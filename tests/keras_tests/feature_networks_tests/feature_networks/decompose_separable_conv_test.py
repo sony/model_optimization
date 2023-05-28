@@ -20,6 +20,7 @@ import tensorflow as tf
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -39,10 +40,9 @@ class DecomposeSeparableConvTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(len(quantized_model.layers) == 4)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.DepthwiseConv2D))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.Conv2D))
-        self.unit_test.assertTrue(quantized_model.layers[2].weights[0].shape == (2, 2, 3, 1 * self.depth_multiplier))
-        self.unit_test.assertTrue(quantized_model.layers[3].weights[0].shape == (1, 1, 3 * self.depth_multiplier, 1))
+        conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
+        dw_layer = get_layers_from_model_by_type(quantized_model, layers.DepthwiseConv2D)[0]
+        self.unit_test.assertTrue(dw_layer.weights[0].shape == (2, 2, 3, 1 * self.depth_multiplier))
+        self.unit_test.assertTrue(conv_layer.weights[0].shape == (1, 1, 3 * self.depth_multiplier, 1))
         self.unit_test.assertTrue(quantized_model.output_shape == float_model.output_shape)
 

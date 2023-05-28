@@ -17,6 +17,7 @@ from tests.keras_tests.exporter_tests.tflite_int8.tflite_int8_exporter_base_test
 import keras
 import numpy as np
 import tests.keras_tests.exporter_tests.constants as constants
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 layers = keras.layers
 
@@ -43,7 +44,8 @@ class TestDepthwiseConv2DTFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
 
         # Reshape DW kernel to be at the same dimensions as in TF.
         kernel = self.interpreter.tensor(kernel_tensor_index)().transpose(0, 1, 3, 2)
-        fake_quantized_kernel_from_exportable_model = self.exportable_model.layers[2].weights_quantizers[DEPTHWISE_KERNEL](self.exportable_model.layers[2].layer.depthwise_kernel)
+        dw_layer = get_layers_from_model_by_type(self.exportable_model, layers.DepthwiseConv2D)[0]
+        fake_quantized_kernel_from_exportable_model = dw_layer.weights_quantizers[DEPTHWISE_KERNEL](dw_layer.layer.depthwise_kernel)
         fake_quantized_kernel_from_int8_model = kernel * kernel_quantization_parameters[constants.SCALES].reshape(1, 1, 3, 1)
         assert np.all(
             fake_quantized_kernel_from_exportable_model == fake_quantized_kernel_from_int8_model), f'Expected quantized kernel to be the same in exportable model and in int8 model'

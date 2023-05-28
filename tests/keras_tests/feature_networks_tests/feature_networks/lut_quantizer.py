@@ -26,6 +26,7 @@ from model_compression_toolkit.core.keras.constants import KERNEL
 from mct_quantizers.keras.quantizers import ActivationLutPOTInferableQuantizer
 from mct_quantizers.common.constants import THRESHOLD, CLUSTER_CENTERS
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -89,10 +90,11 @@ class LUTWeightsQuantizerTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         # check that the two conv's weights have different values since they where quantized
         # using different methods (but started as the same value)
         self.unit_test.assertTrue(np.sum(
-            np.abs(quantized_model.layers[2].get_quantized_weights()[KERNEL]) - quantized_model.layers[3].get_quantized_weights()[KERNEL]) > 0)
+            np.abs(conv_layers[0].get_quantized_weights()[KERNEL]) - conv_layers[1].get_quantized_weights()[KERNEL]) > 0)
 
 
 class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):

@@ -20,6 +20,7 @@ import tensorflow as tf
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -38,8 +39,7 @@ class ReusedSeparableTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        assert len(quantized_model.layers) == 4  # input, fq_input, dw, pw
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.DepthwiseConv2D))
-        self.unit_test.assertFalse(hasattr(quantized_model.layers[2], 'input_shape'))  # assert it's reused
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.Conv2D))
-        self.unit_test.assertFalse(hasattr(quantized_model.layers[3], 'input_shape'))  # assert it's reused
+        dwconv_layer = get_layers_from_model_by_type(quantized_model, layers.DepthwiseConv2D)[0]
+        self.unit_test.assertFalse(hasattr(dwconv_layer, 'input_shape'))  # assert it's reused
+        conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
+        self.unit_test.assertFalse(hasattr(conv_layer, 'input_shape'))  # assert it's reused

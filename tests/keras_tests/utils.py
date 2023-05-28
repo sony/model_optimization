@@ -21,8 +21,8 @@ def get_layers_from_model_by_type(model:keras.Model,
                                   layer_type: type,
                                   include_wrapped_layers: bool = True):
     if include_wrapped_layers:
-        return [layer for layer in model.layers if isinstance(layer, layer_type) or (isinstance(layer, KerasQuantizationWrapper) and isinstance(layer.layer, layer_type))]
-    return [layer for layer in model.layers if isinstance(layer, layer_type)]
+        return [layer for layer in model.layers if type(layer)==layer_type or (isinstance(layer, KerasQuantizationWrapper) and type(layer.layer)==layer_type)]
+    return [layer for layer in model.layers if type(layer)==layer_type]
 
 
 

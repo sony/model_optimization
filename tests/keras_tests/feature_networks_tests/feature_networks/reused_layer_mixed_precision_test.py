@@ -23,6 +23,7 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 import numpy as np
 
 from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -66,13 +67,13 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         if isinstance(float_model.layers[1], layers.Conv2D):
-            self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
-            self.unit_test.assertFalse(hasattr(quantized_model.layers[2], 'input_shape'))  # assert it's reused
+            conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
+            self.unit_test.assertFalse(hasattr(conv_layer, 'input_shape'))  # assert it's reused
         if isinstance(float_model.layers[1], layers.SeparableConv2D):
-            self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.DepthwiseConv2D))
-            self.unit_test.assertFalse(hasattr(quantized_model.layers[2], 'input_shape'))  # assert it's reused
-            self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.Conv2D))
-            self.unit_test.assertFalse(hasattr(quantized_model.layers[3].layer, 'input_shape'))  # assert it's reused
+            dw_layer = get_layers_from_model_by_type(quantized_model, layers.DepthwiseConv2D)[0]
+            self.unit_test.assertFalse(hasattr(dw_layer, 'input_shape'))  # assert it's reused
+            conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
+            self.unit_test.assertFalse(hasattr(conv_layer, 'input_shape'))  # assert it's reused
 
 
 class ReusedSeparableMixedPrecisionTest(ReusedLayerMixedPrecisionTest):

@@ -19,6 +19,8 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 import tensorflow as tf
 import numpy as np
 
+from tests.keras_tests.utils import get_layers_from_model_by_type
+
 keras = tf.keras
 layers = keras.layers
 
@@ -44,17 +46,13 @@ class ReLUBoundToPOTNetTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]
-        alpha_1 = (quantized_model.layers[2].get_quantized_weights()[attr] / float_model.layers[1].weights[0]).numpy().mean()
+        dense_layers = get_layers_from_model_by_type(quantized_model, layers.Dense)
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(layers.Dense)[0]
 
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[4].layer.__class__)[0]
-        beta_1 = (quantized_model.layers[4].get_quantized_weights()[attr] / float_model.layers[3].weights[0]).numpy().mean()
-
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[5].layer.__class__)[0]
-        alpha_2 = (quantized_model.layers[5].get_quantized_weights()[attr] / float_model.layers[4].weights[0]).numpy().mean()
-
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[7].layer.__class__)[0]
-        beta_2 = (quantized_model.layers[7].get_quantized_weights()[attr] / float_model.layers[6].weights[0]).numpy().mean()
+        alpha_1 = (dense_layers[0].get_quantized_weights()[attr] / float_model.layers[1].weights[0]).numpy().mean()
+        beta_1 = (dense_layers[1].get_quantized_weights()[attr] / float_model.layers[3].weights[0]).numpy().mean()
+        alpha_2 = (dense_layers[2].get_quantized_weights()[attr] / float_model.layers[4].weights[0]).numpy().mean()
+        beta_2 = (dense_layers[3].get_quantized_weights()[attr] / float_model.layers[6].weights[0]).numpy().mean()
 
         self.unit_test.assertTrue(np.allclose(alpha_1 * beta_1, 1, atol=1e-1))
         self.unit_test.assertTrue(np.allclose(alpha_1 * 6 / 8, 1, atol=1e-1))

@@ -20,6 +20,7 @@ from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_int8_tpc
 from tests.keras_tests.exporter_tests.tflite_int8.tflite_int8_exporter_base_test import TFLiteINT8ExporterBaseTest
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 layers = keras.layers
 
@@ -53,7 +54,8 @@ class TestConv2DSymmetricTFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
 
         # Reshape Conv kernel to be at the same dimensions as in TF.
         kernel = self.interpreter.tensor(kernel_tensor_index)().transpose(1, 2, 3, 0)
-        fake_quantized_kernel_from_exportable_model = self.exportable_model.layers[2].weights_quantizers[KERNEL](self.exportable_model.layers[2].layer.kernel)
+        conv2d_layer = get_layers_from_model_by_type(self.exportable_model, layers.Conv2D)[0]
+        fake_quantized_kernel_from_exportable_model = conv2d_layer.weights_quantizers[KERNEL](conv2d_layer.layer.kernel)
         fake_quantized_kernel_from_int8_model = kernel * kernel_quantization_parameters[constants.SCALES].reshape(1, 1, 1, 6)
         max_abs_error = np.max(np.abs(fake_quantized_kernel_from_exportable_model-fake_quantized_kernel_from_int8_model))
         assert max_abs_error<=self.weights_diff_tolerance, f'Max abs diff between fake quant (from int8 model and exportable model) kernels passed tolerance: max_abs_error {max_abs_error}, tolerance:{self.weights_diff_tolerance}'
