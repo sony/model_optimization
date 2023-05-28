@@ -42,7 +42,7 @@ def validate_uniform_min_max_ranges(min_range: Any, max_range: Any) -> None:
 
     # Convert min/max to numpy arrays
     min_range, max_range = np.asarray(min_range), np.asarray(max_range)
-    assert np.all(max_range > min_range), f'Expected max_range to be bigger than min_range!'
+    assert np.all(max_range > min_range), f'Expected max_range to be bigger than min_range but min is {min_range} and max is {max_range}. Illegal indices are {np.where((max_range > min_range)==False)[0]}'
 
 
 def validate_adjusted_min_max_ranges(min_range: Any,
