@@ -15,21 +15,21 @@
 
 import tensorflow as tf
 import numpy as np
+from mct_quantizers.common.get_all_subclasses import get_all_subclasses
+from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BaseKerasTrainableQuantizer, \
-    ActivationQuantizationHolder
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_all_subclasses import get_all_subclasses
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
-    BaseKerasInferableQuantizer
+from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder, keras_load_quantized_model, \
+    KerasQuantizationWrapper
+
+from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_tests import \
     MixedPrecisionActivationBaseTest
 from tests.keras_tests.tpc_keras import get_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as mct
-from model_compression_toolkit import quantizers_infrastructure as qi
 
 import os
 from model_compression_toolkit.core.keras.default_framework_info import KERNEL
@@ -68,7 +68,7 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
         ptq_model2 = None
         if self.test_loading:
             ptq_model.save('qat2model.h5')
-            ptq_model2 = mct.quantizers_infrastructure.keras_load_quantized_model('qat2model.h5')
+            ptq_model2 = keras_load_quantized_model('qat2model.h5')
             os.remove('qat2model.h5')
 
         if self.finalize:
@@ -83,10 +83,10 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
     def compare(self, quantized_model, float_model, loaded_model, input_x=None, quantization_info=None):
         if self.test_loading:
             for lo, ll in zip(quantized_model.layers, loaded_model.layers):
-                if isinstance(ll, qi.KerasQuantizationWrapper):
-                    self.unit_test.assertTrue(isinstance(lo, qi.KerasQuantizationWrapper))
-                if isinstance(lo, qi.KerasQuantizationWrapper):
-                    self.unit_test.assertTrue(isinstance(ll, qi.KerasQuantizationWrapper))
+                if isinstance(ll, KerasQuantizationWrapper):
+                    self.unit_test.assertTrue(isinstance(lo, KerasQuantizationWrapper))
+                if isinstance(lo, KerasQuantizationWrapper):
+                    self.unit_test.assertTrue(isinstance(ll, KerasQuantizationWrapper))
                     for w_ll, w_lo in zip(ll.weights, lo.weights):
                         self.unit_test.assertTrue(np.all(w_ll.numpy() == w_lo.numpy()))
 
@@ -121,7 +121,7 @@ class QuantizationAwareTrainingQuantizersTest(QuantizationAwareTrainingTest):
             dw_weight = float_model.layers[1].weights[0].numpy()
             quantized_dw_weight = quantized_model.layers[2].weights[0].numpy()
         else:
-            self.unit_test.assertTrue(isinstance(quantized_model.layers[2], ActivationQuantizationHolder))
+            self.unit_test.assertTrue(isinstance(quantized_model.layers[2], KerasActivationQuantizationHolder))
             self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.DepthwiseConv2D))
             for name, quantizer in quantized_model.layers[3].weights_quantizers.items():
                 w_select = [w for w in float_model.layers[1].weights if name + ":0" in w.name]
@@ -147,10 +147,10 @@ class QuantizationAwareTrainingQuantizerHolderTest(QuantizationAwareTrainingTest
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, loaded_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], ActivationQuantizationHolder))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], KerasActivationQuantizationHolder))
         self.unit_test.assertTrue(quantized_model.layers[2].get_config()['activation_holder_quantizer']['class_name'] == 'STEActivationQATQuantizer')
         self.unit_test.assertTrue(quantized_model.layers[2].get_config()['activation_holder_quantizer']['config']['quantization_config']['activation_n_bits'] == 4)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[4], ActivationQuantizationHolder))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[4], KerasActivationQuantizationHolder))
         self.unit_test.assertTrue(quantized_model.layers[4].get_config()['activation_holder_quantizer']['class_name'] == 'STEActivationQATQuantizer')
         self.unit_test.assertTrue(quantized_model.layers[4].get_config()['activation_holder_quantizer']['config']['quantization_config']['activation_n_bits'] == 4)
 
@@ -210,7 +210,7 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         qat_model = ptq_model
         if self.test_loading:
             qat_model.save('qat2model.h5')
-            qat_model = mct.quantizers_infrastructure.keras_load_quantized_model('qat2model.h5')
+            qat_model = keras_load_quantized_model('qat2model.h5')
             os.remove('qat2model.h5')
 
         self.compare(qat_model,
@@ -226,11 +226,11 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
             # QAT finalize model
             qat_finalize_model = mct.qat.keras_quantization_aware_training_finalize(qat_model)
             for layer in qat_finalize_model.layers:
-                if isinstance(layer, qi.KerasQuantizationWrapper):
+                if isinstance(layer, KerasQuantizationWrapper):
                     self.unit_test.assertTrue(len(layer.activation_quantizers)==0, f'Found {len(layer.activation_quantizers)} activation quantizers in layer wrapper, but activation quantizers should be in ActivationQuantizationHolder layers')
                     for q in layer.weights_quantizers.values():
                         self.unit_test.assertFalse(isinstance(q, BaseTrainableQuantizer), f'Quantizer {type(q)} is trainable after finalizing the model')
-                elif isinstance(layer, ActivationQuantizationHolder):
+                elif isinstance(layer, KerasActivationQuantizationHolder):
                     q = layer.activation_holder_quantizer
                     self.unit_test.assertFalse(isinstance(q, BaseTrainableQuantizer), f'Quantizer {type(q)} is trainable after finalizing the model')
 
@@ -312,7 +312,7 @@ class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
 
         # check that quantizer gets multiple bits configuration
         for layer in qat_ready_model.layers:
-            if isinstance(layer, qi.KerasQuantizationWrapper):
+            if isinstance(layer, KerasQuantizationWrapper):
                 if layer.is_weights_quantization:
                     self.unit_test.assertTrue(
                         len(layer.weights_quantizers['kernel'].quantization_config.weights_bits_candidates) > 1)

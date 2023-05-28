@@ -23,11 +23,8 @@ from model_compression_toolkit.core.common.network_editors.actions import EditRu
     ChangeCandidatesWeightsQuantizationMethod
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.core.keras.constants import KERNEL
-from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import LUTFakeQuant
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
-    ActivationLutPOTInferableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.constants import \
-    THRESHOLD, CLUSTER_CENTERS
+from mct_quantizers.keras.quantizers import ActivationLutPOTInferableQuantizer
+from mct_quantizers.common.constants import THRESHOLD, CLUSTER_CENTERS
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras

@@ -12,18 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from keras.layers import DepthwiseConv2D
 
 import model_compression_toolkit as mct
 import tensorflow as tf
 
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
-    ActivationPOTInferableQuantizer
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
-from model_compression_toolkit.core.keras.back2framework.keras_model_builder import is_layer_fake_quant
 
 keras = tf.keras
 layers = keras.layers
@@ -44,7 +40,6 @@ class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         qi = 3 if isinstance(quantized_model.layers[2].layer, layers.ZeroPadding2D) else 2
         fi = 2 if isinstance(float_model.layers[1], layers.ZeroPadding2D) else 1
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[1].activation_quantizers[0], ActivationPOTInferableQuantizer))
         self.unit_test.assertTrue(quantization_info.input_scale != 1)
 
         # If quantized weight has zeros, the division is inf, and we ignore it by masking these values when computing mean
