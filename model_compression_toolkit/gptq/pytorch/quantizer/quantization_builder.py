@@ -21,7 +21,8 @@ from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_qu
     get_activation_inferable_quantizer_kwargs
 from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantizer import \
     BasePytorchGPTQTrainableQuantizer
-from mct_quantizers import get_inferable_quantizer_class, QuantizationTarget
+from mct_quantizers import QuantizationTarget
+from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
 from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_weights_config

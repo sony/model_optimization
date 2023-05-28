@@ -13,8 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_quantizers \
-    import get_inferable_quantizer_class
+from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
 
 
 class TestGetInferableQuantizer:
