@@ -21,6 +21,7 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -38,5 +39,6 @@ class AddSameTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(len(quantized_model.layers[3].input) == 2)
-        self.unit_test.assertTrue(quantized_model.layers[3].input[0].ref()==quantized_model.layers[3].input[1].ref())
+        add_layer = get_layers_from_model_by_type(quantized_model, layers.Add)[0]
+        self.unit_test.assertTrue(len(add_layer.input) == 2)
+        self.unit_test.assertTrue(add_layer.input[0].ref()==add_layer.input[1].ref())

@@ -25,6 +25,8 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 import model_compression_toolkit as mct
 from tests.keras_tests.feature_networks_tests.feature_networks.network_editor.node_filter_test import get_uniform_weights
 
+from tests.keras_tests.utils import get_layers_from_model_by_type
+
 keras = tf.keras
 layers = keras.layers
 
@@ -49,9 +51,10 @@ class BiasCorrectionDepthwiseTest(BaseKerasFeatureNetworkTest):
         return np.ones(*self.get_input_shapes())
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        error = float_model.layers[1].depthwise_kernel - quantized_model.layers[2].get_quantized_weights()['depthwise_kernel']
+        dw_layer = get_layers_from_model_by_type(quantized_model, DepthwiseConv2D)[0]
+        error = float_model.layers[1].depthwise_kernel - dw_layer.get_quantized_weights()['depthwise_kernel']
         error = np.sum(error, axis=(0,1)).flatten()
-        bias = quantized_model.layers[2].weights[2]
+        bias = dw_layer.weights[2]
         # Input mean is 1 so correction_term = quant_error * 1
         self.unit_test.assertTrue(np.isclose(error, bias).all())
 
