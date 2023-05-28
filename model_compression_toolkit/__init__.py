@@ -25,7 +25,28 @@ from model_compression_toolkit import ptq
 from model_compression_toolkit import qat
 from model_compression_toolkit import exporter
 from model_compression_toolkit import gptq
-from model_compression_toolkit.gptq import GradientPTQConfig
 
+
+# Old API (will not be accessible in future releases)
+from model_compression_toolkit.core.common import network_editors as network_editor
+from model_compression_toolkit.core.common.quantization import quantization_config
+from model_compression_toolkit.core.common.mixed_precision import mixed_precision_quantization_config
+from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
+from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, QuantizationErrorMethod, DEFAULTCONFIG
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
+from model_compression_toolkit.logger import set_log_folder
+from model_compression_toolkit.core.common.data_loader import FolderImageLoader
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo, ChannelAxis
+from model_compression_toolkit.core.common.defaultdict import DefaultDict
+from model_compression_toolkit.legacy.keras_quantization_facade import keras_post_training_quantization, keras_post_training_quantization_mixed_precision
+from model_compression_toolkit.legacy.pytorch_quantization_facade import pytorch_post_training_quantization, pytorch_post_training_quantization_mixed_precision
+from model_compression_toolkit.core.keras.kpi_data_facade import keras_kpi_data
+from model_compression_toolkit.core.pytorch.kpi_data_facade import pytorch_kpi_data
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_config import RoundingType
+from model_compression_toolkit.gptq.keras.quantization_facade import get_keras_gptq_config
+from model_compression_toolkit.gptq.pytorch.quantization_facade import get_pytorch_gptq_config
+from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.load_model import keras_load_quantized_model
 
 __version__ = "1.8.0"
