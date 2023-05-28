@@ -88,9 +88,9 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
 
             quant_conv = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
 
-        attr = 'depthwise_kernel' if isinstance(quant_conv.layer, layers.DepthwiseConv2D) else 'kernel'
-        quant_kernel = getattr(quant_conv.layer, attr)
-        quant_bias = quant_conv.layer.bias
+        attr = 'depthwise_kernel' if isinstance(quant_conv, layers.DepthwiseConv2D) else 'kernel'
+        quant_kernel = getattr(quant_conv, attr)
+        quant_bias = quant_conv.bias
 
         float_bn = float_model.layers[2]
         float_gamma = float_bn.weights[0]

@@ -93,7 +93,7 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
 
         # Create the point-wise layer
         pw_layer = Conv2D(**pw_cfg)
-        pw_layer.build(wrapped_layer.layer.input_shape)
+        pw_layer.build(wrapped_layer.input_shape)
 
         # Create and set the point-wise weights to assign
         dense_kernel = wrapped_layer.layer.kernel
@@ -140,13 +140,13 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         # Example: Dense kernel with the following shape (3, 20) expects to have input with the
         # next dimensions (BATCH_SIZE, x0, x1, ..., xn, 20).
         # Conv layer expects 4-rank input. Thus, the input is reshaped to (BATCH_SIZE, 1, x0*x1*...*xn, 20)
-        dim = wrapped_layer.layer.input_shape[1:-1]
+        dim = wrapped_layer.input_shape[1:-1]
         target_shape = (1, int(np.prod(dim))) + (dense_kernel.get_shape()[0],)
 
         return Sequential([
             Reshape(target_shape=target_shape),
             wrapped_pw,
-            Reshape(wrapped_layer.layer.output_shape[1:])
+            Reshape(wrapped_layer.output_shape[1:])
         ])
 
     def export(self) -> None:
@@ -154,17 +154,18 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         Export a fully quantized model to its int8 tflite model.
         """
 
-        def _substitute_model(wrapped_layer: KerasQuantizationWrapper) -> keras.layers.Layer:
+        def _substitute_model(layer_to_substitue: keras.layers.Layer) -> keras.layers.Layer:
             assert self.is_layer_exportable_fn(
-                wrapped_layer), f'Layer {wrapped_layer.get_config()} did not pass validation'
+                layer_to_substitue), f'Layer {layer_to_substitue.get_config()} did not pass validation'
 
             # In order to support dense quantization using per-channel quantization (which is
             # unsupported in TFLITE int models) we substitute each dense layer to its equivalent
             # point-wise convolution.
-            if isinstance(wrapped_layer.layer, Dense):
-                return self._get_pointwise_layer_to_replace_dense(wrapped_layer)
+            if isinstance(layer_to_substitue, KerasQuantizationWrapper):
+                if isinstance(layer_to_substitue.layer, Dense):
+                    return self._get_pointwise_layer_to_replace_dense(layer_to_substitue)
 
-            return wrapped_layer
+            return layer_to_substitue
 
         # Transform the model to a new model that can be converted to int8 models.
         # For example: replace dense layers with point-wise layers (to support per-channel quantization)

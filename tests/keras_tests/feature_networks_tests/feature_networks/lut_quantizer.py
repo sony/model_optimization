@@ -19,6 +19,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
+from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
@@ -139,18 +140,16 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        all_expected_lut_layers = np.array(quantized_model.layers)[
-            [i for i in range(2, len(quantized_model.layers))]]
+        all_expected_lut_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
 
         for ll in all_expected_lut_layers:
-            assert len(ll.activation_quantizers)==1
             # Check that lut quantizer layer is added where expected (after each layer, for quantizing activation)
-            self.unit_test.assertTrue(isinstance(ll.activation_quantizers[0], ActivationLutPOTInferableQuantizer))
+            self.unit_test.assertTrue(isinstance(ll.activation_holder_quantizer, ActivationLutPOTInferableQuantizer))
             # Check layer's thresholds are power of two
-            self.unit_test.assertTrue(math.log2(ll.activation_quantizers[0].get_config()[THRESHOLD][0]).is_integer())
+            self.unit_test.assertTrue(math.log2(ll.activation_holder_quantizer.get_config()[THRESHOLD][0]).is_integer())
             # Check layers number of clusters and clusters values
-            self.unit_test.assertTrue(len(ll.activation_quantizers[0].get_config()[CLUSTER_CENTERS]) <= 2 ** self.activation_n_bits)
-            self.unit_test.assertTrue(np.all(np.mod(ll.activation_quantizers[0].get_config()[CLUSTER_CENTERS], 1) == 0))
+            self.unit_test.assertTrue(len(ll.activation_holder_quantizer.get_config()[CLUSTER_CENTERS]) <= 2 ** self.activation_n_bits)
+            self.unit_test.assertTrue(np.all(np.mod(ll.activation_holder_quantizer.get_config()[CLUSTER_CENTERS], 1) == 0))
 
 
 if __name__ == '__main__':

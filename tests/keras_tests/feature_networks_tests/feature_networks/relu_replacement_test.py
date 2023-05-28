@@ -137,8 +137,8 @@ class ReluReplacementWithAddBiasTest(SingleReluReplacementTest):
         self.unit_test.assertTrue(np.isclose(6, np.mean(quantized_model.predict(input_x) - input_x)))
         add_bias_layers = get_layers_from_model_by_type(quantized_model, AddBias)
         self.unit_test.assertTrue(len(add_bias_layers) == 2)
-        self.unit_test.assertTrue(add_bias_layers[0].layer.bias == 0)
-        self.unit_test.assertTrue(add_bias_layers[1].layer.bias == 6)
+        self.unit_test.assertTrue(add_bias_layers[0].bias == 0)
+        self.unit_test.assertTrue(add_bias_layers[1].bias == 6)
 
     def get_debug_config(self):
         return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.ReLU),

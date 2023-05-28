@@ -16,6 +16,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
+from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.core.common.network_editors.actions import ChangeCandidatesActivationQuantConfigAttr, \
     ChangeQuantizationParamFunction, EditRule, ChangeCandidatesWeightsQuantConfigAttr
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter, NodeNameScopeFilter, \
@@ -109,12 +110,11 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         # check that this conv's weights did not change
         self.unit_test.assertTrue(np.all(conv_layers[0].get_quantized_weights()['kernel'].numpy() == self.conv_w))
         # check that this conv's weights did not change
-        self.unit_test.assertTrue(np.all(conv_layers[2].layer.kernel == self.conv_w))
-        self.unit_test.assertTrue(conv_layers[0].activation_quantizers[0].get_config()['num_bits'] == 16)
-        self.unit_test.assertTrue(
-            conv_layers[1].activation_quantizers[0].get_config()['num_bits'] == self.activation_n_bits)
-        self.unit_test.assertTrue(
-            conv_layers[2].activation_quantizers[0].get_config()['num_bits'] == self.activation_n_bits)
+        self.unit_test.assertTrue(np.all(conv_layers[2].kernel == self.conv_w))
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        self.unit_test.assertTrue(holder_layers[1].activation_holder_quantizer.get_config()['num_bits'] == 16)
+        self.unit_test.assertTrue(holder_layers[2].activation_holder_quantizer.get_config()['num_bits'] == self.activation_n_bits)
+        self.unit_test.assertTrue(holder_layers[3].activation_holder_quantizer.get_config()['num_bits'] == self.activation_n_bits)
 
 
 class NameFilterTest(BaseKerasFeatureNetworkTest):
@@ -175,8 +175,10 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
                                                                              2 ** (self.weights_n_bits)])
         # check that this conv's weights did not change
         self.unit_test.assertTrue(np.all(conv_layers[1].get_quantized_weights()['kernel'].numpy() == self.conv_w))
-        self.unit_test.assertTrue(conv_layers[0].activation_quantizers[0].get_config()['num_bits'] == self.activation_n_bits)
-        self.unit_test.assertTrue(conv_layers[1].activation_quantizers[0].get_config()['num_bits'] == 16)
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+
+        self.unit_test.assertTrue(holder_layers[1].activation_holder_quantizer.get_config()['num_bits'] == self.activation_n_bits)
+        self.unit_test.assertTrue(holder_layers[2].activation_holder_quantizer.get_config()['num_bits'] == 16)
 
 
 class TypeFilterTest(BaseKerasFeatureNetworkTest):
@@ -249,7 +251,9 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+
         # check that the two conv in the network same weights.
-        self.unit_test.assertTrue(conv_layers[0].get_quantized_weights()['kernel'].numpy().max() == quantized_model.layers[3].get_quantized_weights()['kernel'].numpy().max())
-        self.unit_test.assertTrue(conv_layers[0].activation_quantizers[0].get_config()['num_bits'] == self.activation_n_bits)
-        self.unit_test.assertTrue(conv_layers[1].activation_quantizers[0].get_config()['num_bits'] == self.activation_n_bits)
+        self.unit_test.assertTrue(conv_layers[0].get_quantized_weights()['kernel'].numpy().max() == conv_layers[1].get_quantized_weights()['kernel'].numpy().max())
+        self.unit_test.assertTrue(holder_layers[1].activation_holder_quantizer.get_config()['num_bits'] == self.activation_n_bits)
+        self.unit_test.assertTrue(holder_layers[2].activation_holder_quantizer.get_config()['num_bits'] == self.activation_n_bits)

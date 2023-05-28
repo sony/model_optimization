@@ -87,9 +87,9 @@ class NestedTest(BaseKerasFeatureNetworkTest):
             else:
                 self.unit_test.assertFalse(isinstance(l, Functional) or isinstance(l, Sequential))
         if self.is_inner_functional:
-            num_layers = 9
+            num_layers = 8
         else:
-            num_layers = 6
+            num_layers = 5
         self.unit_test.assertTrue(len(quantized_model.layers) == num_layers)
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)

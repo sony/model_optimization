@@ -76,7 +76,7 @@ class NestedModelMultipleInputsTest(BaseKerasFeatureNetworkTest):
             else:
                 self.unit_test.assertFalse(isinstance(l, Functional) or isinstance(l, Sequential))
         num_layers = 8
-        num_fq_layers = 1
+        num_fq_layers = 7
         self.unit_test.assertTrue(len(quantized_model.layers) == (num_layers+num_fq_layers))
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)

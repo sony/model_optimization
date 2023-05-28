@@ -3,7 +3,7 @@ from typing import List, Any, Tuple
 import keras.layers
 import tensorflow as tf
 from keras.engine.base_layer import Layer
-from mct_quantizers import KerasQuantizationWrapper
+from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
 
 from model_compression_toolkit.ptq import keras_post_training_quantization_experimental
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
@@ -147,40 +147,30 @@ class BaseKerasLayerTest(BaseLayerTest):
         fw_info = self.get_fw_info()
         for layer in quantized_model.layers:
             if not isinstance(layer, InputLayer):
-                assert isinstance(layer, KerasQuantizationWrapper)
-                internal_layer = layer.layer
-                op = internal_layer.function if isinstance(internal_layer, TFOpLambda) else type(internal_layer)
-                if op in KERAS_LAYER_TEST_OPS['kernel_ops']:
-                    assert len(layer.activation_quantizers) > 0
-                    for q in layer.activation_quantizers:
+                if isinstance(layer, KerasActivationQuantizationHolder):
+                    assert layer.activation_holder_quantizer.get_config()['num_bits'] == 8
+                if isinstance(layer, KerasQuantizationWrapper):
+                    # Assert the kernel op outputs are quantized
+                    assert isinstance(layer.outbound_nodes[0].layer, KerasActivationQuantizationHolder)
+                    assert len(layer.weights_quantizers) > 0
+                    for q in layer.weights_quantizers.values():
                         assert q.get_config()['num_bits'] == 8
-                    for attr in fw_info.get_kernel_op_attributes(type(internal_layer)):
+                    for attr in fw_info.get_kernel_op_attributes(type(layer.layer)):
                         self.unit_test.assertTrue(np.sum(np.abs(
-                            layer.get_quantized_weights()[attr] - getattr(float_model.get_layer(internal_layer.name), attr))) > 0.0)
-
-                elif op in KERAS_LAYER_TEST_OPS['no_quantization']:
-                    assert len(layer.activation_quantizers) == 0
-
-                elif op in KERAS_LAYER_TEST_OPS['activation'] or type(internal_layer)==Layer:
-                    assert len(layer.activation_quantizers) > 0
-                    for q in layer.activation_quantizers:
-                        assert q.get_config()['num_bits'] == 8
-
-                else:
-                    raise Exception('Layer is not in framework info')
+                            layer.get_quantized_weights()[attr] - getattr(float_model.get_layer(layer.layer.name), attr))) > 0.0)
 
     def __compare_float_mode(self, float_model, quantized_model):
         for layer_index, layer in enumerate(quantized_model.layers):
             # Check there are no fake-quant layers
-            self.unit_test.assertFalse(is_layer_fake_quant(layer))
+            self.unit_test.assertFalse(isinstance(layer, KerasActivationQuantizationHolder))
             if not isinstance(layer, InputLayer):
-                assert isinstance(layer, KerasQuantizationWrapper)
-                assert len(layer.activation_quantizers) == 0
-                assert len(layer.weights_quantizers.keys()) == 0
-                # check unchanged weights
-                if hasattr(layer.layer, 'weights') and len(layer.layer.weights) > 0:
-                    for i, w in enumerate(layer.layer.weights):
-                        self.unit_test.assertTrue(np.sum(np.abs(w - float_model.layers[layer_index-1].weights[i])) == 0.0)
+                if isinstance(layer, KerasQuantizationWrapper):
+                    assert len(layer.activation_quantizers) == 0
+                    assert len(layer.weights_quantizers.keys()) == 0
+                    # check unchanged weights
+                    if hasattr(layer.layer, 'weights') and len(layer.layer.weights) > 0:
+                        for i, w in enumerate(layer.layer.weights):
+                            self.unit_test.assertTrue(np.sum(np.abs(w - float_model.layers[layer_index-1].weights[i])) == 0.0)
 
         input_tensors = self.generate_inputs()
         y = self.predict(float_model, input_tensors)

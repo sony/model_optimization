@@ -58,7 +58,7 @@ class DwConv2dReplacementTest(BaseKerasFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(np.isclose(0, np.mean(quantized_model.predict(input_x) - input_x)))
         dw_layer = get_layers_from_model_by_type(quantized_model, layers.DepthwiseConv2D)[0]
-        self.unit_test.assertTrue(np.all(dw_layer.layer.depthwise_kernel.numpy() == 1))
+        self.unit_test.assertTrue(np.all(dw_layer.depthwise_kernel.numpy() == 1))
 
     def get_debug_config(self):
         return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.DepthwiseConv2D),

@@ -16,6 +16,7 @@
 
 import tensorflow as tf
 
+from mct_quantizers import KerasActivationQuantizationHolder
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
@@ -37,12 +38,11 @@ class ConvBnReluResidualTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
-        activation_layer = get_layers_from_model_by_type(quantized_model, layers.Activation)[0]
+        holders = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         add_layer = get_layers_from_model_by_type(quantized_model, layers.Add)[0]
         bn_layer = get_layers_from_model_by_type(quantized_model, layers.BatchNormalization)[0]
 
-        self.unit_test.assertTrue(conv_layer.output.ref() in [t.ref() for t in add_layer.input])
-        self.unit_test.assertTrue(activation_layer.output.ref() in [t.ref() for t in add_layer.input])
-        self.unit_test.assertTrue(isinstance(bn_layer.layer, layers.BatchNormalization)) # assert not folding
+        self.unit_test.assertTrue(holders[1].output.ref() in [t.ref() for t in add_layer.input])
+        self.unit_test.assertTrue(holders[3].output.ref() in [t.ref() for t in add_layer.input])
+        self.unit_test.assertTrue(isinstance(bn_layer, layers.BatchNormalization)) # assert not folding
 

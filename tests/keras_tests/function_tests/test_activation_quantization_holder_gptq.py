@@ -49,7 +49,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
     def test_adding_holder_instead_quantize_wrapper(self):
         input_shape = (8, 8, 3)
         gptq_model = self._get_gptq_model(input_shape, basic_model)
-        self.assertTrue(isinstance(gptq_model.layers[4], KerasActivationQuantizationHolder))
+        self.assertTrue(isinstance(gptq_model.layers[3], KerasActivationQuantizationHolder))
         for l in gptq_model.layers:
             if isinstance(l, KerasQuantizationWrapper):
                 self.assertTrue(len(l.activation_quantizers)==0)
@@ -57,21 +57,21 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
     def test_adding_holders_after_reuse(self):
         input_shape = (8, 8, 3)
         gptq_model = self._get_gptq_model(input_shape, reuse_model)
+        self.assertTrue(isinstance(gptq_model.layers[3], KerasActivationQuantizationHolder))
         self.assertTrue(isinstance(gptq_model.layers[4], KerasActivationQuantizationHolder))
-        self.assertTrue(isinstance(gptq_model.layers[5], KerasActivationQuantizationHolder))
         for l in gptq_model.layers:
             if isinstance(l, KerasQuantizationWrapper):
                 self.assertTrue(len(l.activation_quantizers)==0)
 
         # Test that two holders are getting inputs from reused conv2d (the layer that is wrapped)
-        self.assertTrue(gptq_model.layers[3].layer.get_output_at(0).ref() == gptq_model.layers[4].input.ref())
-        self.assertTrue(gptq_model.layers[3].layer.get_output_at(1).ref() == gptq_model.layers[5].input.ref())
+        self.assertTrue(gptq_model.layers[2].get_output_at(0).ref() == gptq_model.layers[3].input.ref())
+        self.assertTrue(gptq_model.layers[2].get_output_at(1).ref() == gptq_model.layers[4].input.ref())
 
     def test_adding_holder_after_relu(self):
         input_shape = (8, 8, 3)
         gptq_model = self._get_gptq_model(input_shape, activation_quantization_for_relu_model)
-        self.assertTrue(isinstance(gptq_model.layers[4], ReLU))
-        self.assertTrue(isinstance(gptq_model.layers[5], KerasActivationQuantizationHolder))
+        self.assertTrue(isinstance(gptq_model.layers[3], ReLU))
+        self.assertTrue(isinstance(gptq_model.layers[4], KerasActivationQuantizationHolder))
 
 
     def _get_gptq_model(self, input_shape, get_model_fn):

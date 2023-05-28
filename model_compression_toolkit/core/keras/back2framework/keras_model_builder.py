@@ -113,7 +113,8 @@ class KerasModelBuilder(BaseModelBuilder):
                          return_float_outputs)
 
         # Build an OperationHandler to handle conversions from graph nodes to Keras operators.
-        self.oh = OperationHandler(self.graph)
+        self.oh = OperationHandler(self.graph,
+                                   wrapper=wrapper)
         self.wrapper = wrapper
         self.get_activation_quantizer_holder = get_activation_quantizer_holder_fn
 
@@ -172,11 +173,6 @@ class KerasModelBuilder(BaseModelBuilder):
                                         for
                                         inode in self.graph.get_inputs()}
 
-        # Support adding Layer after input layers require us to store it in layer_to_node_dict
-        # dict offline (unlike other layers which stored during running).
-        for node, layer in self.oh.node_to_fw_op_dict.items():
-            if node.type == InputLayer:
-                self.oh.layer_to_node_dict[layer] = node
 
         # Build a list of the model's input tensors. Switching from a dictionary to a list
         # to keep the tensors input order, since inputs in Graph are ordered by their indices.
@@ -186,7 +182,8 @@ class KerasModelBuilder(BaseModelBuilder):
 
         # Build a dictionary from node to its output tensors, by applying the layers sequentially.
         for n in self.oh.node_sort:
-            op_func = self.oh.get_node_op_function(n)  # Get node operation function
+            op_func = self.oh.get_node_op_function(n) # Get node operation function
+
             input_tensors = self._build_input_tensors_list(n,
                                                            node_to_output_tensors_dict)  # Fetch Node inputs
             out_tensors_of_n, out_tensors_of_n_float = self._run_operation(n,  # Run node operation and fetch outputs
@@ -222,22 +219,6 @@ class KerasModelBuilder(BaseModelBuilder):
 
         # Build the model.
         model = tf.keras.Model(inputs=inputs_list, outputs=model_output_tensors)
-
-        if self.wrapper is not None:
-            def _wrap(layer):
-                _node = self.oh.layer_to_node_dict.get(layer)
-                if _node is not None:
-                    return self.wrapper(_node,
-                                        layer)
-
-                elif is_layer_fake_quant(layer) or isinstance(layer, KerasActivationQuantizationHolder):
-                    return layer
-
-                raise Exception(  # pragma: no cover
-                    f'Mismatch between keras model and graph cant find node named: '
-                    f'{get_node_name_from_layer(layer)}')
-
-            model = clone_model(model, clone_function=_wrap)
 
         return model, self.graph.user_info
 
@@ -295,8 +276,7 @@ class KerasModelBuilder(BaseModelBuilder):
         if len(input_tensors) == 0:  # Placeholder handling
             out_tensors_of_n_float = input_nodes_to_input_tensors[n]
             out_tensors_of_n = self._run_operation_activation_quantization(n,
-                                                                           out_tensors_of_n_float,
-                                                                           op_func)
+                                                                           out_tensors_of_n_float)
         else:
             input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
             # Build a functional node using its args
@@ -331,24 +311,18 @@ class KerasModelBuilder(BaseModelBuilder):
 
     def _run_operation_activation_quantization(self,
                                                node: BaseNode,
-                                               node_outputs: List[TFReference],
-                                               identity_layer: Layer = None):
+                                               node_outputs: List[TFReference]):
         """
         Quantize node's activations
 
         Args:
             node: Node to quantize its activations
             node_outputs: Output tensors of the float node.
-            identity_layer: Identity layer (should be passed only when quantizing input layers)
 
         Returns:
             Quantized node's outputs.
         """
         if self.wrapper is not None:
-            # If identity layer was passed, use it for inference
-            # (needed since wrapping an Input layer can not be wrapped)
-            if identity_layer is not None:
-                node_outputs = identity_layer(node_outputs)
 
             # In case the activation quantizer is attached out of the wrapper we use get_activation_quantizer_holder
             # for the activation quantization holder (if the node's activations are quantized)

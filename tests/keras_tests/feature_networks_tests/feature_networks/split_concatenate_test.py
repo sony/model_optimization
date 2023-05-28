@@ -17,6 +17,7 @@
 import tensorflow as tf
 from keras.layers import TFOpLambda
 
+from mct_quantizers import KerasActivationQuantizationHolder
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
@@ -39,7 +40,7 @@ class SplitConcatenateTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         split_layer = get_layers_from_model_by_type(quantized_model, TFOpLambda)[0]
-        self.unit_test.assertTrue(split_layer.layer.function == tf.split)
+        self.unit_test.assertTrue(split_layer.function == tf.split)
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
 
         self.unit_test.assertTrue(split_layer.output[1].ref() == conv_layers[0].input.ref())
@@ -47,5 +48,10 @@ class SplitConcatenateTest(BaseKerasFeatureNetworkTest):
 
         concate_layer = get_layers_from_model_by_type(quantized_model, layers.Concatenate)[0]
         self.unit_test.assertTrue(len(concate_layer.input) == 2)
-        self.unit_test.assertTrue(concate_layer.input[0].ref() == conv_layers[0].output.ref())
-        self.unit_test.assertTrue(concate_layer.input[1].ref() == conv_layers[1].output.ref())
+
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        self.unit_test.assertTrue(holder_layers[-3].input.ref() == conv_layers[0].output.ref())
+        self.unit_test.assertTrue(holder_layers[-2].input.ref() == conv_layers[1].output.ref())
+        self.unit_test.assertTrue(holder_layers[-3].output.ref() == concate_layer.input[0].ref())
+        self.unit_test.assertTrue(holder_layers[-2].output.ref() == concate_layer.input[1].ref())
+

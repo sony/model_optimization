@@ -17,6 +17,7 @@
 import numpy as np
 import tensorflow as tf
 
+from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.core import CoreConfig
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from keras import backend as K
@@ -110,13 +111,20 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
                         0] <= unique_tensor_values)
 
         # verify activation quantization
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:] # skip the input layer
         inp = quantized_model.input  # input placeholder
-        out = [layer.output for layer in quantized_model.layers]  # all layer outputs
+        out = [layer.output for layer in holder_layers]  # all layer outputs
         get_outputs = K.function([inp], out)
         layer_outs = get_outputs([input_x])
+
         # verifying fake quant nodes output
-        for idx in activation_layers_idx:
-            self.unit_test.assertTrue(np.unique(layer_outs[idx].flatten()).shape[0] <= unique_tensor_values)
+        for layer_out in layer_outs:
+            self.unit_test.assertTrue(np.unique(layer_out).flatten().shape[0] <= unique_tensor_values)
+
+        # model_output = quantized_model(input_x)
+        # model_output = model_output if isinstance(model_output, list) else [model_output]
+        # for out in model_output:
+        #     self.unit_test.assertTrue(np.unique(out.numpy().flatten()).shape[0] <= unique_tensor_values)
 
 
 class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
@@ -130,7 +138,8 @@ class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # kpi is infinity -> should give best model - 8bits
-        activation_bits = [quantized_model.layers[i].activation_quantizers[0].get_config()['num_bits'] for i in self.activation_layers_idx]
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
 
         self.verify_quantization(quantized_model, input_x,
@@ -160,7 +169,9 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # kpi is 4 bit average
-        activation_bits = [quantized_model.layers[i].activation_quantizers[0].get_config()['num_bits'] for i in self.activation_layers_idx]
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:]
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
+
         # Note that since we're using default max aggregation for activation KPI, then there is no guarantee that the
         # activation bitwidth for each layer would be 4-bit, this assertion tests the expected result for this specific
         # test with its current setup (therefore, we don't check the input layer's bitwidth)
@@ -188,7 +199,8 @@ class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBase
         # Note that since we're using default max aggregation for activation KPI, then there is no guarantee that the
         # activation bitwidth for each layer would be 2-bit, this assertion tests the expected result for this specific
         # test with its current setup (therefore, we don't check the input layer's bitwidth)
-        activation_bits = [quantized_model.layers[i].activation_quantizers[0].get_config()['num_bits'] for i in self.activation_layers_idx]
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:]
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [2, 2]))
 
         self.verify_quantization(quantized_model, input_x,
@@ -223,7 +235,8 @@ class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # kpi is infinity -> should give best model - 8bits
-        activation_bits = [quantized_model.layers[i].activation_quantizers[0].get_config()['num_bits'] for i in self.activation_layers_idx]
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8]))
 
 
@@ -258,8 +271,8 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
         # Note that since we're using default max aggregation for activation KPI, then there is no guarantee that the
         # activation bitwidth for each layer would be 4-bit, this assertion tests the expected result for this specific
         # test with its current setup (therefore, we don't check the relu layer's bitwidth)
-        activation_bits = [quantized_model.layers[i].activation_quantizers[0].get_config()['num_bits'] for i in self.activation_layers_idx]
-        self.unit_test.assertTrue((activation_bits == [4]))
+        holder_layer = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[0]
+        self.unit_test.assertTrue(holder_layer.activation_holder_quantizer.get_config()['num_bits']==4)
 
 
 class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
@@ -281,7 +294,8 @@ class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # kpi is infinity -> should give best model - 8bits
-        activation_bits = [quantized_model.layers[i].activation_quantizers[0].get_config()['num_bits'] for i in self.activation_layers_idx]
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
 
         self.verify_quantization(quantized_model, input_x,
@@ -319,7 +333,8 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # kpi is infinity -> should give best model - 8bits
-        activation_bits = [quantized_model.layers[i].activation_quantizers[0].get_config()['num_bits'] for i in self.activation_layers_idx]
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
 
         self.verify_quantization(quantized_model, input_x,
@@ -365,7 +380,8 @@ class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBa
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # kpi is infinity -> should give best model - 8bits
-        activation_bits = [quantized_model.layers[i].activation_quantizers[0].get_config()['num_bits'] for i in self.activation_layers_idx]
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
 
         self.verify_quantization(quantized_model, input_x,
@@ -386,13 +402,15 @@ class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(32, 4)(inputs)
         x = layers.Add()([x, x])
+        # x = layers.Layer()(inputs)
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # kpi is infinity -> should give best model - 8bits
-        activation_bits = [quantized_model.layers[i].activation_quantizers[0].get_config()['num_bits'] for i in self.activation_layers_idx]
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        activation_bits = [h.activation_holder_quantizer.get_config()['num_bits'] for h in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
 
         self.verify_quantization(quantized_model, input_x,
@@ -442,7 +460,8 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # kpi is infinity -> should give best model - 8bits
-        activation_bits = [quantized_model.layers[i].activation_quantizers[0].get_config()['num_bits'] for i in self.activation_layers_idx]
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8, 8, 8, 8, 8, 8, 8, 8]))
 
         self.verify_quantization(quantized_model, input_x,
@@ -461,8 +480,8 @@ class MixedPrecisionTotalKPISearchTest(MixedPrecisionActivationBaseTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # verify chosen activation bitwidth config
-        activation_bits = [quantized_model.layers[i].activation_quantizers[0].get_config()['num_bits'] for i in
-                           self.activation_layers_idx]
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:]
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [4, 4]))
 
         self.verify_quantization(quantized_model, input_x,
@@ -490,8 +509,8 @@ class MixedPrecisionMultipleKPIsTightSearchTest(MixedPrecisionActivationBaseTest
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # verify chosen activation bitwidth config
-        activation_bits = [quantized_model.layers[i].activation_quantizers[0].get_config()['num_bits'] for i in
-                           self.activation_layers_idx]
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:]
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [4, 4]))
 
         self.verify_quantization(quantized_model, input_x,
@@ -519,8 +538,8 @@ class MixedPrecisionReducedTotalKPISearchTest(MixedPrecisionActivationBaseTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # verify chosen activation bitwidth config
-        activation_bits = [quantized_model.layers[i].activation_quantizers[0].get_config()['num_bits'] for i in
-                           self.activation_layers_idx]
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:]
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [2, 2]))
 
         self.verify_quantization(quantized_model, input_x,
