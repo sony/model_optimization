@@ -17,13 +17,14 @@
 import tensorflow as tf
 from keras.engine.base_layer import Layer
 from keras.engine.input_layer import InputLayer
+from mct_quantizers import KerasQuantizationWrapper, BaseInferableQuantizer
 
 from model_compression_toolkit.core.keras.constants import KERNEL
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
 layers = keras.layers
-from model_compression_toolkit import quantizers_infrastructure as qi
+
 
 class ExportableModelTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
@@ -38,26 +39,26 @@ class ExportableModelTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(isinstance(quantized_model.layers[0], InputLayer))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[1], qi.KerasQuantizationWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[1], KerasQuantizationWrapper))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[1].layer, Layer))
         self.unit_test.assertTrue(len(quantized_model.layers[1].activation_quantizers) == 1)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[1].activation_quantizers[0], qi.BaseInferableQuantizer))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[1].activation_quantizers[0], BaseInferableQuantizer))
 
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], qi.KerasQuantizationWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], KerasQuantizationWrapper))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
         self.unit_test.assertTrue(len(quantized_model.layers[2].activation_quantizers) == 1)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].activation_quantizers[0], qi.BaseInferableQuantizer))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].activation_quantizers[0], BaseInferableQuantizer))
         self.unit_test.assertTrue(len(quantized_model.layers[2].weights_quantizers) == 1)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].weights_quantizers[KERNEL], qi.BaseInferableQuantizer))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].weights_quantizers[KERNEL], BaseInferableQuantizer))
 
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3], qi.KerasQuantizationWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3], KerasQuantizationWrapper))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.Conv2D))
         self.unit_test.assertTrue(len(quantized_model.layers[3].activation_quantizers) == 0)
         self.unit_test.assertTrue(len(quantized_model.layers[3].weights_quantizers) == 1)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].weights_quantizers[KERNEL], qi.BaseInferableQuantizer))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].weights_quantizers[KERNEL], BaseInferableQuantizer))
 
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[4], qi.KerasQuantizationWrapper))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[4], KerasQuantizationWrapper))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[4].layer, layers.ReLU))
         self.unit_test.assertTrue(len(quantized_model.layers[4].activation_quantizers) == 1)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[4].activation_quantizers[0], qi.BaseInferableQuantizer))
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[4].activation_quantizers[0], BaseInferableQuantizer))
 

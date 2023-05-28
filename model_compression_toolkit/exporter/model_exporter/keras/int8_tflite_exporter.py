@@ -48,6 +48,7 @@ KERNEL = 'kernel'
 CONV_KERNEL_CHANNEL_AXIS = 3
 CONV_INPUT_CHANNELS_DIM = 4
 
+
 class INT8TFLiteExporter(FakelyQuantKerasExporter):
     """
     Exporter for INT8 TFLite models.
@@ -108,7 +109,7 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         pw_layer.set_weights(pw_weights)
 
         # Now that we have the point-wise to replace the dense layer,
-        # we need to wrap it using qi.KerasQuantizationWrapper with a new
+        # we need to wrap it using KerasQuantizationWrapper with a new
         # relevant quantizers.
         # Create new kernel quantizer
         pw_kernel_quantizer_cfg = wrapped_layer.weights_quantizers[KERNEL].get_config()
@@ -119,8 +120,10 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         # Unquantized weight to conv layer has 4 dimensions (unlike dense which varies)
         pw_kernel_quantizer_cfg[keras_inferable_constants.INPUT_RANK] = CONV_INPUT_CHANNELS_DIM
 
-        assert isinstance(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD], np.ndarray), f'Expected to find threshold which is a numpy array, but found: {type(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])}'
-        pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD] = list(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])
+        assert isinstance(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD],
+                          np.ndarray), f'Expected to find threshold which is a numpy array, but found: {type(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])}'
+        pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD] = list(
+            pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])
 
         # Now that we have the point-wise quantizer we can instantiate it
         quantizer_class = type(wrapped_layer.weights_quantizers[KERNEL])
@@ -129,9 +132,9 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         pw_weights_quantizers[KERNEL] = pw_quantizer
 
         # Wrap pw with the new quantizers (the activation is not affected thus we take the Dense quantizers)
-        wrapped_pw = qi.KerasQuantizationWrapper(pw_layer,
-                                                 pw_weights_quantizers,
-                                                 wrapped_layer.activation_quantizers)
+        wrapped_pw = KerasQuantizationWrapper(pw_layer,
+                                              pw_weights_quantizers,
+                                              wrapped_layer.activation_quantizers)
 
         # Compute the shape that the input to the new layer should be reshaped into
         # Example: Dense kernel with the following shape (3, 20) expects to have input with the
@@ -151,7 +154,7 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         Export a fully quantized model to its int8 tflite model.
         """
 
-        def _substitute_model(wrapped_layer: qi.KerasQuantizationWrapper) -> keras.layers.Layer:
+        def _substitute_model(wrapped_layer: KerasQuantizationWrapper) -> keras.layers.Layer:
             assert self.is_layer_exportable_fn(
                 wrapped_layer), f'Layer {wrapped_layer.get_config()} did not pass validation'
 

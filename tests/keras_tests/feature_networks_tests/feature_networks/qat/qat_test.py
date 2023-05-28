@@ -247,7 +247,7 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         all_trainable_quantizers = get_all_subclasses(BaseKerasQATTrainableQuantizer)
         all_inferable_quantizers = get_all_subclasses(BaseKerasInferableQuantizer)
         for layer in qat_model.layers:
-            if isinstance(layer, qi.KerasQuantizationWrapper):
+            if isinstance(layer, KerasQuantizationWrapper):
                 # Check Activation quantizers
                 if layer.is_activation_quantization:
                     for quantizer in layer.activation_quantizers:

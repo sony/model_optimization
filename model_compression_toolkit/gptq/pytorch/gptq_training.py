@@ -90,7 +90,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
 
     def _is_gptq_weights_trainable(self,
-                            node: BaseNode) -> bool:
+                                   node: BaseNode) -> bool:
         """
         A function for deciding if a layer should be fine-tuned during GPTQ.
         Args:
@@ -119,8 +119,8 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
         if self._is_gptq_weights_trainable(n):
             weights_quantizers, activation_quantizers = quantization_builder(n, self.gptq_config)
-            return qi.PytorchQuantizationWrapper(layer,
-                                                 weights_quantizers=weights_quantizers)
+            return PytorchQuantizationWrapper(layer,
+                                              weights_quantizers=weights_quantizers)
         else:
             return layer
 

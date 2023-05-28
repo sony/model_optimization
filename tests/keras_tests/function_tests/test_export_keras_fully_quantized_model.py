@@ -23,7 +23,7 @@ from keras import Input
 from keras.layers import Conv2D, BatchNormalization, ReLU, Dropout, Dense, Activation
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.quantizers_infrastructure import keras_load_quantized_model
+from mct_quantizers import keras_load_quantized_model
 from model_compression_toolkit.exporter.model_wrapper import is_keras_layer_exportable
 
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
