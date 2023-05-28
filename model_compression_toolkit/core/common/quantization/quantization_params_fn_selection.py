@@ -17,7 +17,7 @@ from collections.abc import Callable
 from functools import partial
 
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.kmeans_params import kmeans_tensor
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import \
     lut_kmeans_tensor, lut_kmeans_histogram

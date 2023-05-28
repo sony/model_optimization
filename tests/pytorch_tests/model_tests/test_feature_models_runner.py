@@ -74,7 +74,7 @@ from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccurac
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
 from tests.pytorch_tests.model_tests.feature_models.old_api_test import OldApiTest
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 
 
 class FeatureModelsTestRunner(unittest.TestCase):

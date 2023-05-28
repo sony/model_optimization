@@ -21,7 +21,7 @@ from torch import nn
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
-from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
+from mct_quantizers import PytorchQuantizationWrapper
 
 
 class LinearTempDecay:

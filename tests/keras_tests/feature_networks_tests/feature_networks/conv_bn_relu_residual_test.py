@@ -16,8 +16,7 @@
 
 import tensorflow as tf
 
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
-    ActivationPOTInferableQuantizer
+from mct_quantizers.keras.quantizers import ActivationPOTInferableQuantizer
 
 
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest

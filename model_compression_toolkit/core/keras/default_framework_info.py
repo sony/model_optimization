@@ -26,7 +26,7 @@ else:
 
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import SOFTMAX_THRESHOLD
 from model_compression_toolkit.core.keras.constants import SOFTMAX, LINEAR, RELU, SWISH, SIGMOID, IDENTITY, TANH, SELU, \
     KERNEL, DEPTHWISE_KERNEL

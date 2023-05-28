@@ -22,7 +22,7 @@ from keras.engine.base_layer import Layer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import \
     BaseKerasExporter
-from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
+from mct_quantizers import KerasQuantizationWrapper
 
 
 

@@ -22,11 +22,9 @@ from keras import Sequential
 from keras.layers import Dense, Conv2D, Reshape
 from keras.models import clone_model
 
-from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import FakelyQuantKerasExporter
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
-    constants as keras_inferable_constants
+from mct_quantizers import constants as keras_inferable_constants, KerasQuantizationWrapper
 
 BIAS_INITIALIZER = 'bias_initializer'
 BIAS_REGULARIZER = 'bias_regularizer'
@@ -75,7 +73,7 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
 
         self.exported_model = None
 
-    def _get_pointwise_layer_to_replace_dense(self, wrapped_layer: qi.KerasQuantizationWrapper) -> keras.layers.Layer:
+    def _get_pointwise_layer_to_replace_dense(self, wrapped_layer: KerasQuantizationWrapper) -> keras.layers.Layer:
         # First we create a pointwise configuration based on the Dense layer's configuration
         dense_cfg = wrapped_layer.layer.get_config()
 

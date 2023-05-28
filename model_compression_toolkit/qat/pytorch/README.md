@@ -21,14 +21,12 @@ Assume that the quantizer has a new training method called `MyTrainig` which is 
 
 ```python
 NEW_PARAM = "new_param_name"
-from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import
-    mark_quantizer
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit TrainingMethod
+from mct_quantizers import mark_quantizer, QuantizationMethod, QuantizationTarget
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+@mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.MyQuantizerType)
 class MyWeightsTrainingQuantizer(BasePytorchQATTrainableQuantizer):
@@ -61,21 +59,19 @@ Assume that the quantizer has a new training method called `MyTrainig` which is 
 
 ```python
 NEW_PARAM = "new_param_name"
-from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import
-    mark_quantizer
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit import TrainingMethod
+from mct_quantizers import mark_quantizer, QuantizationTarget, QuantizationMethod
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
+@mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.MyQuantizerType)
 class MyActivationsTrainingQuantizer(BasePytorchQATTrainableQuantizer):
     def __init__(self, quantization_config: NodeActivationQuantizationConfig):
         super(MyActivationsTrainingQuantizer, self).__init__(quantization_config,
-                                                             qi.QuantizationTarget.Activation,
-                                                             [qi.QuantizationMethod.SYMMETRIC])
+                                                             QuantizationTarget.Activation,
+                                                             [QuantizationMethod.SYMMETRIC])
         # Define your new params here:
         self.new_param = ...
 
@@ -94,5 +90,5 @@ class MyActivationsTrainingQuantizer(BasePytorchQATTrainableQuantizer):
         return quantized_inputs
 
     def convert2inferable(self):
-        return qi.ActivationUniformInferableQuantizer(...)
+        return ActivationUniformInferableQuantizer(...)
 ```

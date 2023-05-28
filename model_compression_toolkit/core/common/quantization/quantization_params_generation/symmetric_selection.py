@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     qparams_symmetric_selection_histogram_search, kl_qparams_symmetric_selection_histogram_search
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import \
     get_tensor_max
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 
 
 def symmetric_selection_tensor(tensor_data: np.ndarray,

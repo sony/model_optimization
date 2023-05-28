@@ -19,15 +19,15 @@ import torch
 import torch.nn as nn
 
 from model_compression_toolkit.qat import TrainingMethod
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod, PytorchQuantizationWrapper
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
-from model_compression_toolkit import quantizers_infrastructure as qi, constants as C
+from model_compression_toolkit import constants as C
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
+from mct_quantizers.common.base_inferable_quantizer import mark_quantizer, QuantizationTarget
 
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import ste_round, ste_clip, symmetric_quantizer
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
+from mct_quantizers.pytorch.quantizers import \
     WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, ActivationPOTInferableQuantizer, \
     ActivationSymmetricInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
@@ -35,7 +35,7 @@ from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructur
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+@mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.STE)
 class STEWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
@@ -73,7 +73,7 @@ class STEWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: qi.PytorchQuantizationWrapper):
+                                layer: PytorchQuantizationWrapper):
         """
         Add quantizer parameters to the quantizer parameters dictionary
 
@@ -129,7 +129,7 @@ class STEWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
 
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
+@mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.STE)
 class STEActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
@@ -155,7 +155,7 @@ class STEActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: qi.PytorchQuantizationWrapper):
+                                layer: PytorchQuantizationWrapper):
         """
         Add quantizer parameters to the quantizer parameters dictionary
 

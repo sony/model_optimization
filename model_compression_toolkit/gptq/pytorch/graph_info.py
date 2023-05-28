@@ -19,7 +19,7 @@ from model_compression_toolkit.core.pytorch.constants import BIAS
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
+from mct_quantizers import PytorchQuantizationWrapper
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 

@@ -18,12 +18,12 @@ from typing import Any
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import FOUND_TF
 
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer
+from mct_quantizers import BaseInferableQuantizer
 
 
 if FOUND_TF:
     from keras.engine.input_layer import InputLayer
-    from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
+    from mct_quantizers import KerasQuantizationWrapper
 
     def is_keras_layer_exportable(layer: Any) -> bool:
         """

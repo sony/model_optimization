@@ -24,7 +24,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 
 
 class BatchNormalizationReconstruction(common.BaseSubstitution):

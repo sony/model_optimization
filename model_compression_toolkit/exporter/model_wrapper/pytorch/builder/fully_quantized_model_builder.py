@@ -13,8 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-
-from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.constants import FOUND_TORCH
@@ -22,12 +20,13 @@ from model_compression_toolkit.logger import Logger
 
 if FOUND_TORCH:
     import torch
+    from mct_quantizers import PytorchQuantizationWrapper
     from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
     from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizers import \
         get_quantization_quantizers
 
     def fully_quantized_wrapper(node: common.BaseNode,
-                                module: torch.nn.Module) -> qi.PytorchQuantizationWrapper:
+                                module: torch.nn.Module) -> PytorchQuantizationWrapper:
         """
         A function which takes a computational graph node and a pytorch module and
         perform the quantization wrapping
@@ -39,7 +38,7 @@ if FOUND_TORCH:
 
         """
         weight_quantizers, activation_quantizers = get_quantization_quantizers(node)
-        wrapped_layer = qi.PytorchQuantizationWrapper(module, weight_quantizers, activation_quantizers)
+        wrapped_layer = PytorchQuantizationWrapper(module, weight_quantizers, activation_quantizers)
         return wrapped_layer
 
 

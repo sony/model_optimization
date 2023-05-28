@@ -28,7 +28,7 @@ from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructur
 
 if FOUND_TORCH:
     from torch import Tensor
-    from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
+    from mct_quantizers import PytorchQuantizationWrapper
 
     class BasePytorchGPTQTrainableQuantizer(BasePytorchTrainableQuantizer):
         """

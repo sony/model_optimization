@@ -17,10 +17,10 @@ import copy
 from typing import Any, Union
 from enum import Enum
 
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common import constants as C
+from mct_quantizers.common import constants as C
 
 
 def transform_enum(v: Any):

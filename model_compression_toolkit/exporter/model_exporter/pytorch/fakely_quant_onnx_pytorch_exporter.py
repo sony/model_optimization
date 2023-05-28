@@ -21,8 +21,8 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import BasePyTorchExporter
 from packaging import version
 
-from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import LAYER
+from mct_quantizers import PytorchQuantizationWrapper
+from mct_quantizers.common.constants import LAYER
 
 # ONNX opset version 16 is supported from PyTorch 1.12
 if version.parse(torch.__version__) < version.parse("1.12"):

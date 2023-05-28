@@ -19,7 +19,7 @@ from torch import sigmoid
 
 from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo, ChannelAxis
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import SOFTMAX_THRESHOLD
 from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.quantizer.fake_quant_builder import power_of_two_quantization, \

@@ -20,7 +20,7 @@ from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.qat.common.qat_config import QATConfig
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, ActivationQuantizationHolder
+from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_weights_config, get_trainable_quantizer_activation_config, \
     get_trainable_quantizer_quantization_candidates
@@ -31,15 +31,15 @@ from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructur
 def get_activation_quantizer_holder(n: common.BaseNode,
                                     qat_config: QATConfig) -> Union[None, Callable]:
     """
-    Retrieve a ActivationQuantizationHolder layer to use for activation quantization for a node.
+    Retrieve a KerasActivationQuantizationHolder layer to use for activation quantization for a node.
     If the layer is not supposed to be wrapped with activation quantizers - return None.
 
     Args:
-        n: Node to get ActivationQuantizationHolder to attach in its output.
+        n: Node to get KerasActivationQuantizationHolder to attach in its output.
         qat_config: Configuration of QAT (such as training methods for example).
 
     Returns:
-        A ActivationQuantizationHolder layer for the node activation quantization.
+        A KerasActivationQuantizationHolder layer for the node activation quantization.
     """
     _, activation_quantizers = quantization_builder(n,
                                                     qat_config,
@@ -49,8 +49,8 @@ def get_activation_quantizer_holder(n: common.BaseNode,
     # thus we make sure this is the only possible case (unless it's a node with no activation
     # quantization, which in this case has an empty list).
     if len(activation_quantizers) == 1:
-        return ActivationQuantizationHolder(activation_quantizers[0])
-    Logger.error(f'ActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers were found for node {n}')
+        return KerasActivationQuantizationHolder(activation_quantizers[0])
+    Logger.error(f'KerasActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers were found for node {n}')
 
 
 def quantization_builder(n: common.BaseNode,

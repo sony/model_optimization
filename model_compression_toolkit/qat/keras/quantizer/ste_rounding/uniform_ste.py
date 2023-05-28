@@ -18,23 +18,22 @@ from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.quantizers_infrastructure.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.qat import TrainingMethod
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+
+from mct_quantizers import mark_quantizer, QuantizationMethod, QuantizationTarget, KerasQuantizationWrapper
+from mct_quantizers.keras.quantizers import \
+    BaseKerasInferableQuantizer, WeightsUniformInferableQuantizer, ActivationUniformInferableQuantizer
 
 from model_compression_toolkit.qat.keras.quantizer.quant_utils import adjust_range_to_include_zero
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
-from model_compression_toolkit import quantizers_infrastructure as qi, constants as C
+from model_compression_toolkit import constants as C
 
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
     TrainableQuantizerActivationConfig
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import \
-    mark_quantizer
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
-    BaseKerasInferableQuantizer, WeightsUniformInferableQuantizer, ActivationUniformInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+@mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.UNIFORM],
                 quantizer_type=TrainingMethod.STE)
 class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
@@ -73,7 +72,7 @@ class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: qi.KerasQuantizationWrapper):
+                                layer: KerasQuantizationWrapper):
         """
         Add quantizer parameters to the quantizer parameters dictionary
 
@@ -148,7 +147,7 @@ class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
                                                 input_rank=len(self.min_max_shape))
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
+@mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.UNIFORM],
                 quantizer_type=TrainingMethod.STE)
 class STEUniformActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
@@ -173,7 +172,7 @@ class STEUniformActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: qi.KerasQuantizationWrapper):
+                                layer: KerasQuantizationWrapper):
         """
         Add quantizer parameters to the quantizer parameters dictionary
 

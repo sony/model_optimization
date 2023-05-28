@@ -14,33 +14,9 @@
 # ==============================================================================
 
 import copy
-from enum import Enum
 from typing import List
 
-
-class QuantizationMethod(Enum):
-    """
-    Method for quantization function selection:
-
-    POWER_OF_TWO - Symmetric, uniform, threshold is power of two quantization.
-
-    KMEANS - k-means quantization.
-
-    LUT_POT_QUANTIZER - quantization using a lookup table and power of 2 threshold.
-
-    SYMMETRIC - Symmetric, uniform, quantization.
-
-    UNIFORM - uniform quantization,
-
-    LUT_SYM_QUANTIZER - quantization using a lookup table and symmetric threshold.
-
-    """
-    POWER_OF_TWO = 0
-    KMEANS = 1
-    LUT_POT_QUANTIZER = 2
-    SYMMETRIC = 3
-    UNIFORM = 4
-    LUT_SYM_QUANTIZER = 5
+from mct_quantizers import QuantizationMethod
 
 
 class OpQuantizationConfig:

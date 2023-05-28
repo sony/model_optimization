@@ -14,8 +14,6 @@
 # ==============================================================================
 from typing import Tuple
 
-
-from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.constants import FOUND_TF
@@ -27,9 +25,10 @@ if FOUND_TF:
     from tensorflow.keras.layers import Layer
     from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
     from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizers import get_quantization_quantizers
+    from mct_quantizers import KerasQuantizationWrapper
 
     def _get_wrapper(node: common.BaseNode,
-                     layer: Layer) -> qi.KerasQuantizationWrapper:
+                     layer: Layer) -> KerasQuantizationWrapper:
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping
         Args:
@@ -41,7 +40,7 @@ if FOUND_TF:
 
         """
         weights_quantizers, activation_quantizers = get_quantization_quantizers(node)
-        return qi.KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
+        return KerasQuantizationWrapper(layer, weights_quantizers, activation_quantizers)
 
 
     def get_exportable_keras_model(graph: Graph) -> Tuple[tf.keras.models.Model, UserInformation]:

@@ -21,16 +21,14 @@ Assume that the quantizer has a new training method called `MyTrainig` which is 
 
 ```python
 import tensorflow as tf
-from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import
-    mark_quantizer
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit import TrainingMethod
+from mct_quantizers import mark_quantizer, QuantizationMethod, QuantizationTarget
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 
 NEW_PARAM = "new_param_name"
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+@mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.MyTraining)
 class MyWeightsTrainingQuantizer(BaseKerasQATTrainableQuantizer):
@@ -69,14 +67,12 @@ Assume that the quantizer has a new training method called `MyTrainig` which is 
 import tensorflow as tf
 
 NEW_PARAM = "new_param_name"
-from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import
-    mark_quantizer
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit import TrainingMethod
+from mct_quantizers import QuantizationMethod, mark_quantizer, QuantizationTarget
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
+@mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.TrainingMethod)
 class MyActivationsTrainingQuantizer(BaseKerasQATTrainableQuantizer):
