@@ -17,12 +17,11 @@
 import unittest
 
 from model_compression_toolkit.qat import TrainingMethod
-from mct_quantizers import QuantizationMethod
+from mct_quantizers import QuantizationMethod, QuantizationTarget
 from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEWeightQATQuantizer, \
     STEActivationQATQuantizer
 from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.uniform_ste import STEUniformWeightQATQuantizer, \
     STEUniformActivationQATQuantizer
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
     BasePytorchTrainableQuantizer
 from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.pytorch.trainable_pytorch.test_pytorch_base_quantizer import \
