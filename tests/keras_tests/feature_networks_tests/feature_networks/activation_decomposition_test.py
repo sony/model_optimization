@@ -15,14 +15,11 @@
 
 
 import tensorflow as tf
-import numpy as np
 
 from model_compression_toolkit.core.keras.constants import ACTIVATION, LINEAR
-from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
+from mct_quantizers import KerasQuantizationWrapper
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
-from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-import model_compression_toolkit as mct
 
 keras = tf.keras
 layers = keras.layers

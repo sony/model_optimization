@@ -16,7 +16,7 @@
 import tensorflow as tf
 from packaging import version
 
-from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
+from mct_quantizers import KerasQuantizationWrapper
 
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.engine.functional import Functional
