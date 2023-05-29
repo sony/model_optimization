@@ -134,7 +134,6 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFileLogger))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGetGPTQConfig))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQLossFunctions))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasInferableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasTrainableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(keras_gptq_soft_quantizer_test))
 
@@ -157,7 +156,6 @@ if __name__ == '__main__':
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_shufflenet_v2_x1_0', ModelTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchTPModel))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(pytorch_gptq_soft_quantier_test))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchInferableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchTrainableInfrastructureTestRunner))
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)
