@@ -23,10 +23,6 @@ from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer impo
 from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder, \
     KerasQuantizationWrapper
 
-from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEActivationQATQuantizer, \
-    STEWeightQATQuantizer
-from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformActivationQATQuantizer, \
-    STEUniformWeightQATQuantizer
 from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.keras.load_model import \
