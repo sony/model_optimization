@@ -20,6 +20,20 @@ from mct_quantizers import KerasQuantizationWrapper
 def get_layers_from_model_by_type(model:keras.Model,
                                   layer_type: type,
                                   include_wrapped_layers: bool = True):
+    """
+    Return a list of layers of some type from a Keras model. The order of the returned list
+    is according the order of the layers in model.layers.
+    If include_wrapped_layers is True, layers from that type that are wrapped using KerasQuantizationWrapper
+    are returned as well.
+
+    Args:
+        model: Keras model to get its layers.
+        layer_type: Type of the layer we want to retrieve from the model.
+        include_wrapped_layers: Whether or not to include layers that are wrapped using KerasQuantizationWrapper.
+
+    Returns:
+        List of layers from type layer_type from the model.
+    """
     if include_wrapped_layers:
         return [layer for layer in model.layers if type(layer)==layer_type or (isinstance(layer, KerasQuantizationWrapper) and type(layer.layer)==layer_type)]
     return [layer for layer in model.layers if type(layer)==layer_type]
