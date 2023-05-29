@@ -216,10 +216,7 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         qat_model = ptq_model
         if self.test_loading:
             qat_model.save('qat2model.h5')
-            qat_model = keras_load_quantized_model('qat2model.h5', custom_objects={STEActivationQATQuantizer.__name__: STEActivationQATQuantizer,
-                                                                                   STEWeightQATQuantizer.__name__: STEWeightQATQuantizer,
-                                                                                   STEUniformActivationQATQuantizer.__name__: STEUniformActivationQATQuantizer,
-                                                                                   STEUniformWeightQATQuantizer.__name__: STEUniformWeightQATQuantizer})
+            qat_model = keras_load_quantized_model('qat2model.h5')
             os.remove('qat2model.h5')
 
         self.compare(qat_model,
