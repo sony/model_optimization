@@ -104,7 +104,7 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         # check that this conv's weights had changed due to change in number of bits
         self.unit_test.assertTrue(
-            len(np.unique(conv_layers[2].get_quantized_weights()['kernel'].numpy())) in [2 ** (self.weights_n_bits) - 1,
+            len(np.unique(conv_layers[1].get_quantized_weights()['kernel'].numpy())) in [2 ** (self.weights_n_bits) - 1,
                                                                              2 ** (self.weights_n_bits)])
         # check that this conv's weights did not change
         self.unit_test.assertTrue(np.all(conv_layers[0].get_quantized_weights()['kernel'].numpy() == self.conv_w))
