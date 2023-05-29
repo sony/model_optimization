@@ -16,7 +16,7 @@
 import copy
 from typing import List
 
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationMethod
 
 
 class OpQuantizationConfig:
