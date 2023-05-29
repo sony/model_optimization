@@ -20,6 +20,7 @@ import tensorflow as tf
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -39,5 +40,5 @@ class OutputInMiddleTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantized_model.outputs) == 2)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
-        self.unit_test.assertTrue(quantized_model.layers[2].output.ref() in [t.ref() for t in quantized_model.outputs])
+        conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
+        self.unit_test.assertTrue(conv_layer.output.ref() in [t.ref() for t in quantized_model.outputs])

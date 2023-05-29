@@ -25,6 +25,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.user_info import UserInformation
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -101,10 +102,11 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
     def verify_quantization(self, quantized_model, input_x, weights_layers_idx, weights_layers_channels_size,
                             activation_layers_idx, unique_tensor_values):
         # verify weights quantization
-        for i in range(len(weights_layers_idx)):
-            for j in range(weights_layers_channels_size[i]):  # quantized per channel
+        conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
+        for conv_layer, num_channels in zip(conv_layers,weights_layers_channels_size):
+            for j in range(num_channels):  # quantized per channel
                 self.unit_test.assertTrue(
-                    np.unique(quantized_model.layers[weights_layers_idx[i]].get_quantized_weights()['kernel'][:, :, :, j]).flatten().shape[
+                    np.unique(conv_layer.get_quantized_weights()['kernel'][:, :, :, j]).flatten().shape[
                         0] <= unique_tensor_values)
 
         # verify activation quantization

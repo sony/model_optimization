@@ -20,6 +20,7 @@ from model_compression_toolkit.core.keras.constants import ACTIVATION, LINEAR
 from mct_quantizers import KerasQuantizationWrapper
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -39,12 +40,8 @@ class ActivationDecompositionTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], KerasQuantizationWrapper))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3], KerasQuantizationWrapper))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.Activation))
-        self.unit_test.assertTrue(
-            quantized_model.layers[2].layer.get_config().get(ACTIVATION) == LINEAR)
-        self.unit_test.assertTrue(
-            quantized_model.layers[3].layer.get_config().get(ACTIVATION) == self.activation_function)
+        conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0].layer
+        activation_layer = get_layers_from_model_by_type(quantized_model, layers.Activation)[0].layer
+        self.unit_test.assertTrue(conv_layer.get_config().get(ACTIVATION) == LINEAR)
+        self.unit_test.assertTrue(activation_layer.get_config().get(ACTIVATION) == self.activation_function)
 

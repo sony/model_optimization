@@ -27,6 +27,7 @@ from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -56,7 +57,8 @@ def update_kernel_for_bn_folding_fn(conv_layer: layers.Conv2D,
 
 class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
 
-    def __init__(self, unit_test):
+    def __init__(self, unit_test, linear_layer):
+        self.linear_layer = linear_layer
         super(BaseBatchNormalizationFolding, self).__init__(unit_test=unit_test, experimental_exporter=True)
 
     def get_tpc(self):
@@ -79,12 +81,12 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
             float_kernel = float_conv.weights[1]
             float_bias = float_conv.weights[2]
 
-            quant_conv = quantized_model.layers[3]
+            quant_conv = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
         else:
             float_kernel = float_conv.weights[0]
             float_bias = float_conv.weights[1]
 
-            quant_conv = quantized_model.layers[2]
+            quant_conv = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
 
         attr = 'depthwise_kernel' if isinstance(quant_conv.layer, layers.DepthwiseConv2D) else 'kernel'
         quant_kernel = getattr(quant_conv.layer, attr)
@@ -118,11 +120,12 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
 
 class Conv2DBNFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.Conv2D)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(2, 3, padding='same')(inputs)
+        x = self.linear_layer(2, 3, padding='same')(inputs)
         x = layers.BatchNormalization(
             beta_initializer="zeros",
             gamma_initializer="ones",
@@ -134,11 +137,12 @@ class Conv2DBNFoldingTest(BaseBatchNormalizationFolding):
 
 class Conv2DBNConcatnFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.Conv2D)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(2, 3, padding='same')(inputs)
+        x = self.linear_layer(2, 3, padding='same')(inputs)
         x_bn = layers.BatchNormalization(
             beta_initializer="zeros",
             gamma_initializer="ones",
@@ -153,11 +157,12 @@ class Conv2DBNConcatnFoldingTest(BaseBatchNormalizationFolding):
 
 class Conv2DTransposeBNFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.Conv2DTranspose)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2DTranspose(2, 3, padding='same')(inputs)
+        x = self.linear_layer(2, 3, padding='same')(inputs)
         x = layers.BatchNormalization(
             beta_initializer="zeros",
             gamma_initializer="ones",
@@ -169,11 +174,12 @@ class Conv2DTransposeBNFoldingTest(BaseBatchNormalizationFolding):
 
 class DepthwiseConv2DBNFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.DepthwiseConv2D)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.DepthwiseConv2D(1, padding='same')(inputs)
+        x = self.linear_layer(1, padding='same')(inputs)
         x = layers.BatchNormalization(
             beta_initializer="zeros",
             gamma_initializer="ones",
@@ -185,11 +191,12 @@ class DepthwiseConv2DBNFoldingTest(BaseBatchNormalizationFolding):
 
 class DepthwiseConv2DBNFoldingHighMultiplierTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.DepthwiseConv2D)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.DepthwiseConv2D(1, padding='same', depth_multiplier=3)(inputs)
+        x = self.linear_layer(1, padding='same', depth_multiplier=3)(inputs)
         x = layers.BatchNormalization(
             beta_initializer="zeros",
             gamma_initializer="ones",
@@ -201,11 +208,12 @@ class DepthwiseConv2DBNFoldingHighMultiplierTest(BaseBatchNormalizationFolding):
 
 class SeparableConv2DBNFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.SeparableConv2D)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.SeparableConv2D(1, 3, padding='same')(inputs)
+        x = self.linear_layer(1, 3, padding='same')(inputs)
         x = layers.BatchNormalization(
             beta_initializer="zeros",
             gamma_initializer="ones",

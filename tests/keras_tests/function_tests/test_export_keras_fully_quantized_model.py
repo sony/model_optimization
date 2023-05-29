@@ -30,6 +30,7 @@ from model_compression_toolkit.trainable_infrastructure.keras.load_model import 
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit import get_target_platform_capabilities
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
@@ -140,6 +141,6 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         assert kernel_tensor_index is not None, f'did not find the kernel tensor index'
 
         # Test equal weights of the first conv2d layer between exported TFLite and exported TF
-        diff = np.transpose(interpreter.tensor(kernel_tensor_index)(), (1, 2, 3, 0)) - tf_exported_model.layers[
-            2].kernel
+        conv_layer = get_layers_from_model_by_type(tf_exported_model, Conv2D)[0]
+        diff = np.transpose(interpreter.tensor(kernel_tensor_index)(), (1, 2, 3, 0)) - conv_layer.kernel
         self.assertTrue(np.sum(np.abs(diff)) == 0)

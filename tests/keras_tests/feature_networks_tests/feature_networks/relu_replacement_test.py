@@ -24,6 +24,7 @@ from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as mct
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -67,8 +68,10 @@ class SingleReluReplacementTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, Identity))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.ReLU))
+        identity_layers = get_layers_from_model_by_type(quantized_model, Identity)
+        self.unit_test.assertTrue(len(identity_layers)==1)
+        relu_layers = get_layers_from_model_by_type(quantized_model, layers.ReLU)
+        self.unit_test.assertTrue(len(relu_layers)==1)
 
     def get_debug_config(self):
         return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter('ReLU_1'),
@@ -85,8 +88,8 @@ class ReluReplacementTest(SingleReluReplacementTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(np.isclose(0, np.mean(quantized_model.predict(input_x) - input_x)))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, Identity))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, Identity))
+        identity_layers = get_layers_from_model_by_type(quantized_model, Identity)
+        self.unit_test.assertTrue(len(identity_layers) == 2)
 
     def get_debug_config(self):
         #   replace all Relu's with identity custom layer
@@ -132,10 +135,10 @@ class ReluReplacementWithAddBiasTest(SingleReluReplacementTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(np.isclose(6, np.mean(quantized_model.predict(input_x) - input_x)))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, AddBias))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, AddBias))
-        self.unit_test.assertTrue(quantized_model.layers[2].layer.bias == 0)
-        self.unit_test.assertTrue(quantized_model.layers[3].layer.bias == 6)
+        add_bias_layers = get_layers_from_model_by_type(quantized_model, AddBias)
+        self.unit_test.assertTrue(len(add_bias_layers) == 2)
+        self.unit_test.assertTrue(add_bias_layers[0].layer.bias == 0)
+        self.unit_test.assertTrue(add_bias_layers[1].layer.bias == 6)
 
     def get_debug_config(self):
         return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.ReLU),

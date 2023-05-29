@@ -16,11 +16,14 @@
 
 import tensorflow as tf
 import numpy as np
+from keras.engine.base_layer import Layer
+from keras.layers import TFOpLambda
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as mct
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 tp = mct.target_platform
 keras = tf.keras
@@ -52,8 +55,10 @@ class SymmetricThresholdSelectionActivationTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify threshold not power of 2 and unsigned symmetric range for first two layers' activations
-        fake_layer_input_args = quantized_model.layers[1].activation_quantizers[0].get_config()
-        fake_layer_relu_args = quantized_model.layers[2].activation_quantizers[0].get_config()
+        identity_layer = get_layers_from_model_by_type(quantized_model, Layer)[0]
+        fake_layer_input_args = identity_layer.activation_quantizers[0].get_config()
+        relu_layer = get_layers_from_model_by_type(quantized_model, layers.ReLU)[0]
+        fake_layer_relu_args = relu_layer.activation_quantizers[0].get_config()
 
         threshold_input = fake_layer_input_args['threshold'][0]
         threshold_relu = fake_layer_relu_args['threshold'][0]
@@ -67,7 +72,8 @@ class SymmetricThresholdSelectionActivationTest(BaseKerasFeatureNetworkTest):
                                   msg=f"ReLU expected to have unsigned symmetric quantization param but is signed")
 
         # verify threshold not power of 2 and signed symmetric range for first Add activation layer
-        fake_layer_add_args = quantized_model.layers[3].activation_quantizers[0].get_config()
+        add_layer = get_layers_from_model_by_type(quantized_model, TFOpLambda)[0]
+        fake_layer_add_args = add_layer.activation_quantizers[0].get_config()
 
         threshold_add = fake_layer_add_args['threshold'][0]
 
@@ -88,8 +94,10 @@ class SymmetricThresholdSelectionBoundedActivationTest(SymmetricThresholdSelecti
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        fake_layer_input_args = quantized_model.layers[1].activation_quantizers[0].get_config()
-        fake_layer_softmax_args = quantized_model.layers[2].activation_quantizers[0].get_config()
+        identity_layer = get_layers_from_model_by_type(quantized_model, Layer)[0]
+        fake_layer_input_args = identity_layer.activation_quantizers[0].get_config()
+        softmax_layer = get_layers_from_model_by_type(quantized_model, layers.Softmax)[0]
+        fake_layer_softmax_args = softmax_layer.activation_quantizers[0].get_config()
 
         threshold_input = fake_layer_input_args['threshold'][0]
         threshold_softmax = fake_layer_softmax_args['threshold'][0]

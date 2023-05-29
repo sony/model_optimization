@@ -24,6 +24,7 @@ from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import model_compression_toolkit as mct
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -56,8 +57,8 @@ class DwConv2dReplacementTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(np.isclose(0, np.mean(quantized_model.predict(input_x) - input_x)))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.DepthwiseConv2D))
-        self.unit_test.assertTrue(np.all(quantized_model.layers[2].layer.depthwise_kernel.numpy() == 1))
+        dw_layer = get_layers_from_model_by_type(quantized_model, layers.DepthwiseConv2D)[0]
+        self.unit_test.assertTrue(np.all(dw_layer.layer.depthwise_kernel.numpy() == 1))
 
     def get_debug_config(self):
         return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.DepthwiseConv2D),

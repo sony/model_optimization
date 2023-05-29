@@ -22,6 +22,8 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.default_t
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 from packaging import version
 
+from tests.keras_tests.utils import get_layers_from_model_by_type
+
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers.core import TFOpLambda
 else:
@@ -78,16 +80,17 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
                 # add bypass nodes
                 linear_op_index = linear_op_index + 1
                 if isinstance(bypass_op, layers.GlobalAveragePooling2D):
-                    avg_layer = quantized_model.layers[linear_op_index-1]
+                    avg_layer = get_layers_from_model_by_type(quantized_model, layers.GlobalAveragePooling2D)[0]
                     self.unit_test.assertTrue(avg_layer.activation_quantizers[0].get_config()['signed'] == False)
 
-        linear_op_index = linear_op_index + int(self.linear_op_to_test.get_config().get('padding') == 'same')
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[linear_op_index].layer.__class__)[0]
-        q_w, q_b = quantized_model.layers[linear_op_index].get_quantized_weights()[attr].numpy(), \
-                   quantized_model.layers[linear_op_index].layer.bias.numpy()
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(type(self.linear_op_to_test))[0]
+        linear_layer = get_layers_from_model_by_type(quantized_model, type(self.linear_op_to_test))[0]
+        q_w, q_b = linear_layer.get_quantized_weights()[attr].numpy(), linear_layer.layer.bias.numpy()
+
         # Take the ACTUAL value the activations were shifted by, from the Add layer the substitution needs to insert
-        add_layer_index = 3  # should be always the fourth layer (input, fq, swish, add)
-        shift_nl_out = quantized_model.layers[add_layer_index].layer.inbound_nodes[0].call_args[1]
+        tfoplambda_layers = get_layers_from_model_by_type(quantized_model, TFOpLambda)
+        add_layer = [x for x in tfoplambda_layers if x.layer.symbol=='math.add'][0]
+        shift_nl_out = add_layer.layer.inbound_nodes[0].call_args[1]
         if isinstance(self.linear_op_to_test, layers.DepthwiseConv2D):
             self.unit_test.assertTrue(np.allclose(b - q_b, shift_nl_out * np.sum(w, axis=(0, 1)).flatten()))
         elif isinstance(self.linear_op_to_test, layers.Conv2D):

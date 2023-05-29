@@ -18,6 +18,7 @@ import tensorflow as tf
 
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from model_compression_toolkit.core import QuantizationConfig
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -48,14 +49,15 @@ class SoftmaxShiftTest(BaseKerasFeatureNetworkTest):
         return QuantizationConfig(softmax_shift=True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        linear_layer = get_layers_from_model_by_type(quantized_model, type(self.kernel_op_layer))[0]
         if self.kernel_op_layer.__getattribute__('activation') == keras_softmax:
-            quant_bias = quantized_model.layers[2].layer.bias
+            quant_bias = linear_layer.layer.bias
             float_bias = float_model.layers[-1].bias
             diff_bias = float_bias - quant_bias
             mean_diff_bias = np.mean(diff_bias)
             self.unit_test.assertTrue(np.allclose(diff_bias, mean_diff_bias, atol=1e-1))
         else:
-            quant_bias = quantized_model.layers[2].layer.bias
+            quant_bias = linear_layer.layer.bias
             float_bias = float_model.layers[1].bias
             diff_bias = float_bias - quant_bias
             mean_diff_bias = np.mean(diff_bias)

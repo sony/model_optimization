@@ -17,6 +17,7 @@ from tests.keras_tests.exporter_tests.tflite_int8.tflite_int8_exporter_base_test
 import keras
 import numpy as np
 import tests.keras_tests.exporter_tests.constants as constants
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 layers = keras.layers
 
@@ -48,7 +49,8 @@ class TestDenseTFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
         assert len(kernel_quantization_parameters[constants.ZERO_POINTS]) == 20
         assert np.all(kernel_quantization_parameters[constants.ZERO_POINTS]==np.zeros(20))
 
-        fake_quantized_kernel_from_exportable_model = self.exportable_model.layers[2].weights_quantizers[KERNEL](self.exportable_model.layers[2].layer.kernel)
+        dense_layer = get_layers_from_model_by_type(self.exportable_model, layers.Dense)[0]
+        fake_quantized_kernel_from_exportable_model = dense_layer.weights_quantizers[KERNEL](dense_layer.layer.kernel)
         # First reshape Conv kernel to be at the same dimensions as in TF.
         # Then reshape it to the original Dense kernel shape.
         # Then use scales to compute the fake quant kernel and compare it to the Dense fake quantized kernel
