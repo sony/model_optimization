@@ -18,9 +18,9 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import FOUND_TORCH
 
 if FOUND_TORCH:
-    from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
-    from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
-        BasePyTorchInferableQuantizer
+    from mct_quantizers import PytorchQuantizationWrapper
+    from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
+
     def is_pytorch_layer_exportable(layer: Any) -> bool:
         """
         Check whether a torch Module is a valid exportable module or not.

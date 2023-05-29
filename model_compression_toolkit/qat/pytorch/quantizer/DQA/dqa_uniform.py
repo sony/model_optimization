@@ -17,24 +17,21 @@ from typing import Dict
 import numpy as np
 import torch
 import torch.nn as nn
+from mct_quantizers.pytorch.quantizers import WeightsUniformInferableQuantizer
 from torch import Tensor
 
-from model_compression_toolkit.core.common.constants import RANGE_MAX, RANGE_MIN
-from model_compression_toolkit.core.common.target_platform import QuantizationMethod
-from model_compression_toolkit.qat.common.constants import FQ_MIN, FQ_MAX
-from model_compression_toolkit.core.common import constants as C
-from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationTarget, PytorchQuantizationWrapper, mark_quantizer
+from model_compression_toolkit.constants import RANGE_MAX, RANGE_MIN
+from model_compression_toolkit.qat import TrainingMethod
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.common.base_inferable_quantizer import mark_quantizer
-from model_compression_toolkit.quantizers_infrastructure.pytorch import inferable_quantizers as iq
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import uniform_quantizer
-from model_compression_toolkit.quantizers_infrastructure.common.trainable_quantizer_config import \
-    TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
+from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
+from model_compression_toolkit.quantizers_infrastructure.constants import FQ_MIN, FQ_MAX
 
 
-
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+@mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.UNIFORM],
                 quantizer_type=TrainingMethod.DQA)
 class DQAUniformWeightQuantizer(BasePytorchQATTrainableQuantizer):
@@ -72,7 +69,7 @@ class DQAUniformWeightQuantizer(BasePytorchQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: qi.PytorchQuantizationWrapper) -> Dict[str, nn.Parameter]:
+                                layer: PytorchQuantizationWrapper) -> Dict[str, nn.Parameter]:
         """
         Add min and max variables to layer.
         Args:
@@ -120,7 +117,7 @@ class DQAUniformWeightQuantizer(BasePytorchQATTrainableQuantizer):
 
         return q
 
-    def convert2inferable(self) -> iq.WeightsUniformInferableQuantizer:
+    def convert2inferable(self) -> WeightsUniformInferableQuantizer:
         """
         Convert quantizer to inferable quantizer.
 
@@ -130,7 +127,7 @@ class DQAUniformWeightQuantizer(BasePytorchQATTrainableQuantizer):
         _min = self.quantizer_parameters[FQ_MIN].cpu().detach().numpy()
         _max = self.quantizer_parameters[FQ_MAX].cpu().detach().numpy()
 
-        return iq.WeightsUniformInferableQuantizer(num_bits=self.num_bits,
+        return WeightsUniformInferableQuantizer(num_bits=self.num_bits,
                                                    min_range=_min, max_range=_max,
                                                    per_channel=self.quantization_config.weights_per_channel_threshold,
                                                    channel_axis=self.quantization_config.weights_channels_axis)

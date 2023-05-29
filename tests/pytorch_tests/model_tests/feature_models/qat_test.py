@@ -16,26 +16,22 @@
 
 import numpy as np
 import torch.nn as nn
+from mct_quantizers import PytorchActivationQuantizationHolder, QuantizationTarget, PytorchQuantizationWrapper
+from mct_quantizers.common.get_all_subclasses import get_all_subclasses
+from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
 from torch import Tensor
 
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_all_subclasses import get_all_subclasses
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
-    BasePyTorchInferableQuantizer
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
     generate_tp_model_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
-from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.activation_quantization_holder import PytorchActivationQuantizationHolder
 from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEActivationQATQuantizer
-from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 
 
 class TestModel(nn.Module):

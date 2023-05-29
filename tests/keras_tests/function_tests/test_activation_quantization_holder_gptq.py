@@ -3,6 +3,7 @@ import unittest
 import keras
 import numpy as np
 from keras.layers import ReLU
+from mct_quantizers import KerasActivationQuantizationHolder, KerasQuantizationWrapper
 from tensorflow.keras.layers import Conv2D, Input
 
 import model_compression_toolkit as mct
@@ -10,9 +11,6 @@ from model_compression_toolkit.core.common.mixed_precision.bit_width_setter impo
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.keras.gptq_keras_implementation import GPTQKerasImplemantation
 from model_compression_toolkit.gptq.keras.gptq_training import KerasGPTQTrainer
-from model_compression_toolkit.quantizers_infrastructure import ActivationQuantizationHolder, KerasQuantizationWrapper
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
-    ActivationPOTInferableQuantizer
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
 
@@ -51,8 +49,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
     def test_adding_holder_instead_quantize_wrapper(self):
         input_shape = (8, 8, 3)
         gptq_model = self._get_gptq_model(input_shape, basic_model)
-        self.assertTrue(isinstance(gptq_model.layers[4], ActivationQuantizationHolder))
-        self.assertTrue(isinstance(gptq_model.layers[4].activation_holder_quantizer, ActivationPOTInferableQuantizer))
+        self.assertTrue(isinstance(gptq_model.layers[4], KerasActivationQuantizationHolder))
         for l in gptq_model.layers:
             if isinstance(l, KerasQuantizationWrapper):
                 self.assertTrue(len(l.activation_quantizers)==0)
@@ -60,10 +57,8 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
     def test_adding_holders_after_reuse(self):
         input_shape = (8, 8, 3)
         gptq_model = self._get_gptq_model(input_shape, reuse_model)
-        self.assertTrue(isinstance(gptq_model.layers[4], ActivationQuantizationHolder))
-        self.assertTrue(isinstance(gptq_model.layers[5], ActivationQuantizationHolder))
-        self.assertTrue(isinstance(gptq_model.layers[4].activation_holder_quantizer, ActivationPOTInferableQuantizer))
-        self.assertTrue(isinstance(gptq_model.layers[5].activation_holder_quantizer, ActivationPOTInferableQuantizer))
+        self.assertTrue(isinstance(gptq_model.layers[4], KerasActivationQuantizationHolder))
+        self.assertTrue(isinstance(gptq_model.layers[5], KerasActivationQuantizationHolder))
         for l in gptq_model.layers:
             if isinstance(l, KerasQuantizationWrapper):
                 self.assertTrue(len(l.activation_quantizers)==0)
@@ -76,7 +71,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         input_shape = (8, 8, 3)
         gptq_model = self._get_gptq_model(input_shape, activation_quantization_for_relu_model)
         self.assertTrue(isinstance(gptq_model.layers[4], ReLU))
-        self.assertTrue(isinstance(gptq_model.layers[5], ActivationQuantizationHolder))
+        self.assertTrue(isinstance(gptq_model.layers[5], KerasActivationQuantizationHolder))
 
 
     def _get_gptq_model(self, input_shape, get_model_fn):

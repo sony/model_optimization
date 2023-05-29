@@ -20,11 +20,11 @@ from inspect import signature
 from model_compression_toolkit.core import common
 from model_compression_toolkit.logger import Logger
 
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import BaseInferableQuantizer, \
+from mct_quantizers.common.base_inferable_quantizer import BaseInferableQuantizer, \
     QuantizationTarget
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import QUANTIZATION_METHOD, \
+from mct_quantizers.common.constants import QUANTIZATION_METHOD, \
     QUANTIZATION_TARGET
 
 

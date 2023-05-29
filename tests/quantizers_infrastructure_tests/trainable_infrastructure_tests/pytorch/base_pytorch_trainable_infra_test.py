@@ -19,16 +19,15 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
+from mct_quantizers import mark_quantizer, QuantizationTarget, PytorchQuantizationWrapper
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
     BasePytorchTrainableQuantizer
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+@mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
 class ZeroWeightsQuantizer(BasePytorchTrainableQuantizer):
     """
@@ -51,7 +50,7 @@ class ZeroWeightsQuantizer(BasePytorchTrainableQuantizer):
         return inputs * 0
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
+@mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
 class ZeroActivationsQuantizer(BasePytorchTrainableQuantizer):
     """
@@ -95,7 +94,7 @@ class BasePytorchInfrastructureTest:
         return [self.input_shape for _ in range(self.num_of_inputs)]
 
     def get_wrapper(self, layer, weight_quantizers={}, activation_quantizers=[]):
-        return qi.PytorchQuantizationWrapper(layer, weight_quantizers, activation_quantizers)
+        return PytorchQuantizationWrapper(layer, weight_quantizers, activation_quantizers)
 
     def get_weights_quantization_config(self):
         return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.POWER_OF_TWO,

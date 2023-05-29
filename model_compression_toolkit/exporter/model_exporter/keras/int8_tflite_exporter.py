@@ -22,11 +22,9 @@ from keras import Sequential
 from keras.layers import Dense, Conv2D, Reshape
 from keras.models import clone_model
 
-from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import FakelyQuantKerasExporter
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
-    constants as keras_inferable_constants
+from mct_quantizers import constants as keras_inferable_constants, KerasQuantizationWrapper
 
 BIAS_INITIALIZER = 'bias_initializer'
 BIAS_REGULARIZER = 'bias_regularizer'
@@ -49,6 +47,7 @@ KERNEL = 'kernel'
 
 CONV_KERNEL_CHANNEL_AXIS = 3
 CONV_INPUT_CHANNELS_DIM = 4
+
 
 class INT8TFLiteExporter(FakelyQuantKerasExporter):
     """
@@ -75,7 +74,7 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
 
         self.exported_model = None
 
-    def _get_pointwise_layer_to_replace_dense(self, wrapped_layer: qi.KerasQuantizationWrapper) -> keras.layers.Layer:
+    def _get_pointwise_layer_to_replace_dense(self, wrapped_layer: KerasQuantizationWrapper) -> keras.layers.Layer:
         # First we create a pointwise configuration based on the Dense layer's configuration
         dense_cfg = wrapped_layer.layer.get_config()
 
@@ -110,7 +109,7 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         pw_layer.set_weights(pw_weights)
 
         # Now that we have the point-wise to replace the dense layer,
-        # we need to wrap it using qi.KerasQuantizationWrapper with a new
+        # we need to wrap it using KerasQuantizationWrapper with a new
         # relevant quantizers.
         # Create new kernel quantizer
         pw_kernel_quantizer_cfg = wrapped_layer.weights_quantizers[KERNEL].get_config()
@@ -121,8 +120,10 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         # Unquantized weight to conv layer has 4 dimensions (unlike dense which varies)
         pw_kernel_quantizer_cfg[keras_inferable_constants.INPUT_RANK] = CONV_INPUT_CHANNELS_DIM
 
-        assert isinstance(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD], np.ndarray), f'Expected to find threshold which is a numpy array, but found: {type(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])}'
-        pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD] = list(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])
+        assert isinstance(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD],
+                          np.ndarray), f'Expected to find threshold which is a numpy array, but found: {type(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])}'
+        pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD] = list(
+            pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])
 
         # Now that we have the point-wise quantizer we can instantiate it
         quantizer_class = type(wrapped_layer.weights_quantizers[KERNEL])
@@ -131,9 +132,9 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         pw_weights_quantizers[KERNEL] = pw_quantizer
 
         # Wrap pw with the new quantizers (the activation is not affected thus we take the Dense quantizers)
-        wrapped_pw = qi.KerasQuantizationWrapper(pw_layer,
-                                                 pw_weights_quantizers,
-                                                 wrapped_layer.activation_quantizers)
+        wrapped_pw = KerasQuantizationWrapper(pw_layer,
+                                              pw_weights_quantizers,
+                                              wrapped_layer.activation_quantizers)
 
         # Compute the shape that the input to the new layer should be reshaped into
         # Example: Dense kernel with the following shape (3, 20) expects to have input with the
@@ -153,7 +154,7 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         Export a fully quantized model to its int8 tflite model.
         """
 
-        def _substitute_model(wrapped_layer: qi.KerasQuantizationWrapper) -> keras.layers.Layer:
+        def _substitute_model(wrapped_layer: KerasQuantizationWrapper) -> keras.layers.Layer:
             assert self.is_layer_exportable_fn(
                 wrapped_layer), f'Layer {wrapped_layer.get_config()} did not pass validation'
 

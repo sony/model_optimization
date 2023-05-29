@@ -16,10 +16,10 @@ from typing import Union, Any
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants \
+from mct_quantizers import QuantizationTarget
+from mct_quantizers.common.constants \
     import QUANTIZATION_TARGET, QUANTIZATION_METHOD, QUANTIZER_TYPE
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_all_subclasses \
+from mct_quantizers.common.get_all_subclasses \
     import get_all_subclasses
 
 

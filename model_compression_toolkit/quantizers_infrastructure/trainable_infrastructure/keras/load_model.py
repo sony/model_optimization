@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.logger import Logger
+from typing import Any
+
+import mct_quantizers
+from mct_quantizers.common.get_all_subclasses import get_all_subclasses
+
 from model_compression_toolkit.constants import FOUND_TF
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_all_subclasses import get_all_subclasses
+from model_compression_toolkit.logger import Logger
 
 if FOUND_TF:
     import tensorflow as tf
-    from model_compression_toolkit import quantizers_infrastructure as qi
+    from tensorflow.python.saved_model.load_options import LoadOptions
     from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
-    from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.base_keras_inferable_quantizer import BaseKerasInferableQuantizer
     keras = tf.keras
 
-    def keras_load_quantized_model(filepath, custom_objects=None, compile=True, options=None):
+    def keras_load_quantized_model(filepath: str, custom_objects: Any = None, compile: bool = True,
+                                   options: LoadOptions = None):
         """
-        This function wraps the keras load model and MCT quantization custom class to it.
+        This function wraps the keras load model and adds trainable quantizers classes to its custom objects.
 
         Args:
             filepath: the model file path.
@@ -36,12 +40,6 @@ if FOUND_TF:
         Returns: A keras Model
 
         """
-        qi_inferable_custom_objects = {subclass.__name__: subclass for subclass in
-                                       get_all_subclasses(BaseKerasInferableQuantizer)}
-        all_inferable_names = list(qi_inferable_custom_objects.keys())
-        if len(set(all_inferable_names)) < len(all_inferable_names):
-            Logger.error(f"Found multiple quantizers with the same name that inherit from BaseKerasInferableQuantizer"
-                         f"while trying to load a model.")
 
         qi_trainable_custom_objects = {subclass.__name__: subclass for subclass in
                                        get_all_subclasses(BaseKerasTrainableQuantizer)}
@@ -50,18 +48,13 @@ if FOUND_TF:
             Logger.error(f"Found multiple quantizers with the same name that inherit from BaseKerasTrainableQuantizer"
                          f"while trying to load a model.")
 
-        # Merge dictionaries into one dict
-        qi_custom_objects = {**qi_inferable_custom_objects, **qi_trainable_custom_objects}
-
-        # Add non-quantizers custom objects
-        qi_custom_objects.update({qi.KerasQuantizationWrapper.__name__: qi.KerasQuantizationWrapper})
-        qi_custom_objects.update({qi.ActivationQuantizationHolder.__name__: qi.ActivationQuantizationHolder})
+        qi_custom_objects = {**qi_trainable_custom_objects}
 
         if custom_objects is not None:
             qi_custom_objects.update(custom_objects)
-        return tf.keras.models.load_model(filepath,
-                                          custom_objects=qi_custom_objects, compile=compile,
-                                          options=options)
+        return mct_quantizers.keras_load_quantized_model(filepath,
+                                                         custom_objects=qi_custom_objects, compile=compile,
+                                                         options=options)
 else:
     def keras_load_quantized_model(filepath, custom_objects=None, compile=True, options=None):
         """

@@ -32,10 +32,8 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_mo
 from model_compression_toolkit.gptq.pytorch.graph_info import get_gptq_trainable_parameters, \
     get_weights_for_loss
 from model_compression_toolkit.gptq.pytorch.quantizer.quantization_builder import quantization_builder
-from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.gptq.pytorch.quantizer.regularization_factory import get_regularization
-from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.activation_quantization_holder import PytorchActivationQuantizationHolder
+from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
 
 
 class PytorchGPTQTrainer(GPTQTrainer):
@@ -92,7 +90,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
 
     def _is_gptq_weights_trainable(self,
-                            node: BaseNode) -> bool:
+                                   node: BaseNode) -> bool:
         """
         A function for deciding if a layer should be fine-tuned during GPTQ.
         Args:
@@ -108,7 +106,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
     def gptq_wrapper(self,
                      n: BaseNode,
-                     layer: Module) -> Union[qi.PytorchQuantizationWrapper, Module]:
+                     layer: Module) -> Union[PytorchQuantizationWrapper, Module]:
         """
         A function which takes a computational graph node and a pytorch layer and perform the quantization wrapping.
 
@@ -121,8 +119,8 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
         if self._is_gptq_weights_trainable(n):
             weights_quantizers, activation_quantizers = quantization_builder(n, self.gptq_config)
-            return qi.PytorchQuantizationWrapper(layer,
-                                                 weights_quantizers=weights_quantizers)
+            return PytorchQuantizationWrapper(layer,
+                                              weights_quantizers=weights_quantizers)
         else:
             return layer
 

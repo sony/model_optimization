@@ -17,11 +17,12 @@ import tensorflow as tf
 
 from model_compression_toolkit.qat import TrainingMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationTarget
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEWeightQATQuantizer, \
     STEActivationQATQuantizer
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformWeightQATQuantizer, \
     STEUniformActivationQATQuantizer
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget, BaseKerasTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
 from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.trainable_keras.test_get_quantizers import \
     TestGetTrainableQuantizer
 from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.trainable_keras.test_keras_base_quantizer import TestKerasBaseWeightsQuantizer, \

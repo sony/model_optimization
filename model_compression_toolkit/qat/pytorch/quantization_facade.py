@@ -33,18 +33,16 @@ from model_compression_toolkit.ptq.runner import ptq_runner
 if FOUND_TORCH:
     import torch.nn as nn
     from torch.nn import Module
+    from mct_quantizers import PytorchActivationQuantizationHolder
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
     from model_compression_toolkit.qat.common.qat_config import is_qat_applicable
     from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
-    from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
-    from model_compression_toolkit import quantizers_infrastructure as qi
+    from mct_quantizers import PytorchQuantizationWrapper
     from model_compression_toolkit import get_target_platform_capabilities
     from model_compression_toolkit.qat.common.qat_config import QATConfig
     from model_compression_toolkit.qat.pytorch.quantizer.quantization_builder import get_activation_quantizer_holder
-    from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.activation_quantization_holder import \
-        PytorchActivationQuantizationHolder
     from model_compression_toolkit.qat.pytorch.quantizer.quantization_builder import quantization_builder
 
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
@@ -65,7 +63,7 @@ if FOUND_TORCH:
         if is_qat_applicable(n, DEFAULT_PYTORCH_INFO):
             weights_quantizers, _ = quantization_builder(n, qat_config, DEFAULT_PYTORCH_INFO)
             if len(weights_quantizers) > 0:
-                return qi.PytorchQuantizationWrapper(module, weights_quantizers)
+                return PytorchQuantizationWrapper(module, weights_quantizers)
         return module
 
 

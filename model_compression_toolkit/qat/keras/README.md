@@ -11,7 +11,7 @@ In order to make your new quantizer you need to create your quantizer class, `My
    - `MyTrainingQuantizer` should have [`init`](../../quantizers_infrastructure/trainable_infrastructure/common/base_trainable_quantizer.py) function that gets `quantization_config` which is [`NodeWeightsQuantizationConfig`](../../core/common/quantization/node_quantization_config.py#L228) if you choose to implement weights quantizer or [`NodeActivationQuantizationConfig`](../../core/common/quantization/node_quantization_config.py#L63) if you choose activation quantizer.
    - Implement [`initialize_quantization`](../../quantizers_infrastructure/trainable_infrastructure/common/base_trainable_quantizer.py) where you can define your parameters for the quantizer.
    - Implement [`__call__`](../../quantizers_infrastructure/trainable_infrastructure/common/base_trainable_quantizer.py) method to quantize the given inputs while training. This is your custom quantization itself. 
-   - Implement [`convert2inferable`](../../quantizers_infrastructure/trainable_infrastructure/common/base_trainable_quantizer.py) method. This method exports your quantizer for inference (deployment). For doing that you need to choose one of our Inferable Quantizers ([Inferable Quantizers](../../quantizers_infrastructure/inferable_infrastructure/keras)) according to target when implementing `convert2inferable`, and set your learned quantization parameters there.
+   - Implement [`convert2inferable`](../../quantizers_infrastructure/trainable_infrastructure/common/base_trainable_quantizer.py) method. This method exports your quantizer for inference (deployment). For doing that you need to choose one of our Inferable Quantizers according to target when implementing `convert2inferable`, and set your learned quantization parameters there.
    - Decorate `MyTrainingQuantizer` class with the `@mark_quantizer` decorator and choose the appropriate properties to set for you quantizer. The quantizer_type argument for the decorator should be of type of the `TrainingMethod  enum. See explaination about `@mark_quantizer` and how to use it under the [Kears Quantization Infrastructure](../../quantizers_infrastructure/trainable_infrastructure/keras/README.md).
    
 ## Example: Symmetric Weights Quantizer
@@ -21,16 +21,14 @@ Assume that the quantizer has a new training method called `MyTrainig` which is 
 
 ```python
 import tensorflow as tf
-from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import
-    mark_quantizer
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit import TrainingMethod
+from mct_quantizers import mark_quantizer, QuantizationMethod, QuantizationTarget
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 
 NEW_PARAM = "new_param_name"
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+@mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.MyTraining)
 class MyWeightsTrainingQuantizer(BaseKerasQATTrainableQuantizer):
@@ -69,14 +67,13 @@ Assume that the quantizer has a new training method called `MyTrainig` which is 
 import tensorflow as tf
 
 NEW_PARAM = "new_param_name"
-from model_compression_toolkit import quantizers_infrastructure as qi, TrainingMethod
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import
-    mark_quantizer
+from model_compression_toolkit import TrainingMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import mark_quantizer, QuantizationTarget
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
+@mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.TrainingMethod)
 class MyActivationsTrainingQuantizer(BaseKerasQATTrainableQuantizer):

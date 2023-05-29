@@ -24,20 +24,19 @@ from model_compression_toolkit.quantizers_infrastructure.constants import FQ_MIN
 from model_compression_toolkit.qat import TrainingMethod
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationTarget, mark_quantizer, KerasQuantizationWrapper
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
-from model_compression_toolkit import quantizers_infrastructure as qi, constants as C
+from model_compression_toolkit import constants as C
 
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
     TrainableQuantizerActivationConfig
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
-    WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, ActivationPOTInferableQuantizer, \
-    ActivationSymmetricInferableQuantizer
+from mct_quantizers.keras.quantizers import WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, \
+    ActivationPOTInferableQuantizer, ActivationSymmetricInferableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+@mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.STE)
 class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
@@ -84,7 +83,7 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: qi.KerasQuantizationWrapper):
+                                layer: KerasQuantizationWrapper):
         """
         Add quantizer parameters to the quantizer parameters dictionary
 
@@ -171,7 +170,7 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
                                                       input_rank=len(self.threshold_shape))
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
+@mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 quantizer_type=TrainingMethod.STE)
 class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
@@ -206,7 +205,7 @@ class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: qi.KerasQuantizationWrapper):
+                                layer: KerasQuantizationWrapper):
         """
         Add quantizer parameters to the quantizer parameters dictionary
 

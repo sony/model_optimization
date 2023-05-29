@@ -19,10 +19,10 @@ from model_compression_toolkit.constants import THRESHOLD, RANGE_MIN, RANGE_MAX,
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_quantizers import get_inferable_quantizer_class
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers.base_keras_inferable_quantizer import BaseKerasInferableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import constants as qi_keras_consts
+from mct_quantizers import QuantizationTarget
+from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
+from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
+from mct_quantizers import constants as qi_keras_consts
 
 def get_inferable_quantizer_kwargs(node: BaseNode,
                                    quantization_target: QuantizationTarget) -> Dict[str, Any]:

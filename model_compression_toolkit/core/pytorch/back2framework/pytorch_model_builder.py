@@ -31,8 +31,7 @@ from model_compression_toolkit.core.pytorch.default_framework_info import DEFAUL
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, BufferHolder
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 from model_compression_toolkit.core.pytorch.constants import BUFFER
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.constants import \
-    ACTIVATION_HOLDER_QUANTIZER
+from mct_quantizers.common.constants import ACTIVATION_HOLDER_QUANTIZER
 
 
 def _build_input_tensors_list(node: BaseNode,

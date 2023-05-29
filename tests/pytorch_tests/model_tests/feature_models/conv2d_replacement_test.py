@@ -14,15 +14,11 @@
 # ==============================================================================
 import torch
 import numpy as np
+from mct_quantizers import PytorchQuantizationWrapper
+
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter, NodeTypeFilter
-from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
-    ChangeCandidatesWeightsQuantizationMethod, ReplaceLayer
-from model_compression_toolkit.core.pytorch.back2framework.quantization_wrapper.quantized_layer_wrapper import \
-    QuantizedLayerWrapper
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantize_wrapper import PytorchQuantizationWrapper
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
+from model_compression_toolkit.core.common.network_editors.node_filters import NodeTypeFilter
+from model_compression_toolkit.core.common.network_editors.actions import EditRule, ReplaceLayer
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 tp = mct.target_platform

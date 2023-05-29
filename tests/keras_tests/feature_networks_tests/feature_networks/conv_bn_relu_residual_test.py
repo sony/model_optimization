@@ -16,10 +16,6 @@
 
 import tensorflow as tf
 
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.keras.quantizers import \
-    ActivationPOTInferableQuantizer
-
-
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 keras = tf.keras
@@ -41,7 +37,6 @@ class ConvBnReluResidualTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].activation_quantizers[0], ActivationPOTInferableQuantizer))
         self.unit_test.assertTrue(isinstance(quantized_model.layers[5].layer, layers.Add))
         self.unit_test.assertTrue(quantized_model.layers[4].output.ref() in [t.ref() for t in quantized_model.layers[5].input])
         self.unit_test.assertTrue(isinstance(quantized_model.layers[3].layer, layers.BatchNormalization)) # assert not folding

@@ -19,16 +19,16 @@ import tensorflow as tf
 from tensorflow import TensorShape
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
-from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import mark_quantizer
+from mct_quantizers import QuantizationTarget, mark_quantizer, KerasQuantizationWrapper
+from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+@mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
-class IdentityWeightsQuantizer(qi.BaseKerasTrainableQuantizer):
+class IdentityWeightsQuantizer(BaseKerasTrainableQuantizer):
     """
     A dummy quantizer for test usage - "quantize" the layer's weights to the original weights
     """
@@ -47,9 +47,9 @@ class IdentityWeightsQuantizer(qi.BaseKerasTrainableQuantizer):
         return inputs
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+@mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
-class ZeroWeightsQuantizer(qi.BaseKerasTrainableQuantizer):
+class ZeroWeightsQuantizer(BaseKerasTrainableQuantizer):
     """
     A dummy quantizer for test usage - "quantize" the layer's weights to 0
     """
@@ -68,9 +68,9 @@ class ZeroWeightsQuantizer(qi.BaseKerasTrainableQuantizer):
         return inputs * 0
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Activation,
+@mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
-class ZeroActivationsQuantizer(qi.BaseKerasTrainableQuantizer):
+class ZeroActivationsQuantizer(BaseKerasTrainableQuantizer):
     """
     A dummy quantizer for test usage - "quantize" the layer's activation to 0
     """
@@ -109,7 +109,7 @@ class BaseKerasTrainableInfrastructureTest:
         return [self.input_shape for _ in range(self.num_of_inputs)]
 
     def get_wrapper(self, layer, weight_quantizers={}, activation_quantizers=[]):
-        return qi.KerasQuantizationWrapper(layer, weight_quantizers, activation_quantizers)
+        return KerasQuantizationWrapper(layer, weight_quantizers, activation_quantizers)
 
     def get_weights_quantization_config(self):
         return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.POWER_OF_TWO,

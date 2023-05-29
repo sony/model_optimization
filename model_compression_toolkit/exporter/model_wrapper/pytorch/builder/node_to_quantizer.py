@@ -20,11 +20,11 @@ from model_compression_toolkit.constants import THRESHOLD, SIGNED, RANGE_MIN, RA
     SCALE_PER_CHANNEL, CLUSTER_CENTERS
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure import QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.get_quantizers import \
-    get_inferable_quantizer_class
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
-    constants as qi_inferable_quantizers_constants, BasePyTorchInferableQuantizer
+from mct_quantizers import QuantizationTarget
+from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
+from mct_quantizers import \
+    constants as qi_inferable_quantizers_constants
+from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
 import numpy as np
 
 

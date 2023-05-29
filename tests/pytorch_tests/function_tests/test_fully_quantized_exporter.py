@@ -19,14 +19,12 @@ import numpy as np
 import random
 import unittest
 
+from mct_quantizers import PytorchQuantizationWrapper
+from mct_quantizers.pytorch.quantizers import WeightsPOTInferableQuantizer, ActivationPOTInferableQuantizer
 from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-
-from model_compression_toolkit.quantizers_infrastructure import PytorchQuantizationWrapper
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.pytorch.quantizers import \
-    ActivationPOTInferableQuantizer, WeightsPOTInferableQuantizer
 
 tp = mct.target_platform
 

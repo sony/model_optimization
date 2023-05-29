@@ -17,9 +17,9 @@ import torch.nn as nn
 from typing import Dict
 import numpy as np
 
-from model_compression_toolkit import quantizers_infrastructure as qi
 from model_compression_toolkit.quantizers_infrastructure.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationTarget, PytorchQuantizationWrapper
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantizer import \
     BasePytorchGPTQTrainableQuantizer
@@ -28,8 +28,7 @@ from model_compression_toolkit.gptq.pytorch.quantizer import quant_utils as quti
 from model_compression_toolkit.gptq.common.gptq_constants import SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, AUXVAR
 from model_compression_toolkit.gptq.pytorch.quantizer.quant_utils import fix_range_to_include_zero
 from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
-from model_compression_toolkit.quantizers_infrastructure.inferable_infrastructure.common.base_inferable_quantizer import \
-    mark_quantizer
+from mct_quantizers import mark_quantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import \
     VariableGroup
 from model_compression_toolkit.constants import RANGE_MAX, RANGE_MIN
@@ -63,7 +62,7 @@ def soft_rounding_unifrom_quantizer(input_tensor: torch.Tensor,
                                    max_val=2 ** num_bits - 1) + min_range
 
 
-@mark_quantizer(quantization_target=qi.QuantizationTarget.Weights,
+@mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.UNIFORM],
                 quantizer_type=RoundingType.SoftQuantizer)
 class UniformSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
@@ -100,7 +99,7 @@ class UniformSoftRoundingGPTQ(BasePytorchGPTQTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: qi.PytorchQuantizationWrapper):
+                                layer: PytorchQuantizationWrapper):
         """
         Add quantizer parameters to the quantizer parameters dictionary
 
