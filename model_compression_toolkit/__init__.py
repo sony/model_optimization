@@ -24,6 +24,8 @@ from model_compression_toolkit import ptq
 from model_compression_toolkit import qat
 from model_compression_toolkit import exporter
 from model_compression_toolkit import gptq
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.keras.load_model import \
+    keras_load_quantized_model
 
 
 # Old API (will not be accessible in future releases)
@@ -46,7 +48,5 @@ from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from model_compression_toolkit.gptq.keras.quantization_facade import get_keras_gptq_config
 from model_compression_toolkit.gptq.pytorch.quantization_facade import get_pytorch_gptq_config
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.keras.load_model import \
-    keras_load_quantized_model
 
 __version__ = "1.8.0"
