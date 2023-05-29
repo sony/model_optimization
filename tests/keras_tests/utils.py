@@ -14,7 +14,7 @@
 # ==============================================================================
 import keras
 
-from model_compression_toolkit.quantizers_infrastructure import KerasQuantizationWrapper
+from mct_quantizers import KerasQuantizationWrapper
 
 
 def get_layers_from_model_by_type(model:keras.Model,
