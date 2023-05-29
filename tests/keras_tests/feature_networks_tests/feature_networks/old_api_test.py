@@ -41,7 +41,7 @@ class OldApiTest(BaseKerasFeatureNetworkTest):
                                              name="old_api_test")
 
     def get_kpi(self):
-        return mct.core.KPI()
+        return mct.KPI()
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -55,7 +55,7 @@ class OldApiTest(BaseKerasFeatureNetworkTest):
         quant_config = core_config.quantization_config
         gptq_config = mct.GradientPTQConfig(1, keras.optimizers.Adam(learning_rate=1e-12)) if self.gptq_enable else None
         if self.mp_enable:
-            quant_config = mct.core.MixedPrecisionQuantizationConfig(quant_config, num_of_images=1)
+            quant_config = mct.MixedPrecisionQuantizationConfig(quant_config, num_of_images=1)
             facade_fn = mct.keras_post_training_quantization_mixed_precision
             ptq_model, quantization_info = facade_fn(model_float,
                                                      self.representative_data_gen,
