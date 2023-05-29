@@ -20,16 +20,13 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core import CoreConfig, QuantizationConfig, DEFAULTCONFIG, FrameworkInfo, DebugConfig
 from model_compression_toolkit import get_target_platform_capabilities
-from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.constants import TENSORFLOW
+from model_compression_toolkit.core import CoreConfig, QuantizationConfig, DEFAULTCONFIG, FrameworkInfo, DebugConfig
+from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.network_editors import EditRule
 from model_compression_toolkit.core.common.statistics_correction.apply_second_moment_correction_to_graph import \
     quantized_model_builder_for_second_moment_correction
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.keras.constants import EPSILON_VAL, GAMMA, BETA, MOVING_MEAN, MOVING_VARIANCE
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -37,9 +34,13 @@ from model_compression_toolkit.core.keras.keras_model_validation import KerasMod
 from model_compression_toolkit.core.keras.statistics_correction.apply_second_moment_correction import \
     keras_apply_second_moment_correction
 from model_compression_toolkit.core.runner import _init_tensorboard_writer, core_runner
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 from tensorflow.keras.models import Model
@@ -54,9 +55,13 @@ class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):
     This is the base test for the Second Moment Correction feature.
     """
 
-    def __init__(self, unit_test):
-        super(BaseSecondMomentTest, self).__init__(unit_test=unit_test, val_batch_size=128,
-                                                   num_calibration_iter=100, input_shape=(32, 32, 1),
+    def __init__(self, unit_test,
+                 linear_layer):
+        self.linear_layer = linear_layer
+        super(BaseSecondMomentTest, self).__init__(unit_test=unit_test,
+                                                   val_batch_size=128,
+                                                   num_calibration_iter=100,
+                                                   input_shape=(32, 32, 1),
                                                    experimental_exporter=True)
 
     def get_tpc(self):
@@ -69,9 +74,10 @@ class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):
         return mct.core.QuantizationConfig(weights_second_moment_correction=True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]
-        quantized_model_kernel = quantized_model.layers[2].get_quantized_weights()[attr]
-        quantized_model_bias = quantized_model.layers[2].weights[2]
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.linear_layer)[0]
+        linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
+        quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
+        quantized_model_bias = linear_layer.weights[2]
         float_model_gamma = float_model.layers[2].weights[0]
         float_model_beta = float_model.layers[2].weights[1]
         float_model_kernel = float_model.layers[1].weights[0]
@@ -104,14 +110,15 @@ class DepthwiseConv2DSecondMomentTest(BaseSecondMomentTest):
 
     def __init__(self, unit_test):
         self.i = 0
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.DepthwiseConv2D)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.DepthwiseConv2D((1, 1), padding='same',
-                                   depthwise_initializer='ones',
-                                   kernel_initializer="ones",
-                                   bias_initializer="zeros")(inputs)
+        x = self.linear_layer((1, 1), padding='same',
+                              depthwise_initializer='ones',
+                              kernel_initializer="ones",
+                              bias_initializer="zeros")(inputs)
         x = layers.BatchNormalization(
             beta_initializer="zeros",
             gamma_initializer="ones",
@@ -128,11 +135,12 @@ class DepthwiseConv2DWithMultiplierSecondMomentTest(BaseSecondMomentTest):
 
     def __init__(self, unit_test):
         self.i = 0
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.DepthwiseConv2D)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.DepthwiseConv2D((1, 1), padding='same',
+        x = self.linear_layer((1, 1), padding='same',
                                    depthwise_initializer='ones',
                                    kernel_initializer="ones",
                                    bias_initializer="zeros", depth_multiplier=3)(inputs)
@@ -152,11 +160,12 @@ class Conv2DSecondMomentTest(BaseSecondMomentTest):
 
     def __init__(self, unit_test):
         self.i = 0
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.Conv2D)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(1, 1, padding='same',
+        x = self.linear_layer(1, 1, padding='same',
                           kernel_initializer="ones",
                           bias_initializer="zeros")(inputs)
         x = layers.BatchNormalization(
@@ -175,13 +184,14 @@ class Conv2DTSecondMomentTest(BaseSecondMomentTest):
 
     def __init__(self, unit_test):
         self.i = 0
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.Conv2DTranspose)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2DTranspose(1, 1, padding='same',
-                                   kernel_initializer="ones",
-                                   bias_initializer="zeros")(inputs)
+        x = self.linear_layer(1, 1, padding='same',
+                              kernel_initializer="ones",
+                              bias_initializer="zeros")(inputs)
         x = layers.BatchNormalization(
             beta_initializer="zeros",
             gamma_initializer="ones",
@@ -199,11 +209,12 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
 
     def __init__(self, unit_test):
         self.i = 0
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.Conv2D)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(1, 1, padding='same',
+        x = self.linear_layer(1, 1, padding='same',
                           kernel_initializer="ones",
                           bias_initializer="zeros")(inputs)
         x = layers.BatchNormalization(
@@ -293,7 +304,8 @@ class POTSecondMomentTest(BaseSecondMomentTest):
 
     def __init__(self, unit_test):
         self.i = 0
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.Conv2D)
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 16,
@@ -303,7 +315,7 @@ class POTSecondMomentTest(BaseSecondMomentTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(1, 1, padding='same',
+        x = self.linear_layer(1, 1, padding='same',
                           kernel_initializer="ones",
                           bias_initializer="zeros")(inputs)
         x = layers.BatchNormalization(
@@ -334,9 +346,10 @@ class POTSecondMomentTest(BaseSecondMomentTest):
         self.unit_test.assertTrue(any(warn_msg in s for s in cm.output))
 
         # Check that the SMC feature is not working
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]
-        quantized_model_kernel = quantized_model.layers[2].get_quantized_weights()[attr]
-        quantized_model_bias = quantized_model.layers[2].weights[2]
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.linear_layer)[0]
+        linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
+        quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
+        quantized_model_bias = linear_layer.weights[2]
         float_model_gamma = float_model.layers[2].weights[0]
         float_model_beta = float_model.layers[2].weights[1]
         float_model_kernel = float_model.layers[1].weights[0]
@@ -362,11 +375,12 @@ class NoBNSecondMomentTest(BaseSecondMomentTest):
 
     def __init__(self, unit_test):
         self.i = 0
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.Conv2D)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(1, 1, padding='same',
+        x = self.linear_layer(1, 1, padding='same',
                           kernel_initializer="ones",
                           bias_initializer="zeros")(inputs)
         x = layers.Activation('relu')(x)
@@ -374,9 +388,10 @@ class NoBNSecondMomentTest(BaseSecondMomentTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Check that the SMC feature is not working
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]
-        quantized_model_kernel = quantized_model.layers[2].get_quantized_weights()[attr]
-        quantized_model_bias = quantized_model.layers[2].weights[2]
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.linear_layer)[0]
+        linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
+        quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
+        quantized_model_bias = linear_layer.weights[2]
         float_model_kernel = float_model.layers[1].weights[0]
         float_model_bias = float_model.layers[1].weights[1]
 
@@ -391,10 +406,11 @@ class ReusedConvSecondMomentTest(BaseSecondMomentTest):
 
     def __init__(self, unit_test):
         self.i = 0
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.Conv2D)
 
     def create_networks(self):
-        conv_layer = layers.Conv2D(1, 1, padding='same',
+        conv_layer = self.linear_layer(1, 1, padding='same',
                                    kernel_initializer="ones",
                                    bias_initializer="zeros")
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -410,9 +426,10 @@ class ReusedConvSecondMomentTest(BaseSecondMomentTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Check that the SMC feature is not working
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]
-        quantized_model_kernel = quantized_model.layers[2].get_quantized_weights()[attr]
-        quantized_model_bias = quantized_model.layers[2].weights[2]
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.linear_layer)[0]
+        linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
+        quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
+        quantized_model_bias = linear_layer.weights[2]
         float_model_kernel = float_model.layers[1].weights[0]
         float_model_bias = float_model.layers[1].weights[1]
 
@@ -427,7 +444,8 @@ class UniformSecondMomentTest(BaseSecondMomentTest):
 
     def __init__(self, unit_test):
         self.i = 0
-        super().__init__(unit_test)
+        super().__init__(unit_test,
+                         linear_layer=layers.Conv2D)
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 16,
@@ -437,7 +455,7 @@ class UniformSecondMomentTest(BaseSecondMomentTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(1, 2)(inputs)
+        x = self.linear_layer(1, 2)(inputs)
         x = layers.BatchNormalization(
             beta_initializer="zeros",
             gamma_initializer="ones",
@@ -447,9 +465,10 @@ class UniformSecondMomentTest(BaseSecondMomentTest):
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(quantized_model.layers[2].layer.__class__)[0]
-        quantized_model_kernel = quantized_model.layers[2].get_quantized_weights()[attr]
-        quantized_model_bias = quantized_model.layers[2].weights[2]
+        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.linear_layer)[0]
+        linear_layer = get_layers_from_model_by_type(quantized_model, self.linear_layer)[0]
+        quantized_model_kernel = linear_layer.get_quantized_weights()[attr]
+        quantized_model_bias = linear_layer.weights[2]
         float_model_gamma = float_model.layers[2].weights[0]
         float_model_beta = float_model.layers[2].weights[1]
         float_model_kernel = float_model.layers[1].weights[0]

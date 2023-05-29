@@ -26,6 +26,8 @@ from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_m
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 
+from tests.keras_tests.utils import get_layers_from_model_by_type
+
 keras = tf.keras
 layers = keras.layers
 
@@ -94,8 +96,9 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they were quantized
         # using different methods (but started as the same value)
+        conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(np.sum(
-            np.abs(quantized_model.layers[2].weights[0].numpy() - quantized_model.layers[4].weights[0].numpy())) > 0)
+            np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())) > 0)
 
 
 class KmeansQuantizerTest(KmeansQuantizerTestBase):
@@ -112,8 +115,9 @@ class KmeansQuantizerTest(KmeansQuantizerTestBase):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they where quantized
         # using different methods (but started as the same value)
+        conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(np.sum(
-            np.abs(quantized_model.layers[2].weights[0].numpy() - quantized_model.layers[4].weights[0].numpy())) > 0)
+            np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())) > 0)
 
 
 class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
@@ -138,8 +142,9 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they where quantized
         # using different methods (but started as the same value)
+        conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(np.sum(
-            np.abs(quantized_model.layers[2].weights[0].numpy() - quantized_model.layers[4].weights[0].numpy())) > 0)
+            np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())) > 0)
 
 
 class KmeansQuantizerTestManyClasses(KmeansQuantizerTestBase):
@@ -153,8 +158,9 @@ class KmeansQuantizerTestManyClasses(KmeansQuantizerTestBase):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they were quantized
         # using different methods (but started as the same value)
+        conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(
-            np.all(np.isclose(float_model.layers[1].weights[0].numpy(), quantized_model.layers[4].weights[0].numpy())))
+            np.all(np.isclose(float_model.layers[1].weights[0].numpy(), conv_layers[2].weights[0].numpy())))
 
 
 class KmeansQuantizerTestZeroWeights(KmeansQuantizerTestBase):
@@ -170,9 +176,10 @@ class KmeansQuantizerTestZeroWeights(KmeansQuantizerTestBase):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they where quantized
         # using different methods (but started as the same value)
-        self.unit_test.assertTrue(np.sum(np.abs(quantized_model.layers[2].weights[0].numpy())) == 0)
-        self.unit_test.assertTrue(np.sum(np.abs(quantized_model.layers[4].weights[0].numpy())) == 0)
-        self.unit_test.assertTrue(np.sum(np.abs(quantized_model.layers[6].weights[0].numpy())) == 0)
+        conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
+        self.unit_test.assertTrue(np.sum(np.abs(conv_layers[0].weights[0].numpy())) == 0)
+        self.unit_test.assertTrue(np.sum(np.abs(conv_layers[1].weights[0].numpy())) == 0)
+        self.unit_test.assertTrue(np.sum(np.abs(conv_layers[2].weights[0].numpy())) == 0)
 
 
 if __name__ == '__main__':

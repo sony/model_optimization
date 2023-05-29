@@ -22,6 +22,7 @@ from model_compression_toolkit.core.common.network_editors.actions import EditRu
     ChangeFinalActivationQuantConfigAttr, ChangeCandidatesActivationQuantConfigAttr
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeTypeFilter
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -44,9 +45,8 @@ class ChangeFinalWeightQCAttrTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
-        self.unit_test.assertTrue(quantized_model.layers[
-                                      2].layer.bias is None)  # If bias correction is enabled, a bias should be added -
+        conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
+        self.unit_test.assertTrue(conv_layer.layer.bias is None)  # If bias correction is enabled, a bias should be added -
         # This asserts the editing occured
 
 
@@ -66,5 +66,5 @@ class ChangeFinalActivationQCAttrTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[2].layer, layers.Conv2D))
-        self.unit_test.assertTrue(quantized_model.layers[2].activation_quantizers[0].get_config()['num_bits'] == 7)
+        conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
+        self.unit_test.assertTrue(conv_layer.activation_quantizers[0].get_config()['num_bits'] == 7)

@@ -15,8 +15,10 @@
 
 
 import tensorflow as tf
+from keras.layers import TFOpLambda
 
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -36,16 +38,14 @@ class SplitConcatenateTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        self.unit_test.assertTrue(quantized_model.layers[3].layer.function == tf.split)
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[4].layer, layers.Conv2D))
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[5].layer, layers.Conv2D))
-        self.unit_test.assertTrue(quantized_model.layers[4].activation_quantizers[0].get_config()['num_bits'] == 8)
-        self.unit_test.assertTrue(quantized_model.layers[5].activation_quantizers[0].get_config()['num_bits'] == 8)
+        split_layer = get_layers_from_model_by_type(quantized_model, TFOpLambda)[0]
+        self.unit_test.assertTrue(split_layer.layer.function == tf.split)
+        conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
 
-        self.unit_test.assertTrue(quantized_model.layers[3].output[1].ref() == quantized_model.layers[4].input.ref())
-        self.unit_test.assertTrue(quantized_model.layers[3].output[3].ref() == quantized_model.layers[5].input.ref())
+        self.unit_test.assertTrue(split_layer.output[1].ref() == conv_layers[0].input.ref())
+        self.unit_test.assertTrue(split_layer.output[3].ref() == conv_layers[1].input.ref())
 
-        self.unit_test.assertTrue(isinstance(quantized_model.layers[6].layer, layers.Concatenate))
-        self.unit_test.assertTrue(len(quantized_model.layers[6].input) == 2)
-        self.unit_test.assertTrue(quantized_model.layers[6].input[0].ref() == quantized_model.layers[4].output.ref())
-        self.unit_test.assertTrue(quantized_model.layers[6].input[1].ref() == quantized_model.layers[5].output.ref())
+        concate_layer = get_layers_from_model_by_type(quantized_model, layers.Concatenate)[0]
+        self.unit_test.assertTrue(len(concate_layer.input) == 2)
+        self.unit_test.assertTrue(concate_layer.input[0].ref() == conv_layers[0].output.ref())
+        self.unit_test.assertTrue(concate_layer.input[1].ref() == conv_layers[1].output.ref())
