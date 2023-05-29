@@ -20,7 +20,7 @@ from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
-from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder, keras_load_quantized_model, \
+from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder, \
     KerasQuantizationWrapper
 
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEActivationQATQuantizer, \
@@ -29,6 +29,8 @@ from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste impo
     STEUniformWeightQATQuantizer
 from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.keras.load_model import \
+    keras_load_quantized_model
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_tests import \
     MixedPrecisionActivationBaseTest
 from tests.keras_tests.tpc_keras import get_tpc

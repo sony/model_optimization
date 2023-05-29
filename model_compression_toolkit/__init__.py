@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-
 from model_compression_toolkit.target_platform_capabilities import target_platform
 from model_compression_toolkit.target_platform_capabilities.tpc_models.get_target_platform_capabilities import get_target_platform_capabilities
 from model_compression_toolkit import core
@@ -47,5 +46,7 @@ from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from model_compression_toolkit.gptq.keras.quantization_facade import get_keras_gptq_config
 from model_compression_toolkit.gptq.pytorch.quantization_facade import get_pytorch_gptq_config
+from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.keras.load_model import \
+    keras_load_quantized_model
 
 __version__ = "1.8.0"
