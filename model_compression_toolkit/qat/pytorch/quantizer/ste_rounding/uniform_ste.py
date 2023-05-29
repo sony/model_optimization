@@ -21,7 +21,8 @@ from model_compression_toolkit.constants import RANGE_MAX, RANGE_MIN
 from model_compression_toolkit.quantizers_infrastructure.constants import FQ_MIN, FQ_MAX
 
 from model_compression_toolkit.qat import TrainingMethod
-from mct_quantizers import QuantizationMethod, QuantizationTarget, PytorchQuantizationWrapper
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationTarget, PytorchQuantizationWrapper
 from model_compression_toolkit import constants as C
 
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer

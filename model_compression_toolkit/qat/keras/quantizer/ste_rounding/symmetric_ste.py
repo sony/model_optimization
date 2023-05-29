@@ -23,7 +23,8 @@ from model_compression_toolkit.quantizers_infrastructure.constants import FQ_MIN
 
 from model_compression_toolkit.qat import TrainingMethod
 
-from mct_quantizers import QuantizationMethod, QuantizationTarget, mark_quantizer, KerasQuantizationWrapper
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationTarget, mark_quantizer, KerasQuantizationWrapper
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
 from model_compression_toolkit import constants as C
 

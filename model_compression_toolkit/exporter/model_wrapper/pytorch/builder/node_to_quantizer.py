@@ -19,7 +19,8 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX, \
     SCALE_PER_CHANNEL, CLUSTER_CENTERS
 from model_compression_toolkit.logger import Logger
-from mct_quantizers import QuantizationMethod, QuantizationTarget
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationTarget
 from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
 from mct_quantizers import \
     constants as qi_inferable_quantizers_constants

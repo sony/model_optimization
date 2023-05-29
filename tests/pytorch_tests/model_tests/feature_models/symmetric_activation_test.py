@@ -18,7 +18,7 @@ import torch
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import THRESHOLD
-from mct_quantizers import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc

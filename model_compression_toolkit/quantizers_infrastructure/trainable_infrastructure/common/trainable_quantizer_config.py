@@ -14,7 +14,7 @@
 # ==============================================================================
 from abc import ABC
 from typing import Dict, List
-from mct_quantizers import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 
 
 class TrainableQuantizerCandidateConfig:

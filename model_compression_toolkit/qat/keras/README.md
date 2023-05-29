@@ -68,7 +68,8 @@ import tensorflow as tf
 
 NEW_PARAM = "new_param_name"
 from model_compression_toolkit import TrainingMethod
-from mct_quantizers import QuantizationMethod, mark_quantizer, QuantizationTarget
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import mark_quantizer, QuantizationTarget
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 
 

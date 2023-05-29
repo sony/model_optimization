@@ -19,7 +19,8 @@ import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit.gptq import RoundingType
-from mct_quantizers import QuantizationMethod, QuantizationTarget
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationTarget
 from model_compression_toolkit.gptq.common.gptq_constants import AUXVAR, PTQ_THRESHOLD
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 from model_compression_toolkit.constants import THRESHOLD

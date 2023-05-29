@@ -18,7 +18,8 @@ import numpy as np
 
 from model_compression_toolkit.gptq import RoundingType
 from model_compression_toolkit.core.common import max_power_of_two
-from mct_quantizers import QuantizationMethod, QuantizationTarget
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationTarget
 from model_compression_toolkit.gptq.common.gptq_constants import PTQ_THRESHOLD, SCALE_PTQ, \
     SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, AUXVAR
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils

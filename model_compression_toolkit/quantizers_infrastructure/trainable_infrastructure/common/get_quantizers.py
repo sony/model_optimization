@@ -15,7 +15,8 @@
 from typing import Union, Any
 
 from model_compression_toolkit.logger import Logger
-from mct_quantizers import QuantizationMethod, QuantizationTarget
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from mct_quantizers import QuantizationTarget
 from mct_quantizers.common.constants \
     import QUANTIZATION_TARGET, QUANTIZATION_METHOD, QUANTIZER_TYPE
 from mct_quantizers.common.get_all_subclasses \

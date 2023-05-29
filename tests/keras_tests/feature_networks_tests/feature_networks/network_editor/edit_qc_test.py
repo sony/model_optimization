@@ -36,7 +36,7 @@ from model_compression_toolkit.core.common.statistics_correction.statistics_corr
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.runner import read_model_to_graph, get_finalized_graph
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-from mct_quantizers import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 
 
 keras = tf.keras

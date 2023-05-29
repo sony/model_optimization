@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from mct_quantizers import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
 from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
