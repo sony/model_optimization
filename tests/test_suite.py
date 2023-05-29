@@ -72,7 +72,7 @@ if found_tf:
     from tests.keras_tests.exporter_tests.test_runner import ExporterTestsRunner
     from tests.keras_tests.function_tests.test_get_gptq_config import TestGetGPTQConfig
     from tests.keras_tests.function_tests.test_gptq_loss_functions import TestGPTQLossFunctions
-    from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.test_keras_trainable_infra_runner import \
+    from tests.trainable_infrastructure_tests.keras.test_keras_trainable_infra_runner import \
         KerasTrainableInfrastructureTestRunner
     from tests.keras_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as keras_gptq_soft_quantizer_test
     from tests.keras_tests.function_tests.test_activation_quantization_holder_gptq import TestGPTQModelBuilderWithActivationHolder
@@ -83,7 +83,7 @@ if found_pytorch:
     # from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
     from tests.pytorch_tests.function_tests.test_pytorch_tp_model import TestPytorchTPModel
-    from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.pytorch.test_pytorch_trainable_infra_runner import \
+    from tests.trainable_infrastructure_tests.pytorch.test_pytorch_trainable_infra_runner import \
         PytorchTrainableInfrastructureTestRunner
     from tests.pytorch_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as pytorch_gptq_soft_quantier_test
     from tests.pytorch_tests.function_tests.test_activation_quantization_holder_gptq import \
@@ -134,7 +134,6 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFileLogger))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGetGPTQConfig))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQLossFunctions))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasInferableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasTrainableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(keras_gptq_soft_quantizer_test))
 
@@ -157,7 +156,6 @@ if __name__ == '__main__':
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_shufflenet_v2_x1_0', ModelTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchTPModel))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(pytorch_gptq_soft_quantier_test))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchInferableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchTrainableInfrastructureTestRunner))
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)

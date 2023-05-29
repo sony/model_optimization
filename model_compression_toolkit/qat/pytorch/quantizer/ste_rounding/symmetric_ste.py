@@ -31,9 +31,9 @@ from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import ste_
 from mct_quantizers.pytorch.quantizers import \
     WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, ActivationPOTInferableQuantizer, \
     ActivationSymmetricInferableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
+from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,

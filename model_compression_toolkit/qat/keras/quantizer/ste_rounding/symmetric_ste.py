@@ -19,7 +19,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.constants import SIGNED
-from model_compression_toolkit.quantizers_infrastructure.constants import FQ_MIN, FQ_MAX
+from model_compression_toolkit.trainable_infrastructure.common.constants import FQ_MIN, FQ_MAX
 
 from model_compression_toolkit.qat import TrainingMethod
 
@@ -29,11 +29,11 @@ from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
 from model_compression_toolkit import constants as C
 
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
+from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig, \
     TrainableQuantizerActivationConfig
 from mct_quantizers.keras.quantizers import WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, \
     ActivationPOTInferableQuantizer, ActivationSymmetricInferableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,

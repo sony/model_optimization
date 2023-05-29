@@ -28,11 +28,11 @@ from model_compression_toolkit.gptq.pytorch.quantizer import quant_utils as quti
 from model_compression_toolkit.gptq.common.gptq_constants import PTQ_THRESHOLD, SCALE_PTQ, \
     SOFT_ROUNDING_GAMMA, SOFT_ROUNDING_ZETA, AUXVAR
 from model_compression_toolkit.constants import THRESHOLD, MIN_THRESHOLD
-from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
+from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig
 from mct_quantizers import mark_quantizer
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.quant_utils import \
+from model_compression_toolkit.trainable_infrastructure.common.quant_utils import \
     get_threshold_reshape_shape
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 
 def soft_rounding_symmetric_quantizer(input_tensor: torch.Tensor,

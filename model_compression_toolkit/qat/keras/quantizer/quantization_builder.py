@@ -21,10 +21,10 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.qat.common.qat_config import QATConfig
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizer_config import \
+from model_compression_toolkit.trainable_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_weights_config, get_trainable_quantizer_activation_config, \
     get_trainable_quantizer_quantization_candidates
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizers import \
+from model_compression_toolkit.trainable_infrastructure.common.get_quantizers import \
     get_trainable_quantizer_class
 
 

@@ -17,7 +17,7 @@ import tensorflow as tf
 import numpy as np
 
 from model_compression_toolkit.gptq import RoundingType
-from model_compression_toolkit.quantizers_infrastructure.constants import FQ_MIN, FQ_MAX
+from model_compression_toolkit.trainable_infrastructure.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from mct_quantizers import QuantizationTarget
 from model_compression_toolkit.gptq.common.gptq_constants import \
@@ -26,11 +26,11 @@ from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 from typing import Dict, Any
 from model_compression_toolkit.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
+from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig
 from mct_quantizers import mark_quantizer
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.quant_utils import \
+from model_compression_toolkit.trainable_infrastructure.common.quant_utils import \
     get_threshold_reshape_shape
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 
 def soft_rounding_uniform_quantizer(input_tensor: tf.Tensor,

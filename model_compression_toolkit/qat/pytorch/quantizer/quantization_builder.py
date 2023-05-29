@@ -21,11 +21,11 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.qat.common.qat_config import QATConfig
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizer_config import \
+from model_compression_toolkit.trainable_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_quantization_candidates, get_trainable_quantizer_weights_config, \
     get_trainable_quantizer_activation_config
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizers import \
+from model_compression_toolkit.trainable_infrastructure.common.get_quantizers import \
     get_trainable_quantizer_class
 
 def get_activation_quantizer_holder(n: common.BaseNode,

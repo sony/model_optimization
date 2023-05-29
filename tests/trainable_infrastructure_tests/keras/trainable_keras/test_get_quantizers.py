@@ -12,8 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.get_quantizers import \
+
+from model_compression_toolkit.trainable_infrastructure.common.get_quantizers import \
     get_trainable_quantizer_class
+from tests.trainable_infrastructure_tests.keras.base_keras_trainable_infra_test import \
+    BaseKerasTrainableInfrastructureTest
+
+
+class BaseKerasGetQuantizerTest(BaseKerasTrainableInfrastructureTest):
+
+    def __init__(self, unit_test, quant_target, quant_method, quantizer_base_class, expected_quantizer_class=None):
+        super().__init__(unit_test)
+
+        self.quant_target = quant_target
+        self.quant_method = quant_method
+        self.quantizer_base_class = quantizer_base_class
+        self.expected_quantizer_class = expected_quantizer_class
 
 
 class TestGetTrainableQuantizer:

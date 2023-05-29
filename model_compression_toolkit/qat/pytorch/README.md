@@ -1,18 +1,18 @@
 # QAT Quantizers
 
 ## Introduction
-[`BasePytorchQATTrainableQuantizer`](./quantizer/base_pytorch_qat_quantizer.py) is an interface that utilizes the Quantization Infrastructure's [`BasePytorchTrainableQuantizer`](../../quantizers_infrastructure/trainable_infrastructure/pytorch/base_pytorch_quantizer.py) class to  enable easy development of quantizers dedicated to Quantization-Aware Training (QAT).
+[`BasePytorchQATTrainableQuantizer`](./quantizer/base_pytorch_qat_quantizer.py) is an interface that utilizes the Quantization Infrastructure's [`BasePytorchTrainableQuantizer`](../../trainable_infrastructure/pytorch/base_pytorch_quantizer.py) class to  enable easy development of quantizers dedicated to Quantization-Aware Training (QAT).
 All available training types for QAT are defined in the Enum [`TrainingMethod`](./quantizer/README.md).
 
 ## Make your own Pytorch trainable quantizers
 A trainable quantizer can be Weights Quantizer or Activation Quantizer.
 In order to make your new quantizer you need to create your quantizer class, `MyTrainingQuantizer` and do as follows:
-   - `MyTrainingQuantizer` should inherit from [`BasePytorchTrainableQuantizer`](../../quantizers_infrastructure/trainable_infrastructure/pytorch/base_pytorch_quantizer.py).
-   - `MyTrainingQuantizer` should have [`init`](../../quantizers_infrastructure/trainable_infrastructure/common/base_trainable_quantizer.py) function that gets `quantization_config` which is [`NodeWeightsQuantizationConfig`](../../core/common/quantization/node_quantization_config.py#L228) if you choose to implement weights quantizer or [`NodeActivationQuantizationConfig`](../../core/common/quantization/node_quantization_config.py#L63) if you choose activation quantizer.
-   - Implement [`initialize_quantization`](../../quantizers_infrastructure/trainable_infrastructure/common/base_trainable_quantizer.py) where you can define your parameters for the quantizer.
-   - Implement [`__call__`](../../quantizers_infrastructure/trainable_infrastructure/common/base_trainable_quantizer.py) method to quantize the given inputs while training. This is your custom quantization itself. 
-   - Implement [`convert2inferable`](../../quantizers_infrastructure/trainable_infrastructure/common/base_trainable_quantizer.py) method. This method exports your quantizer for inference (deployment). For doing that you need to choose one of our Inferable Quantizers according to target when implement `convert2inferable`, and set your learned quantization parameters there. 
-   - Decorate `MyTrainingQuantizer` class with the `@mark_quantizer` decorator and choose the appropriate properties to set for you quantizer. The quantizer_type argument for the decorator should be of type of the `TrainingMethod  enum. See explaination about `@mark_quantizer` and how to use it under the [Pytorch Quantization Infrastructure](../../quantizers_infrastructure/trainable_infrastructure/pytorch/README.md).
+   - `MyTrainingQuantizer` should inherit from [`BasePytorchTrainableQuantizer`](../../trainable_infrastructure/pytorch/base_pytorch_quantizer.py).
+   - `MyTrainingQuantizer` should have [`init`](../../trainable_infrastructure/common/base_trainable_quantizer.py) function that gets `quantization_config` which is [`NodeWeightsQuantizationConfig`](../../core/common/quantization/node_quantization_config.py#L228) if you choose to implement weights quantizer or [`NodeActivationQuantizationConfig`](../../core/common/quantization/node_quantization_config.py#L63) if you choose activation quantizer.
+   - Implement [`initialize_quantization`](../../trainable_infrastructure/common/base_trainable_quantizer.py) where you can define your parameters for the quantizer.
+   - Implement [`__call__`](../../trainable_infrastructure/common/base_trainable_quantizer.py) method to quantize the given inputs while training. This is your custom quantization itself. 
+   - Implement [`convert2inferable`](../../trainable_infrastructure/common/base_trainable_quantizer.py) method. This method exports your quantizer for inference (deployment). For doing that you need to choose one of our Inferable Quantizers according to target when implement `convert2inferable`, and set your learned quantization parameters there. 
+   - Decorate `MyTrainingQuantizer` class with the `@mark_quantizer` decorator and choose the appropriate properties to set for you quantizer. The quantizer_type argument for the decorator should be of type of the `TrainingMethod  enum. See explaination about `@mark_quantizer` and how to use it under the [Pytorch Quantization Infrastructure](../../trainable_infrastructure/pytorch/README.md).
    
 ## Example: Symmetric Weights Quantizer
 To create custom `MyWeightsTrainingQuantizer` which is a symmetric weights training quantizer you need to set

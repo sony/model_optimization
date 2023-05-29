@@ -10,7 +10,7 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.gptq.keras.quantizer.soft_rounding.symmetric_soft_quantizer import \
     SymmetricSoftRoundingGPTQ
-from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
+from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig
 from mct_quantizers import KerasQuantizationWrapper
 
 tp = mct.target_platform

@@ -27,11 +27,11 @@ from typing import Dict, Any
 from model_compression_toolkit.constants import THRESHOLD, MIN_THRESHOLD
 from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
 from model_compression_toolkit.gptq.keras.quantizer.quant_utils import power_of_two_max, clip, calculate_delta
-from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
+from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig
 from mct_quantizers import mark_quantizer
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.quant_utils import \
+from model_compression_toolkit.trainable_infrastructure.common.quant_utils import \
     get_threshold_reshape_shape
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
 
 def soft_rounding_symmetric_quantizer(input_tensor: tf.Tensor,

@@ -12,7 +12,7 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.gptq.pytorch.quantizer.soft_rounding.symmetric_soft_quantizer import \
     SymmetricSoftRoundingGPTQ
 
-from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
+from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig
 
 tp = mct.target_platform
 

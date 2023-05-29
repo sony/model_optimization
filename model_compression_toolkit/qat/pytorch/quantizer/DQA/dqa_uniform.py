@@ -27,8 +27,8 @@ from model_compression_toolkit.qat import TrainingMethod
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import uniform_quantizer
-from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig
-from model_compression_toolkit.quantizers_infrastructure.constants import FQ_MIN, FQ_MAX
+from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig
+from model_compression_toolkit.trainable_infrastructure.common.constants import FQ_MIN, FQ_MAX
 
 
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,
