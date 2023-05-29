@@ -19,14 +19,13 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.gptq.common.gptq_constants import WEIGHTS_QUANTIZATION_PARAMS
 
-from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
-    TrainableQuantizerActivationConfig
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
+from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 
 if FOUND_TF:
     import tensorflow as tf
 
-    from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
+    from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
     from mct_quantizers import KerasQuantizationWrapper
 
     class BaseKerasGPTQTrainableQuantizer(BaseKerasTrainableQuantizer):

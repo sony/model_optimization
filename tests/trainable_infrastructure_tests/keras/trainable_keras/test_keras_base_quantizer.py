@@ -14,12 +14,12 @@
 # ==============================================================================
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
+from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
+from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.keras.config_serialization import config_serialization, \
+from model_compression_toolkit.trainable_infrastructure.keras.config_serialization import config_serialization, \
     config_deserialization
-from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.base_keras_trainable_infra_test import \
+from tests.trainable_infrastructure_tests.keras.base_keras_trainable_infra_test import \
     BaseKerasTrainableInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer
 
 

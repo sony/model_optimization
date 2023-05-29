@@ -15,7 +15,7 @@
 from typing import List
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
+from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig, TrainableQuantizerCandidateConfig
 
 

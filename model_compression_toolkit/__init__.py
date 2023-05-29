@@ -19,13 +19,12 @@ from model_compression_toolkit import core
 from model_compression_toolkit.logger import set_log_folder
 from model_compression_toolkit.legacy.keras_quantization_facade import keras_post_training_quantization, keras_post_training_quantization_mixed_precision
 from model_compression_toolkit.legacy.pytorch_quantization_facade import pytorch_post_training_quantization, pytorch_post_training_quantization_mixed_precision
-from model_compression_toolkit import quantizers_infrastructure
+from model_compression_toolkit import trainable_infrastructure
 from model_compression_toolkit import ptq
 from model_compression_toolkit import qat
 from model_compression_toolkit import exporter
 from model_compression_toolkit import gptq
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.keras.load_model import \
-    keras_load_quantized_model
+from model_compression_toolkit.trainable_infrastructure.keras.load_model import keras_load_quantized_model
 
 
 # Old API (will not be accessible in future releases)

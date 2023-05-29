@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
+from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
+from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
     BasePytorchTrainableQuantizer
-from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.pytorch.base_pytorch_trainable_infra_test import \
+from tests.trainable_infrastructure_tests.pytorch.base_pytorch_trainable_infra_test import \
     BasePytorchInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 

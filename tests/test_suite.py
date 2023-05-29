@@ -72,7 +72,7 @@ if found_tf:
     from tests.keras_tests.exporter_tests.test_runner import ExporterTestsRunner
     from tests.keras_tests.function_tests.test_get_gptq_config import TestGetGPTQConfig
     from tests.keras_tests.function_tests.test_gptq_loss_functions import TestGPTQLossFunctions
-    from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.keras.test_keras_trainable_infra_runner import \
+    from tests.trainable_infrastructure_tests.keras.test_keras_trainable_infra_runner import \
         KerasTrainableInfrastructureTestRunner
     from tests.keras_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as keras_gptq_soft_quantizer_test
     from tests.keras_tests.function_tests.test_activation_quantization_holder_gptq import TestGPTQModelBuilderWithActivationHolder
@@ -83,7 +83,7 @@ if found_pytorch:
     # from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
     from tests.pytorch_tests.function_tests.test_pytorch_tp_model import TestPytorchTPModel
-    from tests.quantizers_infrastructure_tests.trainable_infrastructure_tests.pytorch.test_pytorch_trainable_infra_runner import \
+    from tests.trainable_infrastructure_tests.pytorch.test_pytorch_trainable_infra_runner import \
         PytorchTrainableInfrastructureTestRunner
     from tests.pytorch_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as pytorch_gptq_soft_quantier_test
     from tests.pytorch_tests.function_tests.test_activation_quantization_holder_gptq import \

@@ -19,11 +19,11 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import FOUND_TORCH
 from model_compression_toolkit.gptq.common.gptq_constants import WEIGHTS_QUANTIZATION_PARAMS
 
-from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
+from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig, \
     TrainableQuantizerActivationConfig
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import \
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import \
     BaseTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
+from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
     BasePytorchTrainableQuantizer
 
 if FOUND_TORCH:

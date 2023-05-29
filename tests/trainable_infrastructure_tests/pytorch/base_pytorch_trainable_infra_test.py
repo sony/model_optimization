@@ -12,90 +12,75 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
 from typing import Dict
 
 import numpy as np
-import tensorflow as tf
-from tensorflow import TensorShape
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
+import torch
+import torch.nn as nn
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from mct_quantizers import QuantizationTarget, mark_quantizer, KerasQuantizationWrapper
-from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
+from mct_quantizers import mark_quantizer, QuantizationTarget, PytorchQuantizationWrapper
+from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
+from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
+    BasePytorchTrainableQuantizer
 
 
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
-class IdentityWeightsQuantizer(BaseKerasTrainableQuantizer):
-    """
-    A dummy quantizer for test usage - "quantize" the layer's weights to the original weights
-    """
-    def __init__(self, quantization_config: TrainableQuantizerWeightsConfig):
-        super().__init__(quantization_config)
-
-    def initialize_quantization(self,
-                                tensor_shape: TensorShape,
-                                name: str,
-                                layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
-        return {}
-
-    def __call__(self,
-                 inputs: tf.Tensor,
-                 training: bool):
-        return inputs
-
-
-@mark_quantizer(quantization_target=QuantizationTarget.Weights,
-                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
-class ZeroWeightsQuantizer(BaseKerasTrainableQuantizer):
+class ZeroWeightsQuantizer(BasePytorchTrainableQuantizer):
     """
     A dummy quantizer for test usage - "quantize" the layer's weights to 0
     """
+
     def __init__(self, quantization_config: TrainableQuantizerWeightsConfig):
         super().__init__(quantization_config)
 
     def initialize_quantization(self,
-                                tensor_shape: TensorShape,
+                                tensor_shape: torch.Size,
                                 name: str,
-                                layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
+                                layer: nn.Module) -> Dict[str, nn.Parameter]:
         return {}
 
     def __call__(self,
-                 inputs: tf.Tensor,
-                 training: bool):
+                 inputs: nn.Parameter,
+                 training: bool) -> nn.Parameter:
+
         return inputs * 0
 
 
 @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
-class ZeroActivationsQuantizer(BaseKerasTrainableQuantizer):
+class ZeroActivationsQuantizer(BasePytorchTrainableQuantizer):
     """
     A dummy quantizer for test usage - "quantize" the layer's activation to 0
     """
+
     def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         super().__init__(quantization_config)
 
     def initialize_quantization(self,
-                                tensor_shape: TensorShape,
+                                tensor_shape: torch.Size,
                                 name: str,
-                                layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
+                                layer: nn.Module) -> Dict[str, nn.Parameter]:
         return {}
 
     def __call__(self,
-                 inputs: tf.Tensor,
-                 training: bool = True) -> tf.Tensor:
+                 inputs: nn.Parameter,
+                 training: bool = True) -> nn.Parameter:
+
         return inputs * 0
 
 
-class BaseKerasTrainableInfrastructureTest:
+class BasePytorchInfrastructureTest:
+
     def __init__(self,
                  unit_test,
                  num_calibration_iter=1,
                  val_batch_size=1,
                  num_of_inputs=1,
-                 input_shape=(8, 8, 3)):
+                 input_shape=(3, 8, 8)):
         self.unit_test = unit_test
         self.val_batch_size = val_batch_size
         self.num_calibration_iter = num_calibration_iter
@@ -109,14 +94,14 @@ class BaseKerasTrainableInfrastructureTest:
         return [self.input_shape for _ in range(self.num_of_inputs)]
 
     def get_wrapper(self, layer, weight_quantizers={}, activation_quantizers=[]):
-        return KerasQuantizationWrapper(layer, weight_quantizers, activation_quantizers)
+        return PytorchQuantizationWrapper(layer, weight_quantizers, activation_quantizers)
 
     def get_weights_quantization_config(self):
         return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
                                                weights_n_bits=9,
                                                weights_quantization_params={},
                                                enable_weights_quantization=True,
-                                               weights_channels_axis=3,
+                                               weights_channels_axis=0,
                                                weights_per_channel_threshold=True,
                                                min_threshold=0)
 

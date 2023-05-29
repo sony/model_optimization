@@ -16,14 +16,14 @@ from typing import Dict, Any, Union, List
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import FOUND_TF
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer, VAR, GROUP
-from model_compression_toolkit.quantizers_infrastructure import TrainableQuantizerWeightsConfig, \
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer, VAR, GROUP
+from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig, \
     TrainableQuantizerActivationConfig
 
 if FOUND_TF:
     QUANTIZATION_CONFIG = 'quantization_config'
-    from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.keras.config_serialization import config_serialization, \
+    from model_compression_toolkit.trainable_infrastructure.keras.config_serialization import config_serialization, \
         config_deserialization
     import tensorflow as tf
 

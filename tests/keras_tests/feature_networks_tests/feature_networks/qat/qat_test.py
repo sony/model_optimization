@@ -23,9 +23,9 @@ from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer impo
 from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder, \
     KerasQuantizationWrapper
 
-from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.keras.load_model import \
+from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
+from model_compression_toolkit.trainable_infrastructure.keras.load_model import \
     keras_load_quantized_model
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_tests import \
     MixedPrecisionActivationBaseTest

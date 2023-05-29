@@ -23,7 +23,7 @@ from model_compression_toolkit.logger import Logger
 if FOUND_TF:
     import tensorflow as tf
     from tensorflow.python.saved_model.load_options import LoadOptions
-    from model_compression_toolkit.quantizers_infrastructure import BaseKerasTrainableQuantizer
+    from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
     keras = tf.keras
 
     def keras_load_quantized_model(filepath: str, custom_objects: Any = None, compile: bool = True,

@@ -22,7 +22,7 @@ from model_compression_toolkit.logger import Logger
 
 from mct_quantizers.common.base_inferable_quantizer import BaseInferableQuantizer, \
     QuantizationTarget
-from model_compression_toolkit.quantizers_infrastructure.trainable_infrastructure.common.trainable_quantizer_config import \
+from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig
 from mct_quantizers.common.constants import QUANTIZATION_METHOD, \
     QUANTIZATION_TARGET

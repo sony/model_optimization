@@ -12,3 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
+from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
+from model_compression_toolkit.trainable_infrastructure.keras.base_keras_quantizer import BaseKerasTrainableQuantizer
+from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_quantizer import BasePytorchTrainableQuantizer
