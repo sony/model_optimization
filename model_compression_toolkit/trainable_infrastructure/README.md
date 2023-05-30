@@ -8,14 +8,16 @@ It utilizes the Inferable Quantizers Infrastructure provided by the [MCT Quantiz
 
 ## High level description
 
-For each layer, we use a "Quantization Wrapper" to wrap the layer, the weights quantizers, and an "Activation Quantization Holder" to hold the activation quantizers. We can choose the quantizers and all the quantization information for each layer by initializing the weights_quantizer and activation_quantizer API.
+For each layer, we use a "Quantization Wrapper" to wrap the layer's weight quantizers, and an "Activation Quantization Holder" to hold the activation quantizers. 
+Both components are provided by the [MCT Quantizers](https://github.com/sony/mct_quantizers) package.
+We can choose the quantizers and all the quantization information for each layer by initializing the weights_quantizer and activation_quantizer API.
 
 Notice that the quantization wrapper, holder and the quantizers are implemented per framework.
 
 <img src="../../docsrc/images/quantization_infra.png" width="700">
 
 ## Quantizers 
-The quantizers in this module are built upon the "Inferable Quantizer" abstraction, and define the "Trainable Quantizer" framework, which contains learnable quantization parameters that can be optimized during training.
+The quantizers in this module are built upon the "Inferable Quantizer" abstraction (from [MCT Quantizers](https://github.com/sony/mct_quantizers)), and define the "Trainable Quantizer" framework, which contains learnable quantization parameters that can be optimized during training.
 
 ## Details and Examples
 
