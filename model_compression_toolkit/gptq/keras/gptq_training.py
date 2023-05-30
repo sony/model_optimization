@@ -150,7 +150,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                                                    weights_quantizers=weights_quantizers)
         return layer
 
-    def get_activation_quantizer_holder(self, n: common.BaseNode) -> Union[None, Callable]:
+    def get_activation_quantizer_holder(self, n: common.BaseNode) -> Callable:
         """
         Retrieve a KerasActivationQuantizationHolder layer to use for activation quantization for a node.
         If the layer is not supposed to be wrapped with activation quantizers - return None.
