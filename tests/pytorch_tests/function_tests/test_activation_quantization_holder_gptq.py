@@ -78,7 +78,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
             self.assertTrue(isinstance(a.activation_holder_quantizer, ActivationPOTInferableQuantizer))
         for name, module in gptq_model.named_modules():
             if isinstance(module, PytorchQuantizationWrapper):
-                self.assertTrue(len(module.activation_quantizers) == 0)
+                self.assertTrue(len(module.weights_quantizers) > 0)
 
     def test_adding_holder_after_relu(self):
         gptq_model = self._get_gptq_model(INPUT_SHAPE, ReLUModel())
@@ -92,7 +92,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
             self.assertTrue(isinstance(a.activation_holder_quantizer, ActivationPOTInferableQuantizer))
         for name, module in gptq_model.named_modules():
             if isinstance(module, PytorchQuantizationWrapper):
-                self.assertTrue(len(module.activation_quantizers) == 0)
+                self.assertTrue(len(module.weights_quantizers) > 0)
 
     def test_adding_holders_after_reuse(self):
         float_model = ReuseModel()
@@ -107,7 +107,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
             self.assertTrue(isinstance(a.activation_holder_quantizer, ActivationPOTInferableQuantizer))
         for name, module in gptq_model.named_modules():
             if isinstance(module, PytorchQuantizationWrapper):
-                self.assertTrue(len(module.activation_quantizers) == 0)
+                self.assertTrue(len(module.weights_quantizers) > 0)
         # Test that two holders are getting inputs from reused conv2d (the layer that is wrapped)
         fx_model = symbolic_trace(gptq_model)
         self.assertTrue(list(fx_model.graph.nodes)[3].all_input_nodes[0] == list(fx_model.graph.nodes)[2])
