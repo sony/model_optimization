@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Tuple, Dict, List, Union, Callable
+from typing import Tuple, Dict, List, Callable
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -29,7 +29,7 @@ from model_compression_toolkit.trainable_infrastructure.common.get_quantizers im
 
 
 def get_activation_quantizer_holder(n: common.BaseNode,
-                                    qat_config: QATConfig) -> Union[None, Callable]:
+                                    qat_config: QATConfig) -> Callable:
     """
     Retrieve a KerasActivationQuantizationHolder layer to use for activation quantization for a node.
     If the layer is not supposed to be wrapped with activation quantizers - return None.

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Dict, Tuple, Union, Callable
+from typing import List, Dict, Tuple, Callable
 
 from mct_quantizers import PytorchActivationQuantizationHolder, QuantizationTarget
 
@@ -29,7 +29,7 @@ from model_compression_toolkit.trainable_infrastructure.common.get_quantizers im
     get_trainable_quantizer_class
 
 def get_activation_quantizer_holder(n: common.BaseNode,
-                                    qat_config: QATConfig) -> Union[None, Callable]:
+                                    qat_config: QATConfig) -> Callable:
     """
     Retrieve a ActivationQuantizationHolder layer to use for activation quantization for a node.
     If the layer is not supposed to be wrapped with activation quantizers - return None.

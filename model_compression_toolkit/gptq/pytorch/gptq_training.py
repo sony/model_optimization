@@ -124,7 +124,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         else:
             return layer
 
-    def get_activation_quantizer_holder(self, n: BaseNode) -> Union[None, Callable]:
+    def get_activation_quantizer_holder(self, n: BaseNode) -> Callable:
         """
         Retrieve a PytorchActivationQuantizationHolder layer to use for activation quantization of a node.
         If the layer is not supposed to be wrapped with an activation quantizer - return None.

@@ -185,13 +185,7 @@ class HardtanhBoundToPOTNetTest(BasePytorchTest):
             self.unit_test.assertTrue(np.allclose(alpha_2 * 6 / 8, 1, atol=1e-1))
             self.unit_test.assertTrue(np.allclose(8 / 6 * beta_2, 1, atol=1e-1))
 
-            if self.experimental_exporter:
-                self.unit_test.assertTrue(quantized_model.hardtanh2.layer.max_val == float_model.hardtanh2.max_val)
-                self.unit_test.assertTrue(quantized_model.hardtanh2.layer.min_val == float_model.hardtanh2.min_val)
-                self.unit_test.assertTrue(quantized_model.hardtanh3.layer.max_val == float_model.hardtanh3.max_val)
-                self.unit_test.assertTrue(quantized_model.hardtanh3.layer.min_val == float_model.hardtanh3.min_val)
-            else:
-                self.unit_test.assertTrue(quantized_model.hardtanh2.max_val == float_model.hardtanh2.max_val)
-                self.unit_test.assertTrue(quantized_model.hardtanh2.min_val == float_model.hardtanh2.min_val)
-                self.unit_test.assertTrue(quantized_model.hardtanh3.max_val == float_model.hardtanh3.max_val)
-                self.unit_test.assertTrue(quantized_model.hardtanh3.min_val == float_model.hardtanh3.min_val)
+            self.unit_test.assertTrue(quantized_model.hardtanh2.max_val == float_model.hardtanh2.max_val)
+            self.unit_test.assertTrue(quantized_model.hardtanh2.min_val == float_model.hardtanh2.min_val)
+            self.unit_test.assertTrue(quantized_model.hardtanh3.max_val == float_model.hardtanh3.max_val)
+            self.unit_test.assertTrue(quantized_model.hardtanh3.min_val == float_model.hardtanh3.min_val)

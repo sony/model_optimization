@@ -71,14 +71,8 @@ class SingleLayerReplacementTest(BasePytorchTest):
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         quantized_model = quantized_models.get('no_quantization')
-        if self.experimental_exporter:
-            self.unit_test.assertTrue(isinstance(quantized_model.activation1, PytorchQuantizationWrapper))
-            self.unit_test.assertTrue(isinstance(quantized_model.activation2, PytorchQuantizationWrapper))
-            self.unit_test.assertTrue(isinstance(quantized_model.activation1.layer, Identity))
-            self.unit_test.assertTrue(isinstance(quantized_model.activation2.layer, torch.nn.ReLU))
-        else:
-            self.unit_test.assertTrue(isinstance(quantized_model.activation1, Identity))
-            self.unit_test.assertTrue(isinstance(quantized_model.activation2, torch.nn.ReLU))
+        self.unit_test.assertTrue(isinstance(quantized_model.activation1, Identity))
+        self.unit_test.assertTrue(isinstance(quantized_model.activation2, torch.nn.ReLU))
 
 
 class ReluReplacementTest(SingleLayerReplacementTest):
@@ -96,14 +90,8 @@ class ReluReplacementTest(SingleLayerReplacementTest):
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         quantized_model = quantized_models.get('no_quantization')
         self.unit_test.assertTrue(torch.all(torch.eq(quantized_model(input_x), input_x[0])))
-        if self.experimental_exporter:
-            self.unit_test.assertTrue(isinstance(quantized_model.activation1, PytorchQuantizationWrapper))
-            self.unit_test.assertTrue(isinstance(quantized_model.activation2, PytorchQuantizationWrapper))
-            self.unit_test.assertTrue(isinstance(quantized_model.activation1.layer, Identity))
-            self.unit_test.assertTrue(isinstance(quantized_model.activation2.layer, Identity))
-        else:
-            self.unit_test.assertTrue(isinstance(quantized_model.activation1, Identity))
-            self.unit_test.assertTrue(isinstance(quantized_model.activation2, Identity))
+        self.unit_test.assertTrue(isinstance(quantized_model.activation1, Identity))
+        self.unit_test.assertTrue(isinstance(quantized_model.activation2, Identity))
 
 
 class AddBias(torch.nn.Module):
@@ -145,11 +133,5 @@ class ReluReplacementWithAddBiasTest(SingleLayerReplacementTest):
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         quantized_model = quantized_models.get('no_quantization')
         self.unit_test.assertTrue(torch.mean((quantized_model(input_x) - input_x[0])) == 6)
-        if self.experimental_exporter:
-            self.unit_test.assertTrue(isinstance(quantized_model.activation1, PytorchQuantizationWrapper))
-            self.unit_test.assertTrue(isinstance(quantized_model.activation2, PytorchQuantizationWrapper))
-            self.unit_test.assertTrue(isinstance(quantized_model.activation1.layer, AddBias))
-            self.unit_test.assertTrue(isinstance(quantized_model.activation2.layer, AddBias))
-        else:
-            self.unit_test.assertTrue(isinstance(quantized_model.activation1, AddBias))
-            self.unit_test.assertTrue(isinstance(quantized_model.activation2, AddBias))
+        self.unit_test.assertTrue(isinstance(quantized_model.activation1, AddBias))
+        self.unit_test.assertTrue(isinstance(quantized_model.activation2, AddBias))
