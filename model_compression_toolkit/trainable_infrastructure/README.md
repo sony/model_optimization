@@ -14,8 +14,6 @@ We can choose the quantizers and all the quantization information for each layer
 
 Notice that the quantization wrapper, holder and the quantizers are implemented per framework.
 
-<img src="../../docsrc/images/quantization_infra.png" width="700">
-
 ## Quantizers 
 The quantizers in this module are built upon the "Inferable Quantizer" abstraction (from [MCT Quantizers](https://github.com/sony/mct_quantizers)), and define the "Trainable Quantizer" framework, which contains learnable quantization parameters that can be optimized during training.
 
