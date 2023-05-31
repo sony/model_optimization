@@ -12,21 +12,20 @@ from benchmark.pytorch_code.helpers import classification_eval, get_representati
 class ModelLib(BaseModelLib):
 
     def __init__(self, args):
+        model_list = timm.list_models('')
+        if args['model_name'] not in model_list:
+            error(f'Unknown model, Available timm models : {model_list}')
+        self.model = timm.create_model(args['model_name'], pretrained=True)
+        self.data_config = resolve_data_config([], model=self.model)  # include the pre-processing
         super().__init__(args)
 
-    def select_model(self, model_name):
-        model_list = timm.list_models('')
-        if model_name not in model_list:
-            error(f'Unknown model, Available timm models : {model_list}')
-        self.model = timm.create_model(model_name, pretrained=True)
-        self.data_config = resolve_data_config([], model=self.model)
-        return self.model.cuda()
+    def get_model(self):
+        return self.model
 
     def get_representative_dataset(self, representative_dataset_folder, n_iter, batch_size, n_images, image_size,
                                    preprocessing=None, seed=0):
-        if self.dataset_name == 'IMAGENET':
-            train_dataset = create_dataset(name='ImageNet', root=representative_dataset_folder, is_training=False,
-                                         batch_size=batch_size)
+        train_dataset = create_dataset(name='ImageNet', root=representative_dataset_folder, split='train',
+                                       is_training=False, batch_size=batch_size)
         dl = create_loader(
             train_dataset,
             input_size=self.data_config['input_size'],
@@ -38,7 +37,7 @@ class ModelLib(BaseModelLib):
         return get_representative_dataset(dl, n_iter)
 
     def evaluate(self, model):
-        batch_size = self.args.batch_size
+        batch_size = int(self.args['batch_size'])
         val_dataset = create_dataset(name='', root=self.validation_dataset_folder, is_training=False,
                                            batch_size=batch_size)
         testloader = create_loader(

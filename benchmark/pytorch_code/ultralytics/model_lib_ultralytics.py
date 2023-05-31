@@ -1,3 +1,4 @@
+import torch
 from torch.utils.data import DataLoader
 
 from benchmark.pytorch_code.ultralytics.replacers import C2fModuleReplacer, DetectModuleReplacer, YOLOReplacer, DetectionModelModuleReplacer
@@ -15,11 +16,8 @@ from ultralytics.yolo.utils.torch_utils import initialize_weights
 class ModelLib(BaseModelLib):
 
     def __init__(self, args):
-        super().__init__(args)
-
-    def select_model(self, model_name):
         # Load model from ultralytics
-        self.ultralytics_model = YOLOReplacer(model_name)
+        self.ultralytics_model = YOLOReplacer(args['model_name'])
         model_weights = self.ultralytics_model.model.state_dict()
 
         # replace few modules with quantization-friendly modules
@@ -31,7 +29,10 @@ class ModelLib(BaseModelLib):
         # load pre-trained weights
         initialize_weights(self.model)
         self.model.load_state_dict(model_weights)  # load weights
-        return self.model.cuda()
+        super().__init__(args)
+
+    def get_model(self):
+        return self.model
 
     def get_representative_dataset(self, representative_dataset_folder, n_iter, batch_size, n_images, image_size,
                                    preprocessing=None, seed=0):
@@ -66,11 +67,16 @@ class ModelLib(BaseModelLib):
 
     def evaluate(self, model):
 
+        # Use Cuda device if available
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.to(device)
+
         # Some attributes are required for the evaluation of the quantized model
         self.ultralytics_model = prepare_model_for_ultralytics_val(self.ultralytics_model, model)
 
         # Evaluation using ultralytics interface
-        return self.ultralytics_model.val(batch=self.args.batch_size)  # evaluate model performance on the validation set
+        results = self.ultralytics_model.val(batch=int(self.args['batch_size']))  # evaluate model performance on the validation set
+        return results.mean_results()[-1]
 
 
 

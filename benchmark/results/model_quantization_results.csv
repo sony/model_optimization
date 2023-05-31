@@ -1,0 +1,4 @@
+model_name,model_library,dataset_name,float_acc,quant_acc,model_size
+mobilenet_v2,torchvision,ImageNet,0.828,0.828,3469760.0
+regnetx_002,timm,ImageNet,0.804,0.812,2662944.0
+yolov8n,ultralytics,COCO,0.3704,0.3616,3146176.0

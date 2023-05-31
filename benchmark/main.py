@@ -1,7 +1,8 @@
 import argparse
 import importlib
 
-from benchmark.common.sources import get_library_name, find_modules
+from benchmark.common.helpers import read_benchmark_list, write_benchmark_list
+from benchmark.common.sources import find_modules
 
 
 def argument_handler():
@@ -26,30 +27,28 @@ def argument_handler():
                         help='Image size required by the pretrained model')
     parser.add_argument('--random_seed', type=int, default=0,
                         help='Random seed')
+    parser.add_argument('--benchmark_csv_list', type=str, default=None,
+                        help='Run benchmark test')
+
 
     args = parser.parse_args()
     return args
 
 
-if __name__ == '__main__':
-
-    #################################################
-    # Set arguments and parameters
-    #################################################
-    args = argument_handler()
+def quantization_flow(args):
 
     #################################################
     # Import the relevant models library and pre-trained model
     #################################################
 
     # Find relevant modules to import according to the model_library
-    model_lib_module, quant_module = find_modules(args.model_library)
+    model_lib_module, quant_module = find_modules(args['model_library'])
     model_lib = importlib.import_module(model_lib_module)
     quant = importlib.import_module(quant_module)
 
     # Create ModelLibrary object and get the pre-trained model
     ml = model_lib.ModelLib(args)
-    float_model = ml.select_model(args.model_name)
+    float_model = ml.get_model()
 
     #################################################
     # Evaluate float model
@@ -59,9 +58,38 @@ if __name__ == '__main__':
     #################################################
     # Run model compression toolkit
     #################################################
-    quantized_model = quant.quantize(float_model, ml.get_representative_dataset, args)
+    target_platform_cap = quant.get_tpc()
+    quantized_model, quantization_info = quant.quantize(float_model, ml.get_representative_dataset, target_platform_cap, args)
 
     #################################################
     # Evaluate quantized model
     #################################################
     quant_results = ml.evaluate(quantized_model)
+
+    return float_results, quant_results, quantization_info
+
+
+if __name__ == '__main__':
+
+    #################################################
+    # Set arguments and parameters
+    #################################################
+    args = argument_handler()
+
+    if args.benchmark_csv_list is None:
+        params = dict(args._get_kwargs())
+        float_acc, quant_acc, quant_info = quantization_flow(params)
+    else:
+        models_list = read_benchmark_list(args.benchmark_csv_list)
+        result_list = []
+        for params in models_list:
+            print(f"Testing model: {params['model_name']} from library: {params['model_library']}")
+            res = {}
+            res['model_name'] = params['model_name']
+            res['model_library'] = params['model_library']
+            res['dataset_name'] = params['dataset_name']
+            res['float_acc'], res['quant_acc'], quant_info = quantization_flow(params)
+            res['model_size'] = quant_info.final_kpi.weights_memory
+            result_list.append(res)
+        write_benchmark_list("model_quantization_results.csv", result_list, res.keys())
+

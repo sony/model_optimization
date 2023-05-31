@@ -1,5 +1,6 @@
 import torch
 
+from benchmark.common.module_replacer import ModuleReplacer
 from ultralytics import YOLO
 from ultralytics.nn.modules import C2f, Detect
 from ultralytics.nn.tasks import DetectionModel
@@ -11,19 +12,16 @@ from pathlib import Path
 from ultralytics.yolo.utils.tal import dist2bbox, make_anchors
 
 
-class ModuleReplacer:
-
-    def __init__(self):
-        return
-
-    def get_new_module(self):
-        return
-
-    def get_config(self):
-        return
-
-    def replace(self):
-        return
+def replace_2d_deg_module(model, old_module, new_module, get_config):
+    for n, m in model.named_children():
+        for name, c in m.named_children():
+            if isinstance(c, old_module):
+                l = new_module(get_config(c))
+                setattr(l, 'f', c.f)
+                setattr(l, 'i', c.i)
+                setattr(l, 'type', c.type)
+                setattr(m, name, l)
+    return model
 
 
 class C2fReplacer(C2f):
@@ -52,16 +50,7 @@ class C2fModuleReplacer(ModuleReplacer):
         return [c1, c2, n, shortcut, g, e]
 
     def replace(self, model):
-        for n, m in model.named_children():
-            for name, c in m.named_children():
-                if isinstance(c, C2f):
-                    l = self.get_new_module(self.get_config(c))
-                    setattr(l, 'f', c.f)
-                    setattr(l, 'i', c.i)
-                    setattr(l, 'type', c.type)
-                    setattr(m, name, l)
-
-        return model
+        return replace_2d_deg_module(model, C2f, self.get_new_module, self.get_config)
 
 
 class DetectReplacer(Detect):
@@ -105,15 +94,7 @@ class DetectModuleReplacer(ModuleReplacer):
         return [nc, ch]
 
     def replace(self, model):
-        for n, m in model.named_children():
-            for name, c in m.named_children():
-                if isinstance(c, Detect):
-                    l = self.get_new_module(self.get_config(c))
-                    setattr(l, 'f', c.f)
-                    setattr(l, 'i', c.i)
-                    setattr(l, 'type', c.type)
-                    setattr(m, name, l)
-        return model
+        return replace_2d_deg_module(model, Detect, self.get_new_module, self.get_config)
 
 
 class DetectionModelReplacer(DetectionModel):

@@ -4,6 +4,8 @@ import torch
 def classification_eval(model, data_loader):
     correct = 0
     total = 0
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
     model.eval()
     # since we're not training, we don't need to calculate the gradients for our outputs
     with torch.no_grad():
@@ -17,6 +19,8 @@ def classification_eval(model, data_loader):
             correct += (predicted == labels.cuda()).sum().item()
             if total % 100 == 0:
                 print(f'Num of images: {total}, Accuracy: {round(100 * correct / total, 2)} %')
+            if total > 200:
+                break
 
     print(f'Num of images: {total}, Accuracy: {round(100 * correct / total, 2)} %')
 
