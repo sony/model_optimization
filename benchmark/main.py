@@ -28,7 +28,9 @@ def argument_handler():
     parser.add_argument('--random_seed', type=int, default=0,
                         help='Random seed')
     parser.add_argument('--benchmark_csv_list', type=str, default=None,
-                        help='Run benchmark test')
+                        help='Runs benchmark test according the a list of models and parameters taken from a csv file')
+    parser.add_argument('--validation_set_limit', type=int, default=None,
+                        help='Limits the number of images taken for evaluation')
 
 
     args = parser.parse_args()
@@ -82,7 +84,9 @@ if __name__ == '__main__':
     else:
         models_list = read_benchmark_list(args.benchmark_csv_list)
         result_list = []
-        for params in models_list:
+        params = dict(args._get_kwargs())
+        for p in models_list:
+            params.update(p)
             print(f"Testing model: {params['model_name']} from library: {params['model_library']}")
             res = {}
             res['model_name'] = params['model_name']

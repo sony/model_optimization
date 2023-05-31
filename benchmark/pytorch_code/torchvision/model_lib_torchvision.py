@@ -43,6 +43,6 @@ class ModelLib(BaseModelLib):
         testloader = torch.utils.data.DataLoader(testset,
                                                   batch_size=batch_size,
                                                   shuffle=False)
-        return classification_eval(model, testloader)
+        return classification_eval(model, testloader, int(self.args['validation_set_limit']))
 
 

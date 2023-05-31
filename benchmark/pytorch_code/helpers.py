@@ -1,7 +1,7 @@
 import torch
 
 
-def classification_eval(model, data_loader):
+def classification_eval(model, data_loader, limit=None):
     correct = 0
     total = 0
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -19,7 +19,7 @@ def classification_eval(model, data_loader):
             correct += (predicted == labels.cuda()).sum().item()
             if total % 100 == 0:
                 print(f'Num of images: {total}, Accuracy: {round(100 * correct / total, 2)} %')
-            if total > 200:
+            if limit and total >= limit:
                 break
 
     print(f'Num of images: {total}, Accuracy: {round(100 * correct / total, 2)} %')
