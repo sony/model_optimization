@@ -17,9 +17,11 @@ from typing import Any
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import FOUND_TORCH
 
+
 if FOUND_TORCH:
     from mct_quantizers import PytorchQuantizationWrapper
     from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
+    from mct_quantizers.pytorch.activation_quantization_holder import PytorchActivationQuantizationHolder
 
     def is_pytorch_layer_exportable(layer: Any) -> bool:
         """
@@ -33,10 +35,10 @@ if FOUND_TORCH:
         """
         if isinstance(layer, PytorchQuantizationWrapper):
             quantizers = list(layer.weights_quantizers.values())
-            quantizers.extend(layer.activation_quantizers)
-            if all([isinstance(q, BasePyTorchInferableQuantizer) for q in quantizers]):
-                return True
-        return False
+            return all([isinstance(q, BasePyTorchInferableQuantizer) for q in quantizers])
+        elif isinstance(layer, PytorchActivationQuantizationHolder):
+            return isinstance(layer.activation_holder_quantizer, BasePyTorchInferableQuantizer)
+        return True
 else:
     def is_pytorch_layer_exportable(*args, **kwargs):  # pragma: no cover
         Logger.error('Installing torch is mandatory '
