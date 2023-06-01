@@ -36,6 +36,6 @@ def new_benchmark_result(params, float_acc, quant_acc, quant_info):
     res['dataset_name'] = params['dataset_name']
     res['float_acc'] = float_acc
     res['quant_acc'] = quant_acc
-    # res['model_size'] = quant_info.final_kpi.weights_memory
+    res['model_size'] = quant_info.final_kpi.weights_memory
 
     return res
