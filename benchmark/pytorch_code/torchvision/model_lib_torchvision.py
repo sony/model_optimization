@@ -19,7 +19,7 @@ class ModelLib(BaseModelLib):
 
     @staticmethod
     def get_torchvision_weights(model_name):
-        return models.get_weight(model_name.title().replace('net', 'Net') + '_Weights.DEFAULT')
+        return models.get_weight(model_name.title().replace('net', 'Net').replace('nas', 'NAS').replace('Mf', 'MF') + '_Weights.DEFAULT')
 
     def __init__(self, args):
         self.model = self.get_torchvision_model(args['model_name'])
@@ -43,6 +43,6 @@ class ModelLib(BaseModelLib):
         testloader = torch.utils.data.DataLoader(testset,
                                                   batch_size=batch_size,
                                                   shuffle=False)
-        return classification_eval(model, testloader, int(self.args['validation_set_limit']))
+        return classification_eval(model, testloader, self.args['validation_set_limit'])
 
 

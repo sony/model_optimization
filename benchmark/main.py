@@ -1,8 +1,8 @@
 import argparse
 import importlib
-
-from benchmark.common.helpers import read_benchmark_list, write_benchmark_list
-from benchmark.common.sources import find_modules
+import time
+from benchmark.common.helpers import read_benchmark_list, write_benchmark_list, new_benchmark_result
+from benchmark.common.helpers import find_modules
 
 
 def argument_handler():
@@ -31,7 +31,6 @@ def argument_handler():
                         help='Runs benchmark test according the a list of models and parameters taken from a csv file')
     parser.add_argument('--validation_set_limit', type=int, default=None,
                         help='Limits the number of images taken for evaluation')
-
 
     args = parser.parse_args()
     return args
@@ -83,17 +82,22 @@ if __name__ == '__main__':
         float_acc, quant_acc, quant_info = quantization_flow(params)
     else:
         models_list = read_benchmark_list(args.benchmark_csv_list)
-        result_list = []
+        results_table = []
         params = dict(args._get_kwargs())
         for p in models_list:
+
+            # Get next model and parameters from the list
+            print(f"-- {time.asctime(time.localtime())} --")
+            print(f"Testing model: {p['model_name']} from library: {p['model_library']}")
             params.update(p)
-            print(f"Testing model: {params['model_name']} from library: {params['model_library']}")
-            res = {}
-            res['model_name'] = params['model_name']
-            res['model_library'] = params['model_library']
-            res['dataset_name'] = params['dataset_name']
-            res['float_acc'], res['quant_acc'], quant_info = quantization_flow(params)
-            res['model_size'] = quant_info.final_kpi.weights_memory
-            result_list.append(res)
-        write_benchmark_list("model_quantization_results.csv", result_list, res.keys())
+
+            # Run quantization flow and add results to the table
+            float_acc, quant_acc, quant_info = quantization_flow(params)
+
+            # Add results to the table
+            res = new_benchmark_result(params, float_acc, quant_acc, quant_info)
+            results_table.append(res)
+
+        # Store results table
+        write_benchmark_list("model_quantization_results.csv", results_table, res.keys())
 

@@ -1,7 +1,5 @@
 from abc import abstractmethod
 
-from benchmark.common.sources import supported_datasets
-
 
 class BaseModelLib(object):
     def __init__(self, args):

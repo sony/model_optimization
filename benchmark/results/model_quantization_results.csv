@@ -1,4 +1,11 @@
-model_name,model_library,dataset_name,float_acc,quant_acc,model_size
-mobilenet_v2,torchvision,ImageNet,0.828,0.828,3469760.0
-regnetx_002,timm,ImageNet,0.804,0.812,2662944.0
-yolov8n,ultralytics,COCO,0.3704,0.3616,3146176.0
+model_name,model_library,dataset_name,float_acc,quant_acc
+mobilenet_v2,torchvision,ImageNet,0.825,0.82
+densenet121,torchvision,ImageNet,0.865,0.845
+efficientnet_b0,torchvision,ImageNet,0.87,0.7
+mnasnet0_5,torchvision,ImageNet,0.82,0.79
+mobilenet_v3_small,torchvision,ImageNet,0.825,0.0
+mobilenet_v3_large,torchvision,ImageNet,0.835,0.82
+regnet_y_400mf,torchvision,ImageNet,0.885,0.86
+regnetx_002,timm,ImageNet,0.805,0.825
+yolov8n,ultralytics,COCO,0.3704,0.3616
+yolov8m,ultralytics,COCO,0.4999,0.4946

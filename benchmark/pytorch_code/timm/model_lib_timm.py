@@ -48,7 +48,7 @@ class ModelLib(BaseModelLib):
             mean=self.data_config['mean'],
             std=self.data_config['std'],
             crop_pct=self.data_config['crop_pct'])
-        return classification_eval(model, testloader, int(self.args['validation_set_limit']))
+        return classification_eval(model, testloader, self.args['validation_set_limit'])
 
 
 
