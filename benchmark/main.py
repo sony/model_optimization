@@ -13,8 +13,6 @@ def argument_handler():
     parser.add_argument('--model_library', type=str, default='torchvision',
                         help='The source of the model out of supported packages',
                         choices=['torchvision', 'timm', 'ultralytics'])
-    parser.add_argument('--dataset_name', type=str, default='IMAGENET',
-                        help='The name of the dataset used for the pre-trained model')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='Batch size for model evaluation')
     parser.add_argument('--validation_dataset_folder', type=str, default='',

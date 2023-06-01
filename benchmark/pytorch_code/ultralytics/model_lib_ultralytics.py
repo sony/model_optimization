@@ -8,7 +8,7 @@ from benchmark.pytorch_code.ultralytics.replacers import prepare_model_for_ultra
 from benchmark.pytorch_code.helpers import get_representative_dataset
 from ultralytics.yolo.data.dataset import YOLODataset
 
-from benchmark.common.base_model_lib import BaseModelLib
+from benchmark.common.base_classes import BaseModelLib
 from enum import Enum
 from ultralytics.yolo.utils.torch_utils import initialize_weights
 

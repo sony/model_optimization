@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 
 class BaseModelLib(object):
@@ -29,6 +29,18 @@ class BaseModelLib(object):
         return
 
 
+class ModuleReplacer(ABC):
 
+    def __init__(self):
+        return
+
+    def get_new_module(self):
+        return
+
+    def get_config(self):
+        return
+
+    def replace(self):
+        return
 
 
