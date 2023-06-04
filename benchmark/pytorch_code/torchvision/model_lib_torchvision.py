@@ -3,7 +3,6 @@ import torch
 import torchvision
 from torch.utils.data import Subset
 from torchvision import models
-import torchvision.transforms as transforms
 
 from benchmark.common.base_model_lib import BaseModelLib
 
@@ -19,6 +18,7 @@ class ModelLib(BaseModelLib):
 
     @staticmethod
     def get_torchvision_weights(model_name):
+        # todo: replace with dedicated API (models_list(), get_mode()...) when updating to torchvision 0.14
         return models.get_weight(model_name.title().replace('net', 'Net').replace('nas', 'NAS').replace('Mf', 'MF') + '_Weights.DEFAULT')
 
     def __init__(self, args):

@@ -1,5 +1,3 @@
-import torch
-
 import timm
 from timm.data import create_dataset, create_loader, resolve_data_config
 

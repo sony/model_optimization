@@ -1,3 +1,10 @@
+"""
+ Parts of this file were copied from https://github.com/ultralytics/ultralytics and modified for this project needs.
+
+ The Licence of the ultralytics project is shown in: https://github.com/ultralytics/ultralytics/blob/main/LICENSE
+"""
+
+
 import torch
 from torch.utils.data import DataLoader
 
