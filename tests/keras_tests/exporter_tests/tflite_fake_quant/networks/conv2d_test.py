@@ -62,3 +62,30 @@ class TestConv2DTFLiteFQExporter(TFLiteFakeQuantExporterBaseTest):
 
 
 
+class TestConv2DReusedTFLiteFQExporter(TFLiteFakeQuantExporterBaseTest):
+
+    def get_input_shape(self):
+        return [(30, 30, 3)]
+
+    def get_tpc(self):
+        tp = generate_test_tp_model({'weights_n_bits': 2})
+        return generate_keras_tpc(name="test_conv2d_2bit_reused_weight", tp_model=tp)
+
+    def get_model(self):
+        conv = Conv2D(3,3)
+        inputs = Input(shape=self.get_input_shape()[0])
+        x = conv(inputs)
+        x = conv(x)
+        return keras.Model(inputs=inputs, outputs=x)
+
+    def run_checks(self):
+        ops = self.interpreter._get_ops_details()
+        op_inputs = []
+        for op in ops:
+            if op['op_name'] == 'CONV_2D':
+                op_inputs.append(op['inputs'])
+        assert len(op_inputs) == 2, f'Expected to find 2 ops of CONV_2D but found {len(op_inputs)}'
+        # Inputs like kernel and bias are expected to be the same since the conv is reused.
+        first_inputs = op_inputs[0][1:] # Ignore first input of activations
+        second_inputs = op_inputs[1][1:] # Ignore first input of activations
+        assert np.all(first_inputs==second_inputs), f'Since conv is reused, the input weight tensors of the op are expected to be identical in both occurrences of the op but indices are {first_inputs} and {second_inputs}'

@@ -15,9 +15,9 @@
 
 import unittest
 
-from tests.keras_tests.exporter_tests.tflite_fake_quant.networks.conv2d_test import TestConv2DTFLiteFQExporter
-from tests.keras_tests.exporter_tests.tflite_int8.networks.conv2d_test import TestConv2DPOTTFLiteINT8Exporter, \
-    TestConv2DSymmetricTFLiteINT8Exporter
+from tests.keras_tests.exporter_tests.tflite_fake_quant.networks.conv2d_test import TestConv2DTFLiteFQExporter, \
+    TestConv2DReusedTFLiteFQExporter
+from tests.keras_tests.exporter_tests.tflite_int8.networks.conv2d_test import TestConv2DPOTTFLiteINT8Exporter, TestConv2DSymmetricTFLiteINT8Exporter
 from tests.keras_tests.exporter_tests.tflite_int8.networks.dense_test import TestDenseTFLiteINT8Exporter
 from tests.keras_tests.exporter_tests.tflite_int8.networks.depthwiseconv2d_test import TestDepthwiseConv2DTFLiteINT8Exporter
 from tests.keras_tests.exporter_tests.tflite_int8.networks.mobilenetv2_test import TestMBV2TFLiteINT8Exporter, \
@@ -50,6 +50,8 @@ class ExporterTestsRunner(unittest.TestCase):
     def test_tflite_fq_conv2d(self):
         TestConv2DTFLiteFQExporter().run_test()
 
+    def test_tflite_fq_conv2d_reused(self):
+        TestConv2DReusedTFLiteFQExporter().run_test()
 
 
 
