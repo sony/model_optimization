@@ -68,7 +68,7 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
             Fake-quant PyTorch model.
         """
         for layer in self.model.children():
-            assert self.is_layer_exportable_fn(layer), f'Layer {layer.name} is not exportable.'
+            self.is_layer_exportable_fn(layer)
 
         model_input = to_torch_tensor(next(self.repr_dataset())[0])
 
