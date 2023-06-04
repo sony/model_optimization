@@ -127,13 +127,13 @@ class ShiftNegActivationPostAddTest(ShiftNegActivationTest):
         self.unit_test.assertTrue(float_model.output.shape.as_list() == quantized_model.output.shape.as_list(),
                                   msg=f'Outputs shape mismatch: {float_model.output.shape} != {quantized_model.output.shape}')
 
-        non_linear_layer_fake_quant = quantized_model.layers[3]
+        non_linear_layer_fake_quant = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1]
         non_linear_nbits = non_linear_layer_fake_quant.activation_holder_quantizer.get_config()['num_bits']
         self.unit_test.assertTrue(non_linear_nbits == SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS,
                                   f"The non-linear node's activation_n_bits after applying snc should be "
                                   f"{SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS}, but activation_n_bits is {non_linear_nbits}")
 
-        post_add_layer_fake_quant = quantized_model.layers[5]
+        post_add_layer_fake_quant = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[2]
         post_add_nbits = post_add_layer_fake_quant.activation_holder_quantizer.get_config()['num_bits']
         self.unit_test.assertTrue(post_add_nbits == self.post_add_nbits,
                                   f"The post_add layer that's added after the non-linear node "

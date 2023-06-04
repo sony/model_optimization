@@ -121,11 +121,6 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
         for layer_out in layer_outs:
             self.unit_test.assertTrue(np.unique(layer_out).flatten().shape[0] <= unique_tensor_values)
 
-        # model_output = quantized_model(input_x)
-        # model_output = model_output if isinstance(model_output, list) else [model_output]
-        # for out in model_output:
-        #     self.unit_test.assertTrue(np.unique(out.numpy().flatten()).shape[0] <= unique_tensor_values)
-
 
 class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
@@ -402,7 +397,6 @@ class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(32, 4)(inputs)
         x = layers.Add()([x, x])
-        # x = layers.Layer()(inputs)
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 

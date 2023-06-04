@@ -29,7 +29,7 @@ if FOUND_TF:
     from mct_quantizers import KerasQuantizationWrapper
 
     def _get_wrapper(node: common.BaseNode,
-                     layer: Layer) -> KerasQuantizationWrapper:
+                     layer: Layer) -> Layer:
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping
         Args:

@@ -69,7 +69,9 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                 Layer after unwrapping.
 
             """
-            assert self.is_layer_exportable_fn(layer), f'Layer {layer.name} is not exportable.'
+
+            # Assert each layer is exportable
+            self.is_layer_exportable_fn(layer)
 
             # If weights are quantized, use the quantized weight for the new built layer.
             if isinstance(layer, KerasQuantizationWrapper):
