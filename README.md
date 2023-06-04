@@ -64,7 +64,7 @@ For more details, we highly recommend visiting our project website where experim
 This section provides a quick starting guide. We begin with installation via source code or pip server. Then, we provide a short usage example.
 
 ### Setting up work environment
-Clone the reposit and install the required packages (via [requirements](requirements.txt)).
+Clone the repository and install the required packages (via [requirements](requirements.txt)).
 ```
 git clone https://github.com/sony/model_optimization.git
 cd model_optimization
