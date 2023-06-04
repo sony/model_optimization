@@ -14,13 +14,12 @@
 # ==============================================================================
 from typing import Any
 
-from keras.engine.base_layer import Layer
-
 from mct_quantizers import BaseInferableQuantizer, KerasActivationQuantizationHolder
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.logger import Logger
 
 if FOUND_TF:
+    from keras.engine.base_layer import Layer
     from keras.engine.input_layer import InputLayer
     from mct_quantizers import KerasQuantizationWrapper
 
