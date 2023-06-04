@@ -63,15 +63,17 @@ For more details, we highly recommend visiting our project website where experim
 
 This section provides a quick starting guide. We begin with installation via source code or pip server. Then, we provide a short usage example.
 
-### Installation
-See the MCT install guide for the pip package, and build from the source.
-
-
-#### From Source
+### Setting up work environment
+Clone the reposit and install the required packages (via [requirements](requirements.txt)).
 ```
 git clone https://github.com/sony/model_optimization.git
-python setup.py install
+cd model_optimization
+pip install -r requirements.txt
 ```
+
+### Installation
+See the MCT install guide for the pip package.
+
 #### From PyPi - latest stable release
 ```
 pip install model-compression-toolkit
