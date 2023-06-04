@@ -24,6 +24,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+import tests.keras_tests.exporter_tests.constants as constants
 
 
 class TFLiteFakeQuantExporterBaseTest(ABC):
@@ -54,6 +55,13 @@ class TFLiteFakeQuantExporterBaseTest(ABC):
         self.interpreter = tf.lite.Interpreter(model_path=self.fq_model_file_path)
         self.interpreter.allocate_tensors()
 
+        # Test inference and similarity to fully quantized model
+        images = next(self.__get_repr_dataset())[0]
+        exportable_predictions = self.exportable_model(images)
+        tflite_predictions = self.__infer_via_interpreter(images)
+        diff = np.sum(np.abs(exportable_predictions - tflite_predictions))
+        assert diff==0, f'Expected same outputs for exported tflite fq model and exportable model buf diff is {diff}'
+
         # Run tests
         self.run_checks()
 
@@ -69,6 +77,15 @@ class TFLiteFakeQuantExporterBaseTest(ABC):
 
     def __get_repr_dataset(self):
         yield [np.random.randn(*((1,) + shape)) for shape in self.get_input_shape()]
+
+    def __infer_via_interpreter(self, inputs):
+        input_index = self.interpreter.get_input_details()[0][constants.INDEX]
+        self.interpreter.set_tensor(input_index, inputs.astype("float32"))
+        # Run inference.
+        self.interpreter.invoke()
+        output_details = self.interpreter.get_output_details()
+        output_data = self.interpreter.get_tensor(output_details[0][constants.INDEX])
+        return output_data
 
     @abstractmethod
     def get_model(self):
