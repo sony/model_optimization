@@ -78,6 +78,11 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                 if layer.is_weights_quantization:
                     new_layer = layer.layer.__class__.from_config(layer.layer.get_config())
                     with tf.name_scope(new_layer.name):
+                        # In order to add the weights of the layer, we need to build it. To build it
+                        # we need to pass its input shape. Not every layer has input_shape since some
+                        # layers may have multiple inputs with different input shapes (reused layers for
+                        # example). For this reason, we take input shape at index 0 so these layers
+                        # can be exported as well.
                         new_layer.build(layer.get_input_shape_at(0))
 
                     # Build a list of the layer's new weights.
