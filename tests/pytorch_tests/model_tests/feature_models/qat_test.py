@@ -186,10 +186,6 @@ class QuantizationAwareTrainingQuantizerHolderTest(QuantizationAwareTrainingTest
         self.unit_test.assertTrue(len(qat_ready_model.activation_activation_holder_quantizer.state_dict()) == 1)
         self.unit_test.assertTrue(len(qat_ready_model.activation_1_activation_holder_quantizer.state_dict()) == 1)
 
-        # Make sure the wrapper layers do not hold activation quantizers
-        self.unit_test.assertTrue(len(qat_ready_model.conv1.activation_quantizers) == 0)
-        self.unit_test.assertTrue(len(qat_ready_model.conv2.activation_quantizers) == 0)
-
 
 class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTest):
     def __init__(self, unit_test):

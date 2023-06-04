@@ -93,8 +93,8 @@ class BasePytorchInfrastructureTest:
     def get_input_shapes(self):
         return [self.input_shape for _ in range(self.num_of_inputs)]
 
-    def get_wrapper(self, layer, weight_quantizers={}, activation_quantizers=[]):
-        return PytorchQuantizationWrapper(layer, weight_quantizers, activation_quantizers)
+    def get_wrapper(self, layer, weight_quantizers={}):
+        return PytorchQuantizationWrapper(layer, weight_quantizers)
 
     def get_weights_quantization_config(self):
         return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
