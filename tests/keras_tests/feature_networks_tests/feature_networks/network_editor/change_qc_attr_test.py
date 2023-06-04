@@ -17,6 +17,7 @@ import numpy as np
 import tensorflow as tf
 from keras.engine.input_layer import InputLayer
 
+from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.core import DebugConfig
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, ChangeFinalWeightsQuantConfigAttr, \
     ChangeFinalActivationQuantConfigAttr, ChangeCandidatesActivationQuantConfigAttr
@@ -66,5 +67,5 @@ class ChangeFinalActivationQCAttrTest(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
-        self.unit_test.assertTrue(conv_layer.activation_quantizers[0].get_config()['num_bits'] == 7)
+        conv_holder_layer = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1]
+        self.unit_test.assertTrue(conv_holder_layer.activation_holder_quantizer.get_config()['num_bits'] == 7)

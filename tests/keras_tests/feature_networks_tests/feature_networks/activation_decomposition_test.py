@@ -40,8 +40,8 @@ class ActivationDecompositionTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0].layer
-        activation_layer = get_layers_from_model_by_type(quantized_model, layers.Activation)[0].layer
+        conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
+        activation_layer = get_layers_from_model_by_type(quantized_model, layers.Activation)[0]
         self.unit_test.assertTrue(conv_layer.get_config().get(ACTIVATION) == LINEAR)
         self.unit_test.assertTrue(activation_layer.get_config().get(ACTIVATION) == self.activation_function)
 

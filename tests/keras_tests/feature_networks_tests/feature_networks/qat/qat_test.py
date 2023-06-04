@@ -125,7 +125,8 @@ class QuantizationAwareTrainingQuantizersTest(QuantizationAwareTrainingTest):
             dw_weight = float_model.layers[1].weights[0].numpy()
             quantized_dw_weight = dw_layers[0].weights[0].numpy()
         else:
-            self.unit_test.assertTrue(isinstance(quantized_model.layers[2], KerasActivationQuantizationHolder))
+            holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+            self.unit_test.assertTrue(len(holder_layers)==2, f'Expected to have 2 activation quantizers (for input and linear layers) but found {len(holder_layers)}')
             for name, quantizer in dw_layers[0].weights_quantizers.items():
                 w_select = [w for w in float_model.layers[1].weights if name + ":0" in w.name]
                 if len(w_select) != 1:

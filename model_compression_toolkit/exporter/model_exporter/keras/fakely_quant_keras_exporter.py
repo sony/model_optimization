@@ -69,51 +69,47 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                 Layer after unwrapping.
 
             """
-            assert self.is_layer_exportable_fn(layer), f'Layer {layer.name} is not exportable.'
+
+            # Assert each layer is exportable
+            self.is_layer_exportable_fn(layer)
 
             # If weights are quantized, use the quantized weight for the new built layer.
-            if layer.is_weights_quantization:
-                new_layer = layer.layer.__class__.from_config(layer.layer.get_config())
-                with tf.name_scope(new_layer.name):
-                    new_layer.build(layer.input_shape)
+            if isinstance(layer, KerasQuantizationWrapper):
+                if layer.is_weights_quantization:
+                    new_layer = layer.layer.__class__.from_config(layer.layer.get_config())
+                    with tf.name_scope(new_layer.name):
+                        new_layer.build(layer.input_shape)
 
-                # Build a list of the layer's new weights.
-                weights_list = []
-                # Go over weights, check if they should be quantized, and quantize if this is the case:
-                for w in new_layer.weights:
-                    val = None
-                    for qw in layer.weights:
-                        if w.name in qw.name:
-                            # Use quantized weight if layer attribute should be quantized.
-                            # For example: check if 'kernel_0' is an attribute
-                            # that should be quantized. First, extract 'kernel' from variable name, check if the
-                            # quantize config contains this as an attribute for quantization. If so -
-                            # Take the quantized weight from the quantize_config and set it to the new layer.
-                            attribute_name = w.name.split('/')[-1].split(':')[0]
-                            if attribute_name in layer.weights_quantizers.keys():
-                                quantizer = layer.weights_quantizers.get(attribute_name)
-                                val = quantizer(qw)
-                            else:
-                                val = qw
-                    if val is None:
-                        Logger.error(f'Could not match weight name: {w.name}')
-                    weights_list.append(val)
+                    # Build a list of the layer's new weights.
+                    weights_list = []
+                    # Go over weights, check if they should be quantized, and quantize if this is the case:
+                    for w in new_layer.weights:
+                        val = None
+                        for qw in layer.weights:
+                            if w.name in qw.name:
+                                # Use quantized weight if layer attribute should be quantized.
+                                # For example: check if 'kernel_0' is an attribute
+                                # that should be quantized. First, extract 'kernel' from variable name, check if the
+                                # quantize config contains this as an attribute for quantization. If so -
+                                # Take the quantized weight from the quantize_config and set it to the new layer.
+                                attribute_name = w.name.split('/')[-1].split(':')[0]
+                                if attribute_name in layer.weights_quantizers.keys():
+                                    quantizer = layer.weights_quantizers.get(attribute_name)
+                                    val = quantizer(qw)
+                                else:
+                                    val = qw
+                        if val is None:
+                            Logger.error(f'Could not match weight name: {w.name}')
+                        weights_list.append(val)
 
-                new_layer.set_weights(weights_list)
-                new_layer.trainable = False
+                    new_layer.set_weights(weights_list)
+                    new_layer.trainable = False
 
-                # If activations are also quantized, wrap the layer back using ActivationQuantizeConfig
-                # from original wrapper (weights wrapping is no longer needed).
-                if layer.is_activation_quantization:
-                    new_layer = KerasQuantizationWrapper(layer=new_layer,
-                                                         activation_quantizers=layer.activation_quantizers)
-
-                return new_layer
+                    return new_layer
 
             # If this is a layer with activation quantization only, just return it
             # as activation quantization in the fake-quant case uses the wrapper for quantization.
             return layer
-
 
         # clone each layer in the model and apply _unwrap_quantize_wrapper to layers wrapped with a QuantizeWrapper.
         self.exported_model = tf.keras.models.clone_model(self.model,

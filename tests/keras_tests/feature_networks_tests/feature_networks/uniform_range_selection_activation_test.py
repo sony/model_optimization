@@ -19,6 +19,7 @@ import numpy as np
 from keras.engine.base_layer import Layer
 from keras.layers import TFOpLambda
 
+from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -55,10 +56,9 @@ class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify quantization range contains zero
-        identity_layers = get_layers_from_model_by_type(quantized_model, Layer)[0]
-        fake_layer_input_args = identity_layers.activation_quantizers[0].get_config()
-        add_layer = get_layers_from_model_by_type(quantized_model, TFOpLambda)[0]
-        fake_layer_add_args = add_layer.activation_quantizers[0].get_config()
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        fake_layer_input_args = holder_layers[0].activation_holder_quantizer.get_config()
+        fake_layer_add_args = holder_layers[2].activation_holder_quantizer.get_config()
 
         input_layer_min, input_layer_max = fake_layer_input_args['min_range'], fake_layer_input_args['max_range']
         add_layer_min, add_layer_max = fake_layer_add_args['min_range'], fake_layer_add_args['max_range']
@@ -92,10 +92,9 @@ class UniformRangeSelectionBoundedActivationTest(UniformRangeSelectionActivation
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        identity_layer = get_layers_from_model_by_type(quantized_model, Layer)[0]
-        fake_layer_input_args = identity_layer.activation_quantizers[0].get_config()
-        softmax_layer = get_layers_from_model_by_type(quantized_model, layers.Softmax)[0]
-        fake_layer_softmax_args = softmax_layer.activation_quantizers[0].get_config()
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        fake_layer_input_args = holder_layers[0].activation_holder_quantizer.get_config()
+        fake_layer_softmax_args = holder_layers[1].activation_holder_quantizer.get_config()
 
         input_layer_min, input_layer_max = fake_layer_input_args['min_range'], fake_layer_input_args['max_range']
         softmax_layer_min, softmax_layer_max = fake_layer_softmax_args['min_range'], fake_layer_softmax_args['max_range']

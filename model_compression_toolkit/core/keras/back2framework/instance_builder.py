@@ -31,14 +31,22 @@ class OperationHandler:
     Class to handle conversions from graph nodes to Keras operators and retrieving them.
     """
 
-    def __init__(self, graph: Graph):
+    def __init__(self, graph: Graph, wrapper: Callable = None):
+        """
+
+        Args:
+            graph: Graph to build its layers based on its nodes.
+            wrapper: Wrapper to use for wrapping the layers.
+        """
+
         # hold nodes after sorting them
         self.node_sort = list(topological_sort(graph))
 
         self.layer_to_node_dict = {}
 
         # hold dictionary from node to its equivalent Keras layer
-        self.node_to_fw_op_dict = instance_builder(self.node_sort)
+        self.node_to_fw_op_dict = instance_builder(self.node_sort,
+                                                   wrapper)
 
     def get_node_op_function(self, n: BaseNode) -> Layer:
         """
@@ -74,12 +82,7 @@ def node_builder(n: common.BaseNode) -> Layer:
         Keras layer that was built from the node.
     """
     framework_attr = copy.copy(n.framework_attr)
-    if n.layer_class is InputLayer:
-        # replace input node with identity, so can wrap it with QuantizationWrapper
-        _layer_class = Layer  # Identity
-        framework_attr = {}
-    else:
-        _layer_class = n.layer_class
+    _layer_class = n.layer_class
     framework_attr[LAYER_NAME] = n.name  # Overwrite framework name to identical graph node name
     node_instance = _layer_class.from_config(framework_attr)  # Build layer from node's configuration.
     with tf.name_scope(n.name):
@@ -90,13 +93,15 @@ def node_builder(n: common.BaseNode) -> Layer:
     return node_instance
 
 
-def instance_builder(toposort: List[BaseNode]) -> Dict[BaseNode, Layer]:
+def instance_builder(toposort: List[BaseNode],
+                     wrapper: Callable = None) -> Dict[BaseNode, Layer]:
     """
     Build a dictionary of nodes to their corresponding Keras
     layers, given a list of nodes.
 
     Args:
         toposort: List of nodes sorted topological to build their layers.
+        wrapper: Wrapper to use for wrapping the layers.
 
     Returns:
         A dictionary of nodes to their corresponding Keras layers.
@@ -106,6 +111,8 @@ def instance_builder(toposort: List[BaseNode]) -> Dict[BaseNode, Layer]:
     for n in toposort:
         if not n.reuse:  # Hold a single node in dictionary for all reused nodes from the same layer.
             keras_node = node_builder(n)
+            if wrapper is not None:
+                keras_node = wrapper(n, keras_node)
             nodes_dict.update({n: keras_node})
 
     return nodes_dict

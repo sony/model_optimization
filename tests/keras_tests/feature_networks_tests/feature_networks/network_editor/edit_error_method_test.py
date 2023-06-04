@@ -18,6 +18,7 @@ import tensorflow as tf
 from keras.engine.base_layer import Layer
 from keras.engine.input_layer import InputLayer
 
+from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.core import QuantizationErrorMethod, DebugConfig
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesActivationQuantConfigAttr
@@ -58,8 +59,8 @@ class EditActivationErrorMethod(BaseKerasFeatureNetworkTest):
         return model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        identity_layer = get_layers_from_model_by_type(quantized_model, Layer)[0]
-        input_q_params = identity_layer.activation_quantizers[0].get_config()
+        holder_layer = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[0]
+        input_q_params = holder_layer.activation_holder_quantizer.get_config()
         threshold = input_q_params['threshold']
         self.unit_test.assertTrue(threshold == 2,
                                   f'After editing input layer to no clipping error method,'
