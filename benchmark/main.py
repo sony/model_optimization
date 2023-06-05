@@ -1,6 +1,6 @@
 import argparse
 import importlib
-import time
+import logging
 from benchmark.common.helpers import read_benchmark_list, write_benchmark_list, new_benchmark_result
 from benchmark.common.helpers import find_modules
 
@@ -9,20 +9,20 @@ def argument_handler():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--model_name', '-m', type=str, required=True,
-                        help='The name of the model to run')
-    parser.add_argument('--model_library', type=str, default='torchvision',
-                        help='The source of the model out of supported packages',
+                        help='The name of the pre-trained model to run')
+    parser.add_argument('--model_library', type=str, required=True,
+                        help='The library that contains the pre-trained model',
                         choices=['torchvision', 'timm', 'ultralytics'])
-    parser.add_argument('--batch_size', type=int, default=32,
-                        help='Batch size for model evaluation')
-    parser.add_argument('--validation_dataset_folder', type=str, default='',
+    parser.add_argument('--validation_dataset_folder', type=str, required=True,
                         help='Path to the validation dataset')
-    parser.add_argument('--representative_dataset_folder', type=str, default='',
+    parser.add_argument('--representative_dataset_folder', type=str, required=True,
                         help='Path to the representative dataset used for quantization')
-    parser.add_argument('--n_images', type=int, default=1024,
+    parser.add_argument('--num_representative_images', type=int, default=1024,
                         help='Number of images for representative dataset')
-    parser.add_argument('--image_size', type=int, default=224,
-                        help='Image size required by the pretrained model')
+    parser.add_argument('--dataset_name', type=str, default='',
+                        help='Datset name for comment')
+    parser.add_argument('--batch_size', type=int, default=32,
+                        help='Batch size for accuracy evaluation')
     parser.add_argument('--random_seed', type=int, default=0,
                         help='Random seed')
     parser.add_argument('--benchmark_csv_list', type=str, default=None,
@@ -70,10 +70,11 @@ def quantization_flow(args):
 
 if __name__ == '__main__':
 
-    #################################################
     # Set arguments and parameters
-    #################################################
     args = argument_handler()
+
+    # Set logger level
+    logging.getLogger().setLevel(logging.INFO)
 
     if args.benchmark_csv_list is None:
         params = dict(args._get_kwargs())
@@ -85,8 +86,7 @@ if __name__ == '__main__':
         for p in models_list:
 
             # Get next model and parameters from the list
-            print(f"-- {time.asctime(time.localtime())} --")
-            print(f"Testing model: {p['model_name']} from library: {p['model_library']}")
+            logging.info(f"Benchmark testing - model: {p['model_name']} from library: {p['model_library']}")
             params.update(p)
 
             # Run quantization flow and add results to the table

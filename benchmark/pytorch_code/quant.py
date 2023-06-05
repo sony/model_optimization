@@ -7,17 +7,14 @@ def get_tpc():
 
 
 def quantize(model, get_representative_dataset, tpc, args):
-    n_iter = math.ceil(int(args['n_images']) // int(args['batch_size']))
-    print(f"Running MCT... number of representative images: {args['n_images']}, number of calibration iters: {n_iter}")
+    n_iter = math.ceil(int(args['num_representative_images']) // int(args['batch_size']))
+    print(f"Running MCT... number of representative images: {args['num_representative_images']}, number of calibration iters: {n_iter}")
 
     representative_data_gen = get_representative_dataset(
         representative_dataset_folder=args['representative_dataset_folder'],
         n_iter=n_iter,
-        batch_size=int(args['batch_size']),
-        n_images=int(args['n_images']),
-        image_size=int(args['image_size']),
-        preprocessing=None,
-        seed=int(args['random_seed']))
+        batch_size=int(args['batch_size'])
+    )
 
 
     quantized_model, quantization_info = \

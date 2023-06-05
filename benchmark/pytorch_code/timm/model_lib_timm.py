@@ -1,10 +1,11 @@
 import timm
 from timm.data import create_dataset, create_loader, resolve_data_config
 
-from benchmark.common.base_model_lib import BaseModelLib
-from logging import error
-
+from benchmark.common.base_classes import BaseModelLib
 from benchmark.pytorch_code.helpers import classification_eval, get_representative_dataset
+
+import logging
+
 
 
 class ModelLib(BaseModelLib):
@@ -12,7 +13,7 @@ class ModelLib(BaseModelLib):
     def __init__(self, args):
         model_list = timm.list_models('')
         if args['model_name'] not in model_list:
-            error(f'Unknown model, Available timm models : {model_list}')
+            logging.error(f'Unknown model, Available timm models : {model_list}')
         self.model = timm.create_model(args['model_name'], pretrained=True)
         self.data_config = resolve_data_config([], model=self.model)  # include the pre-processing
         super().__init__(args)
@@ -20,8 +21,7 @@ class ModelLib(BaseModelLib):
     def get_model(self):
         return self.model
 
-    def get_representative_dataset(self, representative_dataset_folder, n_iter, batch_size, n_images, image_size,
-                                   preprocessing=None, seed=0):
+    def get_representative_dataset(self, representative_dataset_folder, n_iter, batch_size):
         train_dataset = create_dataset(name='ImageNet', root=representative_dataset_folder, split='train',
                                        is_training=False, batch_size=batch_size)
         dl = create_loader(

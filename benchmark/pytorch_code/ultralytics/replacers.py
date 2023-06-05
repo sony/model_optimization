@@ -4,10 +4,9 @@
  The Licence of the ultralytics project is shown in: https://github.com/ultralytics/ultralytics/blob/main/LICENSE
 """
 
-
 import torch
 
-from benchmark.common.module_replacer import ModuleReplacer
+from benchmark.common.base_classes import ModuleReplacer
 from ultralytics import YOLO
 from ultralytics.nn.modules import C2f, Detect
 from ultralytics.nn.tasks import DetectionModel
@@ -31,6 +30,7 @@ def replace_2d_deg_module(model, old_module, new_module, get_config):
     return model
 
 
+# In this section we slightly modify C2f module and replace the "list" function which is not supported by torch.fx
 class C2fReplacer(C2f):
 
     def forward(self, x):
@@ -60,6 +60,9 @@ class C2fModuleReplacer(ModuleReplacer):
         return replace_2d_deg_module(model, C2f, self.get_new_module, self.get_config)
 
 
+# In this section we modify Detect module to exclude dynamic condition which is not supported by torch.fx
+# In addition, we remove the last part of the detection head which is essential for improving the quantization
+# This missing part will be added to the postprocessing implementation
 class DetectReplacer(Detect):
 
     def forward(self, x):
@@ -104,6 +107,7 @@ class DetectModuleReplacer(ModuleReplacer):
         return replace_2d_deg_module(model, Detect, self.get_new_module, self.get_config)
 
 
+# In this section we modify the DetectionModel to exclude dynamic condition which is not supported by torch.fx
 class DetectionModelReplacer(DetectionModel):
     def forward(self, x, augment=False, profile=False, visualize=False):
         # if augment:
@@ -137,11 +141,13 @@ class DetectionModelModuleReplacer(ModuleReplacer):
         return self.get_new_module(self.get_config(model))
 
 
+# In this section we modify the DetectionValidator (not part of the model) to include the missing functionality
+# that was removed from the Detect module
 class DetectionValidatorReplacer(DetectionValidator):
 
     def postprocess(self, preds):
 
-        # post-processing additional part - exported from the model
+        # Post-processing additional part - exported from Detect module
         x = [torch.ones(1, 144, 80, 80), torch.ones(1, 144, 40, 40), torch.ones(1, 144, 20, 20)]
         if preds[0].shape[2] == 6300:
             x = [torch.ones(1, 144, 80, 60), torch.ones(1, 144, 40, 30), torch.ones(1, 144, 20, 15)]
@@ -151,6 +157,7 @@ class DetectionValidatorReplacer(DetectionValidator):
         dbox = dist2bbox(preds[0], a.unsqueeze(0), xywh=True, dim=1) * s
         preds = torch.cat((dbox, preds[1]), 1)
 
+        # Original post-processing part
         preds = super().postprocess(preds)
 
         return preds

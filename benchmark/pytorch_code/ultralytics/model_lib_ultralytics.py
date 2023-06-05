@@ -27,7 +27,7 @@ class ModelLib(BaseModelLib):
         self.ultralytics_model = YOLOReplacer(args['model_name'])
         model_weights = self.ultralytics_model.model.state_dict()
 
-        # replace few modules with quantization-friendly modules
+        # Replace few modules with quantization-friendly modules
         self.model = self.ultralytics_model.model
         self.model = DetectionModelModuleReplacer().replace(self.model)
         self.model = C2fModuleReplacer().replace(self.model)
@@ -41,8 +41,7 @@ class ModelLib(BaseModelLib):
     def get_model(self):
         return self.model
 
-    def get_representative_dataset(self, representative_dataset_folder, n_iter, batch_size, n_images, image_size,
-                                   preprocessing=None, seed=0):
+    def get_representative_dataset(self, representative_dataset_folder, n_iter, batch_size):
         stride = 32
         names = self.ultralytics_model.model.names
 
@@ -52,7 +51,7 @@ class ModelLib(BaseModelLib):
 
         dataset = YOLODataset(
             img_path=representative_dataset_folder,
-            imgsz=image_size,
+            imgsz=640,
             batch_size=batch_size,
             augment=False,  # augmentation
             hyp=hyp,  # TODO: probably add a get_hyps_from_cfg function

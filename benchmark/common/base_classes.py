@@ -20,7 +20,7 @@ class BaseModelLib(object):
 
     @abstractmethod
     # return the representative dataset (for quantization)
-    def get_representative_dataset(self):
+    def get_representative_dataset(self, representative_dataset_folder, n_iter, batch_size):
         return
 
     @abstractmethod
