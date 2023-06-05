@@ -101,15 +101,32 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         def _quantize_multiple_nbits(layer):
             node = self.oh.layer_to_node_dict.get(layer)
             if node is not None:
-                # Wrap only if its weights should be quantized
+                # Wrap only if this is a configurable node
+                # (i.e., weights or activations should be quantized in mixed precision)
                 if node.name in conf_nodes_names:
-                    # TODO: Maybe FullyQuantizedQuantizeWrapper to allow using TFOpLambda in MP
+                    # TODO: Check if new infrastructure enables to run TFOpLambda in MP
                     if node.layer_class in [TFOpLambda, SlicingOpLambda]:
                         Logger.critical(f"Activation mixed-precision is not supported for layers of type "  # pragma: no cover
                                         f"{node.layer_class}. Please modify the TargetPlatformModel object, "
                                         f"such that layers of type {node.layer_class} "
                                         f"won't have more than one quantization configuration option.")
-                    return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node))
+                    # return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node))
+                    assert node.candidates_quantization_cfg is not None
+                    node_q_cfg_candidates = node.candidates_quantization_cfg
+
+                    # sort by decending bit width so using indices would be easier
+                    node_q_cfg_candidates.sort(key=lambda x: (x.weights_quantization_cfg.weights_n_bits,
+                                                              x.activation_quantization_cfg.activation_n_bits),
+                                               reverse=True)
+
+                    float_weights = [n.get_weights_by_keys(attr) for attr in
+                                     DEFAULT_KERAS_INFO.get_kernel_op_attributes(n.type)]
+
+                    max_cfg_candidates = n.find_max_candidates_indices()
+                    assert len(max_cfg_candidates) == 1, \
+                        f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
+                    max_candidate_idx = max_cfg_candidates[0]
+
                 return layer
 
             elif is_layer_fake_quant(layer):
