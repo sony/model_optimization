@@ -61,6 +61,6 @@ The latest MCT benchmark results can be found here [model_quantization_results.p
 This project is licensed under [Apache License 2.0](https://sony.github.io/model_optimization/LICENSE.md).
 However, please note that different external packages have their own licenses. When using this project, you have the option to choose one of the following external packages:
 
-- torchvision: [https://github.com/UiPath/torchvision/blob/master/LICENSE](https://github.com/UiPath/torchvision/blob/master/LICENSE)
-- timm: [https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE](https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE)
-- ultralytics: [https://github.com/ultralytics/ultralytics/blob/main/LICENSE](https://github.com/ultralytics/ultralytics/blob/main/LICENSE)
+- torchvision: [license link](https://github.com/UiPath/torchvision/blob/master/LICENSE), [license copy](https://sony.github.io/model_optimization/benchmark/pytorch_code/torchvision/LICENSE)
+- timm: [license link](https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE), [license copy](https://sony.github.io/model_optimization/benchmark/pytorch_code/timm/LICENSE)
+- ultralytics: [license link](https://github.com/ultralytics/ultralytics/blob/main/LICENSE), [license copy](https://sony.github.io/model_optimization/benchmark/pytorch_code/ultralytics/LICENSE)
