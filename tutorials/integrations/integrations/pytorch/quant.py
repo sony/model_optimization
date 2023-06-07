@@ -1,11 +1,12 @@
 import math
 import model_compression_toolkit as mct
 import logging
-from integrations.common.consts import NUM_REPRESENTATIVE_IMAGES, BATCH_SIZE, REPRESENTATIVE_DATASET_FOLDER
+from integrations.common.consts import NUM_REPRESENTATIVE_IMAGES, BATCH_SIZE, REPRESENTATIVE_DATASET_FOLDER, \
+    TARGET_PLATFORM_NAME, TARGET_PLATFORM_VERSION
 
 
-def get_tpc():
-    return mct.get_target_platform_capabilities('pytorch', 'default')
+def get_tpc(target_platform_name, target_platform_version):
+    return mct.get_target_platform_capabilities('pytorch', target_platform_name, target_platform_version)
 
 
 def quantize(model, get_representative_dataset, tpc, args):
@@ -13,9 +14,9 @@ def quantize(model, get_representative_dataset, tpc, args):
     logging.info(f"Running MCT... number of representative images: {args[REPRESENTATIVE_DATASET_FOLDER]}, number of calibration iters: {n_iter}")
 
     representative_data_gen = get_representative_dataset(
-        representative_dataset_folder=args['representative_dataset_folder'],
+        representative_dataset_folder=args[REPRESENTATIVE_DATASET_FOLDER],
         n_iter=n_iter,
-        batch_size=int(args['batch_size'])
+        batch_size=int(args[BATCH_SIZE])
     )
 
     quantized_model, quantization_info = \

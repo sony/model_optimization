@@ -17,11 +17,11 @@ def find_modules(lib):
     return model_lib_module, quant_module
 
 
-def read_benchmark_list(filename):
+def read_models_list(filename):
     return csv.DictReader(open(path.join(filename)))
 
 
-def write_benchmark_list(filename, models_list, fieldnames):
+def write_results(filename, models_list, fieldnames):
     writer = csv.DictWriter(open(path.join("results",filename), 'w'), fieldnames=fieldnames)
     writer.writeheader()
     for item in models_list:
@@ -29,7 +29,7 @@ def write_benchmark_list(filename, models_list, fieldnames):
         writer.writerow(item)
 
 
-def new_benchmark_result(params, float_acc, quant_acc, quant_info):
+def parse_results(params, float_acc, quant_acc, quant_info):
     res = {}
     res['model_name'] = params['model_name']
     res['model_library'] = params['model_library']

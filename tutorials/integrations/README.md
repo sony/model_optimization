@@ -1,12 +1,10 @@
 # MCT integration example 
 
-This folder contains an example that showcases the integration of MCT with various external packages.
-Each external package contains a collection of pre-trained models. Subfolders with matching name represent a specific
-external package, and within each subfolder, you will find example code that demonstrating how to use integrate 
-that particular package.
+This example project demonstrates the capabilities of MCT and illustrates its interface with various model collections
+packages. 
 
 
-## List of Integrations
+## Supported model collections libraries
 - torchvision: [https://pytorch.org/vision/stable/index.html](https://pytorch.org/vision/stable/index.html)
 - timm: [https://timm.fast.ai](https://timm.fast.ai)
 - ultralytics: [https://ultralytics.com](https://ultralytics.com)
@@ -15,12 +13,8 @@ that particular package.
 ## Getting Started
 ### Installation 
 - Install MCT - Please refer to [MCT documentation](https://github.com/sony/model_optimization/blob/main/README.md)
-- Install one of the following packages for importing the pre-trained models
+- Install one of the supported packages above.
 
-### Supported packages of pre-trained models
-- torchvision: [https://pytorch.org/vision/stable/index.html](https://pytorch.org/vision/stable/index.html)
-- timm: [https://timm.fast.ai](https://timm.fast.ai)
-- ultralytics: [https://ultralytics.com](https://ultralytics.com)
 
 ### Usage Example
 In the following example, we are evaluating the MCT on pre-trained mobilenet_v2, taken from torchvision models library
@@ -48,7 +42,7 @@ The csv file content is a table where each line represent a model and the parame
 | model_name    | model_library | dataset_name  | validation_dataset_folder     | representative_dataset_folder     |
 |---------------|---------------|---------------|-------------------------------|-----------------------------------|
 | mobilenet_v2  | torchvision   | ImageNet      | /path/to/validation/dataset   | /path/to/representative/dataset   |
-| densenet121   | torchvision   | ImageNet      | /path/to/validation/dataset   | /path/to/representative/dataset   |
+| regnetx_002   | timm          | ImageNet      | /path/to/validation/dataset   | /path/to/representative/dataset   |
 
 
 

@@ -4,6 +4,7 @@
  The Licence of the ultralytics project is shown in: https://github.com/ultralytics/ultralytics/blob/main/LICENSE
 """
 
+from enum import Enum
 
 import torch
 from torch.utils.data import DataLoader
@@ -13,10 +14,10 @@ from torchvision.transforms import transforms
 
 from integrations.pytorch.ultralytics.replacers import prepare_model_for_ultralytics_val
 from integrations.pytorch.helpers import get_representative_dataset
-from ultralytics.yolo.data.dataset import YOLODataset
-
 from integrations.common.base_classes import BaseModelLib
-from enum import Enum
+from integrations.integrations.common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT
+
+from ultralytics.yolo.data.dataset import YOLODataset
 from ultralytics.yolo.utils.torch_utils import initialize_weights
 
 
@@ -24,7 +25,7 @@ class ModelLib(BaseModelLib):
 
     def __init__(self, args):
         # Load model from ultralytics
-        self.ultralytics_model = YOLOReplacer(args['model_name'])
+        self.ultralytics_model = YOLOReplacer(args[MODEL_NAME])
         model_weights = self.ultralytics_model.model.state_dict()
 
         # Replace few modules with quantization-friendly modules
@@ -81,7 +82,7 @@ class ModelLib(BaseModelLib):
         self.ultralytics_model = prepare_model_for_ultralytics_val(self.ultralytics_model, model)
 
         # Evaluation using ultralytics interface
-        results = self.ultralytics_model.val(batch=int(self.args['batch_size']))  # evaluate model performance on the validation set
+        results = self.ultralytics_model.val(batch=int(self.args[BATCH_SIZE]))  # evaluate model performance on the validation set
         return results.mean_results()[-1]
 
 

@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import torchvision
 from torch.utils.data import Subset
@@ -6,6 +5,7 @@ from torchvision import models
 
 from integrations.common.base_classes import BaseModelLib
 from integrations.pytorch.helpers import classification_eval, get_representative_dataset
+from integrations.integrations.common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT
 
 
 class ModelLib(BaseModelLib):
@@ -21,9 +21,9 @@ class ModelLib(BaseModelLib):
         return models.get_weight(model_name.title().replace('net', 'Net').replace('nas', 'NAS').replace('Mf', 'MF') + '_Weights.DEFAULT')
 
     def __init__(self, args):
-        self.model = self.get_torchvision_model(args['model_name'])
+        self.model = self.get_torchvision_model(args[MODEL_NAME])
         self.model = self.model(weights='DEFAULT')
-        self.preprocess = self.get_torchvision_weights(args['model_name']).transforms()
+        self.preprocess = self.get_torchvision_weights(args[MODEL_NAME]).transforms()
         super().__init__(args)
 
     def get_model(self):
@@ -36,11 +36,11 @@ class ModelLib(BaseModelLib):
         return get_representative_dataset(dl, n_iter)
 
     def evaluate(self, model):
-        batch_size = int(self.args['batch_size'])
+        batch_size = int(self.args[BATCH_SIZE])
         testset = torchvision.datasets.ImageNet(self.validation_dataset_folder, split='val', transform=self.preprocess)
         testloader = torch.utils.data.DataLoader(testset,
                                                   batch_size=batch_size,
                                                   shuffle=False)
-        return classification_eval(model, testloader, self.args['validation_set_limit'])
+        return classification_eval(model, testloader, self.args[VALIDATION_SET_LIMIT])
 
 
