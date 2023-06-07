@@ -62,7 +62,7 @@ class EditActivationErrorMethod(BaseKerasFeatureNetworkTest):
         holder_layer = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[0]
         input_q_params = holder_layer.activation_holder_quantizer.get_config()
         threshold = input_q_params['threshold']
-        self.unit_test.assertTrue(len(threshold) == 1, f'In per-tensor quantization, expected to fins a single threshold but founod {len(threshold)}')
+        self.unit_test.assertTrue(len(threshold) == 1, f'In per-tensor quantization, expected to find a single threshold but found {len(threshold)} thresholds')
         self.unit_test.assertTrue(threshold[0] == 2,
                                   f'After editing input layer to no clipping error method,'
                                   f'threshold should be 2, but is {threshold}')

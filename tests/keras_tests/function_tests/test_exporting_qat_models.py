@@ -23,6 +23,8 @@ import tensorflow as tf
 import model_compression_toolkit as mct
 from mct_quantizers import KerasActivationQuantizationHolder
 from tests.keras_tests.utils import get_layers_from_model_by_type
+from mct_quantizers import keras_load_quantized_model as mct_quantizers_load # Load with custom of inferable objects
+from model_compression_toolkit import keras_load_quantized_model as mct_load # Load with custom of inferable+trainable objects
 
 layers = keras.layers
 
@@ -46,22 +48,37 @@ class TestExportingQATModelBase(unittest.TestCase):
     def get_filepath(self):
         return tempfile.mkstemp('.h5')[1]
 
-    def load_model(self, filepath):
-        return mct.keras_load_quantized_model(filepath)
+    def load_exported_model(self, filepath):
+        return mct_quantizers_load(filepath)
 
     def infer(self, model, images):
         return model(images)
 
-    def setUp(self) -> None:
+    def export_qat_model(self):
         model = self.get_model()
+        images = next(self.get_dataset())
+
         self.qat_ready, _, _ = mct.qat.keras_quantization_aware_training_init(model,
                                                                          self.get_dataset)
-        images = next(self.get_dataset())
+        _qat_ready_model_path = tempfile.mkstemp('.h5')[1]
+        keras.models.save_model(self.qat_ready, _qat_ready_model_path)
+        self.qat_ready = mct_load(_qat_ready_model_path)
+
         qat_ready_pred = self.qat_ready(images)
         self.final_model = mct.qat.keras_quantization_aware_training_finalize(self.qat_ready)
+
+        _finalized_model_path = tempfile.mkstemp('.h5')[1]
+
+        # TODO: Test it when issue of saving finalized models is solved (issue of converting
+        #  trainable quantizers to inferable quantizers but leaving weights of trainable quantizers
+        #  in wrapper layer)
+        # keras.models.save_model(self.final_model, _finalized_model_path)
+        # self.final_model = mct_quantizers_load(_finalized_model_path)
+
         qat_final_pred = self.final_model(images)
         diff = np.sum(np.abs(qat_ready_pred - qat_final_pred))
-        assert diff == 0, f'QAT Model before and after finalizing should predict identical predictions but diff is ' \
+        assert diff == 0, f'QAT Model before and after finalizing should predict' \
+                          f' identical predictions but diff is ' \
                           f'{diff}'
 
         self.filepath = self.get_filepath()
@@ -70,10 +87,11 @@ class TestExportingQATModelBase(unittest.TestCase):
                                         self.get_tpc(),
                                         serialization_format=self.get_serialization_format())
 
-        self.loaded_model = self.load_model(self.filepath)
+        self.loaded_model = self.load_exported_model(self.filepath)
         self.infer(self.loaded_model, images)
 
-    def test_export_qat_model(self):
+    def test_exported_qat_model(self):
+        self.export_qat_model()
         images = next(self.get_dataset())
         a = self.infer(self.final_model, images)
         b = self.infer(self.loaded_model, images)
@@ -101,7 +119,7 @@ class TestExportingQATModelTFLite(TestExportingQATModelBase):
     def get_filepath(self):
         return tempfile.mkstemp('.tflite')[1]
 
-    def load_model(self, filepath):
+    def load_exported_model(self, filepath):
         # Load model
         interpreter = tf.lite.Interpreter(model_path=filepath)
         interpreter.allocate_tensors()
@@ -115,7 +133,8 @@ class TestExportingQATModelTFLite(TestExportingQATModelBase):
         output_data = model.get_tensor(output_details[0]['index'])
         return output_data
 
-    def test_export_qat_model(self):
+    def test_exported_qat_model(self):
+        self.export_qat_model()
         # Compare scales from tflite model to the fully-quantized model
         exported_model_scales=[]
         for op in self.loaded_model._get_ops_details():
