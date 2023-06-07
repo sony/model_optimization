@@ -40,37 +40,36 @@ def argument_handler():
 
 
 def quantization_flow(config):
+    """
+    This function showcases the typical workflow when using MCT.
+    It begins by evaluating the performance of the floating-point model.
+    Next, the model is compressed using MCT quantization techniques.
+    Finally, the evaluation process is repeated on the compressed model to assess its performance
+    """
 
-    #################################################
-    # Import the relevant models library and pre-trained model
-    #################################################
-
-    # Find relevant modules to import according to the model_library
+    # Find and import the required modules for the models collection library ("model_library")
     model_lib_module, quant_module = find_modules(config[MODEL_LIBRARY])
     model_lib = importlib.import_module(model_lib_module)
     quant = importlib.import_module(quant_module)
 
-    # Create ModelLibrary object and get the pre-trained model
+    # Create a ModelLibrary object that combines the selected pre-trained model with the corresponding performance
+    # evaluation functionality
     ml = model_lib.ModelLib(config)
+
+    # Get the floating point model
     float_model = ml.get_model()
 
-    #################################################
-    # Evaluate float model
-    #################################################
+    # Evaluate the float model
     float_results = ml.evaluate(float_model)
 
-    #################################################
     # Run model compression toolkit
-    #################################################
     target_platform_cap = quant.get_tpc(config[TARGET_PLATFORM_NAME], config[TARGET_PLATFORM_VERSION])
     quantized_model, quantization_info = quant.quantize(float_model,
                                                         ml.get_representative_dataset,
                                                         target_platform_cap,
                                                         config)
 
-    #################################################
     # Evaluate quantized model
-    #################################################
     quant_results = ml.evaluate(quantized_model)
 
     return float_results, quant_results, quantization_info

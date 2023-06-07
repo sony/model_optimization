@@ -55,13 +55,13 @@ class ModelLib(BaseModelLib):
             imgsz=640,
             batch_size=batch_size,
             augment=False,  # augmentation
-            hyp=hyp,  # TODO: probably add a get_hyps_from_cfg function
+            hyp=hyp,
             rect=False,  # rectangular batches
             cache=None,
             single_cls=False,
             stride=int(stride),
             pad=0.5,
-            prefix='',#colorstr(f'{mode}: '),
+            prefix='',
             use_segments=False,
             use_keypoints=False,
             names=names)

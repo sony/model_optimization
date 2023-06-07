@@ -3,7 +3,7 @@ from timm.data import create_dataset, create_loader, resolve_data_config
 
 from integrations.common.base_classes import BaseModelLib
 from integrations.pytorch.helpers import classification_eval, get_representative_dataset
-from integrations.integrations.common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT
+from integrations.common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, VALIDATION_DATASET_FOLDER
 
 import logging
 
@@ -37,7 +37,8 @@ class ModelLib(BaseModelLib):
 
     def evaluate(self, model):
         batch_size = int(self.args[BATCH_SIZE])
-        val_dataset = create_dataset(name='', root=self.validation_dataset_folder, is_training=False,
+        validation_dataset_folder = self.args[VALIDATION_DATASET_FOLDER]
+        val_dataset = create_dataset(name='', root=validation_dataset_folder, is_training=False,
                                            batch_size=batch_size)
         testloader = create_loader(
             val_dataset,

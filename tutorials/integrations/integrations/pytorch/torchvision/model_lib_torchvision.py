@@ -5,7 +5,7 @@ from torchvision import models
 
 from integrations.common.base_classes import BaseModelLib
 from integrations.pytorch.helpers import classification_eval, get_representative_dataset
-from integrations.common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT
+from integrations.common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, VALIDATION_DATASET_FOLDER
 
 
 class ModelLib(BaseModelLib):
@@ -37,7 +37,8 @@ class ModelLib(BaseModelLib):
 
     def evaluate(self, model):
         batch_size = int(self.args[BATCH_SIZE])
-        testset = torchvision.datasets.ImageNet(self.validation_dataset_folder, split='val', transform=self.preprocess)
+        validation_dataset_folder = self.args[VALIDATION_DATASET_FOLDER]
+        testset = torchvision.datasets.ImageNet(validation_dataset_folder, split='val', transform=self.preprocess)
         testloader = torch.utils.data.DataLoader(testset,
                                                   batch_size=batch_size,
                                                   shuffle=False)
