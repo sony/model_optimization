@@ -5,7 +5,7 @@ from torchvision import models
 
 from integrations.common.base_classes import BaseModelLib
 from integrations.pytorch.helpers import classification_eval, get_representative_dataset
-from integrations.integrations.common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT
+from integrations.common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT
 
 
 class ModelLib(BaseModelLib):
