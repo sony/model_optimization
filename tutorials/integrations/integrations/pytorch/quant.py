@@ -1,7 +1,7 @@
 import math
 import model_compression_toolkit as mct
 import logging
-from benchmark.common.consts import NUM_REPRESENTATIVE_IMAGES, BATCH_SIZE, REPRESENTATIVE_DATASET_FOLDER
+from integrations.common.consts import NUM_REPRESENTATIVE_IMAGES, BATCH_SIZE, REPRESENTATIVE_DATASET_FOLDER
 
 
 def get_tpc():

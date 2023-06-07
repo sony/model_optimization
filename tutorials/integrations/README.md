@@ -1,13 +1,15 @@
-# MCT Benchmark 
+# MCT integration example 
 
-This module provides a tool for testing and benchmarking the performance of MCT.
-It is designed to assist developers in evaluating the compression efficiency and the accuracy preservation on a large-scale set of pre-trained models.
+This folder contains an example that showcases the integration of MCT with various external packages.
+Each external package contains a collection of pre-trained models. Subfolders with matching name represent a specific
+external package, and within each subfolder, you will find example code that demonstrating how to use integrate 
+that particular package.
 
 
-## Features
-- Testing:  The module allows to test the performance of compressed models against uncompressed models
-- Model compression and quantization capabilities: Several techniques are available, based on MCT features set.  
-- Large-scale set of models: Supports popular pre-trained model's libraries which are available online
+## List of Integrations
+- torchvision: [https://pytorch.org/vision/stable/index.html](https://pytorch.org/vision/stable/index.html)
+- timm: [https://timm.fast.ai](https://timm.fast.ai)
+- ultralytics: [https://ultralytics.com](https://ultralytics.com)
 
 
 ## Getting Started

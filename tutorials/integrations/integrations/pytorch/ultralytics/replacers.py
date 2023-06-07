@@ -6,7 +6,7 @@
 
 import torch
 
-from benchmark.common.base_classes import ModuleReplacer
+from integrations.common.base_classes import ModuleReplacer
 from ultralytics import YOLO
 from ultralytics.nn.modules import C2f, Detect
 from ultralytics.nn.tasks import DetectionModel

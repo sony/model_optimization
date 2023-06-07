@@ -4,8 +4,8 @@ import torchvision
 from torch.utils.data import Subset
 from torchvision import models
 
-from benchmark.common.base_classes import BaseModelLib
-from benchmark.pytorch.helpers import classification_eval, get_representative_dataset
+from integrations.common.base_classes import BaseModelLib
+from integrations.pytorch.helpers import classification_eval, get_representative_dataset
 
 
 class ModelLib(BaseModelLib):

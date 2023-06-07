@@ -1,9 +1,9 @@
 import argparse
 import importlib
 import logging
-from benchmark.common.helpers import read_benchmark_list, write_benchmark_list, new_benchmark_result
-from benchmark.common.helpers import find_modules
-from benchmark.common.consts import MODEL_NAME, MODEL_LIBRARY, OUTPUT_RESULTS_FILE
+from integrations.common.helpers import read_benchmark_list, write_benchmark_list, new_benchmark_result
+from integrations.common.helpers import find_modules
+from integrations.common.consts import MODEL_NAME, MODEL_LIBRARY, OUTPUT_RESULTS_FILE
 
 
 def argument_handler():

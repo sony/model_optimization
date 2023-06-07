@@ -6,12 +6,12 @@ import importlib
 
 def find_modules(lib):
     # pytorch
-    if importlib.util.find_spec('benchmark.pytorch.' + lib) is not None:
-        model_lib_module = 'benchmark.pytorch.' + lib + '.model_lib_' + lib
-        quant_module = 'benchmark.pytorch.quant'
-    elif importlib.util.find_spec('benchmark.keras_code.' + lib) is not None:
-        model_lib_module = 'benchmark.keras_code.' + lib + '.model_lib_' + lib
-        quant_module = 'benchmark.keras_code.quant'
+    if importlib.util.find_spec('integrations.pytorch.' + lib) is not None:
+        model_lib_module = 'integrations.pytorch.' + lib + '.model_lib_' + lib
+        quant_module = 'integrations.pytorch.quant'
+    elif importlib.util.find_spec('integrations.keras.' + lib) is not None:
+        model_lib_module = 'integrations.keras.' + lib + '.model_lib_' + lib
+        quant_module = 'integrations.keras.quant'
     else:
         raise Exception(f'Error: model library {lib} was not found')
     return model_lib_module, quant_module
