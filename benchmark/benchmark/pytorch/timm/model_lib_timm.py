@@ -2,7 +2,7 @@ import timm
 from timm.data import create_dataset, create_loader, resolve_data_config
 
 from benchmark.common.base_classes import BaseModelLib
-from benchmark.pytorch_code.helpers import classification_eval, get_representative_dataset
+from benchmark.pytorch.helpers import classification_eval, get_representative_dataset
 
 import logging
 

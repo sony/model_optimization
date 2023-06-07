@@ -6,9 +6,9 @@ import importlib
 
 def find_modules(lib):
     # pytorch
-    if importlib.util.find_spec('benchmark.pytorch_code.' + lib) is not None:
-        model_lib_module = 'benchmark.pytorch_code.' + lib + '.model_lib_' + lib
-        quant_module = 'benchmark.pytorch_code.quant'
+    if importlib.util.find_spec('benchmark.pytorch.' + lib) is not None:
+        model_lib_module = 'benchmark.pytorch.' + lib + '.model_lib_' + lib
+        quant_module = 'benchmark.pytorch.quant'
     elif importlib.util.find_spec('benchmark.keras_code.' + lib) is not None:
         model_lib_module = 'benchmark.keras_code.' + lib + '.model_lib_' + lib
         quant_module = 'benchmark.keras_code.quant'
@@ -18,7 +18,7 @@ def find_modules(lib):
 
 
 def read_benchmark_list(filename):
-    return csv.DictReader(open(path.join("results",filename)))
+    return csv.DictReader(open(path.join(filename)))
 
 
 def write_benchmark_list(filename, models_list, fieldnames):
