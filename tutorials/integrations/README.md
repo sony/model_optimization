@@ -46,11 +46,11 @@ The csv file content is a table where each line represent a model and the parame
 
 
 
-Please note that the above example assumes the command is run from the command line and that the [main.py](https://sony.github.io/model_optimization/benchmark/main.py) script is in the current directory
+Please note that the above example assumes the command is run from the command line and that the [main.py](https://sony.github.io/model_optimization/tutorials/integrations/integrations/main.py) script is in the current directory
 
 Make sure to refer to the script itself to understand all available parameters and their usage.
 ## Results
-The latest MCT benchmark results can be found here [model_quantization_results.py](https://sony.github.io/model_optimization/benchmark/results/model_quantization_results.py) 
+The latest MCT benchmark results can be found here [model_quantization_results.py](https://sony.github.io/model_optimization/tutorials/integrations/results/model_quantization_results.py) 
 
 
 ## License
