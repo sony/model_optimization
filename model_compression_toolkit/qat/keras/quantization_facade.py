@@ -256,8 +256,17 @@ if FOUND_TF:
 
          """
         def _export(layer):
-            if isinstance(layer, (KerasQuantizationWrapper, KerasActivationQuantizationHolder)):
+            if isinstance(layer, KerasQuantizationWrapper):
                 layer.convert_to_inferable_quantizers()
+            # In the KerasActivationQuantizationHolder case - converting the quantizers only
+            # is not enough. We need to create a new layer with inferable quantizers. The reason for that
+            # is that if we only convert the quantizers, the layer will have some weights (such as min, max,
+            # threshold) that do not match the configuration, thus loading such a model will fail.
+            # To overcome this, the convert_to_inferable_quantizers of KerasActivationQuantizationHolder
+            # creates a new layer from its new configuration after converting the trainable quantizer
+            # to an inferable quantizer.
+            elif isinstance(layer, KerasActivationQuantizationHolder):
+                layer = layer.convert_to_inferable_quantizers()
             return layer
 
         # clone each layer in the model and apply _export to layers with TrainableQuantizeWrappers

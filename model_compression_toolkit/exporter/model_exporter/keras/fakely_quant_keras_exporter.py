@@ -14,6 +14,7 @@
 # ==============================================================================
 from typing import Dict, Callable
 
+import keras
 import keras.models
 import keras.models
 import tensorflow as tf
@@ -24,7 +25,7 @@ from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter
     BaseKerasExporter
 from mct_quantizers import KerasQuantizationWrapper
 
-
+layers = keras.layers
 
 class FakelyQuantKerasExporter(BaseKerasExporter):
     """
@@ -77,44 +78,36 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
             if isinstance(layer, KerasQuantizationWrapper):
                 if layer.is_weights_quantization:
                     new_layer = layer.layer.__class__.from_config(layer.layer.get_config())
-                    with tf.name_scope(new_layer.name):
-                        # In order to add the weights of the layer, we need to build it. To build it
-                        # we need to pass its input shape. Not every layer has input_shape since some
-                        # layers may have multiple inputs with different input shapes (reused layers for
-                        # example). For this reason, we take input shape at index 0 (any input shape
-                        # should work since the weights are dependent only at some dimensions which have to
-                        # be the same for all inputs).
-                        new_layer.build(layer.get_input_shape_at(0))
 
                     # Build a list of the layer's new weights.
                     weights_list = []
-                    # Go over weights, check if they should be quantized, and quantize if this is the case:
-                    for w in new_layer.weights:
-                        val = None
-                        for qw in layer.weights:
-                            if w.name in qw.name:
-                                # Use quantized weight if layer attribute should be quantized.
-                                # For example: check if 'kernel_0' is an attribute
-                                # that should be quantized. First, extract 'kernel' from variable name, check if the
-                                # quantize config contains this as an attribute for quantization. If so -
-                                # Take the quantized weight from the quantize_config and set it to the new layer.
-                                attribute_name = w.name.split('/')[-1].split(':')[0]
-                                if attribute_name in layer.weights_quantizers.keys():
-                                    quantizer = layer.weights_quantizers.get(attribute_name)
-                                    val = quantizer(qw)
-                                else:
-                                    val = qw
-                        if val is None:
-                            Logger.error(f'Could not match weight name: {w.name}')
-                        weights_list.append(val)
+
+                    # Create a list of weights for the new created layer
+                    if isinstance(layer.layer, layers.DepthwiseConv2D):
+                        weights_list.append(layer.get_quantized_weights()['depthwise_kernel'])
+                    elif isinstance(layer.layer, (layers.Conv2D, layers.Dense, layers.Conv2DTranspose)):
+                        weights_list.append(layer.get_quantized_weights()['kernel'])
+                    else:
+                        Logger.error(f'KerasQuantizationWrapper should wrap only DepthwiseConv2D, Conv2D, Dense'
+                                     f' and Conv2DTranspose layers but wrapped layer is {layer.layer}')
+
+                    if layer.layer.bias is not None:
+                        weights_list.append(layer.layer.bias)
+
+                    # In order to add the weights of the layer, we need to build it. To build it
+                    # we need to pass its input shape. Not every layer has input_shape since some
+                    # layers may have multiple inputs with different input shapes (reused layers for
+                    # example). For this reason, we take input shape at index 0 (any input shape
+                    # should work since the weights are dependent only at some dimensions which have to
+                    # be the same for all inputs).
+                    with tf.name_scope(new_layer.name):
+                        new_layer.build(layer.get_input_shape_at(0))
 
                     new_layer.set_weights(weights_list)
                     new_layer.trainable = False
 
                     return new_layer
 
-            # If this is a layer with activation quantization only, just return it
-            # as activation quantization in the fake-quant case uses the wrapper for quantization.
             return layer
 
         # clone each layer in the model and apply _unwrap_quantize_wrapper to layers wrapped with a QuantizeWrapper.

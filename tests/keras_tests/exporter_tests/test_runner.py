@@ -23,6 +23,7 @@ from tests.keras_tests.exporter_tests.tflite_int8.networks.dense_test import Tes
 from tests.keras_tests.exporter_tests.tflite_int8.networks.depthwiseconv2d_test import TestDepthwiseConv2DTFLiteINT8Exporter
 from tests.keras_tests.exporter_tests.tflite_int8.networks.mobilenetv2_test import TestMBV2TFLiteINT8Exporter, \
     TestMBV2UniformActivationTFLiteINT8Exporter
+from tests.keras_tests.function_tests.test_exporting_qat_models import TestExportingQATModelTFLite, TestExportingQATModelBase
 
 
 class ExporterTestsRunner(unittest.TestCase):
@@ -57,5 +58,11 @@ class ExporterTestsRunner(unittest.TestCase):
     def test_tflite_fq_dense_reused(self):
         TestDenseReusedTFLiteFQExporter().run_test()
 
+    #########################
+    # Exporting QAT models
+    #########################
 
+    def test_export_qat(self):
+        TestExportingQATModelBase().test_exported_qat_model()
+        TestExportingQATModelTFLite().test_exported_qat_model()
 
