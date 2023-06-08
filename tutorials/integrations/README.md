@@ -1,7 +1,7 @@
 # MCT integration example 
 
 This example project demonstrates the capabilities of MCT and illustrates its interface with various model collections
-packages. 
+packages.  
 
 
 ## Supported model collections libraries
