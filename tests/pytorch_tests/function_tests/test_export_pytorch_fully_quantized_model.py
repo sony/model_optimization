@@ -169,7 +169,7 @@ if FOUND_ONNX:
                     return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
 
                 # get onnx conv weight
-                conv_weight_name = 'conv1.layer.weight'
+                conv_weight_name = 'conv1.weight'
                 from onnx import numpy_helper
                 INTIALIZERS = self.exported_model_onnx.graph.initializer
                 Weight = []

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
 from typing import Callable
 
 import torch.nn
@@ -59,11 +60,16 @@ class FakelyQuantTorchScriptPyTorchExporter(BasePyTorchExporter):
         for layer in self.model.children():
             self.is_layer_exportable_fn(layer)
 
+        self._substitute_fully_quantized_model()
+
         torch_traced = torch.jit.trace(self.model,
                                        to_torch_tensor(next(self.repr_dataset())),
                                        check_trace=True)
+
         self.exported_model = torch.jit.script(torch_traced)
+
         Logger.info(f"Exporting PyTorch torch script Model: {self.save_model_path}")
+
         torch.jit.save(self.exported_model, self.save_model_path)
 
 
