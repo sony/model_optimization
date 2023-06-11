@@ -121,7 +121,7 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
         pw_kernel_quantizer_cfg[keras_inferable_constants.INPUT_RANK] = CONV_INPUT_CHANNELS_DIM
 
         assert isinstance(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD],
-                          np.ndarray), f'Expected to find threshold which is a numpy array, but found: {type(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])}'
+                          list), f'Expected to find threshold which is a list, but found: {type(pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])}'
         pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD] = list(
             pw_kernel_quantizer_cfg[keras_inferable_constants.THRESHOLD])
 
