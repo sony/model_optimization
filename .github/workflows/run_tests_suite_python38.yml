@@ -27,6 +27,7 @@ jobs:
           pip install tensorflow_model_optimization
           pip install torch torchvision
           pip install coverage
+          pip install onnx onnxruntime
       - name: Run unittests
         run: coverage run -m --omit "./tests*,*__init__.py" unittest tests/test_suite.py -v
       - name: Run Coverage
