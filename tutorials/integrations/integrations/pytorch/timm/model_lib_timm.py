@@ -12,12 +12,13 @@ import logging
 class ModelLib(BaseModelLib):
 
     def __init__(self, args):
-        model_list = timm.list_models('')
-        if args[MODEL_NAME] not in model_list:
-            logging.error(f'Unknown model, Available timm models : {model_list}')
-        self.model = timm.create_model(args[MODEL_NAME], pretrained=True)
-        self.data_config = resolve_data_config([], model=self.model)  # include the pre-processing
-        super().__init__(args)
+        avialable_models = timm.list_models('')
+        if args[MODEL_NAME] in avialable_models:
+            self.model = timm.create_model(args[MODEL_NAME], pretrained=True)
+            self.data_config = resolve_data_config([], model=self.model)  # include the pre-processing
+            super().__init__(args)
+        else:
+            raise Exception(f'Unknown model, Available timm models : {avialable_models}')
 
     def get_model(self):
         return self.model

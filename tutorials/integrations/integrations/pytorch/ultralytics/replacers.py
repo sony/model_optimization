@@ -148,10 +148,13 @@ class DetectionValidatorReplacer(DetectionValidator):
     def postprocess(self, preds):
 
         # Post-processing additional part - exported from Detect module
-        x = [torch.ones(1, 144, 80, 80), torch.ones(1, 144, 40, 40), torch.ones(1, 144, 20, 20)]
-        if preds[0].shape[2] == 6300:
-            x = [torch.ones(1, 144, 80, 60), torch.ones(1, 144, 40, 30), torch.ones(1, 144, 20, 15)]
-        anchors, strides = (x.transpose(0, 1) for x in make_anchors(x, torch.Tensor([8,16,32]), 0.5))
+        stride = self.model.model.stride # [8,16,32]
+        grid = (self.args.imgsz / stride).numpy().astype(int)
+        in_ch = 64 + self.nc # 144
+        x_dummy = [torch.ones(1, in_ch, grid[0], grid[0]), torch.ones(1, in_ch, grid[1], grid[1]), torch.ones(1, in_ch, grid[2], grid[2])]
+        # if preds[0].shape[2] == 6300:
+        #     x = [torch.ones(1, 144, 80, 60), torch.ones(1, 144, 40, 30), torch.ones(1, 144, 20, 15)]
+        anchors, strides = (x.transpose(0, 1) for x in make_anchors(x_dummy, stride, 0.5))
         a = torch.Tensor.cuda(anchors)
         s = torch.Tensor.cuda(strides)
         dbox = dist2bbox(preds[0], a.unsqueeze(0), xywh=True, dim=1) * s

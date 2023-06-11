@@ -32,6 +32,8 @@ def argument_handler():
                         help='Random seed')
     parser.add_argument('--models_list_csv', type=str, default=None,
                         help='Run according to a list of models and parameters taken from a csv file')
+    parser.add_argument('--output_results_file', type=str, default='model_quantization_results.csv',
+                        help='Run according to a list of models and parameters taken from a csv file')
     parser.add_argument('--validation_set_limit', type=int, default=None,
                         help='Limits the number of images taken for evaluation')
 
@@ -83,13 +85,14 @@ if __name__ == '__main__':
     # Set logger level
     logging.getLogger().setLevel(logging.INFO)
 
+    # Create configuration dictionary
+    config = dict(args._get_kwargs())
+
     if args.models_list_csv is None:
-        config = dict(args._get_kwargs())
         float_acc, quant_acc, quant_info = quantization_flow(config)
     else:
         models_list = read_models_list(args.models_list_csv)
         results_table = []
-        config = dict(args._get_kwargs())
         for p in models_list:
 
             # Get next model and parameters from the list
@@ -104,5 +107,5 @@ if __name__ == '__main__':
             results_table.append(res)
 
         # Store results table
-        write_results(OUTPUT_RESULTS_FILE, results_table, res.keys())
+        write_results(config[OUTPUT_RESULTS_FILE], results_table, res.keys())
 

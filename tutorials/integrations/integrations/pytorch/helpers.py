@@ -17,7 +17,7 @@ def classification_eval(model, data_loader, limit=None):
             # the class with the highest energy is what we choose as prediction
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
-            correct += (predicted == labels.cuda()).sum().item()
+            correct += (predicted == labels.to(device)).sum().item()
             if total % 1000 == 0:
                 logging.info(f'Num of images: {total}, Accuracy: {round(100 * correct / total, 2)} %')
             if limit and total >= int(limit):

@@ -22,20 +22,22 @@ def read_models_list(filename):
 
 
 def write_results(filename, models_list, fieldnames):
-    writer = csv.DictWriter(open(path.join("results",filename), 'w'), fieldnames=fieldnames)
+    writer = csv.DictWriter(open(filename, 'w'), fieldnames=fieldnames)
     writer.writeheader()
     for item in models_list:
-        item['float_acc'], item['quant_acc'] = np.round((item['float_acc'], item['quant_acc']),4)
         writer.writerow(item)
 
 
 def parse_results(params, float_acc, quant_acc, quant_info):
     res = {}
-    res['model_name'] = params['model_name']
-    res['model_library'] = params['model_library']
-    res['dataset_name'] = params['dataset_name']
-    res['float_acc'] = float_acc
-    res['quant_acc'] = quant_acc
-    res['model_size'] = quant_info.final_kpi.weights_memory
+    res['ModelName'] = params['model_name']
+    res['ModelLibrary'] = params['model_library']
+    res['DatasetName'] = params['dataset_name']
+    res['FloatAcc'] = round(float_acc, 4)
+    res['QuantAcc'] = round(quant_acc, 4)
+    res['QuantModelSize[MB]'] = round(quant_info.final_kpi.weights_memory / 1e6, 2)
+    res['CompressionFactor'] = '4'
+    res['QuantTechnique'] = 'PTQ'
+    res['BitConfiguration'] = 'W8A8'
 
     return res

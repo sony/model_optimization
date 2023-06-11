@@ -1,10 +1,11 @@
 # MCT integration example 
 
-This example project demonstrates the capabilities of MCT and illustrates its interface with various model collections
-packages.  
+This example project demonstrates the capabilities of MCT (Model Compression Toolkit) and illustrates its interface
+with various model collections libraries. By accessing a wide range of pre-trained models,
+this project allows users to generate a quantized version of their chosen model with a single click   
 
 
-## Supported model collections libraries
+## Supported libraries
 - torchvision: [https://pytorch.org/vision/stable/index.html](https://pytorch.org/vision/stable/index.html)
 - timm: [https://timm.fast.ai](https://timm.fast.ai)
 - ultralytics: [https://ultralytics.com](https://ultralytics.com)
@@ -12,15 +13,13 @@ packages.
 
 ## Getting Started
 ### Installation 
-- Install MCT - Please refer to [MCT documentation](https://github.com/sony/model_optimization/blob/main/README.md)
-- Install one of the supported packages above.
+- Install one of the supported libraries above.
 
 
 ### Usage Example
 In the following example, we are evaluating the MCT on pre-trained mobilenet_v2, taken from torchvision models library
 1. Install the required library using `pip`:
 ```bash
-pip install model-compression-toolkit
 pip install torchvision
  ```
 2. Run main.py script:
@@ -33,11 +32,11 @@ In this example, we are running the main.py script with the following parameters
 - `--validation_dataset_folder`: Specifies the path to the local copy of the dataset to be used for evaluation.
 - `--representative_dataset_folder`: Specifies the path to the local copy of the dataset to be used for quantization.
 
-In the next example we are evaluating list of pre-trained models. Here we assume the relevant packages were installed (see above), and run the following command:
+In the following example, we evaluate a set of pre-trained models. Assuming that the necessary packages have been installed (as mentioned earlier), we use the following command:
 ```python
-python main.py --benchmark_csv_list <myfile.csv>
+python main.py --models_list_csv <myfile.csv>
 ```
-The csv file content is a table where each line represent a model and the parameters to be used, for example:
+The content of the CSV file consists of a tabular structure where each line represents a model along with its corresponding parameters to be used. For instance:
 
 | model_name    | model_library | dataset_name  | validation_dataset_folder     | representative_dataset_folder     |
 |---------------|---------------|---------------|-------------------------------|-----------------------------------|
@@ -46,11 +45,11 @@ The csv file content is a table where each line represent a model and the parame
 
 
 
-Please note that the above example assumes the command is run from the command line and that the [main.py](https://sony.github.io/model_optimization/tutorials/integrations/integrations/main.py) script is in the current directory
+Please note that the above example assumes the command is run from the command line and that the [main.py](https://sony.github.io/model_optimization/tutorials/integrations/integrations/main.py) script is in the current directory.
 
 Make sure to refer to the script itself to understand all available parameters and their usage.
 ## Results
-The latest MCT benchmark results can be found here [model_quantization_results.py](https://sony.github.io/model_optimization/tutorials/integrations/results/model_quantization_results.py) 
+The latest performance results of MCT on various of models can be found in the [model_quantization_results.py](https://sony.github.io/model_optimization/tutorials/integrations/results/model_quantization_results.py) table. 
 
 
 ## License
