@@ -24,6 +24,7 @@ class ModelLib(BaseModelLib):
         self.model = self.get_torchvision_model(args[MODEL_NAME])
         self.model = self.model(weights='DEFAULT')
         self.preprocess = self.get_torchvision_weights(args[MODEL_NAME]).transforms()
+        self.dataset_name = 'ImageNet'
         super().__init__(args)
 
     def get_model(self):
