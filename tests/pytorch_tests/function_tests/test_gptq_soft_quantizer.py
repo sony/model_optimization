@@ -4,7 +4,7 @@ import torch
 from torch.nn import Conv2d
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.constants import THRESHOLD
+from model_compression_toolkit.constants import THRESHOLD, MIN_THRESHOLD
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from mct_quantizers import PytorchQuantizationWrapper
 from model_compression_toolkit.core.pytorch.constants import KERNEL
@@ -27,27 +27,28 @@ class model_test(torch.nn.Module):
         return x
 
 
-def wrap_test_model(model, sq):
+def wrap_test_model(model, per_channel=False, param_learning=False):
+    tqwc = TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.SYMMETRIC,
+                                           weights_n_bits=8,
+                                           weights_quantization_params={THRESHOLD: 2.0},
+                                           enable_weights_quantization=True,
+                                           weights_channels_axis=1,
+                                           weights_per_channel_threshold=per_channel,
+                                           min_threshold=MIN_THRESHOLD)
+
+    sq = SymmetricSoftRoundingGPTQ(quantization_config=tqwc,
+                                   quantization_parameter_learning=param_learning)
+
     setattr(model, 'conv', PytorchQuantizationWrapper(model.conv, {KERNEL: sq}))
 
 
 class TestGPTQSoftQuantizer(unittest.TestCase):
 
-    def test_soft_targets_symmetric_per_tensor(self):
+    def soft_symmetric_quantizer_per_tensor(self, param_learning=False):
         input = to_torch_tensor(torch.ones([1, 1, 1, 1]))
         in_model = model_test().to(input.device)
 
-        tqwc = TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.SYMMETRIC,
-                                               weights_n_bits=8,
-                                               weights_quantization_params={THRESHOLD: 2.0},
-                                               enable_weights_quantization=True,
-                                               weights_channels_axis=1,
-                                               weights_per_channel_threshold=False,
-                                               min_threshold=0)
-
-        sq = SymmetricSoftRoundingGPTQ(quantization_config=tqwc,
-                                       quantization_parameter_learning=False)
-        wrap_test_model(in_model, sq)
+        wrap_test_model(in_model, per_channel=False, param_learning=param_learning)
 
         conv_wrap_layer = [m for m in in_model.modules() if isinstance(m, PytorchQuantizationWrapper)][0]
         float_weights = [x[1] for x in conv_wrap_layer._weights_vars if x[0] == KERNEL][0]
@@ -60,21 +61,11 @@ class TestGPTQSoftQuantizer(unittest.TestCase):
         out_t = in_model(input)
         self.assertTrue(torch.all(float_weights == out_t.reshape(float_weights.shape)))
 
-    def test_soft_targets_symmetric_per_channel(self):
+    def soft_symmetric_quantizer_per_channel(self, param_learning=False):
         input = to_torch_tensor(torch.ones([1, 1, 2, 2]))
         in_model = model_test(num_channels=1, kernel_size=2).to(input.device)
 
-        tqwc = TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.SYMMETRIC,
-                                               weights_n_bits=8,
-                                               weights_quantization_params={THRESHOLD: 2.0},
-                                               enable_weights_quantization=True,
-                                               weights_channels_axis=1,
-                                               weights_per_channel_threshold=True,
-                                               min_threshold=0)
-
-        sq = SymmetricSoftRoundingGPTQ(quantization_config=tqwc,
-                                       quantization_parameter_learning=False)
-        wrap_test_model(in_model, sq)
+        wrap_test_model(in_model, per_channel=True, param_learning=param_learning)
 
         conv_wrap_layer = [m for m in in_model.modules() if isinstance(m, PytorchQuantizationWrapper)][0]
         float_weights = [x[1] for x in conv_wrap_layer._weights_vars if x[0] == KERNEL][0]
@@ -86,3 +77,15 @@ class TestGPTQSoftQuantizer(unittest.TestCase):
         in_model.train()
         out_t = in_model(input)
         self.assertTrue(torch.isclose(torch.sum(float_weights), out_t))
+
+    def test_soft_targets_symmetric_per_tensor(self):
+        self.soft_symmetric_quantizer_per_tensor(param_learning=False)
+
+    def test_soft_targets_symmetric_per_tensor_param_learning(self):
+        self.soft_symmetric_quantizer_per_tensor(param_learning=True)
+
+    def test_soft_targets_symmetric_per_channel(self):
+        self.soft_symmetric_quantizer_per_channel(param_learning=False)
+
+    def test_soft_targets_symmetric_per_channel_param_learning(self):
+        self.soft_symmetric_quantizer_per_channel(param_learning=True)
