@@ -9,13 +9,13 @@ from enum import Enum
 import torch
 from torch.utils.data import DataLoader
 
-from integrations.pytorch.ultralytics.replacers import C2fModuleReplacer, DetectModuleReplacer, YOLOReplacer, DetectionModelModuleReplacer
+from pytorch_fw.ultralytics.replacers import C2fModuleReplacer, DetectModuleReplacer, YOLOReplacer, DetectionModelModuleReplacer
 from torchvision.transforms import transforms
 
-from integrations.pytorch.ultralytics.replacers import prepare_model_for_ultralytics_val
-from integrations.pytorch.helpers import get_representative_dataset
-from integrations.common.base_classes import BaseModelLib
-from integrations.common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT
+from pytorch_fw.ultralytics.replacers import prepare_model_for_ultralytics_val
+from pytorch_fw.utils import get_representative_dataset
+from common.model_lib import BaseModelLib
+from common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT
 
 from ultralytics.yolo.data.dataset import YOLODataset
 from ultralytics.yolo.utils.torch_utils import initialize_weights

@@ -1,12 +1,11 @@
 import timm
 from timm.data import create_dataset, create_loader, resolve_data_config
 
-from integrations.common.base_classes import BaseModelLib
-from integrations.pytorch.helpers import classification_eval, get_representative_dataset
-from integrations.common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, VALIDATION_DATASET_FOLDER
+from common.model_lib import BaseModelLib
+from pytorch_fw.utils import classification_eval, get_representative_dataset
+from common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, VALIDATION_DATASET_FOLDER
 
 import logging
-
 
 
 class ModelLib(BaseModelLib):

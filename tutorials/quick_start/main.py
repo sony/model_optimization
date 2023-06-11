@@ -1,11 +1,16 @@
 import argparse
 import importlib
 import logging
-from integrations.common.helpers import write_results, read_models_list, parse_results
-from integrations.common.helpers import find_modules
-from integrations.common.consts import MODEL_NAME, MODEL_LIBRARY, OUTPUT_RESULTS_FILE, TARGET_PLATFORM_NAME, \
-    TARGET_PLATFORM_VERSION
+from typing import Dict, Tuple
 
+from common.results import write_results, read_models_list, parse_results
+from common.utils import find_modules
+from common.consts import MODEL_NAME, MODEL_LIBRARY, OUTPUT_RESULTS_FILE, TARGET_PLATFORM_NAME, \
+    TARGET_PLATFORM_VERSION
+from model_compression_toolkit.core.common.user_info import UserInformation
+
+
+# Script to Evaluate and Compress Pre-trained Neural Network Model(s) using MCT (Model Compression Toolkit)
 
 def argument_handler():
     parser = argparse.ArgumentParser()
@@ -20,16 +25,12 @@ def argument_handler():
                         help='Path to the representative dataset used for quantization')
     parser.add_argument('--num_representative_images', type=int, default=1024,
                         help='Number of images for representative dataset')
-    parser.add_argument('--dataset_name', type=str, default='',
-                        help='Datset name for comment')
     parser.add_argument('--target_platform_name', type=str, default='default',
-                        help='Specifies a target platform capabilites (tpc) name')
+                        help='Specifies the name of the target platform capabilities (TPC) to select from the available TPCs provided by MCT')
     parser.add_argument('--target_platform_version', type=str, default=None,
-                        help='Specifies a target platform capabilites (tpc) version')
+                        help='Specifies the version of the target platform capabilities (TPC) to select from the available TPCs provided by MCT')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='Batch size for accuracy evaluation')
-    parser.add_argument('--random_seed', type=int, default=0,
-                        help='Random seed')
     parser.add_argument('--models_list_csv', type=str, default=None,
                         help='Run according to a list of models and parameters taken from a csv file')
     parser.add_argument('--output_results_file', type=str, default='model_quantization_results.csv',
@@ -41,12 +42,20 @@ def argument_handler():
     return args
 
 
-def quantization_flow(config):
+def quantization_flow(config: Dict) -> Tuple[float, float, UserInformation]:
     """
-    This function showcases the typical workflow when using MCT.
+    This function implements the typical workflow when using MCT.
     It begins by evaluating the performance of the floating-point model.
     Next, the model is compressed using MCT quantization techniques.
-    Finally, the evaluation process is repeated on the compressed model to assess its performance
+    Finally, the evaluation process is repeated on the compressed model to assess its performance.
+
+    Args:
+        config (Dict): Configurations dictionary that contains the settings for the quantization flow
+
+    Returns:
+        float_results (float): The accuracy of the floating point model
+        quant_results (float): The accuracy of the quantized model
+        quantization_info (UserInformation): Information of the model optimization process from MCT
     """
 
     # Find and import the required modules for the models collection library ("model_library")
