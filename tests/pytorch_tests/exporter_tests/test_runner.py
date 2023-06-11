@@ -15,7 +15,8 @@
 
 import unittest
 
-from tests.pytorch_tests.exporter_tests.test_exporting_qat_models import TestExportingQATModelTorchscript, TestExportingQATModelONNX
+from model_compression_toolkit.constants import FOUND_ONNXRUNTIME, FOUND_ONNX
+from tests.pytorch_tests.exporter_tests.test_exporting_qat_models import TestExportingQATModelTorchscript
 
 
 class PytorchExporterTestsRunner(unittest.TestCase):
@@ -26,5 +27,7 @@ class PytorchExporterTestsRunner(unittest.TestCase):
 
     def test_export_qat(self):
         TestExportingQATModelTorchscript().test_exported_qat_model()
-        TestExportingQATModelONNX().test_exported_qat_model()
+        if FOUND_ONNX and FOUND_ONNXRUNTIME:
+            from tests.pytorch_tests.exporter_tests.test_exporting_qat_models import TestExportingQATModelONNX
+            TestExportingQATModelONNX().test_exported_qat_model()
 
