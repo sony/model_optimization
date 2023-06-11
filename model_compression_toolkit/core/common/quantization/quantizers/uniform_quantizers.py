@@ -24,9 +24,10 @@ from model_compression_toolkit.core.common.quantization.quantizers.quantizers_he
 def threshold_is_power_of_two(threshold: np.ndarray, per_channel: bool) -> bool:
     if per_channel:
         thresholds_per_channel = threshold.flatten()
-        return (np.log2(thresholds_per_channel) == list(map(int, np.log2(thresholds_per_channel)))).all()
+        return (thresholds_per_channel > 0).all() \
+               and (np.log2(thresholds_per_channel) == list(map(int, np.log2(thresholds_per_channel)))).all()
 
-    return np.log2(threshold) == int(np.log2(threshold))
+    return threshold > 0 and np.log2(threshold) == int(np.log2(threshold))
 
 
 def power_of_two_quantizer(tensor_data: np.ndarray,
@@ -86,6 +87,9 @@ def symmetric_quantizer(tensor_data: np.ndarray,
     threshold = quantization_params.get(THRESHOLD)
     if threshold is None:
         Logger.error(f"{THRESHOLD} parameter must be defined in 'quantization_params'")  # pragma: no cover
+
+    if (per_channel and np.any(threshold <= 0)) or (not per_channel and threshold <= 0):
+        Logger.error(f"{THRESHOLD} parameter must positive")  # pragma: no cover
 
     return quantize_tensor(tensor_data,
                            threshold,

@@ -217,6 +217,7 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
 
             if self.quantization_parameter_learning and not self.power_of_two:
                 scale = tf.reshape(self.get_quantizer_variable(SCALE_PTQ), reshape_shape)
+                scale = tf.where(scale <= 0, MIN_THRESHOLD, scale)
                 q_tensor *= scale
 
         else:
@@ -229,6 +230,7 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
 
             if self.quantization_parameter_learning and not self.power_of_two:
                 scale = self.get_quantizer_variable(SCALE_PTQ)
+                scale = tf.where(scale <= 0, MIN_THRESHOLD, scale)
                 q_tensor *= scale
 
         return q_tensor
@@ -249,7 +251,10 @@ class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
         else:
             old_threshold = self.get_quantizer_variable(PTQ_THRESHOLD)
             if self.quantization_parameter_learning:
-                scale = tf.reshape(self.get_quantizer_variable(SCALE_PTQ), self.threshold_shape)
+                scale = self.get_quantizer_variable(SCALE_PTQ)
+                if self.per_channel:
+                    scale = tf.reshape(scale, self.threshold_shape)
+                scale = tf.where(scale <= 0, MIN_THRESHOLD, scale)
                 old_threshold = old_threshold * scale
             old_threshold = old_threshold.numpy()
         old_threshold = old_threshold.reshape(self.threshold_shape)
