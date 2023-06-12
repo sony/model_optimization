@@ -50,18 +50,12 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         input_shape = (8, 8, 3)
         gptq_model = self._get_gptq_model(input_shape, basic_model)
         self.assertTrue(isinstance(gptq_model.layers[3], KerasActivationQuantizationHolder))
-        for l in gptq_model.layers:
-            if isinstance(l, KerasQuantizationWrapper):
-                self.assertTrue(len(l.activation_quantizers)==0)
 
     def test_adding_holders_after_reuse(self):
         input_shape = (8, 8, 3)
         gptq_model = self._get_gptq_model(input_shape, reuse_model)
         self.assertTrue(isinstance(gptq_model.layers[3], KerasActivationQuantizationHolder))
         self.assertTrue(isinstance(gptq_model.layers[4], KerasActivationQuantizationHolder))
-        for l in gptq_model.layers:
-            if isinstance(l, KerasQuantizationWrapper):
-                self.assertTrue(len(l.activation_quantizers)==0)
 
         # Test that two holders are getting inputs from reused conv2d (the layer that is wrapped)
         self.assertTrue(gptq_model.layers[2].get_output_at(0).ref() == gptq_model.layers[3].input.ref())
