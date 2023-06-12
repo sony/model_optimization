@@ -28,6 +28,7 @@ from model_compression_toolkit import keras_load_quantized_model as mct_load # L
 
 layers = keras.layers
 
+
 class TestExportingQATModelBase(unittest.TestCase):
 
     def get_model(self):
@@ -68,12 +69,8 @@ class TestExportingQATModelBase(unittest.TestCase):
         self.final_model = mct.qat.keras_quantization_aware_training_finalize(self.qat_ready)
 
         _finalized_model_path = tempfile.mkstemp('.h5')[1]
-
-        # TODO: Test it when issue of saving finalized models is solved (issue of converting
-        #  trainable quantizers to inferable quantizers but leaving weights of trainable quantizers
-        #  in wrapper layer)
-        # keras.models.save_model(self.final_model, _finalized_model_path)
-        # self.final_model = mct_quantizers_load(_finalized_model_path)
+        keras.models.save_model(self.final_model, _finalized_model_path)
+        self.final_model = mct_quantizers_load(_finalized_model_path)
 
         qat_final_pred = self.final_model(images)
         diff = np.sum(np.abs(qat_ready_pred - qat_final_pred))
