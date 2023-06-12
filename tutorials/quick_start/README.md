@@ -1,8 +1,12 @@
 # MCT integration example 
 
 This example project demonstrates the capabilities of MCT (Model Compression Toolkit) and illustrates its interface
-with various model collections libraries. By accessing a wide range of pre-trained models,
-this project allows users to generate a quantized version of their chosen model with a single click   
+with various model collections libraries. By accessing a wide range of pre-trained models, this project allows users to
+generate a quantized version of their chosen model with a single click. 
+
+Currently, the project supports a selection of models from each library. However, our ongoing goal is to continually
+expand the support, aiming to include more models
+in the future.   
 
 
 ## Supported libraries
@@ -45,17 +49,17 @@ The content of the CSV file consists of a tabular structure where each line repr
 
 
 
-Please note that the above example assumes the command is run from the command line and that the [main.py](https://sony.github.io/model_optimization/tutorials/quick_start/main.py) script is in the current directory.
+Please note that the above example assumes the command is run from the command line and that the [main.py](./main.py) script is in the current directory.
 
 Make sure to refer to the script itself to understand all available parameters and their usage.
 ## Results
-The latest performance results of MCT on various of models can be found in the [model_quantization_results.py](https://sony.github.io/model_optimization/tutorials/quick_start/results/model_quantization_results.py) table. 
+The latest performance results of MCT on various of models can be found in the [model_quantization_results.py](./results/model_quantization_results.csv) table. 
 
 
 ## License
-This project is licensed under [Apache License 2.0](https://sony.github.io/model_optimization/LICENSE.md).
+This project is licensed under [Apache License 2.0](../../LICENSE.md).
 However, please note that different external packages have their own licenses. When using this project, you have the option to choose one of the following external packages:
 
-- torchvision: [license link](https://github.com/UiPath/torchvision/blob/master/LICENSE), [license copy](https://sony.github.io/model_optimization/quick_start/pytorch_fw/torchvision/LICENSE)
-- timm: [license link](https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE), [license copy](https://sony.github.io/model_optimization/quick_start/pytorch_fw/timm/LICENSE)
-- ultralytics: [license link](https://github.com/ultralytics/ultralytics/blob/main/LICENSE), [license copy](https://sony.github.io/model_optimization/quick_start/pytorch_fw/ultralytics/LICENSE)
+- torchvision: [license link](https://github.com/UiPath/torchvision/blob/master/LICENSE), [license copy](./pytorch_fw/torchvision/LICENSE)
+- timm: [license link](https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE), [license copy](./pytorch_fw/timm/LICENSE)
+- ultralytics: [license link](https://github.com/ultralytics/ultralytics/blob/main/LICENSE), [license copy](./pytorch_fw/ultralytics/LICENSE)
