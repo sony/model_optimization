@@ -45,10 +45,8 @@ class ExportableModelTest(BaseKerasFeatureNetworkTest):
         for holder in holders_layer:
             self.unit_test.assertTrue(isinstance(holder.activation_holder_quantizer, BaseInferableQuantizer))
 
-        self.unit_test.assertTrue(len(conv_layers[0].activation_quantizers) == 0)
         self.unit_test.assertTrue(len(conv_layers[0].weights_quantizers) == 1)
         self.unit_test.assertTrue(isinstance(conv_layers[0].weights_quantizers[KERNEL], BaseInferableQuantizer))
 
-        self.unit_test.assertTrue(len(conv_layers[1].activation_quantizers) == 0)
         self.unit_test.assertTrue(len(conv_layers[1].weights_quantizers) == 1)
         self.unit_test.assertTrue(isinstance(conv_layers[1].weights_quantizers[KERNEL], BaseInferableQuantizer))

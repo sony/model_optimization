@@ -133,8 +133,7 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
 
         # Wrap pw with the new quantizers (the activation is not affected thus we take the Dense quantizers)
         wrapped_pw = KerasQuantizationWrapper(pw_layer,
-                                              pw_weights_quantizers,
-                                              wrapped_layer.activation_quantizers)
+                                              pw_weights_quantizers)
 
         # Compute the shape that the input to the new layer should be reshaped into
         # Example: Dense kernel with the following shape (3, 20) expects to have input with the

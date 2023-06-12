@@ -163,9 +163,6 @@ class QuantizationAwareTrainingQuantizerHolderTest(QuantizationAwareTrainingTest
             self.unit_test.assertTrue(any(['out_min' in w for w in w_names]))
             self.unit_test.assertTrue(any(['out_max' in w for w in w_names]))
 
-        # Make sure the wrapper layers do not hold activation quantizers
-        conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
-        self.unit_test.assertTrue(len(conv_layer.activation_quantizers)==0)
 
 class QATWrappersTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, layer, weight_bits=2, activation_bits=4, finalize=True,
@@ -226,7 +223,6 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
             qat_finalize_model = mct.qat.keras_quantization_aware_training_finalize(qat_model)
             for layer in qat_finalize_model.layers:
                 if isinstance(layer, KerasQuantizationWrapper):
-                    self.unit_test.assertTrue(len(layer.activation_quantizers)==0, f'Found {len(layer.activation_quantizers)} activation quantizers in layer wrapper, but activation quantizers should be in ActivationQuantizationHolder layers')
                     for q in layer.weights_quantizers.values():
                         self.unit_test.assertFalse(isinstance(q, BaseTrainableQuantizer), f'Quantizer {type(q)} is trainable after finalizing the model')
                 elif isinstance(layer, KerasActivationQuantizationHolder):
@@ -246,25 +242,25 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
         all_trainable_quantizers = get_all_subclasses(BaseKerasQATTrainableQuantizer)
         all_inferable_quantizers = get_all_subclasses(BaseKerasInferableQuantizer)
         for layer in qat_model.layers:
-            if isinstance(layer, KerasQuantizationWrapper):
+            if isinstance(layer, KerasActivationQuantizationHolder):
                 # Check Activation quantizers
-                if layer.is_activation_quantization:
-                    for quantizer in layer.activation_quantizers:
-                        if finalize:
-                            self.unit_test.assertTrue(isinstance(quantizer, BaseKerasInferableQuantizer))
-                            q = [_q for _q in all_inferable_quantizers if
-                                 _q.quantization_target == QuantizationTarget.Activation
-                                 and self.activation_quantization_method in _q.quantization_method]
-                            self.unit_test.assertTrue(len(q) == 1)
-                            self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q[0]))
-                        else:
-                            self.unit_test.assertTrue(isinstance(quantizer, BaseKerasTrainableQuantizer))
-                            q = [_q for _q in all_trainable_quantizers if _q.quantizer_type == mct.qat.TrainingMethod.STE
-                                 and _q.quantization_target == QuantizationTarget.Activation
-                                 and self.activation_quantization_method in _q.quantization_method]
-                            self.unit_test.assertTrue(len(q) == 1)
-                            self.unit_test.assertTrue(isinstance(layer.activation_quantizers[0], q[0]))
+                if finalize:
+                    self.unit_test.assertTrue(isinstance(layer.activation_holder_quantizer, BaseKerasInferableQuantizer))
+                    q = [_q for _q in all_inferable_quantizers if
+                         _q.quantization_target == QuantizationTarget.Activation
+                         and self.activation_quantization_method in _q.quantization_method]
+                    self.unit_test.assertTrue(len(q) == 1)
+                    self.unit_test.assertTrue(isinstance(layer.activation_holder_quantizer, q[0]))
+                else:
+                    self.unit_test.assertTrue(isinstance(layer.activation_holder_quantizer, BaseKerasTrainableQuantizer))
+                    q = [_q for _q in all_trainable_quantizers if
+                         _q.quantizer_type == mct.qat.TrainingMethod.STE
+                         and _q.quantization_target == QuantizationTarget.Activation
+                         and self.activation_quantization_method in _q.quantization_method]
+                    self.unit_test.assertTrue(len(q) == 1)
+                    self.unit_test.assertTrue(isinstance(layer.activation_holder_quantizer, q[0]))
 
+            elif isinstance(layer, KerasQuantizationWrapper):
                 # Check Weight quantizers
                 if layer.is_weights_quantization:
                     for name, quantizer in layer.weights_quantizers.items():
@@ -315,6 +311,6 @@ class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
                 if layer.is_weights_quantization:
                     self.unit_test.assertTrue(
                         len(layer.weights_quantizers['kernel'].quantization_config.weights_bits_candidates) > 1)
-                if layer.is_activation_quantization:
-                    self.unit_test.assertTrue(
-                        len(layer.activation_quantizers[0].quantization_config.activation_bits_candidates) > 1)
+            elif isinstance(layer, KerasActivationQuantizationHolder):
+                self.unit_test.assertTrue(
+                    len(layer.activation_holder_quantizer.quantization_config.activation_bits_candidates) > 1)
