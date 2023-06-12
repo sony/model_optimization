@@ -40,9 +40,7 @@ if FOUND_TF:
                            save_model_path: str,
                            target_platform_capabilities: TargetPlatformCapabilities,
                            is_layer_exportable_fn: Callable = is_keras_layer_exportable,
-                           serialization_format: KerasExportSerializationFormat =
-                           KerasExportSerializationFormat.KERAS_H5) -> \
-            Dict[str, type]:
+                           serialization_format: KerasExportSerializationFormat = KerasExportSerializationFormat.KERAS_H5) -> Dict[str, type]:
         """
         Export a Keras quantized model to a h5 or tflite model.
         The model will be saved to the path in save_model_path.
