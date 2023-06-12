@@ -3,7 +3,7 @@ import importlib
 import logging
 from typing import Dict, Tuple
 
-from common.results import write_results, read_models_list, parse_results
+from common.results import write_results, read_models_list, parse_results, QuantInfo, plot_results
 from common.utils import find_modules
 from common.consts import MODEL_NAME, MODEL_LIBRARY, OUTPUT_RESULTS_FILE, TARGET_PLATFORM_NAME, \
     TARGET_PLATFORM_VERSION
@@ -27,7 +27,7 @@ def argument_handler():
                         help='Number of images for representative dataset')
     parser.add_argument('--target_platform_name', type=str, default='default',
                         help='Specifies the name of the target platform capabilities (TPC) to select from the available TPCs provided by MCT')
-    parser.add_argument('--target_platform_version', type=str, default=None,
+    parser.add_argument('--target_platform_version', type=str, default='latest',
                         help='Specifies the version of the target platform capabilities (TPC) to select from the available TPCs provided by MCT')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='Batch size for accuracy evaluation')
@@ -42,7 +42,7 @@ def argument_handler():
     return args
 
 
-def quantization_flow(config: Dict) -> Tuple[float, float, UserInformation]:
+def quantization_flow(config: Dict) -> Tuple[float, float, QuantInfo]:
     """
     This function implements the typical workflow when using MCT.
     It begins by evaluating the performance of the floating-point model.
@@ -55,7 +55,7 @@ def quantization_flow(config: Dict) -> Tuple[float, float, UserInformation]:
     Returns:
         float_results (float): The accuracy of the floating point model
         quant_results (float): The accuracy of the quantized model
-        quantization_info (UserInformation): Information of the model optimization process from MCT
+        quantization_info (QuantInfo): Information of the model optimization process from MCT
     """
 
     # Find and import the required modules for the models collection library ("model_library")
@@ -71,7 +71,7 @@ def quantization_flow(config: Dict) -> Tuple[float, float, UserInformation]:
     float_model = ml.get_model()
 
     # Evaluate the float model
-    float_results = ml.evaluate(float_model)
+    float_results, _ = ml.evaluate(float_model)
 
     # Run model compression toolkit
     target_platform_cap = quant.get_tpc(config[TARGET_PLATFORM_NAME], config[TARGET_PLATFORM_VERSION])
@@ -81,9 +81,9 @@ def quantization_flow(config: Dict) -> Tuple[float, float, UserInformation]:
                                                         config)
 
     # Evaluate quantized model
-    quant_results = ml.evaluate(quantized_model)
+    quant_results, dataset_info = ml.evaluate(quantized_model)
 
-    return float_results, quant_results, quantization_info
+    return float_results, quant_results, quantization_info, dataset_info
 
 
 if __name__ == '__main__':
@@ -98,7 +98,14 @@ if __name__ == '__main__':
     config = dict(args._get_kwargs())
 
     if args.models_list_csv is None:
-        float_acc, quant_acc, quant_info = quantization_flow(config)
+
+        # Run quantization flow and add results to the table
+        float_acc, quant_acc, quant_info, dataset_info = quantization_flow(config)
+
+        # Parse the results and print to screen
+        res = parse_results(config, float_acc, quant_acc, quant_info, dataset_info)
+        plot_results(res)
+
     else:
         models_list = read_models_list(args.models_list_csv)
         results_table = []
@@ -109,12 +116,15 @@ if __name__ == '__main__':
             config.update(p)
 
             # Run quantization flow and add results to the table
-            float_acc, quant_acc, quant_info = quantization_flow(config)
+            float_acc, quant_acc, quant_info, dataset_info = quantization_flow(config)
 
             # Add results to the table
-            res = parse_results(config, float_acc, quant_acc, quant_info)
+            res = parse_results(config, float_acc, quant_acc, quant_info, dataset_info)
             results_table.append(res)
 
         # Store results table
         write_results(config[OUTPUT_RESULTS_FILE], results_table, res.keys())
+
+        # Print results to screen
+        plot_results(results_table)
 

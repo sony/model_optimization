@@ -1,6 +1,7 @@
 import torch
 import logging
 
+
 def classification_eval(model, data_loader, limit=None):
     logging.info(f'Start classification evaluation')
     correct = 0
@@ -25,7 +26,7 @@ def classification_eval(model, data_loader, limit=None):
 
     logging.info(f'Num of images: {total}, Accuracy: {round(100 * correct / total, 2)} %')
 
-    return correct / total
+    return correct / total, total
 
 
 def get_representative_dataset(data_loader, n_iters, data_loader_key=0, transforms=None):

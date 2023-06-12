@@ -7,6 +7,7 @@ from common.consts import NUM_REPRESENTATIVE_IMAGES, BATCH_SIZE, REPRESENTATIVE_
     TARGET_PLATFORM_NAME, TARGET_PLATFORM_VERSION
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from tutorials.quick_start.common.results import QuantInfo
 
 
 def get_tpc(target_platform_name: str, target_platform_version: str) -> TargetPlatformCapabilities:
@@ -55,4 +56,4 @@ def quantize(model: nn.Module,
                                                                 representative_data_gen=representative_data_gen,
                                                                 target_platform_capabilities=tpc)
 
-    return quantized_model, quantization_info
+    return quantized_model, QuantInfo(user_info=quantization_info, tpc_info=tpc.get_info(), technique='PTQ')

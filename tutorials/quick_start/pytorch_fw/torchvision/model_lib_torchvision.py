@@ -7,6 +7,8 @@ from common.model_lib import BaseModelLib
 from pytorch_fw.utils import classification_eval, get_representative_dataset
 from common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, VALIDATION_DATASET_FOLDER
 
+from tutorials.quick_start.common.results import DatasetInfo
+
 
 class ModelLib(BaseModelLib):
 
@@ -32,7 +34,6 @@ class ModelLib(BaseModelLib):
 
     def get_representative_dataset(self, representative_dataset_folder, n_iter, batch_size):
         ds = torchvision.datasets.ImageNet(representative_dataset_folder, split='train', transform=self.preprocess)
-        # ds = Subset(ds, list(np.random.randint(0, len(ds) + 1, n_images)))
         dl = torch.utils.data.DataLoader(ds, batch_size, shuffle=True)
         return get_representative_dataset(dl, n_iter)
 
@@ -43,6 +44,8 @@ class ModelLib(BaseModelLib):
         testloader = torch.utils.data.DataLoader(testset,
                                                   batch_size=batch_size,
                                                   shuffle=False)
-        return classification_eval(model, testloader, self.args[VALIDATION_SET_LIMIT])
+        acc, total = classification_eval(model, testloader, self.args[VALIDATION_SET_LIMIT])
+        dataset_info = DatasetInfo(self.dataset_name, total)
+        return acc, dataset_info
 
 

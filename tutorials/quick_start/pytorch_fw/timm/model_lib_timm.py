@@ -5,7 +5,7 @@ from common.model_lib import BaseModelLib
 from pytorch_fw.utils import classification_eval, get_representative_dataset
 from common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, VALIDATION_DATASET_FOLDER
 
-import logging
+from tutorials.quick_start.common.results import DatasetInfo
 
 
 class ModelLib(BaseModelLib):
@@ -15,6 +15,7 @@ class ModelLib(BaseModelLib):
         if args[MODEL_NAME] in avialable_models:
             self.model = timm.create_model(args[MODEL_NAME], pretrained=True)
             self.data_config = resolve_data_config([], model=self.model)  # include the pre-processing
+            self.dataset_name = 'ImageNet'
             super().__init__(args)
         else:
             raise Exception(f'Unknown model, Available timm models : {avialable_models}')
@@ -48,7 +49,10 @@ class ModelLib(BaseModelLib):
             mean=self.data_config['mean'],
             std=self.data_config['std'],
             crop_pct=self.data_config['crop_pct'])
-        return classification_eval(model, testloader, self.args[VALIDATION_SET_LIMIT])
+
+        acc, total = classification_eval(model, testloader, self.args[VALIDATION_SET_LIMIT])
+        dataset_info = DatasetInfo(self.dataset_name, total)
+        return acc, dataset_info
 
 
 

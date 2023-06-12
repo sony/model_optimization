@@ -17,6 +17,7 @@ from pytorch_fw.utils import get_representative_dataset
 from common.model_lib import BaseModelLib
 from common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT
 
+from tutorials.quick_start.common.results import DatasetInfo
 from ultralytics.yolo.data.dataset import YOLODataset
 from ultralytics.yolo.utils.torch_utils import initialize_weights
 
@@ -26,6 +27,7 @@ class ModelLib(BaseModelLib):
     def __init__(self, args):
         # Load model from ultralytics
         self.ultralytics_model = YOLOReplacer(args[MODEL_NAME])
+        self.dataset_name = 'COCO'
         model_weights = self.ultralytics_model.model.state_dict()
 
         # Replace few modules with quantization-friendly modules
@@ -83,7 +85,9 @@ class ModelLib(BaseModelLib):
 
         # Evaluation using ultralytics interface
         results = self.ultralytics_model.val(batch=int(self.args[BATCH_SIZE]))  # evaluate model performance on the validation set
-        return results.mean_results()[-1]
+        map_res = results.mean_results()[-1]
+        dataset_info = DatasetInfo(self.dataset_name, 5000)
+        return map_res, dataset_info
 
 
 
