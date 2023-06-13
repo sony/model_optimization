@@ -62,26 +62,26 @@ class ScaleEqualizationBaseTest(BasePytorchTest):
             if self.experimental_exporter:
                 quantized_model_layer1_weight = quantized_model.layer1_bn.layer.weight.detach().cpu().numpy().squeeze()
                 quantized_model_layer2_weight = quantized_model.layer2.layer.weight.detach().cpu().numpy().squeeze()
-                float_model_layer1_weight = float_model.layer1.weight.detach().cpu().numpy().squeeze()
-                float_model_layer2_weight = float_model.layer2.weight.detach().cpu().numpy().squeeze()
-                gamma = float_model.bn.weight.detach().cpu().numpy().squeeze()
-                bn_beta = float_model.bn.bias.detach().cpu().numpy().squeeze()
-
-                if type(quantized_model.layer1_bn.layer) == ConvTranspose2d:
-                    quantized_model_layer1_weight = np.transpose(quantized_model_layer1_weight)
-                    float_model_layer1_weight = np.transpose(float_model_layer1_weight)
-
+                is_first_transpose = type(quantized_model.layer1_bn.layer) == ConvTranspose2d
+                is_same = type(quantized_model.layer1_bn.layer) == type(quantized_model.layer2.layer)
             else:
                 quantized_model_layer1_weight = quantized_model.layer1_bn.weight.detach().cpu().numpy().squeeze()
                 quantized_model_layer2_weight = quantized_model.layer2.weight.detach().cpu().numpy().squeeze()
-                float_model_layer1_weight = float_model.layer1.weight.detach().cpu().numpy().squeeze()
-                float_model_layer2_weight = float_model.layer2.weight.detach().cpu().numpy().squeeze()
-                gamma = float_model.bn.weight.detach().cpu().numpy().squeeze()
-                bn_beta = float_model.bn.bias.detach().cpu().numpy().squeeze()
+                is_first_transpose = type(quantized_model.layer1_bn) == ConvTranspose2d
+                is_same = type(quantized_model.layer1_bn) == type(quantized_model.layer2)
 
-                if type(quantized_model.layer1_bn) == ConvTranspose2d:
-                    quantized_model_layer1_weight = np.transpose(quantized_model_layer1_weight)
-                    float_model_layer1_weight = np.transpose(float_model_layer1_weight)
+            float_model_layer1_weight = float_model.layer1.weight.detach().cpu().numpy().squeeze()
+            float_model_layer2_weight = float_model.layer2.weight.detach().cpu().numpy().squeeze()
+            gamma = float_model.bn.weight.detach().cpu().numpy().squeeze()
+            bn_beta = float_model.bn.bias.detach().cpu().numpy().squeeze()
+
+            if not is_first_transpose:
+                gamma = gamma[:, None]
+                bn_beta = bn_beta[:, None]
+
+            if is_same:
+                quantized_model_layer2_weight = np.transpose(quantized_model_layer2_weight)
+                float_model_layer2_weight = np.transpose(float_model_layer2_weight)
 
             fixed_second_moment_vector = fixed_second_moment_after_relu(bn_beta, gamma)
             fixed_mean_vector = fixed_mean_after_relu(bn_beta, gamma)
@@ -93,23 +93,11 @@ class ScaleEqualizationBaseTest(BasePytorchTest):
             quantized_model_layer1_weight_without_bn_fold = quantized_model_layer1_weight / gamma
 
             alpha = quantized_model_layer1_weight_without_bn_fold / float_model_layer1_weight
-
             beta = float_model_layer2_weight / quantized_model_layer2_weight
 
-            if self.experimental_exporter:
-                if type(quantized_model.layer1_bn.layer) == ConvTranspose2d:
-                    alpha = np.transpose(alpha)
-                if type(quantized_model.layer2.layer) == ConvTranspose2d:
-                    beta = np.transpose(beta)
-            else:
-                if type(quantized_model.layer1_bn) == ConvTranspose2d:
-                    alpha = np.transpose(alpha)
-                if type(quantized_model.layer2) == ConvTranspose2d:
-                    beta = np.transpose(beta)
-
-            self.unit_test.assertTrue(np.allclose(alpha, beta, atol=1e-1))
+            self.unit_test.assertTrue(np.allclose(alpha, beta, atol=1e-5))
             self.unit_test.assertTrue(np.alltrue(alpha <= 1.0))
-            self.unit_test.assertTrue(np.allclose(alpha, scale_factor, atol=1e-1))
+            self.unit_test.assertTrue(np.allclose(alpha, scale_factor, atol=1e-5))
 
 
 class ScaleEqualizationNet(torch.nn.Module):
@@ -167,9 +155,9 @@ class ScaleEqualizationReluFuncNet(torch.nn.Module):
 class ScaleEqualizationReluFuncWithZeroPadNet(torch.nn.Module):
     def __init__(self):
         super(ScaleEqualizationReluFuncWithZeroPadNet, self).__init__()
-        self.layer1 = Conv2d(3, 3, kernel_size=1, stride=1)
-        self.bn = BatchNorm2d(3)
-        self.layer2 = Conv2d(3, 3, kernel_size=1, stride=1)
+        self.layer1 = Conv2d(3, 2, kernel_size=1, stride=1)
+        self.bn = BatchNorm2d(2)
+        self.layer2 = Conv2d(2, 3, kernel_size=1, stride=1)
         self.bn = bn_weight_change(self.bn)
         self.zero_pad = ZeroPad2d(padding=2)
 
@@ -185,10 +173,10 @@ class ScaleEqualizationReluFuncWithZeroPadNet(torch.nn.Module):
 class ScaleEqualizationConvTransposeWithZeroPadNet(torch.nn.Module):
     def __init__(self):
         super(ScaleEqualizationConvTransposeWithZeroPadNet, self).__init__()
-        self.layer1 = ConvTranspose2d(3, 3, kernel_size=1, stride=1)
-        self.bn = BatchNorm2d(3)
+        self.layer1 = ConvTranspose2d(3, 2, kernel_size=1, stride=1)
+        self.bn = BatchNorm2d(2)
         self.relu1 = ReLU()
-        self.layer2 = Conv2d(3, 3, kernel_size=1, stride=1)
+        self.layer2 = Conv2d(2, 3, kernel_size=1, stride=1)
         self.zero_pad = ZeroPad2d(padding=2)
         self.bn = bn_weight_change(self.bn)
 
@@ -220,9 +208,9 @@ class ScaleEqualizationConvTransposeReluFuncNet(torch.nn.Module):
 class ScaleEqualizationReluFuncConvTransposeWithZeroPadNet(torch.nn.Module):
     def __init__(self):
         super(ScaleEqualizationReluFuncConvTransposeWithZeroPadNet, self).__init__()
-        self.layer1 = Conv2d(3, 3, kernel_size=1, stride=1)
-        self.bn = BatchNorm2d(3)
-        self.layer2 = ConvTranspose2d(3, 3, kernel_size=1, stride=1)
+        self.layer1 = Conv2d(3, 2, kernel_size=1, stride=1)
+        self.bn = BatchNorm2d(2)
+        self.layer2 = ConvTranspose2d(2, 3, kernel_size=1, stride=1)
         self.bn = bn_weight_change(self.bn)
         self.zero_pad = ZeroPad2d(padding=2)
 
