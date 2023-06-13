@@ -34,26 +34,24 @@ class MixedPrecisionPyTorchModel(PytorchModel):
 
     def __init__(self,
                  graph: common.Graph,
-                 append2output=None,
-                 fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO):
+                 append2output=None):
         """
 
         Args:
             graph: Graph to build its corresponding Pytorch model.
             append2output: List of nodes or OutTensor objects.
-            fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
         """
 
         super().__init__(graph,
-                         append2output,
-                         fw_info)
+                         append2output)
 
 
     def _add_modules(self):
         configurable_nodes = self.graph.get_configurable_sorted_nodes()
         for n in self.node_sort:
             if n in configurable_nodes:
-                self.add_module(n.name, PytorchMixedPrecisionWrapper(n, self.fw_info))
+                self.add_module(n.name, PytorchMixedPrecisionWrapper(n,
+                                                                     DEFAULT_PYTORCH_INFO))
             else:
                 if not isinstance(n, FunctionalNode):
                     self.add_module(n.name, node_builder(n))
@@ -129,5 +127,4 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
         """
         return MixedPrecisionPyTorchModel(self.graph,
-                                          self.append2output,
-                                          self.fw_info), self.graph.user_info
+                                          self.append2output), self.graph.user_info

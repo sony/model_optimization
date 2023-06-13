@@ -171,6 +171,9 @@ if FOUND_TORCH:
 
         user_info.mixed_precision_cfg = bit_widths_config
 
+        # Remove fw_info from graph to enable saving the pytorch model (fw_info can not be pickled)
+        delattr(qat_model.graph, 'fw_info')
+
         return qat_model, user_info
 
 
