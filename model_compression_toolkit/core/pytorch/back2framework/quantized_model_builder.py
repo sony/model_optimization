@@ -33,19 +33,16 @@ class QuantizedPyTorchModel(PytorchModel):
 
     def __init__(self,
                  graph: common.Graph,
-                 append2output=None,
-                 fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO):
+                 append2output=None):
         """
 
         Args:
             graph: Graph to build its corresponding Pytorch model.
             append2output: List of nodes or OutTensor objects.
-            fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
         """
 
         super().__init__(graph,
-                         append2output,
-                         fw_info)
+                         append2output)
 
     def _quantize_node_activations(self,
                                    node: BaseNode,
@@ -96,5 +93,4 @@ class QuantizedPyTorchModelBuilder(PyTorchModelBuilder):
 
         """
         return QuantizedPyTorchModel(self.graph,
-                                     self.append2output,
-                                     self.fw_info), self.graph.user_info
+                                     self.append2output), self.graph.user_info

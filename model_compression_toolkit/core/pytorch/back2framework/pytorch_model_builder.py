@@ -145,7 +145,6 @@ class PytorchModel(torch.nn.Module):
     def __init__(self,
                  graph: Graph,
                  append2output: List[Any] = None,
-                 fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                  return_float_outputs: bool = False,
                  wrapper: Callable = None,
                  get_activation_quantizer_holder_fn: Callable = None):
@@ -155,7 +154,6 @@ class PytorchModel(torch.nn.Module):
         Args:
             graph: Graph to build its corresponding Pytorch model.
             append2output: List of nodes or OutTensor objects.
-            fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
             return_float_outputs: Whether the model returns float tensors or not.
             wrapper: A function wrapper Pytorch Layers.
             get_activation_quantizer_holder_fn: Function to retrieve a quantization holder for a node.
