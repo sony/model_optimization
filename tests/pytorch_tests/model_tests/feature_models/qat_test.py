@@ -138,8 +138,14 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         # Generate a random dataset
         x = to_torch_tensor(next(self.representative_data_gen_experimental())[0])
         y = torch.rand(list(qat_ready_model(x).shape))
-        # Train the model for one epoch with LR 0
+
+        # Train the model for one epoch with LR 0 and assert predictions identical before and after
+        a = qat_ready_model(x)
         qat_ready_model = dummy_train(qat_ready_model,x, y)
+        b = qat_ready_model(x)
+        self.unit_test.assertTrue(torch.max(a - b) == 0,
+                                  f'QAT ready model was trained using LR 0 thus predictions should '
+                                  f'be identical but a diff observed {torch.max(a - b)}')
 
         if self.test_loading:
             pass # TODO: need to save and load pytorch model
