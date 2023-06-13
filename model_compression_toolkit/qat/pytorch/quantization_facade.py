@@ -218,12 +218,11 @@ if FOUND_TORCH:
              >>> quantized_model = mct.pytorch_quantization_aware_training_finalize(quantized_model)
 
          """
-        exported_model = copy.deepcopy(in_model)
-        for _, layer in exported_model.named_children():
+        for _, layer in in_model.named_children():
             if isinstance(layer, (PytorchQuantizationWrapper, PytorchActivationQuantizationHolder)):
                 layer.convert_to_inferable_quantizers()
 
-        return exported_model
+        return in_model
 
 
 else:

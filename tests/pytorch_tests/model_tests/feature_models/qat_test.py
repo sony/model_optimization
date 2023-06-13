@@ -12,27 +12,62 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+import copy
 
 import numpy as np
+import torch
 import torch.nn as nn
+import torch.optim as optim
+import torch.utils.data as data
+from torch import Tensor
+
+import model_compression_toolkit as mct
 from mct_quantizers import PytorchActivationQuantizationHolder, QuantizationTarget, PytorchQuantizationWrapper
 from mct_quantizers.common.get_all_subclasses import get_all_subclasses
 from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
-from torch import Tensor
-
-from model_compression_toolkit.core.pytorch.utils import get_working_device
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core.pytorch.utils import get_working_device, to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
+from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEActivationQATQuantizer
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import \
+    get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
     generate_tp_model_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
-import model_compression_toolkit as mct
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs
-from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEActivationQATQuantizer
 
+
+def dummy_train(qat_ready_model, x, y):
+    # # Generate a random dataset
+    # x = torch.randn(100, 3, 224, 224)
+    # y = torch.randn(100, 1000)
+
+    # Create a DataLoader for the dataset
+    dataset = data.TensorDataset(x, y)
+    dataloader = data.DataLoader(dataset, batch_size=1, shuffle=True)
+
+    # Initialize the model, loss function, and optimizer
+    # model = SimpleNN(input_dim, hidden_dim, output_dim)
+    criterion = nn.MSELoss()
+    optimizer = optim.SGD(qat_ready_model.parameters(), lr=0.0)
+
+    # Training loop
+    for epoch in range(1):
+        for batch_x, batch_y in dataloader:
+            # Forward pass
+            outputs = qat_ready_model(batch_x.to(get_working_device()))
+            loss = criterion(outputs, batch_y.to(get_working_device()))
+
+            # Backward pass and optimization
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+        print(f'Epoch [{epoch + 1}/{1}], Loss: {loss.item():.6f}')
+
+    print("Training complete.")
+    return qat_ready_model
 
 class TestModel(nn.Module):
     def __init__(self):
@@ -94,9 +129,17 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
                                                                                            target_platform_capabilities=_tpc,
                                                                                            new_experimental_exporter=True)
 
+
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(model_float,
                                                                                           self.representative_data_gen_experimental,
                                                                                           target_platform_capabilities=_tpc)
+        copy_of_qat_ready_model = copy.deepcopy(qat_ready_model)
+
+        # Generate a random dataset
+        x = to_torch_tensor(next(self.representative_data_gen_experimental())[0])
+        y = torch.rand(list(qat_ready_model(x).shape))
+        # Train the model for one epoch with LR 0
+        qat_ready_model = dummy_train(qat_ready_model,x, y)
 
         if self.test_loading:
             pass # TODO: need to save and load pytorch model
@@ -107,7 +150,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
             qat_finalized_model = None
 
         self.compare(ptq_model,
-                     qat_ready_model,
+                     copy_of_qat_ready_model,
                      qat_finalized_model,
                      input_x=self.representative_data_gen(),
                      quantization_info=quantization_info)
