@@ -1,0 +1,13 @@
+MODEL_NAME = 'model_name'
+MODEL_LIBRARY = 'model_library'
+OUTPUT_RESULTS_FILE = 'output_results_file'
+NUM_REPRESENTATIVE_IMAGES = 'num_representative_images'
+BATCH_SIZE = 'batch_size'
+REPRESENTATIVE_DATASET_FOLDER = 'representative_dataset_folder'
+VALIDATION_DATASET_FOLDER = 'validation_dataset_folder'
+TARGET_PLATFORM_NAME = 'target_platform_name'
+TARGET_PLATFORM_VERSION = 'target_platform_version'
+VALIDATION_SET_LIMIT = 'validation_set_limit'
+
+IMAGENET_DATASET = 'ImageNet'
+COCO_DATASET = 'COCO'
