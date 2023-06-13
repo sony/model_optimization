@@ -138,9 +138,9 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         a = qat_ready_model(x)
         qat_ready_model = dummy_train(qat_ready_model,x, y)
         b = qat_ready_model(x)
-        self.unit_test.assertTrue(torch.max(a - b) == 0,
+        self.unit_test.assertTrue(torch.max(torch.abs(a - b)) == 0,
                                   f'QAT ready model was trained using LR 0 thus predictions should '
-                                  f'be identical but a diff observed {torch.max(a - b)}')
+                                  f'be identical but a diff observed {torch.max(torch.abs(a - b))}')
 
         if self.test_loading:
             _path = tempfile.mkstemp('.pt')[1]

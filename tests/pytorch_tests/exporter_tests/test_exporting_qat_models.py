@@ -67,7 +67,7 @@ class TestExportingQATModelTorchscript(unittest.TestCase):
         y = torch.randn(100, 1000)
         self.qat_ready = dummy_train(self.qat_ready, x, y)
         b = self.qat_ready(images[0])
-        self.assertTrue(torch.max(a - b) == 0, f'QAT ready model was trained using LR 0 thus predictions should be identical but a diff observed {torch.max(a - b)}')
+        self.assertTrue(torch.max(torch.abs(a - b)) == 0, f'QAT ready model was trained using LR 0 thus predictions should be identical but a diff observed {torch.max(a - b)}')
 
         # Assert qat_ready can be saved and loaded
         _qat_ready_model_tmp_filepath = tempfile.mkstemp('.pt')[1]
