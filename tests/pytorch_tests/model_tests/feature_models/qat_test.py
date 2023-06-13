@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import copy
+import tempfile
 
 import numpy as np
 import torch
@@ -39,9 +40,6 @@ from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
 
 
 def dummy_train(qat_ready_model, x, y):
-    # # Generate a random dataset
-    # x = torch.randn(100, 3, 224, 224)
-    # y = torch.randn(100, 1000)
 
     # Create a DataLoader for the dataset
     dataset = data.TensorDataset(x, y)
@@ -64,9 +62,6 @@ def dummy_train(qat_ready_model, x, y):
             loss.backward()
             optimizer.step()
 
-        print(f'Epoch [{epoch + 1}/{1}], Loss: {loss.item():.6f}')
-
-    print("Training complete.")
     return qat_ready_model
 
 class TestModel(nn.Module):
@@ -148,7 +143,9 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
                                   f'be identical but a diff observed {torch.max(a - b)}')
 
         if self.test_loading:
-            pass # TODO: need to save and load pytorch model
+            _path = tempfile.mkstemp('.pt')[1]
+            torch.save(qat_ready_model, _path)
+            qat_ready_model = torch.load(_path)
 
         if self.finalize:
             qat_finalized_model = mct.qat.pytorch_quantization_aware_training_finalize(qat_ready_model)
