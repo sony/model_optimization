@@ -3,28 +3,29 @@ from timm.data import create_dataset, create_loader, resolve_data_config
 
 from common.model_lib import BaseModelLib
 from pytorch_fw.utils import classification_eval, get_representative_dataset
-from common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, VALIDATION_DATASET_FOLDER
-
-from tutorials.quick_start.common.results import DatasetInfo
+from common.constants import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, VALIDATION_DATASET_FOLDER, \
+    IMAGENET_DATASET
+from common.results import DatasetInfo
 
 
 class ModelLib(BaseModelLib):
 
     def __init__(self, args):
         avialable_models = timm.list_models('')
-        if args[MODEL_NAME] in avialable_models:
+        model_name = args[MODEL_NAME]
+        if model_name in avialable_models:
             self.model = timm.create_model(args[MODEL_NAME], pretrained=True)
             self.data_config = resolve_data_config([], model=self.model)  # include the pre-processing
-            self.dataset_name = 'ImageNet'
+            self.dataset_name = IMAGENET_DATASET
             super().__init__(args)
         else:
-            raise Exception(f'Unknown model, Available timm models : {avialable_models}')
+            raise Exception(f'Unknown model name {model_name}, Available timm models : {avialable_models}')
 
     def get_model(self):
         return self.model
 
     def get_representative_dataset(self, representative_dataset_folder, n_iter, batch_size):
-        train_dataset = create_dataset(name='ImageNet', root=representative_dataset_folder, split='train',
+        train_dataset = create_dataset(name='', root=representative_dataset_folder,
                                        is_training=False, batch_size=batch_size)
         dl = create_loader(
             train_dataset,

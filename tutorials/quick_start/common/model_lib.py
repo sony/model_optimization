@@ -64,8 +64,9 @@ class ModuleReplacer(ABC):
         """
         Initializes the ModuleReplacer object.
         """
-        return
+        pass
 
+    @abstractmethod
     def get_new_module(self, config):
         """
        Abstract method to implement and return the new module based on a given configuration.
@@ -78,6 +79,7 @@ class ModuleReplacer(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def get_config(self, old_module):
         """
         Abstract method to return the configuration of the old module.
@@ -90,6 +92,7 @@ class ModuleReplacer(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def replace(self, model):
         """
         Abstract method to replace the old module with the new module in a given model.

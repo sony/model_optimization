@@ -2,12 +2,12 @@ from typing import Tuple
 import importlib
 
 
-def find_modules(lib) -> Tuple[str, str]:
+def find_modules(lib: str) -> Tuple[str, str]:
     """
     Finds the relevant module paths for a given pre-trained models library.
 
     Args:
-        lib: Name of the library.
+        lib (str): Name of the library.
 
     Returns:
         Tuple of model_lib_module and quant_module, representing the module paths needed to be imported
@@ -27,5 +27,5 @@ def find_modules(lib) -> Tuple[str, str]:
         model_lib_module = 'keras_fw.' + lib + '.model_lib_' + lib
         quant_module = 'keras_fw.quant'
     else:
-        raise Exception(f'Error: model library {lib} was not found')
+        raise Exception(f'Error: model library {lib} is not supported')
     return model_lib_module, quant_module

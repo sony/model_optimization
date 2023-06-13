@@ -3,7 +3,7 @@ from torch import nn
 
 import model_compression_toolkit as mct
 import logging
-from common.consts import NUM_REPRESENTATIVE_IMAGES, BATCH_SIZE, REPRESENTATIVE_DATASET_FOLDER, \
+from common.constants import NUM_REPRESENTATIVE_IMAGES, BATCH_SIZE, REPRESENTATIVE_DATASET_FOLDER, \
     TARGET_PLATFORM_NAME, TARGET_PLATFORM_VERSION
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities

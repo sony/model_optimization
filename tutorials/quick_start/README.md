@@ -20,7 +20,8 @@ in the future.
 - Install one of the supported libraries above.
 
 
-### Usage Example
+### Usage Examples
+#### Single model quantization example
 In the following example, we are evaluating the MCT on pre-trained mobilenet_v2, taken from torchvision models library
 1. Install the required library using `pip`:
 ```bash
@@ -36,6 +37,7 @@ In this example, we are running the main.py script with the following parameters
 - `--validation_dataset_folder`: Specifies the path to the local copy of the dataset to be used for evaluation.
 - `--representative_dataset_folder`: Specifies the path to the local copy of the dataset to be used for quantization.
 
+#### Set of models quantization example
 In the following example, we evaluate a set of pre-trained models. Assuming that the necessary packages have been installed (as mentioned earlier), we use the following command:
 ```python
 python main.py --models_list_csv <myfile.csv>

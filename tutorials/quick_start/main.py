@@ -5,7 +5,7 @@ from typing import Dict, Tuple
 
 from common.results import write_results, read_models_list, parse_results, QuantInfo, plot_results
 from common.utils import find_modules
-from common.consts import MODEL_NAME, MODEL_LIBRARY, OUTPUT_RESULTS_FILE, TARGET_PLATFORM_NAME, \
+from common.constants import MODEL_NAME, MODEL_LIBRARY, OUTPUT_RESULTS_FILE, TARGET_PLATFORM_NAME, \
     TARGET_PLATFORM_VERSION
 from model_compression_toolkit.core.common.user_info import UserInformation
 
@@ -23,13 +23,13 @@ def argument_handler():
                         help='Path to the validation dataset')
     parser.add_argument('--representative_dataset_folder', type=str, required=False,
                         help='Path to the representative dataset used for quantization')
-    parser.add_argument('--num_representative_images', type=int, default=1024,
+    parser.add_argument('--num_representative_images', type=int, default=200,
                         help='Number of images for representative dataset')
     parser.add_argument('--target_platform_name', type=str, default='default',
                         help='Specifies the name of the target platform capabilities (TPC) to select from the available TPCs provided by MCT')
     parser.add_argument('--target_platform_version', type=str, default='latest',
                         help='Specifies the version of the target platform capabilities (TPC) to select from the available TPCs provided by MCT')
-    parser.add_argument('--batch_size', type=int, default=32,
+    parser.add_argument('--batch_size', type=int, default=10,
                         help='Batch size for accuracy evaluation')
     parser.add_argument('--models_list_csv', type=str, default=None,
                         help='Run according to a list of models and parameters taken from a csv file')

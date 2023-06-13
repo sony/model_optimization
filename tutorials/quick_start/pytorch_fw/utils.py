@@ -1,5 +1,6 @@
 import torch
 import logging
+from tqdm import tqdm
 
 
 def classification_eval(model, data_loader, limit=None):
@@ -11,16 +12,14 @@ def classification_eval(model, data_loader, limit=None):
     model.eval()
     # since we're not training, we don't need to calculate the gradients for our outputs
     with torch.no_grad():
-        for data in data_loader:
+        for data in tqdm(data_loader, desc ="Classification evaluation"):
             images, labels = data
             # calculate outputs by running images through the network
-            outputs = model(images.cuda())
+            outputs = model(images.to(device))
             # the class with the highest energy is what we choose as prediction
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels.to(device)).sum().item()
-            if total % 1000 == 0:
-                logging.info(f'Num of images: {total}, Accuracy: {round(100 * correct / total, 2)} %')
             if limit and total >= int(limit):
                 break
 
