@@ -1,4 +1,4 @@
-# MCT integration example 
+# MCT Quick Start 
 
 This example project demonstrates the capabilities of MCT (Model Compression Toolkit) and illustrates its interface
 with various model collections libraries. By accessing a wide range of pre-trained models, this project allows users to
