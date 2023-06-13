@@ -18,14 +18,15 @@ import unittest
 
 import numpy as np
 import torch
-from model_compression_toolkit.constants import FOUND_ONNX, FOUND_ONNXRUNTIME
 from torchvision.models.mobilenetv2 import mobilenet_v2
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.constants import FOUND_ONNX, FOUND_ONNXRUNTIME
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, get_working_device
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.v5.tpc_pytorch import \
     generate_pytorch_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.pytorch_tests.model_tests.feature_models.qat_test import dummy_train
 
 
 class TestExportingQATModelTorchscript(unittest.TestCase):
@@ -60,12 +61,22 @@ class TestExportingQATModelTorchscript(unittest.TestCase):
                                                                              self.get_dataset,
                                                                              target_platform_capabilities=self.get_tpc())
 
-        self.qat_ready(images[0])
+        # Dummy train uses LR 0, thus predictions before and after dummy train should be the same
+        a = self.qat_ready(images[0])
+        x = torch.randn(100, 3, 224, 224)
+        y = torch.randn(100, 1000)
+        self.qat_ready = dummy_train(self.qat_ready, x, y)
+        b = self.qat_ready(images[0])
+        self.assertTrue(torch.max(torch.abs(a - b)) == 0, f'QAT ready model was trained using LR 0 thus predictions should be identical but a diff observed {torch.max(a - b)}')
+
+        # Assert qat_ready can be saved and loaded
         _qat_ready_model_tmp_filepath = tempfile.mkstemp('.pt')[1]
         torch.save(self.qat_ready, _qat_ready_model_tmp_filepath)
         self.qat_ready = torch.load(_qat_ready_model_tmp_filepath)
 
         self.final_model = mct.qat.pytorch_quantization_aware_training_finalize(self.qat_ready)
+
+        # Assert final_model can be used for inference, can be saved and loaded
         self.final_model(images[0])
         _final_model_tmp_filepath = tempfile.mkstemp('.pt')[1]
         torch.save(self.final_model, _final_model_tmp_filepath)
