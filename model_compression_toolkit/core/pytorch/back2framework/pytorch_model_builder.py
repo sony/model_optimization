@@ -167,7 +167,6 @@ class PytorchModel(torch.nn.Module):
         self.node_to_activation_quantization_holder = {}
         self.append2output = append2output
         self.return_float_outputs = return_float_outputs
-        self.fw_info = fw_info
         self.wrapper = wrapper
         self.get_activation_quantizer_holder = get_activation_quantizer_holder_fn
         self._add_modules()

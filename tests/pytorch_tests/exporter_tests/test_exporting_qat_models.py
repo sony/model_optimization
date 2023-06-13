@@ -61,6 +61,11 @@ class TestExportingQATModelTorchscript(unittest.TestCase):
                                                                              target_platform_capabilities=self.get_tpc())
 
         self.final_model = mct.qat.pytorch_quantization_aware_training_finalize(self.qat_ready)
+        self.final_model(images[0])
+        _final_model_tmp_filepath = tempfile.mkstemp('.pt')[1]
+        torch.save(self.final_model, _final_model_tmp_filepath)
+        self.final_model = torch.load(_final_model_tmp_filepath)
+        self.final_model(images[0])
 
         self.filepath = self.get_tmp_filepath()
         mct.exporter.pytorch_export_model(self.final_model,

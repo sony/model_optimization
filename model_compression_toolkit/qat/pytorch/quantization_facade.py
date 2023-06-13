@@ -220,6 +220,9 @@ if FOUND_TORCH:
             if isinstance(layer, (PytorchQuantizationWrapper, PytorchActivationQuantizationHolder)):
                 layer.convert_to_inferable_quantizers()
 
+        # Remove fw_info from graph to enable saving the finalized pytorch model (fw_info can not be pickled)
+        delattr(exported_model.graph, 'fw_info')
+
         return exported_model
 
 
