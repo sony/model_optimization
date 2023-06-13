@@ -11,7 +11,7 @@ in the future.
 
 ## Supported libraries
 - torchvision: [https://pytorch.org/vision/stable/index.html](https://pytorch.org/vision/stable/index.html)
-- timm: [https://timm.fast.ai](https://timm.fast.ai)
+- timm: [https://github.com/huggingface/pytorch-image-models/tree/main/timm](https://github.com/huggingface/pytorch-image-models/tree/main/timm)
 - ultralytics: [https://ultralytics.com](https://ultralytics.com)
 
 
