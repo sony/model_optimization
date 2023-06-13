@@ -15,7 +15,10 @@ class ModelLib(BaseModelLib):
     @staticmethod
     def get_torchvision_model(model_name):
         # todo: replace with dedicated API (models_list(), get_model()...) when updating to torchvision 0.14
-        return getattr(models, model_name)
+        if hasattr(models, model_name):
+            return getattr(models, model_name)
+        else:
+            raise Exception(f'Unknown torchvision model name {model_name}, Please check available models in https://pytorch.org/vision/stable/models.html')
 
     @staticmethod
     def get_torchvision_weights(model_name):

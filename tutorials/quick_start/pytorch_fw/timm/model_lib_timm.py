@@ -19,7 +19,7 @@ class ModelLib(BaseModelLib):
             self.dataset_name = IMAGENET_DATASET
             super().__init__(args)
         else:
-            raise Exception(f'Unknown model name {model_name}, Available timm models : {avialable_models}')
+            raise Exception(f'Unknown timm model name {model_name}, Available models : {avialable_models}')
 
     def get_model(self):
         return self.model
