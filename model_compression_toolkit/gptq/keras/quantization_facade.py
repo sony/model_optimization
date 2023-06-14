@@ -114,8 +114,7 @@ if FOUND_TF:
                                                                core_config: CoreConfig = CoreConfig(),
                                                                fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                                                                target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC,
-                                                               new_experimental_exporter: bool = False) -> \
-    Tuple[Model, UserInformation]:
+                                                               new_experimental_exporter: bool = True) -> Tuple[Model, UserInformation]:
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
         symmetric constraint quantization thresholds (power of two).

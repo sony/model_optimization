@@ -43,7 +43,7 @@ if FOUND_TORCH:
                                                         target_kpi: KPI = None,
                                                         core_config: CoreConfig = CoreConfig(),
                                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC,
-                                                        new_experimental_exporter: bool = False):
+                                                        new_experimental_exporter: bool = True):
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
