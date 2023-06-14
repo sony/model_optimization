@@ -23,23 +23,23 @@ MCT is developed by researchers and engineers working at Sony Semiconductor Isra
 
 ## Getting Started
 
-This section provides a quick starting guide. We begin with installation via source code or pip server. Then, we provide a quick start guide and tutorials.
+This section provides an installation and a quick starting guide.
 
 ### Installation
 
-installing the last stable release:
+To install the latest stable release of MCT, run the following command:
 ```
 pip install model-compression-toolkit
 ```
 
-For installing the nightly version or installing from source check out the [installation guide](INSTALLATION.md)
+For installing the nightly version or installing from source, refer to the [installation guide](INSTALLATION.md).
 
 
 ### Quick start & tutorials 
 
-For an example of how to use the MCT with Tensorflow or PyTorch on a varaity of models and tasks
-check out the [quick-start page](tutorials/quick_start/README.md),
-and the [results csv](tutorials/quick_start/results/model_quantization_results.csv). 
+For an example of how to use MCT with TensorFlow or PyTorch on various models and tasks,
+check out the [quick-start page](tutorials/quick_start/README.md) and
+the [results CSV](tutorials/quick_start/results/model_quantization_results.csv).
 
 In addition, a set of [notebooks](tutorials/notebooks) are provided for an easy start. For example:
 * [MobileNet with Tensorflow](tutorials/notebooks/example_keras_mobilenet.py).
@@ -60,8 +60,7 @@ Currently, MCT is being tested on various Python versions:
 
 ### Supported NN-Frameworks Versions
 
-Currently, MCT supports compressing models of TensorFlow and PyTorch, and
-is tested on various versions:
+MCT supports compressing models built with the TensorFlow or PyTorch frameworks, and is tested on various python versions:
 
 | TensorFlow Version                                                                                   | PyTorch Version                                                                                          |
 |------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
@@ -75,7 +74,7 @@ is tested on various versions:
 MCT supports different quantization methods:
 * Post-training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental)
 * Gradient-based post-training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_gradient_post_training_quantization_experimental.html#ug-pytorch-gradient-post-training-quantization-experimental)
-* Quantization aware training (QAT)[*](#experimental-features)
+* Quantization-aware training (QAT)[*](#experimental-features)
 
 
 | Quantization Method                           | Complexity | Computational Cost          |
@@ -86,6 +85,7 @@ MCT supports different quantization methods:
 
 
 In addition, MCT supports different quantization schemes for quantizing weights and activations:
+
 * Power-Of-Two (hardware-friendly quantization [1])
 * Symmetric
 * Uniform
