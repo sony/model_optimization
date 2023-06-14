@@ -52,7 +52,8 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         old_export_model, _ = mct.ptq.keras_post_training_quantization_experimental(in_model=MobileNetV2(),
                                                                                 representative_data_gen=repr_dataset,
                                                                                 core_config=core_config,
-                                                                                target_platform_capabilities=tpc)
+                                                                                target_platform_capabilities=tpc,
+                                                                                    new_experimental_exporter=False)
 
         self.set_seed(seed)
         core_config = mct.core.CoreConfig()
