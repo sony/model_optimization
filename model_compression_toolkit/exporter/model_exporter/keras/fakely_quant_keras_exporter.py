@@ -125,8 +125,8 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
         # Create a new model with the transformed configuration
         new_model = tf.keras.Model().from_config(new_cfg)
 
-        # Set the filtered weights (weights of the original model without optimization steps variables)
-        # to the new model
+        # Filter "optimization step" variables from the weights of the model (they are used
+        # in KerasActivationQuantizationHolder only for training)
         filtered_weights = self.get_filtered_weights()
         new_model.set_weights(filtered_weights)
         self.exported_model = new_model
@@ -152,29 +152,49 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
         for old_layer in old_cfg['layers']:
             # Transform KerasActivationQuantizationHolder to a fake-quant
             if old_layer['class_name'] == 'KerasActivationQuantizationHolder':
-                # Get quantizer class from mct_quantizers
+                # In order to create the fake-quant layer call_kwargs (such as min/max/num_bits) we ideally
+                # want to extract it from the layer configuration. However, the layer configuration
+                # does not contain this information, but different information such as threshold and signedness.
+                # For this reason, we instantiate the quantizer that is holded (by the
+                # KerasActivationQuantizationHolder) and then extract this information from it.
+                # First, we get the quantizer class from mct_quantizers
                 new_layer_cfg = copy.deepcopy(old_layer)
                 module_mct_quantizers = importlib.import_module('mct_quantizers')
                 keras_quantizers_module = getattr(module_mct_quantizers, 'keras_quantizers')
-                quantizer_class = getattr(keras_quantizers_module,
-                                          f'{old_layer["config"]["activation_holder_quantizer"]["class_name"]}')
+                quantizer_class = getattr(keras_quantizers_module, f'{old_layer["config"]["activation_holder_quantizer"]["class_name"]}')
 
-                #
+                # Then, we instantiate the quantizer with the layer's configuration.
                 quantizer = quantizer_class(**old_layer['config']['activation_holder_quantizer']['config'])
 
+                assert len(quantizer.min_range) == 1, f'Activation quantizers support only per-tensor quantization, ' \
+                                                      f' thus min should be of length 1 but is ' \
+                                                      f'{len(quantizer.min_range)} in layer ' \
+                                                      f'{old_layer["config"]["name"]}'
+
+                assert len(quantizer.max_range) == 1, f'Activation quantizers support only per-tensor quantization, ' \
+                                                      f' thus max should be of length 1 but is ' \
+                                                      f'{len(quantizer.max_range)} in layer {old_layer["config"]["name"]}'
+
+                fake_quant_layer_call_kwargs = {'min': quantizer.min_range[0],
+                                                'max': quantizer.max_range[0],
+                                                'num_bits': quantizer.num_bits,
+                                                'narrow_range': False,
+                                                'name': None}
+
+                # Create fake-quant layer configuration
                 new_layer_cfg['class_name'] = 'TFOpLambda'
                 new_layer_cfg['config'] = {'name': old_layer['config']['name'],
                                            'trainable': False,
                                            'dtype': 'float32',
                                            'function': 'quantization.fake_quant_with_min_max_vars'}
 
-                # Assume it is a list in the following format: [[[X, X, X, X]]]
+                # Assume new_layer_cfg['inbound_nodes'] is a list in the following format: [[[X, X, X, X]]]
+                # TFOpLambda should have 'inbound_nodes' in the format: [[X, X, X, X]]
+                # In addition, the 4th element (new_layer_cfg['inbound_nodes'][0][3]) should contain the
+                # call_kwargs dictionary of the layer (the rest first 3 elements contain details about the
+                # connectivity of the layer's previous layers).
                 new_layer_cfg['inbound_nodes'] = new_layer_cfg['inbound_nodes'][0]
-                new_layer_cfg['inbound_nodes'][0][3] = {'min': quantizer.min_range[0],
-                                                        'max': quantizer.max_range[0],
-                                                        'num_bits': quantizer.num_bits,
-                                                        'narrow_range': False,
-                                                        'name': None}
+                new_layer_cfg['inbound_nodes'][0][3] = fake_quant_layer_call_kwargs
                 new_layers_cfg.append(new_layer_cfg)
             else:
                 # Keep non-KerasActivationQuantizationHolder layers unchanged
