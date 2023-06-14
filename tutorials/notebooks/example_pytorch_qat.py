@@ -31,6 +31,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 import model_compression_toolkit as mct
+import tempfile
 
 
 def argument_handler():
@@ -224,3 +225,9 @@ if __name__ == '__main__':
     # Re-evaluate accuracy after finalizing the model (should have a better accuracy than QAT model, since now the
     # activations are not quantized)
     test(quantized_model, device, test_loader)
+
+    # Export quantized model to ONNX
+    _, onnx_file_path = tempfile.mkstemp('.onnx') # Path of exported model
+    mct.exporter.pytorch_export_model(model=quantized_model, save_model_path=onnx_file_path,
+                                      repr_dataset=representative_data_gen, target_platform_capabilities=get_tpc(),
+                                      serialization_format=mct.exporter.PytorchExportSerializationFormat.ONNX)

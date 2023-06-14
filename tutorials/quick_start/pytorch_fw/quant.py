@@ -14,7 +14,7 @@
 # ==============================================================================
 import math
 from torch import nn
-
+import tempfile
 import model_compression_toolkit as mct
 import logging
 from common.constants import NUM_REPRESENTATIVE_IMAGES, BATCH_SIZE, REPRESENTATIVE_DATASET_FOLDER, \
@@ -65,9 +65,19 @@ def quantize(model: nn.Module,
         batch_size=int(args[BATCH_SIZE])
     )
 
+    # Quantize model
     quantized_model, quantization_info = \
         mct.ptq.pytorch_post_training_quantization_experimental(model,
                                                                 representative_data_gen=representative_data_gen,
                                                                 target_platform_capabilities=tpc)
+
+
+    # Export quantized model to ONNX
+    if args.get('export_model',False):
+        _, onnx_file_path = tempfile.mkstemp('.onnx') # Path of exported model
+        mct.exporter.pytorch_export_model(model=quantized_model, save_model_path=onnx_file_path,
+                                          repr_dataset=representative_data_gen, target_platform_capabilities=tpc,
+                                          serialization_format=mct.exporter.PytorchExportSerializationFormat.ONNX)
+
 
     return quantized_model, QuantInfo(user_info=quantization_info, tpc_info=tpc.get_info(), technique='PTQ')
