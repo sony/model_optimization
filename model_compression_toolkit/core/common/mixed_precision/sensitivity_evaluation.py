@@ -180,7 +180,7 @@ class SensitivityEvaluation:
         model_mp, _ = self.fw_impl.model_builder(evaluation_graph,
                                                  mode=ModelBuilderMode.MIXEDPRECISION,
                                                  append2output=self.interest_points,
-                                                 fw_info=self.fw_info)
+                                                 fw_info=self.fw_info).build_model()
 
         # Build a baseline model.
         baseline_model, _ = self.fw_impl.model_builder(evaluation_graph,

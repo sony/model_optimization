@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Tuple, Any, Dict
+from typing import List, Tuple, Any, Dict, Union
 
 import tensorflow as tf
 import tensorflow_model_optimization.quantization.keras.graph_transformations.model_transformer as mt
+from keras.engine.base_layer import Layer
 from keras.models import Model
+from mct_quantizers import KerasQuantizationWrapper
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.user_info import UserInformation
@@ -64,10 +66,39 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
             return_float_outputs: Whether the model returns float tensors or not.
         """
 
+        self.graph = graph
+
         super().__init__(graph,
                          append2output,
                          fw_info,
-                         return_float_outputs)
+                         return_float_outputs,
+                         wrapper=self.mixed_precision_wrapper,
+                         get_activation_quantizer_holder_fn=self.mixed_precision_activation_holder)
+
+    def mixed_precision_wrapper(self,
+                                n: common.BaseNode,
+                                layer: Layer) -> Union[KerasQuantizationWrapper, Layer]:
+        """
+        A function which takes a computational graph node and a keras layer and perform the quantization wrapping.
+
+        Args:
+            n: A node of mct graph.
+            layer: A keras layer
+
+        Returns: Wrapped layer if the layer should be wrap, otherwise returns the layer as is.
+
+        """
+
+        # conf_nodes_names = self.graph.get_configurable_sorted_nodes_names()
+        weights_conf_nodes_names = [n.name for n in self.graph.get_weights_configurable_nodes()]
+
+        if n.name in weights_conf_nodes_names:
+            weights_quantizers = quantization_builder(n,
+                                                         self.gptq_config) # TODO: split quantizers building into two functions: for weights and activations
+            if len(weights_quantizers) > 0:
+                return KerasQuantizationWrapper(layer,
+                                                   weights_quantizers=weights_quantizers)
+        return layer
 
     def _quantize_node_activations(self,
                                    node: BaseNode,
