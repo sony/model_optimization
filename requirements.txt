@@ -10,4 +10,4 @@ PuLP
 matplotlib
 scipy
 protobuf
-mct-quantizers-nightly
+mct-quantizers
