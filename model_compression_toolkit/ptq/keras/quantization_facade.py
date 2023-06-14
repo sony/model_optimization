@@ -44,7 +44,7 @@ if FOUND_TF:
                                                       target_kpi: KPI = None,
                                                       core_config: CoreConfig = CoreConfig(),
                                                       target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC,
-                                                      new_experimental_exporter: bool = False):
+                                                      new_experimental_exporter: bool = True):
         """
          Quantize a trained Keras model using post-training quantization. The model is quantized using a
          symmetric constraint quantization thresholds (power of two).
@@ -64,7 +64,7 @@ if FOUND_TF:
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
              target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
-             new_experimental_exporter (bool): Whether exporting the quantized model using new exporter or not (in progress. Avoiding it for now is recommended).
+             new_experimental_exporter (bool): Whether to wrap the quantized model using quantization information or not. Enabled by default. Experimental and subject to future changes.
 
          Returns:
 
@@ -152,8 +152,11 @@ if FOUND_TF:
                                         fw_info)
 
         if new_experimental_exporter:
-            Logger.warning('Using new experimental exported models. '
-                           'Please do not use unless you are familiar with what you are doing')
+            Logger.warning('Using new experimental wrapped and ready for export models. To '
+                           'disable it, please set new_experimental_exporter to False when '
+                           'calling keras_post_training_quantization_experimental. '
+                           'If you encounter an issue please file a bug.')
+
             return get_exportable_keras_model(tg)
 
         return export_model(tg,
