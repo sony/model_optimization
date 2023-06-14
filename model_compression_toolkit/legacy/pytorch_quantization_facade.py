@@ -99,6 +99,8 @@ if FOUND_TORCH:
             >>> quantized_module, quantization_info = mct.pytorch_post_training_quantization(module, repr_datagen)
 
         """
+        Logger.warning('pytorch_post_training_quantization is deprecated and will be removed '
+                       'in the future. Please use mct.ptq.pytorch_post_training_quantization_experimental instead.')
 
         core_config = CoreConfig(quant_config,
                                  debug_config=DebugConfig(analyze_similarity=analyze_similarity,
@@ -214,6 +216,9 @@ if FOUND_TORCH:
              For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/experimental_api_docs/modules/mixed_precision_quantization_config.html#model_compression_toolkit.MixedPrecisionQuantizationConfigV2>`_.
 
          """
+
+        Logger.warning('pytorch_post_training_quantization_mixed_precision is deprecated and will be removed '
+                       'in the future. Please use mct.ptq.pytorch_post_training_quantization_experimental instead.')
 
         if not isinstance(quant_config, MixedPrecisionQuantizationConfig):
             Logger.error("Given quantization config to mixed-precision facade is not of type "
