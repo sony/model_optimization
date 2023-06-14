@@ -31,7 +31,7 @@ jobs:
       - name: Build WHL file
         run: |
           version=$(python -c 'import model_compression_toolkit; print(model_compression_toolkit.__version__)')
-          now=$(date +'%d%m%Y-%H%M%S')
+          now=$(date +'%Y%m%d-%H%M%S')
           echo "nightly_version=$version.$now" >> $GITHUB_ENV
           sed -i "s/attr: model_compression_toolkit.__version__/$version.$now/g" setup.cfg
           sed -i "s/name='model_compression_toolkit'/name='model-compression-toolkit'/g" setup.py
