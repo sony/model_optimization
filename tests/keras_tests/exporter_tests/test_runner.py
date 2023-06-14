@@ -19,6 +19,18 @@ from tests.keras_tests.exporter_tests.tflite_fake_quant.networks.conv2d_test imp
     TestConv2DReusedTFLiteFQExporter
 from tests.keras_tests.exporter_tests.tflite_fake_quant.networks.dense_test import TestDenseReusedTFLiteFQExporter
 from tests.keras_tests.exporter_tests.tflite_int8.networks.conv2d_test import TestConv2DPOTTFLiteINT8Exporter, TestConv2DSymmetricTFLiteINT8Exporter
+
+from tests.keras_tests.exporter_tests.keras_fake_quant.networks.conv2d_test import TestConv2DKerasFQExporter, TestConv2DReusedKerasFQExporter, TestCon2DWeightsLUTKerasFQExporter
+from tests.keras_tests.exporter_tests.keras_fake_quant.networks.conv2dtranspose_test import \
+    TestConv2DTransposeKerasFQExporter
+from tests.keras_tests.exporter_tests.keras_fake_quant.networks.dense_test import TestDenseKerasFQExporter
+from tests.keras_tests.exporter_tests.keras_fake_quant.networks.dwconv2d_test import TestDWConv2DKerasFQExporter
+from tests.keras_tests.exporter_tests.keras_fake_quant.networks.multiple_inputs_test import \
+    TestMultipleInputsMultipleOutputsKerasFQExporter
+from tests.keras_tests.exporter_tests.keras_fake_quant.networks.no_quant_test import TestNoQuantKerasFQExporter
+from tests.keras_tests.exporter_tests.keras_fake_quant.networks.tfoplambda_test import TestTFOpLambdaKerasFQExporter
+
+
 from tests.keras_tests.exporter_tests.tflite_int8.networks.dense_test import TestDenseTFLiteINT8Exporter
 from tests.keras_tests.exporter_tests.tflite_int8.networks.depthwiseconv2d_test import TestDepthwiseConv2DTFLiteINT8Exporter
 from tests.keras_tests.exporter_tests.tflite_int8.networks.mobilenetv2_test import TestMBV2TFLiteINT8Exporter, \
@@ -46,6 +58,35 @@ class ExporterTestsRunner(unittest.TestCase):
         TestMBV2UniformActivationTFLiteINT8Exporter().run_test()
 
     #####################
+    # Keras fake quant
+    #####################
+    def test_keras_fq_conv2d(self):
+        TestConv2DKerasFQExporter().run_test()
+        TestConv2DReusedKerasFQExporter().run_test()
+
+    def test_keras_fq_lut(self):
+        TestCon2DWeightsLUTKerasFQExporter().run_test()
+
+    def test_keras_fq_dwconv2d(self):
+        TestDWConv2DKerasFQExporter().run_test()
+
+    def test_keras_fq_dense(self):
+        TestDenseKerasFQExporter().run_test()
+
+    def test_keras_fq_conv2dtranspose(self):
+        TestConv2DTransposeKerasFQExporter().run_test()
+
+    def test_keras_fq_tfoplambda(self):
+        TestTFOpLambdaKerasFQExporter().run_test()
+
+    def test_keras_fq_multiplpe_inputs_multiple_outputs(self):
+        TestMultipleInputsMultipleOutputsKerasFQExporter().run_test()
+
+    def test_keras_fq_no_quant(self):
+        TestNoQuantKerasFQExporter().run_test()
+
+
+    #####################
     # TFLite fake quant
     #####################
 
@@ -57,6 +98,7 @@ class ExporterTestsRunner(unittest.TestCase):
 
     def test_tflite_fq_dense_reused(self):
         TestDenseReusedTFLiteFQExporter().run_test()
+
 
     #########################
     # Exporting QAT models

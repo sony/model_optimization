@@ -19,14 +19,19 @@ import unittest
 import keras
 import numpy as np
 import tensorflow as tf
+from keras.layers import TFOpLambda
 
 import model_compression_toolkit as mct
 from mct_quantizers import KerasActivationQuantizationHolder
+from tests.keras_tests.exporter_tests.keras_fake_quant.keras_fake_quant_exporter_base_test import \
+    get_minmax_from_qparams
 from tests.keras_tests.utils import get_layers_from_model_by_type
 from mct_quantizers import keras_load_quantized_model as mct_quantizers_load # Load with custom of inferable objects
 from model_compression_toolkit import keras_load_quantized_model as mct_load # Load with custom of inferable+trainable objects
 
 layers = keras.layers
+
+
 
 
 class TestExportingQATModelBase(unittest.TestCase):
@@ -96,12 +101,21 @@ class TestExportingQATModelBase(unittest.TestCase):
         assert diff == 0, f'QAT Model before and after export to h5 should ' \
                           f'predict identical predictions but diff is ' \
                           f'{diff}'
-        holder_layers_finalized_model = get_layers_from_model_by_type(self.final_model,
-                                                                      KerasActivationQuantizationHolder)
-        holder_layers_loaded_model = get_layers_from_model_by_type(self.loaded_model,
-                                                                   KerasActivationQuantizationHolder)
-        self.assertTrue(holder_layers_loaded_model[0].get_config()==holder_layers_finalized_model[0].get_config())
-        self.assertTrue(holder_layers_loaded_model[1].get_config() == holder_layers_finalized_model[1].get_config())
+
+        holder_layers_finalized_model = get_layers_from_model_by_type(self.final_model, KerasActivationQuantizationHolder)
+        holder_layers_loaded_model = get_layers_from_model_by_type(self.loaded_model, TFOpLambda)
+
+        _finalized_first_activation_q_params = holder_layers_finalized_model[0].get_config()['activation_holder_quantizer']['config']
+        _min, _max = get_minmax_from_qparams(_finalized_first_activation_q_params)
+        self.assertTrue(_min == holder_layers_loaded_model[0].inbound_nodes[0].call_kwargs['min'])
+        self.assertTrue(_max == holder_layers_loaded_model[0].inbound_nodes[0].call_kwargs['max'])
+        self.assertTrue(_finalized_first_activation_q_params['num_bits'] == holder_layers_loaded_model[0].inbound_nodes[0].call_kwargs['num_bits'])
+
+        _finalized_second_activation_q_params = holder_layers_finalized_model[1].get_config()['activation_holder_quantizer']['config']
+        _min, _max = get_minmax_from_qparams(_finalized_second_activation_q_params)
+        self.assertTrue(_min == holder_layers_loaded_model[1].inbound_nodes[0].call_kwargs['min'])
+        self.assertTrue(_max == holder_layers_loaded_model[1].inbound_nodes[0].call_kwargs['max'])
+        self.assertTrue(_finalized_second_activation_q_params['num_bits'] == holder_layers_loaded_model[1].inbound_nodes[0].call_kwargs['num_bits'])
 
         conv_finalized_model = get_layers_from_model_by_type(self.final_model, layers.Conv2D)[0]
         conv_loaded_model = get_layers_from_model_by_type(self.loaded_model, layers.Conv2D)[0]
