@@ -214,7 +214,8 @@ if __name__ == "__main__":
     print(f"Quantized model test accuracy: {score[1]:02.4f}")
 
 
-    # Export quantized model to TFLite
+    # Export quantized model to TFLite and Keras.
+    # For more details please see: https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/exporter/README.md
     _, tflite_file_path = tempfile.mkstemp('.tflite') # Path of exported model
     mct.exporter.keras_export_model(model=quantized_model, save_model_path=tflite_file_path,
                                     target_platform_capabilities=get_tpc(),
