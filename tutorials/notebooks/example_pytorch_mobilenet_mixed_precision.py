@@ -20,6 +20,7 @@ from torchvision import transforms
 from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
+import tempfile
 
 """
 Mixed precision is a method for quantizing a model using different bit widths
@@ -131,3 +132,9 @@ if __name__ == '__main__':
                                                                                                  target_kpi=kpi,
                                                                                                  core_config=configuration,
                                                                                                  target_platform_capabilities=target_platform_cap)
+
+    # Export quantized model to ONNX
+    _, onnx_file_path = tempfile.mkstemp('.onnx') # Path of exported model
+    mct.exporter.pytorch_export_model(model=quantized_model, save_model_path=onnx_file_path,
+                                      repr_dataset=representative_data_gen, target_platform_capabilities=target_platform_cap,
+                                      serialization_format=mct.exporter.PytorchExportSerializationFormat.ONNX)

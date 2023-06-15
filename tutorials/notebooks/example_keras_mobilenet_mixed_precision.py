@@ -18,6 +18,7 @@ import argparse
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
 import model_compression_toolkit as mct
+import tempfile
 
 """
 Mixed precision is a method for quantizing a model using different bit widths
@@ -137,3 +138,15 @@ if __name__ == '__main__':
                                                                                                target_kpi=kpi,
                                                                                                core_config=configuration,
                                                                                                target_platform_capabilities=target_platform_cap)
+
+    # Export quantized model to TFLite and Keras.
+    # For more details please see: https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/exporter/README.md
+    _, tflite_file_path = tempfile.mkstemp('.tflite') # Path of exported model
+    mct.exporter.keras_export_model(model=quantized_model, save_model_path=tflite_file_path,
+                                    target_platform_capabilities=target_platform_cap,
+                                    serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE)
+
+    _, keras_file_path = tempfile.mkstemp('.h5') # Path of exported model
+    mct.exporter.keras_export_model(model=quantized_model, save_model_path=keras_file_path,
+                                    target_platform_capabilities=target_platform_cap,
+                                    serialization_format=mct.exporter.KerasExportSerializationFormat.KERAS_H5)

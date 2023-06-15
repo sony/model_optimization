@@ -28,13 +28,13 @@ from common.constants import MODEL_NAME, MODEL_LIBRARY, OUTPUT_RESULTS_FILE, TAR
 def argument_handler():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--model_name', '-m', type=str, required=False,
+    parser.add_argument('--model_name', '-m', type=str, required=True,
                         help='The name of the pre-trained model to run')
-    parser.add_argument('--model_library', type=str, required=False,
+    parser.add_argument('--model_library', type=str, required=True,
                         help='The library that contains the pre-trained model')
-    parser.add_argument('--validation_dataset_folder', type=str, required=False,
+    parser.add_argument('--validation_dataset_folder', type=str, required=True,
                         help='Path to the validation dataset')
-    parser.add_argument('--representative_dataset_folder', type=str, required=False,
+    parser.add_argument('--representative_dataset_folder', type=str, required=True,
                         help='Path to the representative dataset used for quantization')
     parser.add_argument('--num_representative_images', type=int, default=200,
                         help='Number of images for representative dataset')
@@ -50,6 +50,8 @@ def argument_handler():
                         help='Run according to a list of models and parameters taken from a csv file')
     parser.add_argument('--validation_set_limit', type=int, default=None,
                         help='Limits the number of images taken for evaluation')
+    parser.add_argument('--export_model', action="store_true",
+                        help='Whether to export the model after quantization')
 
     args = parser.parse_args()
     return args
@@ -95,6 +97,7 @@ def quantization_flow(config: Dict) -> Tuple[float, float, QuantInfo]:
 
     # Evaluate quantized model
     quant_results, dataset_info = ml.evaluate(quantized_model)
+
 
     return float_results, quant_results, quantization_info, dataset_info
 
