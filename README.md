@@ -14,28 +14,78 @@ MCT is developed by researchers and engineers working at Sony Semiconductor Isra
 
 ## Table of Contents
 
-- [Supported features](#supported-features)
 - [Getting Started](#getting-started)
+- [Supported features](#supported-features)
 - [Results](#results)
 - [Contributions](#contributions)
 - [License](#license)
+
+
+## Getting Started
+
+This section provides an installation and a quick starting guide.
+
+### Installation
+
+To install the latest stable release of MCT, run the following command:
+```
+pip install model-compression-toolkit
+```
+
+For installing the nightly version or installing from source, refer to the [installation guide](INSTALLATION.md).
+
+
+### Quick start & tutorials 
+
+For an example of how to use MCT with TensorFlow or PyTorch on various models and tasks,
+check out the [quick-start page](tutorials/quick_start/README.md) and
+the [results CSV](tutorials/quick_start/results/model_quantization_results.csv).
+
+In addition, a set of [notebooks](tutorials/notebooks) are provided for an easy start. For example:
+* [MobileNet with Tensorflow](tutorials/notebooks/example_keras_mobilenet.py).
+* [MobileNetV2 with PyTorch](tutorials/notebooks/example_pytorch_mobilenet_v2.py).
+
+
+### Supported Python Versions
+
+Currently, MCT is being tested on various Python versions:
+
+| Python Version                                                                                                                                                                                                                                                            |
+|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [![Run Tests - Python 3.10](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python310.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python310.yml) |
+| [![Run Tests - Python 3.9](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python39.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python39.yml)   |
+| [![Run Tests - Python 3.8](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python38.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python38.yml)   |
+| [![Run Tests - Python 3.7](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python37.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python37.yml)   |
+
+
+### Supported NN-Frameworks Versions
+
+MCT supports compressing models built with the TensorFlow or PyTorch frameworks, and is tested on various python versions:
+
+| TensorFlow Version                                                                                   | PyTorch Version                                                                                          |
+|------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
+| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf211.yml/badge.svg) | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_13.yml/badge.svg) |
+| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf210.yml/badge.svg) | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_12.yml/badge.svg) |
+| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf29.yml/badge.svg)  | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_11.yml/badge.svg) |
+
 
 ## Supported Features
 
 MCT supports different quantization methods:
 * Post-training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental)
 * Gradient-based post-training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_gradient_post_training_quantization_experimental.html#ug-pytorch-gradient-post-training-quantization-experimental)
-* Quantization aware training (QAT)[*](#experimental-features)
+* Quantization-aware training (QAT)[*](#experimental-features)
 
 
-| Quantization Method | Complexity                                    | Computational Cost          |
-|---------------------|-----------------------------------------------|-----------------------------|
-| PTQ                 | Low                                           | Low (order of minutes)      |
-| GPTQ                | Mild (parameters fine-tuning using gradients) | Mild (order of 2-3 hours)   |
-| QAT                 | High                                          | High (order of 12-36 hours) |
+| Quantization Method                           | Complexity | Computational Cost          |
+|-----------------------------------------------|------------|-----------------------------|
+| PTQ                                           | Low        | Low (order of minutes)      |
+| GPTQ (parameters fine-tuning using gradients) | Mild       | Mild (order of 2-3 hours)   |
+| QAT                                           | High       | High (order of 12-36 hours) |
 
 
 In addition, MCT supports different quantization schemes for quantizing weights and activations:
+
 * Power-Of-Two (hardware-friendly quantization [1])
 * Symmetric
 * Uniform
@@ -57,80 +107,6 @@ Main features:
 Some features are experimental and subject to future changes. 
  
 For more details, we highly recommend visiting our project website where experimental features are mentioned as experimental.
-
-
-## Getting Started
-
-This section provides a quick starting guide. We begin with installation via source code or pip server. Then, we provide a short usage example.
-
-### Setting up work environment
-Clone the repository and install the required packages (via [requirements](requirements.txt)).
-```
-git clone https://github.com/sony/model_optimization.git
-cd model_optimization
-pip install -r requirements.txt
-```
-
-### Installation
-See the MCT install guide for the pip package.
-
-#### From PyPi - latest stable release
-```
-pip install model-compression-toolkit
-```
-
-A nightly package is also available (unstable):
-```
-pip install mct-nightly
-```
-
-### Requirements
-
-To run MCT, one of the supported frameworks, Tensorflow/Pytorch, needs to be installed.
-
-For use with Tensorflow please install the packages: 
-[tensorflow](https://www.tensorflow.org/install), 
-[tensorflow-model-optimization](https://www.tensorflow.org/model_optimization/guide/install)
-
-For use with PyTorch please install the packages: 
-[torch](https://pytorch.org/)
-
-Also, a [requirements](requirements.txt) file can be used to set up your environment.
-
-
-### Supported Python Versions
-
-Currently, MCT is being tested on various Python versions:
-
-
-
-| Python Version                                                                                                                                                                                                                                                            |
-|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [![Run Tests - Python 3.10](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python310.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python310.yml) |
-| [![Run Tests - Python 3.9](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python39.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python39.yml)   |
-| [![Run Tests - Python 3.8](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python38.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python38.yml)   |
-| [![Run Tests - Python 3.7](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python37.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_suite_python37.yml)   |
-
-
-### Supported NN-Frameworks Versions
-
-Currently, MCT supports compressing models of TensorFlow and PyTorch, and
-is tested on various versions:
-
-| TensorFlow Version                                                                                   | PyTorch Version                                                                                          |
-|------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
-| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf211.yml/badge.svg) | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_13.yml/badge.svg) |
-| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf210.yml/badge.svg) | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_12.yml/badge.svg) |
-| ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_tf29.yml/badge.svg)  | ![tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_torch1_11.yml/badge.svg) |
-
-
-### Usage Example 
-For an example of how to use the post-training quantization, using Keras,
-please use this [link](tutorials/notebooks/example_keras_mobilenet.py).
-
-For an example using PyTorch, please use this [link](tutorials/notebooks/example_pytorch_mobilenet_v2.py).
-
-For more examples please see the [tutorials' directory](https://github.com/sony/model_optimization/tree/main/tutorials).
 
 
 ## Results

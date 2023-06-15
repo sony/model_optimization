@@ -55,7 +55,7 @@ Please note that the above example assumes the command is run from the command l
 
 Make sure to refer to the script itself to understand all available parameters and their usage.
 ## Results
-The latest performance results of MCT on various of models can be found in the [model_quantization_results.py](./results/model_quantization_results.csv) table. 
+The latest performance results of MCT on various of models can be found in the [model_quantization_results.csv](./results/model_quantization_results.csv) table. 
 
 
 ## License
