@@ -54,6 +54,7 @@ Initialize data loader:
 
     # Set the batch size of the images at each calibration iteration.
     batch_size = 50
+    n_iter=10
 
     # Set the path to the folder of images to load and use for the representative dataset.
     # Notice that the folder have to contain at least one image.
@@ -74,7 +75,8 @@ Initialize data loader:
     # Calling representative_data_gen() should return a list
     # of two numpy.ndarray objects where the arrays' shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].
     def representative_data_gen() -> list:
-        return [image_data_loader.sample()]
+        for _ in range(n_iter):
+            yield [image_data_loader.sample()]
 
 |
 
@@ -98,9 +100,8 @@ Run Post Training Quantization:
     # Set the number of calibration iterations to 10.
     model = MobileNet()
 
-    quantized_model, quantization_info = mct.keras_post_training_quantization(model,
-                                                                              representative_data_gen,
-                                                                              target_platform_capabilities=target_platform_cap,
-                                                                              n_iter=10)
+    quantized_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model,
+                                                                                           representative_data_gen,
+                                                                                           target_platform_capabilities=target_platform_cap)
 
 |

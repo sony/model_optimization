@@ -12,5 +12,5 @@ CoreConfig
 ==========================
 **Class to configure the optimization process of the model:**
 
-.. autoclass:: model_compression_toolkit.CoreConfig
+.. autoclass:: model_compression_toolkit.core.CoreConfig
 
