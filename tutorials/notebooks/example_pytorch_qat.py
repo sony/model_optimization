@@ -178,6 +178,7 @@ if __name__ == '__main__':
         default_configuration_options = tp.QuantizationConfigOptions([default_config])
         tp_model = tp.TargetPlatformModel(default_configuration_options)
         with tp_model:
+            tp_model.set_quantization_format(quantization_format=tp.quantization_format.QuantizationFormat.FAKELY_QUANT)
             tp.OperatorsSet("NoQuantization",
                             tp.get_default_quantization_config_options().clone_and_edit(
                                 enable_weights_quantization=False,
