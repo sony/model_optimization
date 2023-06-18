@@ -1,0 +1,243 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>exporter Module &#8212; MCT Documentation: ver 1.9.0</title>
+    <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../static/documentation_options.js"></script>
+    <script src="../../../static/jquery.js"></script>
+    <script src="../../../static/underscore.js"></script>
+    <script src="../../../static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../static/doctools.js"></script>
+    <script src="../../../static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">exporter Module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="exporter-module">
+<span id="ug-exporter"></span><h1>exporter Module<a class="headerlink" href="#exporter-module" title="Permalink to this heading">¶</a></h1>
+<p>Allows to export a quantized model in the following serialization formats:</p>
+<ul class="simple">
+<li><p>TensorFlow models can be exported as Tensorflow models (.h5 extension) and TFLite models (.tflite extension).</p></li>
+<li><p>PyTorch models can be exported as torch script models and ONNX models (.onnx extension).</p></li>
+</ul>
+<p>Also, allows to export quantized model in the following quantization formats:</p>
+<ul class="simple">
+<li><p>Fake Quant (where weights and activations are float fakely-quantized values)</p></li>
+<li><p>INT8 (where weights and activations are represented using 8bits integers)</p></li>
+</ul>
+<p>For more details about the export formats and options, please refer to the project’s GitHub <a class="reference external" href="https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/exporter">README file</a>.
+Note that this feature is experimental and subject to future changes. If you have any questions or issues, please open an issue in this GitHub repository.</p>
+<section id="kerasexportserializationformat">
+<h2>KerasExportSerializationFormat<a class="headerlink" href="#kerasexportserializationformat" title="Permalink to this heading">¶</a></h2>
+<p>Select the serialization format for exporting a quantized Keras model.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.exporter.KerasExportSerializationFormat">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.exporter.</span></span><span class="sig-name descname"><span class="pre">KerasExportSerializationFormat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.exporter.KerasExportSerializationFormat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specify which serialization format to use for exporting a quantized Keras model.</p>
+<p>KERAS_H5 - .h5 file format</p>
+<p>TFLITE - .tflite file format</p>
+</dd></dl>
+
+</section>
+<section id="pytorchexportserializationformat">
+<h2>PytorchExportSerializationFormat<a class="headerlink" href="#pytorchexportserializationformat" title="Permalink to this heading">¶</a></h2>
+<p>Select the serialization format for exporting a quantized Pytorch model.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.exporter.PytorchExportSerializationFormat">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.exporter.</span></span><span class="sig-name descname"><span class="pre">PytorchExportSerializationFormat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.exporter.PytorchExportSerializationFormat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specify which serialization format to use for exporting a quantized Pytorch model.</p>
+<p>TORCHSCRIPT - torchscript format</p>
+<p>ONNX - onnx fromat</p>
+</dd></dl>
+
+</section>
+<section id="keras-export-model">
+<h2>keras_export_model<a class="headerlink" href="#keras-export-model" title="Permalink to this heading">¶</a></h2>
+<p>Allows to export a Keras model that was quantized via MCT.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.exporter.keras_export_model">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.exporter.</span></span><span class="sig-name descname"><span class="pre">keras_export_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_model_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_layer_exportable_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">is_keras_layer_exportable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serialization_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">KerasExportSerializationFormat.KERAS_H5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.exporter.keras_export_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export a Keras quantized model to a h5 or tflite model.
+The model will be saved to the path in save_model_path.
+keras_export_model supports the combination of QuantizationFormat.FAKELY_QUANT (where weights
+and activations are float fakely-quantized values) and KerasExportSerializationFormat.KERAS_H5 (where the model
+will be saved to h5 model) or the combination of KerasExportSerializationFormat.TFLITE (where the model will be
+saved to tflite model) with QuantizationFormat.FAKELY_QUANT or QuantizationFormat.INT8 (where weights and
+activations are represented using 8bits integers).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – Model to export.</p></li>
+<li><p><strong>save_model_path</strong> – Path to save the model.</p></li>
+<li><p><strong>target_platform_capabilities</strong> – TargetPlatformCapabilities object that describes the desired inference</p></li>
+<li><p><strong>platform</strong> (<em>target</em>) – </p></li>
+<li><p><strong>is_layer_exportable_fn</strong> – Callable to check whether a layer can be exported or not.</p></li>
+<li><p><strong>serialization_format</strong> – Format to export the model according to (by default</p></li>
+<li><p><strong>KerasExportSerializationFormat.KERAS_H5</strong><strong>)</strong><strong>.</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Custom objects dictionary needed to load the model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Here is an example for how to export a quantized Keras model in a TFLite fakly-quantized format:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mct.target_platform_capabilities.tpc_models.default_tpc.latest</span> <span class="kn">import</span> <span class="n">get_keras_tpc_latest</span>
+<span class="kn">from</span> <span class="nn">mct.exporter</span> <span class="kn">import</span> <span class="n">KerasExportSerializationFormat</span>
+
+<span class="c1"># Path of exported model</span>
+<span class="n">_</span><span class="p">,</span> <span class="n">tflite_file_path</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="s1">&#39;.tflite&#39;</span><span class="p">)</span>
+
+<span class="c1"># Get TPC</span>
+<span class="n">keras_tpc</span> <span class="o">=</span> <span class="n">get_keras_tpc_latest</span><span class="p">()</span>
+
+<span class="c1"># Use mode KerasExportSerializationFormat.TFLITE for tflite model and keras tpc for fakely-quantized weights</span>
+<span class="c1"># and activations</span>
+<span class="n">mct</span><span class="o">.</span><span class="n">exporter</span><span class="o">.</span><span class="n">keras_export_model</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">quantized_exportable_model</span><span class="p">,</span>
+                                <span class="n">save_model_path</span><span class="o">=</span><span class="n">tflite_file_path</span><span class="p">,</span>
+                                <span class="n">target_platform_capabilities</span><span class="o">=</span><span class="n">keras_tpc</span><span class="p">,</span>
+                                <span class="n">serialization_format</span><span class="o">=</span><span class="n">KerasExportSerializationFormat</span><span class="o">.</span><span class="n">TFLITE</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="pytorch-export-model">
+<h2>pytorch_export_model<a class="headerlink" href="#pytorch-export-model" title="Permalink to this heading">¶</a></h2>
+<p>Allows to export a Pytorch model that was quantized via MCT.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.exporter.pytorch_export_model">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.exporter.</span></span><span class="sig-name descname"><span class="pre">pytorch_export_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_model_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repr_dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_layer_exportable_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">is_pytorch_layer_exportable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serialization_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PytorchExportSerializationFormat.TORCHSCRIPT</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.exporter.pytorch_export_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export a PyTorch quantized model to a torchscript or onnx model.
+The model will be saved to the path in save_model_path.
+Currently, pytorch_export_model supports only QuantizationFormat.FAKELY_QUANT (where weights
+and activations are float fakely-quantized values) and PytorchExportSerializationFormat.TORCHSCRIPT
+(where the model will be saved to TorchScript model) or PytorchExportSerializationFormat.ONNX
+(where the model will be saved to ONNX model).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – Model to export.</p></li>
+<li><p><strong>save_model_path</strong> – Path to save the model.</p></li>
+<li><p><strong>repr_dataset</strong> – Representative dataset for tracing the pytorch model (mandatory for exporting it).</p></li>
+<li><p><strong>target_platform_capabilities</strong> – TargetPlatformCapabilities object that describes the desired inference</p></li>
+<li><p><strong>platform</strong> (<em>target</em>) – </p></li>
+<li><p><strong>is_layer_exportable_fn</strong> – Callable to check whether a layer can be exported or not.</p></li>
+<li><p><strong>serialization_format</strong> – Format to export the model according to (by default</p></li>
+<li><p><strong>PytorchExportSerializationFormat.TORCHSCRIPT</strong><strong>)</strong><strong>.</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Here is an example for how to export a quantized Pytorch model in a ONNX fakly-quantized format:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tempfile</span>
+
+<span class="kn">from</span> <span class="nn">mct.target_platform_capabilities.tpc_models.default_tpc.latest</span> <span class="kn">import</span> <span class="n">get_pytorch_tpc_latest</span>
+<span class="kn">from</span> <span class="nn">mct.exporter</span> <span class="kn">import</span> <span class="n">PytorchExportSerializationFormat</span>
+
+<span class="c1"># Path of exported model</span>
+<span class="n">_</span><span class="p">,</span> <span class="n">onnx_file_path</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="s1">&#39;.onnx&#39;</span><span class="p">)</span>
+
+<span class="c1"># Get TPC</span>
+<span class="n">pytorch_tpc</span> <span class="o">=</span> <span class="n">get_pytorch_tpc_latest</span><span class="p">()</span>
+
+<span class="c1"># Use mode PytorchExportSerializationFormat.ONNX for keras h5 model and default pytorch tpc for fakely-quantized weights</span>
+<span class="c1"># and activations</span>
+<span class="n">mct</span><span class="o">.</span><span class="n">exporter</span><span class="o">.</span><span class="n">pytorch_export_model</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">quantized_exportable_model</span><span class="p">,</span> <span class="n">save_model_path</span><span class="o">=</span><span class="n">onnx_file_path</span><span class="p">,</span>
+                                  <span class="n">repr_dataset</span><span class="o">=</span><span class="n">representative_data_gen</span><span class="p">,</span> <span class="n">target_platform_capabilities</span><span class="o">=</span><span class="n">pytorch_tpc</span><span class="p">,</span>
+                                  <span class="n">serialization_format</span><span class="o">=</span><span class="n">PytorchExportSerializationFormat</span><span class="o">.</span><span class="n">ONNX</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">exporter Module</a><ul>
+<li><a class="reference internal" href="#kerasexportserializationformat">KerasExportSerializationFormat</a></li>
+<li><a class="reference internal" href="#pytorchexportserializationformat">PytorchExportSerializationFormat</a></li>
+<li><a class="reference internal" href="#keras-export-model">keras_export_model</a></li>
+<li><a class="reference internal" href="#pytorch-export-model">pytorch_export_model</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">exporter Module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Sony Semiconductor Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
+    </div>
+  </body>
+</html>

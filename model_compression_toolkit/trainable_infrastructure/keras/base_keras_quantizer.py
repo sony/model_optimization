@@ -33,6 +33,7 @@ if FOUND_TF:
             """
             This class is a base quantizer which validates provided quantization config and defines an abstract function which any quantizer needs to implement.
             This class adds to the base quantizer a get_config and from_config functions to enable loading and saving the keras model.
+
             Args:
                 quantization_config: quantizer config class contains all the information about a quantizer configuration.
             """

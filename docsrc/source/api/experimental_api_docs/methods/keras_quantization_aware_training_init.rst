@@ -7,4 +7,4 @@
 Keras Quantization Aware Training Model Init
 ================================================
 
-.. autofunction:: model_compression_toolkit.keras_quantization_aware_training_init
+.. autofunction:: model_compression_toolkit.qat.keras_quantization_aware_training_init

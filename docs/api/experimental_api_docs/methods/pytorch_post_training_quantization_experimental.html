@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Pytorch Post Training Quantization &#8212; MCT Documentation: ver 1.8.0</title>
+    <title>Pytorch Post Training Quantization &#8212; MCT Documentation: ver 1.9.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Pytorch Post Training Quantization</a></li> 
       </ul>
     </div>  
@@ -44,8 +44,8 @@
   <section id="pytorch-post-training-quantization">
 <span id="ug-pytorch-post-training-quantization-experimental"></span><h1>Pytorch Post Training Quantization<a class="headerlink" href="#pytorch-post-training-quantization" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="model_compression_toolkit.pytorch_post_training_quantization_experimental">
-<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">pytorch_post_training_quantization_experimental</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">representative_data_gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_kpi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">CoreConfig()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_PYTORCH_TPC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_experimental_exporter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.pytorch_post_training_quantization_experimental" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model_compression_toolkit.ptq.pytorch_post_training_quantization_experimental">
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.ptq.</span></span><span class="sig-name descname"><span class="pre">pytorch_post_training_quantization_experimental</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">representative_data_gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_kpi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">CoreConfig()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_PYTORCH_TPC</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_experimental_exporter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.ptq.pytorch_post_training_quantization_experimental" title="Permalink to this definition">¶</a></dt>
 <dd><p>Quantize a trained Pytorch module using post-training quantization.
 By default, the module is quantized using a symmetric constraint quantization thresholds
 (power of two) as defined in the default TargetPlatformCapabilities.
@@ -58,17 +58,17 @@ If gptq_config is passed, the quantized weights are optimized using gradient bas
 training quantization by comparing points between the float and quantized modules, and minimizing the
 observed loss.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>in_module</strong> (<em>Module</em>) – Pytorch module to quantize.</p></li>
 <li><p><strong>representative_data_gen</strong> (<em>Callable</em>) – Dataset used for calibration.</p></li>
 <li><p><strong>target_kpi</strong> (<a class="reference internal" href="../modules/mixed_precision_quantization_config.html#model_compression_toolkit.KPI" title="model_compression_toolkit.KPI"><em>KPI</em></a>) – KPI object to limit the search of the mixed-precision configuration as desired.</p></li>
-<li><p><strong>core_config</strong> (<a class="reference internal" href="../modules/core_config.html#model_compression_toolkit.CoreConfig" title="model_compression_toolkit.CoreConfig"><em>CoreConfig</em></a>) – Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.</p></li>
+<li><p><strong>core_config</strong> (<a class="reference internal" href="../modules/core_config.html#model_compression_toolkit.core.CoreConfig" title="model_compression_toolkit.core.CoreConfig"><em>CoreConfig</em></a>) – Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.</p></li>
 <li><p><strong>target_platform_capabilities</strong> (<a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a>) – TargetPlatformCapabilities to optimize the PyTorch model according to.</p></li>
-<li><p><strong>new_experimental_exporter</strong> (<em>bool</em>) – Whether exporting the quantized model using new exporter or not (in progress. Avoiding it for now is recommended).</p></li>
+<li><p><strong>new_experimental_exporter</strong> (<em>bool</em>) – Whether to wrap the quantized model using quantization information or not. Enabled by default. Experimental and subject to future changes.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A quantized module and information the user may need to handle the quantized module.</p>
 </dd>
 </dl>
@@ -90,7 +90,7 @@ In this example a random dataset of 10 batches each containing 4 images is used.
 <p>Import MCT and pass the module with the representative dataset generator to get a quantized module
 Set number of clibration iterations to 1:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">quantized_module</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">pytorch_post_training_quantization_experimental</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">repr_datagen</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">quantized_module</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">ptq</span><span class="o">.</span><span class="n">pytorch_post_training_quantization_experimental</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">repr_datagen</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -124,7 +124,7 @@ Set number of clibration iterations to 1:</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Pytorch Post Training Quantization</a></li> 
       </ul>
     </div>

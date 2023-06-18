@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Keras Post Training Quantization &#8212; MCT Documentation: ver 1.8.0</title>
+    <title>Keras Post Training Quantization &#8212; MCT Documentation: ver 1.9.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Keras Post Training Quantization</a></li> 
       </ul>
     </div>  
@@ -57,7 +57,7 @@ If a gptq_config is passed, the quantized weights are optimized using gradient b
 training quantization by comparing points between the float and quantized models, and minimizing the observed
 loss.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>in_model</strong> (<em>Model</em>) – Keras model to quantize.</p></li>
 <li><p><strong>representative_data_gen</strong> (<em>Callable</em>) – Dataset used for calibration.</p></li>
@@ -65,12 +65,12 @@ loss.</p>
 <li><p><strong>quant_config</strong> (<a class="reference internal" href="../../experimental_api_docs/modules/quantization_config.html#model_compression_toolkit.QuantizationConfig" title="model_compression_toolkit.QuantizationConfig"><em>QuantizationConfig</em></a>) – QuantizationConfig containing parameters of how the model should be quantized. <a class="reference external" href="https://github.com/sony/model_optimization/blob/21e21c95ca25a31874a5be7af9dd2dd5da8f3a10/model_compression_toolkit/core/common/quantization/quantization_config.py#L154">Default configuration.</a></p></li>
 <li><p><strong>fw_info</strong> (<a class="reference internal" href="../../experimental_api_docs/classes/FrameworkInfo.html#model_compression_toolkit.FrameworkInfo" title="model_compression_toolkit.FrameworkInfo"><em>FrameworkInfo</em></a>) – Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). <a class="reference external" href="https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py">Default Keras info</a></p></li>
 <li><p><strong>network_editor</strong> (<em>List</em><em>[</em><a class="reference internal" href="../../experimental_api_docs/modules/network_editor.html#model_compression_toolkit.network_editor.EditRule" title="model_compression_toolkit.network_editor.EditRule"><em>EditRule</em></a><em>]</em>) – List of EditRules. Each EditRule consists of a node filter and an action to change quantization settings of the filtered nodes.</p></li>
-<li><p><strong>gptq_config</strong> (<a class="reference internal" href="../../experimental_api_docs/classes/GradientPTQConfig.html#model_compression_toolkit.GradientPTQConfig" title="model_compression_toolkit.GradientPTQConfig"><em>GradientPTQConfig</em></a>) – Configuration for using gptq (e.g. optimizer).</p></li>
+<li><p><strong>gptq_config</strong> (<a class="reference internal" href="../../experimental_api_docs/classes/GradientPTQConfig.html#model_compression_toolkit.gptq.GradientPTQConfig" title="model_compression_toolkit.gptq.GradientPTQConfig"><em>GradientPTQConfig</em></a>) – Configuration for using gptq (e.g. optimizer).</p></li>
 <li><p><strong>analyze_similarity</strong> (<em>bool</em>) – Whether to plot similarity figures within TensorBoard (when logger is enabled) or not.</p></li>
-<li><p><strong>target_platform_capabilities</strong> (<a class="reference internal" href="../../experimental_api_docs/modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a>) – TargetPlatformCapabilities to optimize the Keras model according to. <a class="reference external" href="https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/tpc_models/keras_tp_models/keras_default.py">Default Keras TPC</a></p></li>
+<li><p><strong>target_platform_capabilities</strong> (<a class="reference internal" href="../../experimental_api_docs/modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a>) – TargetPlatformCapabilities to optimize the Keras model according to.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A quantized model and information the user may need to handle the quantized model.</p>
 </dd>
 </dl>
@@ -91,7 +91,7 @@ loss.</p>
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">UserInformation</span></code>]</p>
 </dd>
 </dl>
@@ -126,7 +126,7 @@ loss.</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Keras Post Training Quantization</a></li> 
       </ul>
     </div>

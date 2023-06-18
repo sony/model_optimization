@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>target_platform Module &#8212; MCT Documentation: ver 1.8.0</title>
+    <title>target_platform Module &#8212; MCT Documentation: ver 1.9.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>  
@@ -51,7 +51,7 @@ for Conv2d, while when using tflite modeling, Tensorflow uses <a class="referenc
 Conv2D</a>.</p>
 <p>This can be addressed in MCT by using the target_platform module, that can configure different
 parameters that are hardware-related, and the optimization process will use this to optimize the model accordingly.
-Models for IMX500, TFLite and qnnpack can be observed <a class="reference external" href="https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/core/tpc_models">here</a>, and can be used using <a class="reference internal" href="../methods/get_target_platform_capabilities.html#ug-get-target-platform-capabilities"><span class="std std-ref">get_target_platform_capabilities function</span></a>.</p>
+Models for IMX500, TFLite and qnnpack can be observed <a class="reference external" href="https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/target_platform_capabilities">here</a>, and can be used using <a class="reference internal" href="../methods/get_target_platform_capabilities.html#ug-get-target-platform-capabilities"><span class="std std-ref">get_target_platform_capabilities function</span></a>.</p>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
@@ -101,7 +101,7 @@ Quantization configuration of different operators can be created using OpQuantiz
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">OpQuantizationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">activation_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_per_channel_threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_weights_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_activation_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantization_preserving</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_zero_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_multiplier_nbits</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.OpQuantizationConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>OpQuantizationConfig is a class to configure the quantization parameters of an operator.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>activation_quantization_method</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.QuantizationMethod" title="model_compression_toolkit.target_platform.QuantizationMethod"><em>QuantizationMethod</em></a>) – Which method to use from QuantizationMethod for activation quantization.</p></li>
 <li><p><strong>weights_quantization_method</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.QuantizationMethod" title="model_compression_toolkit.target_platform.QuantizationMethod"><em>QuantizationMethod</em></a>) – Which method to use from QuantizationMethod for weights quantization.</p></li>
@@ -152,7 +152,7 @@ configuration options for an operator:</p>
 <dd><p>Wrap a set of quantization configurations to consider during the quantization
 of an operator.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>quantization_config_list</strong> (<em>List</em><em>[</em><a class="reference internal" href="#model_compression_toolkit.target_platform.OpQuantizationConfig" title="model_compression_toolkit.target_platform.OpQuantizationConfig"><em>OpQuantizationConfig</em></a><em>]</em>) – List of possible OpQuantizationConfig to gather.</p></li>
 <li><p><strong>base_config</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.OpQuantizationConfig" title="model_compression_toolkit.target_platform.OpQuantizationConfig"><em>OpQuantizationConfig</em></a>) – Fallback OpQuantizationConfig to use when optimizing the model in a non mixed-precision manner.</p></li>
@@ -195,7 +195,7 @@ group operators by common properties and configure patterns of operators to fuse
 The model contains definition of operators, quantization configurations of them, and
 fusing patterns so that multiple operators will be combined into a single operator.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>default_qco</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.QuantizationConfigOptions" title="model_compression_toolkit.target_platform.QuantizationConfigOptions"><em>QuantizationConfigOptions</em></a>) – Default QuantizationConfigOptions to use for operators that their QuantizationConfigOptions are not defined in the model.</p></li>
 <li><p><strong>name</strong> (<em>str</em>) – Name of the model.</p></li>
@@ -230,7 +230,7 @@ in the default QuantizationConfigOptions will guide MCT how this operator should
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">OperatorsSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qc_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.OperatorsSet" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set of operators that are represented by a unique label.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<em>str</em>) – Set’s label (must be unique in a TargetPlatformModel).</p></li>
 <li><p><strong>qc_options</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.QuantizationConfigOptions" title="model_compression_toolkit.target_platform.QuantizationConfigOptions"><em>QuantizationConfigOptions</em></a>) – Configuration options to use for this set of operations.</p></li>
@@ -273,7 +273,7 @@ quantization is applied between them when they appear in a model:</p>
 <dt class="sig sig-object py" id="model_compression_toolkit.target_platform.Fusing">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">Fusing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator_groups_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.Fusing" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>name</strong> – Name of component.</p>
 </dd>
 </dl>
@@ -329,7 +329,7 @@ of [fc_opset, relu_opset], of course).</p>
 <dd><p>Concatenate a list of operator sets to treat them similarly in different places (like fusing).</p>
 <p>Group a list of operation sets.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>*opsets</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.OperatorsSet" title="model_compression_toolkit.target_platform.OperatorsSet"><em>OperatorsSet</em></a>) – List of operator sets to group.</p>
 </dd>
 </dl>
@@ -356,7 +356,10 @@ can be used as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
-<span class="kn">from</span> <span class="nn">model_compression_toolkit.core.common.target_platform</span> <span class="kn">import</span> <span class="n">OpQuantizationConfig</span><span class="p">,</span> <span class="n">TargetPlatformModel</span>
+<span class="kn">from</span> <span class="nn">model_compression_toolkit.target_platform_capabilities.target_platform</span> <span class="kn">import</span> <span class="n">OpQuantizationConfig</span><span class="p">,</span> \
+    <span class="n">TargetPlatformModel</span>
+<span class="kn">from</span> <span class="nn">model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format</span> <span class="kn">import</span> \
+    <span class="n">QuantizationFormat</span>
 
 <span class="n">tp</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">target_platform</span>
 
@@ -454,6 +457,9 @@ can be used as follows:</p>
         <span class="c1"># be used for operations that will be attached to this set&#39;s label.</span>
         <span class="c1"># Otherwise, it will be a configure-less set (used in fusing):</span>
 
+        <span class="c1"># Set quantization format to fakely quant</span>
+        <span class="n">generated_tpc</span><span class="o">.</span><span class="n">set_quantization_format</span><span class="p">(</span><span class="n">QuantizationFormat</span><span class="o">.</span><span class="n">FAKELY_QUANT</span><span class="p">)</span>
+
         <span class="c1"># May suit for operations like: Dropout, Reshape, etc.</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;NoQuantization&quot;</span><span class="p">,</span>
                          <span class="n">tp</span><span class="o">.</span><span class="n">get_default_quantization_config_options</span><span class="p">()</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span>
@@ -489,12 +495,6 @@ can be used as follows:</p>
 
         <span class="c1"># ------------------- #</span>
         <span class="c1"># Fusions</span>
-        <span class="c1"># ------------------- #</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">conv</span><span class="p">,</span> <span class="n">activations_after_conv_to_fuse</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">fc</span><span class="p">,</span> <span class="n">activations_after_fc_to_fuse</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">Fusing</span><span class="p">([</span><span class="n">any_binary</span><span class="p">,</span> <span class="n">any_relu</span><span class="p">])</span>
-
-    <span class="k">return</span> <span class="n">generated_tpc</span>
 </pre></div>
 </div>
 <div class="line-block">
@@ -515,7 +515,7 @@ an OperationsSetToLayers can be used:</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">OperationsSetToLayers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_set_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.OperationsSetToLayers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Associate an OperatorsSet to a list of framework’s layers.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>op_set_name</strong> (<em>str</em>) – Name of OperatorsSet to associate with layers.</p></li>
 <li><p><strong>layers</strong> (<em>List</em><em>[</em><em>Any</em><em>]</em>) – List of layers/FilterLayerParams to associate with OperatorsSet.</p></li>
@@ -547,7 +547,7 @@ For that, LayerFilterParams can be used:</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">LayerFilterParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">conditions</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.LayerFilterParams" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wrap a layer with filters to filter framework’s layers by their attributes.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>layer</strong> – Layer to match when filtering.</p></li>
 <li><p><strong>*conditions</strong> (<em>AttributeFilter</em>) – List of conditions to satisfy.</p></li>
@@ -603,7 +603,7 @@ which attaches the layers representations to OperatorsSets in a TargetPlatformMo
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">TargetPlatformCapabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tp_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'base'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attach framework information to a modeled hardware.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tp_model</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.TargetPlatformModel" title="model_compression_toolkit.target_platform.TargetPlatformModel"><em>TargetPlatformModel</em></a>) – Modeled hardware to attach framework information to.</p></li>
 <li><p><strong>name</strong> (<em>str</em>) – Name of the TargetPlatformCapabilities.</p></li>
@@ -630,9 +630,9 @@ to the TargetPlatformCapabilities like in the following example:</p>
     <span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">Conv2D</span><span class="p">,</span> <span class="n">DepthwiseConv2D</span><span class="p">,</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Reshape</span><span class="p">,</span> <span class="n">ZeroPadding2D</span><span class="p">,</span> \
         <span class="n">Dropout</span><span class="p">,</span> <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">,</span> <span class="n">PReLU</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Cropping2D</span>
 
-<span class="kn">from</span> <span class="nn">model_compression_toolkit.core.tpc_models.default_tpc.v3.tp_model</span> <span class="kn">import</span> <span class="n">get_tp_model</span>
+<span class="kn">from</span> <span class="nn">model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.v3.tp_model</span> <span class="kn">import</span> <span class="n">get_tp_model</span>
 <span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
-<span class="kn">from</span> <span class="nn">model_compression_toolkit.core.tpc_models.default_tpc.v3</span> <span class="kn">import</span> <span class="n">__version__</span> <span class="k">as</span> <span class="n">TPC_VERSION</span>
+<span class="kn">from</span> <span class="nn">model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.v3</span> <span class="kn">import</span> <span class="n">__version__</span> <span class="k">as</span> <span class="n">TPC_VERSION</span>
 
 <span class="n">tp</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">target_platform</span>
 
@@ -744,7 +744,7 @@ to the TargetPlatformCapabilities like in the following example:</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>

@@ -38,7 +38,6 @@ if FOUND_TORCH:
             """
             super().__init__(quantization_config)
 
-
         def get_trainable_variables(self, group: VariableGroup) -> List[torch.Tensor]:
             """
             Get trainable parameters with specific group from quantizer

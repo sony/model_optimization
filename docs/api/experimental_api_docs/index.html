@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>API Docs &#8212; MCT Documentation: ver 1.8.0</title>
+    <title>API Docs &#8212; MCT Documentation: ver 1.9.0</title>
     <link rel="stylesheet" type="text/css" href="../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../static/css/custom.css" />
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="../../guidelines/quickstart_pytorch.html" title="MCT Quickstart Guideline for Pytorch models"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">API Docs</a></li> 
       </ul>
     </div>  
@@ -77,6 +77,7 @@ and will be removed in the future.</p>
 <li><p><a class="reference internal" href="methods/get_target_platform_capabilities.html#ug-get-target-platform-capabilities"><span class="std std-ref">get_target_platform_capabilities</span></a>: A function to get a target platform model for Tensorflow and Pytorch.</p></li>
 <li><p><a class="reference internal" href="methods/keras_kpi_data_experimental.html#ug-keras-kpi-data-experimental"><span class="std std-ref">keras_kpi_data_experimental</span></a>: A function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of Keras models (experimental).</p></li>
 <li><p><a class="reference internal" href="methods/pytorch_kpi_data_experimental.html#ug-pytorch-kpi-data-experimental"><span class="std std-ref">pytorch_kpi_data_experimental</span></a>: A function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of PyTorch models (experimental).</p></li>
+<li><p><a class="reference internal" href="methods/keras_load_quantizad_model.html#ug-keras-load-quantized-model"><span class="std std-ref">keras_load_quantized_model</span></a>: A function to load a quantized keras model (experimental).</p></li>
 </ul>
 </section>
 <section id="modules">
@@ -87,6 +88,9 @@ and will be removed in the future.</p>
 <li><p><a class="reference internal" href="modules/mixed_precision_quantization_config.html#ug-mixed-precision-quantization-config-v2"><span class="std std-ref">mixed_precision_quantization_config</span></a>: Module to configure the quantization process when using mixed-precision PTQ.</p></li>
 <li><p><a class="reference internal" href="modules/debug_config.html#ug-debug-config"><span class="std std-ref">debug_config</span></a>: Module to configure options for debugging the optimization process.</p></li>
 <li><p><a class="reference internal" href="modules/target_platform.html#ug-target-platform"><span class="std std-ref">target_platform</span></a>: Module to create and model hardware-related settings to optimize the model according to, by the hardware the optimized model will use during inference.</p></li>
+<li><p><a class="reference internal" href="modules/qat_config.html#ug-qat-config"><span class="std std-ref">qat_config</span></a>: Module to create quantization configuration for Quantization-aware Training.</p></li>
+<li><p><a class="reference internal" href="modules/exporter.html#ug-exporter"><span class="std std-ref">exporter</span></a>: Module that enables to export a quantized model in different serialization formats.</p></li>
+<li><p><a class="reference internal" href="modules/trainable_infrastructure.html#ug-trainable-infrastructure"><span class="std std-ref">trainable_infrastructure</span></a>: Module that contains quantization abstraction and quantizers for hardware-oriented model optimization tools.</p></li>
 </ul>
 </section>
 <section id="classes">
@@ -159,7 +163,7 @@ and will be removed in the future.</p>
         <li class="right" >
           <a href="../../guidelines/quickstart_pytorch.html" title="MCT Quickstart Guideline for Pytorch models"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">API Docs</a></li> 
       </ul>
     </div>

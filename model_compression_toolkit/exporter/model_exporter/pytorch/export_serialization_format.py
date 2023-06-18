@@ -16,5 +16,14 @@ from enum import Enum
 
 
 class PytorchExportSerializationFormat(Enum):
+    """
+    Specify which serialization format to use for exporting a quantized Pytorch model.
+
+    TORCHSCRIPT - torchscript format
+
+    ONNX - onnx fromat
+
+    """
+
     TORCHSCRIPT = 0
     ONNX = 1

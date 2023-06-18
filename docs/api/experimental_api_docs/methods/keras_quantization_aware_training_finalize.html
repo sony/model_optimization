@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Keras Quantization Aware Training Model Finalize &#8212; MCT Documentation: ver 1.8.0</title>
+    <title>Keras Quantization Aware Training Model Finalize &#8212; MCT Documentation: ver 1.9.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Keras Quantization Aware Training Model Finalize</a></li> 
       </ul>
     </div>  
@@ -44,14 +44,14 @@
   <section id="keras-quantization-aware-training-model-finalize">
 <span id="ug-keras-quantization-aware-training-finalize"></span><h1>Keras Quantization Aware Training Model Finalize<a class="headerlink" href="#keras-quantization-aware-training-model-finalize" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="model_compression_toolkit.keras_quantization_aware_training_finalize">
-<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">keras_quantization_aware_training_finalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.keras_quantization_aware_training_finalize" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model_compression_toolkit.qat.keras_quantization_aware_training_finalize">
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.qat.</span></span><span class="sig-name descname"><span class="pre">keras_quantization_aware_training_finalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.qat.keras_quantization_aware_training_finalize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a model fine-tuned by the user (Trainable quantizers) to a model with Inferable quantizers.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>in_model</strong> (<em>Model</em>) – Keras model to replace TrainableQuantizer with InferableQuantizer</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A quantized model with Inferable quantizers</p>
 </dd>
 </dl>
@@ -71,33 +71,33 @@
 </pre></div>
 </div>
 <p>Create a MCT core config, containing the quantization configuration:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">CoreConfig</span><span class="p">()</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">CoreConfig</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>If mixed precision is desired, create a MCT core config with a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
 The candidates bitwidth for quantization should be defined in the target platform model:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">CoreConfig</span><span class="p">(</span><span class="n">mixed_precision_config</span><span class="o">=</span><span class="n">MixedPrecisionQuantizationConfigV2</span><span class="p">())</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">CoreConfig</span><span class="p">(</span><span class="n">mixed_precision_config</span><span class="o">=</span><span class="n">MixedPrecisionQuantizationConfigV2</span><span class="p">())</span>
 </pre></div>
 </div>
 <p>For mixed-precision set a target KPI object:
 Create a KPI object to limit our returned model’s size. Note that this value affects only coefficients
 that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
 while the bias will not):</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">kpi</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">KPI</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">count_params</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.75</span><span class="p">)</span>  <span class="c1"># About 0.75 of the model size when quantized with 8 bits.</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">kpi</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">KPI</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">count_params</span><span class="p">()</span> <span class="o">*</span> <span class="mf">0.75</span><span class="p">)</span>  <span class="c1"># About 0.75 of the model size when quantized with 8 bits.</span>
 </pre></div>
 </div>
 <p>Pass the model, the representative dataset generator, the configuration and the target KPI to get a
 quantized model:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span><span class="p">,</span> <span class="n">custom_objects</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">keras_quantization_aware_training_init</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">repr_datagen</span><span class="p">,</span> <span class="n">kpi</span><span class="p">,</span> <span class="n">core_config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span><span class="p">,</span> <span class="n">custom_objects</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">qat</span><span class="o">.</span><span class="n">keras_quantization_aware_training_init</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">repr_datagen</span><span class="p">,</span> <span class="n">kpi</span><span class="p">,</span> <span class="n">core_config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Use the quantized model for fine-tuning. For loading the model from file, use the custom_objects dictionary:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">quantized_model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="n">model_file</span><span class="p">,</span> <span class="n">custom_objects</span><span class="o">=</span><span class="n">custom_objects</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">quantized_model</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">keras_quantization_aware_training_finalize</span><span class="p">(</span><span class="n">quantized_model</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">quantized_model</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">qat</span><span class="o">.</span><span class="n">keras_quantization_aware_training_finalize</span><span class="p">(</span><span class="n">quantized_model</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
 </dd>
 </dl>
@@ -132,7 +132,7 @@ quantized model:</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Keras Quantization Aware Training Model Finalize</a></li> 
       </ul>
     </div>

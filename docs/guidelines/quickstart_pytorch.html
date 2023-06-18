@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>MCT Quickstart Guideline for Pytorch models &#8212; MCT Documentation: ver 1.8.0</title>
+    <title>MCT Quickstart Guideline for Pytorch models &#8212; MCT Documentation: ver 1.9.0</title>
     <link rel="stylesheet" type="text/css" href="../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../static/css/custom.css" />
@@ -39,7 +39,7 @@
         <li class="right" >
           <a href="quickstart_keras.html" title="MCT Quickstart Guideline for Keras models"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline for Pytorch models</a></li> 
       </ul>
     </div>  
@@ -99,11 +99,13 @@
 <span class="c1"># The function should be called without any arguments, and should return a list numpy arrays (array for each</span>
 <span class="c1"># model&#39;s input).</span>
 <span class="c1"># For example: A model has two input tensors - one with input shape of [3 X 32 X 32] and the second with</span>
-<span class="c1"># an input shape of [3 X 224 X 224]. We calibrate the model using batches of 20 images.</span>
+<span class="c1"># an input shape of [3 X 224 X 224]. We calibrate the model using batches of 50 images.</span>
 <span class="c1"># Calling representative_data_gen() should return a list</span>
-<span class="c1"># of two numpy.ndarray objects where the arrays&#39; shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].</span>
+<span class="c1"># of two numpy.ndarray objects where the arrays&#39; shapes are [(50, 3, 32, 32), (50, 3, 224, 224)].</span>
+<span class="n">n_iter</span> <span class="o">=</span> <span class="mi">20</span>
 <span class="k">def</span> <span class="nf">representative_data_gen</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">image_data_loader</span><span class="o">.</span><span class="n">sample</span><span class="p">()]</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_iter</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="p">[</span><span class="n">image_data_loader</span><span class="o">.</span><span class="n">sample</span><span class="p">()]</span>
 </pre></div>
 </div>
 <div class="line-block">
@@ -125,21 +127,15 @@
 <span class="c1"># Set the number of calibration iterations to 20.</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">mobilenet_v2</span><span class="p">(</span><span class="n">pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="c1"># set quantization configuration</span>
-<span class="n">quantization_config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">DEFAULTCONFIG</span>
-
-<span class="c1"># Configure z threshold algorithm for outlier removal. Set z threshold to 16.</span>
-<span class="n">quantization_config</span><span class="o">.</span><span class="n">z_threshold</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="c1"># set core configuration with z threshold=16 (an algorithm for outlier removal)</span>
+<span class="n">core_config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">CoreConfig</span><span class="p">(</span><span class="n">quantization_config</span><span class="o">=</span><span class="n">QuantizationConfig</span><span class="p">(</span><span class="n">z_threshold</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
 
 <span class="c1"># run post training quantization on the model to get the quantized model output</span>
-<span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">pytorch_post_training_quantization</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
-                                                                            <span class="n">representative_data_gen</span><span class="p">,</span>
-                                                                            <span class="n">target_platform_capabilities</span><span class="o">=</span><span class="n">target_platform_cap</span><span class="p">,</span>
-                                                                            <span class="n">n_iter</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">quantized_model</span><span class="p">,</span> <span class="n">quantization_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">ptq</span><span class="o">.</span><span class="n">pytorch_post_training_quantization_experimental</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
+                                                                                         <span class="n">representative_data_gen</span><span class="p">,</span>
+                                                                                         <span class="n">core_config</span><span class="o">=</span><span class="n">core_config</span><span class="p">,</span>
+                                                                                         <span class="n">target_platform_capabilities</span><span class="o">=</span><span class="n">target_platform_cap</span><span class="p">)</span>
 </pre></div>
-</div>
-<div class="line-block">
-<div class="line"><br /></div>
 </div>
 </section>
 
@@ -186,7 +182,7 @@
         <li class="right" >
           <a href="quickstart_keras.html" title="MCT Quickstart Guideline for Keras models"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">MCT Quickstart Guideline for Pytorch models</a></li> 
       </ul>
     </div>
