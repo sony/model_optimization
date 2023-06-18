@@ -22,5 +22,5 @@ MixedPrecisionQuantizationConfigV2
 ===================================
 **Class to configure the quantization process of the model when quantizing in mixed-precision:**
 
-.. autoclass:: model_compression_toolkit.MixedPrecisionQuantizationConfigV2
+.. autoclass:: model_compression_toolkit.core.MixedPrecisionQuantizationConfigV2
 

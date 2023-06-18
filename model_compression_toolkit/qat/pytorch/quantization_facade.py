@@ -171,6 +171,9 @@ if FOUND_TORCH:
 
         user_info.mixed_precision_cfg = bit_widths_config
 
+        # Remove fw_info from graph to enable saving the pytorch model (fw_info can not be pickled)
+        delattr(qat_model.graph, 'fw_info')
+
         return qat_model, user_info
 
 
@@ -215,12 +218,11 @@ if FOUND_TORCH:
              >>> quantized_model = mct.pytorch_quantization_aware_training_finalize(quantized_model)
 
          """
-        exported_model = copy.deepcopy(in_model)
-        for _, layer in exported_model.named_children():
+        for _, layer in in_model.named_children():
             if isinstance(layer, (PytorchQuantizationWrapper, PytorchActivationQuantizationHolder)):
                 layer.convert_to_inferable_quantizers()
 
-        return exported_model
+        return in_model
 
 
 else:

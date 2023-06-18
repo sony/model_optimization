@@ -43,6 +43,7 @@ class GPTQHessianWeightsConfig:
 
         """
         Initialize a GPTQHessianWeightsConfig.
+
         Args:
             hessians_num_samples (int): Number of samples to use for computing the Hessian-based weights.
             norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).

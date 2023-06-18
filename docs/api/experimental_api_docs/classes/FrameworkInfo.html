@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>FrameworkInfo Class &#8212; MCT Documentation: ver 1.8.0</title>
+    <title>FrameworkInfo Class &#8212; MCT Documentation: ver 1.9.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">FrameworkInfo Class</a></li> 
       </ul>
     </div>  
@@ -55,7 +55,7 @@ kernel_ops: Layers that have coefficients and need to get quantized (e.g., Conv2
 activation_ops: Layers that their outputs should get quantized (e.g., Add, ReLU, etc.)
 no_quantization_ops:Layers that should not get quantized (e.g., Reshape, Transpose, etc.)</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>activation_quantizer_mapping</strong> (<em>Dict</em><em>[</em><a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.QuantizationMethod" title="model_compression_toolkit.target_platform.QuantizationMethod"><em>QuantizationMethod</em></a><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
 <li><p><strong>kernel_channels_mapping</strong> (<a class="reference internal" href="DefaultDict.html#model_compression_toolkit.DefaultDict" title="model_compression_toolkit.DefaultDict"><em>DefaultDict</em></a>) – Dictionary from a layer to a tuple of its kernel in/out channels indices.</p></li>
@@ -144,7 +144,7 @@ set, and we know it’s kernel out/in channel indices are (3, 2) respectivly:</p
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.8.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">FrameworkInfo Class</a></li> 
       </ul>
     </div>

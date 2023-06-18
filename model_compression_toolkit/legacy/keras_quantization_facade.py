@@ -103,6 +103,9 @@ if FOUND_TF:
             >>> quantized_model, quantization_info = mct.keras_post_training_quantization(model, repr_datagen, n_iter=1)
 
         """
+        Logger.warning('keras_post_training_quantization is deprecated and will be removed '
+                       'in the future. Please use mct.ptq.keras_post_training_quantization_experimental instead.')
+
         KerasModelValidation(model=in_model,
                              fw_info=fw_info).validate()
 
@@ -224,6 +227,9 @@ if FOUND_TF:
              For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/experimental_api_docs/modules/mixed_precision_quantization_config.html#model_compression_toolkit.MixedPrecisionQuantizationConfigV2>`_.
 
          """
+        Logger.warning('keras_post_training_quantization_mixed_precision is deprecated and will be removed '
+                       'in the future. Please use mct.ptq.keras_post_training_quantization_experimental instead.')
+
         KerasModelValidation(model=in_model,
                              fw_info=fw_info).validate()
 

@@ -88,6 +88,7 @@ if found_pytorch:
     from tests.pytorch_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as pytorch_gptq_soft_quantier_test
     from tests.pytorch_tests.function_tests.test_activation_quantization_holder_gptq import \
         TestGPTQModelBuilderWithActivationHolder as TestGPTQModelBuilderWithActivationHolderPytorch
+    from tests.pytorch_tests.exporter_tests.test_runner import PytorchExporterTestsRunner
 
 
 if __name__ == '__main__':
@@ -157,6 +158,8 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchTPModel))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(pytorch_gptq_soft_quantier_test))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchTrainableInfrastructureTestRunner))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchExporterTestsRunner))
+
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)
     unittest.TextTestRunner(verbosity=0).run(comboSuite)

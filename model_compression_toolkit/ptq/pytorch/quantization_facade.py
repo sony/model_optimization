@@ -43,7 +43,7 @@ if FOUND_TORCH:
                                                         target_kpi: KPI = None,
                                                         core_config: CoreConfig = CoreConfig(),
                                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC,
-                                                        new_experimental_exporter: bool = False):
+                                                        new_experimental_exporter: bool = True):
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
@@ -63,7 +63,7 @@ if FOUND_TORCH:
             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to.
-            new_experimental_exporter (bool): Whether exporting the quantized model using new exporter or not (in progress. Avoiding it for now is recommended).
+            new_experimental_exporter (bool): Whether to wrap the quantized model using quantization information or not. Enabled by default. Experimental and subject to future changes.
 
         Returns:
             A quantized module and information the user may need to handle the quantized module.
@@ -125,8 +125,10 @@ if FOUND_TORCH:
                                         DEFAULT_PYTORCH_INFO)
 
         if new_experimental_exporter:
-            Logger.warning('Using new experimental exported models. '
-                           'Please do not use unless you are familiar with what you are doing')
+            Logger.warning('Using new experimental wrapped and ready for export models. To '
+                           'disable it, please set new_experimental_exporter to False when '
+                           'calling pytorch_post_training_quantization_experimental. '
+                           'If you encounter an issue please file a bug.')
 
             return get_exportable_pytorch_model(tg)
 

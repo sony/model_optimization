@@ -113,5 +113,5 @@ class SymmetricThresholdSelectionBoundedActivationTest(SymmetricThresholdSelecti
         # Verify min/max is bounded by 0 and 1
         self.unit_test.assertTrue(fake_layer_softmax_args['signed'] == False,
                                   msg=f"Softmax layer symmetric range is signed. Expected to be unsigned")
-        self.unit_test.assertTrue(fake_layer_softmax_args['threshold'] == 1.0,
+        self.unit_test.assertTrue(fake_layer_softmax_args['threshold'] == [1.0],
                                   msg=f"Softmax layer threshold is {fake_layer_softmax_args['threshold']}. Expected to be 1")
