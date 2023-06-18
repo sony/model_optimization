@@ -16,5 +16,14 @@ from enum import Enum
 
 
 class KerasExportSerializationFormat(Enum):
+    """
+    Specify which serialization format to use for exporting a quantized Keras model.
+
+    KERAS_H5 - .h5 file format
+
+    TFLITE - .tflite file format
+
+    """
+
     KERAS_H5 = 0
     TFLITE = 1

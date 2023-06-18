@@ -33,6 +33,7 @@ Functions
 - :ref:`get_target_platform_capabilities<ug-get_target_platform_capabilities>`: A function to get a target platform model for Tensorflow and Pytorch.
 - :ref:`keras_kpi_data_experimental<ug-keras_kpi_data_experimental>`: A function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of Keras models (experimental).
 - :ref:`pytorch_kpi_data_experimental<ug-pytorch_kpi_data_experimental>`: A function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of PyTorch models (experimental).
+- :ref:`keras_load_quantized_model<ug-keras_load_quantized_model>`: A function to load a quantized keras model (experimental).
 
 
 Modules
@@ -42,6 +43,9 @@ Modules
 - :ref:`mixed_precision_quantization_config<ug-mixed_precision_quantization_config_v2>`: Module to configure the quantization process when using mixed-precision PTQ.
 - :ref:`debug_config<ug-debug_config>`: Module to configure options for debugging the optimization process.
 - :ref:`target_platform<ug-target_platform>`: Module to create and model hardware-related settings to optimize the model according to, by the hardware the optimized model will use during inference.
+- :ref:`qat_config<ug-qat_config>`: Module to create quantization configuration for Quantization-aware Training.
+- :ref:`exporter<ug-exporter>`: Module that enables to export a quantized model in different serialization formats.
+- :ref:`trainable_infrastructure<ug-trainable_infrastructure>`: Module that contains quantization abstraction and quantizers for hardware-oriented model optimization tools.
 
 Classes
 =========

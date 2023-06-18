@@ -17,7 +17,7 @@ Also, allows to export quantized model in the following quantization formats:
 - Fake Quant (where weights and activations are float fakely-quantized values)
 - INT8 (where weights and activations are represented using 8bits integers)
 
-For more detailes about the export formats and options, please refer to the project's GitHub `README file <https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/exporter>`_.
+For more details about the export formats and options, please refer to the project's GitHub `README file <https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/exporter>`_.
 Note that this feature is experimental and subject to future changes. If you have any questions or issues, please open an issue in this GitHub repository.
 
 

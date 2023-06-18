@@ -53,7 +53,7 @@
 <li><p>Fake Quant (where weights and activations are float fakely-quantized values)</p></li>
 <li><p>INT8 (where weights and activations are represented using 8bits integers)</p></li>
 </ul>
-<p>For more detailes about the export formats and options, please refer to the project’s GitHub <a class="reference external" href="https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/exporter">README file</a>.
+<p>For more details about the export formats and options, please refer to the project’s GitHub <a class="reference external" href="https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/exporter">README file</a>.
 Note that this feature is experimental and subject to future changes. If you have any questions or issues, please open an issue in this GitHub repository.</p>
 <section id="kerasexportserializationformat">
 <h2>KerasExportSerializationFormat<a class="headerlink" href="#kerasexportserializationformat" title="Permalink to this heading">¶</a></h2>
@@ -61,7 +61,9 @@ Note that this feature is experimental and subject to future changes. If you hav
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.exporter.KerasExportSerializationFormat">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.exporter.</span></span><span class="sig-name descname"><span class="pre">KerasExportSerializationFormat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.exporter.KerasExportSerializationFormat" title="Permalink to this definition">¶</a></dt>
-<dd><p>An enumeration.</p>
+<dd><p>Specify which serialization format to use for exporting a quantized Keras model.</p>
+<p>KERAS_H5 - .h5 file format</p>
+<p>TFLITE - .tflite file format</p>
 </dd></dl>
 
 </section>
@@ -71,7 +73,9 @@ Note that this feature is experimental and subject to future changes. If you hav
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.exporter.PytorchExportSerializationFormat">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.exporter.</span></span><span class="sig-name descname"><span class="pre">PytorchExportSerializationFormat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.exporter.PytorchExportSerializationFormat" title="Permalink to this definition">¶</a></dt>
-<dd><p>An enumeration.</p>
+<dd><p>Specify which serialization format to use for exporting a quantized Pytorch model.</p>
+<p>TORCHSCRIPT - torchscript format</p>
+<p>ONNX - onnx fromat</p>
 </dd></dl>
 
 </section>

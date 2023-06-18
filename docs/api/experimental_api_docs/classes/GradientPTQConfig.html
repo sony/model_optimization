@@ -121,22 +121,23 @@ accordingly. see example in multiple_tensors_mse_loss</p></li>
 </section>
 <section id="gptqhessianweightsconfig-class">
 <h1>GPTQHessianWeightsConfig Class<a class="headerlink" href="#gptqhessianweightsconfig-class" title="Permalink to this heading">¶</a></h1>
-<p><strong>Configuration to use for computing the Hessian-based weights for GPTQ loss metric.</strong></p>
+<p><strong>The following API can be used to create a GPTQHessianWeightsConfig instance which can be used to define necessary parameters for computing Hessian weights for the GPTQ loss function.</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.gptq.GPTQHessianWeightsConfig">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.gptq.</span></span><span class="sig-name descname"><span class="pre">GPTQHessianWeightsConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessians_num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_log_norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessians_n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.gptq.GPTQHessianWeightsConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configuration to use for computing the Hessian-based weights for GPTQ loss metric.</p>
-<p>Initialize a GPTQHessianWeightsConfig.
-:param hessians_num_samples: Number of samples to use for computing the Hessian-based weights.
-:type hessians_num_samples: int
-:param norm_weights: Whether to normalize the returned weights (to get values between 0 and 1).
-:type norm_weights: bool
-:param log_norm: Whether to use log normalization to the GPTQ Hessian-based weights.
-:type log_norm: bool
-:param scale_log_norm: Whether to scale the final vector of the Hessian weights.
-:type scale_log_norm: bool
-:param hessians_n_iter: Number of random iterations to run Hessian approximation for GPTQ weights.
-:type hessians_n_iter: int</p>
+<p>Initialize a GPTQHessianWeightsConfig.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hessians_num_samples</strong> (<em>int</em>) – Number of samples to use for computing the Hessian-based weights.</p></li>
+<li><p><strong>norm_weights</strong> (<em>bool</em>) – Whether to normalize the returned weights (to get values between 0 and 1).</p></li>
+<li><p><strong>log_norm</strong> (<em>bool</em>) – Whether to use log normalization to the GPTQ Hessian-based weights.</p></li>
+<li><p><strong>scale_log_norm</strong> (<em>bool</em>) – Whether to scale the final vector of the Hessian weights.</p></li>
+<li><p><strong>hessians_n_iter</strong> (<em>int</em>) – Number of random iterations to run Hessian approximation for GPTQ weights.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
