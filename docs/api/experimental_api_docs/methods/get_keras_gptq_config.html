@@ -45,8 +45,44 @@
 <span id="ug-get-keras-gptq-config"></span><h1>Get GradientPTQConfig for Keras Models<a class="headerlink" href="#get-gradientptqconfig-for-keras-models" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="model_compression_toolkit.get_keras_gptq_config">
-<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">get_keras_gptq_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.get_keras_gptq_config" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">get_keras_gptq_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_epochs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_rest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">tf.keras.optimizers.Adam(learning_rate=LR_REST_DEFAULT)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">GPTQMultipleTensorsLoss()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_hessian_based_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.get_keras_gptq_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a GradientPTQConfigV2 instance for Keras models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_epochs</strong> (<em>int</em>) – Number of epochs for running the representative dataset for fine-tuning.</p></li>
+<li><p><strong>optimizer</strong> (<em>OptimizerV2</em>) – Keras optimizer to use for fine-tuning for auxiliry variable with a default learning rate set to 0.2.</p></li>
+<li><p><strong>optimizer_rest</strong> (<em>OptimizerV2</em>) – Keras optimizer to use for fine-tuning of the bias variable.</p></li>
+<li><p><strong>loss</strong> (<em>Callable</em>) – loss to use during fine-tuning. should accept 4 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors, the 3rd is a list of quantized weights and the 4th is a list of float weights.</p></li>
+<li><p><strong>log_function</strong> (<em>Callable</em>) – Function to log information about the gptq process.</p></li>
+<li><p><strong>use_hessian_based_weights</strong> (<em>bool</em>) – Whether to use Hessian-based weights for weighted average loss.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a GradientPTQConfigV2 object to use when fine-tuning the quantized model using gptq.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Import MCT and TensorFlow:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+</pre></div>
+</div>
+<p>Create a GradientPTQConfigV2 to run for 5 epochs:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gptq_conf</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">gptq</span><span class="o">.</span><span class="n">get_keras_gptq_config</span><span class="p">(</span><span class="n">n_epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Other Tensorflow optimizers can be passed:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gptq_conf</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">gptq</span><span class="o">.</span><span class="n">get_keras_gptq_config</span><span class="p">(</span><span class="n">n_epochs</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">Nadam</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>The configuration can be passed to <a class="reference internal" href="../../api_docs/methods/keras_post_training_quantization.html#model_compression_toolkit.keras_post_training_quantization" title="model_compression_toolkit.keras_post_training_quantization"><code class="xref py py-func docutils literal notranslate"><span class="pre">keras_post_training_quantization()</span></code></a> in order to quantize a keras model using gptq.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="../classes/GradientPTQConfig.html#model_compression_toolkit.gptq.GradientPTQConfigV2" title="model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfigV2"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradientPTQConfigV2</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 
