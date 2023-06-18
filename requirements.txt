@@ -1,7 +1,7 @@
 networkx!=2.8.1
 tqdm
 Pillow
-numpy
+numpy!=1.25.0
 opencv-python
 scikit-image
 scikit-learn
