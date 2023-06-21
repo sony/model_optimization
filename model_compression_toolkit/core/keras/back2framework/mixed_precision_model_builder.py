@@ -30,8 +30,6 @@ from model_compression_toolkit.core.keras.mixed_precision.configurable_activatio
     ConfigurableActivationQuantizer
 from model_compression_toolkit.core.keras.mixed_precision.configurable_weights_quantizer import \
     ConfigurableWeightsQuantizer
-from model_compression_toolkit.core.keras.quantizer.input_layer_quantize_transform import \
-    InputLayerWrapperTransform
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from model_compression_toolkit.core.keras.quantizer.mixed_precision.selective_quantize_config import \
@@ -307,7 +305,9 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
     @staticmethod
     def _get_activation_quant_layers(node, layers_list):
         return [_l for _l in layers_list if isinstance(_l, KerasActivationQuantizationHolder)
-                and _l.inbound_nodes[0].inbound_layers.name == node.name]
+                and (_l.inbound_nodes[0].inbound_layers.name == node.name or
+                     (isinstance(_l.inbound_nodes[0].inbound_layers, KerasQuantizationWrapper) and
+                      _l.inbound_nodes[0].inbound_layers.layer.name == node.name))]
 
     def _find_layers_in_model_by_node(self, n, layers):
         weights_quant = n.is_weights_quantization_enabled()

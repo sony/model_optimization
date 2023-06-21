@@ -18,7 +18,6 @@ from keras.engine.input_layer import InputLayer
 from keras.models import Model, clone_model
 from packaging import version
 
-from model_compression_toolkit.constants import INPUT_BASE_NAME
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
 from model_compression_toolkit.core.common.user_info import UserInformation
 from mct_quantizers import KerasActivationQuantizationHolder
@@ -169,7 +168,7 @@ class KerasModelBuilder(BaseModelBuilder):
         # building the model. Initially input nodes with input tensors are added to the dictionary,
         # as they're not added later.
         input_nodes_to_input_tensors = {inode: Input(inode.framework_attr[BATCH_INPUT_SHAPE][1:],
-                                                     name=f'{inode.name}_{INPUT_BASE_NAME}')
+                                                     name=inode.name)
                                         for
                                         inode in self.graph.get_inputs()}
 
