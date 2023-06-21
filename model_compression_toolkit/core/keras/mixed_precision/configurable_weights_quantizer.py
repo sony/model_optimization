@@ -18,7 +18,9 @@ from typing import Dict, Any, List
 import numpy as np
 from tensorflow import Tensor
 import tensorflow as tf
+from packaging import version
 
+from model_compression_toolkit.core.keras.mixed_precision.configurable_quant_id import ConfigurableQuantizerIdentifier
 from model_compression_toolkit.logger import Logger
 
 if version.parse(tf.__version__) < version.parse("2.6"):
@@ -34,11 +36,13 @@ from mct_quantizers import mark_quantizer
 
 # TODO: set TF_FOUND and imports accordingly
 
+
+
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC,
                                      QuantizationMethod.UNIFORM, QuantizationMethod.LUT_POT_QUANTIZER,
                                      QuantizationMethod.LUT_SYM_QUANTIZER],
-                quantizer_type=None)
+                quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
 class ConfigurableWeightsQuantizer(BaseKerasInferableQuantizer):
     """
     TODO: update documentation
@@ -77,10 +81,6 @@ class ConfigurableWeightsQuantizer(BaseKerasInferableQuantizer):
             assert candidate_bits < curmax
             curmax = candidate_bits
 
-        assert len(self.node_q_cfg) > 0, 'ConfigurableWeightsQuantizer has to receive' \
-                                         'at least one quantization configuration'
-        assert (not self.weight_attrs and not self.float_weights) or len(self.weight_attrs) == len(self.float_weights)
-
         # TODO: do we need to care about activation quantization here? (can be removed IMO)
         for qc in self.node_q_cfg:
             assert qc.weights_quantization_cfg.enable_weights_quantization == \
@@ -96,21 +96,22 @@ class ConfigurableWeightsQuantizer(BaseKerasInferableQuantizer):
         # Initialize quantized weights for each weight that should be quantized.
         self.quantized_weights = []
         # if self.enable_weights_quantization:
-        for float_weight in self.float_weights:
-            quant_weights_per_qc = []
-            for qc in self.node_q_cfg:
-                qc_weights = qc.weights_quantization_cfg
-                q_weight = qc_weights.weights_quantization_fn(float_weight,
-                                                              qc_weights.weights_n_bits,
-                                                              True,
-                                                              qc_weights.weights_quantization_params,
-                                                              qc_weights.weights_per_channel_threshold,
-                                                              qc_weights.weights_channels_axis)
+        # for float_weight in self.float_weights:
+        for qc in self.node_q_cfg:
+            qc_weights = qc.weights_quantization_cfg
+            q_weight = qc_weights.weights_quantization_fn(self.float_weights,
+                                                          qc_weights.weights_n_bits,
+                                                          True,
+                                                          qc_weights.weights_quantization_params,
+                                                          qc_weights.weights_per_channel_threshold,
+                                                          qc_weights.weights_channels_axis)
 
-                quant_weights_per_qc.append(tf.Variable(q_weight,
-                                                        trainable=False,
-                                                        dtype=tf.float32))
-            self.quantized_weights.append(quant_weights_per_qc)
+            self.quantized_weights.append(tf.Variable(q_weight,
+                                                      trainable=False,
+                                                      dtype=tf.float32))
+
+        self.active_quantization_config_index = self.max_candidate_idx
+
 
     def set_weights_bit_width_index(self,
                                     index: int,
@@ -129,13 +130,18 @@ class ConfigurableWeightsQuantizer(BaseKerasInferableQuantizer):
         """
 
         # if self.enable_weights_quantization:
-        if attr is None:  # set bit width to all weights of the layer
-            for q in self.weight_quantizers:
-                q._set_active_quantization_config_index(index)
-        else:  # set bit width to a specific attribute
-            i = self.weight_attrs.index(attr)
-            q = self.weight_quantizers[i]
-            q._set_active_quantization_config_index(index)
+        # if attr is None:  # set bit width to all weights of the layer
+        #     for q in self.weight_quantizers:
+        #         q._set_active_quantization_config_index(index)
+        # else:  # set bit width to a specific attribute
+        #     i = self.weight_attrs.index(attr)
+        #     q = self.weight_quantizers[i]
+        #     q._set_active_quantization_config_index(index)
+        assert index < len(
+            self.node_q_cfg), f'Quantizer has {len(self.node_q_cfg)} ' \
+                              f'possible nbits. Can not set ' \
+                              f'index {index}'
+        self.active_quantization_config_index = index
 
     def _set_active_quantization_config_index(self, index: int):
         """
@@ -191,7 +197,6 @@ class ConfigurableWeightsQuantizer(BaseKerasInferableQuantizer):
             index that is in active_quantization_config_index the quantizer holds).
         """
 
-        # TODO: this won't work since we need first to know which weight out of the quantized_weights list to take (in case there are more than 1)
         return self.quantized_weights[self.active_quantization_config_index]
 
     def get_config(self) -> Dict[str, Any]:

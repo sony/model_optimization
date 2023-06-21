@@ -24,6 +24,7 @@ from mct_quantizers.logger import Logger
 
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
+from model_compression_toolkit.core.keras.mixed_precision.configurable_quant_id import ConfigurableQuantizerIdentifier
 
 if FOUND_TF:
     import tensorflow as tf
@@ -33,7 +34,7 @@ if FOUND_TF:
                     quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC,
                                          QuantizationMethod.UNIFORM, QuantizationMethod.LUT_POT_QUANTIZER,
                                          QuantizationMethod.LUT_SYM_QUANTIZER],
-                    quantizer_type=None)
+                    quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
     class ConfigurableActivationQuantizer(BaseKerasInferableQuantizer):
         """
         Class for quantizing activations using power-of-two quantizer

@@ -12,14 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
 from tensorflow.python.layers.base import Layer
 from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
+from model_compression_toolkit.core.keras.mixed_precision.configurable_activation_quantizer import \
+    ConfigurableActivationQuantizer
+from model_compression_toolkit.core.keras.mixed_precision.configurable_weights_quantizer import \
+    ConfigurableWeightsQuantizer
 from model_compression_toolkit.core.keras.quantizer.mixed_precision.selective_quantize_config import \
     SelectiveQuantizeConfig
+from model_compression_toolkit.logger import Logger
 
 
-def set_layer_to_bitwidth(wrapped_layer: Layer,
+def set_layer_to_bitwidth(quantization_layer: Layer,
                           bitwidth_idx: int):
     """
     Configure a layer (which is wrapped in a QuantizeWrapper and holds a
@@ -30,8 +36,19 @@ def set_layer_to_bitwidth(wrapped_layer: Layer,
         wrapped_layer: Layer to change its bit-width.
         bitwidth_idx: Index of the bit-width the layer should work with.
     """
-    assert isinstance(wrapped_layer, QuantizeWrapper) and isinstance(wrapped_layer.quantize_config,
-                                                                     SelectiveQuantizeConfig)
+    # assert isinstance(wrapped_layer, QuantizeWrapper) and isinstance(wrapped_layer.quantize_config,
+    #                                                                  SelectiveQuantizeConfig)
     # Configure the quantize_config to use a different bit-width
     # (in practice, to use a different already quantized kernel).
-    wrapped_layer.quantize_config.set_bit_width_index(bitwidth_idx)
+
+    # wrapped_layer.quantize_config.set_bit_width_index(bitwidth_idx)
+    if isinstance(quantization_layer, KerasQuantizationWrapper):
+        for weight_attr, quantizer in quantization_layer.weights_quantizers.items():
+            if not isinstance(quantizer, ConfigurableWeightsQuantizer):
+                Logger.error(f"Expecting weights quantizer to be of type ConfigurableWeightsQuantizer.")
+            quantizer.set_weights_bit_width_index(bitwidth_idx, weight_attr)
+
+    if isinstance(quantization_layer, KerasActivationQuantizationHolder):
+        if not isinstance(quantization_layer.activation_holder_quantizer, ConfigurableActivationQuantizer):
+            Logger.error(f"Expecting weights quantizer to be of type ConfigurableWeightsQuantizer.")
+        quantization_layer.activation_holder_quantizer.set_active_quantization_config_index(bitwidth_idx)

@@ -90,7 +90,9 @@ class SensitivityEvaluation:
 
         # Build a mixed-precision model which can be configured to use different bitwidth in different layers.
         # And a baseline model.
-        self.baseline_model, self.model_mp = self._build_models()
+        # Also, returns a mapping between a configurable graph's node and its matching layer(s)
+        # in the new built MP model.
+        self.baseline_model, self.model_mp, self.conf_node2layers = self._build_models()
 
         # Build images batches for inference comparison
         self.images_batches = self._get_images_batches(quant_config.num_of_images)
@@ -177,17 +179,17 @@ class SensitivityEvaluation:
                 for c in n.candidates_quantization_cfg:
                     c.activation_quantization_cfg.enable_activation_quantization = False
 
-        model_mp, _ = self.fw_impl.model_builder(evaluation_graph,
-                                                 mode=ModelBuilderMode.MIXEDPRECISION,
-                                                 append2output=self.interest_points,
-                                                 fw_info=self.fw_info).build_model()
+        model_mp, _, conf_node2layers = self.fw_impl.model_builder(evaluation_graph,
+                                                                   mode=ModelBuilderMode.MIXEDPRECISION,
+                                                                   append2output=self.interest_points,
+                                                                   fw_info=self.fw_info)
 
         # Build a baseline model.
         baseline_model, _ = self.fw_impl.model_builder(evaluation_graph,
                                                        mode=ModelBuilderMode.FLOAT,
                                                        append2output=self.interest_points)
 
-        return baseline_model, model_mp
+        return baseline_model, model_mp, conf_node2layers
 
     def _compute_gradient_based_weights(self) -> np.ndarray:
         """
@@ -235,26 +237,50 @@ class SensitivityEvaluation:
         # Thus, the last configurable layer must be included in the interest points for evaluating the metric,
         # otherwise, not all configurable nodes will be considered throughout the MP optimization search (since
         # they will not affect the metric value).
-        model_mp_layers_names = self.fw_impl.get_model_layers_names(model_mp)
+
+        # model_mp_layers_names = self.fw_impl.get_model_layers_names(model_mp)
         if node_idx is not None:  # configure specific layers in the mp model
             for node_idx_to_configure in node_idx:
-                node_name = self.get_quant_node_name(sorted_configurable_nodes_names[node_idx_to_configure])
-                if node_name in model_mp_layers_names:
-                    current_layer = self.fw_impl.get_model_layer_by_name(model_mp, node_name)
-                    self.set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
-                else:
-                    raise Exception("The last configurable node is not included in the list of interest points for"  # pragma: no cover
-                                    "sensitivity evaluation metric for the mixed-precision search.")
+                # node_name = self.get_quant_node_name(sorted_configurable_nodes_names[node_idx_to_configure])
+                # if node_name in model_mp_layers_names:
+                # current_layer = self.fw_impl.get_model_layer_by_name(model_mp, node_name)
+
+                self._configure_node_bitwidth(sorted_configurable_nodes_names,
+                                              mp_model_configuration, node_idx_to_configure)
+
+                # else:
+                #     raise Exception("The last configurable node is not included in the list of interest points for"  # pragma: no cover
+                #                     "sensitivity evaluation metric for the mixed-precision search.")
 
         else:  # use the entire mp_model_configuration to configure the model
             for node_idx_to_configure, bitwidth_idx in enumerate(mp_model_configuration):
-                node_name = self.get_quant_node_name(sorted_configurable_nodes_names[node_idx_to_configure])
-                if node_name in model_mp_layers_names:
-                    current_layer = self.fw_impl.get_model_layer_by_name(model_mp, node_name)
-                    self.set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
-                else:
-                    raise Exception("The last configurable node is not included in the list of interest points for"
-                                    "sensitivity evaluation metric for the mixed-precision search.")  # pragma: no cover
+                # node_name = self.get_quant_node_name(sorted_configurable_nodes_names[node_idx_to_configure])
+
+                # if node_name in model_mp_layers_names:
+                #     current_layer = self.fw_impl.get_model_layer_by_name(model_mp, node_name, is_wrapped=True)
+
+                self._configure_node_bitwidth(sorted_configurable_nodes_names,
+                                              mp_model_configuration, node_idx_to_configure)
+
+                # current_layer = self.fw_impl.get_model_layer_by_name(model_mp, node_name)
+
+                # else:
+                #     raise Exception("The last configurable node is not included in the list of interest points for"
+                #                     "sensitivity evaluation metric for the mixed-precision search.")  # pragma: no cover
+
+
+    def _configure_node_bitwidth(self,
+                                 sorted_configurable_nodes_names,
+                                 mp_model_configuration,
+                                 node_idx_to_configure):
+        node_name = sorted_configurable_nodes_names[node_idx_to_configure]
+        layers_to_config = self.conf_node2layers.get(node_name, None)
+        if layers_to_config is None:
+            Logger.error(
+                f"Couldn't find mathing layers in the MP model for node {node_name}.")  # pragma: no cover
+
+        for current_layer in layers_to_config:
+            self.set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
 
     def _compute_distance_matrix(self,
                                  baseline_tensors: List[Any],
