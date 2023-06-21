@@ -118,7 +118,8 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                 quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
                                                                   node_weights_qc[0].weights_quantization_cfg.weights_quantization_method,
                                                                   BaseKerasInferableQuantizer)
-                kwargs = get_inferable_quantizer_kwargs(n, QuantizationTarget.Weights)
+                kwargs = get_inferable_quantizer_kwargs(node_weights_qc[0].weights_quantization_cfg,
+                                                        QuantizationTarget.Weights)
 
                 return KerasQuantizationWrapper(layer,
                                                 weights_quantizers={attr: quantier_for_node(**kwargs)
@@ -196,7 +197,8 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                 quantizer_for_node = get_inferable_quantizer_class(QuantizationTarget.Activation,
                                                                    node_act_qc[0].activation_quantization_cfg.activation_quantization_method,
                                                                    BaseKerasInferableQuantizer)
-                kwargs = get_inferable_quantizer_kwargs(n, QuantizationTarget.Activation)
+                kwargs = get_inferable_quantizer_kwargs(node_act_qc[0].activation_quantization_cfg,
+                                                        QuantizationTarget.Activation)
 
                 activation_quantizers = [quantizer_for_node(**kwargs)] * num_of_outputs
 
@@ -305,7 +307,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
     @staticmethod
     def _get_activation_quant_layers(node, layers_list):
         return [_l for _l in layers_list if isinstance(_l, KerasActivationQuantizationHolder)
-                and _l.input.name == node.name]
+                and _l.inbound_nodes[0].inbound_layers.name == node.name]
 
     def _find_layers_in_model_by_node(self, n, layers):
         weights_quant = n.is_weights_quantization_enabled()
