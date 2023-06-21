@@ -136,7 +136,7 @@ def get_weights_quantizer_for_node(node: BaseNode) -> BasePyTorchInferableQuanti
     quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
                                                       weights_quantization_method,
                                                       BasePyTorchInferableQuantizer)
-    kwargs = get_weights_inferable_quantizer_kwargs(node)
+    kwargs = get_weights_inferable_quantizer_kwargs(node_w_qc)
 
     return quantier_for_node(**kwargs)
 
