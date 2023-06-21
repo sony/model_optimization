@@ -66,7 +66,7 @@ def quantization_builder(n: common.BaseNode,
                                                         quant_method=quant_method,
                                                         quantizer_base_class=BasePyTorchInferableQuantizer)
 
-        kwargs = get_activation_inferable_quantizer_kwargs(n)
+        kwargs = get_activation_inferable_quantizer_kwargs(n.final_activation_quantization_cfg)
 
         activation_quantizers.append(quantizer_class(**kwargs))
 
