@@ -24,6 +24,8 @@ from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer im
 from mct_quantizers import QuantizationTarget
 from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
 from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
+
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.trainable_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_weights_config
 from model_compression_toolkit.trainable_infrastructure.common.get_quantizers import \
@@ -63,13 +65,17 @@ def quantization_builder(n: common.BaseNode,
 
     activation_quantizers = []
     if n.is_activation_quantization_enabled():
+        if n.final_activation_quantization_cfg is None:
+            Logger.critical(f'Can not set quantizer for a node with no final activation quantization configuration')  #
+            # pragma: no cover
+
         quant_method = n.final_activation_quantization_cfg.activation_quantization_method
 
         quantizer_class = get_inferable_quantizer_class(quant_target=QuantizationTarget.Activation,
                                                         quant_method=quant_method,
                                                         quantizer_base_class=BaseKerasInferableQuantizer)
 
-        kwargs = get_inferable_quantizer_kwargs(n, QuantizationTarget.Activation)
+        kwargs = get_inferable_quantizer_kwargs(n.final_activation_quantization_cfg, QuantizationTarget.Activation)
 
         activation_quantizers.append(quantizer_class(**kwargs))
 
