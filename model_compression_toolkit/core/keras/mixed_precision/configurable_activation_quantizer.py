@@ -86,10 +86,7 @@ if FOUND_TF:
             self.active_quantization_config_index = index
 
         def __call__(self,
-                     inputs: tf.Tensor,
-                     training: bool,
-                     weights: Dict[str, tf.Variable],
-                     **kwargs: Dict[str, Any]) -> np.ndarray:
+                     inputs: tf.Tensor) -> np.ndarray:
             """
             Method to return the quantized weight. This method is called
             when the framework needs to quantize a float weight, and is expected to return the quantized
