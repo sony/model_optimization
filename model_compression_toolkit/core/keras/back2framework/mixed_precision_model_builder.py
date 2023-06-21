@@ -116,7 +116,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                                                   f"but {len(node_weights_qc)} different configurations exist."
 
                 quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
-                                                                  node_weights_qc[0].weights_quantization_method,
+                                                                  node_weights_qc[0].weights_quantization_cfg.weights_quantization_method,
                                                                   BaseKerasInferableQuantizer)
                 kwargs = get_inferable_quantizer_kwargs(n, QuantizationTarget.Weights)
 
@@ -194,7 +194,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                 assert len(node_act_qc) == 1, f"Expecting node {n.name} to have a unique activation configuration, " \
                                               f"but {len(node_act_qc)} different configurations exist."
                 quantizer_for_node = get_inferable_quantizer_class(QuantizationTarget.Activation,
-                                                                   node_act_qc[0].activation_quantization_method,
+                                                                   node_act_qc[0].activation_quantization_cfg.activation_quantization_method,
                                                                    BaseKerasInferableQuantizer)
                 kwargs = get_inferable_quantizer_kwargs(n, QuantizationTarget.Activation)
 

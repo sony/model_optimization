@@ -44,11 +44,15 @@ def set_layer_to_bitwidth(quantization_layer: Layer,
     # wrapped_layer.quantize_config.set_bit_width_index(bitwidth_idx)
     if isinstance(quantization_layer, KerasQuantizationWrapper):
         for weight_attr, quantizer in quantization_layer.weights_quantizers.items():
-            if not isinstance(quantizer, ConfigurableWeightsQuantizer):
-                Logger.error(f"Expecting weights quantizer to be of type ConfigurableWeightsQuantizer.")
-            quantizer.set_weights_bit_width_index(bitwidth_idx, weight_attr)
+            if isinstance(quantizer, ConfigurableWeightsQuantizer):
+                # Setting bitwidth only for configurable layers. There might be wrapped layers that aren't configurable,
+                # for instance, if only activations are quantized with mixed precision and weights are quantized with
+                # fixed precision
+                quantizer.set_weights_bit_width_index(bitwidth_idx, weight_attr)
 
     if isinstance(quantization_layer, KerasActivationQuantizationHolder):
-        if not isinstance(quantization_layer.activation_holder_quantizer, ConfigurableActivationQuantizer):
-            Logger.error(f"Expecting weights quantizer to be of type ConfigurableWeightsQuantizer.")
-        quantization_layer.activation_holder_quantizer.set_active_quantization_config_index(bitwidth_idx)
+        if isinstance(quantization_layer.activation_holder_quantizer, ConfigurableActivationQuantizer):
+            # Setting bitwidth only for configurable layers. There might be activation layers that isn't configurable,
+            # for instance, if only weights are quantized with mixed precision and activation are quantized with
+            # fixed precision
+            quantization_layer.activation_holder_quantizer.set_active_quantization_config_index(bitwidth_idx)
