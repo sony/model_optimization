@@ -45,4 +45,4 @@ def set_layer_to_bitwidth(quantization_layer: Layer,
             # Setting bitwidth only for configurable layers. There might be activation layers that isn't configurable,
             # for instance, if only weights are quantized with mixed precision and activation are quantized with
             # fixed precision
-            quantization_layer.activation_holder_quantizer.set_active_quantization_config_index(bitwidth_idx)
+            quantization_layer.activation_holder_quantizer.set_active_activation_quantizer(bitwidth_idx)

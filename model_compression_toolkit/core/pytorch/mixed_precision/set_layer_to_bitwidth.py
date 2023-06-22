@@ -12,24 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
 from torch.nn import Module
 
-from model_compression_toolkit.core.pytorch.mixed_precision.mixed_precision_wrapper import PytorchMixedPrecisionWrapper
+from model_compression_toolkit.core.pytorch.mixed_precision.configurable_activation_quantizer import \
+    ConfigurableActivationQuantizer
+from model_compression_toolkit.core.pytorch.mixed_precision.configurable_weights_quantizer import \
+    ConfigurableWeightsQuantizer
 
 
-def set_layer_to_bitwidth(wrapped_layer: Module,
+def set_layer_to_bitwidth(quantization_layer: Module,
                           bitwidth_idx: int):
     """
-    Configure a layer (which is wrapped in a PytorchMixedPrecisionWrapper and holds a model's layer (nn.Module))
-    to work with a different bit-width.
-    The bitwidth_idx is the index of the quantized-weights the quantizer in the PytorchMixedPrecisionWrapper holds.
+    Configures a layer's configurable quantizer to work with a different bit-width.
+    The bit-width_idx is the index of the actual quantizer the quantizer object in the quantization_layer wraps/holds.
 
     Args:
-        wrapped_layer: Layer to change its bit-width.
+        quantization_layer: Layer to change its bit-width.
         bitwidth_idx: Index of the bit-width the layer should work with.
     """
-    assert isinstance(wrapped_layer, PytorchMixedPrecisionWrapper)
-    # Configure the quantize_config to use a different bitwidth
-    # (in practice, to use a different already quantized kernel).
-    wrapped_layer.set_active_weights(bitwidth_idx)
-    wrapped_layer.set_active_activation_quantizer(bitwidth_idx)
+
+    if isinstance(quantization_layer, PytorchQuantizationWrapper):
+        for _, quantizer in quantization_layer.weights_quantizers.items():
+            if isinstance(quantizer, ConfigurableWeightsQuantizer):
+                # Setting bitwidth only for configurable layers. There might be wrapped layers that aren't configurable,
+                # for instance, if only activations are quantized with mixed precision and weights are quantized with
+                # fixed precision
+                quantizer.set_weights_bit_width_index(bitwidth_idx)
+
+    if isinstance(quantization_layer, PytorchActivationQuantizationHolder):
+        if isinstance(quantization_layer.activation_holder_quantizer, ConfigurableActivationQuantizer):
+            # Setting bitwidth only for configurable layers. There might be activation layers that isn't configurable,
+            # for instance, if only weights are quantized with mixed precision and activation are quantized with
+            # fixed precision
+            quantization_layer.activation_holder_quantizer.set_active_activation_quantizer(bitwidth_idx)

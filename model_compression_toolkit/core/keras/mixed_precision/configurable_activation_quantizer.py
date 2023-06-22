@@ -27,13 +27,12 @@ from model_compression_toolkit.logger import Logger
 if FOUND_TF:
     import tensorflow as tf
     from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
-    from model_compression_toolkit.core.keras.mixed_precision.configurable_quant_id import \
+    from model_compression_toolkit.core.common.mixed_precision.configurable_quant_id import \
         ConfigurableQuantizerIdentifier
 
     @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                     quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC,
-                                         QuantizationMethod.UNIFORM, QuantizationMethod.LUT_POT_QUANTIZER,
-                                         QuantizationMethod.LUT_SYM_QUANTIZER],
+                                         QuantizationMethod.UNIFORM, QuantizationMethod.LUT_POT_QUANTIZER],
                     quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
     class ConfigurableActivationQuantizer(BaseKerasInferableQuantizer):
         """
@@ -70,7 +69,7 @@ if FOUND_TF:
                 q_activation = qc.activation_quantization_cfg
                 self.activation_quantizers.append(q_activation.quantize_node_output)
 
-        def set_active_quantization_config_index(self, index: int):
+        def set_active_activation_quantizer(self, index: int):
             """
             Set an index to use for the activation quantizer to return when requested.
 

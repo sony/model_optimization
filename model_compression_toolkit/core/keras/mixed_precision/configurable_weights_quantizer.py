@@ -13,10 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 import numpy as np
 
 from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
+    CandidateNodeQuantizationConfig
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from mct_quantizers import QuantizationTarget
@@ -25,7 +27,7 @@ from mct_quantizers import mark_quantizer
 
 if FOUND_TF:
     import tensorflow as tf
-    from model_compression_toolkit.core.keras.mixed_precision.configurable_quant_id import \
+    from model_compression_toolkit.core.common.mixed_precision.configurable_quant_id import \
         ConfigurableQuantizerIdentifier
     from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
 
@@ -48,9 +50,9 @@ if FOUND_TF:
         """
 
         def __init__(self,
-                     node_q_cfg,
-                     float_weights,
-                     max_candidate_idx):
+                     node_q_cfg: List[CandidateNodeQuantizationConfig],
+                     float_weights: tf.Tensor,
+                     max_candidate_idx: int = 0):
             """
             Initializes a configurable quantizer.
 
@@ -92,9 +94,7 @@ if FOUND_TF:
                                                               qc_weights.weights_per_channel_threshold,
                                                               qc_weights.weights_channels_axis)
 
-                self.quantized_weights.append(tf.Variable(q_weight,
-                                                          trainable=False,
-                                                          dtype=tf.float32))
+                self.quantized_weights.append(tf.convert_to_tensor(q_weight, dtype=tf.float32))
 
             self.active_quantization_config_index = self.max_candidate_idx
 
@@ -116,7 +116,7 @@ if FOUND_TF:
 
         def __call__(self,
                      inputs: tf.Tensor,
-                     training: bool):
+                     training: bool) -> tf.Tensor:
             """
             Method to return the quantized weight. This method is called when the framework needs to quantize a
             float weight, and is expected to return the quantized weight. Since we already quantized the weight in
@@ -131,7 +131,7 @@ if FOUND_TF:
 
             return self.quantized_weights[self.active_quantization_config_index]
 
-        def get_config(self) -> Dict[str, Any]:
+        def get_config(self) -> Dict[str, Any]:  # pragma: no cover
             """
             Returns: The ConfigurableWeightsQuantizer configuration.
             """
