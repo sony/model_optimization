@@ -18,7 +18,7 @@
 
  The Licence of the ultralytics project is shown in: https://github.com/ultralytics/ultralytics/blob/main/LICENSE
 """
-
+import logging
 from enum import Enum
 
 import torch
@@ -30,9 +30,10 @@ from torchvision.transforms import transforms
 from pytorch_fw.ultralytics.replacers import prepare_model_for_ultralytics_val
 from pytorch_fw.utils import get_representative_dataset
 from common.model_lib import BaseModelLib
-from common.consts import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, COCO_DATASET
+from common.constants import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, COCO_DATASET, VALIDATION_DATASET_FOLDER
 
 from common.results import DatasetInfo
+
 from ultralytics.yolo.data.dataset import YOLODataset
 from ultralytics.yolo.utils.torch_utils import initialize_weights
 
@@ -99,6 +100,11 @@ class ModelLib(BaseModelLib):
         self.ultralytics_model = prepare_model_for_ultralytics_val(self.ultralytics_model, model)
 
         # Evaluation using ultralytics interface
+        if self.args[VALIDATION_DATASET_FOLDER] is not None:
+            logging.warning('The provided value for "validation_dataset_folder" is ignored. '
+                            'Ultralytics utilizes the dataset path specified in the coco.yaml file. '
+                            'By default, the dataset path is set to "../datasets/coco"')
+
         results = self.ultralytics_model.val(batch=int(self.args[BATCH_SIZE]))  # evaluate model performance on the validation set
         map_res = results.mean_results()[-1]
         dataset_info = DatasetInfo(self.dataset_name, 5000)
