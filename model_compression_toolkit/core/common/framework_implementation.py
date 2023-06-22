@@ -288,7 +288,6 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_substitutions_after_second_moment_correction '
                              f'method.')  # pragma: no cover
 
-
     @abstractmethod
     def get_sensitivity_evaluator(self,
                                   graph: Graph,
@@ -361,40 +360,6 @@ class FrameworkImplementation(ABC):
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_node_distance_fn method.')  # pragma: no cover
-
-    @abstractmethod
-    def get_model_layers_names(self,
-                               model: Any) -> List[str]:
-        """
-        Returns a list of the given model's layers names.
-
-        Args:
-            model: A model.
-
-        Returns: List of layers' names.
-
-        """
-
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s get_model_layers_names method.')  # pragma: no cover
-
-    @abstractmethod
-    def get_model_layer_by_name(self,
-                                model: Any,
-                                layer_name: str) -> Any:
-        """
-        Returns a model's layer by its name.
-
-        Args:
-            model: A model to retrieve a layer from.
-            layer_name: The requested layer's name.
-
-        Returns: A layer object.
-
-        """
-
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s get_model_layer_by_name method.')  # pragma: no cover
 
     @abstractmethod
     def model_grad(self,

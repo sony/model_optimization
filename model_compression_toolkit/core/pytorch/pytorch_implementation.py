@@ -350,7 +350,6 @@ class PytorchImplementation(FrameworkImplementation):
                                      fw_info=fw_info,
                                      fw_impl=self,
                                      set_layer_to_bitwidth=set_layer_to_bitwidth,
-                                     get_quant_node_name=lambda node_name: f'{node_name}',
                                      disable_activation_for_metric=disable_activation_for_metric)
 
     def get_node_prior_info(self,
@@ -409,36 +408,6 @@ class PytorchImplementation(FrameworkImplementation):
         elif layer_class == Linear:
             return compute_cs
         return compute_mse
-
-    def get_model_layers_names(self,
-                               model: Module) -> List[str]:
-        """
-        Returns a list of the given model's layers names.
-
-        Args:
-            model: A Pytorch model.
-
-        Returns: List of layers' names.
-
-        """
-
-        return [layer[0] for layer in list(model.named_children())]
-
-    def get_model_layer_by_name(self,
-                                model: Module,
-                                layer_name: str) -> Module:
-        """
-        Returns a Pytorch model's layer by its name.
-
-        Args:
-            model: A Pytorch model to retrieve a layer from.
-            layer_name: The requested layer's name.
-
-        Returns: A Pytorch layer object.
-
-        """
-
-        return model.get_submodule(target=layer_name)
 
     def model_grad(self,
                    graph_float: common.Graph,

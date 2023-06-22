@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Tuple, Any, Dict, Union
+from typing import Tuple, Any, Dict, Union, List
 
-import tensorflow as tf
-# import tensorflow_model_optimization.quantization.keras.graph_transformations.model_transformer as mt
 from keras.engine.base_layer import Layer
 from keras.models import Model
 from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder, QuantizationTarget
@@ -24,34 +22,19 @@ from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder, \
-    is_layer_fake_quant, get_node_name_from_layer
+from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
 from model_compression_toolkit.core.keras.mixed_precision.configurable_activation_quantizer import \
     ConfigurableActivationQuantizer
 from model_compression_toolkit.core.keras.mixed_precision.configurable_weights_quantizer import \
     ConfigurableWeightsQuantizer
 
-# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-from model_compression_toolkit.core.keras.quantizer.mixed_precision.selective_quantize_config import \
-    SelectiveQuantizeConfig
-from packaging import version
-
 from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
     get_inferable_quantizer_kwargs
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.layers.core import TFOpLambda, SlicingOpLambda  # pragma: no cover
-else:
-    from keras.layers.core import TFOpLambda, SlicingOpLambda
-
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.core.keras.quantizer.mixed_precision.quantization_config_factory import \
-    quantization_config_builder_mixed_precision
-from tensorflow.python.util.object_identity import Reference as TFReference
 
 
 class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
@@ -86,13 +69,16 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                                 n: common.BaseNode,
                                 layer: Layer) -> Union[KerasQuantizationWrapper, Layer]:
         """
-        A function which takes a computational graph node and a keras layer and perform the quantization wrapping.
+        A function which takes a computational graph node and a keras layer and perform the quantization
+        wrapping for mixed precision.
 
         Args:
             n: A node of mct graph.
             layer: A keras layer
 
-        Returns: Wrapped layer if the layer should be wrap, otherwise returns the layer as is.
+        Returns: Wrapped layer with a configurable quantizer if the layer should quantized in mixed precision,
+        otherwise returns either the layer wrapped with a fixed precision inferable quantizer or the layer as is if it's
+        not supposed to be quantized.
 
         """
 
@@ -101,17 +87,15 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         if n.is_weights_quantization_enabled():
             kernel_attributes = self.fw_info.get_kernel_op_attributes(n.type)
             if n.name in weights_conf_nodes_names:
-                # if len(kernel_attribute) == 0:
-                #     Logger.error(f"Node {n.name} has no valid kernel attribute to quantize.")
-
                 return KerasQuantizationWrapper(layer,
                                                 weights_quantizers={attr: ConfigurableWeightsQuantizer(
                                                     **self._get_weights_configurable_quantizer_kwargs(n, attr))
                                                                     for attr in kernel_attributes})
             else:
                 node_weights_qc = n.get_unique_weights_candidates()
-                assert len(node_weights_qc) == 1, f"Expecting node {n.name} to have a unique weights configuration, " \
-                                                  f"but {len(node_weights_qc)} different configurations exist."
+                if not len(node_weights_qc) == 1:
+                    Logger.error(f"Expecting node {n.name} to have a unique weights configuration "
+                                 f"but {len(node_weights_qc)} different configurations exist.")
 
                 quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
                                                                   node_weights_qc[0].weights_quantization_cfg.weights_quantization_method,
@@ -127,10 +111,12 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
     def _get_weights_configurable_quantizer_kwargs(self, n: BaseNode, attr: str) -> Dict[str, Any]:
         """
-        Get the quantization parameters for an inferable quantizer.
+        Get the quantization parameters for a configurable quantizer.
+
         Args:
-            node: The node for which the quantizer is being created.
-            quantization_target: The target of the quantization (weights or activations).
+            n: The node for which the quantizer is being created.
+            attr: The name of the weights attribute to be quantized.
+
         Returns:
             The quantization parameters as a dictionary.
         """
@@ -141,12 +127,13 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         node_q_cfg_candidates.sort(key=lambda x: (x.weights_quantization_cfg.weights_n_bits,
                                                   x.activation_quantization_cfg.activation_n_bits), reverse=True)
 
-        # float_weights = [n.get_weights_by_keys(attr) for attr in self.fw_info.get_kernel_op_attributes(n.type)]
         float_weights = n.get_weights_by_keys(attr)
 
         max_cfg_candidates = n.find_max_candidates_indices()
-        assert len(max_cfg_candidates) == 1, \
-            f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
+        if not len(max_cfg_candidates) == 1:
+            Logger.error(f"A maximal config candidate must be defined, "
+                         f"but some node have multiple potential maximal candidates")
+
         max_candidate_idx = max_cfg_candidates[0]
 
         return {'node_q_cfg': node_q_cfg_candidates,
@@ -155,10 +142,11 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                 'max_candidate_idx': max_candidate_idx
                 }
 
-    def mixed_precision_activation_holder(self, n):
+    def mixed_precision_activation_holder(self, n: BaseNode) -> KerasActivationQuantizationHolder:
         """
         Retrieve a KerasActivationQuantizationHolder layer to use for activation quantization for a node.
-        If the layer is not supposed to be wrapped with activation quantizers - return None.
+        The layer should hold either a configurable activation quantizer, if it is quantized with mixed precision,
+        or an inferable quantizer for fixed single bit-width quantization.
 
         Args:
             n: Node to get KerasActivationQuantizationHolder to attach in its output.
@@ -210,28 +198,16 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
             f'KerasActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
             f'were found for node {n}')
 
-    # def _quantize_node_activations(self,
-    #                                node: BaseNode,
-    #                                input_tensors: List[TFReference]) -> List[TFReference]:
-    #     """
-    #     Quantize node's activation given input tensors.
-    #
-    #     Args:
-    #         node: Node to quantize its outputs.
-    #         input_tensors: Input tensors of the node.
-    #
-    #     Returns:
-    #         Output of the node.
-    #
-    #     """
-    #     if node.is_all_activation_candidates_equal():
-    #         # otherwise, we want to use the float tensor when building the model for MP search
-    #         return node.candidates_quantization_cfg[0].activation_quantization_cfg.quantize_node_output(input_tensors)
-    #     return input_tensors
-    #
-    def build_model(self) -> Tuple[Model, UserInformation, Dict[str, Layer]]:
+    def build_model(self) -> Tuple[Model, UserInformation,
+                                   Dict[str, Union[KerasQuantizationWrapper, KerasActivationQuantizationHolder]]]:
         """
         Build a Keras mixed-precision model and return it.
+        Used the basic Keras model builder to build the model, and adding a mapping between each configurable node to
+        a list of layers (from the new model) that are matching to the node (either KerasQuantizationWrapper or
+        KerasActivationQuantizationHolder type layers).
+        This mapping is used during mixed precision metric computation to enforce pairs of weights-activation bit-width
+        candidates when configuring a model.
+
         Returns: Mixed-precision Keras model.
 
         """
@@ -243,82 +219,60 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
         return model, user_info, conf_node2layers
 
-    #
-    #     conf_nodes_names = self.graph.get_configurable_sorted_nodes_names()
-    #
-    #     def _quantize_multiple_nbits(layer):
-    #         node = self.oh.layer_to_node_dict.get(layer)
-    #         if node is not None:
-    #             # Wrap only if its weights should be quantized
-    #             if node.name in conf_nodes_names:
-    #                 # TODO: Maybe FullyQuantizedQuantizeWrapper to allow using TFOpLambda in MP
-    #                 if node.layer_class in [TFOpLambda, SlicingOpLambda]:
-    #                     Logger.critical(f"Activation mixed-precision is not supported for layers of type "  # pragma: no cover
-    #                                     f"{node.layer_class}. Please modify the TargetPlatformModel object, "
-    #                                     f"such that layers of type {node.layer_class} "
-    #                                     f"won't have more than one quantization configuration option.")
-    #                 return QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node))
-    #             return layer
-    #
-    #         elif is_layer_fake_quant(layer):
-    #             return layer
-    #         else:
-    #             raise Exception(  # pragma: no cover
-    #                 f'Mismatch between keras model and graph cant find node named: '
-    #                 f'{get_node_name_from_layer(layer)}')
-    #
-    #     # clone each layer in the model and apply _quantize to the layer.
-    #     model = tf.keras.models.clone_model(model,
-    #                                         input_tensors=None,
-    #                                         clone_function=_quantize_multiple_nbits)
-    #
-    #     # We use a model transformer to wrap the input layer with QuantizeWrapper,
-    #     # to allow layer configuration to different bitwidths.
-    #     # A model transformer allows to modify a layer in an existing model, by applying the given list of
-    #     # transformers on the model (in this case,
-    #     # we only apply single transformer - InputLayerQuantizeTransform)
-    #     model_inputs = self.graph.get_inputs()
-    #
-    #     input_transformer = mt.ModelTransformer(model, [InputLayerWrapperTransform(inp,
-    #                                                                                quantization_config_builder_mixed_precision(inp),
-    #                                                                                self.get_custom_objects(),
-    #                                                                                QuantizeWrapper)
-    #                                                     for inp in model_inputs])
-    #     model = input_transformer.transform()[0]
-    #
-    #     return model, user_info
+    @staticmethod
+    def _get_weights_quant_layers(n: BaseNode, layers_list: List[Layer]) -> List[KerasQuantizationWrapper]:
+        """
+        Filters KerasQuantizationWrapper layers from an MP model that are matching to the given graph node.
 
-    # @staticmethod
-    # def get_custom_objects() -> Dict[str, Any]:
-    #     """
-    #
-    #     Returns: Dictionary of custom objects needed to load this model builder's output.
-    #
-    #     """
-    #     return {QuantizeWrapper.__name__:QuantizeWrapper,
-    #             SelectiveQuantizeConfig.__name__: SelectiveQuantizeConfig}
+        Args:
+            n: A configurable graph node.
+            layers_list: Mixed precision model layers list.
+
+        Returns: A list of layers that responsible for the node's weights quantization.
+
+        """
+        return [_l for _l in layers_list if isinstance(_l, KerasQuantizationWrapper) and _l.layer.name == n.name]
 
     @staticmethod
-    def _get_weights_quant_layers(node, layers_list):
-        return [_l for _l in layers_list if isinstance(_l, KerasQuantizationWrapper) and _l.layer.name == node.name]
+    def _get_activation_quant_layers(n: BaseNode, layers_list: List[Layer]) -> List[KerasActivationQuantizationHolder]:
+        """
+        Filters KerasActivationQuantizationHolder layers from an MP model that are matching to the given graph node.
 
-    @staticmethod
-    def _get_activation_quant_layers(node, layers_list):
+        Args:
+            n: A configurable graph node.
+            layers_list: Mixed precision model layers list.
+
+        Returns: A list of layers that responsible for the node's activation quantization.
+
+        """
         return [_l for _l in layers_list if isinstance(_l, KerasActivationQuantizationHolder)
-                and (_l.inbound_nodes[0].inbound_layers.name == node.name or
+                and (_l.inbound_nodes[0].inbound_layers.name == n.name or
                      (isinstance(_l.inbound_nodes[0].inbound_layers, KerasQuantizationWrapper) and
-                      _l.inbound_nodes[0].inbound_layers.layer.name == node.name))]
+                      _l.inbound_nodes[0].inbound_layers.layer.name == n.name))]
 
-    def _find_layers_in_model_by_node(self, n, layers):
+    def _find_layers_in_model_by_node(self, n: BaseNode, layers_list: List[Layer]) -> \
+            List[Union[KerasQuantizationWrapper, KerasActivationQuantizationHolder]]:
+        """
+        Retries layers from an MP model that are matching to the given graph node, that is, this are either
+        KerasQuantizationWrapper layers or KerasActivationQuantizationHolder layers that are responsible for the graph
+        configurable model quantization.
+
+        Args:
+            n: A configurable graph node.
+            layers_list: Mixed precision model layers list.
+
+        Returns: A list of layers that responsible for the node's quantization.
+
+        """
         weights_quant = n.is_weights_quantization_enabled()
         act_quant = n.is_activation_quantization_enabled()
 
         if weights_quant and not act_quant:
-            return self._get_weights_quant_layers(n, layers)
+            return self._get_weights_quant_layers(n, layers_list)
         elif not weights_quant and act_quant:
-            return self._get_activation_quant_layers(n, layers)
+            return self._get_activation_quant_layers(n, layers_list)
         elif weights_quant and act_quant:
-            return self._get_weights_quant_layers(n, layers) + self._get_activation_quant_layers(n, layers)
+            return self._get_weights_quant_layers(n, layers_list) + self._get_activation_quant_layers(n, layers_list)
         else:
             Logger.error(f"Expects node {n.name} to have at either weights or activation quantization configured,"
                          f"but both are disabled.")
