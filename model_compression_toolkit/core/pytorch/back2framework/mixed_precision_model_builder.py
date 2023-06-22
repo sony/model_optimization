@@ -16,7 +16,7 @@
 from typing import List, Any, Tuple, Union, Dict
 
 import torch
-from mct_quantizers import PytorchQuantizationWrapper, QuantizationTarget, BaseInferableQuantizer, \
+from mct_quantizers import PytorchQuantizationWrapper, QuantizationTarget, \
     PytorchActivationQuantizationHolder
 from mct_quantizers.common.constants import ACTIVATION_HOLDER_QUANTIZER
 from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
@@ -25,83 +25,15 @@ from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder
-from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder, \
-    PytorchModel
+from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
 
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_activation_quantizer import \
     ConfigurableActivationQuantizer
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_weights_quantizer import \
     ConfigurableWeightsQuantizer
-from model_compression_toolkit.core.pytorch.mixed_precision.mixed_precision_wrapper import PytorchMixedPrecisionWrapper
 
-
-# class MixedPrecisionPyTorchModel(PytorchModel):
-#
-#     def __init__(self,
-#                  graph: common.Graph,
-#                  append2output=None):
-#         """
-#
-#         Args:
-#             graph: Graph to build its corresponding Pytorch model.
-#             append2output: List of nodes or OutTensor objects.
-#         """
-#
-#         super().__init__(graph,
-#                          append2output)
-#
-#
-#     def _add_modules(self):
-#         configurable_nodes = self.graph.get_configurable_sorted_nodes()
-#         for n in self.node_sort:
-#             if n in configurable_nodes:
-#                 self.add_module(n.name, PytorchMixedPrecisionWrapper(n,
-#                                                                      DEFAULT_PYTORCH_INFO))
-#             else:
-#                 if not isinstance(n, FunctionalNode):
-#                     self.add_module(n.name, node_builder(n))
-#
-#     def _quantize_node_activations(self,
-#                                    node: BaseNode,
-#                                    input_tensors: List[torch.Tensor]) -> List[torch.Tensor]:
-#         """
-#         Quantize node's activation given input tensors.
-#
-#         Args:
-#             node: Node to quantize its outputs.
-#             input_tensors: Input tensors of the node.
-#
-#         Returns:
-#             Output of the node.
-#
-#         """
-#         if node.is_all_activation_candidates_equal():
-#             # otherwise, we want to use the float tensor when building the model for MP search
-#             input_tensors = node.candidates_quantization_cfg[0].activation_quantization_cfg.quantize_node_output(input_tensors)
-#         return input_tensors
-#
-#
-#     def _get_op_func(self,
-#                      node: BaseNode,
-#                      configurable_nodes_names: List[str]) -> Any:
-#         """
-#         Gets the operation function that runs the actual inference of the nodes compatible layer.
-#
-#         Args:
-#             node: The corresponding node of the layer it runs.
-#             configurable_nodes_names: A list of names of configurable nodes in the quantized model.
-#
-#         Returns: Module/functional to apply to the input tensors.
-#
-#         """
-#         if node.name in configurable_nodes_names:
-#             return getattr(self, node.name)
-#         else:
-#             return node.type if isinstance(node, FunctionalNode) else getattr(self, node.name)
 from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizer import \
     get_weights_inferable_quantizer_kwargs, get_activation_inferable_quantizer_kwargs
 from model_compression_toolkit.logger import Logger
@@ -138,12 +70,12 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
                                 n: common.BaseNode,
                                 layer: torch.nn.Module) -> Union[PytorchQuantizationWrapper, torch.nn.Module]:
         """
-        A function which takes a computational graph node and a keras layer and perform the quantization
+        A function which takes a computational graph node and a pytorch layer and perform the quantization
         wrapping for mixed precision.
 
         Args:
             n: A node of mct graph.
-            layer: A keras layer
+            layer: A pytorch layer
 
         Returns: Wrapped layer with a configurable quantizer if the layer should quantized in mixed precision,
         otherwise returns either the layer wrapped with a fixed precision inferable quantizer or the layer as is if it's
@@ -211,15 +143,15 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
     def mixed_precision_activation_holder(self, n: BaseNode) -> PytorchActivationQuantizationHolder:
         """
-        Retrieve a KerasActivationQuantizationHolder layer to use for activation quantization for a node.
+        Retrieve a PytorchActivationQuantizationHolder layer to use for activation quantization for a node.
         The layer should hold either a configurable activation quantizer, if it is quantized with mixed precision,
         or an inferable quantizer for fixed single bit-width quantization.
 
         Args:
-            n: Node to get KerasActivationQuantizationHolder to attach in its output.
+            n: Node to get PytorchActivationQuantizationHolder to attach in its output.
 
         Returns:
-            A KerasActivationQuantizationHolder layer for the node activation quantization.
+            A PytorchActivationQuantizationHolder layer for the node activation quantization.
         """
 
         activation_conf_nodes_names = [n.name for n in self.graph.get_activation_configurable_nodes()]
@@ -261,7 +193,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
             return PytorchActivationQuantizationHolder(activation_quantizers[0])
 
         Logger.error(
-            f'KerasActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
+            f'PytorchActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
             f'were found for node {n}')
 
     def build_model(self) -> Tuple[torch.nn.Module, UserInformation,
@@ -285,7 +217,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
     def _get_weights_quant_layers(n: BaseNode, named_layers: Dict[str, torch.nn.Module]) \
             -> List[PytorchQuantizationWrapper]:
         """
-        Filters KerasQuantizationWrapper layers from an MP model that are matching to the given graph node.
+        Filters PytorchQuantizationWrapper layers from an MP model that are matching to the given graph node.
 
         Args:
             n: A configurable graph node.
@@ -301,7 +233,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
     def _get_activation_quant_layers(n: BaseNode, named_layers: Dict[str, torch.nn.Module]) \
             -> List[PytorchActivationQuantizationHolder]:
         """
-        Filters KerasActivationQuantizationHolder layers from an MP model that are matching to the given graph node.
+        Filters PytorchActivationQuantizationHolder layers from an MP model that are matching to the given graph node.
 
         Args:
             n: A configurable graph node.
@@ -318,7 +250,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
             List[Union[PytorchQuantizationWrapper, PytorchActivationQuantizationHolder]]:
         """
         Retries layers from an MP model that are matching to the given graph node, that is, this are either
-        KerasQuantizationWrapper layers or KerasActivationQuantizationHolder layers that are responsible for the graph
+        PytorchQuantizationWrapper layers or PytorchActivationQuantizationHolder layers that are responsible for the graph
         configurable model quantization.
 
         Args:

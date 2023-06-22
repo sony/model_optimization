@@ -123,6 +123,10 @@ if FOUND_TF:
             all possible bitwidths, we do not quantize it again, and simply return the quantized weight according
             to the current active_quantization_config_index.
 
+            Args:
+                inputs: Input tensor (not relevant since the weights are already quantized).
+                training: Whether the graph is in training mode (not used in this function).
+
             Returns:
                 Quantized weight, that was quantized using number of bits that is in a
                 specific quantization configuration candidate (the candidate's index is the

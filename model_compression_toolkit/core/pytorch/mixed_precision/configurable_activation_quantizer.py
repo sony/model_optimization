@@ -12,12 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import torch
-import torch.nn as nn
-from typing import Dict, List, Any
-from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
 
-from model_compression_toolkit.core.common import BaseNode
+from typing import Dict, List, Any
+
+from model_compression_toolkit.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.mixed_precision.configurable_quant_id import ConfigurableQuantizerIdentifier
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
@@ -27,89 +25,108 @@ from mct_quantizers import QuantizationTarget
 from mct_quantizers import mark_quantizer
 
 
-@mark_quantizer(quantization_target=QuantizationTarget.Activation,
-                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC,
-                                     QuantizationMethod.UNIFORM, QuantizationMethod.LUT_POT_QUANTIZER],
-                quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
-class ConfigurableActivationQuantizer(BasePyTorchInferableQuantizer):
-    """
-    Trainable symmetric quantizer to optimize the rounding of the quantized values using a soft quantization method.
-    """
+if FOUND_TORCH:
+    import torch
+    import torch.nn as nn
+    from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
 
-    def __init__(self,
-                 node_q_cfg: List[CandidateNodeQuantizationConfig],
-                 max_candidate_idx: int = 0):
+    @mark_quantizer(quantization_target=QuantizationTarget.Activation,
+                    quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC,
+                                         QuantizationMethod.UNIFORM, QuantizationMethod.LUT_POT_QUANTIZER],
+                    quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
+    class ConfigurableActivationQuantizer(BasePyTorchInferableQuantizer):
         """
-        Construct a Pytorch model that utilize a fake weight quantizer of soft-quantizer for symmetric quantizer.
-
-        Args:
-            quantization_config: Trainable weights quantizer config.
-            quantization_parameter_learning (Bool): Whether to learn the threshold or not
+        Configurable activation quantizer for mixed precision search.
+        It holds a set of activation quantizers for each of the given bit-width candidates, provided by the
+        node's quantization config. This allows to use different quantized activations on-the-fly, according to the
+        "active" quantization configuration index.
         """
 
-        super(ConfigurableActivationQuantizer, self).__init__()
+        def __init__(self,
+                     node_q_cfg: List[CandidateNodeQuantizationConfig],
+                     max_candidate_idx: int = 0):
+            """
+            Initializes a configurable quantizer.
 
-        self.node_q_cfg = node_q_cfg
-        self.active_quantization_config_index = max_candidate_idx  # initialize with first config as default
+            Args:
+                node_q_cfg: Quantization configuration candidates of the node that generated the layer that will
+                    use this quantizer.
+                max_candidate_idx: Index of the node's candidate that has the maximal bitwidth (must exist absolute max).
+            """
 
-        for qc in self.node_q_cfg:
-            if qc.activation_quantization_cfg.enable_activation_quantization != \
-                   self.node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization:
-                Logger.error("Candidates with different activation enabled properties is currently not supported.")
+            super(ConfigurableActivationQuantizer, self).__init__()
 
-        # Setting layer's activation
-        self.activation_quantizers = self._get_activation_quantizers()
-        self.active_quantization_config_index = max_candidate_idx
+            self.node_q_cfg = node_q_cfg
+            self.active_quantization_config_index = max_candidate_idx  # initialize with first config as default
 
-    def _get_activation_quantizers(self) -> List[Any]:
-        """
-        Builds a list of quantizers for each of the bitwidth candidates for activation quantization,
-        to be stored and used during MP search.
+            for qc in self.node_q_cfg:
+                if qc.activation_quantization_cfg.enable_activation_quantization != \
+                       self.node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization:
+                    Logger.error("Candidates with different activation enabled properties is currently not supported.")
 
-        Returns: a list of activation quantizers - for each bitwidth and layer's attribute to be quantized.
-        """
-        activation_quantizers = []
-        for index, qc in enumerate(self.node_q_cfg):
-            q_activation = self.node_q_cfg[index].activation_quantization_cfg
-            activation_quantizers.append(q_activation.quantize_node_output)
+            # Setting layer's activation
+            self.activation_quantizers = self._get_activation_quantizers()
+            self.active_quantization_config_index = max_candidate_idx
 
-        return activation_quantizers
+        def _get_activation_quantizers(self) -> List[Any]:
+            """
+            Builds a list of quantizers for each of the bitwidth candidates for activation quantization,
+            to be stored and used during MP search.
 
-    def set_active_activation_quantizer(self,
-                                        index: int):
-        """
-        Set an activation quantizer to use by the layer wrapped by the module.
+            Returns: a list of activation quantizers - for each bitwidth and layer's attribute to be quantized.
+            """
 
-        Args:
-            index: Index of a candidate quantization configuration to use its quantizer
-                for quantizing the activation.
-        """
+            activation_quantizers = []
+            for index, qc in enumerate(self.node_q_cfg):
+                q_activation = self.node_q_cfg[index].activation_quantization_cfg
+                activation_quantizers.append(q_activation.quantize_node_output)
 
-        assert index < len(self.node_q_cfg), f'Quantizer has {len(self.node_q_cfg)} ' \
-                                             f'possible nbits. Can not set index {index}'
-        self.active_quantization_config_index = index
+            return activation_quantizers
 
-    def __call__(self,
-                 inputs: nn.Parameter) -> torch.Tensor:
-        """
-        Quantize a tensor.
+        def set_active_activation_quantizer(self,
+                                            index: int):
+            """
+            Set an activation quantizer to use by the layer wrapped by the module.
 
-        Args:
-            inputs: Input tensor to quantize.
+            Args:
+                index: Index of a candidate quantization configuration to use its quantizer
+                    for quantizing the activation.
+            """
 
-        Returns:
-            quantized tensor
-        """
+            assert index < len(self.node_q_cfg), f'Quantizer has {len(self.node_q_cfg)} ' \
+                                                 f'possible nbits. Can not set index {index}'
+            self.active_quantization_config_index = index
 
-        return self.activation_quantizers[self.active_quantization_config_index](inputs)
+        def __call__(self,
+                     inputs: nn.Parameter) -> torch.Tensor:
+            """
+            Method to return the quantized activation tensor. This method is called when the framework needs to
+            quantize a float activation tensor, and is expected to return the quantized tensor, according to the active
+            activation quantizer.
 
-    def get_config(self) -> Dict[str, Any]:  # pragma: no cover
-        """
-        Returns: The ConfigurableActivationQuantizer configuration.
-        """
+            Args:
+                inputs: Input tensor to quantize.
 
-        return {
-            'node_q_cfg': self.node_q_cfg,
-            'activation_quantizers': self.activation_quantizers,
-            'active_quantization_config_index': self.active_quantization_config_index
-        }
+            Returns:
+                Quantized activation tensor.
+            """
+
+            return self.activation_quantizers[self.active_quantization_config_index](inputs)
+
+        def get_config(self) -> Dict[str, Any]:  # pragma: no cover
+            """
+            Returns: The ConfigurableActivationQuantizer configuration.
+            """
+
+            return {
+                'node_q_cfg': self.node_q_cfg,
+                'activation_quantizers': self.activation_quantizers,
+                'active_quantization_config_index': self.active_quantization_config_index
+            }
+
+else:
+    class ConfigurableActivationQuantizer:  # pragma: no cover
+        def __init__(self, *args, **kwargs):
+            Logger.critical('Installing Pytorch is mandatory '
+                            'when using ConfigurableActivationQuantizer. '
+                            'Could not find torch package.')  # pragma: no cover

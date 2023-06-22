@@ -17,9 +17,9 @@ from typing import List, Dict, Any
 import numpy as np
 
 from mct_quantizers.common.base_inferable_quantizer import mark_quantizer, QuantizationTarget
-from mct_quantizers.common.constants import FOUND_TF
 from mct_quantizers.common.quant_info import QuantizationMethod
 
+from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.logger import Logger
@@ -88,6 +88,9 @@ if FOUND_TF:
             Method to return the quantized activation tensor. This method is called when the framework needs to
             quantize a float activation tensor, and is expected to return the quantized tensor, according to the active
             activation quantizer.
+
+            Args:
+                inputs: Input tensor to quantize.
 
             Returns:
                 Quantized activation tensor.

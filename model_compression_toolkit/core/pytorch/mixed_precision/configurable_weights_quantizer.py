@@ -43,11 +43,13 @@ class ConfigurableWeightsQuantizer(BasePyTorchInferableQuantizer):
                  float_weights,
                  max_candidate_idx):
         """
-        Construct a Pytorch model that utilize a fake weight quantizer of soft-quantizer for symmetric quantizer.
+        Initializes a configurable quantizer.
 
         Args:
-            quantization_config: Trainable weights quantizer config.
-            quantization_parameter_learning (Bool): Whether to learn the threshold or not
+            node_q_cfg: Quantization configuration candidates of the node that generated the layer that will
+                use this quantizer.
+            float_weights: Float weights of the layer.
+            max_candidate_idx: Index of the node's candidate that has the maximal bitwidth (must exist absolute max).
         """
 
         super(ConfigurableWeightsQuantizer, self).__init__()
@@ -115,13 +117,18 @@ class ConfigurableWeightsQuantizer(BasePyTorchInferableQuantizer):
     def __call__(self,
                  inputs: nn.Parameter) -> torch.Tensor:
         """
-        Quantize a tensor.
+        Method to return the quantized weight. This method is called when the framework needs to quantize a
+            float weight, and is expected to return the quantized weight. Since we already quantized the weight in
+            all possible bitwidths, we do not quantize it again, and simply return the quantized weight according
+            to the current active_quantization_config_index.
 
         Args:
-            inputs: Input tensor to quantize.
+            inputs: Input tensor (not used in this function since the weights are already quantized).
 
         Returns:
-            quantized tensor
+            Quantized weight, that was quantized using number of bits that is in a
+                specific quantization configuration candidate (the candidate's index is the
+                index that is in active_quantization_config_index the quantizer holds).
         """
 
         return self.quantized_weights[self.active_quantization_config_index]
