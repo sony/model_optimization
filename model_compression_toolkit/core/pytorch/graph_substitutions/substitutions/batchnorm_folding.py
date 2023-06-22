@@ -22,7 +22,7 @@ from model_compression_toolkit.core.pytorch.constants import KERNEL, BIAS, GAMMA
     EPSILON, USE_BIAS, GROUPS, IN_CHANNELS
 
 
-def batchnorm_folding_node_matchers():
+def batchnorm_folding_node_matchers() -> [BaseNode, BaseNode]:
     """
     Function generates matchers for matching:
     (Conv2d, ConvTranspose2d)-> BatchNorm2d.
@@ -36,7 +36,7 @@ def batchnorm_folding_node_matchers():
     return bn_node, source_node
 
 
-def batchnorm_forward_folding_node_matchers():
+def batchnorm_forward_folding_node_matchers() -> [BaseNode, BaseNode]:
     """
     Function generates matchers for matching:
     BatchNormalization --> (Conv2d, ConvTranspose2d)
@@ -53,7 +53,7 @@ def batchnorm_forward_folding_node_matchers():
 
 def update_kernel_for_bn_folding_fn(conv_node: BaseNode,
                                     kernel: np.ndarray,
-                                    weights_scale: np.ndarray):
+                                    weights_scale: np.ndarray) -> [np.ndarray, str]:
     """
     Args:
         conv_node: Convolution node to update the weight/kernel.
@@ -73,8 +73,8 @@ def update_kernel_for_bn_folding_fn(conv_node: BaseNode,
 def update_weights_for_bn_forward_folding_fn(conv_node: BaseNode,
                                              kernel: np.ndarray,
                                              bias: np.ndarray,
-                                             weights_scale,
-                                             bias_factor):
+                                             weights_scale: np.ndarray,
+                                             bias_factor: np.ndarray) -> [np.ndarray, np.ndarray, str]:
     """
     Args:
         conv_node: Convolution node to update the weight/kernel.
@@ -98,28 +98,28 @@ def update_weights_for_bn_forward_folding_fn(conv_node: BaseNode,
     return kernel * _scale, bias + bias_update, KERNEL
 
 
-def get_kernel_hw_fn(kernel: np.ndarray):
+def get_kernel_hw_fn(kernel: np.ndarray) -> [int, int]:
     """
     Args:
         kernel: The Convolution node's weight
 
     Returns:
-        kernel HW shape
+        kernel height & width shape
     """
     return kernel.shape[2:]
 
 
-def is_group_conv_fn(_node: BaseNode):
+def is_group_conv_fn(node: BaseNode) -> bool:
     """
     Check whether the node is a group-convolution
     Args:
-        _node: The Convolution node
+        node: The Convolution node
 
     Returns:
         True if the node is a group convolution, else False
     """
-    return _node.type in [Conv2d, ConvTranspose2d] and \
-           _node.framework_attr[GROUPS] not in [_node.framework_attr[IN_CHANNELS], 1]
+    return node.type in [Conv2d, ConvTranspose2d] and \
+           node.framework_attr[GROUPS] not in [node.framework_attr[IN_CHANNELS], 1]
 
 
 def pytorch_batchnorm_folding() -> BatchNormalizationFolding:

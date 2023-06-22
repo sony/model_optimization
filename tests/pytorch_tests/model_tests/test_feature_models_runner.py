@@ -132,10 +132,10 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the BatchNorm folding feature.
         """
         BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=1)).run_test()
-        BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=3, groups=3)).run_test()
+        BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=3, groups=3)).run_test()  # DW-Conv test
         BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(2, 1))).run_test()
         BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=2), fold_applied=False).run_test()
-        BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=(3, 1), groups=3), fold_applied=False).run_test()
+        BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=(3, 1), groups=3), fold_applied=False).run_test()  # DW-Conv test
         BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(1, 3)), fold_applied=False).run_test()
 
     def test_bn_forward_folding(self):
@@ -143,11 +143,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the BatchNorm forward folding feature.
         """
         BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1)).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3)).run_test()
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3)).run_test()  # DW-Conv test
         BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1)).run_test()
         BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), fold_applied=False).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), fold_applied=False).run_test()
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), fold_applied=False).run_test()  # DW-Conv test
         BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, (1, 3)), fold_applied=False).run_test()
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), add_bn=True).run_test()
 
     def test_second_moment_correction(self):
         """

@@ -491,6 +491,8 @@ class FeatureNetworkTest(unittest.TestCase):
         BNForwardFoldingTest(self, layers.Conv2D(2, 2), False).run_test()
         BNForwardFoldingTest(self, layers.DepthwiseConv2D((3, 1)), False).run_test()
         BNForwardFoldingTest(self, layers.Conv2DTranspose(2, (1, 3)), False).run_test()
+        BNForwardFoldingTest(self, layers.Conv2D(2, 1, bias_initializer='glorot_uniform'),
+                             True, add_bn=True).run_test()
 
     def test_residual_collapsing(self):
         ResidualCollapsingTest1(self).run_test()

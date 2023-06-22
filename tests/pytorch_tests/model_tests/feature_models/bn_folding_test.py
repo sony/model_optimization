@@ -68,7 +68,7 @@ class BNFoldingNetTest(BasePytorchTest):
 
 
 class BNForwardFoldingNet(torch.nn.Module):
-    def __init__(self, test_layer):
+    def __init__(self, test_layer, add_bn=False):
         super(BNForwardFoldingNet, self).__init__()
         self.bn = torch.nn.BatchNorm2d(3)
         torch.nn.init.uniform_(self.bn.weight, 0.02, 1.05)
@@ -76,25 +76,37 @@ class BNForwardFoldingNet(torch.nn.Module):
         torch.nn.init.uniform_(self.bn.running_var, 0.02, 1.05)
         torch.nn.init.uniform_(self.bn.running_mean, -1.2, 1.05)
         self.conv = test_layer
+        if add_bn:
+            self.bn2 = torch.nn.BatchNorm2d(test_layer.out_channels)
+            torch.nn.init.uniform_(self.bn2.weight, 0.02, 1.05)
+            torch.nn.init.uniform_(self.bn2.bias, -1.2, 1.05)
+            torch.nn.init.uniform_(self.bn2.running_var, 0.02, 1.05)
+            torch.nn.init.uniform_(self.bn2.running_mean, -1.2, 1.05)
+        else:
+            self.bn2 = None
 
     def forward(self, inp):
         x = self.bn(inp)
         x = self.conv(x)
+        if self.bn2 is not None:
+            x = self.bn2(x)
         x = torch.tanh(x)
         return x
 
 
 class BNForwardFoldingNetTest(BasePytorchTest):
     """
-    This test checks the BatchNorm forward folding feature.
+    This test checks the BatchNorm forward folding feature. When fold_applied is False
+    test that the BN isn't folded
     """
-    def __init__(self, unit_test, test_layer, fold_applied=True):
+    def __init__(self, unit_test, test_layer, fold_applied=True, add_bn=False):
         super().__init__(unit_test, float_reconstruction_error=1e-6)
         self.test_layer = test_layer
         self.fold_applied = fold_applied
+        self.add_bn = add_bn
 
     def create_feature_network(self, input_shape):
-        return BNForwardFoldingNet(self.test_layer)
+        return BNForwardFoldingNet(self.test_layer, self.add_bn)
 
     def get_tpc(self):
         return {'no_quantization': super().get_tpc()['no_quantization']}

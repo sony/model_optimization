@@ -154,7 +154,7 @@ class BatchNormalizationFolding(common.BaseSubstitution):
 
 class BatchNormalizationForwardFolding(common.BaseSubstitution):
     """
-    Fold BatchNormalization into subsequent linear layers.
+    Fold BatchNormalization into subsequent convolution layers with 1x1 kernels.
     """
 
     def __init__(self,
@@ -180,7 +180,7 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
             conv_node: Node matcher for convolution type nodes.
             update_weights_for_bn_forward_folding_fn: Function for updating the convolution kernel & bias
                                                       with the batch normalization weights
-            get_kernel_hw_fn: Function for getting the kernel HW shape
+            get_kernel_hw_fn: Function for getting the kernel height & width shape
             is_group_conv_fn: Function for checking if the linear layer is a group-convolution
             kernel_str: The framework specific attribute name of the convolution layer's weight/kernel.
             bias_str: The framework specific attribute name of the convolution layer's bias.
@@ -210,7 +210,7 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
                    graph: Graph,
                    edge_nodes: Tuple[BaseNode, BaseNode]) -> Graph:
         """
-        Fold BatchNormalization into subsequent linear layers.
+        Fold BatchNormalization into subsequent Convolution layers with 1x1 kernels.
 
         Args:
             graph: Graph we apply the substitution on.
@@ -251,7 +251,7 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
         if bias is None:
             bias = 0.0
 
-        # W * (gamma * (x-mean)/sqrt(var+eps) + bata) + bias ==>  (W * gamma / sqert()) * X + (bias + W*(beta - gamma*mean/sqrt()))
+        # W * (gamma * (x-mean)/sqrt(var+eps) + bata) + bias ==>  (W * gamma / sqrt()) * X + (bias + W*(beta - gamma*mean/sqrt()))
         weights_scale = gamma / np.sqrt(moving_variance + eps)
         kernel, bias, kernel_name = self.update_weights_for_bn_forward_folding_fn(conv_node, kernel, bias,
                                                                                   weights_scale,
@@ -260,13 +260,13 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
         framework_attr = copy.copy(conv_node.framework_attr)
         framework_attr[self.use_bias] = True
         if self.layer_name_str is not None:
-            framework_attr[self.layer_name_str] = conv_node.name + '_bn'
+            framework_attr[self.layer_name_str] = 'bn_' + conv_node.name
 
         weights_dict = {kernel_name: kernel,
                         self.bias_str: bias}
 
         conv_bn = copy.deepcopy(conv_node)
-        conv_bn_name = conv_node.name + '_bn'
+        conv_bn_name = 'bn_' + conv_node.name
         conv_bn.name = conv_bn_name
         conv_bn.framework_attr = framework_attr
         conv_bn.weights = weights_dict

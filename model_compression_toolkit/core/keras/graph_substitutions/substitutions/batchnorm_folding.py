@@ -23,7 +23,7 @@ from model_compression_toolkit.core.keras.constants import KERNEL, LINEAR, ACTIV
     MOVING_MEAN, MOVING_VARIANCE, EPSILON, USE_BIAS, LAYER_NAME, GROUPS
 
 
-def batchnorm_folding_node_matchers():
+def batchnorm_folding_node_matchers() -> [BaseNode, BaseNode]:
     """
     Function generates matchers for matching:
     (DepthwiseConv2D, Conv2D, Conv2DTranspose)[activation=linear] -> BatchNormalization.
@@ -33,15 +33,15 @@ def batchnorm_folding_node_matchers():
     """
     bn_node = NodeOperationMatcher(BatchNormalization)
     conv_node = NodeOperationMatcher(DepthwiseConv2D) | \
-                  NodeOperationMatcher(Conv2D) | \
-                  NodeOperationMatcher(Conv2DTranspose)
+                NodeOperationMatcher(Conv2D) | \
+                NodeOperationMatcher(Conv2DTranspose)
 
     activation_linear = NodeFrameworkAttrMatcher(ACTIVATION, LINEAR)
     source_node = conv_node & activation_linear
     return bn_node, source_node
 
 
-def batchnorm_forward_folding_node_matchers():
+def batchnorm_forward_folding_node_matchers() -> [BaseNode, BaseNode]:
     """
     Function that generates matchers for matching:
     BatchNormalization -> (DepthwiseConv2D, Conv2D, Conv2DTranspose).
@@ -51,15 +51,15 @@ def batchnorm_forward_folding_node_matchers():
     """
     bn_node = NodeOperationMatcher(BatchNormalization)
     conv_node = NodeOperationMatcher(DepthwiseConv2D) | \
-                  NodeOperationMatcher(Conv2D) | \
-                  NodeOperationMatcher(Conv2DTranspose)
+                NodeOperationMatcher(Conv2D) | \
+                NodeOperationMatcher(Conv2DTranspose)
 
     return bn_node, conv_node
 
 
 def update_kernel_for_bn_folding_fn(conv_node: BaseNode,
                                     kernel: np.ndarray,
-                                    weights_scale):
+                                    weights_scale: np.ndarray) -> [np.ndarray, str]:
     """
     Args:
         conv_node: Convolution node to update the weight/kernel.
@@ -87,8 +87,8 @@ def update_kernel_for_bn_folding_fn(conv_node: BaseNode,
 def update_weights_for_bn_forward_folding_fn(conv_node: BaseNode,
                                              kernel: np.ndarray,
                                              bias: np.ndarray,
-                                             weights_scale,
-                                             bias_factor):
+                                             weights_scale: np.ndarray,
+                                             bias_factor: np.ndarray) -> [np.ndarray, np.ndarray, str]:
     """
     Args:
         conv_node: Convolution node to update the weight/kernel.
@@ -118,27 +118,27 @@ def update_weights_for_bn_forward_folding_fn(conv_node: BaseNode,
     return kernel, bias + bias_update.flatten(), kernel_name
 
 
-def get_kernel_hw_fn(kernel: np.ndarray):
+def get_kernel_hw_fn(kernel: np.ndarray) -> [int, int]:
     """
     Args:
         kernel: The Convolution node's weight
 
     Returns:
-        kernel HW shape
+        kernel height & width shape
     """
     return kernel.shape[:2]
 
 
-def is_group_conv_fn(_node: BaseNode):
+def is_group_conv_fn(node: BaseNode) -> bool:
     """
     Check whether the node is a group-convolution
     Args:
-        _node: The Convolution node
+        node: The Convolution node
 
     Returns:
         True if the node is a group convolution, else False
     """
-    return (_node.type == Conv2D) and _node.framework_attr[GROUPS] > 1
+    return (node.type == Conv2D) and node.framework_attr[GROUPS] > 1
 
 
 def keras_batchnorm_folding() -> BatchNormalizationFolding:

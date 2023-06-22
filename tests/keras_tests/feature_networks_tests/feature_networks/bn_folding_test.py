@@ -245,9 +245,14 @@ class BaseForwardBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
 
 
 class BNForwardFoldingTest(BaseForwardBatchNormalizationFolding):
-    def __init__(self, unit_test, test_layer, conversion_applied):
+    """
+    This test checks the BatchNorm forward folding feature. When conversion_applied is False
+    test that the BN isn't folded
+    """
+    def __init__(self, unit_test, test_layer, conversion_applied, add_bn=False):
         super().__init__(unit_test, conversion_applied)
         self.test_layer = test_layer
+        self.add_bn = add_bn
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -257,6 +262,12 @@ class BNForwardFoldingTest(BaseForwardBatchNormalizationFolding):
                                       moving_variance_initializer=tf.keras.initializers.RandomUniform(minval=0.0001, maxval=1.05)
                                       )(inputs)
         x = self.test_layer(x)
+        if self.add_bn:
+            x = layers.BatchNormalization(beta_initializer='glorot_uniform',
+                                          gamma_initializer=tf.keras.initializers.RandomUniform(minval=0.0001, maxval=1.05),
+                                          moving_mean_initializer='glorot_uniform',
+                                          moving_variance_initializer=tf.keras.initializers.RandomUniform(minval=0.0001, maxval=1.05)
+                                          )(x)
         x = layers.Activation('tanh')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
