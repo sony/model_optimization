@@ -138,7 +138,6 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
         return {'node_q_cfg': node_q_cfg_candidates,
                 'float_weights': float_weights,
-                'weight_attrs': attr,
                 'max_candidate_idx': max_candidate_idx
                 }
 

@@ -145,7 +145,7 @@ class KerasImplementation(FrameworkImplementation):
                       mode: ModelBuilderMode,
                       append2output: List[Any] = None,
                       fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                      return_float_outputs: bool = False) -> Tuple[Model, UserInformation]:
+                      return_float_outputs: bool = False) -> Tuple:
         """
         Build a Keras model from a graph.
         The mode determines how the model should be build. append2output is a list of Nodes
@@ -158,7 +158,7 @@ class KerasImplementation(FrameworkImplementation):
             fw_info: FrameworkInfo object with information about the specific framework's model
             return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
         Returns:
-            A tuple of the Keras model that was built and an UserInformation object.
+            A tuple with the model and additional relevant supporting objects.
         """
 
         keras_model_builder = get_keras_model_builder(mode)

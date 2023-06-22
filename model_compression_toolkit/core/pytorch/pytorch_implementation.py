@@ -134,7 +134,7 @@ class PytorchImplementation(FrameworkImplementation):
                       mode: ModelBuilderMode,
                       append2output: List[Any] = None,
                       fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                      return_float_outputs: bool = False) -> Tuple[Module, UserInformation]:
+                      return_float_outputs: bool = False) -> Tuple:
         """
         Build a Pytorch module from a graph.
         The mode determines how the module should be build. append2output is a list of Nodes
@@ -148,7 +148,7 @@ class PytorchImplementation(FrameworkImplementation):
             return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
 
         Returns:
-            A tuple of the Pytorch module that was built and an UserInformation object.
+            A tuple with the model and additional relevant supporting objects.
         """
         pytorch_model_builder = get_pytorch_model_builder(mode)
         return pytorch_model_builder(graph=graph,

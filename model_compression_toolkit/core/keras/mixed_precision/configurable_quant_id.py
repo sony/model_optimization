@@ -16,4 +16,8 @@ from enum import Enum
 
 
 class ConfigurableQuantizerIdentifier(Enum):
+    """
+    A unique idetifier for configurable quantizers.
+    """
+
     CONFIGURABLE_ID = "Configurable_Quantizer"

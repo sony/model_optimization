@@ -94,7 +94,7 @@ class FrameworkImplementation(ABC):
                       mode: ModelBuilderMode,
                       append2output: List[Any],
                       fw_info: FrameworkInfo,
-                      return_float_outputs: bool = False) -> Tuple[Any, UserInformation]:
+                      return_float_outputs: bool = False) -> Tuple:
         """
         Build a framework model from a graph.
         The mode determines how the model should be build. append2output is a list of Nodes
@@ -108,7 +108,7 @@ class FrameworkImplementation(ABC):
             return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
 
         Returns:
-            A tuple of the model that was built and an UserInformation object.
+            A tuple with the model and additional relevant supporting objects.
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s model_builder method.')  # pragma: no cover
