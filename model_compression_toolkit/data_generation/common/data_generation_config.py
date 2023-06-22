@@ -13,9 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from enum import Enum
-from typing import Callable, Any, Dict, List
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
-from model_compression_toolkit.core import common
+from typing import Callable, Any, List
 
 
 class ImageGranularity(Enum):
@@ -25,29 +23,66 @@ class ImageGranularity(Enum):
     1. BatchWise
     2. AllImages
     """
+
     ImageWise = 0
     BatchWise = 1
     AllImages = 2
 
+    @classmethod
+    def get_values(cls):
+        """
+        Get the list of values corresponding to the enum members.
+
+        Returns:
+            List of values.
+        """
+        return [x.value for x_name, x in cls.__members__.items()]
+
 
 class BaseImagePipeline:
-    def __init__(self,output_image_size):
+    def __init__(self, output_image_size: int, padding: int = 0):
+        """
+        Base class for image pipeline.
+
+        Args:
+            output_image_size: The desired output image size.
+            padding: Padding size for the image.
+        """
         self.output_image_size = output_image_size
+        self.padding = padding
 
     def get_image_input_size(self):
+        """
+        Get the size of the input image for the image pipeline.
+        """
         raise NotImplemented
 
-    def image_input_manipulation(self, images):
+    def image_input_manipulation(self, images: Any):
+        """
+        Perform image input manipulation in the image pipeline.
+
+        Args:
+            images: Input images.
+
+        Returns:
+            Manipulated images.
+        """
         raise NotImplemented
 
-    def image_output_finalize(self, images):
+    def image_output_finalize(self, images: Any):
+        """
+        Perform finalization of output images in the image pipeline.
+
+        Args:
+            images: Output images.
+
+        Returns:
+            Finalized images.
+        """
         raise NotImplemented
 
 
 class DataGenerationConfig:
-    """
-    Configuration for data generation.
-    """
 
     def __init__(self,
                  n_iter: int,
@@ -56,31 +91,33 @@ class DataGenerationConfig:
                  data_gen_batch_size: int,
                  initial_lr: float,
                  image_granularity: ImageGranularity = ImageGranularity.AllImages,
+                 scheduler_step_fn: Callable = None,
                  bna_loss_fn: Callable = None,
                  image_pipeline: BaseImagePipeline = None,
+                 image_padding: int = 0,
                  image_initialization_fn: Callable = None,
+                 layer_weighting_fn: Callable = None,
+                 activations_loss_fn: Callable = None,
                  bn_layer_types: List = []
                  ):
         """
-        Initialize a DataGenerationConfig.
+        Configuration class for data generation.
 
         Args:
-            n_iter (int): Number of iterations to train.
-            optimizer (Any): Optimizer to use.
-            scheduler (Any): Scheduler to use.
-            loss (Callable): The loss to use. should accept 6 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
-             the 3rd is a list of quantized weights, the 4th is a list of float weights, the 5th and 6th lists are the mean and std of the tensors
-             accordingly. see example in multiple_tensors_mse_loss
-            log_function (Callable): Function to log information about the GPTQ process.
-            train_bias (bool): Whether to update the bias during the training or not.
-            rounding_type (RoundingType): An enum that defines the rounding type.
-            use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
-            optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
-            optimizer_bias (Any): Optimizer to override the rest optimizer for bias.
-            regularization_factor (float): A floating point number that defines the regularization factor.
-            hessian_weights_config (GPTQHessianWeightsConfig): A configuration that include all necessary arguments to run a computation of Hessian weights for the GPTQ loss.
-            gptq_quantizer_params_override (dict): A dictionary of parameters to override in GPTQ quantizer instantiation. Defaults to None (no parameters).
-
+            n_iter: Number of iterations.
+            optimizer: Optimizer used for training.
+            scheduler: Learning rate scheduler.
+            data_gen_batch_size: Batch size for data generation.
+            initial_lr: Initial learning rate.
+            image_granularity: Image granularity when optimizing.
+            scheduler_step_fn: Function to perform a step for the scheduler.
+            bna_loss_fn: Loss function for batch normalization statistics alignment.
+            image_pipeline: Image pipeline for image manipulation.
+            image_padding: Padding size for the image.
+            image_initialization_fn: Function for image initialization.
+            layer_weighting_fn: Function for layer weighting.
+            activations_loss_fn: Loss function for activations.
+            bn_layer_types: List of batch normalization layer types.
         """
         self.n_iter = n_iter
         self.optimizer = optimizer
@@ -88,12 +125,22 @@ class DataGenerationConfig:
         self.data_gen_batch_size = data_gen_batch_size
         self.initial_lr = initial_lr
         self.image_granularity = image_granularity
+        self.scheduler_step_fn = scheduler_step_fn
         self.bna_loss_fn = bna_loss_fn
         self.image_pipeline = image_pipeline
+        self.image_padding = image_padding
         self.image_initialization_fn = image_initialization_fn
+        self.layer_weighting_fn = layer_weighting_fn
+        self.activations_loss_fn = activations_loss_fn
         self.bn_layer_types = bn_layer_types
 
-    def get_dimensions_for_average(self):
+    def get_dimensions_for_average(self) -> list:
+        """
+        Get the dimensions to be used for averaging based on the image_granularity attribute.
+
+        Returns:
+            list: List of dimensions for averaging.
+        """
         if self.image_granularity == ImageGranularity.ImageWise:
             return [2, 3]
         else:
