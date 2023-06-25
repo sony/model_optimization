@@ -12,14 +12,14 @@ pip install ultralytics==8.0.47
  ```
 
 ### Usage Examples
-In the following example, we are evaluating the MCT on pre-trained yolov8n, taken from Ultralytics models library
+In the following example, we are evaluating the MCT on pre-trained yolov8n, taken from the Ultralytics models library
 ```python
-python main.py --model_name yolov8n --model_library ultralytics --representative_dataset_folder <my path> --num_representative_images 64 --batch_size 1 
+python main.py --model_name yolov8n --model_library ultralytics --representative_dataset_folder ../datasets/coco128 --num_representative_images 64 --batch_size 1 
 ```
 In this example, we are running the main.py script with the following parameters:
 - `--model_name`: Specifies the name of the model to be used out of Ultralytics models (yolov8n in this case).
 - `--model_library`: Specifies the package of the pre-trained models from which the model name is taken (in this case, ultralytics).
-- `--representative_dataset_folder`: Specifies the path to the local copy of the dataset to be used for quantization.
+- `--representative_dataset_folder`: Specifies the path to the local copy of the dataset to be used for quantization. In this case, we use a small subset of the downloaded dataset provided by Ultralytics, which includes the first 128 images from the COCO train2017 dataset.
 - `--num_representative_images`: Specifies the number of representative images to be used for quantization.
 - `--batch_size`: Specifies the batch size to be used.
 
@@ -27,7 +27,7 @@ Please note that during the first model evaluation, Ultralytics downloads the CO
 
 For the representative dataset, it is expected to follow the same format as the downloaded COCO dataset. For instance, you can use the 'train' split of the COCO dataset as the representative dataset or create a new split with the same format.
 
-It is important to mention that the above example assumes the command is run from the command line and that the [main.py](./main.py) script is located in the current directory.
+It is important to mention that the above example assumes the command is run from the command line and that the [main.py](./main.py) script is located in the current directory. Additionally, it is expected that the model_optimization and mct_quantizers packages are included in the system path.
 
 ## Model Replacers
 During the process, we perform a few manipulations to achieve better quantization results:
