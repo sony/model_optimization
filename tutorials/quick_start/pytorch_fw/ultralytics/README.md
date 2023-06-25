@@ -12,7 +12,10 @@ pip install ultralytics==8.0.47
  ```
 
 ### Usage Examples
-In the following example, we are evaluating the MCT on pre-trained yolov8n, taken from the Ultralytics models library
+In the following example, we are evaluating the MCT on pre-trained yolov8n, taken from the Ultralytics models library.
+
+Note that we assume the command is run from the command line and that the [main.py](../../main.py) script is located in the current directory.
+Additionally, it is expected that the [model_optimization](../../../../../model_optimization) folder is included in python path.
 ```python
 python main.py --model_name yolov8n --model_library ultralytics --representative_dataset_folder ../datasets/coco128 --num_representative_images 64 --batch_size 1 
 ```
@@ -27,7 +30,6 @@ Please note that during the first model evaluation, Ultralytics downloads the CO
 
 For the representative dataset, it is expected to follow the same format as the downloaded COCO dataset. For instance, you can use the 'train' split of the COCO dataset as the representative dataset or create a new split with the same format.
 
-It is important to mention that the above example assumes the command is run from the command line and that the [main.py](../../main.py) script is located in the current directory. Additionally, it is expected that the model_optimization folder is included in the system path.
 
 ## Model Replacers
 During the process, we perform a few manipulations to achieve better quantization results:
