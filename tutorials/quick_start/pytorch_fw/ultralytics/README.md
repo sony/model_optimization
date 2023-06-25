@@ -12,11 +12,16 @@ pip install ultralytics==8.0.47
  ```
 
 ### Usage Examples
+
 In the following example, we are evaluating the MCT on pre-trained yolov8n, taken from the Ultralytics models library.
 
 Note that we assume the command is run from the command line and that the [main.py](../../main.py) script is located in the current directory.
 Additionally, it is expected that the [model_optimization](../../../../../model_optimization) folder is included in python path.
-```python
+```csh 
+setenv PYTHONPATH /path/to/model_optimization/folder
+```
+
+```csh 
 python main.py --model_name yolov8n --model_library ultralytics --representative_dataset_folder ../datasets/coco128 --num_representative_images 64 --batch_size 1 
 ```
 In this example, we are running the main.py script with the following parameters:
