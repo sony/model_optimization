@@ -44,6 +44,6 @@ During the process, we perform a few manipulations to achieve better quantizatio
 
 
 ## License
-This project is licensed under [Apache License 2.0](../../LICENSE.md).
+This project is licensed under [Apache License 2.0](../../../../LICENSE.md).
 Ultralytics has the following license requirements: 
-- ultralytics: [license link](https://github.com/ultralytics/ultralytics/blob/main/LICENSE), [license copy](./pytorch_fw/ultralytics/LICENSE)
+- ultralytics: [license link](https://github.com/ultralytics/ultralytics/blob/main/LICENSE), [license copy](./LICENSE)
