@@ -17,7 +17,7 @@ in the future.
 
 ## Getting Started
 ### Installation 
-- Install one of the supported libraries above.
+Install one of the supported libraries above.
 
 
 ### Usage Examples
@@ -54,9 +54,20 @@ The content of the CSV file consists of a tabular structure where each line repr
 Please note that the above example assumes the command is run from the command line and that the [main.py](./main.py) script is in the current directory.
 
 Make sure to refer to the script itself to understand all available parameters and their usage.
+
+#### More examples
+More details and examples for using Ultrlytics models can be found in this [readme](./pytorch_fw/ultralytics/README.md)   
+
 ## Results
 The latest performance results of MCT on various of models can be found in the [model_quantization_results.csv](./results/model_quantization_results.csv) table. 
 
+## External Package Versions
+
+The following external packages were tested with this project:
+
+- torchvision: Version 0.14.0
+- timm: Version 0.6.13
+- ultralytics: Version 8.0.47
 
 ## License
 This project is licensed under [Apache License 2.0](../../LICENSE.md).
