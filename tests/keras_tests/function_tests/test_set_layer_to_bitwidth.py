@@ -20,6 +20,7 @@ from keras import Input
 from keras.layers import Conv2D
 from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
 
+from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -27,7 +28,6 @@ from model_compression_toolkit.core.keras.mixed_precision.configurable_activatio
     ConfigurableActivationQuantizer
 from model_compression_toolkit.core.keras.mixed_precision.configurable_weights_quantizer import \
     ConfigurableWeightsQuantizer
-from model_compression_toolkit.core.keras.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
 
@@ -74,7 +74,10 @@ class TestKerasSetLayerToBitwidth(unittest.TestCase):
             # Changing active quantizer candidate index manually to 1 (this is an invalid value in this case)
             q.active_quantization_config_index = 1
 
-        set_layer_to_bitwidth(wrapper_layer, bitwidth_idx=0)
+        set_layer_to_bitwidth(wrapper_layer, bitwidth_idx=0, weights_quantizer_type=ConfigurableWeightsQuantizer,
+                              activation_quantizer_type=ConfigurableActivationQuantizer,
+                              weights_quant_layer_type=KerasQuantizationWrapper,
+                              activation_quant_layer_type=KerasActivationQuantizationHolder)
 
         for attr, q in wrapper_layer.weights_quantizers.items():
             self.assertEqual(q.active_quantization_config_index, 0)
@@ -94,6 +97,9 @@ class TestKerasSetLayerToBitwidth(unittest.TestCase):
         # Changing active quantizer candidate index manually to 1 (this is an invalid value in this case)
         q.active_quantization_config_index = 1
 
-        set_layer_to_bitwidth(holder_layer, bitwidth_idx=0)
+        set_layer_to_bitwidth(holder_layer, bitwidth_idx=0, weights_quantizer_type=ConfigurableWeightsQuantizer,
+                              activation_quantizer_type=ConfigurableActivationQuantizer,
+                              weights_quant_layer_type=KerasQuantizationWrapper,
+                              activation_quant_layer_type=KerasActivationQuantizationHolder)
 
         self.assertEqual(q.active_quantization_config_index, 0)

@@ -14,10 +14,12 @@
 # ==============================================================================
 import operator
 from copy import deepcopy
+from functools import partial
 from typing import List, Any, Tuple, Callable, Type, Dict
 
 import numpy as np
 import torch
+from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
 from torch import sigmoid, softmax, add, cat, argmax
 from torch.nn import Conv2d, ConvTranspose2d, Linear
 from torch.nn import Module, Sigmoid, Softmax
@@ -31,6 +33,7 @@ from model_compression_toolkit.core.common.collectors.statistics_collector_gener
     create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
@@ -70,7 +73,10 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.vi
     VirtualActivationWeightsComposition
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
-from model_compression_toolkit.core.pytorch.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
+from model_compression_toolkit.core.pytorch.mixed_precision.configurable_activation_quantizer import \
+    ConfigurableActivationQuantizer
+from model_compression_toolkit.core.pytorch.mixed_precision.configurable_weights_quantizer import \
+    ConfigurableWeightsQuantizer
 from model_compression_toolkit.core.pytorch.pytorch_node_prior_info import create_node_prior_info
 from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 from model_compression_toolkit.core.pytorch.statistics_correction.apply_second_moment_correction import \
@@ -350,7 +356,11 @@ class PytorchImplementation(FrameworkImplementation):
                                      representative_data_gen=representative_data_gen,
                                      fw_info=fw_info,
                                      fw_impl=self,
-                                     set_layer_to_bitwidth=set_layer_to_bitwidth,
+                                     set_layer_to_bitwidth=partial(set_layer_to_bitwidth,
+                                                                   weights_quantizer_type=ConfigurableWeightsQuantizer,
+                                                                   activation_quantizer_type=ConfigurableActivationQuantizer,
+                                                                   weights_quant_layer_type=PytorchQuantizationWrapper,
+                                                                   activation_quant_layer_type=PytorchActivationQuantizationHolder),
                                      disable_activation_for_metric=disable_activation_for_metric)
 
     def get_node_prior_info(self,

@@ -12,17 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
-from tensorflow.python.layers.base import Layer
-
-from model_compression_toolkit.core.keras.mixed_precision.configurable_activation_quantizer import \
-    ConfigurableActivationQuantizer
-from model_compression_toolkit.core.keras.mixed_precision.configurable_weights_quantizer import \
-    ConfigurableWeightsQuantizer
+from typing import Any
 
 
-def set_layer_to_bitwidth(quantization_layer: Layer,
-                          bitwidth_idx: int):
+def set_layer_to_bitwidth(quantization_layer: Any,
+                          bitwidth_idx: int,
+                          weights_quantizer_type: type,
+                          activation_quantizer_type: type,
+                          weights_quant_layer_type: type,
+                          activation_quant_layer_type: type):
     """
     Configures a layer's configurable quantizer to work with a different bit-width.
     The bit-width_idx is the index of the actual quantizer the quantizer object in the quantization_layer wraps/holds.
@@ -32,16 +30,16 @@ def set_layer_to_bitwidth(quantization_layer: Layer,
         bitwidth_idx: Index of the bit-width the layer should work with.
     """
 
-    if isinstance(quantization_layer, KerasQuantizationWrapper):
+    if isinstance(quantization_layer, weights_quant_layer_type):
         for _, quantizer in quantization_layer.weights_quantizers.items():
-            if isinstance(quantizer, ConfigurableWeightsQuantizer):
+            if isinstance(quantizer, weights_quantizer_type):
                 # Setting bitwidth only for configurable layers. There might be wrapped layers that aren't configurable,
                 # for instance, if only activations are quantized with mixed precision and weights are quantized with
                 # fixed precision
                 quantizer.set_weights_bit_width_index(bitwidth_idx)
 
-    if isinstance(quantization_layer, KerasActivationQuantizationHolder):
-        if isinstance(quantization_layer.activation_holder_quantizer, ConfigurableActivationQuantizer):
+    if isinstance(quantization_layer, activation_quant_layer_type):
+        if isinstance(quantization_layer.activation_holder_quantizer, activation_quantizer_type):
             # Setting bitwidth only for configurable layers. There might be activation layers that isn't configurable,
             # for instance, if only weights are quantized with mixed precision and activation are quantized with
             # fixed precision

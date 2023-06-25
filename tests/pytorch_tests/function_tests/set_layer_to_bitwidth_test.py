@@ -12,20 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import copy
 
 import torch
-import numpy as np
 from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
 from torch.nn import Conv2d
 
+from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_activation_quantizer import \
     ConfigurableActivationQuantizer
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_weights_quantizer import \
     ConfigurableWeightsQuantizer
-from model_compression_toolkit.core.pytorch.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
@@ -84,7 +82,10 @@ class TestSetLayerToBitwidthWeights(BasePytorchTest):
             # Changing active quantizer candidate index manually to 1 (this is an invalid value in this case)
             q.active_quantization_config_index = 1
 
-        set_layer_to_bitwidth(wrapper_layer, bitwidth_idx=0)
+        set_layer_to_bitwidth(wrapper_layer, bitwidth_idx=0, weights_quantizer_type=ConfigurableWeightsQuantizer,
+                              activation_quantizer_type=ConfigurableActivationQuantizer,
+                              weights_quant_layer_type=PytorchQuantizationWrapper,
+                              activation_quant_layer_type=PytorchActivationQuantizationHolder)
 
         for attr, q in wrapper_layer.weights_quantizers.items():
             self.unit_test.assertEqual(q.active_quantization_config_index, 0)
@@ -117,6 +118,9 @@ class TestSetLayerToBitwidthActivation(BasePytorchTest):
         # Changing active quantizer candidate index manually to 1 (this is an invalid value in this case)
         q.active_quantization_config_index = 1
 
-        set_layer_to_bitwidth(holder_layer, bitwidth_idx=0)
+        set_layer_to_bitwidth(holder_layer, bitwidth_idx=0, weights_quantizer_type=ConfigurableWeightsQuantizer,
+                              activation_quantizer_type=ConfigurableActivationQuantizer,
+                              weights_quant_layer_type=PytorchQuantizationWrapper,
+                              activation_quant_layer_type=PytorchActivationQuantizationHolder)
 
         self.unit_test.assertEqual(q.active_quantization_config_index, 0)

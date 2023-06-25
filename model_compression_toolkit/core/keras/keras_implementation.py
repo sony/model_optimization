@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from functools import partial
 from typing import List, Any, Tuple, Callable, Dict
 
 import numpy as np
 import tensorflow as tf
+from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
 
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence, compute_cs, compute_mse
 from model_compression_toolkit.core.keras.back2framework.model_gradients import \
     keras_iterative_approx_jacobian_trace
@@ -30,7 +33,10 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.virt
     VirtualActivationWeightsComposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
-from model_compression_toolkit.core.keras.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
+from model_compression_toolkit.core.keras.mixed_precision.configurable_activation_quantizer import \
+    ConfigurableActivationQuantizer
+from model_compression_toolkit.core.keras.mixed_precision.configurable_weights_quantizer import \
+    ConfigurableWeightsQuantizer
 from model_compression_toolkit.core.keras.statistics_correction.apply_second_moment_correction import \
     keras_apply_second_moment_correction
 from packaging import version
@@ -373,7 +379,11 @@ class KerasImplementation(FrameworkImplementation):
                                      representative_data_gen=representative_data_gen,
                                      fw_info=fw_info,
                                      fw_impl=self,
-                                     set_layer_to_bitwidth=set_layer_to_bitwidth,
+                                     set_layer_to_bitwidth=partial(set_layer_to_bitwidth,
+                                                                   weights_quantizer_type=ConfigurableWeightsQuantizer,
+                                                                   activation_quantizer_type=ConfigurableActivationQuantizer,
+                                                                   weights_quant_layer_type=KerasQuantizationWrapper,
+                                                                   activation_quant_layer_type=KerasActivationQuantizationHolder),
                                      disable_activation_for_metric=disable_activation_for_metric)
 
     def get_node_prior_info(self,
