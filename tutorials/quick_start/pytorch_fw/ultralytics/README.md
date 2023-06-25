@@ -22,12 +22,12 @@ setenv PYTHONPATH /path/to/model_optimization/folder
 ```
 
 ```csh 
-python main.py --model_name yolov8n --model_library ultralytics --representative_dataset_folder ../datasets/coco128 --num_representative_images 64 --batch_size 1 
+python main.py --model_name yolov8n --model_library ultralytics --representative_dataset_folder ../datasets/coco/images/train2017 --num_representative_images 64 --batch_size 1 
 ```
 In this example, we are running the main.py script with the following parameters:
 - `--model_name`: Specifies the name of the model to be used out of Ultralytics models (yolov8n in this case).
 - `--model_library`: Specifies the package of the pre-trained models from which the model name is taken (in this case, ultralytics).
-- `--representative_dataset_folder`: Specifies the path to the local copy of the dataset to be used for quantization. In this case, we use a small subset of the downloaded dataset provided by Ultralytics, which includes the first 128 images from the COCO train2017 dataset.
+- `--representative_dataset_folder`: Specifies the path to the local copy of the dataset to be used for quantization. In this case, we use the 'train' split of the downloaded dataset provided by Ultralytics.
 - `--num_representative_images`: Specifies the number of representative images to be used for quantization.
 - `--batch_size`: Specifies the batch size to be used.
 
