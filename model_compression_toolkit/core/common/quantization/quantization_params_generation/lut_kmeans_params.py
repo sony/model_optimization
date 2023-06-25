@@ -67,7 +67,7 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
         n_clusters = len(np.unique(tensor_data.flatten()))
     else:
         n_clusters = 2 ** n_bits
-    kmeans = KMeans(n_clusters=n_clusters)
+    kmeans = KMeans(n_clusters=n_clusters, n_init=10)
 
     threshold_selection_tensor = symmetric_selection_tensor if is_symmetric else power_of_two_selection_tensor
     thresholds_per_channel = threshold_selection_tensor(tensor_data, p, n_bits, per_channel,
@@ -125,7 +125,7 @@ def lut_kmeans_histogram(bins: np.ndarray,
     else:
         n_clusters = 2 ** n_bits
 
-    kmeans = KMeans(n_clusters=n_clusters)
+    kmeans = KMeans(n_clusters=n_clusters, n_init=10)
     tensor_max = np.max(bins_with_values)
     threshold = max_power_of_two(tensor_max, min_threshold)
 
