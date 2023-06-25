@@ -5,9 +5,6 @@ This example demonstrates how to use MCT 'quick start' with Ultralytics object d
 
 ## Getting Started
 
-### Supported Ultrlytics versions
-Version: '8.0.47'
-
 ### Installation 
 Install the required library using `pip`:
 ```bash
@@ -24,8 +21,11 @@ In this example, we are running the main.py script with the following parameters
 - `--model_library`: Specifies the package of the pre-trained models from which the model name is taken (in this case, ultralytics).
 - `--representative_dataset_folder`: Specifies the path to the local copy of the dataset to be used for quantization.
 - `--num_representative_images`: Specifies the number of representative images to be used for quantization.
-- `--batch_size`: Specifies the batch size for the dataset.
+- `--batch_size`: Specifies the batch size to be used.
+
 Please note that during the first model evaluation, Ultralytics downloads the COCO dataset to the folder specified in the 'coco.yaml' file. By default, the dataset is downloaded to '../datasets/coco'. Therefore, the 'validation_dataset_folder' value is not required in this case.
+
+For the representative dataset, it is expected to follow the same format as the downloaded COCO dataset. For instance, you can use the 'train' split of the COCO dataset as the representative dataset or create a new split with the same format.
 
 It is important to mention that the above example assumes the command is run from the command line and that the [main.py](./main.py) script is located in the current directory.
 
@@ -33,7 +33,8 @@ It is important to mention that the above example assumes the command is run fro
 During the process, we perform a few manipulations to achieve better quantization results:
 
 1. We replace certain modules with modules supported by `torch.fx`, which our project relies on. The `torch.fx` toolkit helps us acquire a static graph representation from PyTorch models, enabling model compression manipulations like batch norm folding.
-2. We remove the last part of the detection head, responsible for bounding box decoding, and include it as part of the postprocessing. You can find the additional postprocessing in the new definition of the `postprocess` method under [replacer.py](./pytorch_fw/ultralytics/replacers.py).
+2. We remove the last part of the detection head, responsible for bounding box decoding, and include it as part of the postprocessing. You can find the additional postprocessing in the new definition of the `postprocess` method under [replacer.py](./replacers.py).
+
 
 ## License
 This project is licensed under [Apache License 2.0](../../LICENSE.md).
