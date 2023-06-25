@@ -80,7 +80,7 @@ class BatchNormalizationFolding(common.BaseSubstitution):
 
         Args:
             graph: Graph we apply the substitution on.
-            edge_nodes: Tuple of tow nodes (linear op and batchnorm node).
+            edge_nodes: Tuple of two nodes (linear op and batchnorm node).
 
         Returns:
             Graph after applying the substitution.
@@ -144,6 +144,140 @@ class BatchNormalizationFolding(common.BaseSubstitution):
         conv_bn.prior_info = bn_node.prior_info
 
         graph.remove_edge(conv_node, bn_node)
+        graph.remove_node(bn_node)
+        graph.remove_node(conv_node)
+
+        assert num_nodes_before_substition - len(graph.nodes) == 1
+        assert num_edges_before_substition - len(graph.edges) == 1
+        return graph
+
+
+class BatchNormalizationForwardFolding(common.BaseSubstitution):
+    """
+    Fold BatchNormalization into subsequent convolution layers with 1x1 kernels.
+    """
+
+    def __init__(self,
+                 bn_node: NodeOperationMatcher,
+                 conv_node: NodeOperationMatcher,
+                 update_weights_for_bn_forward_folding_fn: Callable,
+                 get_kernel_hw_fn: Callable,
+                 is_group_conv_fn: Callable,
+                 kernel_str: str,
+                 bias_str: str,
+                 gamma_str: str,
+                 beta_str: str,
+                 moving_mean_str: str,
+                 moving__variance_str: str,
+                 epsilon_str: str,
+                 use_bias: str,
+                 layer_name_str: str):
+        """
+        Matches: Batch Normalization (bn node) followed by a Conv node (source node).
+
+        Args:
+            bn_node: Node matcher for batch normalization nodes.
+            conv_node: Node matcher for convolution type nodes.
+            update_weights_for_bn_forward_folding_fn: Function for updating the convolution kernel & bias
+                                                      with the batch normalization weights
+            get_kernel_hw_fn: Function for getting the kernel height & width shape
+            is_group_conv_fn: Function for checking if the linear layer is a group-convolution
+            kernel_str: The framework specific attribute name of the convolution layer's weight/kernel.
+            bias_str: The framework specific attribute name of the convolution layer's bias.
+            gamma_str: The framework specific attribute name of the batch norm layer's gamma parameter.
+            beta_str: The framework specific attribute name of the batch norm layer's beta parameter.
+            moving_mean_str: The framework specific attribute name of the batch norm layer's moving mean parameter.
+            moving__variance_str: The framework specific attribute name of the batch norm layer's moving variance parameter.
+            epsilon_str: The framework specific attribute name of the batch norm layer's epsilon parameter.
+            use_bias: The framework specific attribute name of the convolution layer's bias flag.
+            layer_name_str: The framework specific attribute name of layer's name.
+        """
+        super().__init__(matcher_instance=EdgeMatcher(bn_node, conv_node))
+        self.update_weights_for_bn_forward_folding_fn = update_weights_for_bn_forward_folding_fn
+        self.get_kernel_hw_fn = get_kernel_hw_fn
+        self.is_group_conv_fn = is_group_conv_fn
+        self.kernel_str = kernel_str
+        self.bias_str = bias_str
+        self.gamma_str = gamma_str
+        self.beta_str = beta_str
+        self.moving_mean_str = moving_mean_str
+        self.moving__variance_str = moving__variance_str
+        self.epsilon_str = epsilon_str
+        self.use_bias = use_bias
+        self.layer_name_str = layer_name_str
+
+    def substitute(self,
+                   graph: Graph,
+                   edge_nodes: Tuple[BaseNode, BaseNode]) -> Graph:
+        """
+        Fold BatchNormalization into subsequent Convolution layers with 1x1 kernels.
+
+        Args:
+            graph: Graph we apply the substitution on.
+            edge_nodes: Tuple of two nodes (batchnorm node and linear op).
+
+        Returns:
+            Graph after applying the substitution.
+        """
+
+        num_nodes_before_substition = len(graph.nodes)
+        num_edges_before_substition = len(graph.edges)
+
+        bn_node, conv_node, _ = edge_nodes
+
+        # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
+        # we should skip the substitution.
+        if conv_node.reuse or conv_node.reuse_group is not None:
+            return graph
+
+        if len(graph.get_next_nodes(bn_node)) > 1 or len(graph.get_prev_nodes(conv_node)) > 1:
+            return graph
+        if self.is_group_conv_fn(conv_node):
+            return graph
+        kernel = conv_node.get_weights_by_keys(self.kernel_str)
+        if not np.all(np.array(self.get_kernel_hw_fn(kernel)) == 1):
+            return graph
+        bias = conv_node.get_weights_by_keys(self.bias_str)
+        gamma = bn_node.get_weights_by_keys(self.gamma_str)
+        beta = bn_node.get_weights_by_keys(self.beta_str)
+        moving_mean = bn_node.get_weights_by_keys(self.moving_mean_str)
+        moving_variance = bn_node.get_weights_by_keys(self.moving__variance_str)
+        eps = bn_node.framework_attr[self.epsilon_str]
+
+        if gamma is None:
+            gamma = 1.0
+        if beta is None:
+            beta = 0.0
+        if bias is None:
+            bias = 0.0
+
+        # W * (gamma * (x-mean)/sqrt(var+eps) + bata) + bias ==>  (W * gamma / sqrt()) * X + (bias + W*(beta - gamma*mean/sqrt()))
+        weights_scale = gamma / np.sqrt(moving_variance + eps)
+        kernel, bias, kernel_name = self.update_weights_for_bn_forward_folding_fn(conv_node, kernel, bias,
+                                                                                  weights_scale,
+                                                                                  beta - moving_mean * weights_scale)
+
+        framework_attr = copy.copy(conv_node.framework_attr)
+        framework_attr[self.use_bias] = True
+        if self.layer_name_str is not None:
+            framework_attr[self.layer_name_str] = 'bn_' + conv_node.name
+
+        weights_dict = {kernel_name: kernel,
+                        self.bias_str: bias}
+
+        conv_bn = copy.deepcopy(conv_node)
+        conv_bn_name = 'bn_' + conv_node.name
+        conv_bn.name = conv_bn_name
+        conv_bn.framework_attr = framework_attr
+        conv_bn.weights = weights_dict
+
+        graph.add_node(conv_bn)
+        graph.reconnect_out_edges(current_node=conv_node, new_node=conv_bn)
+        graph.reconnect_in_edges(current_node=bn_node, new_node=conv_bn)
+
+        graph.replace_output_node(current_node=conv_node, new_node=conv_bn)
+
+        graph.remove_edge(bn_node, conv_node)
         graph.remove_node(bn_node)
         graph.remove_node(conv_node)
 
