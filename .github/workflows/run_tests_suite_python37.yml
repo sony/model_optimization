@@ -21,6 +21,7 @@ jobs:
           python-version: '3.7'
       - name: Install dependencies
         run: |
+          sed -i 's/mct-quantizers/mct-quantizers-nightly/' requirements.txt
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install tensorflow==2.11.*
