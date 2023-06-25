@@ -18,7 +18,7 @@ jobs:
           python-version: 3.8
       - name: Install dependencies
         run: |
-          sed 's/mct-quantizers/mct-quantizers-nightly/' requirements.txt
+          sed -i 's/mct-quantizers/mct-quantizers-nightly/' requirements.txt
           python -m pip install --upgrade pip
           cat requirements.txt
           pip install -r requirements.txt          
