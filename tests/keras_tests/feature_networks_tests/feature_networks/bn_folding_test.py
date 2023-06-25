@@ -221,3 +221,54 @@ class SeparableConv2DBNFoldingTest(BaseBatchNormalizationFolding):
             moving_variance_initializer="ones")(x)
         x = layers.Activation('relu')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=x)
+
+
+class BaseForwardBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
+
+    def __init__(self, unit_test, conversion_applied):
+        super(BaseForwardBatchNormalizationFolding, self).__init__(unit_test=unit_test, experimental_exporter=True)
+        self.conversion_applied = conversion_applied
+
+    def get_tpc(self):
+        tp = generate_test_tp_model({'weights_n_bits': 16,
+                                     'activation_n_bits': 16,
+                                     'enable_weights_quantization': False,
+                                     'enable_activation_quantization': False})
+        return generate_keras_tpc(name="bn_folding_test", tp_model=tp)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        is_bn_in_model = any([isinstance(l, tf.keras.layers.BatchNormalization) for l in quantized_model.layers])
+        self.unit_test.assertTrue(self.conversion_applied is not is_bn_in_model)
+        out_float = float_model(input_x)
+        out_quant = quantized_model(input_x)
+        self.unit_test.assertTrue(np.isclose(out_quant, out_float, rtol=1e-4).all())
+
+
+class BNForwardFoldingTest(BaseForwardBatchNormalizationFolding):
+    """
+    This test checks the BatchNorm forward folding feature. When conversion_applied is False
+    test that the BN isn't folded
+    """
+    def __init__(self, unit_test, test_layer, conversion_applied, add_bn=False):
+        super().__init__(unit_test, conversion_applied)
+        self.test_layer = test_layer
+        self.add_bn = add_bn
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.BatchNormalization(beta_initializer='glorot_uniform',
+                                      gamma_initializer=tf.keras.initializers.RandomUniform(minval=0.0001, maxval=1.05),
+                                      moving_mean_initializer='glorot_uniform',
+                                      moving_variance_initializer=tf.keras.initializers.RandomUniform(minval=0.0001, maxval=1.05)
+                                      )(inputs)
+        x = self.test_layer(x)
+        if self.add_bn:
+            x = layers.BatchNormalization(beta_initializer='glorot_uniform',
+                                          gamma_initializer=tf.keras.initializers.RandomUniform(minval=0.0001, maxval=1.05),
+                                          moving_mean_initializer='glorot_uniform',
+                                          moving_variance_initializer=tf.keras.initializers.RandomUniform(minval=0.0001, maxval=1.05)
+                                          )(x)
+        x = layers.Activation('tanh')(x)
+        return tf.keras.models.Model(inputs=inputs, outputs=x)
+
+

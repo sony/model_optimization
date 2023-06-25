@@ -57,7 +57,7 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.acti
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.softmax_shift import \
     keras_softmax_shift
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.batchnorm_folding import \
-    keras_batchnorm_folding
+    keras_batchnorm_folding, keras_batchnorm_forward_folding
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.batchnorm_refusing import \
     keras_batchnorm_refusing
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.linear_collapsing import \
@@ -260,7 +260,8 @@ class KerasImplementation(FrameworkImplementation):
             A list of the framework substitutions used before we collect statistics.
 
         """
-        substitutions_list = [keras_batchnorm_folding()]
+        substitutions_list = [keras_batchnorm_folding(),
+                              keras_batchnorm_forward_folding()]
         if quant_config.relu_bound_to_power_of_2:
             substitutions_list.append(ReLUBoundToPowerOfTwo())
         return substitutions_list

@@ -40,7 +40,7 @@ from model_compression_toolkit.core.pytorch.back2framework.model_gradients impor
     pytorch_iterative_approx_jacobian_trace
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
-    pytorch_batchnorm_folding
+    pytorch_batchnorm_folding, pytorch_batchnorm_forward_folding
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_reconstruction import \
     pytorch_batchnorm_reconstruction
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_refusing import \
@@ -243,7 +243,8 @@ class PytorchImplementation(FrameworkImplementation):
 
         Returns: A list of the framework substitutions used before we build a quantized module.
         """
-        substitutions_list = [pytorch_batchnorm_folding()]
+        substitutions_list = [pytorch_batchnorm_folding(),
+                              pytorch_batchnorm_forward_folding()]
         if quant_config.relu_bound_to_power_of_2:
             substitutions_list.append(ReLUBoundToPowerOfTwo())
         return substitutions_list

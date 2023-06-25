@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import unittest
-
+from torch import nn
 import model_compression_toolkit as mct
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
@@ -29,7 +29,7 @@ from tests.pytorch_tests.model_tests.feature_models.relu_replacement_test import
 from tests.pytorch_tests.model_tests.feature_models.remove_assert_test import AssertNetTest
 from tests.pytorch_tests.model_tests.feature_models.remove_broken_node_test import BrokenNetTest
 from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSameNetTest
-from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest
+from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest, BNForwardFoldingNetTest
 from tests.pytorch_tests.model_tests.feature_models.linear_collapsing_test import TwoConv2DCollapsingTest, \
     ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest
 from tests.pytorch_tests.model_tests.feature_models.residual_collapsing_test import ResidualCollapsingTest1, ResidualCollapsingTest2
@@ -129,9 +129,26 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_bn_folding(self):
         """
-        This test checks the BatchNorm folding feature, plus adding a residual connection.
+        This test checks the BatchNorm folding feature.
         """
-        BNFoldingNetTest(self).run_test()
+        BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=1)).run_test()
+        BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=3, groups=3)).run_test()  # DW-Conv test
+        BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(2, 1))).run_test()
+        BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=2), fold_applied=False).run_test()
+        BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=(3, 1), groups=3), fold_applied=False).run_test()  # DW-Conv test
+        BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(1, 3)), fold_applied=False).run_test()
+
+    def test_bn_forward_folding(self):
+        """
+        This test checks the BatchNorm forward folding feature.
+        """
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1)).run_test()
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3)).run_test()  # DW-Conv test
+        BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1)).run_test()
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), fold_applied=False).run_test()
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), fold_applied=False).run_test()  # DW-Conv test
+        BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, (1, 3)), fold_applied=False).run_test()
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), add_bn=True).run_test()
 
     def test_second_moment_correction(self):
         """
@@ -210,49 +227,22 @@ class FeatureModelsTestRunner(unittest.TestCase):
         SoftmaxFunctionNetTest(self).run_test()
 
     def test_scale_equalization(self):
-        """
-        This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a layer
-        """
+        # This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a layer
         ScaleEqualizationNetTest(self).run_test()
-
-    def test_scale_equalization_with_zero_pad(self):
-        """
-        This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a layer
-        and with zero padding.
-        """
+        # This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a layer and with zero padding.
         ScaleEqualizationWithZeroPadNetTest(self).run_test()
-
-    def test_scale_equalization_with_relu_func(self):
-        """
-        This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a function
-        """
+        # This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a function
         ScaleEqualizationReluFuncNetTest(self).run_test()
-
-    def test_scale_equalization_with_relu_func_zero_pad(self):
-        """
-        This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a function
-        and with zero padding.
-        """
+        # This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a function
+        # and with zero padding.
         ScaleEqualizationReluFuncWithZeroPadNetTest(self).run_test()
-
-    def test_scale_equalization_conv_transpose_with_zero_pad(self):
-        """
-        This test checks the Channel Scale Equalization feature in ConvTranspose2D - Relu - Conv2D with Relu as a layer
-        and with zero padding.
-        """
+        # This test checks the Channel Scale Equalization feature in ConvTranspose2D - Relu - Conv2D with Relu as a layer
+        # and with zero padding.
         ScaleEqualizationConvTransposeWithZeroPadNetTest(self).run_test()
-
-    def test_scale_equalization_with_relu_func_conv_transpose(self):
-        """
-        This test checks the Channel Scale Equalization feature in ConvTranspose2D - Relu - Conv2D with Relu as a function.
-        """
+        # This test checks the Channel Scale Equalization feature in ConvTranspose2D - Relu - Conv2D with Relu as a function.
         ScaleEqualizationConvTransposeReluFuncNetTest(self).run_test()
-
-    def test_scale_equalization_conv_transpose_with_relu_func_zero_pad(self):
-        """
-        This test checks the Channel Scale Equalization feature in Conv2D - Relu - ConvTranspose2D with Relu as a function
-        and with zero padding.
-        """
+        # This test checks the Channel Scale Equalization feature in Conv2D - Relu - ConvTranspose2D with Relu as a function
+        # and with zero padding.
         ScaleEqualizationReluFuncConvTransposeWithZeroPadNetTest(self).run_test()
 
     def test_layer_name(self):

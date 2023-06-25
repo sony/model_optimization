@@ -31,7 +31,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_d
     BiasCorrectionDepthwiseTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bn_folding_test import Conv2DBNFoldingTest, \
     DepthwiseConv2DBNFoldingTest, DepthwiseConv2DBNFoldingHighMultiplierTest, Conv2DTransposeBNFoldingTest, \
-    Conv2DBNConcatnFoldingTest, SeparableConv2DBNFoldingTest
+    Conv2DBNConcatnFoldingTest, SeparableConv2DBNFoldingTest, BNForwardFoldingTest
 from tests.keras_tests.feature_networks_tests.feature_networks.conv_bn_relu_residual_test import ConvBnReluResidualTest
 from tests.keras_tests.feature_networks_tests.feature_networks.decompose_separable_conv_test import \
     DecomposeSeparableConvTest
@@ -483,6 +483,16 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_conv2dbn_folding(self):
         Conv2DBNFoldingTest(self).run_test()
+
+    def test_bn_forward_folding(self):
+        BNForwardFoldingTest(self, layers.Conv2D(2, 1, bias_initializer='glorot_uniform'), True).run_test()
+        BNForwardFoldingTest(self, layers.DepthwiseConv2D(1, bias_initializer='glorot_uniform'), True).run_test()
+        BNForwardFoldingTest(self, layers.Conv2DTranspose(2, 1, bias_initializer='glorot_uniform'), True).run_test()
+        BNForwardFoldingTest(self, layers.Conv2D(2, 2), False).run_test()
+        BNForwardFoldingTest(self, layers.DepthwiseConv2D((3, 1)), False).run_test()
+        BNForwardFoldingTest(self, layers.Conv2DTranspose(2, (1, 3)), False).run_test()
+        BNForwardFoldingTest(self, layers.Conv2D(2, 1, bias_initializer='glorot_uniform'),
+                             True, add_bn=True).run_test()
 
     def test_residual_collapsing(self):
         ResidualCollapsingTest1(self).run_test()
