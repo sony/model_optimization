@@ -90,8 +90,8 @@ def node_builder(n: common.BaseNode) -> Layer:
     except Exception as e:
         print(e) # pragma: no cover
         Logger.error(
-            f"Keras can not de-serialize layer {_layer_class} in order to build static graph representation. This is probably because "
-            f"your model contains custom layers which MCT doesn't support. Please, if possible, provide a model without custom layers.") # pragma: no cover
+            f"Keras can not de-serialize layer {_layer_class} in order to build a static graph representation. This is probably because "
+            f"your model contains custom layers which MCT doesn't support. Please provide a model without custom layers.") # pragma: no cover
     with tf.name_scope(n.name):
         # Add layer name to default weight name to avoid name duplications
         node_instance.build(n.input_shape)
