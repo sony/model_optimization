@@ -24,6 +24,7 @@ from tensorflow.keras.layers import Layer, InputLayer
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.keras.constants import LAYER_NAME
+from model_compression_toolkit.logger import Logger
 
 
 class OperationHandler:
@@ -84,7 +85,13 @@ def node_builder(n: common.BaseNode) -> Layer:
     framework_attr = copy.copy(n.framework_attr)
     _layer_class = n.layer_class
     framework_attr[LAYER_NAME] = n.name  # Overwrite framework name to identical graph node name
-    node_instance = _layer_class.from_config(framework_attr)  # Build layer from node's configuration.
+    try:
+        node_instance = _layer_class.from_config(framework_attr)  # Build layer from node's configuration.
+    except Exception as e:
+        print(e) # pragma: no cover
+        Logger.error(
+            f"Keras can not de-serialize layer {_layer_class} in order to build a static graph representation. This is probably because "
+            f"your model contains custom layers which MCT doesn't support. Please provide a model without custom layers.") # pragma: no cover
     with tf.name_scope(n.name):
         # Add layer name to default weight name to avoid name duplications
         node_instance.build(n.input_shape)
