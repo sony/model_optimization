@@ -14,8 +14,8 @@
 # ==============================================================================
 import torch
 import torchvision
+from torchvision.models import list_models, get_model, get_model_weights, get_weight
 from torch.utils.data import Subset
-from torchvision import models
 
 from common.model_lib import BaseModelLib
 from pytorch_fw.utils import classification_eval, get_representative_dataset
@@ -28,20 +28,21 @@ class ModelLib(BaseModelLib):
 
     @staticmethod
     def get_torchvision_model(model_name):
-        # todo: replace with dedicated API (models_list(), get_model()...) when updating to torchvision 0.14
-        if hasattr(models, model_name):
-            return getattr(models, model_name)
+        all_models = list_models() # List all torchvision models
+        if model_name in all_models:
+            # Initialize model with the best available weights
+            return get_model(model_name, weights="DEFAULT")
         else:
             raise Exception(f'Unknown torchvision model name {model_name}, Please check available models in https://pytorch.org/vision/stable/models.html')
 
     @staticmethod
     def get_torchvision_weights(model_name):
-        # todo: replace with dedicated API (models_list(), get_model()...) when updating to torchvision 0.14
-        return models.get_weight(model_name.title().replace('net', 'Net').replace('nas', 'NAS').replace('Mf', 'MF') + '_Weights.DEFAULT')
+
+        # Return the best available weights of the model
+        return get_model_weights(model_name).DEFAULT
 
     def __init__(self, args):
         self.model = self.get_torchvision_model(args[MODEL_NAME])
-        self.model = self.model(weights='DEFAULT')
         self.preprocess = self.get_torchvision_weights(args[MODEL_NAME]).transforms()
         self.dataset_name = IMAGENET_DATASET
         super().__init__(args)

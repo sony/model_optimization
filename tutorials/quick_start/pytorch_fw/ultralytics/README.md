@@ -22,7 +22,7 @@ setenv PYTHONPATH /path/to/model_optimization/folder
 ```
 
 ```csh 
-python main.py --model_name yolov8n --model_library ultralytics --representative_dataset_folder ../datasets/coco/images/train2017 --num_representative_images 64 --batch_size 1 
+python main.py --model_name yolov8n --model_library ultralytics --representative_dataset_folder <download_location>/datasets/coco/images/train2017 --num_representative_images 64 --batch_size 1 
 ```
 In this example, we are running the main.py script with the following parameters:
 - `--model_name`: Specifies the name of the model to be used out of Ultralytics models (yolov8n in this case).
@@ -31,10 +31,11 @@ In this example, we are running the main.py script with the following parameters
 - `--num_representative_images`: Specifies the number of representative images to be used for quantization.
 - `--batch_size`: Specifies the batch size to be used.
 
-Please note that during the first model evaluation, Ultralytics downloads the COCO dataset to the folder specified in the 'coco.yaml' file. By default, the dataset is downloaded to '../datasets/coco'. Therefore, the 'validation_dataset_folder' value is not required in this case.
+Please note that during the first model evaluation, Ultralytics downloads the COCO dataset to the folder specified in [coco.yaml](https://github.com/ultralytics/ultralytics/blob/main/ultralytics/datasets/coco.yaml) file. Therefore, the 'validation_dataset_folder' value is not required in this case.
 
 For the representative dataset, it is expected to follow the same format as the downloaded COCO dataset. For instance, you can use the 'train' split of the COCO dataset as the representative dataset or create a new split with the same format.
 
+For more information on the dataset format please refer the [ultralytics docs](https://docs.ultralytics.com/datasets/)
 
 ## Model Replacers
 During the process, we perform a few manipulations to achieve better quantization results:
