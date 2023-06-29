@@ -28,14 +28,17 @@ class ModelLib(BaseModelLib):
 
     @staticmethod
     def get_torchvision_model(model_name):
-        all_models = list_models()
+        all_models = list_models() # List all torchvision models
         if model_name in all_models:
+            # Initialize model with the best available weights
             return get_model(model_name, weights="DEFAULT")
         else:
             raise Exception(f'Unknown torchvision model name {model_name}, Please check available models in https://pytorch.org/vision/stable/models.html')
 
     @staticmethod
     def get_torchvision_weights(model_name):
+
+        # Return the best available weights of the model
         return get_model_weights(model_name).DEFAULT
 
     def __init__(self, args):
