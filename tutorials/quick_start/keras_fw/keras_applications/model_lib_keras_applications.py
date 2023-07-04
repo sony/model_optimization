@@ -1,0 +1,171 @@
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+from typing import Dict
+import tensorflow as tf
+
+from tutorials.quick_start.common.model_lib import BaseModelLib
+from tutorials.quick_start.keras_fw.utils import classification_eval, get_representative_dataset
+from tutorials.quick_start.common.constants import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, VALIDATION_DATASET_FOLDER, IMAGENET_DATASET
+
+from tutorials.quick_start.common.results import DatasetInfo
+
+
+class ModelLib(BaseModelLib):
+    """
+    A class for quantizing pre-trained models from the tensorflow.keras.applications library
+    """
+    MISPLACED_CLASSES = ['MobileNetV3Small', 'MobileNetV3Large']
+
+    def __init__(self, args: Dict):
+        """
+        Init the ModelLib with user arguments
+        Args:
+            args (dict): user arguments
+        """
+        model_fn, self.model_package = self.get_keras_apps_model(args[MODEL_NAME])
+        # create model
+        self.model = model_fn()
+        self.preprocess = self.generate_preprocess()
+        self.dataset_name = IMAGENET_DATASET
+        # Extract image input size and verify it's not dynamic (equals None)
+        self.input_size = self.model.layers[0].input_shape[0][1:3]
+        if None in self.input_size:
+            raise Exception(f'model {args[MODEL_NAME]} has a dynamic input size, which is not supported by the MCT')
+        super().__init__(args)
+
+    def get_keras_apps_model(self, model_name: str):
+        """
+        Extracts the model package and model name from the input string: <package>.<model>
+        The model package class contains the 'preprocess_input' method for preprocessing input images
+        One exception is the MobileNetV3 models that are located in the parent model (tf.keras.applications)
+
+        Args:
+            model_name (str): A string containing the model to quantize in the following format: <package>.<model> (e.g. mobilenet_v2.MobileNetV2)
+
+        Returns:
+            model package class
+            model class
+
+        """
+        model_attrs = model_name.split('.')
+        if len(model_attrs) == 1 and model_attrs[0] in self.MISPLACED_CLASSES:
+            # the MobNetV3 models aren't located in their own package as other models, but rather in the general package
+            model_package, model_class = 'mobilenet_v3', model_attrs[0]
+        elif len(model_attrs) != 2:
+            raise Exception(f'Keras Applications expects model_name of format <model_package>.<model_class>, but got {model_name}')
+        else:
+            model_package, model_class = model_attrs
+        if hasattr(tf.keras.applications, model_package):
+            model_package = getattr(tf.keras.applications, model_package)
+            if model_class in self.MISPLACED_CLASSES:
+                return getattr(tf.keras.applications, model_class), model_package
+            elif hasattr(model_package, model_class):
+                return getattr(model_package, model_class), model_package
+            else:
+                raise Exception(f'Unknown Keras Applications model class {model_class}')
+        else:
+            raise Exception(f'Unknown Keras Applications model package {model_package}, Please check available models in https://www.tensorflow.org/api_docs/python/tf/keras/applications')
+
+    @staticmethod
+    def get_keras_apps_weights(model_name):
+        return None
+
+    def generate_preprocess(self, truncate_preprocess: bool = False):
+        """
+        Generates the preprocess function for evaluation and quantization (representative dataset)
+        Some models in this library contain the normalization of the preprocess in the beginning of the model. They can be removed.
+        Args:
+            truncate_preprocess (bool): Removes Normalization & Rescaling layers from the beginning of the model
+
+        Returns:
+
+        """
+        preprocess_layers = []
+        pp_model = None
+
+        if truncate_preprocess:
+            layer, last_layer = None, None
+            for layer in self.model.layers[1:]:
+                if isinstance(layer, (tf.keras.layers.Normalization,
+                                      tf.keras.layers.Rescaling)):
+                    # Collect layers predefined as preprocess (normalization & Rescaling) at the beginning of the model
+                    preprocess_layers.append(layer.__class__.from_config(layer.get_config()))
+                else:
+                    break
+                last_layer = layer
+
+            if preprocess_layers and not isinstance(layer, tf.keras.Sequential):
+                # Separate the model into 2 models: preprocess-model and model without preprocess
+                pp_model = tf.keras.Model(inputs=self.model.input, outputs=last_layer.output)
+                self.model = tf.keras.Model(inputs=layer.input, outputs=self.model.output)
+
+        def _preprocess(x):
+            x = self.model_package.preprocess_input(x)
+            if pp_model is not None:
+                x = pp_model(x)
+            return x
+
+        return _preprocess
+
+    def get_model(self):
+        return self.model
+
+    def get_representative_dataset(self, representative_dataset_folder: str, n_iter: int, batch_size: int):
+        """
+        Create a representative dataset generator
+        Args:
+            representative_dataset_folder: Dataset location folder, in the format: representative_dataset_folder/<class>/<images>
+            n_iter: number batches to run in the generator
+            batch_size: number of images in each batch
+
+        Returns:
+            A generator for the representative dataset, as the MCT expects
+
+        """
+        dl = tf.keras.utils.image_dataset_from_directory(representative_dataset_folder,
+                                                         batch_size=batch_size,
+                                                         image_size=self.input_size,
+                                                         crop_to_aspect_ratio=True)
+
+        return get_representative_dataset(dl, n_iter, preprocess=self.preprocess)
+
+    def evaluate(self, model):
+        """
+        Evaluate a model
+        Args:
+            model: A keras model to evaluate
+
+        Returns:
+            model accuracy
+            dataset info (dataset name, number of images in dataset)
+
+        """
+        batch_size = int(self.args[BATCH_SIZE])
+        validation_dataset_folder = self.args[VALIDATION_DATASET_FOLDER]
+        testloader = tf.keras.utils.image_dataset_from_directory(validation_dataset_folder,
+                                                                 batch_size=batch_size,
+                                                                 image_size=self.input_size,
+                                                                 shuffle=False,
+                                                                 crop_to_aspect_ratio=True)
+
+        _in = tf.keras.layers.Input(shape=model.input_shape[1:])
+        pp_input = self.preprocess(_in)
+        _out = model(pp_input)
+        _model = tf.keras.Model(inputs=_in, outputs=_out)
+
+        acc, total = classification_eval(_model, testloader, self.args[VALIDATION_SET_LIMIT])
+        dataset_info = DatasetInfo(self.dataset_name, total)
+        return acc, dataset_info
