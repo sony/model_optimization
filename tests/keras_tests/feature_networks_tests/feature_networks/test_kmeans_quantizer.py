@@ -134,15 +134,20 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.MSE,
-                                      weights_error_method=mct.core.QuantizationErrorMethod.MSE,
-                                      relu_bound_to_power_of_2=False,
-                                      weights_bias_correction=False,
-                                      weights_per_channel_threshold=False)
+                                           weights_error_method=mct.core.QuantizationErrorMethod.MSE,
+                                           relu_bound_to_power_of_2=False,
+                                           weights_bias_correction=False,
+                                           weights_per_channel_threshold=False)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they where quantized
         # using different methods (but started as the same value)
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
+        print(np.sum(np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())))
+        print(' ================ layer 0 =======================================')
+        print(conv_layers[0].weights[0].numpy())
+        print(' ================ layer 2 =======================================')
+        print(conv_layers[2].weights[0].numpy())
         self.unit_test.assertTrue(np.sum(
             np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())) > 0)
 
