@@ -15,6 +15,7 @@
 
 import unittest
 
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit import target_platform
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, ChangeCandidatesWeightsQuantConfigAttr
@@ -143,11 +144,11 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
         # check that the two conv's weights have different values since they where quantized
         # using different methods (but started as the same value)
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        print(np.sum(np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())))
-        print(' ================ layer 0 =======================================')
-        print(conv_layers[0].weights[0].numpy())
-        print(' ================ layer 2 =======================================')
-        print(conv_layers[2].weights[0].numpy())
+        mct.core.print(np.sum(np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())))
+        Logger.info(' ================ layer 0 =======================================')
+        Logger.info(conv_layers[0].weights[0].numpy())
+        Logger.info(' ================ layer 2 =======================================')
+        Logger.info(conv_layers[2].weights[0].numpy())
         self.unit_test.assertTrue(np.sum(
             np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())) > 0)
 
