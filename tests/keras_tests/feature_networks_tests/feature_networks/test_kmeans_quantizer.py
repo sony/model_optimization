@@ -15,7 +15,6 @@
 
 import unittest
 
-from model_compression_toolkit.logger import Logger
 from model_compression_toolkit import target_platform
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, ChangeCandidatesWeightsQuantConfigAttr
