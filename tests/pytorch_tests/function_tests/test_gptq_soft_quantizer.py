@@ -49,7 +49,7 @@ class TestGPTQSoftQuantizer(unittest.TestCase):
         in_model = model_test().to(input.device)
         d = {k: v for k, v in in_model.conv.state_dict().items()}
         t = torch.Tensor([0.1, -0.3, 0.67]).reshape(in_model.conv.weight.shape)
-        d['weight'] = t
+        d[KERNEL] = t
         in_model.conv.load_state_dict(d)
 
         wrap_test_model(in_model, per_channel=False, param_learning=param_learning)
@@ -70,7 +70,7 @@ class TestGPTQSoftQuantizer(unittest.TestCase):
         in_model = model_test(num_channels=1, kernel_size=2).to(input.device)
         d = {k: v for k, v in in_model.conv.state_dict().items()}
         t = torch.Tensor([0.1, -0.3, 0.67, -0.44]).reshape(in_model.conv.weight.shape)
-        d['weight'] = t
+        d[KERNEL] = t
         in_model.conv.load_state_dict(d)
 
         wrap_test_model(in_model, per_channel=True, param_learning=param_learning)
