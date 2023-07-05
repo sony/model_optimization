@@ -103,7 +103,7 @@ class ModelLib(BaseModelLib):
         if self.args[VALIDATION_DATASET_FOLDER] is not None:
             logging.warning('The provided value for "validation_dataset_folder" is ignored. '
                             'Ultralytics utilizes the dataset path specified in the coco.yaml file. '
-                            'By default, the dataset path is set to "../datasets/coco"')
+                            'By default, the dataset path is taken from "/home/user/.config/Ultralytics/settings.yaml", depends on your operating system.')
 
         results = self.ultralytics_model.val(batch=int(self.args[BATCH_SIZE]))  # evaluate model performance on the validation set
         map_res = results.mean_results()[-1]

@@ -154,8 +154,9 @@ class DetectionValidatorReplacer(DetectionValidator):
         in_ch = 64 + self.nc # 144
         x_dummy = [torch.ones(1, in_ch, grid[0], grid[0]), torch.ones(1, in_ch, grid[1], grid[1]), torch.ones(1, in_ch, grid[2], grid[2])]
         anchors, strides = (x.transpose(0, 1) for x in make_anchors(x_dummy, stride, 0.5))
-        a = torch.Tensor.cuda(anchors)
-        s = torch.Tensor.cuda(strides)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        a = anchors.to(device)
+        s = strides.to(device)
         dbox = dist2bbox(preds[0], a.unsqueeze(0), xywh=True, dim=1) * s
         preds = torch.cat((dbox, preds[1]), 1)
 
