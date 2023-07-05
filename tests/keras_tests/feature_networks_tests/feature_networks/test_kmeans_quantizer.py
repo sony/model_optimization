@@ -144,7 +144,7 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
         # check that the two conv's weights have different values since they where quantized
         # using different methods (but started as the same value)
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        mct.core.print(np.sum(np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())))
+        Logger.info(np.sum(np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())))
         Logger.info(' ================ layer 0 =======================================')
         Logger.info(conv_layers[0].weights[0].numpy())
         Logger.info(' ================ layer 2 =======================================')
