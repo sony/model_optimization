@@ -18,6 +18,8 @@ import unittest
 from model_compression_toolkit import target_platform
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, ChangeCandidatesWeightsQuantConfigAttr
+from model_compression_toolkit.core.common.quantization.quantizers.uniform_quantizers import power_of_two_quantizer
+from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import power_of_two_selection_tensor
 import model_compression_toolkit as mct
 import tensorflow as tf
 
@@ -90,8 +92,15 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
 
     def get_debug_config(self):
         return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                                                        action=ChangeCandidatesWeightsQuantConfigAttr(
-                                                            weights_quantization_method=target_platform.QuantizationMethod.POWER_OF_TWO))])
+                                                             action=ChangeCandidatesWeightsQuantConfigAttr(
+                                                                 weights_quantization_method=target_platform.QuantizationMethod.POWER_OF_TWO)),
+                                                    EditRule(filter=NodeNameFilter(self.node_to_change_name),
+                                                             action=ChangeCandidatesWeightsQuantConfigAttr(
+                                                                 weights_quantization_fn=power_of_two_quantizer)),
+                                                    EditRule(filter=NodeNameFilter(self.node_to_change_name),
+                                                             action=ChangeCandidatesWeightsQuantConfigAttr(
+                                                                 weights_quantization_params_fn=power_of_two_selection_tensor)),
+                                                    ])
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they were quantized
@@ -113,7 +122,7 @@ class KmeansQuantizerTest(KmeansQuantizerTestBase):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        # check that the two conv's weights have different values since they where quantized
+        # check that the two conv's weights have different values since they were quantized
         # using different methods (but started as the same value)
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(np.sum(
@@ -134,10 +143,10 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.MSE,
-                                      weights_error_method=mct.core.QuantizationErrorMethod.MSE,
-                                      relu_bound_to_power_of_2=False,
-                                      weights_bias_correction=False,
-                                      weights_per_channel_threshold=False)
+                                           weights_error_method=mct.core.QuantizationErrorMethod.MSE,
+                                           relu_bound_to_power_of_2=False,
+                                           weights_bias_correction=False,
+                                           weights_per_channel_threshold=False)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they where quantized
