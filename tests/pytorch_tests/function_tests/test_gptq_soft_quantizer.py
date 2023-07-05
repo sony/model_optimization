@@ -96,6 +96,4 @@ class TestGPTQSoftQuantizer(unittest.TestCase):
         self.soft_symmetric_quantizer_per_channel(param_learning=False)
 
     def test_soft_targets_symmetric_per_channel_param_learning(self):
-        for i in range(1000):
-            print(i)
-            self.soft_symmetric_quantizer_per_channel(param_learning=True)
+        self.soft_symmetric_quantizer_per_channel(param_learning=True)
