@@ -26,7 +26,7 @@ def edit_network_graph(graph: Graph,
     Apply a list of edit rules on a graph.
 
     Args:
-        graph_to_edit: The graph to edit.
+        graph: The graph to edit.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.)
         network_editor: List of edit rules to apply to the graph.
