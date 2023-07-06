@@ -156,7 +156,7 @@ class TestExportingQATModelTFLite(TestExportingQATModelBase):
         # Get Kernel values
         tflite_kernel=None
         for t in self.loaded_model.get_tensor_details():
-            if np.all(t['shape'] == np.asarray([3, 3, 3, 3])) and len(t['shape']) == 4:
+            if len(t['shape']) == 4 and np.all(t['shape'] == np.asarray([3, 3, 3, 3])):
                 tflite_kernel = self.loaded_model.tensor(t['index'])()
         assert tflite_kernel is not None, f' Could not find conv kernel in tflite model'
 

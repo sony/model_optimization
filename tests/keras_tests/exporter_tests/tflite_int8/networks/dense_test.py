@@ -38,7 +38,7 @@ class TestDenseTFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
         # Fetch quantized weights from int8 model tensors
         kernel_quantization_parameters, kernel_tensor_index = None, None
         for t in self.interpreter.get_tensor_details():
-            if np.all(t[constants.SHAPE] == np.asarray([20, 1, 1, 8])):
+            if len(t[constants.SHAPE]) == 4 and np.all(t[constants.SHAPE] == np.asarray([20, 1, 1, 8])):
                 kernel_tensor_index = t[constants.INDEX]
                 kernel_quantization_parameters = t[constants.QUANTIZATION_PARAMETERS]
         assert kernel_quantization_parameters is not None

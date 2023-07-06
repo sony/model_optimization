@@ -44,7 +44,7 @@ class TestConv2DTFLiteFQExporter(TFLiteFakeQuantExporterBaseTest):
         # Fetch quantized weights from fq model tensors
         kernel_quantization_parameters, kernel_tensor_index, kernel_dtype = None, None, None
         for t in self.interpreter.get_tensor_details():
-            if np.all(t[constants.SHAPE] == np.asarray([6, 20, 20, 3])):
+            if len(t[constants.SHAPE]) == 4 and np.all(t[constants.SHAPE] == np.asarray([6, 20, 20, 3])):
                 kernel_tensor_index = t[constants.INDEX]
                 kernel_quantization_parameters = t[constants.QUANTIZATION_PARAMETERS]
                 kernel_dtype = t[constants.DTYPE]
