@@ -18,14 +18,17 @@ import numpy as np
 
 from keras import Input
 from keras.layers import Conv2D
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
+from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
 
+from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.core.keras.mixed_precision.configurable_activation_quantizer import \
+    ConfigurableActivationQuantizer
+from model_compression_toolkit.core.keras.mixed_precision.configurable_weights_quantizer import \
+    ConfigurableWeightsQuantizer
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
-from model_compression_toolkit.core.keras.quantizer.mixed_precision.quantization_config_factory import \
-    quantization_config_builder_mixed_precision
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
 
 
@@ -54,29 +57,49 @@ def test_setup():
 
 class TestKerasSetLayerToBitwidth(unittest.TestCase):
 
-    def test_set_layer_to_bitwidth(self):
+    def test_set_layer_to_bitwidth_weights(self):
         layer, node = test_setup()
-        wrapper_layer = QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node))
 
-        for q in wrapper_layer.quantize_config.weight_quantizers:
+        wrapper_layer = \
+            KerasQuantizationWrapper(layer,
+                                     weights_quantizers={KERNEL:
+                                         ConfigurableWeightsQuantizer(
+                                             node_q_cfg=node.candidates_quantization_cfg,
+                                             float_weights=node.get_weights_by_keys(KERNEL),
+                                             max_candidate_idx=node.find_max_candidates_indices()[0])
+                                     })
+
+        for attr, q in wrapper_layer.weights_quantizers.items():
             self.assertEqual(q.active_quantization_config_index, 0)
             # Changing active quantizer candidate index manually to 1 (this is an invalid value in this case)
             q.active_quantization_config_index = 1
 
-        wrapper_layer.quantize_config.set_bit_width_index(index=0)
+        set_layer_to_bitwidth(wrapper_layer, bitwidth_idx=0, weights_quantizer_type=ConfigurableWeightsQuantizer,
+                              activation_quantizer_type=ConfigurableActivationQuantizer,
+                              weights_quant_layer_type=KerasQuantizationWrapper,
+                              activation_quant_layer_type=KerasActivationQuantizationHolder)
 
-        for q in wrapper_layer.quantize_config.weight_quantizers:
+        for attr, q in wrapper_layer.weights_quantizers.items():
             self.assertEqual(q.active_quantization_config_index, 0)
 
-    def test_set_single_attr_to_bitwidth(self):
+    def test_set_layer_to_bitwidth_activation(self):
         layer, node = test_setup()
-        wrapper_layer = QuantizeWrapper(layer, quantization_config_builder_mixed_precision(node))
 
-        kernel_attr_idx = wrapper_layer.quantize_config.weight_attrs.index(KERNEL)
-        self.assertEqual(wrapper_layer.quantize_config.weight_quantizers[kernel_attr_idx].active_quantization_config_index, 0)
+        holder_layer = \
+            KerasActivationQuantizationHolder(ConfigurableActivationQuantizer(
+                node_q_cfg=node.candidates_quantization_cfg,
+                max_candidate_idx=node.find_max_candidates_indices()[0]))
+
+        q = holder_layer.activation_holder_quantizer
+
+        self.assertEqual(q.active_quantization_config_index, 0)
 
         # Changing active quantizer candidate index manually to 1 (this is an invalid value in this case)
-        wrapper_layer.quantize_config.weight_quantizers[kernel_attr_idx].active_quantization_config_index = 1
+        q.active_quantization_config_index = 1
 
-        wrapper_layer.quantize_config.set_bit_width_index(index=0, attr=KERNEL)
-        self.assertEqual(wrapper_layer.quantize_config.weight_quantizers[kernel_attr_idx].active_quantization_config_index, 0)
+        set_layer_to_bitwidth(holder_layer, bitwidth_idx=0, weights_quantizer_type=ConfigurableWeightsQuantizer,
+                              activation_quantizer_type=ConfigurableActivationQuantizer,
+                              weights_quant_layer_type=KerasQuantizationWrapper,
+                              activation_quant_layer_type=KerasActivationQuantizationHolder)
+
+        self.assertEqual(q.active_quantization_config_index, 0)
