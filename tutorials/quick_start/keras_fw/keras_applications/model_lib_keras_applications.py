@@ -17,7 +17,7 @@ from typing import Dict
 import tensorflow as tf
 
 from tutorials.quick_start.common.model_lib import BaseModelLib
-from tutorials.quick_start.keras_fw.utils import classification_eval, get_representative_dataset
+from tutorials.quick_start.keras_fw.utils import classification_eval, get_representative_dataset, separate_preprocess_model
 from tutorials.quick_start.common.constants import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, VALIDATION_DATASET_FOLDER, IMAGENET_DATASET
 
 from tutorials.quick_start.common.results import DatasetInfo
@@ -93,24 +93,9 @@ class ModelLib(BaseModelLib):
         Returns:
 
         """
-        preprocess_layers = []
         pp_model = None
-
         if truncate_preprocess:
-            layer, last_layer = None, None
-            for layer in self.model.layers[1:]:
-                if isinstance(layer, (tf.keras.layers.Normalization,
-                                      tf.keras.layers.Rescaling)):
-                    # Collect layers predefined as preprocess (normalization & Rescaling) at the beginning of the model
-                    preprocess_layers.append(layer.__class__.from_config(layer.get_config()))
-                else:
-                    break
-                last_layer = layer
-
-            if preprocess_layers and not isinstance(layer, tf.keras.Sequential):
-                # Separate the model into 2 models: preprocess-model and model without preprocess
-                pp_model = tf.keras.Model(inputs=self.model.input, outputs=last_layer.output)
-                self.model = tf.keras.Model(inputs=layer.input, outputs=self.model.output)
+            self.model, pp_model = separate_preprocess_model(self.model)
 
         def _preprocess(x):
             x = self.model_package.preprocess_input(x)

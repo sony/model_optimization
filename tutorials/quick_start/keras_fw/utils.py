@@ -86,3 +86,37 @@ def get_representative_dataset(data_loader: tf.data.Dataset, n_iters: int, data_
             return n_iters
 
     return RepresentativeDataset(data_loader)
+
+
+def separate_preprocess_model(model: tf.keras.Model):
+    """
+    Separate the first layers of a model if they are considered as preprocess layers.
+    Args:
+        model (tf.keras.Model): input model
+
+    Returns:
+        The model without preprocessing layers
+        A model of the preprocessing layers to use in the preprocess of the representative dataset and evaluation
+
+    """
+    pp_model = None
+
+    preprocess_layers = []
+    layer, last_layer = None, None
+    for layer in model.layers[1:]:
+        if isinstance(layer, (tf.keras.layers.Normalization,
+                              tf.keras.layers.Rescaling)):
+            # Collect layers predefined as preprocess (normalization & Rescaling) at the beginning of the model
+            preprocess_layers.append(layer.__class__.from_config(layer.get_config()))
+        else:
+            break
+        last_layer = layer
+
+    if preprocess_layers and not isinstance(layer, tf.keras.Sequential):
+        # Separate the model into 2 models: preprocess-model and model without preprocess
+        pp_model = tf.keras.Model(inputs=model.input, outputs=last_layer.output)
+        trunc_model = tf.keras.Model(inputs=layer.input, outputs=model.output)
+    else:
+        trunc_model = model
+
+    return trunc_model, pp_model
