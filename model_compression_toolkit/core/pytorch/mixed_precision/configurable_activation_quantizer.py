@@ -98,14 +98,3 @@ class ConfigurableActivationQuantizer(BasePyTorchInferableQuantizer):
         """
 
         return self.activation_quantizers[self.active_quantization_config_index](inputs)
-
-    def get_config(self) -> Dict[str, Any]:  # pragma: no cover
-        """
-        Returns: The ConfigurableActivationQuantizer configuration.
-        """
-
-        return {
-            'node_q_cfg': self.node_q_cfg,
-            'activation_quantizers': self.activation_quantizers,
-            'active_quantization_config_index': self.active_quantization_config_index
-        }

@@ -117,14 +117,3 @@ class ConfigurableWeightsQuantizer(BasePyTorchInferableQuantizer):
         """
 
         return self.quantized_weights[self.active_quantization_config_index]
-
-    def get_config(self) -> Dict[str, Any]:  # pragma: no cover
-        """
-        Returns: The ConfigurableWeightsQuantizer configuration.
-        """
-
-        return {
-            'float_weights': self.float_weights,
-            'node_q_cfg': self.node_q_cfg,
-            'active_quantization_config_index': self.active_quantization_config_index
-        }
