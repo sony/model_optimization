@@ -15,6 +15,7 @@
 
 from typing import Dict
 import tensorflow as tf
+import keras
 
 from tutorials.quick_start.common.model_lib import BaseModelLib
 from tutorials.quick_start.keras_fw.utils import classification_eval, get_representative_dataset, separate_preprocess_model
@@ -27,8 +28,6 @@ class ModelLib(BaseModelLib):
     """
     A class for quantizing pre-trained models from the tensorflow.keras.applications library
     """
-    MISPLACED_CLASSES = ['MobileNetV3Small', 'MobileNetV3Large']
-
     def __init__(self, args: Dict):
         """
         Init the ModelLib with user arguments
@@ -60,24 +59,13 @@ class ModelLib(BaseModelLib):
             model class
 
         """
-        model_attrs = model_name.split('.')
-        if len(model_attrs) == 1 and model_attrs[0] in self.MISPLACED_CLASSES:
-            # the MobNetV3 models aren't located in their own package as other models, but rather in the general package
-            model_package, model_class = 'mobilenet_v3', model_attrs[0]
-        elif len(model_attrs) != 2:
-            raise Exception(f'Keras Applications expects model_name of format <model_package>.<model_class>, but got {model_name}')
+        if hasattr(tf.keras.applications, model_name):
+            model_class = getattr(tf.keras.applications, model_name)
+            model_package = eval(model_class.__module__)
         else:
-            model_package, model_class = model_attrs
-        if hasattr(tf.keras.applications, model_package):
-            model_package = getattr(tf.keras.applications, model_package)
-            if model_class in self.MISPLACED_CLASSES:
-                return getattr(tf.keras.applications, model_class), model_package
-            elif hasattr(model_package, model_class):
-                return getattr(model_package, model_class), model_package
-            else:
-                raise Exception(f'Unknown Keras Applications model class {model_class}')
-        else:
-            raise Exception(f'Unknown Keras Applications model package {model_package}, Please check available models in https://www.tensorflow.org/api_docs/python/tf/keras/applications')
+            raise Exception(f'Unknown Keras Applications model class {model_name}')
+
+        return model_class, model_package
 
     @staticmethod
     def get_keras_apps_weights(model_name):
@@ -97,11 +85,11 @@ class ModelLib(BaseModelLib):
         if truncate_preprocess:
             self.model, pp_model = separate_preprocess_model(self.model)
 
-        def _preprocess(x):
+        def _preprocess(x, l):
             x = self.model_package.preprocess_input(x)
             if pp_model is not None:
                 x = pp_model(x)
-            return x
+            return x, l
 
         return _preprocess
 
@@ -123,9 +111,9 @@ class ModelLib(BaseModelLib):
         dl = tf.keras.utils.image_dataset_from_directory(representative_dataset_folder,
                                                          batch_size=batch_size,
                                                          image_size=self.input_size,
-                                                         crop_to_aspect_ratio=True)
+                                                         crop_to_aspect_ratio=True).map(self.preprocess)
 
-        return get_representative_dataset(dl, n_iter, preprocess=self.preprocess)
+        return get_representative_dataset(dl, n_iter)
 
     def evaluate(self, model):
         """
@@ -146,11 +134,8 @@ class ModelLib(BaseModelLib):
                                                                  shuffle=False,
                                                                  crop_to_aspect_ratio=True)
 
-        _in = tf.keras.layers.Input(shape=model.input_shape[1:])
-        pp_input = self.preprocess(_in)
-        _out = model(pp_input)
-        _model = tf.keras.Model(inputs=_in, outputs=_out)
+        testloader = testloader.map(self.preprocess)
 
-        acc, total = classification_eval(_model, testloader, self.args[VALIDATION_SET_LIMIT])
+        acc, total = classification_eval(model, testloader, self.args[VALIDATION_SET_LIMIT])
         dataset_info = DatasetInfo(self.dataset_name, total)
         return acc, dataset_info

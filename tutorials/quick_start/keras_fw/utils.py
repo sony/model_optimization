@@ -54,12 +54,12 @@ def classification_eval(model: tf.keras.Model, data_loader: tf.data.Dataset, lim
 def get_representative_dataset(data_loader: tf.data.Dataset, n_iters: int, data_loader_key: int = 0, preprocess=None):
     """
     A function to generate a representative dataset generator. The class can iterate the rep. dataset over and
-    over if there are less images in the dataset than required iterations.
+    over if it contains fewer images than required iterations.
     Args:
-        data_loader (tf.data.Dataset): a tendorflow dataset
+        data_loader (tf.data.Dataset): a tensorflow dataset
         n_iters (int): number of iterations
         data_loader_key (int): index of images in data_loader output (usually the output is a tuple: [image, label])
-        preprocess (callable): a function to preprocess a batch of images
+        preprocess (callable): a function to preprocess a batch of dataset outputs: tuple of (images, labels)
 
     Returns:
         A representative dataset generator
@@ -79,7 +79,7 @@ def get_representative_dataset(data_loader: tf.data.Dataset, n_iters: int, data_
                     self.iter = iter(self.dl)
                     x = next(self.iter)[data_loader_key]
                 if preprocess is not None:
-                    x = preprocess(x)
+                    x = preprocess(x, None)[0]
                 yield [x.numpy()]
 
         def __len__(self):
