@@ -20,6 +20,8 @@ from mct_quantizers.common.base_inferable_quantizer import mark_quantizer, Quant
 from mct_quantizers.common.quant_info import QuantizationMethod
 
 from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.core.common.mixed_precision.configurable_quantizer_utils import \
+    verify_candidates_descending_order, init_activation_quantizers
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.logger import Logger
@@ -57,17 +59,16 @@ if FOUND_TF:
             super(ConfigurableActivationQuantizer, self).__init__()
 
             self.node_q_cfg = node_q_cfg
-            self.active_quantization_config_index = max_candidate_idx  # initialize with first config as default
+
+            verify_candidates_descending_order(self.node_q_cfg)
 
             for qc in node_q_cfg:
                 if qc.activation_quantization_cfg.enable_activation_quantization != \
                         node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization:
                     Logger.error("Candidates with different activation enabled properties is currently not supported.")  # pragma: no cover
 
-            self.activation_quantizers = []
-            for qc in self.node_q_cfg:
-                q_activation = qc.activation_quantization_cfg
-                self.activation_quantizers.append(q_activation.quantize_node_output)
+            self.activation_quantizers = init_activation_quantizers(self.node_q_cfg)
+            self.active_quantization_config_index = max_candidate_idx  # initialize with first config as default
 
         def set_active_activation_quantizer(self, index: int):
             """

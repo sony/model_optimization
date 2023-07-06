@@ -17,6 +17,8 @@ from typing import Dict, List, Any
 
 from model_compression_toolkit.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.mixed_precision.configurable_quant_id import ConfigurableQuantizerIdentifier
+from model_compression_toolkit.core.common.mixed_precision.configurable_quantizer_utils import \
+    verify_candidates_descending_order, init_activation_quantizers
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.logger import Logger
@@ -57,7 +59,8 @@ if FOUND_TORCH:
             super(ConfigurableActivationQuantizer, self).__init__()
 
             self.node_q_cfg = node_q_cfg
-            self.active_quantization_config_index = max_candidate_idx  # initialize with first config as default
+
+            verify_candidates_descending_order(self.node_q_cfg)
 
             for qc in self.node_q_cfg:
                 if qc.activation_quantization_cfg.enable_activation_quantization != \
@@ -65,23 +68,8 @@ if FOUND_TORCH:
                     Logger.error("Candidates with different activation enabled properties is currently not supported.")  # pragma: no cover
 
             # Setting layer's activation
-            self.activation_quantizers = self._get_activation_quantizers()
-            self.active_quantization_config_index = max_candidate_idx
-
-        def _get_activation_quantizers(self) -> List[Any]:
-            """
-            Builds a list of quantizers for each of the bitwidth candidates for activation quantization,
-            to be stored and used during MP search.
-
-            Returns: a list of activation quantizers - for each bitwidth and layer's attribute to be quantized.
-            """
-
-            activation_quantizers = []
-            for index, qc in enumerate(self.node_q_cfg):
-                q_activation = self.node_q_cfg[index].activation_quantization_cfg
-                activation_quantizers.append(q_activation.quantize_node_output)
-
-            return activation_quantizers
+            self.activation_quantizers = init_activation_quantizers(self.node_q_cfg)
+            self.active_quantization_config_index = max_candidate_idx  # initialize with first config as default
 
         def set_active_activation_quantizer(self,
                                             index: int):

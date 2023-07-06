@@ -13,10 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 from typing import Dict, Any
-import numpy as np
 
 from model_compression_toolkit.constants import FOUND_TORCH
 from model_compression_toolkit.core.common.mixed_precision.configurable_quant_id import ConfigurableQuantizerIdentifier
+from model_compression_toolkit.core.common.mixed_precision.configurable_quantizer_utils import \
+    verify_candidates_descending_order, init_quantized_weights
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from mct_quantizers import QuantizationTarget
@@ -37,7 +38,7 @@ if FOUND_TORCH:
                     quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
     class ConfigurableWeightsQuantizer(BasePyTorchInferableQuantizer):
         """
-        Configurable weights quantizer for mixed precision search.
+        Configurable weights quantizer for Pytorch mixed precision search.
         The quantizer holds a set of quantized layer's weights for each of the given bit-width candidates, provided by the
         node's quantization config. This allows to use different quantized weights on-the-fly.
 
@@ -68,45 +69,19 @@ if FOUND_TORCH:
             self.float_weights = float_weights
             self.max_candidate_idx = max_candidate_idx
 
-            # Make sure the candidates configurations arrived in descending order.
-            curmax = (np.inf, np.inf)
-            n_candidate_bits = [(x.weights_quantization_cfg.weights_n_bits, x.activation_quantization_cfg.activation_n_bits)
-                                for x in self.node_q_cfg]
-            for candidate_bits in n_candidate_bits:
-                assert candidate_bits < curmax
-                curmax = candidate_bits
+            verify_candidates_descending_order(self.node_q_cfg)
 
             for qc in self.node_q_cfg:
                 if qc.weights_quantization_cfg.enable_weights_quantization != \
                        self.node_q_cfg[0].weights_quantization_cfg.enable_weights_quantization:
                     Logger.error("Candidates with different weights enabled properties is currently not supported.")  # pragma: no cover
 
-            # Setting the model with the initial quantized weights (the highest precision)
-            self.weights_quantizer_fn_list = [qc.weights_quantization_cfg.weights_quantization_fn
-                                              for qc in self.node_q_cfg]
-            self.quantized_weights = self._get_quantized_weights()
+            # Initialize quantized weights for each weight that should be quantized.
+            self.quantized_weights = init_quantized_weights(node_q_cfg=self.node_q_cfg,
+                                                            float_weights=self.float_weights,
+                                                            fw_tensor_convert_func=to_torch_tensor)
 
             self.active_quantization_config_index = self.max_candidate_idx
-
-        def _get_quantized_weights(self):
-            """
-            Calculates the quantized weights' tensors for each of the bitwidth candidates for quantization,
-            to be stored and used during MP search.
-            Returns: a list of quantized weights - for each bitwidth and layer's attribute to be quantized.
-            """
-            quantized_weights = []
-            for index, qc in enumerate(self.node_q_cfg):
-                # for each quantization configuration in mixed precision
-                # get quantized weights for each attribute and for each filter
-                q_weight = self.weights_quantizer_fn_list[index](tensor_data=self.float_weights,
-                                                                 n_bits=qc.weights_quantization_cfg.weights_n_bits,
-                                                                 signed=True,
-                                                                 quantization_params=qc.weights_quantization_cfg.weights_quantization_params,
-                                                                 per_channel=qc.weights_quantization_cfg.weights_per_channel_threshold,
-                                                                 output_channels_axis=qc.weights_quantization_cfg.weights_channels_axis)
-                quantized_weights.append(to_torch_tensor(q_weight))
-
-            return quantized_weights
 
         def set_weights_bit_width_index(self,
                                         index: int):

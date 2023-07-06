@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+from functools import partial
 from typing import Dict, Any, List
-import numpy as np
 
 from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.core.common.mixed_precision.configurable_quantizer_utils import \
+    verify_candidates_descending_order, init_quantized_weights
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.logger import Logger
@@ -38,7 +39,7 @@ if FOUND_TF:
                     quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
     class ConfigurableWeightsQuantizer(BaseKerasInferableQuantizer):
         """
-        Configurable weights quantizer for mixed precision search.
+        Configurable weights quantizer for Keras mixed precision search.
         The quantizer holds a set of quantized layer's weights for each of the given bit-width candidates, provided by the
         node's quantization config. This allows to use different quantized weights on-the-fly.
 
@@ -70,13 +71,7 @@ if FOUND_TF:
             self.float_weights = float_weights
             self.max_candidate_idx = max_candidate_idx
 
-            # Make sure the candidates configurations arrived in descending order.
-            curmax = (np.inf, np.inf)
-            n_candidate_bits = [(x.weights_quantization_cfg.weights_n_bits, x.activation_quantization_cfg.activation_n_bits)
-                                for x in self.node_q_cfg]
-            for candidate_bits in n_candidate_bits:
-                assert candidate_bits < curmax
-                curmax = candidate_bits
+            verify_candidates_descending_order(self.node_q_cfg)
 
             for qc in self.node_q_cfg:
                 if qc.weights_quantization_cfg.enable_weights_quantization != \
@@ -84,17 +79,10 @@ if FOUND_TF:
                     Logger.error("Candidates with different weights enabled properties is currently not supported.")
 
             # Initialize quantized weights for each weight that should be quantized.
-            self.quantized_weights = []
-            for qc in self.node_q_cfg:
-                qc_weights = qc.weights_quantization_cfg
-                q_weight = qc_weights.weights_quantization_fn(self.float_weights,
-                                                              qc_weights.weights_n_bits,
-                                                              True,
-                                                              qc_weights.weights_quantization_params,
-                                                              qc_weights.weights_per_channel_threshold,
-                                                              qc_weights.weights_channels_axis)
-
-                self.quantized_weights.append(tf.convert_to_tensor(q_weight, dtype=tf.float32))
+            self.quantized_weights = init_quantized_weights(node_q_cfg=self.node_q_cfg,
+                                                            float_weights=self.float_weights,
+                                                            fw_tensor_convert_func=partial(tf.convert_to_tensor,
+                                                                                           dtype=tf.float32))
 
             self.active_quantization_config_index = self.max_candidate_idx
 
