@@ -86,7 +86,7 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_
 
 class PytorchImplementation(FrameworkImplementation):
     """
-    An class with implemented methods to support optimizing Pytorch models.
+    A class with implemented methods to support optimizing Pytorch models.
     """
 
     def __init__(self):

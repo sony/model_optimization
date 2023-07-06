@@ -9,3 +9,6 @@ resnet10t,timm,ImageNet,50000,0.6656,0.6643,5.43,W8A8,PTQ,default_pytorch_tpc-v4
 efficientnet_es,timm,ImageNet,50000,0.7808,0.7774,5.39,W8A8,PTQ,default_pytorch_tpc-v4
 yolov8n,ultralytics,COCO,5000,0.3704,0.3617,3.15,W8A8,PTQ,default_pytorch_tpc-v4
 yolov8m,ultralytics,COCO,5000,0.4999,0.494,25.9,W8A8,PTQ,default_pytorch_tpc-v4
+mobilenet_v2.MobileNetV2,keras_applications,ImageNet,50000,0.7185,0.7157,3.47,W8A8,PTQ,default_keras_tpc-v4
+efficientnet_v2.EfficientNetV2B0,keras_applications,ImageNet,50000,0.7841,0.7744,7.06,W8A8,PTQ,default_keras_tpc-v4
+resnet50.ResNet50,keras_applications,ImageNet,50000,0.7422,0.7408,25.5,W8A8,PTQ,default_keras_tpc-v4

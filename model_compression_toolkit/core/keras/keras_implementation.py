@@ -95,7 +95,7 @@ from model_compression_toolkit.core.keras.back2framework import get_keras_model_
 
 class KerasImplementation(FrameworkImplementation):
     """
-    An class with implemented methods to support optimizing Keras models.
+    A class with implemented methods to support optimizing Keras models.
     """
 
     def __init__(self):

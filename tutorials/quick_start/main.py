@@ -98,7 +98,6 @@ def quantization_flow(config: Dict) -> Tuple[float, float, QuantInfo]:
     # Evaluate quantized model
     quant_results, dataset_info = ml.evaluate(quantized_model)
 
-
     return float_results, quant_results, quantization_info, dataset_info
 
 
