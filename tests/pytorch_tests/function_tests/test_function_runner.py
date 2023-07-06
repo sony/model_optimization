@@ -28,7 +28,8 @@ from tests.pytorch_tests.function_tests.model_gradients_test import ModelGradien
     ModelGradientsCalculationTest, ModelGradientsAdvancedModelTest, ModelGradientsOutputReplacementTest, \
     ModelGradientsMultipleOutputsModelTest, ModelGradientsNonDifferentiableNodeModelTest, \
     ModelGradientsMultipleOutputsTest
-from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSetSingleAttrToBitwidth, TestSetLayerToBitwidth
+from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSetLayerToBitwidthWeights, \
+    TestSetLayerToBitwidthActivation
 from tests.pytorch_tests.function_tests.test_sensitivity_eval_output_replacement import \
     TestSensitivityEvalWithArgmaxOutputReplacementNodes, TestSensitivityEvalWithSoftmaxOutputReplacementNodes
 
@@ -124,8 +125,8 @@ class FunctionTestRunner(unittest.TestCase):
         This test checks the functionality of setting a configurable layer's weights bit-width for mixed precision
         layer wrapper.
         """
-        TestSetLayerToBitwidth(self).run_test()
-        TestSetSingleAttrToBitwidth(self).run_test()
+        TestSetLayerToBitwidthWeights(self).run_test()
+        TestSetLayerToBitwidthActivation(self).run_test()
 
     def test_sensitivity_eval_outputs_replacement(self):
         """

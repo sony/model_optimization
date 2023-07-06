@@ -117,10 +117,6 @@ WEIGHTS_CHANNELS_AXIS = 'weights_channels_axis'
 DUMMY_NODE = 'dummy_node'
 DUMMY_TENSOR = 'dummy_tensor'
 
-
-# TF Input node base name
-INPUT_BASE_NAME = 'base_input'
-
 # Jacobian-weights constants
 MIN_JACOBIANS_ITER = 10
 JACOBIANS_COMP_TOLERANCE = 1e-3

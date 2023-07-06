@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from functools import partial
 from typing import List, Any, Tuple, Callable, Dict
 
 import numpy as np
 import tensorflow as tf
+from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
 
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
+from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence, compute_cs, compute_mse
 from model_compression_toolkit.core.keras.back2framework.model_gradients import \
     keras_iterative_approx_jacobian_trace
@@ -30,7 +33,10 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.virt
     VirtualActivationWeightsComposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
-from model_compression_toolkit.core.keras.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
+from model_compression_toolkit.core.keras.mixed_precision.configurable_activation_quantizer import \
+    ConfigurableActivationQuantizer
+from model_compression_toolkit.core.keras.mixed_precision.configurable_weights_quantizer import \
+    ConfigurableWeightsQuantizer
 from model_compression_toolkit.core.keras.statistics_correction.apply_second_moment_correction import \
     keras_apply_second_moment_correction
 from packaging import version
@@ -145,7 +151,7 @@ class KerasImplementation(FrameworkImplementation):
                       mode: ModelBuilderMode,
                       append2output: List[Any] = None,
                       fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                      return_float_outputs: bool = False) -> Tuple[Model, UserInformation]:
+                      return_float_outputs: bool = False) -> Tuple:
         """
         Build a Keras model from a graph.
         The mode determines how the model should be build. append2output is a list of Nodes
@@ -158,7 +164,7 @@ class KerasImplementation(FrameworkImplementation):
             fw_info: FrameworkInfo object with information about the specific framework's model
             return_float_outputs (bool): whether to return outputs before or after quantization nodes (default)
         Returns:
-            A tuple of the Keras model that was built and an UserInformation object.
+            A tuple with the model and additional relevant supporting objects.
         """
 
         keras_model_builder = get_keras_model_builder(mode)
@@ -373,8 +379,11 @@ class KerasImplementation(FrameworkImplementation):
                                      representative_data_gen=representative_data_gen,
                                      fw_info=fw_info,
                                      fw_impl=self,
-                                     set_layer_to_bitwidth=set_layer_to_bitwidth,
-                                     get_quant_node_name=lambda node_name: f'quant_{node_name}',
+                                     set_layer_to_bitwidth=partial(set_layer_to_bitwidth,
+                                                                   weights_quantizer_type=ConfigurableWeightsQuantizer,
+                                                                   activation_quantizer_type=ConfigurableActivationQuantizer,
+                                                                   weights_quant_layer_type=KerasQuantizationWrapper,
+                                                                   activation_quant_layer_type=KerasActivationQuantizationHolder),
                                      disable_activation_for_metric=disable_activation_for_metric)
 
     def get_node_prior_info(self,
@@ -446,36 +455,6 @@ class KerasImplementation(FrameworkImplementation):
         elif layer_class == Dense:
             return compute_cs
         return compute_mse
-
-    def get_model_layers_names(self,
-                               model: Model) -> List[str]:
-        """
-        Returns a list of the given model's layers names.
-
-        Args:
-            model: A Keras model.
-
-        Returns: List of layers' names.
-
-        """
-
-        return [layer.name for layer in model.layers]
-
-    def get_model_layer_by_name(self,
-                                model: Model,
-                                layer_name: str) -> Layer:
-        """
-        Returns a Keras model's layer by its name.
-
-        Args:
-            model: A Keras model to retrieve a layer from.
-            layer_name: The requested layer's name.
-
-        Returns: A Keras layer object.
-
-        """
-
-        return model.get_layer(name=layer_name)
 
     def model_grad(self,
                    graph_float: common.Graph,

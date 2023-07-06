@@ -14,14 +14,11 @@
 # ==============================================================================
 
 import tensorflow as tf
-from keras.engine.input_layer import InputLayer
-from keras.models import Model, clone_model
+from keras.models import Model
 from packaging import version
 
-from model_compression_toolkit.constants import INPUT_BASE_NAME
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
 from model_compression_toolkit.core.common.user_info import UserInformation
-from mct_quantizers import KerasActivationQuantizationHolder
 
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 if version.parse(tf.__version__) < version.parse("2.6"):
@@ -168,11 +165,8 @@ class KerasModelBuilder(BaseModelBuilder):
         # Hold a dictionary from an input node to its corresponding input tensor. It is needed for when
         # building the model. Initially input nodes with input tensors are added to the dictionary,
         # as they're not added later.
-        input_nodes_to_input_tensors = {inode: Input(inode.framework_attr[BATCH_INPUT_SHAPE][1:],
-                                                     name=f'{inode.name}_{INPUT_BASE_NAME}')
-                                        for
-                                        inode in self.graph.get_inputs()}
-
+        input_nodes_to_input_tensors = {inode: Input(inode.framework_attr[BATCH_INPUT_SHAPE][1:], name=inode.name)
+                                        for inode in self.graph.get_inputs()}
 
         # Build a list of the model's input tensors. Switching from a dictionary to a list
         # to keep the tensors input order, since inputs in Graph are ordered by their indices.
@@ -182,7 +176,7 @@ class KerasModelBuilder(BaseModelBuilder):
 
         # Build a dictionary from node to its output tensors, by applying the layers sequentially.
         for n in self.oh.node_sort:
-            op_func = self.oh.get_node_op_function(n) # Get node operation function
+            op_func = self.oh.get_node_op_function(n)  # Get node operation function
 
             input_tensors = self._build_input_tensors_list(n,
                                                            node_to_output_tensors_dict)  # Fetch Node inputs
@@ -238,7 +232,6 @@ class KerasModelBuilder(BaseModelBuilder):
 
         Args:
             node: Node to build its input tensors list.
-            graph: Graph the node is in.
             node_to_output_tensors_dict: A dictionary from a node to its output tensors.
 
         Returns:
