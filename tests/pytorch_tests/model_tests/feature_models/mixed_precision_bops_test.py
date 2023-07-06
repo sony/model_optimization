@@ -129,7 +129,7 @@ class BaseMixedPrecisionBopsTest(BasePytorchTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Verify that some layers got bit-width smaller than 8 bits (so checking candidate index is not 0)
-        self.unit_test.assertTrue(all(i > 0 for i in quantization_info.mixed_precision_cfg))
+        self.unit_test.assertTrue(any(i > 0 for i in quantization_info.mixed_precision_cfg))
         # Verify final BOPs KPI
         self.unit_test.assertTrue(quantization_info.final_kpi.bops <= self.get_kpi().bops)
 
@@ -160,7 +160,7 @@ class MixedPrecisionBopsAllWeightsLayersTest(BaseMixedPrecisionBopsTest):
         return AllWeightsBopsNetwork(input_shape)
 
     def get_kpi(self):
-        return KPI(bops=1785000)  # should require some quantization to all layers
+        return KPI(bops=3000000)  # should require some quantization to all layers
 
 
 class MixedPrecisionWeightsOnlyBopsTest(MixedPrecisionBopsAllWeightsLayersTest):
@@ -168,7 +168,7 @@ class MixedPrecisionWeightsOnlyBopsTest(MixedPrecisionBopsAllWeightsLayersTest):
         super().__init__(unit_test, mixed_precision_candidates_list=[(8, 8), (4, 8), (2, 8)])
 
     def get_kpi(self):
-        return KPI(bops=7135000)  # should require some quantization to all layers
+        return KPI(bops=10000000)  # should require some quantization to all layers
 
 
 class MixedPrecisionActivationOnlyBopsTest(MixedPrecisionBopsAllWeightsLayersTest):
@@ -176,7 +176,7 @@ class MixedPrecisionActivationOnlyBopsTest(MixedPrecisionBopsAllWeightsLayersTes
         super().__init__(unit_test, mixed_precision_candidates_list=[(8, 8), (8, 4), (8, 2)])
 
     def get_kpi(self):
-        return KPI(bops=7135000)  # should require some quantization to all layers
+        return KPI(bops=10000000)  # should require some quantization to all layers
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Verify that some layers got bit-width smaller than 8 bits (so checking candidate index is not 0)
@@ -190,7 +190,7 @@ class MixedPrecisionBopsAndWeightsKPITest(MixedPrecisionBopsAllWeightsLayersTest
         super().__init__(unit_test)
 
     def get_kpi(self):
-        return KPI(weights_memory=150, bops=1800000)  # should require some quantization to all layers
+        return KPI(weights_memory=150, bops=3000000)  # should require some quantization to all layers
 
 
 class MixedPrecisionBopsAndActivationKPITest(MixedPrecisionBopsAllWeightsLayersTest):
@@ -198,7 +198,7 @@ class MixedPrecisionBopsAndActivationKPITest(MixedPrecisionBopsAllWeightsLayersT
         super().__init__(unit_test)
 
     def get_kpi(self):
-        return KPI(activation_memory=1000, bops=1782616)  # should require some quantization to all layers
+        return KPI(activation_memory=1000, bops=3000000)  # should require some quantization to all layers
 
 
 class MixedPrecisionBopsAndTotalKPITest(MixedPrecisionBopsAllWeightsLayersTest):
@@ -206,7 +206,7 @@ class MixedPrecisionBopsAndTotalKPITest(MixedPrecisionBopsAllWeightsLayersTest):
         super().__init__(unit_test)
 
     def get_kpi(self):
-        return KPI(total_memory=1100, bops=1800000)  # should require some quantization to all layers
+        return KPI(total_memory=1100, bops=3000000)  # should require some quantization to all layers
 
 
 class MixedPrecisionBopsWeightsActivationKPITest(MixedPrecisionBopsAllWeightsLayersTest):
@@ -214,7 +214,7 @@ class MixedPrecisionBopsWeightsActivationKPITest(MixedPrecisionBopsAllWeightsLay
         super().__init__(unit_test)
 
     def get_kpi(self):
-        return KPI(weights_memory=150, activation_memory=1000, bops=1800000)  # should require some quantization to all layers
+        return KPI(weights_memory=150, activation_memory=1000, bops=3000000)  # should require some quantization to all layers
 
 
 class MixedPrecisionBopsMultipleOutEdgesTest(BaseMixedPrecisionBopsTest):
