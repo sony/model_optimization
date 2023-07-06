@@ -94,7 +94,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
             else:
                 node_weights_qc = n.get_unique_weights_candidates()
                 if not len(node_weights_qc) == 1:
-                    Logger.error(f"Expecting node {n.name} to have a unique weights configuration "
+                    Logger.error(f"Expecting node {n.name} to have a unique weights configuration "  # pragma: no cover
                                  f"but {len(node_weights_qc)} different configurations exist.")
 
                 quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
@@ -131,7 +131,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
         max_cfg_candidates = n.find_max_candidates_indices()
         if not len(max_cfg_candidates) == 1:
-            Logger.error(f"A maximal config candidate must be defined, "
+            Logger.error(f"A maximal config candidate must be defined, "  # pragma: no cover
                          f"but some node have multiple potential maximal candidates")
 
         max_candidate_idx = max_cfg_candidates[0]
@@ -193,9 +193,8 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         if len(activation_quantizers) == 1:
             return KerasActivationQuantizationHolder(activation_quantizers[0])
 
-        Logger.error(
-            f'KerasActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
-            f'were found for node {n}')
+        Logger.error(f'KerasActivationQuantizationHolder supports a single quantizer but '  # pragma: no cover
+                     f'{len(activation_quantizers)} quantizers were found for node {n}')
 
     def build_model(self) -> Tuple[Model, UserInformation,
                                    Dict[str, Union[KerasQuantizationWrapper, KerasActivationQuantizationHolder]]]:
@@ -273,6 +272,6 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         elif weights_quant and act_quant:
             return self._get_weights_quant_layers(n, layers_list) + self._get_activation_quant_layers(n, layers_list)
         else:
-            Logger.error(f"Expects node {n.name} to have at either weights or activation quantization configured,"
+            Logger.error(f"Expects node {n.name} to have at either weights or activation quantization configured,"  # pragma: no cover
                          f"but both are disabled.")
 

@@ -28,6 +28,10 @@ def set_layer_to_bitwidth(quantization_layer: Any,
     Args:
         quantization_layer: Layer to change its bit-width.
         bitwidth_idx: Index of the bit-width the layer should work with.
+        weights_quantizer_type: A class of weights quantizer with configurable bitwidth options.
+        activation_quantizer_type: A class of activation quantizer with configurable bitwidth options.
+        weights_quant_layer_type: A class of a weights layer wrapper.
+        activation_quant_layer_type: A class of an activation quantization holder.
     """
 
     if isinstance(quantization_layer, weights_quant_layer_type):

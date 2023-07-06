@@ -37,7 +37,15 @@ if FOUND_TORCH:
                     quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
     class ConfigurableWeightsQuantizer(BasePyTorchInferableQuantizer):
         """
-        Trainable symmetric quantizer to optimize the rounding of the quantized values using a soft quantization method.
+        Configurable weights quantizer for mixed precision search.
+        The quantizer holds a set of quantized layer's weights for each of the given bit-width candidates, provided by the
+        node's quantization config. This allows to use different quantized weights on-the-fly.
+
+        The general idea behind this kind of quantizer is that it gets the float tensor to quantize
+        when initialized, it quantizes the float tensor in different bitwidths, and every time it need to return a
+        quantized version of the float weight, it returns only one quantized weight according to an "active"
+        index - the index of a candidate weight quantization configuration from a list of candidates that was passed
+        to the quantizer when it was initialized.
         """
 
         def __init__(self,
@@ -71,7 +79,7 @@ if FOUND_TORCH:
             for qc in self.node_q_cfg:
                 if qc.weights_quantization_cfg.enable_weights_quantization != \
                        self.node_q_cfg[0].weights_quantization_cfg.enable_weights_quantization:
-                    Logger.error("Candidates with different weights enabled properties is currently not supported.")
+                    Logger.error("Candidates with different weights enabled properties is currently not supported.")  # pragma: no cover
 
             # Setting the model with the initial quantized weights (the highest precision)
             self.weights_quantizer_fn_list = [qc.weights_quantization_cfg.weights_quantization_fn

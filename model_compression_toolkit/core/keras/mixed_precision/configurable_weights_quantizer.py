@@ -109,14 +109,13 @@ if FOUND_TF:
 
             """
 
-            assert index < len(self.node_q_cfg), \
-                f'Quantizer has {len(self.node_q_cfg)} ' \
-                f'possible nbits. Can not set index {index}'
+            if index >= len(self.node_q_cfg):
+                Logger.error(f'Quantizer has {len(self.node_q_cfg)} '  # pragma: no cover
+                             f'possible nbits. Can not set index {index}')
             self.active_quantization_config_index = index
 
         def __call__(self,
-                     inputs: tf.Tensor,
-                     training: bool) -> tf.Tensor:
+                     inputs: tf.Tensor) -> tf.Tensor:
             """
             Method to return the quantized weight. This method is called when the framework needs to quantize a
             float weight, and is expected to return the quantized weight. Since we already quantized the weight in
@@ -125,7 +124,6 @@ if FOUND_TF:
 
             Args:
                 inputs: Input tensor (not relevant since the weights are already quantized).
-                training: Whether the graph is in training mode (not used in this function).
 
             Returns:
                 Quantized weight, that was quantized using number of bits that is in a

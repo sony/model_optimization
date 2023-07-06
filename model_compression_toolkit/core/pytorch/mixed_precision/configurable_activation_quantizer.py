@@ -62,7 +62,7 @@ if FOUND_TORCH:
             for qc in self.node_q_cfg:
                 if qc.activation_quantization_cfg.enable_activation_quantization != \
                        self.node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization:
-                    Logger.error("Candidates with different activation enabled properties is currently not supported.")
+                    Logger.error("Candidates with different activation enabled properties is currently not supported.")  # pragma: no cover
 
             # Setting layer's activation
             self.activation_quantizers = self._get_activation_quantizers()
