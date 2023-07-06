@@ -1,6 +1,6 @@
 import keras
 import unittest
-
+import tensorflow as tf
 from keras.models import clone_model
 from tensorflow.keras.layers import Conv2D, Input
 import numpy as np
@@ -13,15 +13,17 @@ from model_compression_toolkit.gptq.keras.quantizer.soft_rounding.symmetric_soft
 from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig
 from mct_quantizers import KerasQuantizationWrapper
 
+from tests.keras_tests.utils import get_layers_from_model_by_type
+
 tp = mct.target_platform
 
 
-def model_test(input_shape, per_channel, param_learning, num_channels=3, kernel_size=1):
+def model_test(input_shape, num_channels=3, kernel_size=1):
     inputs = Input(shape=input_shape)
     outputs = Conv2D(num_channels, kernel_size, use_bias=False)(inputs)
     model = keras.Model(inputs=inputs, outputs=outputs)
 
-    return wrap_test_model(model, per_channel, param_learning)
+    return model
 
 
 def wrap_test_model(model, per_channel=False, param_learning=False):
@@ -48,10 +50,18 @@ class TestGPTQSoftQuantizer(unittest.TestCase):
 
     def soft_symmetric_quantizer_per_tensor(self, param_learning=False):
         input_shape = (1, 1, 1)
-        in_model = model_test(input_shape, per_channel=False, param_learning=param_learning)
+        in_model = model_test(input_shape)
+
+        conv_layer = get_layers_from_model_by_type(model=in_model, layer_type=Conv2D, include_wrapped_layers=False)[0]
+        t = np.asarray([0.1, -0.3, 0.67]).reshape([1] + conv_layer.weights[0].shape)
+        conv_layer.set_weights(t)
+
+        in_model = wrap_test_model(in_model, per_channel=False, param_learning=param_learning)
 
         input = [np.ones([1, 1, 1, 1]).astype(np.float32)]
-        float_weights = [x[1] for x in in_model.layers[1]._weights_vars if x[0] == KERNEL][0]
+        wrapped_conv_layer = get_layers_from_model_by_type(model=in_model, layer_type=Conv2D,
+                                                           include_wrapped_layers=True)[0]
+        float_weights = [x[1] for x in wrapped_conv_layer._weights_vars if x[0] == KERNEL][0]
         out = in_model(input)
         self.assertTrue(np.any(float_weights != out))
 
@@ -60,11 +70,19 @@ class TestGPTQSoftQuantizer(unittest.TestCase):
 
     def soft_symmetric_quantizer_per_channel(self, param_learning=False):
         input_shape = (2, 2, 2)
-        in_model = model_test(input_shape, per_channel=True, num_channels=1, kernel_size=2,
-                              param_learning=param_learning)
+        in_model = model_test(input_shape, num_channels=1, kernel_size=2)
+
+        conv_layer = get_layers_from_model_by_type(model=in_model, layer_type=Conv2D, include_wrapped_layers=False)[0]
+        t = np.asarray([0.1, -0.3, 0.67, -0.44, 0.51, 0.91, -0.001, 0.12])\
+            .reshape([1] + conv_layer.weights[0].shape)
+        conv_layer.set_weights(t)
+
+        in_model = wrap_test_model(in_model, per_channel=True, param_learning=param_learning)
 
         input = [np.ones([1, 2, 2, 2]).astype(np.float32)]
-        float_weights = [x[1] for x in in_model.layers[1]._weights_vars if x[0] == KERNEL][0]
+        wrapped_conv_layer = get_layers_from_model_by_type(model=in_model, layer_type=Conv2D,
+                                                           include_wrapped_layers=True)[0]
+        float_weights = [x[1] for x in wrapped_conv_layer._weights_vars if x[0] == KERNEL][0]
         out = in_model(input)
         self.assertFalse(np.isclose(np.sum(float_weights), out))
 
