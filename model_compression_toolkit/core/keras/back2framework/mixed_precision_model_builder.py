@@ -121,7 +121,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
             The quantization parameters as a dictionary.
         """
 
-        assert n.candidates_quantization_cfg is not None
+        assert n.candidates_quantization_cfg is not None, f"Node {n.name} candidates_quantization_cfg is None"
         node_q_cfg_candidates = n.candidates_quantization_cfg
         # sort by descending bit width so using indices would be easier
         node_q_cfg_candidates.sort(key=lambda x: (x.weights_quantization_cfg.weights_n_bits,
@@ -160,7 +160,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         if n.is_activation_quantization_enabled():
             num_of_outputs = len(n.output_shape) if isinstance(n.output_shape, list) else 1
             if n.name in activation_conf_nodes_names:
-                assert n.candidates_quantization_cfg is not None
+                assert n.candidates_quantization_cfg is not None, f"Node {n.name} candidates_quantization_cfg is None"
                 node_q_cfg_candidates = n.candidates_quantization_cfg
                 # sort by descending bit width so using indices would be easier
                 node_q_cfg_candidates.sort(key=lambda x: (x.weights_quantization_cfg.weights_n_bits,

@@ -235,9 +235,20 @@ class SensitivityEvaluation:
                                               mp_model_configuration, node_idx_to_configure)
 
     def _configure_node_bitwidth(self,
-                                 sorted_configurable_nodes_names,
-                                 mp_model_configuration,
-                                 node_idx_to_configure):
+                                 sorted_configurable_nodes_names: List[str],
+                                 mp_model_configuration: List[int],
+                                 node_idx_to_configure: int):
+        """
+        Configures a node with multiple quantization candidates to the bitwidth candidate in the given index.
+        Args:
+            sorted_configurable_nodes_names: A list of configurable nodes names sorted according to the graph
+                topological sort order.
+            mp_model_configuration: Configuration of bit-width indices to set to the model.
+            node_idx_to_configure: Quantization configuration candidate to configure.
+
+        Returns:
+
+        """
         node_name = sorted_configurable_nodes_names[node_idx_to_configure]
         layers_to_config = self.conf_node2layers.get(node_name, None)
         if layers_to_config is None:

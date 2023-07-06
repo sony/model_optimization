@@ -35,7 +35,8 @@ def verify_candidates_descending_order(node_q_cfg: List[CandidateNodeQuantizatio
     n_candidate_bits = [(x.weights_quantization_cfg.weights_n_bits, x.activation_quantization_cfg.activation_n_bits)
                         for x in node_q_cfg]
     for candidate_bits in n_candidate_bits:
-        assert candidate_bits < curmax
+        assert candidate_bits < curmax, f"Node's quantization configuration candidates should arrive in " \
+                                        f"descending order of (weights_nbits, activation_nbits)."
         curmax = candidate_bits
 
 

@@ -19,99 +19,91 @@ import numpy as np
 from mct_quantizers.common.base_inferable_quantizer import mark_quantizer, QuantizationTarget
 from mct_quantizers.common.quant_info import QuantizationMethod
 
-from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.configurable_quantizer_utils import \
     verify_candidates_descending_order, init_activation_quantizers
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.logger import Logger
 
-if FOUND_TF:
-    import tensorflow as tf
-    from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
-    from model_compression_toolkit.core.common.mixed_precision.configurable_quant_id import \
-        ConfigurableQuantizerIdentifier
+import tensorflow as tf
+from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
+from model_compression_toolkit.core.common.mixed_precision.configurable_quant_id import \
+    ConfigurableQuantizerIdentifier
 
-    @mark_quantizer(quantization_target=QuantizationTarget.Activation,
-                    quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC,
-                                         QuantizationMethod.UNIFORM, QuantizationMethod.LUT_POT_QUANTIZER],
-                    quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
-    class ConfigurableActivationQuantizer(BaseKerasInferableQuantizer):
+
+@mark_quantizer(quantization_target=QuantizationTarget.Activation,
+                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC,
+                                     QuantizationMethod.UNIFORM, QuantizationMethod.LUT_POT_QUANTIZER],
+                quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
+class ConfigurableActivationQuantizer(BaseKerasInferableQuantizer):
+    """
+    Configurable activation quantizer for mixed precision search.
+    It holds a set of activation quantizers for each of the given bit-width candidates, provided by the
+    node's quantization config. This allows to use different quantized activations on-the-fly, according to the
+    "active" quantization configuration index.
+    """
+
+    def __init__(self,
+                 node_q_cfg: List[CandidateNodeQuantizationConfig],
+                 max_candidate_idx: int = 0):
         """
-        Configurable activation quantizer for mixed precision search.
-        It holds a set of activation quantizers for each of the given bit-width candidates, provided by the
-        node's quantization config. This allows to use different quantized activations on-the-fly, according to the
-        "active" quantization configuration index.
+        Initializes a configurable quantizer.
+
+        Args:
+            node_q_cfg: Quantization configuration candidates of the node that generated the layer that will
+                use this quantizer.
+            max_candidate_idx: Index of the node's candidate that has the maximal bitwidth (must exist absolute max).
         """
 
-        def __init__(self,
-                     node_q_cfg: List[CandidateNodeQuantizationConfig],
-                     max_candidate_idx: int = 0):
-            """
-            Initializes a configurable quantizer.
+        super(ConfigurableActivationQuantizer, self).__init__()
 
-            Args:
-                node_q_cfg: Quantization configuration candidates of the node that generated the layer that will
-                    use this quantizer.
-                max_candidate_idx: Index of the node's candidate that has the maximal bitwidth (must exist absolute max).
-            """
+        self.node_q_cfg = node_q_cfg
 
-            super(ConfigurableActivationQuantizer, self).__init__()
+        verify_candidates_descending_order(self.node_q_cfg)
 
-            self.node_q_cfg = node_q_cfg
+        for qc in node_q_cfg:
+            if qc.activation_quantization_cfg.enable_activation_quantization != \
+                    node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization:
+                Logger.error("Candidates with different activation enabled properties is currently not supported.")  # pragma: no cover
 
-            verify_candidates_descending_order(self.node_q_cfg)
+        self.activation_quantizers = init_activation_quantizers(self.node_q_cfg)
+        self.active_quantization_config_index = max_candidate_idx  # initialize with first config as default
 
-            for qc in node_q_cfg:
-                if qc.activation_quantization_cfg.enable_activation_quantization != \
-                        node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization:
-                    Logger.error("Candidates with different activation enabled properties is currently not supported.")  # pragma: no cover
+    def set_active_activation_quantizer(self, index: int):
+        """
+        Set an index to use for the activation quantizer to return when requested.
 
-            self.activation_quantizers = init_activation_quantizers(self.node_q_cfg)
-            self.active_quantization_config_index = max_candidate_idx  # initialize with first config as default
+        Args:
+            index: Index of a candidate quantization configuration to use its quantized
+                version of the float weight.
+        """
 
-        def set_active_activation_quantizer(self, index: int):
-            """
-            Set an index to use for the activation quantizer to return when requested.
+        assert index < len(self.node_q_cfg), f'Quantizer has {len(self.node_q_cfg)} ' \
+                                             f'possible nbits. Can not set index {index}'
+        self.active_quantization_config_index = index
 
-            Args:
-                index: Index of a candidate quantization configuration to use its quantized
-                    version of the float weight.
-            """
+    def __call__(self,
+                 inputs: tf.Tensor) -> np.ndarray:
+        """
+        Method to return the quantized activation tensor. This method is called when the framework needs to
+        quantize a float activation tensor, and is expected to return the quantized tensor, according to the active
+        activation quantizer.
 
-            assert index < len(self.node_q_cfg), f'Quantizer has {len(self.node_q_cfg)} ' \
-                                                 f'possible nbits. Can not set index {index}'
-            self.active_quantization_config_index = index
+        Args:
+            inputs: Input tensor to quantize.
 
-        def __call__(self,
-                     inputs: tf.Tensor) -> np.ndarray:
-            """
-            Method to return the quantized activation tensor. This method is called when the framework needs to
-            quantize a float activation tensor, and is expected to return the quantized tensor, according to the active
-            activation quantizer.
+        Returns:
+            Quantized activation tensor.
+        """
+        return self.activation_quantizers[self.active_quantization_config_index](inputs)
 
-            Args:
-                inputs: Input tensor to quantize.
+    def get_config(self) -> Dict[str, Any]:  # pragma: no cover
+        """
+        Returns: The ConfigurableActivationQuantizer configuration.
+        """
 
-            Returns:
-                Quantized activation tensor.
-            """
-            return self.activation_quantizers[self.active_quantization_config_index](inputs)
-
-        def get_config(self) -> Dict[str, Any]:  # pragma: no cover
-            """
-            Returns: The ConfigurableActivationQuantizer configuration.
-            """
-
-            return {
-                'node_q_cfg': self.node_q_cfg,
-                'activation_quantizers': self.activation_quantizers,
-                'active_quantization_config_index': self.active_quantization_config_index
-            }
-
-else:
-    class ConfigurableActivationQuantizer:  # pragma: no cover
-        def __init__(self, *args, **kwargs):
-            Logger.error('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                         'when using ConfigurableActivationQuantizer. '
-                         'Could not find Tensorflow package.')
+        return {
+            'node_q_cfg': self.node_q_cfg,
+            'activation_quantizers': self.activation_quantizers,
+            'active_quantization_config_index': self.active_quantization_config_index
+        }
