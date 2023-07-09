@@ -17,7 +17,7 @@ import importlib
 import logging
 from typing import Dict, Tuple
 
-from common.results import write_results, read_models_list, parse_results, QuantInfo, plot_results
+from common.results import write_results, read_models_list, parse_results, QuantInfo, plot_results, DatasetInfo
 from common.utils import find_modules
 from common.constants import MODEL_NAME, MODEL_LIBRARY, OUTPUT_RESULTS_FILE, TARGET_PLATFORM_NAME, \
     TARGET_PLATFORM_VERSION
@@ -57,7 +57,7 @@ def argument_handler():
     return args
 
 
-def quantization_flow(config: Dict) -> Tuple[float, float, QuantInfo]:
+def quantization_flow(config: Dict) -> Tuple[float, float, QuantInfo, DatasetInfo]:
     """
     This function implements the typical workflow when using MCT.
     It begins by evaluating the performance of the floating-point model.
@@ -71,6 +71,7 @@ def quantization_flow(config: Dict) -> Tuple[float, float, QuantInfo]:
         float_results (float): The accuracy of the floating point model
         quant_results (float): The accuracy of the quantized model
         quantization_info (QuantInfo): Information of the model optimization process from MCT
+        dataset_info (DatasetInfo): Information about the evaluated dataset
     """
 
     # Find and import the required modules for the models collection library ("model_library")

@@ -39,8 +39,16 @@ from ultralytics.yolo.utils.torch_utils import initialize_weights
 
 
 class ModelLib(BaseModelLib):
+    """
+    A class representing ultralytics model library (https://github.com/ultralytics/ultralytics).
+    """
 
     def __init__(self, args):
+        """
+         Init the ModelLib with user arguments
+         Args:
+             args (dict): user arguments
+         """
         # Load model from ultralytics
         self.ultralytics_model = YOLOReplacer(args[MODEL_NAME])
         self.dataset_name = COCO_DATASET
@@ -58,9 +66,23 @@ class ModelLib(BaseModelLib):
         super().__init__(args)
 
     def get_model(self):
+        """
+         Returns the model instance.
+         """
         return self.model
 
     def get_representative_dataset(self, representative_dataset_folder, n_iter, batch_size):
+        """
+        Create a representative dataset generator
+        Args:
+            representative_dataset_folder: Dataset location folder, in YOLO format (see ultralytics docs), for example: /<my_folder>/coco/images/train2017
+            n_iter: number batches to run in the generator
+            batch_size: number of images in each batch
+
+        Returns:
+            A generator for the representative dataset, as the MCT expects
+
+        """
         stride = 32
         names = self.ultralytics_model.model.names
 
@@ -91,7 +113,16 @@ class ModelLib(BaseModelLib):
         return get_representative_dataset(dl, n_iter, 'img', transforms.Normalize(0,255))
 
     def evaluate(self, model):
+        """
+         Evaluates the model's performance.
 
+         Args:
+             model: The model to evaluate.
+
+         Returns:
+             acc: The accuracy of the model.
+             DatasetInfo: Information about the dataset used.
+         """
         # Use Cuda device if available
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model.to(device)
