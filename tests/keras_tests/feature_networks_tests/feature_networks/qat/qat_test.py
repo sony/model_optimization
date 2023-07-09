@@ -23,6 +23,7 @@ from model_compression_toolkit.qat import TrainingMethod
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder, \
     KerasQuantizationWrapper
+from mct_quantizers.common.base_inferable_quantizer import QuantizerID
 
 from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer

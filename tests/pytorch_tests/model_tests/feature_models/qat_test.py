@@ -37,6 +37,7 @@ from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_m
     generate_tp_model_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
+from mct_quantizers.common.base_inferable_quantizer import QuantizerID
 
 
 def dummy_train(qat_ready_model, x, y):
