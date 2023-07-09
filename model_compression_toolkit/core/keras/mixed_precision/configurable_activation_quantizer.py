@@ -34,7 +34,7 @@ from model_compression_toolkit.core.common.mixed_precision.configurable_quant_id
 @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC,
                                      QuantizationMethod.UNIFORM, QuantizationMethod.LUT_POT_QUANTIZER],
-                quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
+                identifier=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
 class ConfigurableActivationQuantizer(BaseKerasInferableQuantizer):
     """
     Configurable activation quantizer for mixed precision search.

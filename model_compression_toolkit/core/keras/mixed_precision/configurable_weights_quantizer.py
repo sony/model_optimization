@@ -34,7 +34,7 @@ from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC,
                                      QuantizationMethod.UNIFORM, QuantizationMethod.LUT_POT_QUANTIZER,
                                      QuantizationMethod.LUT_SYM_QUANTIZER],
-                quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
+                identifier=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
 class ConfigurableWeightsQuantizer(BaseKerasInferableQuantizer):
     """
     Configurable weights quantizer for Keras mixed precision search.

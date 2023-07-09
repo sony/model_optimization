@@ -18,13 +18,13 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from mct_quantizers import QuantizationTarget
 from mct_quantizers.common.constants \
-    import QUANTIZATION_TARGET, QUANTIZATION_METHOD, QUANTIZER_TYPE
+    import QUANTIZATION_TARGET, QUANTIZATION_METHOD, QUANTIZER_ID
 from mct_quantizers.common.get_all_subclasses \
     import get_all_subclasses
 
 
 def get_trainable_quantizer_class(quant_target: QuantizationTarget,
-                                  quantizer_type: Union[Any, Any],
+                                  quantizer_id: Any,
                                   quant_method: QuantizationMethod,
                                   quantizer_base_class: type) -> type:
     """
@@ -34,8 +34,7 @@ def get_trainable_quantizer_class(quant_target: QuantizationTarget,
     Args:
         quant_target: QuantizationTarget value which indicates what is the target for quantization to
             use the quantizer for.
-        quantizer_type: The type of the quantizer (quantization technique).
-            This can differ, depending on the purpose the quantizer is for.
+        quantizer_id: A unique identifier for the quantizer class.
         quant_method: A list of QuantizationMethod values to indicate all type of quantization methods that the
             quantizer supports.
         quantizer_base_class: A type of quantizer that the requested quantizer should inherit from.
@@ -51,13 +50,13 @@ def get_trainable_quantizer_class(quant_target: QuantizationTarget,
                                                       getattr(q_class, QUANTIZATION_TARGET) == quant_target and
                                                       getattr(q_class, QUANTIZATION_METHOD, None) is not None and
                                                        quant_method in getattr(q_class, QUANTIZATION_METHOD, []) and
-                                                      getattr(q_class, QUANTIZER_TYPE, None) == quantizer_type,
+                                                      getattr(q_class, QUANTIZER_ID, None) == quantizer_id,
                                       qat_quantizer_classes))
 
     if len(filtered_quantizers) != 1:
         Logger.error(f"Found {len(filtered_quantizers)} quantizer for target {quant_target.value} "  # pragma: no cover
                      f"that matches the requested quantization method {quant_method.name} and "
-                     f"quantizer type {quantizer_type.value} but there should be exactly one."
+                     f"quantizer type {quantizer_id.value} but there should be exactly one."
                      f"The possible quantizers that were found are {filtered_quantizers}.")
 
     return filtered_quantizers[0]

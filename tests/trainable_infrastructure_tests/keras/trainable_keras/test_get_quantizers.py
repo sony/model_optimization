@@ -32,18 +32,18 @@ class BaseKerasGetQuantizerTest(BaseKerasTrainableInfrastructureTest):
 
 class TestGetTrainableQuantizer:
 
-    def __init__(self, unit_test, quant_target, quant_method, quantizer_base_class, quantizer_type,
+    def __init__(self, unit_test, quant_target, quant_method, quantizer_base_class, quantizer_id,
                  expected_quantizer_class=None):
         self.unit_test = unit_test
         self.quant_target = quant_target
         self.quant_method = quant_method
         self.quantizer_base_class = quantizer_base_class
         self.expected_quantizer_class = expected_quantizer_class
-        self.quantizer_type = quantizer_type
+        self.quantizer_id = quantizer_id
 
     def run_test(self):
         quantizer = get_trainable_quantizer_class(quant_target=self.quant_target,
-                                                  quantizer_type=self.quantizer_type,
+                                                  quantizer_id=self.quantizer_id,
                                                   quant_method=self.quant_method,
                                                   quantizer_base_class=self.quantizer_base_class)
 
