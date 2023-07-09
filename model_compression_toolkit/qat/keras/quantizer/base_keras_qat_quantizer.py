@@ -44,6 +44,6 @@ else:
                      quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
 
             super().__init__(quantization_config)
-            Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+            Logger.critical('Installing tensorflow is mandatory '
                             'when using BaseKerasQATTrainableQuantizer. '
                             'Could not find Tensorflow package.')  # pragma: no cover

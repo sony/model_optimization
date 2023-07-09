@@ -106,6 +106,6 @@ if FOUND_TF:
 else:
     class BaseKerasGPTQTrainableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
-            Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+            Logger.critical('Installing tensorflow is mandatory '
                             'when using BaseKerasGPTQTrainableQuantizer. '
                             'Could not find Tensorflow package.')  # pragma: no cover

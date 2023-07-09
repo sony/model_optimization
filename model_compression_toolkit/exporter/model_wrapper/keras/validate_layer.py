@@ -69,6 +69,6 @@ if FOUND_TF:
         return True
 else:
     def is_keras_layer_exportable(*args, **kwargs):  # pragma: no cover
-        Logger.error('Installing tensorflow and tensorflow_model_optimization is mandatory '
+        Logger.error('Installing tensorflow is mandatory '
                      'when using is_keras_layer_exportable. '
                      'Could not find Tensorflow package.')

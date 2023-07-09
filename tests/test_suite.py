@@ -33,8 +33,7 @@ from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTe
 if FOUND_ONNX:
     from tests.pytorch_tests.function_tests.test_export_pytorch_fully_quantized_model import TestPyTorchFakeQuantExporter
 
-found_tf = importlib.util.find_spec("tensorflow") is not None and importlib.util.find_spec(
-    "tensorflow_model_optimization") is not None
+found_tf = importlib.util.find_spec("tensorflow") is not None
 found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util.find_spec(
     "torchvision") is not None
 

@@ -25,7 +25,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install tensorflow==2.11.*
-          pip install tensorflow_model_optimization
           pip install torch torchvision
           pip install coverage
       - name: Run unittests

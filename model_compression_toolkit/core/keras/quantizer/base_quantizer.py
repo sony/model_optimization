@@ -13,14 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 
-from tensorflow_model_optimization.python.core.quantization.keras.quantizers import Quantizer
 from typing import List, Any, Dict
 from tensorflow import Tensor
 import six, abc
 
 
 @six.add_metaclass(abc.ABCMeta)
-class BaseTrainableQuantizer(Quantizer):
+class BaseTrainableQuantizer:
     """
     Base trainable quantizer to define extra methods needed by the GPTQ post-processing.
     """

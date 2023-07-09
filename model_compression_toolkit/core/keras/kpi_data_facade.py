@@ -151,15 +151,15 @@ if FOUND_TF:
                                 fw_impl)
 
 else:
-    # If tensorflow or tensorflow_model_optimization are not installed,
+    # If tensorflow is not installed,
     # we raise an exception when trying to use this function.
     def keras_kpi_data(*args, **kwargs):
-        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+        Logger.critical('Installing tensorflow and is mandatory '
                         'when using keras_kpi_data. '
                         'Could not find Tensorflow package.')  # pragma: no cover
 
 
     def keras_kpi_data_experimental(*args, **kwargs):
-        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+        Logger.critical('Installing tensorflow is mandatory '
                         'when using keras_kpi_data. '
                         'Could not find Tensorflow package.')  # pragma: no cover
