@@ -163,16 +163,16 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         # check relevant layers are wrapped and correct quantizers were chosen
         for _, layer in qat_ready_model.named_children():
             if isinstance(layer, PytorchActivationQuantizationHolder):
-                q = [_q for _q in all_trainable_quantizers if _q.quantizer_id == mct.qat.TrainingMethod.STE
+                q = [_q for _q in all_trainable_quantizers if _q.identifier == mct.qat.TrainingMethod.STE
                      and _q.quantization_target == QuantizationTarget.Activation
                      and self.activation_quantization_method in _q.quantization_method]
                 self.unit_test.assertTrue(len(q) == 1)
                 self.unit_test.assertTrue(isinstance(layer.activation_holder_quantizer, q[0]))
             elif isinstance(layer, PytorchQuantizationWrapper) and isinstance(layer.layer, nn.Conv2d):
-                q = [_q for _q in all_trainable_quantizers if _q.quantizer_id == mct.qat.TrainingMethod.STE
+                q = [_q for _q in all_trainable_quantizers if _q.identifier == mct.qat.TrainingMethod.STE
                      and _q.quantization_target == QuantizationTarget.Weights
                      and self.weights_quantization_method in _q.quantization_method
-                     and type(_q.quantizer_id) == mct.qat.TrainingMethod]
+                     and type(_q.identifier) == mct.qat.TrainingMethod]
                 self.unit_test.assertTrue(len(q) == 1)
                 self.unit_test.assertTrue(isinstance(layer.weights_quantizers['weight'], q[0]))
 
@@ -188,14 +188,14 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
                     q = [_q for _q in all_inferable_quantizers if
                          _q.quantization_target == QuantizationTarget.Activation
                          and self.activation_quantization_method in _q.quantization_method
-                         and _q.quantizer_id == QuantizerID.INFERABLE]
+                         and _q.identifier == QuantizerID.INFERABLE]
                     self.unit_test.assertTrue(len(q) == 1)
                     self.unit_test.assertTrue(isinstance(layer.activation_holder_quantizer, q[0]))
                 elif isinstance(layer, PytorchQuantizationWrapper) and isinstance(layer.layer, nn.Conv2d):
                     q = [_q for _q in all_inferable_quantizers if
                          _q.quantization_target == QuantizationTarget.Weights
                          and self.weights_quantization_method in _q.quantization_method
-                         and _q.quantizer_id == QuantizerID.INFERABLE]
+                         and _q.identifier == QuantizerID.INFERABLE]
                     self.unit_test.assertTrue(len(q) == 1)
                     self.unit_test.assertTrue(isinstance(layer.weights_quantizers['weight'], q[0]))
             # check quantization didn't change when switching between PTQ model and QAT finalized model
