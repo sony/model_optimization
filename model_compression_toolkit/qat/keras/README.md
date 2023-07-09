@@ -12,7 +12,7 @@ In order to make your new quantizer you need to create your quantizer class, `My
    - Implement [`initialize_quantization`](../../trainable_infrastructure/common/base_trainable_quantizer.py) where you can define your parameters for the quantizer.
    - Implement [`__call__`](../../trainable_infrastructure/common/base_trainable_quantizer.py) method to quantize the given inputs while training. This is your custom quantization itself. 
    - Implement [`convert2inferable`](../../trainable_infrastructure/common/base_trainable_quantizer.py) method. This method exports your quantizer for inference (deployment). For doing that you need to choose one of the available Inferable Quantizers from the [MCT Quantizers](https://github.com/sony/mct_quantizers) package, according to the target when implementing `convert2inferable`, and set your learned quantization parameters there.
-   - Decorate `MyTrainingQuantizer` class with the `@mark_quantizer` decorator (provided by the [MCT Quantizers](https://github.com/sony/mct_quantizers) package) and choose the appropriate properties to set for your quantizer. The quantizer_type argument for the decorator should be of type `TrainingMethod`  enum.  See explaination about `@mark_quantizer` and how to use it under the [Pytorch Quantization Infrastructure](../../trainable_infrastructure/keras/README.md).
+   - Decorate `MyTrainingQuantizer` class with the `@mark_quantizer` decorator (provided by the [MCT Quantizers](https://github.com/sony/mct_quantizers) package) and choose the appropriate properties to set for your quantizer. The "identifier" property for the decorator should be of type `TrainingMethod`  enum.  See explanation about `@mark_quantizer` and how to use it under the [Pytorch Quantization Infrastructure](../../trainable_infrastructure/keras/README.md).
    
 ## Example: Symmetric Weights Quantizer
 To create custom `MyWeightsTrainingQuantizer` which is a symmetric weights training quantizer you need to set
@@ -30,7 +30,7 @@ NEW_PARAM = "new_param_name"
 
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.SYMMETRIC],
-                quantizer_type=TrainingMethod.MyTraining)
+                identifier=TrainingMethod.MyTraining)
 class MyWeightsTrainingQuantizer(BaseKerasQATTrainableQuantizer):
     def __init__(self, quantization_config: NodeWeightsQuantizationConfig):
         super(MyWeightsTrainingQuantizer, self).__init__(quantization_config)
@@ -75,7 +75,7 @@ from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer impo
 
 @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.SYMMETRIC],
-                quantizer_type=TrainingMethod.TrainingMethod)
+                identifier=TrainingMethod.TrainingMethod)
 class MyActivationsTrainingQuantizer(BaseKerasQATTrainableQuantizer):
     def __init__(self, quantization_config: NodeActivationQuantizationConfig):
         super(MyActivationsTrainingQuantizer, self).__init__(quantization_config)

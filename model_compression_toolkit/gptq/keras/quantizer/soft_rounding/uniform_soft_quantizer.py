@@ -63,7 +63,7 @@ def soft_rounding_uniform_quantizer(input_tensor: tf.Tensor,
 
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.UNIFORM],
-                quantizer_type=RoundingType.SoftQuantizer)
+                identifier=RoundingType.SoftQuantizer)
 class UniformSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
     """
     Trainable uniform quantizer to optimize the rounding of the quantized values using a soft quantization method.

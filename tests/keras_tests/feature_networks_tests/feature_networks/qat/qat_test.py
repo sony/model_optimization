@@ -250,16 +250,16 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                     q = [_q for _q in all_inferable_quantizers if
                          _q.quantization_target == QuantizationTarget.Activation
                          and self.activation_quantization_method in _q.quantization_method
-                         and _q.quantizer_type is None]
+                         and _q.quantizer_id == InferableQuantizerID.INFERABLE]
                     self.unit_test.assertTrue(len(q) == 1)
                     self.unit_test.assertTrue(isinstance(layer.activation_holder_quantizer, q[0]))
                 else:
                     self.unit_test.assertTrue(isinstance(layer.activation_holder_quantizer, BaseKerasTrainableQuantizer))
                     q = [_q for _q in all_trainable_quantizers if
-                         _q.quantizer_type == mct.qat.TrainingMethod.STE
+                         _q.quantizer_id == mct.qat.TrainingMethod.STE
                          and _q.quantization_target == QuantizationTarget.Activation
                          and self.activation_quantization_method in _q.quantization_method
-                         and type(_q.quantizer_type) == TrainingMethod]
+                         and type(_q.quantizer_id) == TrainingMethod]
                     self.unit_test.assertTrue(len(q) == 1)
                     self.unit_test.assertTrue(isinstance(layer.activation_holder_quantizer, q[0]))
 
@@ -272,15 +272,15 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                             q = [_q for _q in all_inferable_quantizers if
                                  _q.quantization_target == QuantizationTarget.Weights
                                  and self.weights_quantization_method in _q.quantization_method
-                                 and _q.quantizer_type is None]
+                                 and _q.quantizer_id == InferableQuantizerID.INFERABLE]
                             self.unit_test.assertTrue(len(q) == 1)
                             self.unit_test.assertTrue(isinstance(layer.weights_quantizers[KERNEL], q[0]))
                         else:
                             self.unit_test.assertTrue(isinstance(quantizer, BaseKerasTrainableQuantizer))
-                            q = [_q for _q in all_trainable_quantizers if _q.quantizer_type == mct.qat.TrainingMethod.STE
+                            q = [_q for _q in all_trainable_quantizers if _q.quantizer_id == mct.qat.TrainingMethod.STE
                                  and _q.quantization_target == QuantizationTarget.Weights
                                  and self.weights_quantization_method in _q.quantization_method
-                                 and type(_q.quantizer_type) == TrainingMethod]
+                                 and type(_q.quantizer_id) == TrainingMethod]
                             self.unit_test.assertTrue(len(q) == 1)
                             self.unit_test.assertTrue(isinstance(layer.weights_quantizers[KERNEL], q[0]))
 

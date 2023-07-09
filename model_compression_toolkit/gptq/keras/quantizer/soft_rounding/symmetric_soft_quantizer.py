@@ -68,7 +68,7 @@ def soft_rounding_symmetric_quantizer(input_tensor: tf.Tensor,
 
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
-                quantizer_type=RoundingType.SoftQuantizer)
+                identifier=RoundingType.SoftQuantizer)
 class SymmetricSoftRoundingGPTQ(BaseKerasGPTQTrainableQuantizer):
     """
     Trainable symmetric quantizer to optimize the rounding of the quantized values using a soft quantization method.
