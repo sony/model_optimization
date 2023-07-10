@@ -33,7 +33,7 @@ from model_compression_toolkit.trainable_infrastructure.common.constants import 
 
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.UNIFORM],
-                quantizer_type=TrainingMethod.DQA)
+                identifier=TrainingMethod.DQA)
 class DQAUniformWeightQuantizer(BasePytorchQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.

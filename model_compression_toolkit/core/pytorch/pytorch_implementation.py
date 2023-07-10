@@ -481,7 +481,6 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: The MAC count of the operation
         """
 
-        input_shape = node.input_shape[0]
         output_shape = node.output_shape[0]
         kernel_shape = node.get_weights_by_keys(fw_info.get_kernel_op_attributes(node.type)[0]).shape
         output_channel_axis, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
@@ -489,7 +488,7 @@ class PytorchImplementation(FrameworkImplementation):
         if node.type is Conv2d or node.type is ConvTranspose2d:
             # (C_out * W_out * H_out) * C_in * (W_kernel * H_kernel)
             return np.prod([x for x in output_shape if x is not None]) * \
-                   input_shape[input_channel_axis] * \
+                   kernel_shape[input_channel_axis] * \
                    (kernel_shape[0] * kernel_shape[1])
         elif node.type is Linear:
             # IN * OUT

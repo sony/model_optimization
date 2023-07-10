@@ -35,7 +35,7 @@ from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC,
                                      QuantizationMethod.UNIFORM, QuantizationMethod.LUT_POT_QUANTIZER,
                                      QuantizationMethod.LUT_SYM_QUANTIZER],
-                quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
+                identifier=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
 class ConfigurableWeightsQuantizer(BasePyTorchInferableQuantizer):
     """
     Configurable weights quantizer for Pytorch mixed precision search.

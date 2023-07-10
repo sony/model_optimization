@@ -54,7 +54,7 @@ def quantization_builder(n: common.BaseNode,
         quant_method = n.final_weights_quantization_cfg.weights_quantization_method
 
         quantizer_class = get_trainable_quantizer_class(quant_target=QuantizationTarget.Weights,
-                                                        quantizer_type=gptq_config.rounding_type,
+                                                        quantizer_id=gptq_config.rounding_type,
                                                         quant_method=quant_method,
                                                         quantizer_base_class=BaseKerasGPTQTrainableQuantizer)
         kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=n.type,

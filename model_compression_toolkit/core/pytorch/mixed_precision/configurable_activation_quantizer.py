@@ -33,7 +33,7 @@ from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
 @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC,
                                      QuantizationMethod.UNIFORM, QuantizationMethod.LUT_POT_QUANTIZER],
-                quantizer_type=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
+                identifier=ConfigurableQuantizerIdentifier.CONFIGURABLE_ID)
 class ConfigurableActivationQuantizer(BasePyTorchInferableQuantizer):
     """
     Configurable activation quantizer for mixed precision search.

@@ -38,7 +38,7 @@ from model_compression_toolkit.trainable_infrastructure.common.base_trainable_qu
 
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.UNIFORM],
-                quantizer_type=TrainingMethod.STE)
+                identifier=TrainingMethod.STE)
 class STEUniformWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.
@@ -120,7 +120,7 @@ class STEUniformWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
 
 @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.UNIFORM],
-                quantizer_type=TrainingMethod.STE)
+                identifier=TrainingMethod.STE)
 class STEUniformActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer activations.
