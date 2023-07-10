@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict
+from typing import Dict, Any
 
 import numpy as np
 import tensorflow as tf
 from tensorflow import TensorShape
-from tensorflow_model_optimization.python.core.quantization.keras.quantize_wrapper import QuantizeWrapper
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from mct_quantizers import QuantizationTarget, mark_quantizer, KerasQuantizationWrapper
@@ -38,7 +37,7 @@ class IdentityWeightsQuantizer(BaseKerasTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
+                                layer: Any) -> Dict[str, tf.Variable]:
         return {}
 
     def __call__(self,
@@ -59,7 +58,7 @@ class ZeroWeightsQuantizer(BaseKerasTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
+                                layer: Any) -> Dict[str, tf.Variable]:
         return {}
 
     def __call__(self,
@@ -80,7 +79,7 @@ class ZeroActivationsQuantizer(BaseKerasTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: QuantizeWrapper) -> Dict[str, tf.Variable]:
+                                layer: Any) -> Dict[str, tf.Variable]:
         return {}
 
     def __call__(self,

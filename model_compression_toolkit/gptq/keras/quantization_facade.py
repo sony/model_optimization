@@ -240,15 +240,15 @@ if FOUND_TF:
                             bit_widths_config)
 
 else:
-    # If tensorflow or tensorflow_model_optimization are not installed,
+    # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
     def get_keras_gptq_config(*args, **kwargs):
-        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+        Logger.critical('Installing tensorflow is mandatory '
                         'when using keras_post_training_quantization_mixed_precision. '
                         'Could not find Tensorflow package.')  # pragma: no cover
 
 
     def keras_gradient_post_training_quantization_experimental(*args, **kwargs):
-        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+        Logger.critical('Installing tensorflow is mandatory '
                         'when using keras_gradient_post_training_quantization_experimental. '
                         'Could not find Tensorflow package.')  # pragma: no cover

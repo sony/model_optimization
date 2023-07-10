@@ -69,6 +69,6 @@ else:
         Returns: A keras Model
 
         """
-        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+        Logger.critical('Installing tensorflow is mandatory '
                         'when using keras_load_quantized_model. '
                         'Could not find Tensorflow package.')  # pragma: no cover

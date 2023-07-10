@@ -21,7 +21,6 @@ jobs:
           sed -i 's/mct-quantizers/mct-quantizers-nightly/' requirements.txt
           python -m pip install --upgrade pip
           pip install -r requirements.txt          
-          pip install tensorflow_model_optimization
           pip install tensorflow==${{ inputs.tf-version }}
       - name: Run unittests
         run: |

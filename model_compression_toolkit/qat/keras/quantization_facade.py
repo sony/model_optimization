@@ -275,15 +275,15 @@ if FOUND_TF:
         return exported_model
 
 else:
-    # If tensorflow or tensorflow_model_optimization are not installed,
+    # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
     def keras_quantization_aware_training_init(*args, **kwargs):
-        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+        Logger.critical('Installing tensorflow is mandatory '
                         'when using keras_quantization_aware_training_init. '
                         'Could not find Tensorflow package.')  # pragma: no cover
 
 
     def keras_quantization_aware_training_finalize(*args, **kwargs):
-        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
+        Logger.critical('Installing tensorflow is mandatory '
                         'when using keras_quantization_aware_training_finalize. '
                         'Could not find Tensorflow package.')  # pragma: no cover
