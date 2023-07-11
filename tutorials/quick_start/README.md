@@ -13,7 +13,7 @@ in the future.
 - torchvision: [https://pytorch.org/vision/stable/index.html](https://pytorch.org/vision/stable/index.html)
 - timm: [https://github.com/huggingface/pytorch-image-models/tree/main/timm](https://github.com/huggingface/pytorch-image-models/tree/main/timm)
 - ultralytics: [https://ultralytics.com](https://ultralytics.com)
-
+- keras-applications: [https://keras.io/api/applications](https://keras.io/api/applications/)
 
 ## Getting Started
 ### Installation 
@@ -68,6 +68,7 @@ The following external packages were tested with this project:
 - torchvision: Version 0.14.0
 - timm: Version 0.6.13
 - ultralytics: Version 8.0.47
+- keras-applications: Version 2.9.0
 
 ## License
 This project is licensed under [Apache License 2.0](../../LICENSE.md).
@@ -76,3 +77,4 @@ However, please note that different external packages have their own licenses. W
 - torchvision: [license link](https://github.com/UiPath/torchvision/blob/master/LICENSE), [license copy](./pytorch_fw/torchvision/LICENSE)
 - timm: [license link](https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE), [license copy](./pytorch_fw/timm/LICENSE)
 - ultralytics: [license link](https://github.com/ultralytics/ultralytics/blob/main/LICENSE), [license copy](./pytorch_fw/ultralytics/LICENSE)
+- keras-applications: [license link](https://github.com/keras-team/keras-applications/blob/master/LICENSE), [license copy](./keras_fw/keras_applications/LICENSE)

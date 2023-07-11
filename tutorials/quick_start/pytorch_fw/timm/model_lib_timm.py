@@ -23,8 +23,16 @@ from common.results import DatasetInfo
 
 
 class ModelLib(BaseModelLib):
+    """
+    A class representing timm model library (https://github.com/huggingface/pytorch-image-models/tree/main).
+    """
 
     def __init__(self, args):
+        """
+        Init the ModelLib with user arguments
+        Args:
+            args (dict): user arguments
+        """
         avialable_models = timm.list_models('')
         model_name = args[MODEL_NAME]
         if model_name in avialable_models:
@@ -36,9 +44,23 @@ class ModelLib(BaseModelLib):
             raise Exception(f'Unknown timm model name {model_name}, Available models : {avialable_models}')
 
     def get_model(self):
+        """
+         Returns the model instance.
+         """
         return self.model
 
     def get_representative_dataset(self, representative_dataset_folder, n_iter, batch_size):
+        """
+        Create a representative dataset generator
+        Args:
+            representative_dataset_folder: Dataset location folder, in the format: representative_dataset_folder/<class>/<images>
+            n_iter: number batches to run in the generator
+            batch_size: number of images in each batch
+
+        Returns:
+            A generator for the representative dataset, as the MCT expects
+
+        """
         train_dataset = create_dataset(name='', root=representative_dataset_folder,
                                        is_training=False, batch_size=batch_size)
         dl = create_loader(
@@ -52,6 +74,16 @@ class ModelLib(BaseModelLib):
         return get_representative_dataset(dl, n_iter)
 
     def evaluate(self, model):
+        """
+        Evaluates the model's performance.
+
+        Args:
+            model: The model to evaluate.
+
+        Returns:
+            acc: The accuracy of the model.
+            DatasetInfo: Information about the dataset used.
+        """
         batch_size = int(self.args[BATCH_SIZE])
         validation_dataset_folder = self.args[VALIDATION_DATASET_FOLDER]
         val_dataset = create_dataset(name='', root=validation_dataset_folder, is_training=False,

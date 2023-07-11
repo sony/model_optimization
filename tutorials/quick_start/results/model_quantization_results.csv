@@ -6,6 +6,7 @@ squeezenet1_0,torchvision,ImageNet,50000,0.581,0.5767,1.24,W8A8,PTQ,default_pyto
 regnetx_002,timm,ImageNet,50000,0.6876,0.6827,2.67,W8A8,PTQ,default_pytorch_tpc-v4
 regnety_008,timm,ImageNet,50000,0.7632,0.7598,6.23,W8A8,PTQ,default_pytorch_tpc-v4
 resnet10t,timm,ImageNet,50000,0.6656,0.6643,5.43,W8A8,PTQ,default_pytorch_tpc-v4
+resnet18,timm,ImageNet,50000,0.6976,0.6961,11.68,W8A8,PTQ,default_pytorch_tpc-v4
 efficientnet_es,timm,ImageNet,50000,0.7808,0.7774,5.39,W8A8,PTQ,default_pytorch_tpc-v4
 yolov8n,ultralytics,COCO,5000,0.3704,0.3617,3.15,W8A8,PTQ,default_pytorch_tpc-v4
 yolov8m,ultralytics,COCO,5000,0.4999,0.494,25.9,W8A8,PTQ,default_pytorch_tpc-v4

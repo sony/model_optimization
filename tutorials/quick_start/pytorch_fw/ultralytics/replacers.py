@@ -34,6 +34,18 @@ from ultralytics.yolo.utils.tal import dist2bbox, make_anchors
 
 
 def replace_2d_deg_module(model, old_module, new_module, get_config):
+    """
+    Replaces a 2nd degree submodule in the given ultralytics model with a new module.
+
+    Args:
+        model (torch.nn.Module): The model to modify.
+        old_module (type): The old module type to replace.
+        new_module (callable): A function or callable that creates the new module.
+        get_config (callable): A function or callable that retrieves the configuration for creating the new module.
+
+    Returns:
+        torch.nn.Module: The modified model.
+    """
     for n, m in model.named_children():
         for name, c in m.named_children():
             if isinstance(c, old_module):
@@ -47,7 +59,9 @@ def replace_2d_deg_module(model, old_module, new_module, get_config):
 
 # In this section we slightly modify C2f module and replace the "list" function which is not supported by torch.fx
 class C2fReplacer(C2f):
-
+    """
+    A new C2f module definition supported by torch.fx
+    """
     def forward(self, x):
         y1 = self.cv1(x).chunk(2, 1)
         y = [y1[0], y1[1]]
@@ -56,7 +70,9 @@ class C2fReplacer(C2f):
 
 
 class C2fModuleReplacer(ModuleReplacer):
-
+    """
+    A module replacer for C2f modules.
+    """
     def get_new_module(self, config):
         return C2fReplacer(*config)
 
@@ -78,7 +94,9 @@ class C2fModuleReplacer(ModuleReplacer):
 # In addition, we remove the last part of the detection head which is essential for improving the quantization
 # This missing part will be added to the postprocessing implementation
 class DetectReplacer(Detect):
-
+    """
+    Replaces the Detect module with modifications to support torch.fx and removes the last part of the detection head.
+    """
     def forward(self, x):
         shape = x[0].shape  # BCHW
         for i in range(self.nl):
@@ -100,7 +118,9 @@ class DetectReplacer(Detect):
 
 
 class DetectModuleReplacer(ModuleReplacer):
-
+    """
+    A module replacer for Detect modules.
+    """
     def get_new_module(self, config):
         return DetectReplacer(*config)
 
@@ -115,6 +135,9 @@ class DetectModuleReplacer(ModuleReplacer):
 
 # In this section we modify the DetectionModel to exclude dynamic condition which is not supported by torch.fx
 class DetectionModelReplacer(DetectionModel):
+    """
+    Replaces the DetectionModel to exclude dynamic condition not supported by torch.fx.
+    """
     def forward(self, x, augment=False, profile=False, visualize=False):
         return self._forward_once(x, profile, visualize)  # single-scale inference, train
 
@@ -131,7 +154,9 @@ class DetectionModelReplacer(DetectionModel):
 
 
 class DetectionModelModuleReplacer(ModuleReplacer):
-
+    """
+    A module replacer for DetectionModel modules.
+    """
     def get_config(self, c):
         return [c.yaml]
 
@@ -145,7 +170,9 @@ class DetectionModelModuleReplacer(ModuleReplacer):
 # In this section we modify the DetectionValidator (not part of the model) to include the missing functionality
 # that was removed from the Detect module
 class DetectionValidatorReplacer(DetectionValidator):
-
+    """
+    Replaces the DetectionValidator to include missing functionality from the Detect module.
+    """
     def postprocess(self, preds):
 
         # Post-processing additional part - exported from Detect module
@@ -167,7 +194,9 @@ class DetectionValidatorReplacer(DetectionValidator):
 
 
 class YOLOReplacer(YOLO):
-
+    """
+    Replaces the YOLO class to include the modified DetectionValidator
+    """
     def val(self, data=None, **kwargs):
         """
         Validate a model on a given dataset .
@@ -198,7 +227,9 @@ class YOLOReplacer(YOLO):
 
 
 def prepare_model_for_ultralytics_val(ultralytics_model, model):
-
+    """
+    Prepares the model for Ultralytics validation by setting necessary attributes.
+    """
     if not hasattr(model, 'args'):
         def fuse():
             return ultralytics_model.model
