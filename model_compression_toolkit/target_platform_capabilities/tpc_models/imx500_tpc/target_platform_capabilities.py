@@ -23,9 +23,11 @@ keras_tpc_models_dict = None
 if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_keras_tpc_latest
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tpc_keras import get_keras_tpc as get_keras_tpc_v1
+    from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1_lut.tpc_keras import get_keras_tpc as get_keras_tpc_v1_lut
 
     # Keras: TPC versioning
     keras_tpc_models_dict = {'v1': get_keras_tpc_v1(),
+                             'v1_lut': get_keras_tpc_v1_lut(),
                              LATEST: get_keras_tpc_latest()}
 
 ###############################

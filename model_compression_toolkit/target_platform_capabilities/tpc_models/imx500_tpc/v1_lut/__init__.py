@@ -12,12 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from enum import Enum
 
-
-class ConfigurableQuantizerIdentifier(Enum):
-    """
-    A unique identifier for configurable quantizers.
-    """
-
-    CONFIGURABLE_ID = "Configurable_Quantizer"
+__version__ = 'v1_lut'
