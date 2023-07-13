@@ -66,7 +66,7 @@ def get_inferable_quantizer_kwargs(node_qc: BaseNodeQuantizationConfig,
         elif quantization_method in [QuantizationMethod.LUT_SYM_QUANTIZER, QuantizationMethod.LUT_POT_QUANTIZER]:
             return {qi_keras_consts.NUM_BITS: node_qc.weights_n_bits,
                     qi_keras_consts.PER_CHANNEL: node_qc.weights_per_channel_threshold,
-                    qi_keras_consts.CLUSTER_CENTERS: node_qc.weights_quantization_params[CLUSTER_CENTERS],
+                    qi_keras_consts.CLUSTER_CENTERS: list(node_qc.weights_quantization_params[CLUSTER_CENTERS].flatten()),
                     qi_keras_consts.THRESHOLD: list(node_qc.weights_quantization_params[SCALE_PER_CHANNEL].flatten()),
                     qi_keras_consts.CHANNEL_AXIS: node_qc.weights_channels_axis,
                     # TODO: how to pass multiplier nbits and eps for a specific node?
