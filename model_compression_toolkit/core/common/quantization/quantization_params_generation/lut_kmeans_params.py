@@ -59,8 +59,8 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
         A dictionary containing the cluster assignments according to the k-means algorithm,
         the thresholds per channel and the multiplier num bits.
     """
-    if n_bits > MULTIPLIER_N_BITS:
-        Logger.critical(f'Look-Up-Table bit configuration has {n_bits} bits, but must be less or equal to '
+    if n_bits >= MULTIPLIER_N_BITS:
+        Logger.critical(f'Look-Up-Table bit configuration has {n_bits} bits, but must be less than '
                         f'{MULTIPLIER_N_BITS}')  # pragma: no cover
     # TODO: need to set this externally
     if len(np.unique(tensor_data.flatten())) < 2 ** n_bits:
