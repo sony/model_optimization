@@ -45,10 +45,10 @@ class TestLUTQuantizerParams(unittest.TestCase):
     def test_properties_with_fewer_data(self):
         # check when the number of values of the tensor_data is lower than 2**n_bits
         channel_axis = random.choice([0, 1, 2])
-        tensor_data = np.random.randn(3, 4, 5)
+        tensor_data = np.random.randn(3, 2, 2)
         quantization_params = lut_kmeans_tensor(tensor_data=tensor_data,
                                                 p=2,
-                                                n_bits=8,
+                                                n_bits=4,
                                                 per_channel=True,
                                                 channel_axis=channel_axis)
         cluster_centers = quantization_params[CLUSTER_CENTERS]

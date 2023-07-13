@@ -72,8 +72,8 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
-                                      mct.core.QuantizationErrorMethod.MSE,
-                                      False, False, True)
+                                           mct.core.QuantizationErrorMethod.MSE,
+                                           False, False, True)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, self.num_conv_channels]]

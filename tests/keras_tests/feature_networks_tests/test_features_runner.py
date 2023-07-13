@@ -188,7 +188,7 @@ class FeatureNetworkTest(unittest.TestCase):
 
         # In this test we have weights with less unique values than the number of clusters
         KmeansQuantizerTestManyClasses(self, QuantizationMethod.LUT_POT_QUANTIZER,
-                                       weights_n_bits=8).run_test()
+                                       weights_n_bits=7).run_test()
 
     def test_reused_separable_mixed_precision(self):
         ReusedSeparableMixedPrecisionTest(self).run_test()
