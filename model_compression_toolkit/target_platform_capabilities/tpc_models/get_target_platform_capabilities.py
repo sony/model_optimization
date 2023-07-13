@@ -51,7 +51,7 @@ def get_target_platform_capabilities(fw_name: str,
     fw_tpc = tpc_dict.get(target_platform_name)
     assert fw_name in fw_tpc, f'Framework {fw_name} is not supported in {target_platform_name}. Please make sure the relevant ' \
                               f'packages are installed when using MCT for optimizing a {fw_name} model. ' \
-                              f'For Tensorflow, please install tensorflow and tensorflow-model-optimization. ' \
+                              f'For Tensorflow, please install tensorflow. ' \
                               f'For PyTorch, please install torch.'
     tpc_versions = fw_tpc.get(fw_name)
     if target_platform_version is None:

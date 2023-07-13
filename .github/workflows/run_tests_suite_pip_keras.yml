@@ -26,7 +26,7 @@ jobs:
         run: |
           git checkout tags/${{  inputs.mct_version  }}
           pip install -r requirements.txt
-          pip install tensorflow tensorflow-model-optimization
+          pip install tensorflow
           pip install torch torchvision
       - name: Build WHL file
         run: |

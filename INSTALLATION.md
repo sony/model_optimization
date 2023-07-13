@@ -34,9 +34,8 @@ pip install -r requirements.txt
 
 Before running MCT, make sure to install one of the supported frameworks: TensorFlow or PyTorch.
 
-If you intend to use MCT with TensorFlow, install the following packages: 
-[tensorflow](https://www.tensorflow.org/install), 
-[tensorflow-model-optimization](https://www.tensorflow.org/model_optimization/guide/install)
+If you intend to use MCT with TensorFlow, install the following package: 
+[tensorflow](https://www.tensorflow.org/install)
 
 If you plan to use MCT with PyTorch, install the following package: 
 [torch](https://pytorch.org/)
