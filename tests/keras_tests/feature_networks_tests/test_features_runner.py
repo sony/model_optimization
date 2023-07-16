@@ -485,6 +485,15 @@ class FeatureNetworkTest(unittest.TestCase):
         Conv2DBNFoldingTest(self).run_test()
 
     def test_bn_forward_folding(self):
+        BNForwardFoldingTest(self, layers.Conv2D(2, 1, bias_initializer='glorot_uniform'), True, is_dwconv=True).run_test()
+        BNForwardFoldingTest(self, layers.DepthwiseConv2D(1, bias_initializer='glorot_uniform'), True, is_dwconv=True).run_test()
+        BNForwardFoldingTest(self, layers.Conv2DTranspose(2, 1, bias_initializer='glorot_uniform'), True, is_dwconv=True).run_test()
+        BNForwardFoldingTest(self, layers.Conv2D(2, 2), False, is_dwconv=True).run_test()
+        BNForwardFoldingTest(self, layers.DepthwiseConv2D((3, 1)), False, is_dwconv=True).run_test()
+        BNForwardFoldingTest(self, layers.Conv2DTranspose(2, (1, 3)), False, is_dwconv=True).run_test()
+        BNForwardFoldingTest(self, layers.Conv2D(2, 1, bias_initializer='glorot_uniform'),
+                             True, add_bn=True, is_dwconv=True).run_test()
+
         BNForwardFoldingTest(self, layers.Conv2D(2, 1, bias_initializer='glorot_uniform'), True).run_test()
         BNForwardFoldingTest(self, layers.DepthwiseConv2D(1, bias_initializer='glorot_uniform'), True).run_test()
         BNForwardFoldingTest(self, layers.Conv2DTranspose(2, 1, bias_initializer='glorot_uniform'), True).run_test()

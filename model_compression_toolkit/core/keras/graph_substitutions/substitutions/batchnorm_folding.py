@@ -49,7 +49,7 @@ def batchnorm_forward_folding_node_matchers() -> [BaseNode, BaseNode]:
     Returns:
         Matcher for batch norm nodes, and source nodes.
     """
-    bn_node = NodeOperationMatcher(BatchNormalization)
+    bn_node = NodeOperationMatcher(BatchNormalization) | NodeOperationMatcher(DepthwiseConv2D)
     conv_node = NodeOperationMatcher(DepthwiseConv2D) | \
                 NodeOperationMatcher(Conv2D) | \
                 NodeOperationMatcher(Conv2DTranspose)
@@ -70,11 +70,11 @@ def update_kernel_for_bn_folding_fn(conv_node: BaseNode,
         The modified convolution node's weight/kernel/
     """
     if conv_node.type == DepthwiseConv2D:
-        kernel = kernel * weights_scale.reshape(1, 1, kernel.shape[-2], kernel.shape[-1])
+        kernel = kernel * weights_scale.reshape((1, 1, kernel.shape[-2], kernel.shape[-1]))
     elif conv_node.type == Conv2DTranspose:
-        kernel = kernel * weights_scale.reshape(1, 1, -1, 1)
+        kernel = kernel * weights_scale.reshape((1, 1, -1, 1))
     else:
-        kernel = kernel * weights_scale.reshape(1, 1, 1, -1)
+        kernel = kernel * weights_scale.reshape((1, 1, 1, -1))
 
     if conv_node.type == DepthwiseConv2D:
         kernel_name = DEPTHWISE_KERNEL
@@ -101,14 +101,14 @@ def update_weights_for_bn_forward_folding_fn(conv_node: BaseNode,
         The modified convolution node's weight/kernel/
     """
     if conv_node.type == DepthwiseConv2D:
-        bias_update = kernel * bias_factor.reshape(1, 1, -1, 1)
-        kernel = kernel * weights_scale.reshape(1, 1, -1, 1)
+        bias_update = kernel * bias_factor.reshape((1, 1, -1, 1))
+        kernel = kernel * weights_scale.reshape((1, 1, -1, 1))
     elif conv_node.type == Conv2DTranspose:
-        bias_update = (kernel * bias_factor.reshape(1, 1, 1, -1)).sum(3)
-        kernel = kernel * weights_scale.reshape(1, 1, 1, -1)
+        bias_update = (kernel * bias_factor.reshape((1, 1, 1, -1))).sum(3)
+        kernel = kernel * weights_scale.reshape((1, 1, 1, -1))
     else:
-        bias_update = (kernel * bias_factor.reshape(1, 1, -1, 1)).sum(2)
-        kernel = kernel * weights_scale.reshape(1, 1, -1, 1)
+        bias_update = (kernel * bias_factor.reshape((1, 1, -1, 1))).sum(2)
+        kernel = kernel * weights_scale.reshape((1, 1, -1, 1))
 
     if conv_node.type == DepthwiseConv2D:
         kernel_name = DEPTHWISE_KERNEL
@@ -139,6 +139,23 @@ def is_group_conv_fn(node: BaseNode) -> bool:
         True if the node is a group convolution, else False
     """
     return (node.type == Conv2D) and node.framework_attr[GROUPS] > 1
+
+
+def is_bn_node_valid_fn(node: BaseNode) -> [bool, bool]:
+    """
+    Check whether the node to forward fold is a valid dw-convolution node or a
+    batch-normalization node
+    Args:
+        node: The node to fold
+
+    Returns:
+        is_bn: True if the node is a batch norm, else False
+        is_dw_valid: True if the node is a dw-convolution valid for folding or a batch-norm node, else False
+    """
+    is_bn = node.type is BatchNormalization
+    is_dw = node.type is DepthwiseConv2D
+    is_dw_valid = is_dw and np.all(np.array(node.get_weights_by_keys(DEPTHWISE_KERNEL).shape[:2]) == 1)
+    return is_bn, is_dw_valid
 
 
 def keras_batchnorm_folding() -> BatchNormalizationFolding:
@@ -174,6 +191,7 @@ def keras_batchnorm_forward_folding() -> BatchNormalizationForwardFolding:
                                             update_weights_for_bn_forward_folding_fn,
                                             get_kernel_hw_fn,
                                             is_group_conv_fn,
+                                            is_bn_node_valid_fn,
                                             KERNEL,
                                             BIAS,
                                             GAMMA,

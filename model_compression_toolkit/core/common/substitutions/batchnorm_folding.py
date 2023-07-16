@@ -163,6 +163,7 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
                  update_weights_for_bn_forward_folding_fn: Callable,
                  get_kernel_hw_fn: Callable,
                  is_group_conv_fn: Callable,
+                 is_bn_node_valid_fn: Callable,
                  kernel_str: str,
                  bias_str: str,
                  gamma_str: str,
@@ -182,6 +183,7 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
                                                       with the batch normalization weights
             get_kernel_hw_fn: Function for getting the kernel height & width shape
             is_group_conv_fn: Function for checking if the linear layer is a group-convolution
+            is_bn_node_valid_fn: Function for checking whether the node to forward fold is a valid node and it's type
             kernel_str: The framework specific attribute name of the convolution layer's weight/kernel.
             bias_str: The framework specific attribute name of the convolution layer's bias.
             gamma_str: The framework specific attribute name of the batch norm layer's gamma parameter.
@@ -196,6 +198,7 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
         self.update_weights_for_bn_forward_folding_fn = update_weights_for_bn_forward_folding_fn
         self.get_kernel_hw_fn = get_kernel_hw_fn
         self.is_group_conv_fn = is_group_conv_fn
+        self.is_valid_dw_conv_fn = is_bn_node_valid_fn
         self.kernel_str = kernel_str
         self.bias_str = bias_str
         self.gamma_str = gamma_str
@@ -227,7 +230,7 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
 
         # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
         # we should skip the substitution.
-        if conv_node.reuse or conv_node.reuse_group is not None:
+        if conv_node.reuse or conv_node.reuse_group is not None or bn_node.reuse or bn_node.reuse_group is not None:
             return graph
 
         if len(graph.get_next_nodes(bn_node)) > 1 or len(graph.get_prev_nodes(conv_node)) > 1:
@@ -235,14 +238,24 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
         if self.is_group_conv_fn(conv_node):
             return graph
         kernel = conv_node.get_weights_by_keys(self.kernel_str)
+        bias = conv_node.get_weights_by_keys(self.bias_str)
         if not np.all(np.array(self.get_kernel_hw_fn(kernel)) == 1):
             return graph
-        bias = conv_node.get_weights_by_keys(self.bias_str)
-        gamma = bn_node.get_weights_by_keys(self.gamma_str)
-        beta = bn_node.get_weights_by_keys(self.beta_str)
-        moving_mean = bn_node.get_weights_by_keys(self.moving_mean_str)
-        moving_variance = bn_node.get_weights_by_keys(self.moving__variance_str)
-        eps = bn_node.framework_attr[self.epsilon_str]
+        is_bn, is_dw_valid = self.is_valid_dw_conv_fn(bn_node)
+        if is_bn:
+            gamma = bn_node.get_weights_by_keys(self.gamma_str)
+            beta = bn_node.get_weights_by_keys(self.beta_str)
+            moving_mean = bn_node.get_weights_by_keys(self.moving_mean_str)
+            moving_variance = bn_node.get_weights_by_keys(self.moving__variance_str)
+            eps = bn_node.framework_attr[self.epsilon_str]
+        elif is_dw_valid:
+            gamma = bn_node.get_weights_by_keys(self.kernel_str).flatten()
+            beta = bn_node.get_weights_by_keys(self.bias_str)
+            moving_mean = 0.0
+            moving_variance = 1.0
+            eps = 0.0
+        else:
+            return graph
 
         if gamma is None:
             gamma = 1.0
