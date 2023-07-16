@@ -154,7 +154,7 @@ class BatchNormalizationFolding(common.BaseSubstitution):
 
 class BatchNormalizationForwardFolding(common.BaseSubstitution):
     """
-    Fold BatchNormalization into subsequent convolution layers with 1x1 kernels.
+    Fold BatchNormalization or DW-Convolution with kernel 1x1 into subsequent convolution layers with 1x1 kernels.
     """
 
     def __init__(self,
@@ -163,7 +163,7 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
                  update_weights_for_bn_forward_folding_fn: Callable,
                  get_kernel_hw_fn: Callable,
                  is_group_conv_fn: Callable,
-                 is_bn_node_valid_fn: Callable,
+                 get_foldable_node_type_and_validity_fn: Callable,
                  kernel_str: str,
                  bias_str: str,
                  gamma_str: str,
@@ -183,7 +183,7 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
                                                       with the batch normalization weights
             get_kernel_hw_fn: Function for getting the kernel height & width shape
             is_group_conv_fn: Function for checking if the linear layer is a group-convolution
-            is_bn_node_valid_fn: Function for checking whether the node to forward fold is a valid node and it's type
+            get_foldable_node_type_and_validity_fn: Function for checking whether the node to forward fold is a valid node and it's type
             kernel_str: The framework specific attribute name of the convolution layer's weight/kernel.
             bias_str: The framework specific attribute name of the convolution layer's bias.
             gamma_str: The framework specific attribute name of the batch norm layer's gamma parameter.
@@ -198,7 +198,7 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
         self.update_weights_for_bn_forward_folding_fn = update_weights_for_bn_forward_folding_fn
         self.get_kernel_hw_fn = get_kernel_hw_fn
         self.is_group_conv_fn = is_group_conv_fn
-        self.is_valid_dw_conv_fn = is_bn_node_valid_fn
+        self.get_foldable_node_type_and_validity_fn = get_foldable_node_type_and_validity_fn
         self.kernel_str = kernel_str
         self.bias_str = bias_str
         self.gamma_str = gamma_str
@@ -241,7 +241,7 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
         bias = conv_node.get_weights_by_keys(self.bias_str)
         if not np.all(np.array(self.get_kernel_hw_fn(kernel)) == 1):
             return graph
-        is_bn, is_dw_valid = self.is_valid_dw_conv_fn(bn_node)
+        is_bn, is_dw_valid = self.get_foldable_node_type_and_validity_fn(bn_node)
         if is_bn:
             gamma = bn_node.get_weights_by_keys(self.gamma_str)
             beta = bn_node.get_weights_by_keys(self.beta_str)

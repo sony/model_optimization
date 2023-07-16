@@ -44,17 +44,17 @@ def batchnorm_folding_node_matchers() -> [BaseNode, BaseNode]:
 def batchnorm_forward_folding_node_matchers() -> [BaseNode, BaseNode]:
     """
     Function that generates matchers for matching:
-    BatchNormalization -> (DepthwiseConv2D, Conv2D, Conv2DTranspose).
+    (BatchNormalization, DepthwiseConv2D 1x1) -> (DepthwiseConv2D, Conv2D, Conv2DTranspose).
 
     Returns:
         Matcher for batch norm nodes, and source nodes.
     """
-    bn_node = NodeOperationMatcher(BatchNormalization) | NodeOperationMatcher(DepthwiseConv2D)
+    bn_or_dw1x1_node = NodeOperationMatcher(BatchNormalization) | NodeOperationMatcher(DepthwiseConv2D)
     conv_node = NodeOperationMatcher(DepthwiseConv2D) | \
                 NodeOperationMatcher(Conv2D) | \
                 NodeOperationMatcher(Conv2DTranspose)
 
-    return bn_node, conv_node
+    return bn_or_dw1x1_node, conv_node
 
 
 def update_kernel_for_bn_folding_fn(conv_node: BaseNode,
@@ -141,7 +141,7 @@ def is_group_conv_fn(node: BaseNode) -> bool:
     return (node.type == Conv2D) and node.framework_attr[GROUPS] > 1
 
 
-def is_bn_node_valid_fn(node: BaseNode) -> [bool, bool]:
+def get_foldable_node_type_and_validity_fn(node: BaseNode) -> [bool, bool]:
     """
     Check whether the node to forward fold is a valid dw-convolution node or a
     batch-normalization node
@@ -191,7 +191,7 @@ def keras_batchnorm_forward_folding() -> BatchNormalizationForwardFolding:
                                             update_weights_for_bn_forward_folding_fn,
                                             get_kernel_hw_fn,
                                             is_group_conv_fn,
-                                            is_bn_node_valid_fn,
+                                            get_foldable_node_type_and_validity_fn,
                                             KERNEL,
                                             BIAS,
                                             GAMMA,
