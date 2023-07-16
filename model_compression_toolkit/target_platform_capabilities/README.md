@@ -42,7 +42,7 @@ import numpy as np
 target_platform_cap = mct.get_target_platform_capabilities('tensorflow', 'default')
 
 quantized_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(MobileNet(),
-                                                                                       lambda: np.random.randn(1, 224, 224, 3),  # Random representative dataset 
+                                                                                       lambda: [np.random.randn(1, 224, 224, 3)],  # Random representative dataset 
                                                                                        target_platform_capabilities=target_platform_cap)
 ```
 
