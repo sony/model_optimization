@@ -68,13 +68,16 @@ class BNFoldingNetTest(BasePytorchTest):
 
 
 class BNForwardFoldingNet(torch.nn.Module):
-    def __init__(self, test_layer, add_bn=False):
+    def __init__(self, test_layer, add_bn=False, is_dw=False):
         super(BNForwardFoldingNet, self).__init__()
-        self.bn = torch.nn.BatchNorm2d(3)
-        torch.nn.init.uniform_(self.bn.weight, 0.02, 1.05)
-        torch.nn.init.uniform_(self.bn.bias, -1.2, 1.05)
-        torch.nn.init.uniform_(self.bn.running_var, 0.02, 1.05)
-        torch.nn.init.uniform_(self.bn.running_mean, -1.2, 1.05)
+        if is_dw:
+            self.bn = torch.nn.Conv2d(3, 3, 1, groups=3)
+        else:
+            self.bn = torch.nn.BatchNorm2d(3)
+            torch.nn.init.uniform_(self.bn.weight, 0.02, 1.05)
+            torch.nn.init.uniform_(self.bn.bias, -1.2, 1.05)
+            torch.nn.init.uniform_(self.bn.running_var, 0.02, 1.05)
+            torch.nn.init.uniform_(self.bn.running_mean, -1.2, 1.05)
         self.conv = test_layer
         if add_bn:
             self.bn2 = torch.nn.BatchNorm2d(test_layer.out_channels)
@@ -99,14 +102,15 @@ class BNForwardFoldingNetTest(BasePytorchTest):
     This test checks the BatchNorm forward folding feature. When fold_applied is False
     test that the BN isn't folded
     """
-    def __init__(self, unit_test, test_layer, fold_applied=True, add_bn=False):
+    def __init__(self, unit_test, test_layer, fold_applied=True, add_bn=False, is_dw=False):
         super().__init__(unit_test, float_reconstruction_error=1e-6)
         self.test_layer = test_layer
         self.fold_applied = fold_applied
         self.add_bn = add_bn
+        self.is_dw = is_dw
 
     def create_feature_network(self, input_shape):
-        return BNForwardFoldingNet(self.test_layer, self.add_bn)
+        return BNForwardFoldingNet(self.test_layer, self.add_bn, self.is_dw)
 
     def get_tpc(self):
         return {'no_quantization': super().get_tpc()['no_quantization']}
@@ -121,6 +125,11 @@ class BNForwardFoldingNetTest(BasePytorchTest):
         out_float = torch_tensor_to_numpy(float_model(*input_x))
         out_quant = torch_tensor_to_numpy(quant_model(*input_x))
 
-        is_bn_in_model = torch.nn.BatchNorm2d in [type(module) for name, module in quant_model.named_modules()]
+        if self.is_dw:
+            is_bn_in_model = (sum([type(module) is torch.nn.Conv2d for name, module in float_model.named_modules()]) ==
+                              sum([type(module) is torch.nn.Conv2d for name, module in quant_model.named_modules()]))
+        else:
+            is_bn_in_model = torch.nn.BatchNorm2d in [type(module) for name, module in quant_model.named_modules()]
+
         self.unit_test.assertTrue(self.fold_applied is not is_bn_in_model)
         self.unit_test.assertTrue(np.isclose(out_quant, out_float, atol=1e-6, rtol=1e-4).all())

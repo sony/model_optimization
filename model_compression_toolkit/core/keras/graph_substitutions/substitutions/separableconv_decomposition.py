@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.keras.constants import KERNEL, DEPTHWISE_KERNEL, BIAS, KERNEL_SIZE, PADDING, \
-    STRIDES, USE_BIAS, LINEAR, ACTIVATION, TRAINABLE, FILTERS, PAD_VALID
+    STRIDES, USE_BIAS, LINEAR, ACTIVATION, TRAINABLE, FILTERS, PAD_VALID, GROUPS
 
 POINTWISE_KERNEL = 'pointwise_kernel'
 DEPTH_MULTIPLIER = 'depth_multiplier'
@@ -89,7 +89,7 @@ class SeparableConvDecomposition(common.BaseSubstitution):
 
         # List of pw attributes that should take from separable as they are.
         pw_attr_list = [FILTERS, DATA_FORMAT, DILATION_RATE, ACTIVATION, USE_BIAS, BIAS_CONSTRAINT,
-                        BIAS_INITIALIZER, BIAS_REGULARIZER, TRAINABLE, ACTIVITY_REGULARIZER]
+                        BIAS_INITIALIZER, BIAS_REGULARIZER, TRAINABLE, ACTIVITY_REGULARIZER, GROUPS]
 
         pw_framework_attr = {attr: separable_node.framework_attr[attr] for attr in pw_attr_list}
 

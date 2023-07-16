@@ -142,6 +142,14 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the BatchNorm forward folding feature.
         """
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), is_dw=True).run_test()
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3), is_dw=True).run_test()  # DW-Conv test
+        BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1), is_dw=True).run_test()
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), fold_applied=False, is_dw=True).run_test()
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), fold_applied=False, is_dw=True).run_test()  # DW-Conv test
+        BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, (1, 3)), fold_applied=False, is_dw=True).run_test()
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), add_bn=True, is_dw=True).run_test()
+
         BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1)).run_test()
         BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3)).run_test()  # DW-Conv test
         BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1)).run_test()
