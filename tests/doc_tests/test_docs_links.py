@@ -23,8 +23,8 @@ import re
 
 class TestDocsLinks(unittest.TestCase):
     """
-    A test for checking links in 'readme' (.md files) and '.rst' files. Searches for external
-    links (https:) and local folder or files links.
+    A test for checking links in 'readme' (.md files), notebooks (.ipynb files) and '.rst' files.
+    Searches for external links (https:) and local folder or files links.
     """
 
     @staticmethod
@@ -43,7 +43,7 @@ class TestDocsLinks(unittest.TestCase):
         for filepath, _, filenames in walk(mct_folder):
             for filename in filenames:
 
-                if filename.endswith(".md"):
+                if filename.endswith(".md") or filename.endswith(".ipynb"):
                     # readme file detected. go over lines in search of links.
                     with open(join(filepath, filename), "r") as fh:
                         lines = fh.readlines()
@@ -53,6 +53,8 @@ class TestDocsLinks(unittest.TestCase):
                             _strs = re.findall(r'\[.[^]]*\]\(.[^)]*\)', l)
                             for link_str in _strs:
                                 _link = link_str.split(']')[-1][1:-1]
+                                # replace colab link with actual github link because accessing a broken link through colab doesn't return an error
+                                _link = _link.replace('://colab.research.google.com/github/', '://github.com/')
                                 if _link[0] == '#':
                                     # A link starting with '#' is a local reference to a headline in the current file --> ignore
                                     pass
