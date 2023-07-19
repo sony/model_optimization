@@ -17,6 +17,9 @@ from typing import Any
 import tensorflow as tf
 from packaging import version
 
+from mct_quantizers.logger import Logger
+from model_compression_toolkit.core.keras.custom_layer_validation import is_keras_custom_layer
+
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers.core import TFOpLambda, SlicingOpLambda
     from tensorflow.python.keras.engine.keras_tensor import KerasTensor
@@ -55,6 +58,12 @@ def build_node(node: KerasNode,
     op_call_args = node.call_args
     op_call_kwargs = node.call_kwargs
     layer_class = type(keras_layer)  # class path to instantiating it in back2framework.
+
+    # Validate the layer is not a custom layer
+    if is_keras_custom_layer(layer_class):
+        Logger.error(f'MCT does not support optimizing Keras custom layers, but found layer of type {layer_class}. '
+                     f'Please file a feature request or an issue if you believe this is an issue.')
+
     weights = {v.name: v.numpy() for v in keras_layer.weights}  # layer's weights
 
     # If it's a node representing a reused layer, several nodes will contain the same layer instance.
