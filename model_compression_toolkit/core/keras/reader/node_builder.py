@@ -17,8 +17,8 @@ from typing import Any
 import tensorflow as tf
 from packaging import version
 
-from mct_quantizers.logger import Logger
 from model_compression_toolkit.core.keras.custom_layer_validation import is_keras_custom_layer
+from model_compression_toolkit.logger import Logger
 
 if version.parse(tf.__version__) < version.parse("2.6"):
     from tensorflow.python.keras.layers.core import TFOpLambda, SlicingOpLambda
