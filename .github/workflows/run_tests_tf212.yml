@@ -1,0 +1,14 @@
+name: Run Tests - Tensorflow 2.12
+on:
+  workflow_dispatch: # Allow manual triggers
+  schedule:
+    - cron: 0 0 * * *
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-tensorflow-2_12:
+    uses: ./.github/workflows/run_keras_tests.yml
+    with:
+      tf-version: "2.12.*"

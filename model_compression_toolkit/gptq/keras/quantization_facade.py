@@ -50,8 +50,10 @@ if FOUND_TF:
     # As from TF2.9 optimizers package is changed
     if version.parse(tf.__version__) < version.parse("2.9"):
         from keras.optimizer_v2.optimizer_v2 import OptimizerV2
-    else:
+    elif version.parse(tf.__version__) < version.parse("2.12"):
         from keras.optimizers.optimizer_v2.optimizer_v2 import OptimizerV2
+    else:
+        from tensorflow.python.keras.optimizer_v2.optimizer_v2 import OptimizerV2
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
