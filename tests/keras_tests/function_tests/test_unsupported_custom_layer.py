@@ -23,28 +23,25 @@ keras = tf.keras
 layers = keras.layers
 
 
-class CustomFC(keras.layers.Layer):
+class CustomIdentity(keras.layers.Layer):
 
-    def __init__(self, units=32, input_dim=3):
+    def __init__(self):
         super().__init__()
-        self.w = self.add_weight(
-            shape=(input_dim, units), initializer="random_normal", trainable=True
-        )
-        self.b = self.add_weight(shape=(units,), initializer="zeros", trainable=True)
 
     def call(self, inputs):
-        return tf.matmul(inputs, self.w) + self.b
+        return inputs
+
 
 
 class TestUnsupportedCustomLayer(unittest.TestCase):
 
     def test_raised_error_with_custom_layer(self):
         inputs = layers.Input(shape=(3, 3, 3))
-        x = CustomFC()(inputs)
+        x = CustomIdentity()(inputs)
         model = keras.Model(inputs=inputs, outputs=x)
 
         expected_error = f'MCT does not support optimizing Keras custom layers, but found layer of type <class ' \
-                         f'\'test_unsupported_custom_layer.CustomFC\'>. Please file a feature request or an issue if ' \
+                         f'\'test_unsupported_custom_layer.CustomIdentity\'>. Please file a feature request or an issue if ' \
                          f'you believe this is an issue.'
 
         with self.assertRaises(Exception) as e:
