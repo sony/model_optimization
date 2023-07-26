@@ -45,7 +45,8 @@ class QuantInfo:
     """
     def __init__(self, user_info: UserInformation,
                  tpc_info: dict,
-                 technique: str
+                 technique: str,
+                 mp_weights_compression: float = None
                  ):
         """
         Initializes a new instance of the QuantInfo class.
@@ -54,10 +55,12 @@ class QuantInfo:
             user_info (UserInformation): Quantization information returned from MCT
             tpc_info (dict): The target platform capabilities information which is provided to the MCT.
             technique (str): String to describe the quantization method.
+            mp_weights_compression (float): Weights compression factor for mixed precision KPI
         """
         self.user_info = user_info
         self.tpc_info = tpc_info
         self.technique = technique
+        self.mp_weights_compression = mp_weights_compression
 
 
 def read_models_list(filename: str) -> csv.DictReader:
@@ -110,6 +113,8 @@ def parse_results(params: dict, float_acc: float, quant_acc: float, quant_info: 
     a_bits = quant_info.tpc_info['Target Platform Model']['Default quantization config']['activation_n_bits']
     w_bits = quant_info.tpc_info['Target Platform Model']['Default quantization config']['weights_n_bits']
     bit_config = 'W' + str(w_bits) + 'A' + str(a_bits)
+    if quant_info.mp_weights_compression:
+        bit_config += '+MP Comp x' + str(quant_info.mp_weights_compression)
 
     res = {}
     res['ModelName'] = params[MODEL_NAME]

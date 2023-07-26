@@ -52,6 +52,12 @@ def argument_handler():
                         help='Limits the number of images taken for evaluation')
     parser.add_argument('--export_model', action="store_true",
                         help='Whether to export the model after quantization')
+    parser.add_argument('--gptq', action="store_true",
+                        help='Enables Gradient-based Post Training Quantization (GPTQ)')
+    parser.add_argument('--gptq_num_calibration_iter', type=int, default=10,
+                        help='The number of iterations on the representative dataset')
+    parser.add_argument("--mp_weights_compression", type=float, default=None,
+                        help='Weights compression factor for mixed precision KPI')
 
     args = parser.parse_args()
     return args
