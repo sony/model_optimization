@@ -151,7 +151,7 @@ class TestExportingQATModelTFLite(TestExportingQATModelBase):
         for op in self.loaded_model._get_ops_details():
             if op['op_name'] == 'QUANTIZE':
                 # Take scale from quant params of the output tensor of QUANTIZE op
-                exported_model_scales.append(self.loaded_model._get_tensor_details(op['outputs'][0])['quantization_parameters']['scales'][0])
+                exported_model_scales.append(self.loaded_model.get_tensor_details()[op['outputs'][0]]['quantization_parameters']['scales'][0])
 
         # Get Kernel values
         tflite_kernel=None
