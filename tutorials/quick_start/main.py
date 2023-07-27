@@ -54,10 +54,14 @@ def argument_handler():
                         help='Whether to export the model after quantization')
     parser.add_argument('--gptq', action="store_true",
                         help='Enables Gradient-based Post Training Quantization (GPTQ)')
-    parser.add_argument('--gptq_num_calibration_iter', type=int, default=10,
+    parser.add_argument('--gptq_num_calibration_iter', type=int, default=200,
+                        help='The number of iterations on the representative dataset')
+    parser.add_argument('--gptq_lr', type=float, default=1e-4,
                         help='The number of iterations on the representative dataset')
     parser.add_argument("--mp_weights_compression", type=float, default=None,
-                        help='Weights compression factor for mixed precision KPI')
+                        help='Enables mixed-precision quantization for a given weights compression rate. '
+                             'The compression rate is relative to 32 bits fp precision, i.e. For a given'
+                             ' compression-rate of C, the average bits per parameter = 32/C ')
 
     args = parser.parse_args()
     return args

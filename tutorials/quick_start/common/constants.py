@@ -26,3 +26,5 @@ VALIDATION_SET_LIMIT = 'validation_set_limit'
 
 IMAGENET_DATASET = 'ImageNet'
 COCO_DATASET = 'COCO'
+
+BYTES_TO_FP32 = 4
