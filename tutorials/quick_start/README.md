@@ -43,9 +43,9 @@ Make sure to refer to the script itself to understand all available parameters a
 
 #### Advanced model quantization example
 ##### Mixed-precision 
-In this example, we employ the MCT Mixed-Precision quantization workflow to achieve a more aggressive reduction in the model's size. 
+In this example, we use the MCT Mixed-Precision quantization workflow to further reduce the model's size, with minimal reduction in the quantized model accuracy. 
 We use the same pre-trained mobilenet_v2 model as our baseline, with the goal of attaining a model size
-that is 1/5 of the original floating-point model size. This is equivalent to a size reduction factor of 5. 
+that is 1/5 of the original floating-point model weights size. This is equivalent to a size reduction factor of 5. 
 In contrast, the basic PTQ example illustrated earlier only manages to decrease the model size by a factor of 4.
 
 You can execute the following Python script to compress the model:
@@ -55,8 +55,8 @@ python main.py --model_name mobilenet_v2 --model_library torchvision --mp_weight
 
 ##### Gradient-based post training quantization 
 The following example demontrates the use of MCT's Gradient-based Post-Training Quantization (GPTQ) workflow. 
-This approach is superior to the basic PTQ method as it modifies the quantized model weights for enhanced performance
-through the knowledge distillation technique sourced from the original floating-point model.
+This approach is superior to the basic PTQ method as it refines the quantized model weights in order to regain performance.
+The weights modification is done through a knowledge distillation technique sourced from the original floating-point model.
 
 To execute the model compression with this approach, run the following Python script:
 ```python
