@@ -61,7 +61,7 @@ def argument_handler():
     parser.add_argument("--mp_weights_compression", type=float, default=None,
                         help='Enables mixed-precision quantization for a given weights compression rate. '
                              'The compression rate is relative to 32 bits fp precision, i.e. For a given'
-                             ' compression-rate of C, the average bits per parameter = 32/C ')
+                             ' compression-rate of C, the average bits per parameter = 32/C for the compressed model')
 
     args = parser.parse_args()
     return args

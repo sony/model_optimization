@@ -112,9 +112,9 @@ def parse_results(params: dict, float_acc: float, quant_acc: float, quant_info: 
     """
     a_bits = quant_info.tpc_info['Target Platform Model']['Default quantization config']['activation_n_bits']
     w_bits = quant_info.tpc_info['Target Platform Model']['Default quantization config']['weights_n_bits']
-    bit_config = f'W{str(w_bits)}A{str(a_bits)}'
+    bit_config = f'W{w_bits}A{a_bits}'
     if quant_info.mp_weights_compression:
-        bit_config = f'{bit_config},MP-x{str(quant_info.mp_weights_compression)}'
+        bit_config = f'{bit_config},MP-x{quant_info.mp_weights_compression}'
 
     res = {}
     res['ModelName'] = params[MODEL_NAME]
