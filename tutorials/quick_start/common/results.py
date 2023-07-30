@@ -45,7 +45,7 @@ class QuantInfo:
     """
     def __init__(self, user_info: UserInformation,
                  tpc_info: dict,
-                 technique: str,
+                 quantization_workflow: str,
                  mp_weights_compression: float = None
                  ):
         """
@@ -54,12 +54,12 @@ class QuantInfo:
         Args:
             user_info (UserInformation): Quantization information returned from MCT
             tpc_info (dict): The target platform capabilities information which is provided to the MCT.
-            technique (str): String to describe the quantization method.
+            quantization_workflow (str): String to describe the quantization workflow (PTQ, GPTQ etc.).
             mp_weights_compression (float): Weights compression factor for mixed precision KPI
         """
         self.user_info = user_info
         self.tpc_info = tpc_info
-        self.technique = technique
+        self.quantization_workflow = quantization_workflow
         self.mp_weights_compression = mp_weights_compression
 
 
@@ -125,7 +125,7 @@ def parse_results(params: dict, float_acc: float, quant_acc: float, quant_info: 
     res['QuantAcc'] = round(quant_acc, 4)
     res['Size[MB]'] = round(quant_info.user_info.final_kpi.weights_memory / 1e6, 2)
     res['BitsConfig'] = bit_config
-    res['QuantTechnique'] = quant_info.technique
+    res['QuantWorkflow'] = quant_info.quantization_workflow
     res['TPC'] = quant_info.tpc_info['Target Platform Capabilities'] + '-' + quant_info.tpc_info['Version']
 
     return res

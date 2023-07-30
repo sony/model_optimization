@@ -26,7 +26,7 @@ from common.constants import NUM_REPRESENTATIVE_IMAGES, BATCH_SIZE, REPRESENTATI
 from model_compression_toolkit import KPI
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2, CoreConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from tutorials.quick_start.common.constants import BYTES_TO_FP32
+from tutorials.quick_start.common.constants import BYTES_TO_FP32, MP_WEIGHTS_COMPRESSION
 from tutorials.quick_start.common.results import QuantInfo
 
 
@@ -94,20 +94,19 @@ def quantize(model: nn.Module,
     )
 
     # Mixed-precision configurations
-    if args.get('mp_weights_compression', False):
+    mp_wcr = args.get(MP_WEIGHTS_COMPRESSION, None)
+    if mp_wcr:
         mp_conf = MixedPrecisionQuantizationConfigV2()
         core_conf = CoreConfig(mixed_precision_config=mp_conf)
-        mp_wcr = args['mp_weights_compression']
         target_kpi = get_target_kpi(model, mp_wcr, representative_data_gen, core_conf, tpc)
     else:
         core_conf = CoreConfig()
-        mp_wcr = None
         target_kpi = None
 
     # Quantize model
     if args.get('gptq', False):
 
-        technique = 'GPTQ'
+        workflow = 'GPTQ'
         n_epochs = args.get('gptq_num_calibration_iter') // n_iter
         logging.info(
             f"MCT Gradient-based Post Training Quantization is enabled. Number of epochs: {n_epochs}")
@@ -125,7 +124,7 @@ def quantize(model: nn.Module,
 
 
     else:
-        technique = 'PTQ'
+        workflow = 'PTQ'
         quantized_model, quantization_info = \
             mct.ptq.pytorch_post_training_quantization_experimental(model,
                                                                     representative_data_gen=representative_data_gen,
@@ -142,4 +141,4 @@ def quantize(model: nn.Module,
                                           serialization_format=mct.exporter.PytorchExportSerializationFormat.ONNX)
 
 
-    return quantized_model, QuantInfo(user_info=quantization_info, tpc_info=tpc.get_info(), technique=technique, mp_weights_compression=mp_wcr)
+    return quantized_model, QuantInfo(user_info=quantization_info, tpc_info=tpc.get_info(), quantization_workflow=workflow, mp_weights_compression=mp_wcr)
