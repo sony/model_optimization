@@ -21,7 +21,7 @@ Install one of the supported libraries above.
 
 
 ### Usage Examples
-#### Basic model quantization example
+#### Basic model quantization example - Post training quantization (PTQ)
 In the following example, we are evaluating the MCT on pre-trained mobilenet_v2, taken from torchvision models library
 1. Install the required library using `pip`:
 ```bash
@@ -62,6 +62,8 @@ To execute the model compression with this approach, run the following Python sc
 ```python
 python main.py --model_name mobilenet_v2 --model_library torchvision --gptq --validation_dataset_folder <my path> --representative_dataset_folder <my path> 
 ```
+
+Please note that the Mixed-Precision and Gradient-based Post Training Quantization (GPTQ) strategies can be combined to achieve a more significant model compression while mitigating the impact on model performance.
 #### More examples
 More details and examples for using Ultrlytics models can be found in this [readme](./pytorch_fw/ultralytics/README.md)   
 
