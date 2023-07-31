@@ -127,6 +127,10 @@ def keras_iterative_approx_jacobian_trace(graph_float: common.Graph,
     point's output has on the model's output.
     """
 
+    if len(interest_points) == 1:
+        # Only one compare point, nothing else to "weight"
+        return [1.0]
+
     if not all([images.shape[0] == 1 for node, images in model_input_tensors.items()]):
         Logger.critical("Iterative jacobian trace computation is only supported on a single image sample")  # pragma: no cover
 

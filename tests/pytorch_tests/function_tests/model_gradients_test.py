@@ -433,3 +433,25 @@ class ModelGradientsNonDifferentiableNodeModelTest(BasePytorchTest):
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
+
+
+class ModelGradientsSinglePointTest(ModelGradientsBasicModelTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def run_test(self, seed=0):
+        model_float = basic_model()
+        pytorch_impl = PytorchImplementation()
+        graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
+                                           self.representative_data_gen, generate_pytorch_tpc)
+        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
+
+        ipts = [graph.get_topo_sorted_nodes()[-1]]
+        output_list = [ipts[-1]]
+        model_grads = pytorch_impl.model_grad(graph_float=graph,
+                                              model_input_tensors=input_tensors,
+                                              interest_points=ipts,
+                                              output_list=output_list,
+                                              all_outputs_indices=[len(ipts) - 1])
+
+        self.unit_test.assertTrue(len(model_grads) == 1 and model_grads[0] == 1.0)

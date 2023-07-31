@@ -239,6 +239,10 @@ def pytorch_iterative_approx_jacobian_trace(graph_float: common.Graph,
     point's output has on the model's output.
     """
 
+    if len(interest_points) == 1:
+        # Only one compare point, nothing else to "weight"
+        return [1.0]
+
     # Set inputs to require_grad
     for n, input_tensor in model_input_tensors.items():
         input_tensor.requires_grad_()

@@ -221,3 +221,24 @@ class TestModelGradients(unittest.TestCase):
         graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
 
         self._run_model_grad_test(graph, keras_impl)
+
+    def test_model_grad_single_point(self):
+        input_shape = (8, 8, 3)
+        in_model = basic_model(input_shape)
+        keras_impl = KerasImplementation()
+        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
+
+        sorted_graph_nodes = graph.get_topo_sorted_nodes()
+        interest_points = [sorted_graph_nodes[-1]]
+
+        input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
+        output_nodes = [sorted_graph_nodes[-1]]
+        output_indices = [len(interest_points) - 1]
+
+        x = keras_impl.model_grad(graph_float=graph,
+                                  model_input_tensors=input_tensors,
+                                  interest_points=interest_points,
+                                  output_list=output_nodes,
+                                  all_outputs_indices=output_indices)
+
+        self.assertTrue(len(x) == 1 and x[0] == 1.0)
