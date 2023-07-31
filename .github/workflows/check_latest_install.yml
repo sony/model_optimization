@@ -6,14 +6,14 @@ on:
     - cron: 0 0 * * *
 
 jobs:
-  run-tensorflow-tests:
+  check-latest-install:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Install Python 3
         uses: actions/setup-python@v1
         with:
-          python-version: 3.10
+          python-version: "3.10"
       - name: Install latest MCT
         run: |
           python -m pip install --upgrade pip
