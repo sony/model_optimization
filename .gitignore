@@ -1,5 +1,3 @@
-data/
-tutorials/notebooks/.ipynb_checkpoints/
 .idea/
 scratch_pad.py
 **/__pycache__/
