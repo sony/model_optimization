@@ -284,7 +284,7 @@ class SensitivityEvaluation:
                                                   framework_attrs=self.interest_points[i].framework_attr,
                                                   compute_distance_fn=self.quant_config.compute_distance_fn)
 
-            axis = self.interest_points[i].framework_attr.get(AXIS, None)
+            axis = self.interest_points[i].framework_attr.get(AXIS)
             distance_matrix[i] = point_distance_fn(baseline_tensors[i], mp_tensors[i], batch=True, axis=axis)
 
         return distance_matrix

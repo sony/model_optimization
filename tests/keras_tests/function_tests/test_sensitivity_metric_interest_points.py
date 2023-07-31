@@ -71,7 +71,7 @@ def softmax_model(input_shape):
     inputs = tf.keras.layers.Input(shape=input_shape)
     x = tf.keras.layers.Conv2D(32, 4)(inputs)
     x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.Softmax(axis=-1)(x)
+    x = tf.keras.layers.Softmax(axis=2)(x)
     x = tf.keras.layers.Dense(32)(x)
     outputs = tf.nn.softmax(x, axis=-1)
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
