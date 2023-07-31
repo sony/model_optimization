@@ -19,6 +19,7 @@ from keras.applications.densenet import DenseNet121
 from keras.applications.mobilenet_v2 import MobileNetV2
 from keras.layers import TFOpLambda
 
+from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
@@ -132,8 +133,12 @@ class TestSensitivityMetricInterestPoints(unittest.TestCase):
             self.assertEqual(distance_fn, compute_kl_divergence,
                              f"Softmax node should use KL Divergence for distance computation.")
 
-            distance_per_softmax_axis = distance_fn(t1, t2, axis=-1)
-            distance_global = distance_fn(t1, t2, axis=None)
+            axis = sn.framework_attr.get(AXIS)
+            if axis is None:
+                axis = sn.op_call_kwargs.get(AXIS)
+
+            distance_per_softmax_axis = distance_fn(t1, t2, batch=True, axis=axis)
+            distance_global = distance_fn(t1, t2, batch=True, axis=None)
 
             self.assertFalse(np.isclose(distance_per_softmax_axis, distance_global),
                              f"Computing distance for softmax node on softmax activation axis should be different than "

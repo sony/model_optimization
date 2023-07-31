@@ -65,9 +65,11 @@ def flatten_tensor(t: np.ndarray, batch: bool, axis: int = None) -> np.ndarray:
     """
 
     if axis is not None and batch:
-        f_t = t.reshape([t.shape[0], -1, t.shape[axis]])
+        t = np.moveaxis(t, axis, -1)
+        f_t = t.reshape([t.shape[0], -1, t.shape[-1]])
     elif axis is not None:
-        f_t = t.reshape([-1, t.shape[axis]])
+        t = np.moveaxis(t, axis, -1)
+        f_t = t.reshape([-1, t.shape[-1]])
     elif batch:
         f_t = t.reshape([t.shape[0], -1])
     else:
