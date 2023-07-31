@@ -99,8 +99,10 @@ def quantization_flow(config: Dict) -> Tuple[float, float, QuantInfo, DatasetInf
     # Evaluate the float model
     float_results, _ = ml.evaluate(float_model)
 
-    # Run model compression toolkit
+    # Select the target platform capabilities (https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/README.md)
     target_platform_cap = quant.get_tpc(config[TARGET_PLATFORM_NAME], config[TARGET_PLATFORM_VERSION])
+
+    # Run model compression toolkit
     quantized_model, quantization_info = quant.quantize(float_model,
                                                         ml.get_representative_dataset,
                                                         target_platform_cap,

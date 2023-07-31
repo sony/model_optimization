@@ -68,7 +68,7 @@ Please note that the Mixed-Precision and Gradient-based Post Training Quantizati
 More details and examples for using Ultrlytics models can be found in this [readme](./pytorch_fw/ultralytics/README.md)   
 
 ## Results
-The latest performance results of MCT on various of models can be found in the [model_quantization_results.csv](./results/model_quantization_results.csv) table. 
+The latest performance results of MCT on various of models can be found in the [results CSV](./results/model_quantization_results.csv) table. 
 
 ## External Package Versions
 
