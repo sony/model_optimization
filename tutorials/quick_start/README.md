@@ -21,7 +21,7 @@ Install one of the supported libraries above.
 
 
 ### Usage Examples
-#### Single model quantization example
+#### Basic model quantization example - Post training quantization (PTQ)
 In the following example, we are evaluating the MCT on pre-trained mobilenet_v2, taken from torchvision models library
 1. Install the required library using `pip`:
 ```bash
@@ -37,29 +37,38 @@ In this example, we are running the main.py script with the following parameters
 - `--validation_dataset_folder`: Specifies the path to the local copy of the dataset to be used for evaluation.
 - `--representative_dataset_folder`: Specifies the path to the local copy of the dataset to be used for quantization.
 
-#### Set of models quantization example
-In the following example, we evaluate a set of pre-trained models. Assuming that the necessary packages have been installed (as mentioned earlier), we use the following command:
-```python
-python main.py --models_list_csv <myfile.csv>
-```
-The content of the CSV file consists of a tabular structure where each line represents a model along with its corresponding parameters to be used. For instance:
-
-| model_name    | model_library | dataset_name  | validation_dataset_folder     | representative_dataset_folder     |
-|---------------|---------------|---------------|-------------------------------|-----------------------------------|
-| mobilenet_v2  | torchvision   | ImageNet      | /path/to/validation/dataset   | /path/to/representative/dataset   |
-| regnetx_002   | timm          | ImageNet      | /path/to/validation/dataset   | /path/to/representative/dataset   |
-
-
-
 Please note that the above example assumes the command is run from the command line and that the [main.py](./main.py) script is in the current directory.
 
 Make sure to refer to the script itself to understand all available parameters and their usage.
 
+#### Advanced model quantization example
+##### Mixed-precision 
+In this example, we use the MCT Mixed-Precision quantization workflow to further reduce the model's size, with minimal reduction in the quantized model accuracy. 
+We use the same pre-trained mobilenet_v2 model as our baseline, with the goal of attaining a model size
+that is 1/5 of the original floating-point model weights size. This is equivalent to a size reduction factor of 5. 
+In contrast, the basic PTQ example illustrated earlier only manages to decrease the model size by a factor of 4.
+
+You can execute the following Python script to compress the model:
+```python
+python main.py --model_name mobilenet_v2 --model_library torchvision --mp_weights_compression 5 --validation_dataset_folder <my path> --representative_dataset_folder <my path> 
+```
+
+##### Gradient-based post training quantization 
+The following example demontrates the use of MCT's Gradient-based Post-Training Quantization (GPTQ) workflow. 
+This approach is superior to the basic PTQ method as it refines the quantized model weights in order to regain performance.
+The weights modification is done through a knowledge distillation technique sourced from the original floating-point model.
+
+To execute the model compression with this approach, run the following Python script:
+```python
+python main.py --model_name mobilenet_v2 --model_library torchvision --gptq --validation_dataset_folder <my path> --representative_dataset_folder <my path> 
+```
+
+Please note that the Mixed-Precision and Gradient-based Post Training Quantization (GPTQ) strategies can be combined to achieve a more significant model compression while mitigating the impact on model performance.
 #### More examples
 More details and examples for using Ultrlytics models can be found in this [readme](./pytorch_fw/ultralytics/README.md)   
 
 ## Results
-The latest performance results of MCT on various of models can be found in the [model_quantization_results.csv](./results/model_quantization_results.csv) table. 
+The latest performance results of MCT on various of models can be found in the [results CSV](./results/model_quantization_results.csv) table. 
 
 ## External Package Versions
 

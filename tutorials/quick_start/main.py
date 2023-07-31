@@ -52,6 +52,16 @@ def argument_handler():
                         help='Limits the number of images taken for evaluation')
     parser.add_argument('--export_model', action="store_true",
                         help='Whether to export the model after quantization')
+    parser.add_argument('--gptq', action="store_true",
+                        help='Enables Gradient-based Post Training Quantization (GPTQ)')
+    parser.add_argument('--gptq_num_calibration_iter', type=int, default=200,
+                        help='The number of iterations on the representative dataset')
+    parser.add_argument('--gptq_lr', type=float, default=1e-4,
+                        help='The number of iterations on the representative dataset')
+    parser.add_argument("--mp_weights_compression", type=float, default=None,
+                        help='Enables mixed-precision quantization for a given weights compression rate. '
+                             'The compression rate is relative to 32 bits fp precision, i.e. For a given'
+                             ' compression-rate of C, the average bits per parameter = 32/C for the compressed model')
 
     args = parser.parse_args()
     return args
@@ -89,8 +99,10 @@ def quantization_flow(config: Dict) -> Tuple[float, float, QuantInfo, DatasetInf
     # Evaluate the float model
     float_results, _ = ml.evaluate(float_model)
 
-    # Run model compression toolkit
+    # Select the target platform capabilities (https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/README.md)
     target_platform_cap = quant.get_tpc(config[TARGET_PLATFORM_NAME], config[TARGET_PLATFORM_VERSION])
+
+    # Run model compression toolkit
     quantized_model, quantization_info = quant.quantize(float_model,
                                                         ml.get_representative_dataset,
                                                         target_platform_cap,

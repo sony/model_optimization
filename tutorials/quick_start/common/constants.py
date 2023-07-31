@@ -23,6 +23,9 @@ VALIDATION_DATASET_FOLDER = 'validation_dataset_folder'
 TARGET_PLATFORM_NAME = 'target_platform_name'
 TARGET_PLATFORM_VERSION = 'target_platform_version'
 VALIDATION_SET_LIMIT = 'validation_set_limit'
+MP_WEIGHTS_COMPRESSION = 'mp_weights_compression'
 
 IMAGENET_DATASET = 'ImageNet'
 COCO_DATASET = 'COCO'
+
+BYTES_TO_FP32 = 4
