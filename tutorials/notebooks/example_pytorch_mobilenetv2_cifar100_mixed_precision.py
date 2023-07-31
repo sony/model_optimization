@@ -20,6 +20,7 @@
 import argparse
 import copy
 import tempfile
+import random
 
 import torch
 import torchvision
@@ -28,13 +29,21 @@ from torchvision import transforms
 from tqdm import tqdm
 
 import model_compression_toolkit as mct
+import numpy as np
 
+def seed_everything(seed_value):
+    random.seed(seed_value)
+    np.random.seed(seed_value)
+    torch.manual_seed(seed_value)
+    torch.cuda.manual_seed_all(seed_value)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 def argument_handler():
     parser = argparse.ArgumentParser()
     parser.add_argument('--retrain_num_epochs', type=int, default=20,
                         help='Number of epochs for the retraining phase.')
-    parser.add_argument('--eval_batch_size', type=int, default=512,
+    parser.add_argument('--eval_batch_size', type=int, default=32,
                         help='Batch size for evaluation.')
     parser.add_argument('--retrain_batch_size', type=int, default=32,
                         help='Batch size for retraining.')
@@ -165,6 +174,8 @@ if __name__ == '__main__':
     # Parse arguments
     args = argument_handler()
 
+    seed_everything(args.seed)
+
     # Load pretrained MobileNetV2 model on ImageNet
     model = torchvision.models.mobilenet_v2(pretrained=True)
 
@@ -203,6 +214,10 @@ if __name__ == '__main__':
             yield [next(iter(trainloader))[0]]
 
 
+    # Get a TargetPlatformCapabilities object that models the hardware for the quantized model inference.
+    # Here, for example, we use the default platform that is attached to a Pytorch layers representation.
+    target_platform_cap = mct.get_target_platform_capabilities('pytorch', 'default')
+
     # Create a mixed-precision quantization configuration with possible mixed-precision search options.
     # MCT will search a mixed-precision configuration (namely, bit-width for each layer)
     # and quantize the model according to this configuration.
@@ -210,10 +225,6 @@ if __name__ == '__main__':
     configuration = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2(
         num_of_images=args.mixed_precision_num_of_images,
         use_grad_based_weights=args.enable_mixed_precision_gradients_weighting))
-
-    # Get a TargetPlatformCapabilities object that models the hardware for the quantized model inference.
-    # Here, for example, we use the default platform that is attached to a Pytorch layers representation.
-    target_platform_cap = mct.get_target_platform_capabilities('pytorch', 'default')
 
     # Get KPI information to constraint your model's memory size.
     # Retrieve a KPI object with helpful information of each KPI metric,
