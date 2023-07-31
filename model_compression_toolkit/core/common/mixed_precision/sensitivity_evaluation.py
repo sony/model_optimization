@@ -17,6 +17,7 @@ import copy
 import numpy as np
 from typing import Callable, Any, List
 
+from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
@@ -283,7 +284,8 @@ class SensitivityEvaluation:
                                                   framework_attrs=self.interest_points[i].framework_attr,
                                                   compute_distance_fn=self.quant_config.compute_distance_fn)
 
-            distance_matrix[i] = point_distance_fn(baseline_tensors[i], mp_tensors[i], batch=True)
+            axis = self.interest_points[i].framework_attr.get(AXIS, None)
+            distance_matrix[i] = point_distance_fn(baseline_tensors[i], mp_tensors[i], batch=True, axis=axis)
 
         return distance_matrix
 

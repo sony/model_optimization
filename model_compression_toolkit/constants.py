@@ -42,6 +42,7 @@ RANGE_MAX = 'range_max'
 REUSE = 'reuse'
 REUSE_GROUP = 'reuse_group'
 LAST_AXIS = -1
+AXIS = 'axis'
 
 # Data types:
 DATA_TYPE = 'dtype'

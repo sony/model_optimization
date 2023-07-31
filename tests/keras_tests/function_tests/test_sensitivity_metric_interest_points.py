@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import tensorflow as tf
 import unittest
+import numpy as np
 from keras.applications.densenet import DenseNet121
 from keras.applications.mobilenet_v2 import MobileNetV2
+from keras.layers import TFOpLambda
 
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
@@ -23,7 +26,7 @@ from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluatio
 from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
-from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
+from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_keras_tpc
@@ -64,6 +67,17 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
     return ips, graph, fw_info
 
 
+def softmax_model(input_shape):
+    inputs = tf.keras.layers.Input(shape=input_shape)
+    x = tf.keras.layers.Conv2D(32, 4)(inputs)
+    x = tf.keras.layers.BatchNormalization()(x)
+    x = tf.keras.layers.Softmax(axis=-1)(x)
+    x = tf.keras.layers.Dense(32)(x)
+    outputs = tf.nn.softmax(x, axis=-1)
+    model = tf.keras.Model(inputs=inputs, outputs=outputs)
+    return model
+
+
 class TestSensitivityMetricInterestPoints(unittest.TestCase):
 
     def test_filtered_interest_points_set(self):
@@ -96,7 +110,34 @@ class TestSensitivityMetricInterestPoints(unittest.TestCase):
         with self.assertRaises(Exception):
             ips, graph, fw_info = build_ip_list_for_test(in_model, num_interest_points_factor=0)
 
+    def test_softmax_interest_point(self):
+        in_model = softmax_model((16, 16, 3))
+        ips, graph, fw_info = build_ip_list_for_test(in_model, num_interest_points_factor=1.0)
 
+        softmax_nodes = [n for n in graph.get_topo_sorted_nodes() if n.layer_class == tf.keras.layers.Softmax or
+                         (n.layer_class == TFOpLambda and n.framework_attr['function'] == 'nn.softmax')]
+        softmax_node2layer = {n: [l for l in in_model.layers if isinstance(l, n.layer_class)][0] for n in softmax_nodes}
+
+        self.assertTrue(len(softmax_nodes) == 2)
+
+        for sn in softmax_nodes:
+            self.assertIn(sn, ips, f"Expecting a softmax layer to be considered as interest point for "
+                                   f"mixed precision distance metric but node {sn.name} is missing.")
+
+            t1 = softmax_node2layer[sn](np.random.rand(*[8, *softmax_node2layer[sn].input_shape[1:]])).numpy()
+            t2 = softmax_node2layer[sn](np.random.rand(*[8, *softmax_node2layer[sn].input_shape[1:]])).numpy()
+
+            distance_fn = KerasImplementation().get_node_distance_fn(layer_class=sn.layer_class,
+                                                                     framework_attrs=sn.framework_attr)
+            self.assertEqual(distance_fn, compute_kl_divergence,
+                             f"Softmax node should use KL Divergence for distance computation.")
+
+            distance_per_softmax_axis = distance_fn(t1, t2, axis=-1)
+            distance_global = distance_fn(t1, t2, axis=None)
+
+            self.assertFalse(np.isclose(distance_per_softmax_axis, distance_global),
+                             f"Computing distance for softmax node on softmax activation axis should be different than "
+                             f"on than computing on the entire tensor.")
 
 
 if __name__ == '__main__':
