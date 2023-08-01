@@ -60,12 +60,12 @@ The weights modification is done through a knowledge distillation technique sour
 
 To execute the model compression with this approach, run the following Python script:
 ```python
-python main.py --model_name mobilenet_v2 --model_library torchvision --gptq --validation_dataset_folder <my path> --representative_dataset_folder <my path> 
+python main.py --model_name mobilenet_v2 --model_library torchvision_lib --gptq --validation_dataset_folder <my path> --representative_dataset_folder <my path> 
 ```
 
 Please note that the Mixed-Precision and Gradient-based Post Training Quantization (GPTQ) strategies can be combined to achieve a more significant model compression while mitigating the impact on model performance.
 #### More examples
-More details and examples for using Ultrlytics models can be found in this [readme](./pytorch_fw/ultralytics/README.md)   
+More details and examples for using Ultrlytics models can be found in this [readme](./pytorch_fw/ultralytics_lib/README.md)   
 
 ## Results
 The latest performance results of MCT on various of models can be found in the [results CSV](./results/model_quantization_results.csv) table. 
