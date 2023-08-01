@@ -60,12 +60,12 @@ The weights modification is done through a knowledge distillation technique sour
 
 To execute the model compression with this approach, run the following Python script:
 ```python
-python main.py --model_name mobilenet_v2 --model_library torchvision --gptq --validation_dataset_folder <my path> --representative_dataset_folder <my path> 
+python main.py --model_name mobilenet_v2 --model_library torchvision_lib --gptq --validation_dataset_folder <my path> --representative_dataset_folder <my path> 
 ```
 
 Please note that the Mixed-Precision and Gradient-based Post Training Quantization (GPTQ) strategies can be combined to achieve a more significant model compression while mitigating the impact on model performance.
 #### More examples
-More details and examples for using Ultrlytics models can be found in this [readme](./pytorch_fw/ultralytics/README.md)   
+More details and examples for using Ultrlytics models can be found in this [readme](./pytorch_fw/ultralytics_lib/README.md)   
 
 ## Results
 The latest performance results of MCT on various of models can be found in the [results CSV](./results/model_quantization_results.csv) table. 
@@ -83,7 +83,7 @@ The following external packages were tested with this project:
 This project is licensed under [Apache License 2.0](../../LICENSE.md).
 However, please note that different external packages have their own licenses. When using this project, you have the option to choose one of the following external packages:
 
-- torchvision: [license link](https://github.com/UiPath/torchvision/blob/master/LICENSE), [license copy](./pytorch_fw/torchvision/LICENSE)
-- timm: [license link](https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE), [license copy](./pytorch_fw/timm/LICENSE)
-- ultralytics: [license link](https://github.com/ultralytics/ultralytics/blob/main/LICENSE), [license copy](./pytorch_fw/ultralytics/LICENSE)
+- torchvision: [license link](https://github.com/UiPath/torchvision/blob/master/LICENSE), [license copy](./pytorch_fw/torchvision_lib/LICENSE)
+- timm: [license link](https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE), [license copy](./pytorch_fw/timm_lib/LICENSE)
+- ultralytics: [license link](https://github.com/ultralytics/ultralytics/blob/main/LICENSE), [license copy](./pytorch_fw/ultralytics_lib/LICENSE)
 - keras-applications: [license link](https://github.com/keras-team/keras-applications/blob/master/LICENSE), [license copy](./keras_fw/keras_applications/LICENSE)
