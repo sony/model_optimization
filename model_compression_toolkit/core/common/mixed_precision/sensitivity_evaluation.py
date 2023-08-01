@@ -17,8 +17,10 @@ import copy
 import numpy as np
 from typing import Callable, Any, List
 
+from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
 
@@ -278,12 +280,16 @@ class SensitivityEvaluation:
         distance_matrix = np.ndarray((num_interest_points, num_samples))
 
         for i in range(num_interest_points):
+            point_node = self.interest_points[i]
             point_distance_fn = \
-                self.fw_impl.get_node_distance_fn(layer_class=self.interest_points[i].layer_class,
-                                                  framework_attrs=self.interest_points[i].framework_attr,
+                self.fw_impl.get_node_distance_fn(layer_class=point_node.layer_class,
+                                                  framework_attrs=point_node.framework_attr,
                                                   compute_distance_fn=self.quant_config.compute_distance_fn)
 
-            distance_matrix[i] = point_distance_fn(baseline_tensors[i], mp_tensors[i], batch=True)
+            axis = point_node.framework_attr.get(AXIS) if not isinstance(point_node, FunctionalNode) \
+                else point_node.op_call_kwargs.get(AXIS)
+
+            distance_matrix[i] = point_distance_fn(baseline_tensors[i], mp_tensors[i], batch=True, axis=axis)
 
         return distance_matrix
 

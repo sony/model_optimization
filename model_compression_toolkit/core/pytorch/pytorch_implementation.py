@@ -389,7 +389,8 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: True if the node should be considered an interest point, False otherwise.
         """
 
-        if node.type in [Conv2d, Linear, ConvTranspose2d, Sigmoid, sigmoid, Softmax, softmax, operator.add, add, cat]:
+        if node.type in [Conv2d, Linear, ConvTranspose2d, Sigmoid, sigmoid, Softmax, softmax, operator.add, add, cat,
+                         operator.concat]:
             return True
         return False
 
@@ -466,7 +467,7 @@ class PytorchImplementation(FrameworkImplementation):
 
         """
 
-        return node.layer_class not in [argmax, softmax]
+        return node.layer_class not in [argmax, softmax, Softmax]
 
     def get_node_mac_operations(self,
                                 node: BaseNode,

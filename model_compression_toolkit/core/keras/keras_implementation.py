@@ -417,8 +417,8 @@ class KerasImplementation(FrameworkImplementation):
             node_type_name = node.framework_attr[keras_constants.ACTIVATION]
             if node_type_name in [keras_constants.SOFTMAX, keras_constants.SIGMOID]:
                 return True
-        elif node.type in [tf.nn.softmax, tf.nn.sigmoid, Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense, Concatenate,
-                           Add, tf.add]:
+        elif node.type in [tf.nn.softmax, tf.keras.layers.Softmax, tf.nn.sigmoid, Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense, Concatenate,
+                           tf.concat, Add, tf.add]:
             return True
 
         return False
@@ -448,7 +448,8 @@ class KerasImplementation(FrameworkImplementation):
                 return compute_kl_divergence
             elif node_type_name == SIGMOID:
                 return compute_cs
-        elif layer_class == tf.nn.softmax:
+        elif layer_class == tf.nn.softmax or layer_class == tf.keras.layers.Softmax \
+                or (layer_class == TFOpLambda and SOFTMAX in framework_attrs[keras_constants.FUNCTION]):
             return compute_kl_divergence
         elif layer_class == tf.nn.sigmoid:
             return compute_cs
@@ -507,7 +508,7 @@ class KerasImplementation(FrameworkImplementation):
             node_attr = getattr(node, 'framework_attr', None)
             if node_attr is not None and (ARGMAX in node_attr[LAYER_NAME] or SOFTMAX in node_attr[LAYER_NAME]):
                 return False
-        elif node.layer_class == tf.nn.softmax or node.layer_class == tf.math.argmax:
+        elif node.layer_class in [tf.nn.softmax, tf.keras.layers.Softmax, tf.math.argmax]:
             return False
 
         return True
