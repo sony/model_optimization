@@ -1,0 +1,100 @@
+from functools import partial
+from typing import Any, List
+
+import torch
+from torch import nn
+from torch.optim import Optimizer, RAdam
+from torch.optim.lr_scheduler import StepLR
+import torch.nn.functional as F
+
+from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig
+from model_compression_toolkit.data_generation.common.enums import SchedularType, BatchNormAlignemntLossType, \
+    DataInitType, LayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
+from model_compression_toolkit.data_generation.pytorch.pytorch_data_generation import \
+    pytorch_data_generation_experimental
+
+
+class BaseDataGenerationModel(torch.nn.Module):
+    def __init__(self):
+        super(BaseDataGenerationModel, self).__init__()
+        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1)
+        self.bn1 = nn.BatchNorm2d(16)
+        self.conv2 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
+        self.bn2 = nn.BatchNorm2d(16)
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
+        out = F.relu(out)
+        return out
+
+class BasePytorchDataGenerationTest:
+
+    def __init__(self,
+                 unit_test,
+                 n_images: int = 32,
+                 output_image_size: int = 32,
+                 n_iter: int = 10,
+                 optimizer: Optimizer = RAdam,
+                 scheduler: Any = partial(StepLR, step_size=10),
+                 data_gen_batch_size=8,
+                 initial_lr=0.05,
+                 output_loss_multiplier=0.0001,
+                 scheduler_type: SchedularType = SchedularType.STEP,
+                 bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
+                 output_loss_type: OutputLossType = OutputLossType.MIN_MAX_DIFF,
+                 data_init_type: DataInitType = DataInitType.Diverse,
+                 layer_weighting_type: LayerWeightingType = LayerWeightingType.AVERAGE,
+                 image_granularity=ImageGranularity.AllImages,
+                 image_pipeline_type: ImagePipelineType = ImagePipelineType.CROP_FLIP,
+                 image_normalization_type: ImageNormalizationType = ImageNormalizationType.TORCHVISION,
+                 image_padding: int = 0,
+                 bn_layer_types: List = [torch.nn.BatchNorm2d]
+                 ):
+        self.unit_test = unit_test
+        self.model = BaseDataGenerationModel()
+        self.n_images = n_images
+        self.output_image_size = output_image_size
+        self.n_iter = n_iter
+        self.optimizer = optimizer
+        self.scheduler = scheduler
+        self.data_gen_batch_size = data_gen_batch_size
+        self.initial_lr = initial_lr
+        self.output_loss_multiplier = output_loss_multiplier
+        self.scheduler_type = scheduler_type
+        self.bn_alignment_loss_type = bn_alignment_loss_type
+        self.output_loss_type = output_loss_type
+        self.data_init_type = data_init_type
+        self.layer_weighting_type = layer_weighting_type
+        self.image_granularity = image_granularity
+        self.image_pipeline_type = image_pipeline_type
+        self.image_normalization_type = image_normalization_type
+        self.image_padding = image_padding
+        self.bn_layer_types = bn_layer_types
+
+
+    def get_data_generation_config(self):
+        return DataGenerationConfig(
+            n_iter=self.n_iter,
+            optimizer=self.optimizer,
+            data_gen_batch_size=self.data_gen_batch_size,
+            initial_lr=self.initial_lr,
+            output_loss_multiplier=self.output_loss_multiplier,
+            scheduler_type=self.scheduler_type,
+            bn_alignment_loss_type=self.bn_alignment_loss_type,
+            output_loss_type=self.output_loss_type,
+            data_init_type=self.data_init_type,
+            layer_weighting_type=self.layer_weighting_type,
+            image_granularity=self.image_granularity,
+            image_pipeline_type=self.image_pipeline_type,
+            image_normalization_type=self.image_normalization_type,
+            image_padding=self.image_padding,
+            bn_layer_types=self.bn_layer_types)
+
+    def run_test(self):
+        data_generation_config = self.get_data_generation_config()
+        data_loader = pytorch_data_generation_experimental(
+            model=self.model,
+            n_images=self.n_images,
+            output_image_size=self.output_image_size,
+            data_generation_config=data_generation_config)

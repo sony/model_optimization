@@ -1,47 +1,102 @@
-from typing import List, Callable, Type, Any, Dict, Tuple
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+from typing import List, Callable, Type, Any, Tuple
+
 import numpy as np
 import torch
 from torch import Tensor
+from torch.nn import Module
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
+from torchvision.transforms import Normalize
 
-from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig, \
-    ImageGranularity, BaseImagePipeline
-from model_compression_toolkit.data_generation.pytorch.constants import DEVICE, IMAGE_INPUT, BATCH_AXIS, H_AXIS, W_AXIS
-from model_compression_toolkit.data_generation.pytorch.model_info_exctractors import ActivationExtractor, \
-    OrigBNStatsHolder
+from model_compression_toolkit.data_generation.common.enums import ImageGranularity
+from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
+from model_compression_toolkit.data_generation.common.optimization_utils import BatchStatsHolder, AllImgsStatsHolder, \
+    BatchOptimizationHolder, AllImagesOptimizationHandler
+from model_compression_toolkit.data_generation.pytorch.constants import DEVICE, IMAGE_INPUT
+from model_compression_toolkit.data_generation.pytorch.model_info_exctractors import ActivationExtractor
 
 
-class AllImagesOptimizationHandler:
+class PytorchAllImagesOptimizationHandler(AllImagesOptimizationHandler):
+    """
+    An extension of AllImagesOptimizationHandler specifically for PyTorch models.
+    """
     def __init__(self,
-                 init_dataset: DataLoader,
-                 data_generation_config: DataGenerationConfig,
+                 model: Any,
+                 data_gen_batch_size: int,
+                 init_dataset: Any,
+                 optimizer: Optimizer,
                  image_pipeline: BaseImagePipeline,
                  activation_extractor: ActivationExtractor,
+                 image_granularity: ImageGranularity,
+                 scheduler_step_fn: Callable,
+                 scheduler: Any,
+                 initial_lr: float,
+                 normalization_mean: List[float],
+                 normalization_std: List[float],
+                 clip_images: bool,
+                 reflection: bool,
                  eps: float = 1e-6):
         """
-        Constructor for the AllImagesOptimizationHandler class.
+        Constructor for the PytorchAllImagesOptimizationHandler class.
 
         Args:
-            init_dataset (torch.utils.data.Dataset): The initial dataset used for images generation.
-            data_generation_config (DataGenerationConfig): Configurations for data generation.
+            model (Any): The PyTorch model.
+            data_gen_batch_size (int): Batch size for generating data.
+            init_dataset (Any): The initial dataset used for image generation.
+            optimizer (Optimizer): The optimizer for updating the model parameters.
             image_pipeline (BaseImagePipeline): The image pipeline for processing images.
             activation_extractor (ActivationExtractor): Extractor for layer activations.
+            image_granularity (ImageGranularity): The granularity of the images.
+            scheduler_step_fn (Callable): The function to perform a scheduler step.
+            scheduler (Any): The scheduler responsible for adjusting the learning rate of the optimizer over time.
+            initial_lr (float): The initial learning rate used by the optimizer.
+            normalization_mean (List[float]): The mean values for image normalization.
+            normalization_std (List[float]): The standard deviation values for image normalization.
+            clip_images (bool): Whether to clip the images during optimization.
+            reflection (bool): Whether to use reflection during image clipping.
             eps (float): A small value added for numerical stability.
         """
-        self.data_generation_config = data_generation_config
-        self.image_pipeline = image_pipeline
-        self.batch_size = self.data_generation_config.data_gen_batch_size
-        self.eps = eps
-        self.targets = []
-        self.use_all_data_stats = False
+        super(PytorchAllImagesOptimizationHandler, self).__init__(model=model,
+                                                                  data_gen_batch_size=data_gen_batch_size,
+                                                                  init_dataset=init_dataset,
+                                                                  optimizer=optimizer,
+                                                                  image_pipeline=image_pipeline,
+                                                                  activation_extractor=activation_extractor,
+                                                                  image_granularity=image_granularity,
+                                                                  scheduler_step_fn=scheduler_step_fn,
+                                                                  scheduler=scheduler,
+                                                                  initial_lr=initial_lr,
+                                                                  normalization_mean=normalization_mean,
+                                                                  normalization_std=normalization_std,
+                                                                  clip_images=clip_images,
+                                                                  reflection=reflection,
+                                                                  eps=eps)
 
-        # Determine if all data statistics should be used
-        if data_generation_config.image_granularity in [ImageGranularity.AllImages]:
-            self.use_all_data_stats = True
+        # Image valid grid
+        t = torch.from_numpy(np.array(list(range(256))).repeat(3).reshape(-1, 3) / 255)
+        self.valid_grid = Normalize(mean=normalization_mean,
+                                    std=normalization_std)(t.transpose(1, 0)[None, :, :, None]).squeeze().to(DEVICE)
+
 
         # Set the mean axis based on the image granularity
-        self.mean_axis = data_generation_config.get_dimensions_for_average()
+        if self.image_granularity == ImageGranularity.ImageWise:
+            self.mean_axis = [2, 3]
+        else:
+            self.mean_axis = [0, 2, 3]
 
         # Create BatchOptimizationHolder objects for each batch in the initial dataset
         self.batch_opt_holders_list = []
@@ -52,19 +107,18 @@ class AllImagesOptimizationHandler:
                 targets.to(DEVICE)
             else:
                 batched_images = data_input
-                targets = None
+                # targets = torch.randint(1000, [batched_images.size(0)])
             self.batch_opt_holders_list.append(
-                BatchOptimizationHolder(
+                PytorchBatchOptimizationHolder(
                     images=batched_images.to(DEVICE),
-                    optimizer=data_generation_config.optimizer,
-                    scheduler=data_generation_config.scheduler,
-                    initial_lr=data_generation_config.initial_lr))
-            self.targets.append(targets)
+                    optimizer=optimizer,
+                    scheduler=scheduler,
+                    initial_lr=initial_lr))
         self.n_batches = len(self.batch_opt_holders_list)
         self.random_batch_reorder()
-        self.all_imgs_stats_holder = AllImgsStatsHolder(n_batches=self.n_batches,
-                                                        batch_size=self.batch_size,
-                                                        mean_axis=self.mean_axis)
+        self.all_imgs_stats_holder = PytorchAllImgsStatsHolder(n_batches=self.n_batches,
+                                                               batch_size=self.batch_size,
+                                                               mean_axis=self.mean_axis)
 
         # Initialize statistics if using all data stats
         if self.use_all_data_stats:
@@ -76,61 +130,7 @@ class AllImagesOptimizationHandler:
                                                               activation_extractor=activation_extractor,
                                                               to_differentiate=False)
 
-    def random_batch_reorder(self):
-        """
-        Randomly reorders the batch indices.
-        """
-        self.rand_batch_inds = np.random.choice(self.n_batches, self.n_batches, replace=False)
-
-    def get_random_batch_index(self, index: int) -> int:
-        """
-        Get the random batch index at the specified index.
-
-         Args:
-            index (int): The index.
-
-        Returns:
-            int: The random batch index.
-        """
-        return self.rand_batch_inds[index]
-
-    def get_images_by_batch_index(self, batch_index: int) -> Tensor:
-        """
-        Retrieves the images from the batch optimization holder at the given batch index.
-
-        Args:
-            batch_index (int): The index of the batch optimization holder.
-
-        Returns:
-            Tensor: The images in the batch.
-        """
-        return self.batch_opt_holders_list[batch_index].get_images()
-
-    def get_optimizer_by_batch_index(self, batch_index: int) -> Optimizer:
-        """
-        Get the optimizer for the specific batch specified by the batch index.
-
-        Args:
-            batch_index (int) : the index of the batch.
-
-        Returns:
-            Optimizer: the optimizer of the specific batch specified by the batch index.
-        """
-        return self.batch_opt_holders_list[batch_index].get_optimizer()
-
-    def get_scheduler_by_batch_index(self, batch_index: int):
-        """
-        Get the scheduler for the specific batch specified by the batch index.
-
-        Args:
-            batch_index (str): the index of the batch.
-
-        Returns:
-            LRScheduler: the scheduler of the specific batch specified by the batch index.
-        """
-        return self.batch_opt_holders_list[batch_index].get_scheduler()
-
-    def get_accumulated_stats_per_layer(self, layer_name: str) -> Tuple[Tensor, Tensor]:
+    def get_accumulated_stats_per_layer(self, layer_name: str) -> Tuple[Tensor, Tensor, Tensor]:
         """
         Get the accumulated activation statistics for a layer.
 
@@ -138,103 +138,70 @@ class AllImagesOptimizationHandler:
             layer_name (str): the name of the layer.
 
         Returns:
-            Tuple[Tensor, Tensor]: the averaged activation statistics on all the batches for the specified layer.
+            Tuple[Tensor, Tensor, Tensor]: The averaged activation statistics (mean, variance, and standard deviation) on all the batches for the specified layer.
         """
         total_mean, total_second_moment = 0, 0
         for i_batch in range(self.n_batches):
-            mean, second_moment = self.all_imgs_stats_holder.get_stats(i_batch, layer_name)
+            mean, second_moment, var, std = self.all_imgs_stats_holder.get_stats(i_batch, layer_name)
             total_mean += mean
             total_second_moment += second_moment
 
         total_mean /= self.n_batches
         total_second_moment /= self.n_batches
         total_var = total_second_moment - torch.pow(total_mean, 2)
-        return total_mean, total_var
+        total_std = torch.sqrt(total_var + self.eps)
+        return total_mean, total_var, total_std
 
-    def compute_bn_loss(self,
-                        input_imgs: Tensor,
-                        batch_index: int,
-                        activation_extractor: ActivationExtractor,
-                        orig_bn_stats_holder: OrigBNStatsHolder,
-                        bn_loss_fn: Callable,
-                        layer_weights: Dict) -> Tensor:
+    def optimization_step(self,
+                          batch_index: int,
+                          loss: Tensor,
+                          i_ter: int):
         """
-        Compute the batch norm alignment loss.
+        Perform an optimization step.
 
         Args:
-            input_imgs (Tensor): the input images.
-            batch_index (int): the index of the batch.
-            activation_extractor (ActivationExtractor): extractor for layer activations.
-            orig_bn_stats_holder (OrigBNStatsHolder): holder for original BatchNorm statistics.
-            bn_loss_fn (Callable): the batch norm alignment loss function.
-            layer_weights (Dict): weights to multiply the loss for each layer.
-
-        Returns:
-            Tensor: the computed batch norm alignment loss.
+            batch_index (int): Index of the batch.
+            loss (Tensor): Loss value.
+            i_ter (int): Current optimization iteration.
         """
-        # Update the batch statistics for the current batch
-        self.all_imgs_stats_holder.update_batch_stats(batch_index=batch_index,
-                                                      input_imgs=input_imgs,
-                                                      activation_extractor=activation_extractor,
-                                                      to_differentiate=True)
+        # Get optimizer and schedular for the specific batch index
+        optimizer = self.get_optimizer_by_batch_index(batch_index)
+        scheduler = self.get_scheduler_by_batch_index(batch_index)
 
-        # Initialize variables for accumulating mean and variance differences
-        total_mean_diff, total_var_diff = 0, 0
+        # Backward pass
+        loss.backward()
 
-        # Iterate over each BN layer
-        for layer_name in orig_bn_stats_holder.get_bn_layer_names():
-            # Get the layer weight for the current BN layer
-            layer_weight = layer_weights.get(layer_name)
+        # Update weights
+        optimizer.step()
 
-            # Get the mean and variance from the original BN statistics
-            bn_layer_mean = orig_bn_stats_holder.get_mean(layer_name)
-            bn_layer_var = orig_bn_stats_holder.get_var(layer_name)
+        # Perform scheduler step
+        self.scheduler_step_fn(scheduler, i_ter, loss.item())
 
-            # Get the mean and variance from the current batch's statistics
-            if self.use_all_data_stats:
-                # If using all data statistics, retrieve the accumulated statistics from all batches
-                imgs_layer_mean, imgs_layer_var = self.get_accumulated_stats_per_layer(layer_name)
-            else:
-                # Otherwise, retrieve the statistics from the current batch
-                imgs_layer_mean, imgs_layer_var = self.all_imgs_stats_holder.get_stats(batch_index, layer_name)
+        if self.clip_images:
+            self.batch_opt_holders_list[batch_index].clip_images(self.valid_grid, reflection=self.reflection)
 
-            # Calculate the standard deviation from the variance
-            bn_layer_std = torch.sqrt(bn_layer_var + self.eps)
-            imgs_layer_std = torch.sqrt(imgs_layer_var + self.eps)
 
-            # Accumulate the mean and variance loss metrics weighted by the layer weight
-            total_mean_diff += layer_weight * bn_loss_fn(bn_layer_mean, imgs_layer_mean)
-            total_var_diff += layer_weight * bn_loss_fn(bn_layer_std, imgs_layer_std)
-
-        # Compute the total BN loss as the sum of mean and variance differences
-        total_bn_loss = total_mean_diff + total_var_diff
-
-        return total_bn_loss
-
-    def update_statistics(self,
-                        input_imgs: Tensor,
-                        batch_index: int,
-                        activation_extractor: ActivationExtractor):
+    def zero_grad(self, batch_index: int):
         """
-        Update the statistics for the images at the specified batch index.
+        Zero the gradients for the specific batch index.
 
         Args:
-            input_imgs (Tensor): the input images.
-            batch_index (int): the index of the batch.
-            activation_extractor (ActivationExtractor): extractor for layer activations.
+            batch_index (int): Index of the batch.
         """
-        if self.use_all_data_stats:
-            self.all_imgs_stats_holder.update_batch_stats(batch_index=batch_index,
-                                                          input_imgs=input_imgs,
-                                                          activation_extractor=activation_extractor,
-                                                          to_differentiate=False)
+        # Get optimizer for the specific batch index
+        optimizer = self.get_optimizer_by_batch_index(batch_index)
 
-    def get_finalized_data_loader(self) -> DataLoader:
+        # Zero gradients
+        optimizer.zero_grad()
+        self.model.zero_grad()
+
+
+    def get_finalized_images(self) -> List:
         """
-        Create and return a DataLoader using the optimized images.
+        Create and return a list of the optimized images.
 
         Returns:
-            DataLoader: a DataLoader object using the optimized images.
+            List: a list of the optimized images.
         """
         finalized_images = []
 
@@ -249,149 +216,82 @@ class AllImagesOptimizationHandler:
             # Split the finalized batch into individual images and add them to the finalized_images list
             finalized_images += torch.split(finalized_batch, 1)
 
-        # Create a DatasetFromList object using the finalized_images list
-        tensor_dataset = DatasetFromList(finalized_images)
-
-        # Create and return a DataLoader using the tensor_dataset
-        return DataLoader(
-            tensor_dataset,
-            batch_size=self.batch_size, shuffle=True,
-            num_workers=0, pin_memory=True)
+        return finalized_images
 
 
-class BatchOptimizationHolder:
-
+class PytorchBatchOptimizationHolder(BatchOptimizationHolder):
+    """
+    An extension of BatchOptimizationHolder specifically for PyTorch models.
+    """
     def __init__(self,
                  images: Tensor,
                  optimizer: Optimizer,
                  scheduler: Any,
                  initial_lr: float):
         """
-        Constructor for the BatchOptimizationHolder class.
+        Constructor for the PytorchBatchOptimizationHolder class.
 
         Args:
-            images (Tensor): a tensor containing the input images.
-            optimizer (Optimizer): optimizer responsible for updating the image parameters during optimization.
-            scheduler (Any): scheduler responsible for adjusting the learning rate of the optimizer over time.
-            initial_lr (float): the initial learning rate used by the optimizer.
+            images (Tensor): A tensor containing the input images.
+            optimizer (Optimizer): An optimizer responsible for updating the image parameters during optimization.
+            scheduler (Any): A scheduler responsible for adjusting the learning rate of the optimizer over time.
+            initial_lr (float): The initial learning rate used by the optimizer.
         """
         self.images = images
         self.images.requires_grad = True
         self.optimizer = optimizer([self.images], lr=initial_lr)
         self.scheduler = scheduler(self.optimizer)
 
-    def get_images(self):
-        """Returns the stored images"""
-        return self.images
-
-    def get_optimizer(self):
-        """Returns the optimizer"""
-        return self.optimizer
-
-    def get_scheduler(self):
-        "Returns the scheduler"
-        return self.scheduler
-
-
-class AllImgsStatsHolder:
-    def __init__(self,
-                 n_batches: int,
-                 batch_size: int,
-                 mean_axis=Type[list]):
+    def clip_images(self,
+                    valid_grid: Tensor,
+                    reflection: bool = True):
         """
-        Constructor for the AllImgsStatsHolder class.
+        Clip the images.
 
         Args:
-            n_batches (int): the number of batches.
-            batch_size (int): the size of each batch.
-            mean_axis (int): the axis along which to compute the mean.
+            valid_grid (Tensor): A tensor containing valid values for image clipping.
+            reflection (bool): Whether to use reflection during image clipping. Defaults to True.
         """
-        self.mean_axis = mean_axis
-        self.n_batches = n_batches
-        self.batch_size = batch_size
-        self.batches_stats_holder_list = [BatchStatsHolder(self.mean_axis) for _ in range(self.n_batches)]
-        self.data_bn_mean_all_batches_except_one = {}
-        self.data_bn_second_moment_all_batches_except_one = {}
-        self.bn_mean_all_batches = {}
-        self.bn_second_moment_all_batches = {}
+        with torch.no_grad():
+            for i_ch in range(valid_grid.shape[0]):
+                clamp = torch.clamp(self.images[:, i_ch, :, :], valid_grid[i_ch, :].min(), valid_grid[i_ch, :].max())
+                if reflection:
+                    self.images[:, i_ch, :, :] = 2 * clamp - self.images[:, i_ch, :, :]
+                else:
+                    self.images[:, i_ch, :, :] = clamp
+        self.images.requires_grad = True
 
-    def update_batch_stats(self,
-                           batch_index: int,
-                           input_imgs: Tensor,
-                           activation_extractor: ActivationExtractor,
-                           to_differentiate=False):
+
+class PytorchAllImgsStatsHolder(AllImgsStatsHolder):
+    """
+    An extension of AllImgsStatsHolder specifically for PyTorch models.
+    """
+    def get_batches_stats_holder_list(self) -> List[BatchStatsHolder]:
         """
-        Update the batch statistics for a given batch.
-
-        Args:
-            batch_index (int): the index of the batch.
-            input_imgs (Tensor): the input images for which to calculate the statistics.
-            activation_extractor (ActivationsExtractor): the activation extractor object.
-            to_differentiate (bool): a flag indicating whether to differentiate or not. Defaults to False.
-        """
-        self.batches_stats_holder_list[batch_index].clear()
-        self.batches_stats_holder_list[batch_index].calc_bn_stats_from_activations(input_imgs=input_imgs,
-                                                                                   activation_extractor=activation_extractor,
-                                                                                   to_differentiate=to_differentiate)
-
-    def get_stats(self,
-                  batch_index: int,
-                  layer_name: str) -> Tuple[Tensor, Tensor]:
-        """
-        Get the statistics for a given batch and layer.
-
-        Args:
-            batch_index (int): the index of the batch.
-            layer_name (str): the name of the layer.
+        Get a list of BatchStatsHolder objects.
 
         Returns:
-            Tuple[Tensor, Tensor]: the mean and second moment for the specified batch and layer.
+            List[BatchStatsHolder]: A list of BatchStatsHolder objects.
         """
-        mean = self.batches_stats_holder_list[batch_index].get_mean(layer_name)
-        second_moment = self.batches_stats_holder_list[batch_index].get_second_moment(layer_name)
-        return mean, second_moment
+        return [PytorchBatchStatsHolder(self.mean_axis) for _ in range(self.n_batches)]
 
 
-class BatchStatsHolder(object):
 
+class PytorchBatchStatsHolder(BatchStatsHolder):
+    """
+    An extension of BatchStatsHolder specifically for PyTorch models.
+    """
     def __init__(self,
                  mean_axis: Type[list],
                  eps: float = 1e-6):
         """
-        Constructor for the BatchStatsHolder class.
+        Constructor for the PytorchBatchStatsHolder class.
 
         Args:
-            mean_axis (Type[list]): the axis along which to compute the mean.
-            eps (float): a small value added to the denominator to avoid division by zero. Defaults to 1e-6.
+            mean_axis (List[int]): The axis along which to compute the mean.
+            eps (float): A small value added to the denominator to avoid division by zero. Defaults to 1e-6.
         """
-        self.eps = eps
-        self.mean_axis = mean_axis
-        self.bn_mean = {}
-        self.bn_second_moment = {}
-
-    def get_mean(self, bn_layer_name: str) -> Tensor:
-        """
-        Get the mean for the specified layer.
-
-        Args:
-            bn_layer_name (str): the name of the layer.
-
-        Returns:
-            Tensor: the mean for the specified layer.
-        """
-        return self.bn_mean[bn_layer_name]
-
-    def get_second_moment(self, bn_layer_name: str) -> Tensor:
-        """
-        Get the second moment for the specified layer.
-
-        Args:
-            bn_layer_name (str): the name of the layer.
-
-        Returns:
-            Tensor: the second moment for the specified layer.
-        """
-        return self.bn_second_moment[bn_layer_name]
+        super(PytorchBatchStatsHolder, self).__init__(mean_axis=mean_axis, eps=eps)
 
     def get_var(self, bn_layer_name: str) -> Tensor:
         """
@@ -408,20 +308,19 @@ class BatchStatsHolder(object):
         var = second_moment - torch.pow(mean, 2.0)
         return var
 
-    def update_layer_stats(self,
-                           bn_layer_name: str,
-                           mean: Tensor,
-                           second_moment: Tensor):
+
+    def get_std(self, bn_layer_name: str) -> Tensor:
         """
-        Update the statistics for a layer.
+        Calculate the standard deviation for the specified layer.
 
         Args:
             bn_layer_name (str): the name of the layer.
-            mean (Tensor): the mean value for the layer.
-            second_moment (Tensor): the second moment value for the layer.
+
+        Returns:
+            Tensor: The standard deviation for the specified layer.
         """
-        self.bn_mean.update({bn_layer_name: mean})
-        self.bn_second_moment.update({bn_layer_name: second_moment})
+        var = self.get_var(bn_layer_name)
+        return torch.sqrt(var + self.eps)
 
     def calc_bn_stats_from_activations(self,
                                        input_imgs: Tensor,
@@ -442,7 +341,7 @@ class BatchStatsHolder(object):
             imgs_second_moment = imgs_second_moment.detach()
         self.update_layer_stats(IMAGE_INPUT, imgs_mean, imgs_second_moment)
         # Extract statistics of intermediate convolution outputs before the BatchNorm layers
-        for bn_layer_name in activation_extractor.get_bn_layer_names():
+        for bn_layer_name in activation_extractor.get_extractor_layer_names():
             bn_input_activations = activation_extractor.get_activation(bn_layer_name)
             if not to_differentiate:
                 bn_input_activations = bn_input_activations.detach()
@@ -453,15 +352,14 @@ class BatchStatsHolder(object):
 
     def clear(self):
         """Clear the statistics."""
-        self.bn_mean.clear()
-        self.bn_second_moment.clear()
-        self.bn_mean = {}
-        self.bn_second_moment = {}
+        super().clear()
         torch.cuda.empty_cache()
 
 
 class DatasetFromList(Dataset):
-
+    """
+    A custom Dataset that creates a Dataset from a list of images.
+    """
     def __init__(self, img_list: List[Tensor]):
         """
         Constructor for the DatasetFromList class.
@@ -476,7 +374,7 @@ class DatasetFromList(Dataset):
         Get the length of the dataset.
 
         Returns:
-            The number of images in the dataset.
+            int: The number of images in the dataset.
         """
 
         return len(self.img_list)

@@ -1,102 +1,89 @@
-from typing import Tuple, Union, List
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+from typing import Type, Dict, List
 
-import cv2
 from torch import Tensor
-from torch.utils.data import Dataset, DataLoader
 from torchvision.transforms import RandomCrop, RandomHorizontalFlip, CenterCrop
-from torchvision.transforms.transforms import _setup_size
-from model_compression_toolkit.data_generation.common.data_generation_config import BaseImagePipeline
-import torch
-import numpy as np
 
 
-class RandomDataset(Dataset):
+from model_compression_toolkit.data_generation.common.enums import ImagePipelineType, ImageNormalizationType
+from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
+
+
+class PytorchIdentityImagePipeline(BaseImagePipeline):
     """
-    A PyTorch dataset that generates random Gaussian samples with mean 0 and variance 1.
-    """
-
-    def __init__(self,
-                 length: int,
-                 size: Union[Tuple, List],
-                 ):
-        """
-        Initialize the RandomDataset.
-
-        Args:
-            length (int): The number of samples in the dataset.
-            size (tuple or list): The size of each sample.
-        """
-        self.length = length
-        self.size = size
-
-    def __len__(self) -> int:
-        """
-        Get the length of the dataset.
-
-        Returns:
-            int: The length of the dataset.
-        """
-        return self.length
-
-    def __getitem__(self, idx: int) -> Tensor:
-        """
-        Get an item from the dataset.
-
-        Args:
-            idx (int): The index of the item.
-
-        Returns:
-            Tensor: The random sample.
-        """
-        random_std = torch.from_numpy(np.array([1, 1, 1]))[:, None, None] * (torch.randn(size=(3, 1, 1))) + torch.ones(size=(3, 1, 1))
-        random_mean = torch.from_numpy(np.array([1, 1, 1]))[:, None, None] * torch.randn(size=(3, 1, 1)) * torch.ones(self.size)
-
-        sample = random_std * torch.randn(self.size) + random_mean
-        kernel = np.ones((5, 5), np.float32) / 16
-        sample = torch.from_numpy(cv2.filter2D(sample.float().detach().cpu().numpy(), -1, kernel))
-        return sample.float()
-
-
-def get_random_data(
-        n_images: int = 1000,
-        size: tuple = (224, 224),
-        crop: int = 32,
-        batch_size: int = 50) -> Tuple[int, Tensor]:
-    """
-    Get a random sample DataLoader.
-
-    Args:
-        n_images (int): The number of random samples.
-        size (tuple): The size of each sample.
-        crop (int): The crop size.
-        batch_size (int): The batch size.
-
-    Returns:
-        tuple: A tuple containing the length of the DataLoader and the DataLoader object.
-    """
-    image_size = _setup_size(size, error_msg="Please provide only two dimensions (h, w) for size.")
-    image_size = [s + crop for s in image_size]
-    dataset = RandomDataset(length=n_images, size=[3] + image_size)
-    data_loader = DataLoader(dataset,
-                             batch_size=batch_size,
-                             shuffle=False,
-                             num_workers=0)
-    return len(data_loader), data_loader
-
-
-class PytorchImagePipeline(BaseImagePipeline):
-    """
-    An image pipeline implementation for PyTorch models.
+    An image pipeline implementation for PyTorch models that returns the input images as is (identity).
     """
     def __init__(self, output_image_size: int, padding: int = 0):
         """
-        Initialize the PytorchImagePipeline.
+        Initialize the PytorchIdentityImagePipeline.
+
+        Args:
+            output_image_size (int): The output image size.
+            padding (int): The padding size (not used in identity pipeline).
+        """
+        super(PytorchIdentityImagePipeline, self).__init__(output_image_size)
+
+    def get_image_input_size(self) -> int:
+        """
+        Get the input size of the image.
+
+        Returns:
+            int: The input image size.
+        """
+        return self.output_image_size
+
+    def image_input_manipulation(self, images: Tensor) -> Tensor:
+        """
+        Manipulate the input images (identity operation, returns the input images as is).
+
+        Args:
+            images (Tensor): The input images.
+
+        Returns:
+            Tensor: The manipulated images (input images as is).
+        """
+        return images
+
+    def image_output_finalize(self, images: Tensor) -> Tensor:
+        """
+        Finalize the output images (identity operation, returns the output images as is).
+
+        Args:
+            images (Tensor): The output images.
+
+        Returns:
+            Tensor: The finalized images (output images as is).
+        """
+        return images
+
+
+class PytorchCropFlipImagePipeline(BaseImagePipeline):
+    """
+    An image pipeline implementation for PyTorch models that includes random cropping and flipping.
+    """
+    def __init__(self, output_image_size: int, padding: int = 0):
+        """
+        Initialize the PytorchCropFlipImagePipeline.
 
         Args:
             output_image_size (int): The output image size.
             padding (int): The padding size.
         """
-        super(PytorchImagePipeline, self).__init__(output_image_size, padding)
+        super(PytorchCropFlipImagePipeline, self).__init__(output_image_size)
+        self.padding = padding
         self.random_crop = RandomCrop(self.output_image_size)
         self.random_flip = RandomHorizontalFlip(0.5)
         self.center_crop = CenterCrop(self.output_image_size)
@@ -112,25 +99,38 @@ class PytorchImagePipeline(BaseImagePipeline):
 
     def image_input_manipulation(self, images: Tensor) -> Tensor:
         """
-        Manipulate the input images.
+        Manipulate the input images with random flipping and cropping.
 
         Args:
             images (Tensor): The input images.
 
         Returns:
-            Tensor: The manipulated images.
+            Tensor: The manipulated images (randomly flipped and cropped).
         """
         random_flipped_data = self.random_flip(images)
         return self.random_crop(random_flipped_data)
 
     def image_output_finalize(self, images: Tensor) -> Tensor:
         """
-        Finalize the output images.
+        Finalize the output images with center cropping.
 
         Args:
             images (Tensor): The output images.
 
         Returns:
-            Tensor: The finalized images.
+            Tensor: The finalized images (center cropped).
         """
         return self.center_crop(images)
+
+
+# Dictionary mapping ImagePipelineType to corresponding image pipeline classes
+image_pipeline_dict: Dict[ImagePipelineType, Type[BaseImagePipeline]] = {
+    ImagePipelineType.IDENTITY: PytorchIdentityImagePipeline,
+    ImagePipelineType.CROP_FLIP: PytorchCropFlipImagePipeline
+}
+
+# Dictionary mapping ImageNormalizationType to corresponding normalization values
+image_normalization_dict: Dict[ImageNormalizationType, List[List[float]]] = {
+    ImageNormalizationType.TORCHVISION: [[0.485, 0.456, 0.406], [0.229, 0.224, 0.225]],
+    ImageNormalizationType.NO_NORMALIZATION: [[0, 0, 0], [1, 1, 1]]
+}
