@@ -28,7 +28,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import Dataset
 from torchvision import datasets, transforms
 from torch.optim.lr_scheduler import StepLR
 import model_compression_toolkit as mct
@@ -41,7 +40,7 @@ def argument_handler():
                         help='folder path for the representative dataset.')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='batch size for the representative data.')
-    parser.add_argument('--num_calibration_iterations', type=int, default=1,
+    parser.add_argument('--num_calibration_iterations', type=int, default=10,
                         help='number of iterations for calibration.')
     return parser.parse_args()
 
@@ -110,31 +109,8 @@ def test(model, device, test_loader):
         100. * correct / len(test_loader.dataset)))
 
 
-class RandomDataset(Dataset):
-    """
-    get random gaussian samples with mean 0 and variance 1
-    """
-
-    def __init__(self,
-                 length,
-                 size,
-                 labels=False,
-                 ):
-        self.length = length
-        self.size = size
-        self.labels = labels
-
-    def __len__(self):
-        return self.length
-
-    def __getitem__(self, idx):
-        # if self.labels:
-        return torch.randn(self.size).float(), torch.squeeze(torch.randint(0,9,(1,)))
-        # return torch.randn(self.size).float()
-
 if __name__ == '__main__':
-    import os
-    # os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+
     # Parse arguments
     args = argument_handler()
 
@@ -142,9 +118,7 @@ if __name__ == '__main__':
     batch_size = args.batch_size
     test_batch_size = 1000
     random_seed = 1
-    torch.cuda.set_device(3)
-    device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
-    # device = torch.cuda.device(3)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.backends.cudnn.enabled = False
     torch.manual_seed(random_seed)
     dataset_folder = args.representative_dataset_dir
@@ -158,14 +132,10 @@ if __name__ == '__main__':
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
     ])
-    # dataset1 = datasets.MNIST(dataset_folder, train=True, download=True,
-    #                           transform=transform)
-    # dataset2 = datasets.MNIST(dataset_folder, train=False,
-    #                           transform=transform)
-    ss = 28
-    dataset1 = RandomDataset(length=100, size=(1, ss, ss), labels=True)
-    dataset2 = RandomDataset(length=100, size=(1, ss, ss))
-
+    dataset1 = datasets.MNIST(dataset_folder, train=True, download=True,
+                              transform=transform)
+    dataset2 = datasets.MNIST(dataset_folder, train=False,
+                              transform=transform)
     train_loader = torch.utils.data.DataLoader(dataset1, num_workers=0, pin_memory=True, batch_size=batch_size,
                                                shuffle=True)
     test_loader = torch.utils.data.DataLoader(dataset2, num_workers=0, pin_memory=True, batch_size=test_batch_size,
