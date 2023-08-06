@@ -14,8 +14,6 @@
 # ==============================================================================
 from typing import Callable, Tuple, List
 
-from torch.utils.data import DataLoader
-
 from model_compression_toolkit.constants import FOUND_TORCH
 from model_compression_toolkit.core.pytorch.utils import set_model
 from model_compression_toolkit.data_generation.common.data_generation import data_generation
