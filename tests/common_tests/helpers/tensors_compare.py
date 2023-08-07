@@ -44,10 +44,17 @@ def norm_similarity(a, b):
 
 
 def normalized_mse(a, b, norm_factor=None):
+    batch_size = a.shape[0]
+
+    a = np.reshape(a, [batch_size, -1])
+    b = np.reshape(b, [batch_size, -1])
+
     if norm_factor is None:
-        norm_factor = np.square(np.abs(a)).mean()
+        norm_factor = np.square(np.abs(a)).mean(axis=-1)
+        norm_factor = np.reshape(norm_factor, [batch_size, 1])
+
     lsb_error = (np.abs(a - b)**2 / norm_factor)
-    return np.mean(lsb_error), np.std(lsb_error), np.max(lsb_error), np.min(lsb_error)
+    return np.mean(lsb_error, axis=-1), np.std(lsb_error, axis=-1), np.max(lsb_error, axis=-1), np.min(lsb_error, axis=-1)
 
 
 def tensor_norm(a):
