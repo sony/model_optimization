@@ -104,7 +104,7 @@ class BNForwardFoldingNetTest(BasePytorchTest):
     test that the BN isn't folded
     """
     def __init__(self, unit_test, test_layer, fold_applied=True, add_bn=False, is_dw=False):
-        super().__init__(unit_test, float_reconstruction_error=1e-6)
+        super().__init__(unit_test, float_reconstruction_error=1e-6, val_batch_size=2)
         self.test_layer = test_layer
         self.fold_applied = fold_applied
         self.add_bn = add_bn
@@ -133,16 +133,12 @@ class BNForwardFoldingNetTest(BasePytorchTest):
         self.unit_test.assertTrue(self.fold_applied is not is_bn_in_model)
 
         # Checking on multiple inputs to reduce probability for numeric error that will randomly fail the test
-        input_x2 = self.generate_inputs(self.create_inputs_shape())
+        self.unit_test.assertEqual(input_x[0].shape[0], 2, "Expecting batch of size 2 for BN folding test.")
 
-        out_float1 = torch_tensor_to_numpy(float_model(*input_x))
-        out_quant1 = torch_tensor_to_numpy(quant_model(*input_x))
+        out_float = torch_tensor_to_numpy(float_model(*input_x))
+        out_quant = torch_tensor_to_numpy(quant_model(*input_x))
 
-        out_float2 = torch_tensor_to_numpy(float_model(*input_x2))
-        out_quant2 = torch_tensor_to_numpy(quant_model(*input_x2))
+        norm_mse, _, max_error, _ = normalized_mse(out_float, out_quant)
 
-        norm_mse1, _, max_error1, _ = normalized_mse(out_float1, out_quant1)
-        norm_mse2, _, max_error2, _ = normalized_mse(out_float2, out_quant2)
-
-        self.unit_test.assertTrue(np.isclose(norm_mse1, 0, atol=1e-5) or np.isclose(norm_mse2, 0, atol=1e-5))
-        self.unit_test.assertTrue(np.isclose(max_error1, 0, atol=1e-4) or np.isclose(max_error2, 0, atol=1e-4))
+        self.unit_test.assertTrue(np.isclose(norm_mse[0], 0, atol=1e-5) or np.isclose(norm_mse[1], 0, atol=1e-5))
+        self.unit_test.assertTrue(np.isclose(max_error[0], 0, atol=1e-4) or np.isclose(max_error[1], 0, atol=1e-4))
