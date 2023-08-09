@@ -71,6 +71,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     tf.math.equal,
                                                     tf.gather,
                                                     tf.cast,
+                                                    tf.unstack,
                                                     tf.compat.v1.gather,
                                                     tf.nn.top_k,
                                                     tf.__operators__.getitem,

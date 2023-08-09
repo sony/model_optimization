@@ -65,7 +65,8 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     torch.minimum,
                                                     torch.min,
                                                     torch.nn.functional.pad,
-                                                    torch.select])
+                                                    torch.select,
+                                                    torch.unbind])
 
         tp.OperationsSetToLayers("FullyConnected", [torch.nn.Linear, torch.nn.functional.linear])
         tp.OperationsSetToLayers("L2Normalization",
