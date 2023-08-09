@@ -24,7 +24,8 @@ else:
 
 from tensorflow.python.keras.layers.core import SlicingOpLambda
 from tensorflow.python.ops.image_ops_impl import ResizeMethod
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import Eq
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import \
+    Eq
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.tflite_tpc.v1.tp_model import get_tp_model
 import model_compression_toolkit as mct
@@ -59,29 +60,30 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
 
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", [AveragePooling2D,
-                                                                tf.nn.avg_pool2d,
-                                                                Concatenate,
-                                                                tf.concat,
-                                                                MaxPooling2D,
-                                                                Multiply,
-                                                                tf.multiply,
-                                                                Reshape,
-                                                                tf.reshape,
-                                                                tp.LayerFilterParams(tf.image.resize,
-                                                                                     method=ResizeMethod.BILINEAR),
-                                                                tf.nn.space_to_depth,
-                                                                ZeroPadding2D,
-                                                                tf.gather,
-                                                                tf.compat.v1.batch_to_space_nd,
-                                                                tf.space_to_batch_nd,
-                                                                tf.transpose,
-                                                                tf.maximum,
-                                                                Maximum,
-                                                                tf.minimum,
-                                                                Minimum,
-                                                                tf.pad,
-                                                                tf.slice,
-                                                                SlicingOpLambda])
+                                                    tf.nn.avg_pool2d,
+                                                    Concatenate,
+                                                    tf.concat,
+                                                    MaxPooling2D,
+                                                    Multiply,
+                                                    tf.multiply,
+                                                    Reshape,
+                                                    tf.reshape,
+                                                    tp.LayerFilterParams(tf.image.resize,
+                                                                         method=ResizeMethod.BILINEAR),
+                                                    tf.nn.space_to_depth,
+                                                    ZeroPadding2D,
+                                                    tf.unstack,
+                                                    tf.gather,
+                                                    tf.compat.v1.batch_to_space_nd,
+                                                    tf.space_to_batch_nd,
+                                                    tf.transpose,
+                                                    tf.maximum,
+                                                    Maximum,
+                                                    tf.minimum,
+                                                    Minimum,
+                                                    tf.pad,
+                                                    tf.slice,
+                                                    SlicingOpLambda])
 
         tp.OperationsSetToLayers("FullyConnected", [Dense])
         tp.OperationsSetToLayers("L2Normalization", [tf.math.l2_normalize])
