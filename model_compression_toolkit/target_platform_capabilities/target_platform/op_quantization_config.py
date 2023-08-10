@@ -63,7 +63,7 @@ class OpQuantizationConfig:
         self.quantization_preserving = quantization_preserving
         self.fixed_scale = fixed_scale
         self.fixed_zero_point = fixed_zero_point
-        self.weights_multiplier_nbits = weights_multiplier_nbits
+        self.eights_lut_values_bitwidth = weights_multiplier_nbits
 
     def get_info(self):
         """

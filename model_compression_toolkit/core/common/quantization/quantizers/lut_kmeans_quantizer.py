@@ -15,8 +15,8 @@
 
 import numpy as np
 
-from model_compression_toolkit.constants import CLUSTER_CENTERS, SCALE_PER_CHANNEL, \
-    MULTIPLIER_N_BITS
+from model_compression_toolkit.constants import LUT_VALUES, SCALE_PER_CHANNEL, \
+    LUT_VALUES_BITWIDTH
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import kmeans_assign_clusters, \
     get_quantized_tensor, int_quantization_with_threshold
 
@@ -30,8 +30,8 @@ def lut_kmeans_quantizer(tensor_data: np.ndarray,
     """
     Quantize a tensor with given cluster centers and thresholds-per-channel vector.
     1. We divide tensor_data with the scale vector per channel.
-    2. We scale the result to the range [-2^(MULTIPLIER_N_BITS-1), 2^(MULTIPLIER_N_BITS-1)-1].
-    3. We assign cluster centers to every value, multiply by thresholds_per_channel and divide by 2^(MULTIPLIER_N_BITS-1).
+    2. We scale the result to the range [-2^(LUT_VALUES_BITWIDTH-1), 2^(LUT_VALUES_BITWIDTH-1)-1].
+    3. We assign cluster centers to every value, multiply by thresholds_per_channel and divide by 2^(LUT_VALUES_BITWIDTH-1).
     The result is the quantized tensor.
 
 
@@ -46,12 +46,12 @@ def lut_kmeans_quantizer(tensor_data: np.ndarray,
     Returns:
         Quantized data.
     """
-    cluster_centers = quantization_params[CLUSTER_CENTERS]
+    lut_values = quantization_params[LUT_VALUES]
     thresholds_per_channel = quantization_params[SCALE_PER_CHANNEL]
-    tensor = int_quantization_with_threshold(tensor_data, thresholds_per_channel, MULTIPLIER_N_BITS)
+    tensor = int_quantization_with_threshold(tensor_data, thresholds_per_channel, LUT_VALUES_BITWIDTH)
     shape_before_kmeans = tensor.shape
-    cluster_assignments = kmeans_assign_clusters(cluster_centers, tensor.reshape(-1, 1))
-    quant_tensor = get_quantized_tensor(cluster_centers[cluster_assignments].reshape(shape_before_kmeans),
+    cluster_assignments = kmeans_assign_clusters(lut_values, tensor.reshape(-1, 1))
+    quant_tensor = get_quantized_tensor(lut_values[cluster_assignments].reshape(shape_before_kmeans),
                                         thresholds_per_channel,
-                                        MULTIPLIER_N_BITS)
+                                        LUT_VALUES_BITWIDTH)
     return quant_tensor

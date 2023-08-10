@@ -17,7 +17,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
-from model_compression_toolkit.constants import CLUSTER_CENTERS, SCALE_PER_CHANNEL, MIN_THRESHOLD, EPS
+from model_compression_toolkit.constants import LUT_VALUES, SCALE_PER_CHANNEL, MIN_THRESHOLD, EPS
 
 
 def kmeans_tensor(tensor_data: np.ndarray,
@@ -59,6 +59,6 @@ def kmeans_tensor(tensor_data: np.ndarray,
     tensor_for_kmeans = (tensor_data / (scales_per_channel + EPS))
     kmeans.fit(tensor_for_kmeans.reshape(-1, 1))
 
-    return {CLUSTER_CENTERS: kmeans.cluster_centers_,
+    return {LUT_VALUES: kmeans.cluster_centers_,
             SCALE_PER_CHANNEL: scales_per_channel,
             }
