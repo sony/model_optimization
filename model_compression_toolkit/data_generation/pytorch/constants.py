@@ -14,11 +14,7 @@
 # ==============================================================================
 import torch
 
-# Device selection based on availability of CUDA
-DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-
 # Axis indices for tensor dimensions
 BATCH_AXIS, CHANNEL_AXIS, H_AXIS, W_AXIS = 0, 1, 2, 3
-
-# "image_input" string
 IMAGE_INPUT = 'image_input'
+NUM_INPUT_CHANNELS = 3

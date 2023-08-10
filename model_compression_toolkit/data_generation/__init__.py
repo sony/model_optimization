@@ -14,5 +14,3 @@
 # ==============================================================================
 from model_compression_toolkit.data_generation.pytorch.pytorch_data_generation import pytorch_data_generation_experimental
 from model_compression_toolkit.data_generation.pytorch.pytorch_data_generation import get_pytorch_data_generation_config
-
-__version__ = "1.0.0"

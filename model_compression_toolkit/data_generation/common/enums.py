@@ -24,7 +24,7 @@ class EnumBaseClass(Enum):
         Returns:
             List of values.
         """
-        return [mem.value for mem, mem in cls.__members__.items()]
+        return [value.value for key, value in cls.__members__.items()]
 
 
 class ImageGranularity(EnumBaseClass):
@@ -53,10 +53,11 @@ class DataInitType(EnumBaseClass):
 class ImagePipelineType(EnumBaseClass):
     """
     An enum for choosing the image pipeline type for image manipulation.
-    CROP_FLIP: Crop and flip the images.
+    RANDOM_CROP_FLIP: Crop and flip the images.
     IDENTITY: Do not apply any manipulation (identity transformation).
     """
-    CROP_FLIP = 'crop_flip'
+    RANDOM_CROP = 'random_crop'
+    RANDOM_CROP_FLIP = 'random_crop_flip'
     IDENTITY = 'identity'
 
 
@@ -70,7 +71,7 @@ class ImageNormalizationType(EnumBaseClass):
     NO_NORMALIZATION = 'no_normalization'
 
 
-class LayerWeightingType(EnumBaseClass):
+class BNLayerWeightingType(EnumBaseClass):
     """
    An enum for choosing the layer weighting type.
    AVERAGE: Use the same weight per layer.
@@ -101,7 +102,7 @@ class OutputLossType(EnumBaseClass):
     MIN_MAX_DIFF = 'min_max_diff'
 
 
-class SchedularType(EnumBaseClass):
+class SchedulerType(EnumBaseClass):
     """
     An enum for choosing the scheduler type for the optimizer.
     REDUCE_ON_PLATEAU: Use the ReduceOnPlateau scheduler.

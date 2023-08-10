@@ -23,6 +23,7 @@ import numpy as np
 from torch.utils.data import Dataset, DataLoader
 
 from model_compression_toolkit.data_generation.common.enums import DataInitType
+from model_compression_toolkit.data_generation.pytorch.constants import NUM_INPUT_CHANNELS
 
 
 class RandomDataset(Dataset):
@@ -90,8 +91,8 @@ def diverse_sample(size: Tuple[int, ...]) -> Tensor:
     Returns:
         torch.Tensor: The random diverse sample.
     """
-    random_std = torch.randn(size=(3, 1, 1))
-    random_mean = torch.randn(size=(3, 1, 1))
+    random_std = torch.randn(size=(NUM_INPUT_CHANNELS, 1, 1))
+    random_mean = torch.randn(size=(NUM_INPUT_CHANNELS, 1, 1))
 
     sample = random_std * torch.randn(size) + random_mean
     kernel = np.ones((5, 5), np.float32) / 16
@@ -120,7 +121,7 @@ def default_data_init_fn(
     """
     image_size = _setup_size(size, error_msg="Please provide only two dimensions (h, w) for size.")
     image_size = [s + crop for s in image_size]
-    dataset = RandomDataset(length=n_images, size=[3] + image_size,
+    dataset = RandomDataset(length=n_images, size=[NUM_INPUT_CHANNELS] + image_size,
                             sample_fn=sample_fn)
     data_loader = DataLoader(dataset,
                              batch_size=batch_size,

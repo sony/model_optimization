@@ -70,19 +70,70 @@ class PytorchIdentityImagePipeline(BaseImagePipeline):
         return images
 
 
-class PytorchCropFlipImagePipeline(BaseImagePipeline):
+class PytorchRandomCropImagePipeline(BaseImagePipeline):
     """
-    An image pipeline implementation for PyTorch models that includes random cropping and flipping.
+    An image pipeline implementation for PyTorch models that includes random cropping.
     """
     def __init__(self, output_image_size: int, padding: int = 0):
         """
-        Initialize the PytorchCropFlipImagePipeline.
+        Initialize the PytorchRandomCropFlipImagePipeline.
 
         Args:
             output_image_size (int): The output image size.
             padding (int): The padding size.
         """
-        super(PytorchCropFlipImagePipeline, self).__init__(output_image_size)
+        super(PytorchRandomCropImagePipeline, self).__init__(output_image_size)
+        self.padding = padding
+        self.random_crop = RandomCrop(self.output_image_size)
+        self.center_crop = CenterCrop(self.output_image_size)
+
+    def get_image_input_size(self) -> int:
+        """
+        Get the input size of the image.
+
+        Returns:
+            int: The input image size.
+        """
+        return self.output_image_size + self.padding
+
+    def image_input_manipulation(self, images: Tensor) -> Tensor:
+        """
+        Manipulate the input images with random flipping and cropping.
+
+        Args:
+            images (Tensor): The input images.
+
+        Returns:
+            Tensor: The manipulated images (randomly flipped and cropped).
+        """
+        return self.random_crop(images)
+
+    def image_output_finalize(self, images: Tensor) -> Tensor:
+        """
+        Finalize the output images with center cropping.
+
+        Args:
+            images (Tensor): The output images.
+
+        Returns:
+            Tensor: The finalized images (center cropped).
+        """
+        return self.center_crop(images)
+
+
+class PytorchRandomCropFlipImagePipeline(BaseImagePipeline):
+    """
+    An image pipeline implementation for PyTorch models that includes random cropping and flipping.
+    """
+    def __init__(self, output_image_size: int, padding: int = 0):
+        """
+        Initialize the PytorchRandomCropFlipImagePipeline.
+
+        Args:
+            output_image_size (int): The output image size.
+            padding (int): The padding size.
+        """
+        super(PytorchRandomCropFlipImagePipeline, self).__init__(output_image_size)
         self.padding = padding
         self.random_crop = RandomCrop(self.output_image_size)
         self.random_flip = RandomHorizontalFlip(0.5)
@@ -126,7 +177,8 @@ class PytorchCropFlipImagePipeline(BaseImagePipeline):
 # Dictionary mapping ImagePipelineType to corresponding image pipeline classes
 image_pipeline_dict: Dict[ImagePipelineType, Type[BaseImagePipeline]] = {
     ImagePipelineType.IDENTITY: PytorchIdentityImagePipeline,
-    ImagePipelineType.CROP_FLIP: PytorchCropFlipImagePipeline
+    ImagePipelineType.RANDOM_CROP: PytorchRandomCropImagePipeline,
+    ImagePipelineType.RANDOM_CROP_FLIP: PytorchRandomCropFlipImagePipeline
 }
 
 # Dictionary mapping ImageNormalizationType to corresponding normalization values

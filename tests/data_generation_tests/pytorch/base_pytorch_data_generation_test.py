@@ -1,3 +1,18 @@
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 from functools import partial
 from typing import Any, List
 
@@ -8,8 +23,8 @@ from torch.optim.lr_scheduler import StepLR
 import torch.nn.functional as F
 
 from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig
-from model_compression_toolkit.data_generation.common.enums import SchedularType, BatchNormAlignemntLossType, \
-    DataInitType, LayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
+from model_compression_toolkit.data_generation.common.enums import SchedulerType, BatchNormAlignemntLossType, \
+    DataInitType, BNLayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
 from model_compression_toolkit.data_generation.pytorch.pytorch_data_generation import \
     pytorch_data_generation_experimental
 
@@ -40,13 +55,13 @@ class BasePytorchDataGenerationTest:
                  data_gen_batch_size=8,
                  initial_lr=0.05,
                  output_loss_multiplier=0.0001,
-                 scheduler_type: SchedularType = SchedularType.STEP,
+                 scheduler_type: SchedulerType = SchedulerType.STEP,
                  bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
                  output_loss_type: OutputLossType = OutputLossType.MIN_MAX_DIFF,
                  data_init_type: DataInitType = DataInitType.Diverse,
-                 layer_weighting_type: LayerWeightingType = LayerWeightingType.AVERAGE,
+                 layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
                  image_granularity=ImageGranularity.AllImages,
-                 image_pipeline_type: ImagePipelineType = ImagePipelineType.CROP_FLIP,
+                 image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP_FLIP,
                  image_normalization_type: ImageNormalizationType = ImageNormalizationType.TORCHVISION,
                  image_padding: int = 0,
                  bn_layer_types: List = [torch.nn.BatchNorm2d]

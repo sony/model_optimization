@@ -14,26 +14,28 @@
 # ==============================================================================
 from typing import Callable, Tuple, List
 
+from torch import Tensor
+
 from model_compression_toolkit.constants import FOUND_TORCH
 from model_compression_toolkit.core.pytorch.utils import set_model
 from model_compression_toolkit.data_generation.common.data_generation import data_generation
 from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig
-from model_compression_toolkit.data_generation.common.enums import ImageGranularity, SchedularType, \
-    BatchNormAlignemntLossType, DataInitType, LayerWeightingType, ImagePipelineType, ImageNormalizationType, \
+from model_compression_toolkit.data_generation.common.enums import ImageGranularity, SchedulerType, \
+    BatchNormAlignemntLossType, DataInitType, BNLayerWeightingType, ImagePipelineType, ImageNormalizationType, \
     OutputLossType
 from model_compression_toolkit.data_generation.pytorch.image_pipeline import image_pipeline_dict, \
     image_normalization_dict
 from model_compression_toolkit.data_generation.pytorch.model_info_exctractors import PytorchActivationExtractor, \
-    PytorchOrigBNStatsHolder
+    PytorchOriginalBNStatsHolder
 from model_compression_toolkit.data_generation.pytorch.optimization_functions.batchnorm_alignment_functions import \
     bn_alignment_loss_function_dict
 from model_compression_toolkit.data_generation.pytorch.optimization_functions.image_initilization import \
     image_initilization_function_dict
-from model_compression_toolkit.data_generation.pytorch.optimization_functions.layer_weighting_functions import \
-    layer_weighting_function_dict
+from model_compression_toolkit.data_generation.pytorch.optimization_functions.bn_layer_weighting_functions import \
+    bn_layer_weighting_function_dict
 from model_compression_toolkit.data_generation.pytorch.optimization_functions.output_loss_functions import \
     output_loss_function_dict
-from model_compression_toolkit.data_generation.pytorch.optimization_functions.schedular_step_functions import \
+from model_compression_toolkit.data_generation.pytorch.optimization_functions.scheduler_step_functions import \
     scheduler_step_function_dict
 from model_compression_toolkit.data_generation.pytorch.optimization_utils import PytorchAllImagesOptimizationHandler, \
     DatasetFromList
@@ -42,7 +44,7 @@ from model_compression_toolkit.logger import Logger
 # Define default values for various configuration parameters
 DEFAULT_INITIAL_LR = 5
 DEFAULT_OUTPUT_LOSS_MULTIPLIER = 0.0001
-DEFAULT_DATA_GEN_BS = 8
+DEFAULT_DATA_GEN_BS = 32
 DEFAULT_N_ITER = 500
 
 if FOUND_TORCH:
@@ -59,13 +61,13 @@ if FOUND_TORCH:
             data_gen_batch_size=DEFAULT_DATA_GEN_BS,
             initial_lr=DEFAULT_INITIAL_LR,
             output_loss_multiplier=DEFAULT_OUTPUT_LOSS_MULTIPLIER,
-            scheduler_type: SchedularType = SchedularType.REDUCE_ON_PLATEAU,
+            scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU,
             bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
             output_loss_type: OutputLossType = OutputLossType.MIN_MAX_DIFF,
             data_init_type: DataInitType = DataInitType.Diverse,
-            layer_weighting_type: LayerWeightingType = LayerWeightingType.AVERAGE,
+            layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
             image_granularity=ImageGranularity.AllImages,
-            image_pipeline_type: ImagePipelineType = ImagePipelineType.CROP_FLIP,
+            image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP,
             image_normalization_type: ImageNormalizationType = ImageNormalizationType.TORCHVISION,
             image_padding: int = 0,
             activations_loss_fn: Callable = None,
@@ -82,11 +84,11 @@ if FOUND_TORCH:
             data_gen_batch_size (int): Batch size for data generation.
             initial_lr (float): Initial learning rate for the optimizer.
             output_loss_multiplier (float): Multiplier for the output loss during optimization.
-            scheduler_type (SchedularType): The type of scheduler to use.
+            scheduler_type (SchedulerType): The type of scheduler to use.
             bn_alignment_loss_type (BatchNormAlignemntLossType): The type of BatchNorm alignment loss to use.
             output_loss_type (OutputLossType): The type of output loss to use.
             data_init_type (DataInitType): The type of data initialization to use.
-            layer_weighting_type (LayerWeightingType): The type of layer weighting to use.
+            layer_weighting_type (BNLayerWeightingType): The type of layer weighting to use.
             image_granularity (ImageGranularity): The granularity of the images for optimization.
             image_pipeline_type (ImagePipelineType): The type of image pipeline to use.
             image_normalization_type (ImageNormalizationType): The type of image normalization to use.
@@ -128,7 +130,7 @@ if FOUND_TORCH:
             model: Module,
             n_images: int,
             output_image_size: Tuple,
-            data_generation_config: DataGenerationConfig) -> List:
+            data_generation_config: DataGenerationConfig) -> List[Tensor]:
         """
         Function to perform data generation using the provided model and data generation configuration.
 
@@ -139,7 +141,7 @@ if FOUND_TORCH:
             data_generation_config (DataGenerationConfig): Configuration for data generation.
 
         Returns:
-            List: Finalized list containing generated images.
+            List[Tensor]: Finalized list containing generated images.
         """
         # Get the image pipeline class corresponding to the specified type
         image_pipeline = image_pipeline_dict.get(data_generation_config.image_pipeline_type)(output_image_size,
@@ -158,12 +160,12 @@ if FOUND_TORCH:
                 f'Invalid image_normalization_type {data_generation_config.image_normalization_type}. Please choose one of {ImageNormalizationType.get_values()}')
 
         # Get the layer weighting function corresponding to the specified type
-        layer_weighting_fn = layer_weighting_function_dict.get(data_generation_config.layer_weighting_type)
+        bn_layer_weighting_fn = bn_layer_weighting_function_dict.get(data_generation_config.layer_weighting_type)
 
         # Check if the layer weighting type is valid
-        if layer_weighting_fn is None:
+        if bn_layer_weighting_fn is None:
             Logger.exception(
-                f'Invalid layer_weighting_type {data_generation_config.layer_weighting_type}. Please choose one of {LayerWeightingType.get_values()}')
+                f'Invalid layer_weighting_type {data_generation_config.layer_weighting_type}. Please choose one of {BNLayerWeightingType.get_values()}')
 
         # Get the image initialization function corresponding to the specified type
         image_initialization_fn = image_initilization_function_dict.get(data_generation_config.data_init_type)
@@ -179,7 +181,7 @@ if FOUND_TORCH:
         # Check if the scheduler type is valid
         if scheduler_get_fn is None or scheduler_step_fn is None:
             Logger.exception(
-                f'Invalid scheduler_type {data_generation_config.scheduler_type}. Please choose one of {SchedularType.get_values()}')
+                f'Invalid scheduler_type {data_generation_config.scheduler_type}. Please choose one of {SchedulerType.get_values()}')
 
         # Create a scheduler object with the specified number of iterations
         scheduler = scheduler_get_fn(data_generation_config.n_iter)
@@ -213,7 +215,11 @@ if FOUND_TORCH:
         activation_extractor = PytorchActivationExtractor(model, data_generation_config.bn_layer_types)
 
         # Create an orig_bn_stats_holder object to hold original BatchNorm statistics
-        orig_bn_stats_holder = PytorchOrigBNStatsHolder(model, data_generation_config.bn_layer_types)
+        orig_bn_stats_holder = PytorchOriginalBNStatsHolder(model, data_generation_config.bn_layer_types)
+        if orig_bn_stats_holder.get_num_bn_layers() == 0:
+            Logger.exception(
+                f'Data generation requires a model with at least one Batch Norm layer.')
+
 
         # Create an AllImagesOptimizationHandler object for handling optimization
         all_imgs_opt_handler = PytorchAllImagesOptimizationHandler(model=model,
@@ -237,7 +243,7 @@ if FOUND_TORCH:
                                                 orig_bn_stats_holder=orig_bn_stats_holder,
                                                 all_imgs_opt_handler=all_imgs_opt_handler,
                                                 image_pipeline=image_pipeline,
-                                                layer_weighting_fn=layer_weighting_fn,
+                                                bn_layer_weighting_fn=bn_layer_weighting_fn,
                                                 bn_alignment_loss_fn=bn_alignment_loss_fn,
                                                 output_loss_fn=output_loss_fn,
                                                 output_loss_multiplier=data_generation_config.output_loss_multiplier,

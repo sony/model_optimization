@@ -14,11 +14,8 @@
 # ==============================================================================
 from typing import Callable, Any, List
 
-from model_compression_toolkit.data_generation.common.enums import SchedularType, BatchNormAlignemntLossType, \
-    DataInitType, LayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
-from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
-from model_compression_toolkit.data_generation.common.model_info_exctractors import ActivationExtractor
-from model_compression_toolkit.data_generation.common.optimization_utils import AllImagesOptimizationHandler
+from model_compression_toolkit.data_generation.common.enums import SchedulerType, BatchNormAlignemntLossType, \
+    DataInitType, BNLayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
 
 
 class DataGenerationConfig:
@@ -32,11 +29,11 @@ class DataGenerationConfig:
                  initial_lr: float,
                  output_loss_multiplier: float,
                  image_granularity: ImageGranularity = ImageGranularity.AllImages,
-                 scheduler_type: SchedularType = None,
+                 scheduler_type: SchedulerType = None,
                  bn_alignment_loss_type: BatchNormAlignemntLossType = None,
                  output_loss_type: OutputLossType = None,
                  data_init_type: DataInitType = None,
-                 layer_weighting_type: LayerWeightingType = None,
+                 layer_weighting_type: BNLayerWeightingType = None,
                  image_pipeline_type: ImagePipelineType = None,
                  image_normalization_type: ImageNormalizationType = None,
                  image_padding: int = 0,
@@ -55,11 +52,11 @@ class DataGenerationConfig:
             initial_lr (float): Initial learning rate for the optimizer.
             output_loss_multiplier (float): Multiplier for the output loss.
             image_granularity (ImageGranularity): Granularity of image data generation. Defaults to ImageGranularity.AllImages.
-            scheduler_type (SchedularType): Type of scheduler for the optimizer. Defaults to None.
+            scheduler_type (SchedulerType): Type of scheduler for the optimizer. Defaults to None.
             bn_alignment_loss_type (BatchNormAlignemntLossType): Type of BatchNorm alignment loss. Defaults to None.
             output_loss_type (OutputLossType): Type of output loss. Defaults to None.
             data_init_type (DataInitType): Type of data initialization. Defaults to None.
-            layer_weighting_type (LayerWeightingType): Type of layer weighting. Defaults to None.
+            layer_weighting_type (BNLayerWeightingType): Type of layer weighting. Defaults to None.
             image_pipeline_type (ImagePipelineType): Type of image pipeline. Defaults to None.
             image_normalization_type (ImageNormalizationType): Type of image normalization. Defaults to None.
             image_padding (int): Padding size for images. Defaults to 0.
@@ -86,28 +83,4 @@ class DataGenerationConfig:
         self.bn_layer_types = bn_layer_types
         self.clip_images = clip_images
         self.reflection = reflection
-
-    def get_all_images_optimization_handler(self,
-                                            model: Any,
-                                            init_dataset: Any,
-                                            image_pipeline: BaseImagePipeline,
-                                            activation_extractor: ActivationExtractor,
-                                            scheduler_step_fn: Callable,
-                                            scheduler: Any) -> AllImagesOptimizationHandler:
-        """
-        Get the AllImagesOptimizationHandler object.
-
-        Args:
-            model (Any): Model for which data generation is being performed.
-            init_dataset (Any): Initial dataset for data generation.
-            image_pipeline (BaseImagePipeline): Callable image pipeline for image manipulation.
-            activation_extractor (ActivationExtractor): The activation extractor for the model.
-            scheduler_step_fn (Callable): Scheduler step function for the optimizer.
-            scheduler (Any): Scheduler for the optimizer.
-
-        Returns:
-            AllImagesOptimizationHandler: AllImagesOptimizationHandler object.
-        """
-        raise NotImplemented
-
 

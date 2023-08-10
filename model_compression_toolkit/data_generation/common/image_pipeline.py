@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from abc import ABC, abstractmethod
 from typing import Any
 
 
-class BaseImagePipeline:
+class BaseImagePipeline(ABC):
     def __init__(self,
                  output_image_size: int,
                  padding: int = 0):
@@ -28,7 +29,7 @@ class BaseImagePipeline:
         """
         self.output_image_size = output_image_size
         self.padding = padding
-
+    @abstractmethod
     def get_image_input_size(self) -> int:
         """
         Get the size of the input image for the image pipeline.
@@ -38,6 +39,7 @@ class BaseImagePipeline:
         """
         raise NotImplemented
 
+    @abstractmethod
     def image_input_manipulation(self,
                                  images: Any) -> Any:
         """
@@ -51,6 +53,7 @@ class BaseImagePipeline:
         """
         raise NotImplemented
 
+    @abstractmethod
     def image_output_finalize(self,
                               images: Any) -> Any:
         """

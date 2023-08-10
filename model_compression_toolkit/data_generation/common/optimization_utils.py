@@ -18,12 +18,20 @@ import numpy as np
 from model_compression_toolkit.data_generation.common.enums import ImageGranularity
 from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
 from model_compression_toolkit.data_generation.pytorch.model_info_exctractors import ActivationExtractor, \
-    OrigBNStatsHolder
+    OriginalBNStatsHolder
 
 
 class AllImagesOptimizationHandler:
     """
-    Handles the optimization process for all images.
+    Handles the optimization process for generating images. Manages the order for which
+    the image batches are optimized per iteration.
+
+    Methods for a specific batch (specified by batch index):
+    - Clear gradients.
+    - Compute the batch-norm loss.
+    - Perform a single optimization step.
+    - Updates batch statistics.
+
     """
     def __init__(self,
                  model: Any,
@@ -78,19 +86,21 @@ class AllImagesOptimizationHandler:
         self.use_all_data_stats = False
 
         # Determine if all data statistics should be used
-        if image_granularity in [ImageGranularity.AllImages]:
-            self.use_all_data_stats = True
-
+        self.use_all_data_stats = image_granularity == ImageGranularity.AllImages
 
     def random_batch_reorder(self):
         """
         Randomly reorders the batch indices.
+        This is done to ensure that the optimization process doesn't repeatedly
+        target the same batch of images at the same order.
         """
         self.rand_batch_inds = np.random.choice(self.n_batches, self.n_batches, replace=False)
 
     def get_random_batch_index(self, index: int) -> int:
         """
         Get the random batch index at the specified index.
+        Providing a reference index that the method will use as a base to
+        calculate the random batch index.
 
          Args:
             index (int): The index.
@@ -137,7 +147,7 @@ class AllImagesOptimizationHandler:
         """
         return self.batch_opt_holders_list[batch_index].get_scheduler()
 
-    def get_accumulated_stats_per_layer(self, layer_name: str) -> Tuple[Any, Any]:
+    def get_layer_accumulated_stats(self, layer_name: str) -> Tuple[Any, Any]:
         """
         Get the accumulated activation statistics for a layer.
 
@@ -153,9 +163,9 @@ class AllImagesOptimizationHandler:
                         input_imgs: Any,
                         batch_index: int,
                         activation_extractor: ActivationExtractor,
-                        orig_bn_stats_holder: OrigBNStatsHolder,
+                        orig_bn_stats_holder: OriginalBNStatsHolder,
                         bn_alignment_loss_fn: Callable,
-                        layer_weights: Dict) -> Any:
+                        bn_layer_weights: Dict) -> Any:
         """
         Compute the batch norm alignment loss.
 
@@ -163,9 +173,9 @@ class AllImagesOptimizationHandler:
             input_imgs (Any): the input images.
             batch_index (int): the index of the batch.
             activation_extractor (ActivationExtractor): extractor for layer activations.
-            orig_bn_stats_holder (OrigBNStatsHolder): holder for original BatchNorm statistics.
+            orig_bn_stats_holder (OriginalBNStatsHolder): holder for original BatchNorm statistics.
             bn_alignment_loss_fn (Callable): the batch norm alignment loss function.
-            layer_weights (Dict): weights to multiply the loss for each layer.
+            bn_layer_weights (Dict): weights to multiply the loss for each layer.
 
         Returns:
             Any: the computed batch norm alignment loss.
@@ -182,7 +192,7 @@ class AllImagesOptimizationHandler:
         # Iterate over each BN layer
         for layer_name in orig_bn_stats_holder.get_bn_layer_names():
             # Get the layer weight for the current BN layer
-            layer_weight = layer_weights.get(layer_name)
+            bn_layer_weight = bn_layer_weights.get(layer_name)
 
             # Get the mean and variance from the original BN statistics
             bn_layer_mean = orig_bn_stats_holder.get_mean(layer_name)
@@ -191,13 +201,13 @@ class AllImagesOptimizationHandler:
             # Get the mean and variance from the current batch's statistics
             if self.use_all_data_stats:
                 # If using all data statistics, retrieve the accumulated statistics from all batches
-                imgs_layer_mean, imgs_layer_var, imgs_layer_std = self.get_accumulated_stats_per_layer(layer_name)
+                imgs_layer_mean, imgs_layer_std = self.get_layer_accumulated_stats(layer_name)
             else:
                 # Otherwise, retrieve the statistics from the current batch
-                imgs_layer_mean, imgs_layer_second_moment, imgs_layer_var, imgs_layer_std = self.all_imgs_stats_holder.get_stats(batch_index, layer_name)
+                imgs_layer_mean, imgs_layer_second_moment, imgs_layer_std = self.all_imgs_stats_holder.get_stats(batch_index, layer_name)
 
             # Accumulate the batchnorm alignment weighted by the layer weight
-            total_bn_loss += layer_weight * bn_alignment_loss_fn(bn_layer_mean, imgs_layer_mean, bn_layer_std, imgs_layer_std)
+            total_bn_loss += bn_layer_weight * bn_alignment_loss_fn(bn_layer_mean, imgs_layer_mean, bn_layer_std, imgs_layer_std)
 
         return total_bn_loss
 
@@ -213,11 +223,10 @@ class AllImagesOptimizationHandler:
             batch_index (int): the index of the batch.
             activation_extractor (ActivationExtractor): extractor for layer activations.
         """
-        if self.use_all_data_stats:
-            self.all_imgs_stats_holder.update_batch_stats(batch_index=batch_index,
-                                                          input_imgs=input_imgs,
-                                                          activation_extractor=activation_extractor,
-                                                          to_differentiate=False)
+        self.all_imgs_stats_holder.update_batch_stats(batch_index=batch_index,
+                                                      input_imgs=input_imgs,
+                                                      activation_extractor=activation_extractor,
+                                                      to_differentiate=False)
 
     def optimization_step(self,
                           batch_index: int,
@@ -253,7 +262,13 @@ class AllImagesOptimizationHandler:
 
 
 class BatchOptimizationHolder:
+    """
+    Holds optimization parameters for a batch of images.
 
+    This class acts as a container for optimization-related parameters specific to a batch of images. It does not
+    directly manage or handle the optimization process itself but rather holds the necessary components for
+    optimization, including images, optimizer and scheduler.
+    """
     def __init__(self,
                  images: Any,
                  optimizer: Any,
@@ -279,25 +294,30 @@ class BatchOptimizationHolder:
         return self.optimizer
 
     def get_scheduler(self) -> Any:
-        "Returns the scheduler"
+        """Returns the scheduler"""
         return self.scheduler
 
 
-class AllImgsStatsHolder:
+class AllImagesStatsHolder:
     """
-    Holds statistics for all images.
+    Stores activation statistics for all image batches. It offers an organized mechanism for retaining mean,
+    second-moment, and standard deviation statistics corresponding to the activations of each layer.
+
+    Responsible for collecting and storing activation statistics across all batches of images.
+    It stores a list 'batches_stats_holder_list' of 'BatchStatsHolder's. Each `BatchStatsHolder` instance in
+    the `batches_stats_holder_list` is responsible for storing statistics for a specific batch, specified by "batch_index".
     """
     def __init__(self,
                  n_batches: int,
                  batch_size: int,
-                 mean_axis=Type[list]):
+                 mean_axis: List):
         """
-        Constructor for the AllImgsStatsHolder class.
+        Constructor for the AllImagesStatsHolder class.
 
         Args:
             n_batches (int): the number of batches.
             batch_size (int): the size of each batch.
-            mean_axis (int): the axis along which to compute the mean.
+            mean_axis (List): the axis along which to compute the mean.
         """
         self.mean_axis = mean_axis
         self.n_batches = n_batches
@@ -347,27 +367,30 @@ class AllImgsStatsHolder:
             layer_name (str): the name of the layer.
 
         Returns:
-            Tuple[Tensor, Tensor]: the mean and second moment for the specified batch and layer.
+            Tuple[Any, Any, Any]: the mean, second moment and std for the specified batch and layer.
         """
         mean = self.batches_stats_holder_list[batch_index].get_mean(layer_name)
         second_moment = self.batches_stats_holder_list[batch_index].get_second_moment(layer_name)
         var = self.batches_stats_holder_list[batch_index].get_var(layer_name)
         std = self.batches_stats_holder_list[batch_index].get_std(layer_name)
-        return mean, second_moment, var, std
+        return mean, second_moment, std
 
 
-class BatchStatsHolder(object):
+class BatchStatsHolder:
     """
-    Holds batch statistics for a layer.
+    Stores activation statistics for a specific batch of images.
+    This class provides a structured approach for managing mean, second-moment,
+    and standard deviation statistics related to the activations of each layer
+    for a particular batch of images.
     """
     def __init__(self,
-                 mean_axis: Type[list],
+                 mean_axis: List,
                  eps: float = 1e-6):
         """
         Constructor for the BatchStatsHolder class.
 
         Args:
-            mean_axis (Type[list]): the axis along which to compute the mean.
+            mean_axis (List): the axis along which to compute the mean.
             eps (float): a small value added to the denominator to avoid division by zero. Defaults to 1e-6.
         """
         self.eps = eps

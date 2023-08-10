@@ -14,13 +14,16 @@
 # ==============================================================================
 # Import required modules and classes
 import time
-from typing import Callable, Any
+from typing import Callable, Any, List
 
-from charset_normalizer.md import List
+import torch
+from tqdm import tqdm
 
+from model_compression_toolkit.core.pytorch.utils import get_working_device
 from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig
+from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
 from model_compression_toolkit.data_generation.common.model_info_exctractors import ActivationExtractor, \
-    OrigBNStatsHolder
+    OriginalBNStatsHolder
 from model_compression_toolkit.data_generation.common.optimization_utils import AllImagesOptimizationHandler
 from model_compression_toolkit.logger import Logger
 
@@ -28,10 +31,10 @@ from model_compression_toolkit.logger import Logger
 def data_generation(
         data_generation_config: DataGenerationConfig,
         activation_extractor: ActivationExtractor,
-        orig_bn_stats_holder: OrigBNStatsHolder,
+        orig_bn_stats_holder: OriginalBNStatsHolder,
         all_imgs_opt_handler: AllImagesOptimizationHandler,
-        image_pipeline: Callable,
-        layer_weighting_fn: Callable,
+        image_pipeline: BaseImagePipeline,
+        bn_layer_weighting_fn: Callable,
         bn_alignment_loss_fn: Callable,
         output_loss_fn: Callable,
         output_loss_multiplier: float
@@ -42,10 +45,10 @@ def data_generation(
     Args:
         data_generation_config (DataGenerationConfig): Configuration for data generation.
         activation_extractor (ActivationExtractor): The activation extractor for the model.
-        orig_bn_stats_holder (OrigBNStatsHolder): Object to hold original BatchNorm statistics.
+        orig_bn_stats_holder (OriginalBNStatsHolder): Object to hold original BatchNorm statistics.
         all_imgs_opt_handler (AllImagesOptimizationHandler): Handles the images optimization process.
         image_pipeline (Callable): Callable image pipeline for image manipulation.
-        layer_weighting_fn (Callable): Function to compute layer weighting for the BatchNorm alignment loss .
+        bn_layer_weighting_fn (Callable): Function to compute layer weighting for the BatchNorm alignment loss .
         bn_alignment_loss_fn (Callable): Function to compute BatchNorm alignment loss.
         output_loss_fn (Callable): Function to compute output loss.
         output_loss_multiplier (float): Multiplier for the output loss.
@@ -55,17 +58,16 @@ def data_generation(
     """
 
     # Compute the layer weights based on orig_bn_stats_holder
-    layer_weights = layer_weighting_fn(orig_bn_stats_holder)
+    bn_layer_weights = bn_layer_weighting_fn(orig_bn_stats_holder)
 
-    # Define the log intervals for iterations
-    iter_log_interval = [10] + list(range(0, data_generation_config.n_iter , int(data_generation_config.n_iter / 10)))[1:]
-
+    # Get the current time to measure the total time taken
     total_time = time.time()
-    avg_iter_time = 0
+
+    # Create a tqdm progress bar for iterating over data_generation_config.n_iter iterations
+    ibar = tqdm(range(data_generation_config.n_iter))
 
     # Perform data generation iterations
-    for i_ter in range(data_generation_config.n_iter):
-        iter_time = time.time()
+    for i_ter in ibar:
 
         # Randomly reorder the batches
         all_imgs_opt_handler.random_batch_reorder()
@@ -85,7 +87,7 @@ def data_generation(
             input_imgs = image_pipeline.image_input_manipulation(imgs_to_optimize)
 
             # Forward pass to extract activations
-            output = activation_extractor.run_on_inputs(input_imgs)
+            output = activation_extractor.run_model(input_imgs)
 
             # Compute BatchNorm alignment loss
             bn_loss = all_imgs_opt_handler.compute_bn_loss(input_imgs=input_imgs,
@@ -93,11 +95,11 @@ def data_generation(
                                                            activation_extractor=activation_extractor,
                                                            orig_bn_stats_holder=orig_bn_stats_holder,
                                                            bn_alignment_loss_fn=bn_alignment_loss_fn,
-                                                           layer_weights=layer_weights)
+                                                           bn_layer_weights=bn_layer_weights)
+
 
             # Compute output loss
-            output_loss = output_loss_fn(output_imgs=output,
-                                         output_loss_multiplier=output_loss_multiplier)
+            output_loss = output_loss_fn(output_imgs=output) if output_loss_multiplier > 0 else torch.zeros(1).to(get_working_device())
 
             # Compute total loss
             total_loss = bn_loss + output_loss_multiplier * output_loss
@@ -106,25 +108,18 @@ def data_generation(
             all_imgs_opt_handler.optimization_step(random_batch_index, total_loss, i_ter)
 
             # Update the statistics based on the updated images
-            final_imgs = image_pipeline.image_output_finalize(imgs_to_optimize)
-            all_imgs_opt_handler.update_statistics(input_imgs=final_imgs,
-                                          batch_index=random_batch_index,
-                                          activation_extractor=activation_extractor)
+            if all_imgs_opt_handler.use_all_data_stats:
+                final_imgs = image_pipeline.image_output_finalize(imgs_to_optimize)
+                all_imgs_opt_handler.update_statistics(input_imgs=final_imgs,
+                                                       batch_index=random_batch_index,
+                                                       activation_extractor=activation_extractor)
 
-            # Log iteration progress
-            if i_ter in iter_log_interval and i_batch == (all_imgs_opt_handler.n_batches - 1):
-                Logger.info(f"Iteration {i_ter}/{data_generation_config.n_iter}: "
-                            f"Total Loss: {total_loss.item():.5f}, "
+        ibar.set_description(f"Total Loss: {total_loss.item():.5f}, "
                             f"BN Loss: {bn_loss.item():.5f}, "
-                            f"Ouptut Loss: {output_loss.item():.5f},\n"
-                            f"Average iteration time: {avg_iter_time:.4f}, "
-                            f"Time elapsed: {int(time.time() - total_time)}, "
-                            f"Estimated time to complete (seconds): {int((data_generation_config.n_iter - i_ter) * avg_iter_time)}"
-                            )
-        avg_iter_time = (1 / (i_ter + 1)) * (time.time() - iter_time) + (i_ter / (i_ter + 1)) * avg_iter_time
+                            f"Output Loss: {output_loss.item():.5f}")
 
 
-    # Return the finalized data loader containing the generated images
+    # Return the finalized list containing the generated images
     finalized_imgs = all_imgs_opt_handler.get_finalized_images()
-    Logger.info(f'Total time to genenrate {len(finalized_imgs)} images (seconds): {int(time.time() - total_time)}')
+    Logger.info(f'Total time to generate {len(finalized_imgs)} images (seconds): {int(time.time() - total_time)}')
     return finalized_imgs

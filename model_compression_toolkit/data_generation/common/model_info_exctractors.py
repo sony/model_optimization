@@ -12,26 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Type, Any, List
+from abc import ABC, abstractmethod
+from typing import Type, Any, List, Dict, Tuple
 
 
-class OrigBNStatsHolder(object):
+class OriginalBNStatsHolder:
     """
     Holds the original batch normalization (BN) statistics for a model.
     """
     def __init__(self,
                  model: Any,
-                 bn_layer_types: Type[list],
-                 eps=1e-6):
+                 bn_layer_types: List):
         """
-        Initializes the OrigBNStatsHolder.
+        Initializes the OriginalBNStatsHolder.
 
         Args:
             model (Any): The framework model.
-            bn_layer_types (Type[list]): List of batch normalization layer types.
-            eps (float): Epsilon value for numerical stability.
+            bn_layer_types (List): List of batch normalization layer types.
         """
-        self.eps = eps
         self.bn_params = self.get_bn_params(model, bn_layer_types)
 
     def get_bn_layer_names(self) -> List[str]:
@@ -90,13 +88,13 @@ class OrigBNStatsHolder(object):
 
     def get_bn_params(self,
                       model: Any,
-                      bn_layer_types: Type[list]) -> dict:
+                      bn_layer_types: List) -> Dict[str, Tuple]:
         """
         Get the batch normalization parameters (mean and variance) for each batch normalization layer in the model.
 
         Args:
             model (Any): The model.
-            bn_layer_types (Type[list]): List of batch normalization layer types.
+            bn_layer_types (List): List of batch normalization layer types.
 
         Returns:
             dict: Dictionary mapping batch normalization layer names to their parameters.
@@ -105,34 +103,37 @@ class OrigBNStatsHolder(object):
 
 
 
-class ActivationExtractor(object):
+class ActivationExtractor:
     """
-    Extracts activations of inputs to layers in a model.
+    Extracts activations of input tensors to layers in a model.
     """
+
     def __init__(self,
                  model: Any,
-                 layer_types_to_extract_inputs: Type[list]):
+                 layer_types_to_extract_inputs: List):
         """
         Initializes the ActivationExtractor.
 
         Args:
             model (Any): The model.
-            layer_types_to_extract_inputs (Type[list]): Tuple or list of layer types.
+            layer_types_to_extract_inputs (List): Tuple or list of layer types.
         """
         raise NotImplemented
 
-    def get_activation(self, layer_name: str) -> Any:
+    @abstractmethod
+    def get_layer_input_activation(self, layer_name: str) -> Any:
         """
-        Get the activation (input) tensor of a layer.
+        Get the input activation tensor of a layer.
 
         Args:
             layer_name (str): Name of the layer.
 
         Returns:
-            Any: Activation tensor of the layer.
+            Any: Input activation tensor of the layer.
         """
         raise NotImplemented
 
+    @abstractmethod
     def get_num_extractor_layers(self) -> int:
         """
         Get the number of layers for which to extract input activations.
@@ -142,6 +143,7 @@ class ActivationExtractor(object):
         """
         raise NotImplemented
 
+    @abstractmethod
     def get_extractor_layer_names(self) -> list:
         """
         Get a list of the layer names for which to extract input activations.
@@ -151,19 +153,22 @@ class ActivationExtractor(object):
         """
         raise NotImplemented
 
+    @abstractmethod
     def clear(self):
         """
         Clear the stored activation tensors.
         """
         raise NotImplemented
 
+    @abstractmethod
     def remove(self):
         """
         Remove the hooks from the model.
         """
         raise NotImplemented
 
-    def run_on_inputs(self, inputs: Any) -> Any:
+    @abstractmethod
+    def run_model(self, inputs: Any) -> Any:
         """
         Run the model on the given inputs and return the output.
 
