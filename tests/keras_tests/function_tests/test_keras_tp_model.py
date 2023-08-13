@@ -23,8 +23,9 @@ from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
 from model_compression_toolkit.core.common import BaseNode
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.keras.layers import Conv2D, Conv2DTranspose, ReLU, Activation, Input
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers import Conv2D, Conv2DTranspose, ReLU, Activation
+    from keras.src import Input
 else:
     from keras.layers import Conv2D, Conv2DTranspose, ReLU, Activation
     from keras import Input

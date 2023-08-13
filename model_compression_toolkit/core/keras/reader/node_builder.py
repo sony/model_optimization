@@ -20,10 +20,10 @@ from packaging import version
 from model_compression_toolkit.core.keras.custom_layer_validation import is_keras_custom_layer
 from model_compression_toolkit.logger import Logger
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.layers.core import TFOpLambda, SlicingOpLambda
-    from tensorflow.python.keras.engine.keras_tensor import KerasTensor
-    from tensorflow.python.keras.engine.node import Node as KerasNode
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers.core import TFOpLambda, SlicingOpLambda
+    from keras.src.engine.keras_tensor import KerasTensor
+    from keras.src.engine.node import Node as KerasNode
 else:
     from keras.layers.core import TFOpLambda, SlicingOpLambda
     from keras.engine.keras_tensor import KerasTensor

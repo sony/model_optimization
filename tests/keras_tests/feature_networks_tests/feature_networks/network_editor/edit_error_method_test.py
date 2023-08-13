@@ -15,8 +15,11 @@
 
 import numpy as np
 import tensorflow as tf
-from keras.engine.base_layer import Layer
-from keras.engine.input_layer import InputLayer
+from packaging import version
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.engine.input_layer import InputLayer
+else:
+    from keras.engine.input_layer import InputLayer
 
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.core import QuantizationErrorMethod, DebugConfig

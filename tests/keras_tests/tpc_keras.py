@@ -12,8 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from keras.engine.input_layer import InputLayer
+from packaging import version
+import tensorflow as tf
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.engine.input_layer import InputLayer
+else:
+    from keras.engine.input_layer import InputLayer
 import model_compression_toolkit as mct
 
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \

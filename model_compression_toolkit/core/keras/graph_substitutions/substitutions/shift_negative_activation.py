@@ -16,11 +16,16 @@
 from typing import Tuple, Any
 
 import numpy as np
-import tensorflow as tf
 
+from packaging import version
+import tensorflow as tf
 from tensorflow.python.keras.layers.core import TFOpLambda
-from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, ZeroPadding2D, Reshape, \
-    GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers import Activation, Conv2D, Dense, DepthwiseConv2D, ZeroPadding2D, Reshape, \
+        GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
+else:
+    from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, ZeroPadding2D, Reshape, \
+        GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
 
 from model_compression_toolkit.core import CoreConfig, FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode, Graph

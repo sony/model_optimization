@@ -136,10 +136,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQLossFunctions))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasTrainableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(keras_gptq_soft_quantizer_test))
-
-        # Keras test layers are supported in TF2.6 or higher versions
-        if version.parse(tf.__version__) >= version.parse("2.6"):
-            suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))
 
     if found_pytorch:
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQModelBuilderWithActivationHolderPytorch))

@@ -17,9 +17,8 @@
 import tensorflow as tf
 from packaging import version
 
-# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.engine.node import Node as KerasNode
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.engine.node import Node as KerasNode
 else:
     from keras.engine.node import Node as KerasNode
 

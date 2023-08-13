@@ -14,7 +14,13 @@
 # ==============================================================================
 from typing import Tuple, Any, Dict, Union, List
 
-from keras.engine.base_layer import Layer
+from packaging import version
+import tensorflow as tf
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.engine.base_layer import Layer
+else:
+    from keras.engine.base_layer import Layer
+
 from keras.models import Model
 from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder, QuantizationTarget
 from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class

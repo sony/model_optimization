@@ -19,8 +19,8 @@ import tensorflow as tf
 from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import activation_lut_kmean_quantizer
 from packaging import version
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU
 

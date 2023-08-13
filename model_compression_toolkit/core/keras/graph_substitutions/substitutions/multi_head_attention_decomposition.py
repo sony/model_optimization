@@ -16,9 +16,9 @@ import numpy as np
 import tensorflow as tf
 from packaging import version
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.layers.core import TFOpLambda
-    from tensorflow.keras.layers import MultiHeadAttention, Conv2D, Softmax, Concatenate, Reshape, Permute
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers.core import TFOpLambda
+    from keras.src.layers import MultiHeadAttention, Conv2D, Softmax, Concatenate, Reshape, Permute
 else:
     from keras.layers.core import TFOpLambda
     from keras.layers import MultiHeadAttention, Conv2D, Softmax, Concatenate, Reshape, Permute

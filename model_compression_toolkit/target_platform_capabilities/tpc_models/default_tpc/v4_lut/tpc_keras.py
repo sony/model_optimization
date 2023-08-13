@@ -16,8 +16,8 @@ import tensorflow as tf
 from packaging import version
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.v4_lut import __version__ as TPC_VERSION
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
         Conv2DTranspose
 else:

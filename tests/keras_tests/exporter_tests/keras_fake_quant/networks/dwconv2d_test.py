@@ -14,8 +14,14 @@
 # ==============================================================================
 import keras
 from keras import Input
-from keras.applications import MobileNetV2
-from keras.layers import Conv2D, TFOpLambda, Add, DepthwiseConv2D, Dense
+from packaging import version
+import tensorflow as tf
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers import DepthwiseConv2D
+    from keras.src.layers.core.tf_op_layer import TFOpLambda
+else:
+    from keras.layers import DepthwiseConv2D
+    from keras.layers.core.tf_op_layer import TFOpLambda
 import numpy as np
 import tensorflow as tf
 

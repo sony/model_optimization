@@ -13,9 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-import numpy as np
 import tensorflow as tf
-from keras.engine.input_layer import InputLayer
 
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.core import DebugConfig
