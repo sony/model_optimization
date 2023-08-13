@@ -17,8 +17,8 @@ import numpy as np
 from sklearn.cluster import KMeans
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
-from model_compression_toolkit.constants import CLUSTER_CENTERS, MIN_THRESHOLD, SCALE_PER_CHANNEL, \
-    MULTIPLIER_N_BITS, THRESHOLD
+from model_compression_toolkit.constants import LUT_VALUES, MIN_THRESHOLD, SCALE_PER_CHANNEL, \
+    LUT_VALUES_BITWIDTH, THRESHOLD
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import \
     max_power_of_two, int_quantization_with_threshold
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import \
@@ -41,7 +41,7 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
     """
     The quantizer first finds the closest max value per channel of tensor_data.
     Now, we divide tensor_data with the threshold vector per channel. In addition, we scale the result to the range
-    [-2^(MULTIPLIER_N_BITS-1), 2^(MULTIPLIER_N_BITS-1)-1].
+    [-2^(LUT_VALUES_BITWIDTH-1), 2^(LUT_VALUES_BITWIDTH-1)-1].
     Next, we take the scaled tensor_data and perform k-means clustering with 2^nbit clusters.
     We return the rounded cluster centers, and threshold per channel. We use these to quantize the data.
     Args:
@@ -59,9 +59,9 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
         A dictionary containing the cluster assignments according to the k-means algorithm,
         the thresholds per channel and the multiplier num bits.
     """
-    if n_bits >= MULTIPLIER_N_BITS:
+    if n_bits >= LUT_VALUES_BITWIDTH:
         Logger.critical(f'Look-Up-Table bit configuration has {n_bits} bits, but must be less than '
-                        f'{MULTIPLIER_N_BITS}')  # pragma: no cover
+                        f'{LUT_VALUES_BITWIDTH}')  # pragma: no cover
     # TODO: need to set this externally
     if len(np.unique(tensor_data.flatten())) < 2 ** n_bits:
         n_clusters = len(np.unique(tensor_data.flatten()))
@@ -74,10 +74,10 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
                                                         channel_axis, n_iter, min_threshold,
                                                         qc.QuantizationErrorMethod.NOCLIPPING)[THRESHOLD]
 
-    tensor_for_kmeans = int_quantization_with_threshold(tensor_data, thresholds_per_channel, MULTIPLIER_N_BITS)
+    tensor_for_kmeans = int_quantization_with_threshold(tensor_data, thresholds_per_channel, LUT_VALUES_BITWIDTH)
     kmeans.fit(tensor_for_kmeans.reshape(-1, 1))
 
-    return {CLUSTER_CENTERS: np.round(kmeans.cluster_centers_),
+    return {LUT_VALUES: np.round(kmeans.cluster_centers_),
             SCALE_PER_CHANNEL: thresholds_per_channel}
 
 
@@ -115,9 +115,9 @@ def lut_kmeans_histogram(bins: np.ndarray,
         the threshold for pre-clustering quantization.
     """
 
-    if n_bits >= MULTIPLIER_N_BITS:
+    if n_bits >= LUT_VALUES_BITWIDTH:
         Logger.critical(f'Look-Up-Table bit configuration has {n_bits} bits. It must be less then '
-                        f'{MULTIPLIER_N_BITS}')  # pragma: no cover
+                        f'{LUT_VALUES_BITWIDTH}')  # pragma: no cover
 
     bins_with_values = np.abs(bins)[1:][counts > 0]
     if len(np.unique(bins_with_values.flatten())) < 2 ** n_bits:
@@ -130,8 +130,8 @@ def lut_kmeans_histogram(bins: np.ndarray,
     threshold = max_power_of_two(tensor_max, min_threshold)
 
     signed = np.any(bins[:-1][counts != 0] < 0)  # Whether histogram contains negative values or not.
-    tensor_for_kmeans = int_quantization_with_threshold(data=bins, threshold=threshold, n_bits=MULTIPLIER_N_BITS, signed=signed)
+    tensor_for_kmeans = int_quantization_with_threshold(data=bins, threshold=threshold, n_bits=LUT_VALUES_BITWIDTH, signed=signed)
     kmeans.fit(tensor_for_kmeans.reshape(-1, 1), sample_weight=np.insert(counts, 0, 0))
 
-    return {CLUSTER_CENTERS: np.float32(np.round(kmeans.cluster_centers_)),
+    return {LUT_VALUES: np.float32(np.round(kmeans.cluster_centers_)),
             THRESHOLD: threshold}

@@ -15,7 +15,7 @@
 from typing import Dict, Any
 
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.constants import THRESHOLD, RANGE_MIN, RANGE_MAX, SIGNED, CLUSTER_CENTERS, SCALE_PER_CHANNEL
+from model_compression_toolkit.constants import THRESHOLD, RANGE_MIN, RANGE_MAX, SIGNED, LUT_VALUES, SCALE_PER_CHANNEL
 from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig, \
     NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
 
@@ -66,7 +66,7 @@ def get_inferable_quantizer_kwargs(node_qc: BaseNodeQuantizationConfig,
         elif quantization_method in [QuantizationMethod.LUT_SYM_QUANTIZER, QuantizationMethod.LUT_POT_QUANTIZER]:
             return {qi_keras_consts.NUM_BITS: node_qc.weights_n_bits,
                     qi_keras_consts.PER_CHANNEL: node_qc.weights_per_channel_threshold,
-                    qi_keras_consts.CLUSTER_CENTERS: list(node_qc.weights_quantization_params[CLUSTER_CENTERS].flatten()),
+                    qi_keras_consts.LUT_VALUES: list(node_qc.weights_quantization_params[LUT_VALUES].flatten()),
                     qi_keras_consts.THRESHOLD: list(node_qc.weights_quantization_params[SCALE_PER_CHANNEL].flatten()),
                     qi_keras_consts.CHANNEL_AXIS: node_qc.weights_channels_axis,
                     # TODO: how to pass multiplier nbits and eps for a specific node?
@@ -98,7 +98,7 @@ def get_inferable_quantizer_kwargs(node_qc: BaseNodeQuantizationConfig,
         elif quantization_method in [QuantizationMethod.LUT_POT_QUANTIZER]:
             return {qi_keras_consts.NUM_BITS: node_qc.activation_n_bits,
                     qi_keras_consts.SIGNED: node_qc.activation_quantization_params[SIGNED],
-                    qi_keras_consts.CLUSTER_CENTERS: node_qc.activation_quantization_params[CLUSTER_CENTERS],
+                    qi_keras_consts.LUT_VALUES: node_qc.activation_quantization_params[LUT_VALUES],
                     qi_keras_consts.THRESHOLD: [node_qc.activation_quantization_params[THRESHOLD]]
                     # TODO: how to pass multiplier nbits and eps for a specific node?
                     }

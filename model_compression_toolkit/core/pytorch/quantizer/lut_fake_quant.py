@@ -3,7 +3,7 @@ from typing import Dict, Callable
 import torch
 import numpy as np
 
-from model_compression_toolkit.constants import SIGNED, CLUSTER_CENTERS, THRESHOLD, MULTIPLIER_N_BITS, EPS
+from model_compression_toolkit.constants import SIGNED, LUT_VALUES, THRESHOLD, LUT_VALUES_BITWIDTH, EPS
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 
 
@@ -27,7 +27,7 @@ def activation_lut_kmean_quantizer(activation_n_bits: int,
 
 class PytorchLUTFakeQuant(torch.nn.Module):
     """
-    A custom PyTorch layer for quantizing activation tensor with non-uniform quantization (using lookup table clustering).
+    A custom PyTorch layer for quantizing activation tensor with non-uniform quantization (using lookup table values).
     """
 
     def __init__(self,
@@ -43,7 +43,7 @@ class PytorchLUTFakeQuant(torch.nn.Module):
 
         self.quantization_params = quantization_params
         self.activation_is_signed = self.quantization_params.get(SIGNED)
-        self.cluster_centers = to_torch_tensor(self.quantization_params.get(CLUSTER_CENTERS))
+        self.lut_values = to_torch_tensor(self.quantization_params.get(LUT_VALUES))
         self.threshold = self.quantization_params.get(THRESHOLD)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -56,7 +56,7 @@ class PytorchLUTFakeQuant(torch.nn.Module):
         Returns:
             Quantized torch Tensor.
         """
-        if self.activation_is_signed is None or self.cluster_centers is None or self.threshold is None:
+        if self.activation_is_signed is None or self.lut_values is None or self.threshold is None:
             return None   # pragma: no cover
 
         _quant_output = self.lut_kmeans_quantizer(x)
@@ -76,14 +76,14 @@ class PytorchLUTFakeQuant(torch.nn.Module):
         Returns: Quantized tensor.
         """
 
-        tensor = self.int_quantization_with_threshold(tensor_data, MULTIPLIER_N_BITS)
+        tensor = self.int_quantization_with_threshold(tensor_data, LUT_VALUES_BITWIDTH)
         tensor = tensor.unsqueeze(-1)
 
-        expanded_cluster_centers = self.cluster_centers.reshape([*[1 for _ in range(len(tensor.shape) - 1)], -1])
-        cluster_assignments = torch.argmin(torch.abs(tensor - expanded_cluster_centers), dim=-1)
-        centers = self.cluster_centers.flatten()[cluster_assignments]
+        expanded_lut_values = self.lut_values.reshape([*[1 for _ in range(len(tensor.shape) - 1)], -1])
+        lut_values_assignments = torch.argmin(torch.abs(tensor - expanded_lut_values), dim=-1)
+        centers = self.lut_values.flatten()[lut_values_assignments]
 
-        quant_tensor = (centers / (2 ** (MULTIPLIER_N_BITS - int(self.activation_is_signed)))) * self.threshold
+        quant_tensor = (centers / (2 ** (LUT_VALUES_BITWIDTH - int(self.activation_is_signed)))) * self.threshold
 
         return quant_tensor
 

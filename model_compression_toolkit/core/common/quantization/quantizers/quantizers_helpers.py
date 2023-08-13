@@ -151,12 +151,12 @@ def uniform_quantize_tensor(tensor_data: np.ndarray,
     return q
 
 
-def kmeans_assign_clusters(cluster_centers: np.ndarray,
+def kmeans_assign_clusters(lut_values: np.ndarray,
                            query: np.ndarray) -> np.ndarray:
     """
     Assign each data value in query with its closest cluster center point.
     Args:
-        cluster_centers: the cluster centers to assign the query values.
+        lut_values: the cluster centers to assign the query values.
         query: values for which to assign cluster centers.
 
     Returns: A tensor of indexes to the cluster centers that where assigned to each value in
@@ -164,9 +164,9 @@ def kmeans_assign_clusters(cluster_centers: np.ndarray,
 
     """
     d0 = query.shape[0]
-    d1 = cluster_centers.shape[0]
+    d1 = lut_values.shape[0]
     query_ = query.repeat(d1).reshape(d0, d1)
-    cluster_centers_ = cluster_centers.repeat(d0).reshape(d1, d0).transpose(1, 0)
+    cluster_centers_ = lut_values.repeat(d0).reshape(d1, d0).transpose(1, 0)
     return np.argmin(np.abs(query_ - cluster_centers_), axis=1)
 
 

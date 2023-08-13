@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.network_editors.actions import EditRu
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.core.keras.constants import KERNEL
 from mct_quantizers.keras.quantizers import ActivationLutPOTInferableQuantizer
-from mct_quantizers.common.constants import THRESHOLD, CLUSTER_CENTERS
+from mct_quantizers.common.constants import THRESHOLD, LUT_VALUES
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
@@ -147,9 +147,9 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
             self.unit_test.assertTrue(isinstance(ll.activation_holder_quantizer, ActivationLutPOTInferableQuantizer))
             # Check layer's thresholds are power of two
             self.unit_test.assertTrue(math.log2(ll.activation_holder_quantizer.get_config()[THRESHOLD][0]).is_integer())
-            # Check layers number of clusters and clusters values
-            self.unit_test.assertTrue(len(ll.activation_holder_quantizer.get_config()[CLUSTER_CENTERS]) <= 2 ** self.activation_n_bits)
-            self.unit_test.assertTrue(np.all(np.mod(ll.activation_holder_quantizer.get_config()[CLUSTER_CENTERS], 1) == 0))
+            # Check layers number of lut values
+            self.unit_test.assertTrue(len(ll.activation_holder_quantizer.get_config()[LUT_VALUES]) <= 2 ** self.activation_n_bits)
+            self.unit_test.assertTrue(np.all(np.mod(ll.activation_holder_quantizer.get_config()[LUT_VALUES], 1) == 0))
 
 
 if __name__ == '__main__':

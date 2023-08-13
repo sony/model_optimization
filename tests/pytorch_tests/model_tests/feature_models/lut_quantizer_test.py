@@ -148,7 +148,7 @@ class LUTActivationQuantizerTest(BasePytorchTest):
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         quantized_model = quantized_models.get('lut_quantizer_test')
 
-        # Check that quantization occurred and the number of quantization clusters
+        # Check that quantization occurred and the number of quantization lut values
         set_model(float_model)
         self.unit_test.assertFalse(np.all(torch_tensor_to_numpy(float_model(input_x[0]) == quantized_model(input_x[0]))))
         self.unit_test.assertTrue(len(np.unique(torch_tensor_to_numpy(quantized_model(input_x[0])).flatten())) <=

@@ -17,8 +17,8 @@ import unittest
 
 import numpy as np
 
-from model_compression_toolkit.constants import CLUSTER_CENTERS, THRESHOLD, SIGNED, \
-    MULTIPLIER_N_BITS
+from model_compression_toolkit.constants import LUT_VALUES, THRESHOLD, SIGNED, \
+    LUT_VALUES_BITWIDTH
 from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import LUTFakeQuant
 
 
@@ -26,20 +26,20 @@ class TestLUTQuantizerFakeQuant(unittest.TestCase):
 
     def test_signed_lut_activation_fake_quant(self):
         threshold = 16
-        cluster_centers = np.array([-8.0, 0.0, 4.0])
+        lut_values = np.array([-8.0, 0.0, 4.0])
         tensor = np.linspace(-1*threshold, threshold, num=2*threshold+1)
         quantization_params = {SIGNED: True,
-                               CLUSTER_CENTERS: cluster_centers,
+                               LUT_VALUES: lut_values,
                                THRESHOLD: threshold}
 
         # We divide the centers in 2^(8-1) (the minus 1 because of the signed quantization)
-        div_val_output = (2 ** (MULTIPLIER_N_BITS - 1))
+        div_val_output = (2 ** (LUT_VALUES_BITWIDTH - 1))
 
         # Construct the FakeQuant
         model = LUTFakeQuant(quantization_params)
         output = model(tensor)
 
-        expected_unique_values = (cluster_centers / div_val_output) * threshold
+        expected_unique_values = (lut_values / div_val_output) * threshold
 
         # Check expected unique values of the output
         self.assertTrue((np.unique(output) == expected_unique_values).all())
@@ -53,20 +53,20 @@ class TestLUTQuantizerFakeQuant(unittest.TestCase):
 
     def test_unsigned_lut_activation_fake_quant(self):
         threshold = 8
-        cluster_centers = np.array([0.0, 256.0])
+        lut_values = np.array([0.0, 256.0])
         tensor = np.linspace(0, threshold, num=threshold+1)
         quantization_params = {SIGNED: False,
-                               CLUSTER_CENTERS: cluster_centers,
+                               LUT_VALUES: lut_values,
                                THRESHOLD: threshold}
 
         # We divide the centers in 2^8
-        div_val_output = (2 ** MULTIPLIER_N_BITS)
+        div_val_output = (2 ** LUT_VALUES_BITWIDTH)
 
         # Construct the FakeQuant
         model = LUTFakeQuant(quantization_params)
         output = model(tensor)
 
-        expected_unique_values = (cluster_centers / div_val_output) * threshold
+        expected_unique_values = (lut_values / div_val_output) * threshold
 
         # Check expected unique values of the output
         self.assertTrue((np.unique(output) == expected_unique_values).all())

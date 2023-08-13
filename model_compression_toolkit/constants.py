@@ -27,13 +27,13 @@ WEIGHTS_SIGNED = True
 # Minimal threshold to use for quantization ranges:
 MIN_THRESHOLD = (2 ** -16)
 EPS = 1e-8
-MULTIPLIER_N_BITS = 8
+LUT_VALUES_BITWIDTH = 8
 
 # Quantization attributes:
 OUTPUT_SCALE = 'output_scale'
 THRESHOLD = 'threshold'
 SIGNED = 'is_signed'
-CLUSTER_CENTERS = 'cluster_centers'
+LUT_VALUES = 'lut_values'
 SCALE_PER_CHANNEL = 'scale_per_channel'
 RANGE_MIN = 'range_min'
 RANGE_MAX = 'range_max'

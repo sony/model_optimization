@@ -18,7 +18,7 @@ import random
 import unittest
 import numpy as np
 
-from model_compression_toolkit.constants import CLUSTER_CENTERS, SCALE_PER_CHANNEL
+from model_compression_toolkit.constants import LUT_VALUES, SCALE_PER_CHANNEL
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import \
     lut_kmeans_tensor
 
@@ -33,14 +33,14 @@ class TestLUTQuantizerParams(unittest.TestCase):
                                                 n_bits=4,
                                                 per_channel=True,
                                                 channel_axis=channel_axis)
-        cluster_centers = quantization_params[CLUSTER_CENTERS]
+        lut_values = quantization_params[LUT_VALUES]
         scales_per_channel = quantization_params[SCALE_PER_CHANNEL]
         # check size of scales
         self.assertTrue(scales_per_channel.shape[channel_axis] == tensor_data.shape[channel_axis])
         self.assertTrue(len(scales_per_channel.shape) == len(tensor_data.shape))
         # check that all scales are power of 2
         self.assertTrue(np.all([math.log2(n).is_integer() for n in list(scales_per_channel.flatten())]))
-        self.assertTrue(len(np.unique(cluster_centers.flatten())) <= len(np.unique(tensor_data.flatten())))
+        self.assertTrue(len(np.unique(lut_values.flatten())) <= len(np.unique(tensor_data.flatten())))
 
     def test_properties_with_fewer_data(self):
         # check when the number of values of the tensor_data is lower than 2**n_bits
@@ -51,15 +51,15 @@ class TestLUTQuantizerParams(unittest.TestCase):
                                                 n_bits=4,
                                                 per_channel=True,
                                                 channel_axis=channel_axis)
-        cluster_centers = quantization_params[CLUSTER_CENTERS]
+        lut_values = quantization_params[LUT_VALUES]
         scales_per_channel = quantization_params[SCALE_PER_CHANNEL]
         # check size of scales
         self.assertTrue(scales_per_channel.shape[channel_axis] == tensor_data.shape[channel_axis])
         self.assertTrue(len(scales_per_channel.shape) == len(tensor_data.shape))
         # check that all scales are power of 2
         self.assertTrue(np.all([math.log2(n).is_integer() for n in list(scales_per_channel.flatten())]))
-        # len(unique(tensor_data)) < 2 ** n_bits then cluster_centers = len(unique(tensor_data))
-        self.assertTrue(len(cluster_centers.flatten()) <= len(np.unique(tensor_data.flatten())))
+        # len(unique(tensor_data)) < 2 ** n_bits then lut_values = len(unique(tensor_data))
+        self.assertTrue(len(lut_values.flatten()) <= len(np.unique(tensor_data.flatten())))
 
 
 if __name__ == '__main__':

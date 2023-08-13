@@ -5,8 +5,8 @@ import tensorflow as tf
 from keras.layers import Layer
 from tensorflow.python.util.object_identity import Reference as TFReference
 
-from model_compression_toolkit.constants import SIGNED, CLUSTER_CENTERS, EPS, \
-    MULTIPLIER_N_BITS, THRESHOLD
+from model_compression_toolkit.constants import SIGNED, LUT_VALUES, EPS, \
+    LUT_VALUES_BITWIDTH, THRESHOLD
 
 
 def activation_lut_kmean_quantizer(activation_n_bits: int,
@@ -29,14 +29,14 @@ def activation_lut_kmean_quantizer(activation_n_bits: int,
 
 class LUTFakeQuant(Layer):
     """
-    A custom Keras layer for quantizing activation tensor with non-uniform quantization (using lookup table clustering).
+    A custom Keras layer for quantizing activation tensor with non-uniform quantization (using lookup table values).
     """
 
     def __init__(self, quantization_params: Dict[str, np.ndarray], **kwargs):
         super(LUTFakeQuant, self).__init__(**kwargs)
         self.quantization_params = quantization_params
         self.activation_is_signed = self.quantization_params.get(SIGNED)
-        self.cluster_centers = self.quantization_params.get(CLUSTER_CENTERS)
+        self.lut_values = self.quantization_params.get(LUT_VALUES)
         self.threshold = self.quantization_params.get(THRESHOLD)
 
     def build(self, input_shape: Tuple[int]):
@@ -59,7 +59,7 @@ class LUTFakeQuant(Layer):
         Returns: KerasTensor after applying a non-uniform fake quantization.
 
         """
-        if self.activation_is_signed is None or self.cluster_centers is None or self.threshold is None:
+        if self.activation_is_signed is None or self.lut_values is None or self.threshold is None:
             return None  # pragma: no cover
 
         _quant_output = self.lut_kmeans_quantizer(input_data)
@@ -79,14 +79,14 @@ class LUTFakeQuant(Layer):
         Returns: Quantized tensor.
         """
 
-        tensor = self.int_quantization_with_threshold(tensor_data, MULTIPLIER_N_BITS)
+        tensor = self.int_quantization_with_threshold(tensor_data, LUT_VALUES_BITWIDTH)
         tensor = tf.expand_dims(tensor, -1)
 
-        expanded_cluster_centers = self.cluster_centers.reshape([*[1 for _ in range(len(tensor.shape)-1)], -1])
-        cluster_assignments = tf.argmin(tf.abs(tensor - expanded_cluster_centers), axis=-1)
-        centers = tf.gather(self.cluster_centers.flatten(), cluster_assignments)
+        expanded_lut_values = self.lut_values.reshape([*[1 for _ in range(len(tensor.shape)-1)], -1])
+        lut_values_assignments = tf.argmin(tf.abs(tensor - expanded_lut_values), axis=-1)
+        centers = tf.gather(self.lut_values.flatten(), lut_values_assignments)
 
-        quant_tensor = (centers / (2 ** (MULTIPLIER_N_BITS - int(self.activation_is_signed)))) * self.threshold
+        quant_tensor = (centers / (2 ** (LUT_VALUES_BITWIDTH - int(self.activation_is_signed)))) * self.threshold
 
         return quant_tensor
 

@@ -18,7 +18,7 @@ import unittest
 import numpy as np
 
 from model_compression_toolkit.core import QuantizationErrorMethod
-from model_compression_toolkit.constants import CLUSTER_CENTERS, MIN_THRESHOLD, THRESHOLD
+from model_compression_toolkit.constants import LUT_VALUES, MIN_THRESHOLD, THRESHOLD
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import \
     lut_kmeans_histogram
 
@@ -42,16 +42,16 @@ class TestLUTActivationsQuantizerParams(unittest.TestCase):
                                                    quant_error_method=QuantizationErrorMethod.MSE  # dummy
                                                    )
 
-        cluster_centers = quantization_params[CLUSTER_CENTERS]
+        lut_values = quantization_params[LUT_VALUES]
         threshold = quantization_params[THRESHOLD]
         # check threshold is power-of-two
         self.assertTrue(math.log2(threshold).is_integer(), "LUT quantization threshold must be a power of two")
 
-        # check number of clusters
-        self.assertTrue(cluster_centers.shape[0] <= 2 ** n_bits,
-                        f"Number of clusters is {cluster_centers.shape[0]} but should not exceed {2 ** n_bits}"),
-        # check clusters are rounded
-        self.assertTrue(np.all(np.mod(cluster_centers, 1) == 0), "Cluster points are supposed to be rounded")
+        # check number of lut values
+        self.assertTrue(lut_values.shape[0] <= 2 ** n_bits,
+                        f"Number of lut values is {lut_values.shape[0]} but should not exceed {2 ** n_bits}"),
+        # check lut values are rounded
+        self.assertTrue(np.all(np.mod(lut_values, 1) == 0), "lut values are supposed to be rounded")
 
     def test_unsigned_lut_activation_quantization_params(self):
         data = np.random.randn(3, 4, 5, 6)
@@ -71,16 +71,16 @@ class TestLUTActivationsQuantizerParams(unittest.TestCase):
                                                    quant_error_method=QuantizationErrorMethod.MSE  # dummy
                                                    )
 
-        cluster_centers = quantization_params[CLUSTER_CENTERS]
+        lut_values = quantization_params[LUT_VALUES]
         threshold = quantization_params[THRESHOLD]
         # check threshold is power-of-two
         self.assertTrue(math.log2(threshold).is_integer(), "LUT quantization threshold must be a power of two")
 
-        # check number of clusters
-        self.assertTrue(cluster_centers.shape[0] <= 2 ** n_bits,
-                        f"Number of clusters is {cluster_centers.shape[0]} but should not exceed {2 ** n_bits}"),
-        # check clusters are rounded
-        self.assertTrue(np.all(np.mod(cluster_centers, 1) == 0), "Cluster points are supposed to be rounded")
+        # check number of lut values
+        self.assertTrue(lut_values.shape[0] <= 2 ** n_bits,
+                        f"Number of lut values is {lut_values.shape[0]} but should not exceed {2 ** n_bits}"),
+        # check lut values are rounded
+        self.assertTrue(np.all(np.mod(lut_values, 1) == 0), "lut values are supposed to be rounded")
 
     def test_lut_activation_quantization_params_with_fewer_data(self):
         # check when the number of values of the data is lower than 2**n_bits
@@ -100,16 +100,16 @@ class TestLUTActivationsQuantizerParams(unittest.TestCase):
                                                    quant_error_method=QuantizationErrorMethod.MSE  # dummy
                                                    )
 
-        cluster_centers = quantization_params[CLUSTER_CENTERS]
+        lut_values = quantization_params[LUT_VALUES]
         threshold = quantization_params[THRESHOLD]
         # check threshold is power-of-two
         self.assertTrue(math.log2(threshold).is_integer(), "LUT quantization threshold must be a power of two")
 
-        # check number of clusters
-        self.assertTrue(cluster_centers.shape[0] <= bins.shape[0],
-                        f"Number of clusters is {cluster_centers.shape[0]} but should not exceed {bins.shape[0]}"),
-        # check clusters are rounded
-        self.assertTrue(np.all(np.mod(cluster_centers, 1) == 0), "Cluster points are supposed to be rounded")
+        # check number of lut values
+        self.assertTrue(lut_values.shape[0] <= bins.shape[0],
+                        f"Number of lut values is {lut_values.shape[0]} but should not exceed {bins.shape[0]}"),
+        # check lut values are rounded
+        self.assertTrue(np.all(np.mod(lut_values, 1) == 0), "lut values are supposed to be rounded")
 
 
 if __name__ == '__main__':
