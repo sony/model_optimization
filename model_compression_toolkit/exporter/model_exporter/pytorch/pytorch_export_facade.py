@@ -41,7 +41,8 @@ if FOUND_TORCH:
                              target_platform_capabilities: TargetPlatformCapabilities,
                              is_layer_exportable_fn: Callable = is_pytorch_layer_exportable,
                              serialization_format: PytorchExportSerializationFormat =
-                             PytorchExportSerializationFormat.TORCHSCRIPT) -> None:
+                             PytorchExportSerializationFormat.TORCHSCRIPT,
+                             use_onnx_custom_ops: bool = False) -> None:
         """
         Export a PyTorch quantized model to a torchscript or onnx model.
         The model will be saved to the path in save_model_path.
@@ -59,6 +60,7 @@ if FOUND_TORCH:
             is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
             serialization_format: Format to export the model according to (by default
             PytorchExportSerializationFormat.TORCHSCRIPT).
+            use_onnx_custom_ops: Whether to export quantizers ops in ONNX or not (affects only if serialization_format==PytorchExportSerializationFormat.ONNX). Experimental
 
         """
 
@@ -81,7 +83,8 @@ if FOUND_TORCH:
                 exporter = FakelyQuantONNXPyTorchExporter(model,
                                                           is_layer_exportable_fn,
                                                           save_model_path,
-                                                          repr_dataset)
+                                                          repr_dataset,
+                                                          use_onnx_custom_ops=use_onnx_custom_ops)
             else:
                 Logger.critical(
                     f'Unsupported quantization {target_platform_capabilities.tp_model.quantization_format} for '

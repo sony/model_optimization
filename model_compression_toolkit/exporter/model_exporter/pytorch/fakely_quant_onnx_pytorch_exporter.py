@@ -16,10 +16,12 @@ from typing import Callable
 
 import torch.nn
 
+from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import BasePyTorchExporter
 from packaging import version
+from mct_quantizers import pytorch_quantizers
 
 # ONNX opset version 16 is supported from PyTorch 1.12
 if version.parse(torch.__version__) < version.parse("1.12"):
@@ -40,7 +42,8 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
                  model: torch.nn.Module,
                  is_layer_exportable_fn: Callable,
                  save_model_path: str,
-                 repr_dataset: Callable):
+                 repr_dataset: Callable,
+                 use_onnx_custom_ops: bool = False):
         """
 
         Args:
@@ -48,12 +51,15 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
             is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
             save_model_path: Path to save the exported model.
             repr_dataset: Representative dataset (needed for creating torch script).
+            use_onnx_custom_ops: Whether to export quantizers ops in ONNX or not. Experimental
         """
 
         super().__init__(model,
                          is_layer_exportable_fn,
                          save_model_path,
                          repr_dataset)
+
+        self._use_onnx_custom_ops = use_onnx_custom_ops
 
 
     def export(self) -> None:
@@ -67,7 +73,11 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
         for layer in self.model.children():
             self.is_layer_exportable_fn(layer)
 
-        self._substitute_fully_quantized_model()
+        # Set forward that is used during onnx export
+        if self._use_onnx_custom_ops:
+            self._enable_onnx_custom_ops_export()
+        else:
+            self._substitute_fully_quantized_model()
 
         Logger.info(f"Exporting PyTorch fake quant onnx model: {self.save_model_path}")
 
@@ -82,3 +92,15 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
                           output_names=['output'],
                           dynamic_axes={'input': {0: 'batch_size'},
                                         'output': {0: 'batch_size'}})
+
+    def _enable_onnx_custom_ops_export(self):
+        # Enable the custom implementation forward to export it with custom quantizers
+        for n, m in self.model.named_children():
+            if isinstance(m, PytorchActivationQuantizationHolder):
+                assert isinstance(m.activation_holder_quantizer, pytorch_quantizers.BasePyTorchInferableQuantizer)
+                m.activation_holder_quantizer.enable_custom_impl()
+
+            if isinstance(m, PytorchQuantizationWrapper):
+                for wq in m.weights_quantizers.values():
+                    assert isinstance(wq, pytorch_quantizers.BasePyTorchInferableQuantizer)
+                    wq.enable_custom_impl()
