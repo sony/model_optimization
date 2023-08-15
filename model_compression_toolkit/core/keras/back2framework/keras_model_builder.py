@@ -20,12 +20,10 @@ from packaging import version
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
 from model_compression_toolkit.core.common.user_info import UserInformation
 
-# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.keras.layers import Input
-    from tensorflow.python.keras.layers.core import TFOpLambda
-    from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
-    from tensorflow.python.keras.layers import Layer
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras import Input
+    from keras.src.layers.core import TFOpLambda
+    from keras.src.engine.base_layer import TensorFlowOpLayer, Layer
 else:
     from keras import Input
     from keras.layers.core import TFOpLambda

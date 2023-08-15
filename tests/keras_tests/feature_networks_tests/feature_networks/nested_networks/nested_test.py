@@ -18,9 +18,8 @@ import tensorflow as tf
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 from packaging import version
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.engine.functional import Functional
-    from tensorflow.python.keras.engine.sequential import Sequential
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.models import Functional, Sequential
 else:
     from keras.models import Functional, Sequential
 import model_compression_toolkit as mct

@@ -19,10 +19,10 @@ from packaging import version
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from tqdm import tqdm
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.layers import Layer  # pragma: no cover
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.engine.base_layer import Layer
 else:
-    from keras.engine.base_layer import Layer
+    from tensorflow.python.keras.engine.base_layer import Layer
 
 from typing import Any, Dict, List, Tuple
 from tensorflow.python.util.object_identity import Reference as TFReference

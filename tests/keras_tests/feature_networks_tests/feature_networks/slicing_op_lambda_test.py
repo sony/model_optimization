@@ -18,8 +18,8 @@ import model_compression_toolkit.target_platform_capabilities.target_platform.op
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from packaging import version
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.layers.core import SlicingOpLambda
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers.core import SlicingOpLambda
 else:
     from keras.layers.core import SlicingOpLambda
 

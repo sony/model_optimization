@@ -16,8 +16,7 @@
 
 import tensorflow as tf
 import numpy as np
-from keras.engine.base_layer import Layer
-from keras.layers import TFOpLambda
+
 
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc

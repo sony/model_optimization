@@ -17,11 +17,16 @@ import copy
 from typing import Any, Union
 from enum import Enum
 
+import numpy as np
+
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig
 from mct_quantizers.common import constants as C
 
+
+CONFIG = "config"
+VALUE = "value"
 
 def transform_enum(v: Any):
     """
@@ -63,9 +68,13 @@ def config_deserialization(in_config: dict) -> Union[TrainableQuantizerWeightsCo
     """
     in_config = copy.deepcopy(in_config)
     if in_config[C.IS_WEIGHTS]:
+        weights_quantization_params = {}
+        for key, value in in_config[C.WEIGHTS_QUANTIZATION_PARAMS].items():
+            # In TF2.13.0, serialization of numpy array is dictionary with parameters
+            weights_quantization_params.update({key: np.array(value[CONFIG][VALUE] if isinstance(value, dict) else value)})
         return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod(in_config[C.WEIGHTS_QUANTIZATION_METHOD]),
                                                weights_n_bits=in_config[C.WEIGHTS_N_BITS],
-                                               weights_quantization_params=in_config[C.WEIGHTS_QUANTIZATION_PARAMS],
+                                               weights_quantization_params=weights_quantization_params,
                                                enable_weights_quantization=in_config[C.ENABLE_WEIGHTS_QUANTIZATION],
                                                weights_channels_axis=in_config[C.WEIGHTS_CHANNELS_AXIS],
                                                weights_per_channel_threshold=in_config[C.WEIGHTS_PER_CHANNEL_THRESHOLD],

@@ -18,7 +18,11 @@ from typing import Dict, Callable
 
 import keras.models
 import tensorflow as tf
-from keras.engine.base_layer import Layer
+from packaging import version
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.engine.base_layer import Layer
+else:
+    from keras.engine.base_layer import Layer
 
 from mct_quantizers import KerasQuantizationWrapper
 from mct_quantizers.logger import Logger
@@ -27,8 +31,8 @@ layers = keras.layers
 
 from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import BaseKerasExporter
 
-from keras.engine import base_layer_utils
-from keras import backend
+from tensorflow.python.keras.engine import base_layer_utils
+from tensorflow.python.keras import backend
 
 
 class FakelyQuantKerasExporter(BaseKerasExporter):

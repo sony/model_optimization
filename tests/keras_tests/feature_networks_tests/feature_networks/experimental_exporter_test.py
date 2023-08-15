@@ -15,8 +15,7 @@
 
 
 import tensorflow as tf
-from keras.engine.base_layer import Layer
-from mct_quantizers import KerasQuantizationWrapper, BaseInferableQuantizer, KerasActivationQuantizationHolder
+from mct_quantizers import BaseInferableQuantizer, KerasActivationQuantizationHolder
 
 from model_compression_toolkit.core.keras.constants import KERNEL
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest

@@ -1,8 +1,6 @@
 from typing import List, Any, Tuple
 
-import keras.layers
 import tensorflow as tf
-from keras.engine.base_layer import Layer
 from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
 
 from model_compression_toolkit.ptq import keras_post_training_quantization_experimental
@@ -10,18 +8,13 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.default_t
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 from packaging import version
-import model_compression_toolkit as mct
-
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.layers.core import TFOpLambda
-    from tensorflow.keras.models import Model
-    from tensorflow.keras.layers import Input
-    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src import Input, Model
+    from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
         Dropout, MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, \
-        UpSampling2D, InputLayer, Concatenate, Softmax, PReLU, Flatten, Cropping2D, ELU, Dot, LeakyReLU, Permute, \
+        UpSampling2D, InputLayer, Concatenate, Softmax, PReLU, Flatten, Cropping2D, Dot, ELU, LeakyReLU, Permute, \
         LayerNormalization
 else:
-    from keras.layers.core import TFOpLambda
     from keras import Input, Model
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Reshape, ZeroPadding2D, \
         Dropout, MaxPooling2D, Activation, ReLU, GlobalAveragePooling2D, Add, Multiply, AveragePooling2D, \
@@ -31,7 +24,6 @@ else:
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.gptq import keras_gradient_post_training_quantization_experimental
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.keras.back2framework.keras_model_builder import is_layer_fake_quant
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.base_layer_test import BaseLayerTest, LayerTestMode

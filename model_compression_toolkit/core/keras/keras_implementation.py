@@ -41,9 +41,10 @@ from model_compression_toolkit.core.keras.statistics_correction.apply_second_mom
     keras_apply_second_moment_correction
 from packaging import version
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add
-    from tensorflow.python.keras.layers.core import TFOpLambda
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, \
+        Concatenate, Add
+    from keras.src.layers.core import TFOpLambda
 else:
     from keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, \
         Concatenate, Add

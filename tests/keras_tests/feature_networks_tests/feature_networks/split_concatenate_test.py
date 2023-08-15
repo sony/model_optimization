@@ -15,7 +15,11 @@
 
 
 import tensorflow as tf
-from keras.layers import TFOpLambda
+from packaging import version
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers.core import TFOpLambda
+else:
+    from keras.layers.core import TFOpLambda
 
 from mct_quantizers import KerasActivationQuantizationHolder
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest

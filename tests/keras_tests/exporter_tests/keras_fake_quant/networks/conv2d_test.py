@@ -14,7 +14,13 @@
 # ==============================================================================
 import keras
 from keras import Input
-from keras.layers import Conv2D, TFOpLambda
+from packaging import version
+import tensorflow as tf
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers import Conv2D, TFOpLambda
+else:
+    from keras.layers import Conv2D, TFOpLambda
+
 import numpy as np
 import tensorflow as tf
 

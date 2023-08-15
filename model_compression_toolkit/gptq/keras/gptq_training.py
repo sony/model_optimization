@@ -28,8 +28,8 @@ from model_compression_toolkit.gptq.keras.quantizer.quantization_builder import 
 from model_compression_toolkit.logger import Logger
 from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.engine.base_layer import TensorFlowOpLayer
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.engine.base_layer import TensorFlowOpLayer
 else:
     from keras.engine.base_layer import TensorFlowOpLayer
 

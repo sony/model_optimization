@@ -14,20 +14,16 @@
 # ==============================================================================
 
 import tensorflow as tf
-from packaging import version
 
 from mct_quantizers import KerasQuantizationWrapper
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.engine.functional import Functional
-    from tensorflow.python.keras.engine.sequential import Sequential
+from packaging import version
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.models import Functional, Sequential
 else:
     from keras.models import Functional, Sequential
 
-import model_compression_toolkit as mct
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-import numpy as np
-from tests.common_tests.helpers.tensors_compare import cosine_similarity
 
 keras = tf.keras
 layers = keras.layers

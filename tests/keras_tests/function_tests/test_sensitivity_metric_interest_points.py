@@ -17,7 +17,12 @@ import unittest
 import numpy as np
 from keras.applications.densenet import DenseNet121
 from keras.applications.mobilenet_v2 import MobileNetV2
-from keras.layers import TFOpLambda
+
+from packaging import version
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers.core import TFOpLambda
+else:
+    from keras.layers.core import TFOpLambda
 
 from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights

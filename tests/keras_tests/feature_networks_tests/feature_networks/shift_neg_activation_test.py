@@ -25,10 +25,11 @@ from packaging import version
 
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.layers.core import TFOpLambda
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers.core import TFOpLambda
 else:
     from keras.layers.core import TFOpLambda
+
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 import numpy as np
 

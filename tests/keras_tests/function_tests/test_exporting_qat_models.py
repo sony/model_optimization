@@ -19,7 +19,12 @@ import unittest
 import keras
 import numpy as np
 import tensorflow as tf
-from keras.layers import TFOpLambda
+
+from packaging import version
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers.core import TFOpLambda
+else:
+    from keras.layers.core import TFOpLambda
 
 import model_compression_toolkit as mct
 from mct_quantizers import KerasActivationQuantizationHolder

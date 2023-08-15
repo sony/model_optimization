@@ -17,12 +17,12 @@
 import tensorflow as tf
 from packaging import version
 
-# As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
-if version.parse(tf.__version__) < version.parse("2.6"):
-    from tensorflow.python.keras.engine.node import Node as KerasNode
-    from tensorflow.keras.layers import InputLayer
-    from tensorflow.python.keras.engine.functional import Functional
-    from tensorflow.python.keras.engine.sequential import Sequential
+
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.engine.input_layer import InputLayer
+    from keras.src.engine.node import Node as KerasNode
+    from keras.src.engine.functional import Functional
+    from keras.src.engine.sequential import Sequential
 else:
     from keras.engine.input_layer import InputLayer
     from keras.engine.node import Node as KerasNode

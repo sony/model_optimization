@@ -19,8 +19,15 @@ from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.logger import Logger
 
 if FOUND_TF:
-    from keras.engine.base_layer import Layer
-    from keras.engine.input_layer import InputLayer
+    from packaging import version
+    import tensorflow as tf
+    if version.parse(tf.__version__) >= version.parse("2.13"):
+        from keras.src.engine.base_layer import Layer
+        from keras.src.engine.input_layer import InputLayer
+    else:
+        from keras.engine.base_layer import Layer
+        from keras.engine.input_layer import InputLayer
+
     from mct_quantizers import KerasQuantizationWrapper
 
     def is_keras_layer_exportable(layer: Any) -> bool:
