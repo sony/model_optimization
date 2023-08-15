@@ -24,8 +24,6 @@ from tests.pytorch_tests.exporter_tests.base_pytorch_onnx_export_test import Bas
 from tests.pytorch_tests.exporter_tests.custom_ops_tests.test_export_pot_onnx_quantizers import OneLayer
 
 
-# import onnxruntime
-# from onnx import numpy_helper
 
 
 class TestExportONNXWeightUniform2BitsQuantizers(BasePytorchONNXCustomOpsExportTest):

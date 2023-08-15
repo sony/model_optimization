@@ -30,8 +30,6 @@ from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_m
 from tests.pytorch_tests.exporter_tests.base_pytorch_onnx_export_test import BasePytorchONNXCustomOpsExportTest
 from tests.pytorch_tests.model_tests.feature_models.qat_test import dummy_train
 import onnx
-# import onnxruntime
-# from onnx import numpy_helper
 
 
 class OneLayer(torch.nn.Module):

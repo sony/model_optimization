@@ -73,7 +73,11 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
         for layer in self.model.children():
             self.is_layer_exportable_fn(layer)
 
-        # Set forward that is used during onnx export
+        # Set forward that is used during onnx export.
+        # If _use_onnx_custom_quantizer_ops is set to True, the quantizer forward function will use
+        # the custom implementation when exporting the operator into onnx model. If not, it removes the
+        # wraps and quantizes the ops in place (for weights, for activation torch quantization function is
+        # exported since it's used during forward.
         if self._use_onnx_custom_quantizer_ops:
             self._enable_onnx_custom_ops_export()
         else:
@@ -94,7 +98,11 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
                                         'output': {0: 'batch_size'}})
 
     def _enable_onnx_custom_ops_export(self):
-        # Enable the custom implementation forward to export it with custom quantizers
+        """
+        Enable the custom implementation forward in quantizers, so it is exported
+        with custom quantizers.
+        """
+
         for n, m in self.model.named_children():
             if isinstance(m, PytorchActivationQuantizationHolder):
                 assert isinstance(m.activation_holder_quantizer, pytorch_quantizers.BasePyTorchInferableQuantizer)
