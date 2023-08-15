@@ -9,3 +9,5 @@ jobs:
     uses: ./.github/workflows/run_pytorch_tests.yml
     with:
       torch-version: "1.12.*"
+      python-version: "3.10"
+
