@@ -1,0 +1,14 @@
+name: Python 3.10, Pytorch 1.13
+on:
+  workflow_dispatch: # Allow manual triggers
+  pull_request:
+    branches:
+      - main
+
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/run_pytorch_tests.yml
+    with:
+      python-version: "3.10"
+      pytorch-version: "1.13.*"

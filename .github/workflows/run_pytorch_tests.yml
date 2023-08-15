@@ -3,6 +3,9 @@ name: Run PyTorch Tests
 on:
   workflow_call:
     inputs:
+      python-version:
+        required: true
+        type: string
       torch-version:
         required: true
         type: string
@@ -15,7 +18,7 @@ jobs:
       - name: Install Python 3
         uses: actions/setup-python@v1
         with:
-          python-version: 3.8
+          python-version: ${{ inputs.python-version }}
       - name: Install dependencies
         run: |
           sed -i 's/mct-quantizers==[0-9.]*/mct-quantizers-nightly/' requirements.txt
