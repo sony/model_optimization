@@ -43,7 +43,7 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
                  is_layer_exportable_fn: Callable,
                  save_model_path: str,
                  repr_dataset: Callable,
-                 use_onnx_custom_ops: bool = False):
+                 use_onnx_custom_quantizer_ops: bool = False):
         """
 
         Args:
@@ -51,7 +51,7 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
             is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
             save_model_path: Path to save the exported model.
             repr_dataset: Representative dataset (needed for creating torch script).
-            use_onnx_custom_ops: Whether to export quantizers ops in ONNX or not. Experimental
+            use_onnx_custom_quantizer_ops: Whether to export quantizers custom ops in ONNX or not.
         """
 
         super().__init__(model,
@@ -59,7 +59,7 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
                          save_model_path,
                          repr_dataset)
 
-        self._use_onnx_custom_ops = use_onnx_custom_ops
+        self._use_onnx_custom_quantizer_ops = use_onnx_custom_quantizer_ops
 
 
     def export(self) -> None:
@@ -74,7 +74,7 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
             self.is_layer_exportable_fn(layer)
 
         # Set forward that is used during onnx export
-        if self._use_onnx_custom_ops:
+        if self._use_onnx_custom_quantizer_ops:
             self._enable_onnx_custom_ops_export()
         else:
             self._substitute_fully_quantized_model()

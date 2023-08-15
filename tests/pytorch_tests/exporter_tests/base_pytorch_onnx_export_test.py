@@ -78,6 +78,6 @@ class BasePytorchONNXExportTest(BasePytorchExportTest):
 
 class BasePytorchONNXCustomOpsExportTest(BasePytorchONNXExportTest):
 
-    def run_export(self, quantized_model, use_onnx_custom_ops=True):
+    def run_export(self, quantized_model, use_onnx_custom_quantizer_ops=True):
         super().run_export(quantized_model,
-                           use_onnx_custom_ops=use_onnx_custom_ops)
+                           use_onnx_custom_quantizer_ops=use_onnx_custom_quantizer_ops)
