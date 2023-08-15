@@ -119,12 +119,12 @@ class STEWeightQATQuantizer(BasePytorchQATTrainableQuantizer):
         if self.power_of_two:
             pot_threshold = 2 ** np.ceil(np.log2(np_threshold))
             return WeightsPOTInferableQuantizer(num_bits=self.num_bits,
-                                                threshold=pot_threshold,
+                                                threshold=pot_threshold.tolist(),
                                                 per_channel=self.quantization_config.weights_per_channel_threshold,
                                                 channel_axis=self.quantization_config.weights_channels_axis)
         else:
             return WeightsSymmetricInferableQuantizer(num_bits=self.num_bits,
-                                                      threshold=np_threshold,
+                                                      threshold=np_threshold.tolist(),
                                                       per_channel=self.quantization_config.weights_per_channel_threshold,
                                                       channel_axis=self.quantization_config.weights_channels_axis)
 
@@ -198,9 +198,9 @@ class STEActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
         if self.power_of_two:
             pot_threshold = np.power(2.0, np.ceil(np.log2(np_threshold)))
             return ActivationPOTInferableQuantizer(num_bits=self.num_bits,
-                                                   threshold=pot_threshold,
+                                                   threshold=pot_threshold.tolist(),
                                                    signed=self.sign)
         else:
             return ActivationSymmetricInferableQuantizer(num_bits=self.num_bits,
-                                                         threshold=np_threshold,
+                                                         threshold=np_threshold.tolist(),
                                                          signed=self.sign)

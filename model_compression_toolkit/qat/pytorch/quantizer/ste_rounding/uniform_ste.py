@@ -190,4 +190,5 @@ class STEUniformActivationQATQuantizer(BasePytorchQATTrainableQuantizer):
         _max = self.get_quantizer_variable(FQ_MAX).cpu().detach().numpy()
 
         return ActivationUniformInferableQuantizer(num_bits=self.num_bits,
-                                                   min_range=_min, max_range=_max)
+                                                   min_range=_min.tolist(),
+                                                   max_range=_max.tolist())
