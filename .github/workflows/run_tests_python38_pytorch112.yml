@@ -11,4 +11,4 @@ jobs:
     uses: ./.github/workflows/run_pytorch_tests.yml
     with:
       python-version: "3.8"
-      pytorch-version: "1.12.*"
+      torch-version: "1.12.*"
