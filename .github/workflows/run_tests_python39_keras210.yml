@@ -11,4 +11,4 @@ jobs:
     uses: ./.github/workflows/run_keras_tests.yml
     with:
       python-version: "3.9"
-      pytorch-version: "2.10.*"
+      tf-version: "2.10.*"
