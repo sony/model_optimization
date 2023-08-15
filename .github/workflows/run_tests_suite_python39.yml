@@ -7,27 +7,9 @@ on:
     branches:
       - main
 
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    env:
-      COVERAGE_THRESHOlD: 80
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install Python 3
-        uses: actions/setup-python@v1
-        with:
-          python-version: '3.9'
-      - name: Install dependencies
-        run: |
-          sed -i 's/mct-quantizers==[0-9.]*/mct-quantizers-nightly/' requirements.txt
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install tensorflow==2.11.*
-          pip install torch torchvision
-          pip install coverage
-      - name: Run unittests
-        run: coverage run -m --omit "./tests*,*__init__.py" unittest tests/test_suite.py -v
-      - name: Run Coverage
-        run: coverage report -i --skip-covered --fail-under $COVERAGE_THRESHOlD
+  run-testsuite-for-python3.9:
+    uses: ./.github/workflows/run_tests_suite_for_python_version.yml
+    with:
+      python-version: "3.9"
