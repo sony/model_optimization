@@ -51,15 +51,15 @@ def get_weights_inferable_quantizer_kwargs(node_qc: NodeWeightsQuantizationConfi
     if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                QuantizationMethod.SYMMETRIC]:
         return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.weights_n_bits,
-                qi_inferable_quantizers_constants.THRESHOLD: node_qc.weights_quantization_params[THRESHOLD].flatten(),
+                qi_inferable_quantizers_constants.THRESHOLD: node_qc.weights_quantization_params[THRESHOLD].flatten().tolist(),
                 qi_inferable_quantizers_constants.PER_CHANNEL: node_qc.weights_per_channel_threshold,
                 qi_inferable_quantizers_constants.CHANNEL_AXIS: node_qc.weights_channels_axis}
 
     elif quantization_method in [QuantizationMethod.UNIFORM]:
         return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.weights_n_bits,
                 qi_inferable_quantizers_constants.PER_CHANNEL: node_qc.weights_per_channel_threshold,
-                qi_inferable_quantizers_constants.MIN_RANGE: node_qc.weights_quantization_params[RANGE_MIN].flatten(),
-                qi_inferable_quantizers_constants.MAX_RANGE: node_qc.weights_quantization_params[RANGE_MAX].flatten(),
+                qi_inferable_quantizers_constants.MIN_RANGE: node_qc.weights_quantization_params[RANGE_MIN].flatten().tolist(),
+                qi_inferable_quantizers_constants.MAX_RANGE: node_qc.weights_quantization_params[RANGE_MAX].flatten().tolist(),
                 qi_inferable_quantizers_constants.CHANNEL_AXIS: node_qc.weights_channels_axis}
 
     elif quantization_method in [QuantizationMethod.LUT_POT_QUANTIZER, QuantizationMethod.LUT_SYM_QUANTIZER]:
@@ -96,13 +96,13 @@ def get_activation_inferable_quantizer_kwargs(node_qc: NodeActivationQuantizatio
     if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                QuantizationMethod.SYMMETRIC]:
         return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.activation_n_bits,
-                qi_inferable_quantizers_constants.THRESHOLD: np.asarray([node_qc.activation_quantization_params[THRESHOLD]]),
+                qi_inferable_quantizers_constants.THRESHOLD: [node_qc.activation_quantization_params[THRESHOLD]],
                 qi_inferable_quantizers_constants.SIGNED: node_qc.activation_quantization_params.get(SIGNED)}
 
     elif quantization_method in [QuantizationMethod.UNIFORM]:
         return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.activation_n_bits,
-                qi_inferable_quantizers_constants.MIN_RANGE: np.asarray([node_qc.activation_quantization_params[RANGE_MIN]]),
-                qi_inferable_quantizers_constants.MAX_RANGE: np.asarray([node_qc.activation_quantization_params[RANGE_MAX]])}
+                qi_inferable_quantizers_constants.MIN_RANGE: [node_qc.activation_quantization_params[RANGE_MIN]],
+                qi_inferable_quantizers_constants.MAX_RANGE: [node_qc.activation_quantization_params[RANGE_MAX]]}
 
     elif quantization_method in [QuantizationMethod.LUT_POT_QUANTIZER]:
         return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.activation_n_bits,
