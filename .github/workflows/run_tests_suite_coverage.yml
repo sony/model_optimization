@@ -1,8 +1,6 @@
-name: Python 3.9
+name: Coverage Test
 on:
   workflow_dispatch: # Allow manual triggers
-  schedule:
-    - cron: 0 0 * * *
   pull_request:
     branches:
       - main
@@ -18,14 +16,14 @@ jobs:
       - name: Install Python 3
         uses: actions/setup-python@v1
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: Install dependencies
         run: |
           sed -i 's/mct-quantizers==[0-9.]*/mct-quantizers-nightly/' requirements.txt
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install tensorflow==2.11.*
-          pip install torch torchvision
+          pip install tensorflow==2.13.*
+          pip install torch==1.13.* torchvision
           pip install coverage
       - name: Run unittests
         run: coverage run -m --omit "./tests*,*__init__.py" unittest tests/test_suite.py -v
