@@ -14,6 +14,10 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.8
+
+      - name: Edit requirements mct-quantizers name # Remove the entire line in requirements.txt so no need special care for the specified version
+        run: |
+          sed -i "/mct-quantizers/c\mct-quantizers-nightly" requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -30,4 +34,11 @@ jobs:
       - name: Publish nightly
         run: |
           twine upload --repository pypi dist/* --verbose -u __token__ -p ${{ secrets.PYPI_API_KEY }}
-
+      - name: Post publish import test
+        run: |
+          pip install mct-nightly
+          pip list
+          from_pip_version=$(python -c 'import model_compression_toolkit; print(model_compression_toolkit.__version__)')
+          echo "mct_nigthly_pip_version=$from_pip_version"
+          echo "mct_nigthly_expected_version=$GITHUB_ENV"
+          [ "$GITHUB_ENV" = "$from_pip_version" ] || (echo "Versions diff!" && exit 1)
