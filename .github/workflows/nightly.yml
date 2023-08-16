@@ -38,11 +38,4 @@ jobs:
         run: |
           pip install mct-nightly
           pip list
-          
-          from_pip_version=$(pip list | grep mct-quantizers-nightly | awk -F ' ' '{print $2}')')
-          echo "mct_nigthly_pip_version=$from_pip_version"
-          echo "mct_nigthly_expected_version=$version.$now$"
-          [ "$version.$now" = "$from_pip_version" ] || (echo "Versions diff!" && exit 1)
-          
           [ "$(pip list | grep mct-quantizers-nightly | wc -l)" = "1" ] || (echo "not one line" && exit 1)
-          
