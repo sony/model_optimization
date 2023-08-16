@@ -19,7 +19,7 @@ class KerasExportSerializationFormat(Enum):
     """
     Specify which serialization format to use for exporting a quantized Keras model.
 
-    KERAS_H5 - .h5 file format
+    KERAS_H5 - .keras (TF2.13 and above) or .h5 (TF2.12 and below) file format
 
     TFLITE - .tflite file format
 
