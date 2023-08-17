@@ -311,6 +311,12 @@ def shift_negative_function(graph: Graph,
     add_node = create_add_node(shift_value,
                                non_linear_node.name,
                                non_linear_node.input_shape)
+
+    # Create prior info for the add node
+    if non_linear_node.prior_info is not None:
+        add_prior_info = non_linear_node.prior_info.get_shifted_prior_info(shift_value)
+        add_node.prior_info = add_prior_info
+
     insert_node_after_node(graph,
                            node_to_insert=add_node,
                            first_node=non_linear_node)

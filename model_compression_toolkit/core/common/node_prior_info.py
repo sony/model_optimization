@@ -41,6 +41,30 @@ class NodePriorInfo:
         self.mean_output = mean_output
         self.std_output = std_output
 
+    def get_shifted_prior_info(self, shift_val: float):
+        """
+        Get a prior info of this NodePriorInfo if its output was shifted by shift_val.
+        Args:
+            shift_val: Shift value for the node's output to update.
+
+        Returns:
+            A NodePriorInfo with values of this NodePriorInfo if its output was shifted.
+        """
+        shifted_min_output, shifted_max_output, shifted_mean_output, shifted_std_output = None, None, None, None
+        if self.min_output is not None:
+            shifted_min_output = self.min_output + shift_val
+        if self.max_output is not None:
+            shifted_max_output = self.max_output + shift_val
+        if self.mean_output is not None:
+            shifted_mean_output = self.mean_output + shift_val
+        if self.std_output is not None:
+            shifted_std_output = self.std_output
+
+        return NodePriorInfo(shifted_min_output,
+                             shifted_max_output,
+                             shifted_mean_output,
+                             shifted_std_output)
+
     def is_output_bounded(self) -> bool:
         """
 
