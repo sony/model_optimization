@@ -44,6 +44,7 @@ class ExporterTestsRunner(unittest.TestCase):
     # TFLite INT8
     #################
     def test_conv2d(self):
+        assert False
         TestConv2DPOTTFLiteINT8Exporter().run_test()
         TestConv2DSymmetricTFLiteINT8Exporter().run_test()
 
