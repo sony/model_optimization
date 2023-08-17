@@ -191,6 +191,7 @@ def shift_negative_function(graph: Graph,
                             bias_flag_str: str,
                             zero_padding_node: BaseNode = None,
                             bypass_nodes: List = None,
+                            params_search_quantization_fn: Callable = None
                             ) -> Graph:
     """
     Shift the output of a non-linear activation by its minimal output value (quantized) such
@@ -216,6 +217,7 @@ def shift_negative_function(graph: Graph,
         bias_str: The framework specific attribute name of the bias.
         bias_flag_str: The framework specific attribute name of the bias flag.
         zero_padding_node: ZeroPadding2D node that may be in the graph before the linear layer.
+        params_search_quantization_fn: Function to quantize np tensor using a framework (tf/torch) quantization method. Needed for better param_search estimating the expected loss.
 
     Returns:
         Graph after applying the shifting and correction.
@@ -251,6 +253,7 @@ def shift_negative_function(graph: Graph,
     shift_value = q_points[np.argmin(delta)]
 
     if core_config.quantization_config.shift_negative_params_search:
+
         hist_bins, hist_count = graph.get_out_stats_collector(non_linear_node).hc.get_histogram()
         hist_count = z_score_filter(non_linear_node_cfg_candidate.z_threshold,
                                     hist_bins, hist_count)
@@ -263,9 +266,24 @@ def shift_negative_function(graph: Graph,
                 'float32')  # Change to type float32 to support tensorflow dtypes
             for _shift_value in _q_points:
                 _hist_bins = hist_bins.astype(np.float32) + _shift_value
-                q_bins = non_linear_node_cfg_candidate.activation_quantization_fn(
-                    non_linear_node_cfg_candidate.activation_n_bits,
-                    qparams)(_hist_bins)
+                fw_quant_fn = non_linear_node_cfg_candidate.activation_quantization_fn(non_linear_node_cfg_candidate.activation_n_bits,qparams)
+                """
+                In SNC, when better shifting values are tested for better choice,
+                the histogram (which is a numpy object) is quantized using the non-linear node activation
+                quantization function (to estimate the expected mse comparing to the original histogram).
+                The quantization function is a framework function, which makes it fail since it
+                expects a fw tensor. The commmon part of SNC receives an argument which is a callable 
+                that receives two argument and returns one: it gets the fw activation quantization function
+                and the bins to quantize. The function (of each fw) responsible for doing (if needed) a preprocessing and postprocessing
+                to the bins which is a numpy object.
+                Only if this function is passed - common SNC will use this function. If not - it assumes
+                no processing is needed and simply uses the activation quantization quantizer to quantize the bins (like tf for example).
+                """
+                if params_search_quantization_fn is None:
+                    q_bins = fw_quant_fn(_hist_bins)
+                else:
+                    q_bins = params_search_quantization_fn(fw_quant_fn, _hist_bins)
+
                 mse = _mse_error_histogram(q_bins, None, _hist_bins, hist_count)
                 if mse < min_mse:
                     min_mse = mse
@@ -466,7 +484,8 @@ def apply_shift_negative_correction(graph: Graph,
                                     is_padding_node_and_node_has_padding: Callable,
                                     padding_str: str,
                                     bias_str: str,
-                                    bias_flag_str: str) -> Graph:
+                                    bias_flag_str: str,
+                                    params_search_quantization_fn: Callable=None) -> Graph:
     """
     Apply the substitution even if the linear node is not immediately after
     the non-linear node, but there are intermediate nodes
@@ -521,5 +540,6 @@ def apply_shift_negative_correction(graph: Graph,
                                                 bias_str,
                                                 bias_flag_str,
                                                 zero_padding_node=pad_node,
-                                                bypass_nodes=bypass_nodes)
+                                                bypass_nodes=bypass_nodes,
+                                                params_search_quantization_fn=params_search_quantization_fn)
     return graph

@@ -13,8 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 import operator
-from typing import Tuple, Any
+from typing import Tuple, Any, Callable
 
+import numpy as np
 import torch.nn.functional
 from torch.nn import Conv2d, Linear, PReLU, ELU, Hardswish, Dropout, ZeroPad2d, SiLU
 from torch import reshape
@@ -28,6 +29,7 @@ from model_compression_toolkit.core.common.graph.graph_matchers import EdgeMatch
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core.common.substitutions.shift_negative_activation import apply_shift_negative_correction
 from model_compression_toolkit.core.pytorch.constants import PAD, VALUE, PADDING, BIAS, USE_BIAS
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 
 """
 This substitution aims to solve an issue of activation with negative outputs where
@@ -39,6 +41,23 @@ to the next linear node is computed and added to its bias term.
 If the linear node pads the input tensor with zeros, we modify the padded value as well.  
 """
 
+
+def params_search_quantization_fn(quantization_fw:Callable,
+                                  bins_to_quantize:np.ndarray) -> np.ndarray:
+    """
+    This function receives a quantization function and the bins of a histogram
+    which is a numpy array. The function preprocessd postprocess the bins tensor according
+    to the quantization_fw expected input/output.
+
+    Args:
+        quantization_fw: Quantization fn to use to quantize the bins.
+        bins_to_quantize: Bins to quantize.
+
+    Returns:
+        Quantized np array bins.
+
+    """
+    return quantization_fw(to_torch_tensor(bins_to_quantize)).cpu().numpy()
 
 def shift_negative_activation_node_matchers():
     # Match activation nodes with negative outputs.
@@ -219,5 +238,6 @@ def pytorch_apply_shift_negative_correction(graph: Graph,
                                            is_padding_node_and_node_has_padding,
                                            PADDING,
                                            BIAS,
-                                           USE_BIAS
+                                           USE_BIAS,
+                                           params_search_quantization_fn=params_search_quantization_fn
                                            )
