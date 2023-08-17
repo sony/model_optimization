@@ -28,7 +28,7 @@ jobs:
       - name: Run tensorflow testsuite
         run: coverage run --parallel-mode -m --omit "./tests*,*__init__.py" unittest tests/test_suite.py -v
       - name: Prepare Torch env
-          run: pip uninstall tensorflow && pip install torch==2.0.* torchvision onnx onnxruntime onnxruntime-extensions
+        run: pip uninstall tensorflow && pip install torch==2.0.* torchvision onnx onnxruntime onnxruntime-extensions
       - name: Run torch testsuite
         run: coverage run --parallel-mode -m --omit "./tests*,*__init__.py" unittest tests/test_suite.py -v
       - name: Run Coverage
