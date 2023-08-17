@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import numpy as np
 import torch
 
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_tp_model
-from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
-from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
-import numpy as np
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
+from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_tp_model
+from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
+from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 
 """
 This test checks the shift negative activation feature.
@@ -62,10 +62,12 @@ class ShiftNegaviteActivationNetTest(BasePytorchTest):
 
     def get_core_configs(self):
         return {
-            'all_8bit': mct.core.CoreConfig(quantization_config=mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                                                                  mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                                                                  shift_negative_activation_correction=True,
-                                                                                  shift_negative_ratio=np.inf)),
+            'all_8bit': mct.core.CoreConfig(
+                quantization_config=mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
+                                                                mct.core.QuantizationErrorMethod.NOCLIPPING,
+                                                                shift_negative_activation_correction=True,
+                                                                shift_negative_params_search=True,
+                                                                shift_negative_ratio=np.inf)),
         }
 
     def create_inputs_shape(self):

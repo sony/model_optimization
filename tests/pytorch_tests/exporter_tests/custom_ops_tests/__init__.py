@@ -12,18 +12,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from enum import Enum
-
-
-class KerasExportSerializationFormat(Enum):
-    """
-    Specify which serialization format to use for exporting a quantized Keras model.
-
-    KERAS_H5 - .keras (TF2.13 and above) or .h5 (TF2.12 and below) file format
-
-    TFLITE - .tflite file format
-
-    """
-
-    KERAS_H5 = 0
-    TFLITE = 1

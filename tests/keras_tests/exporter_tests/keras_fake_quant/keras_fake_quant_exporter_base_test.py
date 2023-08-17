@@ -24,7 +24,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit import get_target_platform_capabilities, QuantizationConfig
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
-
+from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import TMP_KERAS_EXPORT_FORMAT
 
 def get_minmax_from_qparams(qparams):
     if qparams['signed']:
@@ -53,8 +53,8 @@ class KerasFakeQuantExporterBaseTest(ABC):
             target_platform_capabilities=self.get_tpc(),
             new_experimental_exporter=True)
 
-        # Export model in h5 format
-        _, self.fq_model_file_path = tempfile.mkstemp('.h5')
+        # Export model in keras (or h5) format
+        _, self.fq_model_file_path = tempfile.mkstemp(TMP_KERAS_EXPORT_FORMAT)
         mct.exporter.keras_export_model(model=self.exportable_model,
                                         save_model_path=self.fq_model_file_path,
                                         target_platform_capabilities=self.get_tpc())

@@ -17,6 +17,13 @@ from typing import Callable
 from model_compression_toolkit.exporter.model_exporter.fw_agonstic.exporter import Exporter
 import keras
 
+import tensorflow as tf
+from packaging import version
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    TMP_KERAS_EXPORT_FORMAT = ".keras"
+else:
+    TMP_KERAS_EXPORT_FORMAT = ".h5"
+
 
 class BaseKerasExporter(Exporter):
     """

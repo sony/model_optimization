@@ -75,7 +75,7 @@ class BasePyTorchExporter(Exporter):
         """
         Substitution for pytorch "fully-quantized" models. It first uses the weight quantizers
         in PytorchQuantizationWrapper layers to quantize the weights and set them in the layer.
-        Then, it replace all wrapped layers with the layers the wrap.
+        Then, it replaces all wrapped layers with the layers the wrap.
         """
 
         # Replace float weight with wrapped quantized weights
