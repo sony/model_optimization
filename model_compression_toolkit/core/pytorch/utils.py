@@ -17,6 +17,8 @@ import numpy as np
 from typing import Union
 from model_compression_toolkit.core.pytorch.constants import CUDA, CPU
 
+_device = CUDA if torch.cuda.is_available() else CPU
+
 
 def get_working_device() -> str:
     """
@@ -26,7 +28,17 @@ def get_working_device() -> str:
         Device "cuda" if GPU is available, else "cpu"
 
     """
-    return torch.device(CUDA if torch.cuda.is_available() else CPU)
+    global _device
+    return torch.device(_device)
+
+
+def set_working_device(device):
+    """
+    Set the working device of the environment
+
+    """
+    global _device
+    _device = device
 
 
 def set_model(model: torch.nn.Module, train_mode: bool = False):
@@ -44,10 +56,7 @@ def set_model(model: torch.nn.Module, train_mode: bool = False):
     else:
         model.eval()
 
-    if torch.cuda.is_available():
-        model.cuda()
-    else:
-        model.cpu()
+    model.to(device=get_working_device())
 
 
 def to_torch_tensor(tensor):
@@ -61,7 +70,7 @@ def to_torch_tensor(tensor):
     """
     working_device = get_working_device()
     if isinstance(tensor, torch.Tensor):
-        return tensor.to(working_device)
+        return tensor.to(device=working_device)
     elif isinstance(tensor, list):
         return [to_torch_tensor(t) for t in tensor]
     elif isinstance(tensor, tuple):
@@ -69,7 +78,7 @@ def to_torch_tensor(tensor):
     elif isinstance(tensor, np.ndarray):
         return torch.from_numpy(tensor.astype(np.float32)).to(working_device)
     else:
-        raise Exception(f'Conversion of type {type(tensor)} to {type(torch.Tensor)} is not supported')
+        raise Exception(f"Conversion of type {type(tensor)} to {type(torch.Tensor)} is not supported")
 
 
 def torch_tensor_to_numpy(tensor: Union[torch.Tensor, list, tuple]) -> Union[np.ndarray, list, tuple]:
@@ -90,4 +99,4 @@ def torch_tensor_to_numpy(tensor: Union[torch.Tensor, list, tuple]) -> Union[np.
     elif isinstance(tensor, torch.Tensor):
         return tensor.cpu().detach().contiguous().numpy()
     else:
-        raise Exception(f'Conversion of type {type(tensor)} to {type(np.ndarray)} is not supported')
+        raise Exception(f"Conversion of type {type(tensor)} to {type(np.ndarray)} is not supported")
