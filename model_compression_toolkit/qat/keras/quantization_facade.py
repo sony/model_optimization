@@ -22,7 +22,6 @@ from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
-from mct_quantizers import KerasActivationQuantizationHolder, KerasQuantizationWrapper
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
 from model_compression_toolkit.ptq.runner import ptq_runner
@@ -32,6 +31,7 @@ if FOUND_TF:
     from tensorflow.keras.layers import Layer
     from tensorflow.keras.models import Model
 
+    from mct_quantizers import KerasActivationQuantizationHolder, KerasQuantizationWrapper
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
