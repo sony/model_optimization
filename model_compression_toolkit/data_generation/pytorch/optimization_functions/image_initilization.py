@@ -95,6 +95,8 @@ def diverse_sample(size: Tuple[int, ...]) -> Tensor:
     random_mean = torch.randn(size=(NUM_INPUT_CHANNELS, 1, 1))
 
     sample = random_std * torch.randn(size) + random_mean
+
+    # filtering to make the image a bit smoother
     kernel = np.ones((5, 5), np.float32) / 16
     if sample.shape[1] < 500 and sample.shape[2] < 500:
         sample = torch.from_numpy(cv2.filter2D(sample.float().detach().cpu().numpy(), -1, kernel))

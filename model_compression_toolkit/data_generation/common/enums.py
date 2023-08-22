@@ -24,7 +24,7 @@ class EnumBaseClass(Enum):
         Returns:
             List of values.
         """
-        return [value.value for key, value in cls.__members__.items()]
+        return [value.value for value in cls.__members__.values()]
 
 
 class ImageGranularity(EnumBaseClass):

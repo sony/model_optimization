@@ -37,6 +37,7 @@ class PytorchOriginalBNStatsHolder(OriginalBNStatsHolder):
             model (Module): The PyTorch model.
             bn_layer_types (List): List of batch normalization layer types.
         """
+        self.device = get_working_device()
         super(PytorchOriginalBNStatsHolder, self).__init__(model, bn_layer_types)
 
     def get_bn_params(self,
@@ -54,13 +55,13 @@ class PytorchOriginalBNStatsHolder(OriginalBNStatsHolder):
         """
         bn_params = {}
         # Assume the images in the dataset are normalized to be 0-mean, 1-variance
-        imgs_mean = torch.zeros(1, NUM_INPUT_CHANNELS).to(get_working_device())
-        imgs_var = torch.ones(1, NUM_INPUT_CHANNELS).to(get_working_device())
+        imgs_mean = torch.zeros(1, NUM_INPUT_CHANNELS).to(self.device)
+        imgs_var = torch.ones(1, NUM_INPUT_CHANNELS).to(self.device)
         bn_params.update({IMAGE_INPUT: (imgs_mean, imgs_var, imgs_var)})
         for name, module in model.named_modules():
             if isinstance(module, tuple(bn_layer_types)):
-                mean = module.running_mean.detach().clone().flatten().to(get_working_device())
-                var = module.running_var.detach().clone().flatten().to(get_working_device())
+                mean = module.running_mean.detach().clone().flatten().to(self.device)
+                var = module.running_var.detach().clone().flatten().to(self.device)
                 std = torch.sqrt(var)
                 bn_params.update({name: (mean, var, std)})
         return bn_params

@@ -19,16 +19,16 @@ from typing import Any
 class BaseImagePipeline(ABC):
     def __init__(self,
                  output_image_size: int,
-                 padding: int = 0):
+                 extra_pixels: int = 0):
         """
         Base class for image pipeline.
 
         Args:
             output_image_size (int): The desired output image size.
-            padding (int, optional): Padding size for the image. Defaults to 0.
+            extra_pixels (int, optional): Extra pixels add to the input image size. Defaults to 0.
         """
         self.output_image_size = output_image_size
-        self.padding = padding
+        self.extra_pixels = extra_pixels
     @abstractmethod
     def get_image_input_size(self) -> int:
         """

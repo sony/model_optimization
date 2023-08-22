@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from abc import abstractmethod
 from typing import Callable, Type, Any, Dict, Tuple, List
 import numpy as np
 
@@ -21,7 +22,7 @@ from model_compression_toolkit.data_generation.pytorch.model_info_exctractors im
     OriginalBNStatsHolder
 
 
-class AllImagesOptimizationHandler:
+class ImagesOptimizationHandler:
     """
     Handles the optimization process for generating images. Manages the order for which
     the image batches are optimized per iteration.
@@ -50,7 +51,7 @@ class AllImagesOptimizationHandler:
                  initial_lr: float,
                  eps: float = 1e-6):
         """
-        Constructor for the AllImagesOptimizationHandler class.
+        Constructor for the ImagesOptimizationHandler class.
 
         Args:
             model (Any): The framework model used for optimization.
@@ -227,7 +228,7 @@ class AllImagesOptimizationHandler:
                                                       input_imgs=input_imgs,
                                                       activation_extractor=activation_extractor,
                                                       to_differentiate=False)
-
+    @abstractmethod
     def optimization_step(self,
                           batch_index: int,
                           loss: Any,
@@ -242,6 +243,7 @@ class AllImagesOptimizationHandler:
         """
         raise NotImplemented
 
+    @abstractmethod
     def zero_grad(self, batch_index: int):
         """
         Zero the gradients of the optimizer for the specified batch.
@@ -251,6 +253,7 @@ class AllImagesOptimizationHandler:
         """
         raise NotImplemented
 
+    @abstractmethod
     def get_finalized_images(self) -> list:
         """
         Create and return a list of the generated images.

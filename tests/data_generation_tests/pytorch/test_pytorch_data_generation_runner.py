@@ -43,9 +43,9 @@ class PytorchDataGenerationTestRunner(unittest.TestCase):
 
     def test_pytorch_image_pipeline_types(self):
         BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.IDENTITY).run_test()
-        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.RANDOM_CROP, image_padding=32).run_test()
-        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.RANDOM_CROP_FLIP, image_padding=0).run_test()
-        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.RANDOM_CROP_FLIP, image_padding=1).run_test()
+        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.RANDOM_CROP, extra_pixels=32).run_test()
+        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.RANDOM_CROP_FLIP, extra_pixels=0).run_test()
+        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.RANDOM_CROP_FLIP, extra_pixels=1).run_test()
 
     def test_pytorch_image_normalization_types(self):
         BasePytorchDataGenerationTest(self, image_normalization_type=ImageNormalizationType.TORCHVISION).run_test()

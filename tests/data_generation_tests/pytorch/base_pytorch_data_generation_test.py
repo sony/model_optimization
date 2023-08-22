@@ -63,7 +63,7 @@ class BasePytorchDataGenerationTest:
                  image_granularity=ImageGranularity.AllImages,
                  image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP_FLIP,
                  image_normalization_type: ImageNormalizationType = ImageNormalizationType.TORCHVISION,
-                 image_padding: int = 0,
+                 extra_pixels: int = 0,
                  bn_layer_types: List = [torch.nn.BatchNorm2d]
                  ):
         self.unit_test = unit_test
@@ -84,7 +84,7 @@ class BasePytorchDataGenerationTest:
         self.image_granularity = image_granularity
         self.image_pipeline_type = image_pipeline_type
         self.image_normalization_type = image_normalization_type
-        self.image_padding = image_padding
+        self.extra_pixels = extra_pixels
         self.bn_layer_types = bn_layer_types
 
 
@@ -103,7 +103,7 @@ class BasePytorchDataGenerationTest:
             image_granularity=self.image_granularity,
             image_pipeline_type=self.image_pipeline_type,
             image_normalization_type=self.image_normalization_type,
-            image_padding=self.image_padding,
+            extra_pixels=self.extra_pixels,
             bn_layer_types=self.bn_layer_types)
 
     def run_test(self):

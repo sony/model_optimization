@@ -26,14 +26,14 @@ from model_compression_toolkit.core.pytorch.utils import get_working_device
 from model_compression_toolkit.data_generation.common.enums import ImageGranularity
 from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
 from model_compression_toolkit.data_generation.common.optimization_utils import BatchStatsHolder, AllImagesStatsHolder, \
-    BatchOptimizationHolder, AllImagesOptimizationHandler
+    BatchOptimizationHolder, ImagesOptimizationHandler
 from model_compression_toolkit.data_generation.pytorch.constants import IMAGE_INPUT, BATCH_AXIS, H_AXIS, W_AXIS
 from model_compression_toolkit.data_generation.pytorch.model_info_exctractors import ActivationExtractor
 
 
-class PytorchAllImagesOptimizationHandler(AllImagesOptimizationHandler):
+class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
     """
-    An extension of AllImagesOptimizationHandler specifically for PyTorch models.
+    An extension of ImagesOptimizationHandler specifically for PyTorch models.
     Handles the optimization process for generating images. Manages the order for which
     the image batches are optimized per iteration.
 
@@ -61,7 +61,7 @@ class PytorchAllImagesOptimizationHandler(AllImagesOptimizationHandler):
                  reflection: bool,
                  eps: float = 1e-6):
         """
-        Constructor for the PytorchAllImagesOptimizationHandler class.
+        Constructor for the PytorchImagesOptimizationHandler class.
 
         Args:
             model (Module): The PyTorch model.
@@ -80,7 +80,7 @@ class PytorchAllImagesOptimizationHandler(AllImagesOptimizationHandler):
             reflection (bool): Whether to use reflection during image clipping.
             eps (float): A small value added for numerical stability.
         """
-        super(PytorchAllImagesOptimizationHandler, self).__init__(model=model,
+        super(PytorchImagesOptimizationHandler, self).__init__(model=model,
                                                                   data_gen_batch_size=data_gen_batch_size,
                                                                   init_dataset=init_dataset,
                                                                   optimizer=optimizer,
@@ -96,10 +96,11 @@ class PytorchAllImagesOptimizationHandler(AllImagesOptimizationHandler):
                                                                   reflection=reflection,
                                                                   eps=eps)
 
+        self.device = get_working_device()
         # Image valid grid, each image value can only be 0 - 255 before normalization
         t = torch.from_numpy(np.array(list(range(256))).repeat(3).reshape(-1, 3) / 255)
         self.valid_grid = Normalize(mean=normalization_mean,
-                                    std=normalization_std)(t.transpose(1, 0)[None, :, :, None]).squeeze().to(get_working_device())
+                                    std=normalization_std)(t.transpose(1, 0)[None, :, :, None]).squeeze().to(self.device)
 
 
         # Set the mean axis based on the image granularity
@@ -114,13 +115,13 @@ class PytorchAllImagesOptimizationHandler(AllImagesOptimizationHandler):
             if isinstance(data_input, list):
                 # This is the case in which the data loader holds both images and targets
                 batched_images, targets = data_input
-                targets.to(get_working_device())
+                targets.to(self.device)
             else:
                 batched_images = data_input
                 # targets = torch.randint(1000, [batched_images.size(0)])
             self.batch_opt_holders_list.append(
                 PytorchBatchOptimizationHolder(
-                    images=batched_images.to(get_working_device()),
+                    images=batched_images.to(self.device),
                     optimizer=optimizer,
                     scheduler=scheduler,
                     initial_lr=initial_lr))

@@ -24,7 +24,7 @@ from model_compression_toolkit.data_generation.common.data_generation_config imp
 from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
 from model_compression_toolkit.data_generation.common.model_info_exctractors import ActivationExtractor, \
     OriginalBNStatsHolder
-from model_compression_toolkit.data_generation.common.optimization_utils import AllImagesOptimizationHandler
+from model_compression_toolkit.data_generation.common.optimization_utils import ImagesOptimizationHandler
 from model_compression_toolkit.logger import Logger
 
 
@@ -32,7 +32,7 @@ def data_generation(
         data_generation_config: DataGenerationConfig,
         activation_extractor: ActivationExtractor,
         orig_bn_stats_holder: OriginalBNStatsHolder,
-        all_imgs_opt_handler: AllImagesOptimizationHandler,
+        all_imgs_opt_handler: ImagesOptimizationHandler,
         image_pipeline: BaseImagePipeline,
         bn_layer_weighting_fn: Callable,
         bn_alignment_loss_fn: Callable,
@@ -46,7 +46,7 @@ def data_generation(
         data_generation_config (DataGenerationConfig): Configuration for data generation.
         activation_extractor (ActivationExtractor): The activation extractor for the model.
         orig_bn_stats_holder (OriginalBNStatsHolder): Object to hold original BatchNorm statistics.
-        all_imgs_opt_handler (AllImagesOptimizationHandler): Handles the images optimization process.
+        all_imgs_opt_handler (ImagesOptimizationHandler): Handles the images optimization process.
         image_pipeline (Callable): Callable image pipeline for image manipulation.
         bn_layer_weighting_fn (Callable): Function to compute layer weighting for the BatchNorm alignment loss .
         bn_alignment_loss_fn (Callable): Function to compute BatchNorm alignment loss.
@@ -119,7 +119,7 @@ def data_generation(
                             f"Output Loss: {output_loss.item():.5f}")
 
 
-    # Return the finalized list containing the generated images
+    # Return a list containing the finalized generated images
     finalized_imgs = all_imgs_opt_handler.get_finalized_images()
     Logger.info(f'Total time to generate {len(finalized_imgs)} images (seconds): {int(time.time() - total_time)}')
     return finalized_imgs

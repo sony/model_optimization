@@ -37,7 +37,7 @@ from model_compression_toolkit.data_generation.pytorch.optimization_functions.ou
     output_loss_function_dict
 from model_compression_toolkit.data_generation.pytorch.optimization_functions.scheduler_step_functions import \
     scheduler_step_function_dict
-from model_compression_toolkit.data_generation.pytorch.optimization_utils import PytorchAllImagesOptimizationHandler, \
+from model_compression_toolkit.data_generation.pytorch.optimization_utils import PytorchImagesOptimizationHandler, \
     DatasetFromList
 from model_compression_toolkit.logger import Logger
 
@@ -69,7 +69,7 @@ if FOUND_TORCH:
             image_granularity=ImageGranularity.AllImages,
             image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP,
             image_normalization_type: ImageNormalizationType = ImageNormalizationType.TORCHVISION,
-            image_padding: int = 0,
+            extra_pixels: int = 0,
             activations_loss_fn: Callable = None,
             bn_layer_types: List = [torch.nn.BatchNorm2d],
             clip_images: bool = True,
@@ -92,7 +92,7 @@ if FOUND_TORCH:
             image_granularity (ImageGranularity): The granularity of the images for optimization.
             image_pipeline_type (ImagePipelineType): The type of image pipeline to use.
             image_normalization_type (ImageNormalizationType): The type of image normalization to use.
-            image_padding (int): Padding to be applied to the images during data generation.
+            extra_pixels (int): Extra pixels add to the input image size. Defaults to 0.
             activations_loss_fn (Callable): Activation loss function to use during optimization.
             bn_layer_types (List): List of BatchNorm layer types to be considered for data generation.
             clip_images (bool): Whether to clip images during optimization.
@@ -118,7 +118,7 @@ if FOUND_TORCH:
             image_granularity=image_granularity,
             image_pipeline_type=image_pipeline_type,
             image_normalization_type=image_normalization_type,
-            image_padding=image_padding,
+            extra_pixels=extra_pixels,
             activations_loss_fn=activations_loss_fn,
             bn_layer_types=bn_layer_types,
             clip_images=clip_images,
@@ -145,7 +145,7 @@ if FOUND_TORCH:
         """
         # Get the image pipeline class corresponding to the specified type
         image_pipeline = image_pipeline_dict.get(data_generation_config.image_pipeline_type)(output_image_size,
-                                                                                             data_generation_config.image_padding)
+                                                                                             data_generation_config.extra_pixels)
         # Check if the image pipeline type is valid
         if image_pipeline is None:
             Logger.exception(
@@ -221,8 +221,8 @@ if FOUND_TORCH:
                 f'Data generation requires a model with at least one Batch Norm layer.')
 
 
-        # Create an AllImagesOptimizationHandler object for handling optimization
-        all_imgs_opt_handler = PytorchAllImagesOptimizationHandler(model=model,
+        # Create an ImagesOptimizationHandler object for handling optimization
+        all_imgs_opt_handler = PytorchImagesOptimizationHandler(model=model,
                                                                    data_gen_batch_size=data_generation_config.data_gen_batch_size,
                                                                    init_dataset=init_dataset,
                                                                    optimizer=data_generation_config.optimizer,
