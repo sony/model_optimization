@@ -77,7 +77,12 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
     tensor_for_kmeans = int_quantization_with_threshold(tensor_data, thresholds_per_channel, LUT_VALUES_BITWIDTH)
     kmeans.fit(tensor_for_kmeans.reshape(-1, 1))
 
-    return {LUT_VALUES: np.round(kmeans.cluster_centers_),
+    # Add 0 to the LUT
+    cc = np.round(kmeans.cluster_centers_)
+    closest2zero_idx = (np.abs(cc - 0)).argmin()
+    cc[closest2zero_idx] = 0.0
+
+    return {LUT_VALUES: cc,
             SCALE_PER_CHANNEL: thresholds_per_channel}
 
 
