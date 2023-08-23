@@ -16,6 +16,15 @@ from typing import Tuple
 import importlib
 
 
+# Dictionary mapping library names to folder names
+LIB2FOLDER_DICT = {
+    'torchvision': 'torchvision_lib',             # TorchVision library folder
+    'timm': 'timm_lib',                           # TIMM library folder
+    'ultralytics': 'ultralytics_lib',             # Ultralytics folder
+    'keras_applications': 'keras_applications'    # Keras Applications library folder
+}
+
+
 def find_modules(lib: str) -> Tuple[str, str]:
     """
     Finds the relevant module paths for a given pre-trained models library.
@@ -32,13 +41,14 @@ def find_modules(lib: str) -> Tuple[str, str]:
     """
 
     # Search in PyTorch libraries
-    if importlib.util.find_spec('pytorch_fw.' + lib) is not None:
-        model_lib_module = 'pytorch_fw.' + lib + '.model_lib'
+    folder_name = LIB2FOLDER_DICT[lib]
+    if importlib.util.find_spec('pytorch_fw.' + folder_name) is not None:
+        model_lib_module = 'pytorch_fw.' + folder_name + '.model_lib'
         quant_module = 'pytorch_fw.quant'
 
     # Search in Keras libraries
-    elif importlib.util.find_spec('keras_fw.' + lib) is not None:
-        model_lib_module = 'keras_fw.' + lib + '.model_lib'
+    elif importlib.util.find_spec('keras_fw.' + folder_name) is not None:
+        model_lib_module = 'keras_fw.' + folder_name + '.model_lib'
         quant_module = 'keras_fw.quant'
     else:
         raise Exception(f'Error: model library {lib} is not supported')

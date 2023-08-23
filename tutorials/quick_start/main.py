@@ -18,7 +18,7 @@ import logging
 from typing import Dict, Tuple
 
 from common.results import write_results, read_models_list, parse_results, QuantInfo, plot_results, DatasetInfo
-from common.utils import find_modules
+from common.library_mapping import find_modules
 from common.constants import MODEL_NAME, MODEL_LIBRARY, OUTPUT_RESULTS_FILE, TARGET_PLATFORM_NAME, \
     TARGET_PLATFORM_VERSION
 
@@ -54,9 +54,9 @@ def argument_handler():
                         help='Whether to export the model after quantization')
     parser.add_argument('--gptq', action="store_true",
                         help='Enables Gradient-based Post Training Quantization (GPTQ)')
-    parser.add_argument('--gptq_num_calibration_iter', type=int, default=200,
+    parser.add_argument('--gptq_num_calibration_iter', type=int, default=5000,
                         help='The number of iterations on the representative dataset')
-    parser.add_argument('--gptq_lr', type=float, default=1e-4,
+    parser.add_argument('--gptq_lr', type=float, default=3e-2,
                         help='The number of iterations on the representative dataset')
     parser.add_argument("--mp_weights_compression", type=float, default=None,
                         help='Enables mixed-precision quantization for a given weights compression rate. '

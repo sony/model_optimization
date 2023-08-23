@@ -24,10 +24,10 @@ from enum import Enum
 import torch
 from torch.utils.data import DataLoader
 
-from pytorch_fw.ultralytics.replacers import C2fModuleReplacer, DetectModuleReplacer, YOLOReplacer, DetectionModelModuleReplacer
+from pytorch_fw.ultralytics_lib.replacers import C2fModuleReplacer, DetectModuleReplacer, YOLOReplacer, DetectionModelModuleReplacer
 from torchvision.transforms import transforms
 
-from pytorch_fw.ultralytics.replacers import prepare_model_for_ultralytics_val
+from pytorch_fw.ultralytics_lib.replacers import prepare_model_for_ultralytics_val
 from pytorch_fw.utils import get_representative_dataset
 from common.model_lib import BaseModelLib
 from common.constants import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, COCO_DATASET, VALIDATION_DATASET_FOLDER
