@@ -22,7 +22,7 @@ setenv PYTHONPATH /path/to/model_optimization/folder
 ```
 
 ```csh 
-python main.py --model_name yolov8n --model_library ultralytics_lib --representative_dataset_folder <download_location>/datasets/coco/images/train2017 --num_representative_images 64 --batch_size 1 
+python main.py --model_name yolov8n --model_library ultralytics --representative_dataset_folder <download_location>/datasets/coco/images/train2017 --num_representative_images 64 --batch_size 1 
 ```
 In this example, we are running the main.py script with the following parameters:
 - `--model_name`: Specifies the name of the model to be used out of Ultralytics models (yolov8n in this case).
