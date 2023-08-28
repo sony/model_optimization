@@ -4,7 +4,7 @@ import tensorflow as tf
 from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
 
 from model_compression_toolkit.ptq import keras_post_training_quantization_experimental
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 from packaging import version

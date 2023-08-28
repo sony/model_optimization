@@ -14,16 +14,16 @@ in some operator for its weights/activations, fusing patterns, etc.)
 
 Currently, MCT contains three target-platform models
 (new models can be created and used by users as demonstrated [here](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/modules/target_platform.html#targetplatformmodel-code-example)):
-- Default model
 - [IMX500](https://developer.sony.com/develop/imx500/)
 - [TFLite](https://www.tensorflow.org/lite/performance/quantization_spec)
 - [QNNPACK](https://github.com/pytorch/QNNPACK)
 
-The default target-platform model quantizes operators using 8 bits with power-of-two thresholds.
+The default target-platform model is [IMX500](https://developer.sony.com/develop/imx500/), quantizes activations using 8 bits with power-of-two thresholds for 
+activations and symmetric threshold for weights.
 For mixed-precision quantization it uses either 2, 4, or 8 bits for quantizing the operators.
 One may view the full default target-platform model and its parameters [here](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/tpc_models/default_tpc/v3/tp_model.py).
 
-[IMX500](https://developer.sony.com/develop/imx500/), [TFLite](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/tpc_models/tflite_tpc/v1/tp_model.py) and [QNNPACK](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/tpc_models/qnnpack_tpc/v1/tp_model.py) models were created similarly and were used to create two TPCs: One for Keras TPC and one for PyTorch TPC (for each model, this 8 in total).
+[TFLite](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/tpc_models/tflite_tpc/v1/tp_model.py) and [QNNPACK](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/tpc_models/qnnpack_tpc/v1/tp_model.py) models were created similarly and were used to create two TPCs: One for Keras TPC and one for PyTorch TPC (for each model, this 8 in total).
 
 ## Usage
 
@@ -37,7 +37,7 @@ import numpy as np
 
 # Get a TPC object that models the hardware for the quantized model inference.
 # The model determines the quantization methods to use during the MCT optimization process.
-# Here, we use the default target-platform model attached to a Tensorflow
+# Here, we use the default (imx500) target-platform model attached to a Tensorflow
 # layers representation.
 target_platform_cap = mct.get_target_platform_capabilities('tensorflow', 'default')
 

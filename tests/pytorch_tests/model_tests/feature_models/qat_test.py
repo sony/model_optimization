@@ -30,8 +30,8 @@ from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.pytorch.utils import get_working_device, to_torch_tensor
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
 from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEActivationQATQuantizer
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import \
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
     generate_tp_model_with_activation_mp

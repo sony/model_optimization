@@ -33,17 +33,20 @@ else:
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import LayerFilterParams
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import Greater, \
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
+    LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import \
+    Greater, \
     Smaller, GreaterEq, Eq, SmallerEq, Contains
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, QNNPACK_TP_MODEL, TFLITE_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
+    QNNPACK_TP_MODEL, TFLITE_TP_MODEL
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.test_tp_model import TEST_QCO, TEST_QC
 
 tp = mct.target_platform
 
 
-def get_node(layer)->BaseNode:
+def get_node(layer) -> BaseNode:
     i = Input(shape=(3, 16, 16))
     x = layer(i)
     model = tf.keras.Model(i, x)
@@ -232,34 +235,33 @@ class TestGetKerasTPC(unittest.TestCase):
             yield [np.random.randn(1, 224, 224, 3)]
 
         quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(model,
-                                                                               rep_data,
-                                                                               target_platform_capabilities=tpc,
-                                                                               new_experimental_exporter=True)
+                                                                                   rep_data,
+                                                                                   target_platform_capabilities=tpc,
+                                                                                   new_experimental_exporter=True)
 
-        core_config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1))
+        core_config = mct.core.CoreConfig(
+            mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1))
         quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(model,
-                                                                               rep_data,
-                                                                               core_config=core_config,
-                                                                               target_kpi=mct.core.KPI(np.inf),
-                                                                               target_platform_capabilities=tpc,
-                                                                               new_experimental_exporter=True)
+                                                                                   rep_data,
+                                                                                   core_config=core_config,
+                                                                                   target_kpi=mct.core.KPI(np.inf),
+                                                                                   target_platform_capabilities=tpc,
+                                                                                   new_experimental_exporter=True)
 
     def test_get_keras_supported_version(self):
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)  # Latest
-        self.assertTrue(tpc.version == 'v4')
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v4')
-        self.assertTrue(tpc.version == 'v4')
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v3_lut')
-        self.assertTrue(tpc.version == 'v3_lut')
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v3')
-        self.assertTrue(tpc.version == 'v3')
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v2')
-        self.assertTrue(tpc.version == 'v2')
+        self.assertTrue(tpc.version == 'v1')
+
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1_lut')
+        self.assertTrue(tpc.version == 'v1_lut')
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1')
         self.assertTrue(tpc.version == 'v1')
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1")
         self.assertTrue(tpc.version == 'v1')
+
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1_lut")
+        self.assertTrue(tpc.version == 'v1_lut')
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, TFLITE_TP_MODEL, "v1")
         self.assertTrue(tpc.version == 'v1')
