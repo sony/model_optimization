@@ -30,17 +30,6 @@ from tests.pytorch_tests.exporter_tests.test_exporting_qat_models import TestExp
 class PytorchExporterTestsRunner(unittest.TestCase):
 
     #########################
-    # Exporting QAT models
-    #########################
-    # TODO:
-    # fix test
-    # def test_export_qat(self):
-    #     TestExportingQATModelTorchscript().test_exported_qat_model()
-    #     if FOUND_ONNX and FOUND_ONNXRUNTIME:
-    #         from tests.pytorch_tests.exporter_tests.test_exporting_qat_models import TestExportingQATModelONNX
-    #         TestExportingQATModelONNX().test_exported_qat_model()
-
-    #########################
     # Exporting custom ONNX ops
     #########################
     def test_pot2bits_custom_quantizer_onnx(self):
