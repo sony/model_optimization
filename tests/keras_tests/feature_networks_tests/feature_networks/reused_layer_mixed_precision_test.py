@@ -15,7 +15,7 @@
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig, MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_op_quantization_configs, generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_keras_tpc
 import model_compression_toolkit as mct
 import tensorflow as tf
 

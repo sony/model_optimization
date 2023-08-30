@@ -22,7 +22,7 @@ import model_compression_toolkit as mct
 
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
     generate_mixed_precision_test_tp_model, generate_tp_model_with_activation_mp, generate_test_tpc
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 
 tp = mct.target_platform
 

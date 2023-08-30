@@ -18,7 +18,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_model
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_pytorch_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 
 
 tp = mct.target_platform

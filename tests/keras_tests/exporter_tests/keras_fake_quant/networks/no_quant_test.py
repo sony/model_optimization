@@ -23,7 +23,7 @@ else:
 import numpy as np
 
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.keras_tests.exporter_tests.keras_fake_quant.keras_fake_quant_exporter_base_test import \
     KerasFakeQuantExporterBaseTest
 

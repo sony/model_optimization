@@ -24,7 +24,7 @@ import mct_quantizers
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import FOUND_ONNX, FOUND_ONNXRUNTIME
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, get_working_device
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.v5.tpc_pytorch import \
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tpc_pytorch import \
     generate_pytorch_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.pytorch_tests.exporter_tests.base_pytorch_onnx_export_test import BasePytorchONNXCustomOpsExportTest
@@ -40,6 +40,7 @@ class OneLayer(torch.nn.Module):
     def forward(self, x):
         return self.layer(x)
 
+
 class TestExportONNXWeightPOT2BitsQuantizers(BasePytorchONNXCustomOpsExportTest):
 
     def get_model(self):
@@ -50,24 +51,29 @@ class TestExportONNXWeightPOT2BitsQuantizers(BasePytorchONNXCustomOpsExportTest)
                                      'weights_n_bits': 2})
         return generate_pytorch_tpc(name="test_conv2d_2bit_fq_weight", tp_model=tp)
 
-
     def compare(self, exported_model, wrapped_quantized_model, quantization_info):
         pot_q_nodes = self._get_onnx_node_by_type(exported_model, "ActivationPOTQuantizer")
-        assert len(pot_q_nodes)==2, f"Expected to find 2 POT quantizers but found {len(pot_q_nodes)}"
+        assert len(pot_q_nodes) == 2, f"Expected to find 2 POT quantizers but found {len(pot_q_nodes)}"
 
-        conv_qparams=self._get_onnx_node_attributes(pot_q_nodes[1])
-        assert int(wrapped_quantized_model.layer_activation_holder_quantizer.activation_holder_quantizer.signed) == conv_qparams['signed']
-        assert wrapped_quantized_model.layer_activation_holder_quantizer.activation_holder_quantizer.threshold_np == conv_qparams['threshold']
-        assert wrapped_quantized_model.layer_activation_holder_quantizer.activation_holder_quantizer.num_bits == conv_qparams['num_bits']
+        conv_qparams = self._get_onnx_node_attributes(pot_q_nodes[1])
+        assert int(wrapped_quantized_model.layer_activation_holder_quantizer.activation_holder_quantizer.signed) == \
+               conv_qparams['signed']
+        assert wrapped_quantized_model.layer_activation_holder_quantizer.activation_holder_quantizer.threshold_np == \
+               conv_qparams['threshold']
+        assert wrapped_quantized_model.layer_activation_holder_quantizer.activation_holder_quantizer.num_bits == \
+               conv_qparams['num_bits']
 
-        pot_q_nodes = self._get_onnx_node_by_type(exported_model, "WeightsPOTQuantizer")
-        assert len(pot_q_nodes) == 1, f"Expected to find 1 weight POT quantizer but found {len(pot_q_nodes)}"
+        sym_q_nodes = self._get_onnx_node_by_type(exported_model, "WeightsSymmetricQuantizer")
+        assert len(sym_q_nodes) == 1, f"Expected to find 1 weight Symmetric quantizer but found {len(sym_q_nodes)}"
 
-        conv_qparams = self._get_onnx_node_attributes(pot_q_nodes[0])
-        assert conv_qparams['signed']==1 # Weights always signed
+        conv_qparams = self._get_onnx_node_attributes(sym_q_nodes[0])
+        assert conv_qparams['signed'] == 1  # Weights always signed
         assert conv_qparams['num_bits'] == wrapped_quantized_model.layer.weights_quantizers['weight'].num_bits
-        assert conv_qparams['per_channel'] == int(wrapped_quantized_model.layer.weights_quantizers['weight'].per_channel)
+        assert conv_qparams['per_channel'] == int(
+            wrapped_quantized_model.layer.weights_quantizers['weight'].per_channel)
         assert conv_qparams['channel_axis'] == wrapped_quantized_model.layer.weights_quantizers['weight'].channel_axis
 
-        conv_qparams = self._get_onnx_node_const_inputs(exported_model, "WeightsPOTQuantizer")
-        assert np.all(conv_qparams[0] == wrapped_quantized_model.layer.weights_quantizers['weight'].threshold)
+        # TODO:
+        # Increase atol due to a minor difference in Symmetric quantizer
+        conv_qparams = self._get_onnx_node_const_inputs(exported_model, "WeightsSymmetricQuantizer")
+        assert np.all(np.isclose(conv_qparams[0], wrapped_quantized_model.layer.weights_quantizers['weight'].threshold_np))

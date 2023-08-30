@@ -15,8 +15,6 @@
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.target_platform_capabilities import \
-    tpc_dict as default_tpc_dict
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.target_platform_capabilities import \
     tpc_dict as imx500_tpc_dict
 from model_compression_toolkit.target_platform_capabilities.tpc_models.tflite_tpc.target_platform_capabilities import \
@@ -25,7 +23,7 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_t
     tpc_dict as qnnpack_tpc_dict
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL,  LATEST
 
-tpc_dict = {DEFAULT_TP_MODEL: default_tpc_dict,
+tpc_dict = {DEFAULT_TP_MODEL: imx500_tpc_dict,
             IMX500_TP_MODEL: imx500_tpc_dict,
             TFLITE_TP_MODEL: tflite_tpc_dict,
             QNNPACK_TP_MODEL: qnnpack_tpc_dict}

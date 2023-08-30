@@ -21,7 +21,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, get_working_device
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.v5.tpc_pytorch import \
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tpc_pytorch import \
     generate_pytorch_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 

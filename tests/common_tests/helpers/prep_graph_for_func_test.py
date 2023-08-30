@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.runner import get_finalized_graph, read_model_to_graph, _init_tensorboard_writer, \
     _prepare_model_for_quantization
 
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import generate_tp_model, \
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_tp_model, \
     get_op_quantization_configs
 
 import model_compression_toolkit as mct
