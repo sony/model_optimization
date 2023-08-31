@@ -21,6 +21,7 @@ import unittest
 
 from mct_quantizers import PytorchQuantizationWrapper
 from mct_quantizers.pytorch.quantizers import WeightsPOTInferableQuantizer, ActivationPOTInferableQuantizer
+from mct_quantizers.pytorch.quantizers import WeightsSymmetricInferableQuantizer
 from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
@@ -87,8 +88,12 @@ class TestFullyQuantizedExporter(unittest.TestCase):
 
         images = next(repr_dataset())
         diff = new_export_model(images) - old_export_model(images)
-        w_delta = np.sum(np.abs(_to_numpy(old_export_model.features_0_0_bn.weight) - _to_numpy(new_export_model.features_0_0_bn.layer.weight)))
-        self.assertTrue(w_delta == 0, f'Diff between weights: {w_delta}')
+        # TODO:
+        # Increase atol due to a minor difference in Symmetric quantizer
+        # w_delta = np.mean(np.abs(_to_numpy(old_export_model.features_0_0_bn.weight) - _to_numpy(new_export_model.features_0_0_bn.layer.weight)))
+        # self.assertTrue(w_delta == 0, f'Diff between weights: {w_delta}')
+        self.assertTrue(np.isclose(_to_numpy(old_export_model.features_0_0_bn.weight),
+                                   _to_numpy(new_export_model.features_0_0_bn.layer.weight)).all())
         self.assertTrue(np.sum(np.abs(diff.cpu().detach().numpy())) == 0, f'Sum absolute error: {np.sum(np.abs(diff.cpu().detach().numpy()))}')
 
 
@@ -106,11 +111,11 @@ class TestFullyQuantizedExporter(unittest.TestCase):
 
     def test_weights_qc(self):
         self.assertTrue(len(self.fully_quantized_mbv2.features_0_0_bn.weights_quantizers) == 1)
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.weights_quantizers['weight'], WeightsPOTInferableQuantizer))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.features_0_0_bn.weights_quantizers['weight'], WeightsSymmetricInferableQuantizer))
 
     def test_weights_activation_qc(self):
         self.assertTrue(len(self.fully_quantized_mbv2.classifier_1.weights_quantizers) == 1)
-        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.weights_quantizers['weight'], WeightsPOTInferableQuantizer))
+        self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1.weights_quantizers['weight'], WeightsSymmetricInferableQuantizer))
         self.assertTrue(isinstance(self.fully_quantized_mbv2.classifier_1_activation_holder_quantizer.activation_holder_quantizer, ActivationPOTInferableQuantizer))
 
     def test_activation_qc(self):

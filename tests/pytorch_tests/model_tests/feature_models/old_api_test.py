@@ -17,11 +17,11 @@ import numpy as np
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.v4.tp_model import generate_tp_model
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import generate_tp_model
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
-from model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.latest import get_tp_model, generate_pytorch_tpc, get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model, generate_pytorch_tpc, get_op_quantization_configs
 
 
 class OneLayerConv2dNet(torch.nn.Module):

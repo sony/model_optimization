@@ -21,6 +21,7 @@ import numpy as np
 import tensorflow as tf
 
 from packaging import version
+
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers.core import TFOpLambda
 else:
@@ -31,27 +32,26 @@ from mct_quantizers import KerasActivationQuantizationHolder
 from tests.keras_tests.exporter_tests.keras_fake_quant.keras_fake_quant_exporter_base_test import \
     get_minmax_from_qparams
 from tests.keras_tests.utils import get_layers_from_model_by_type
-from mct_quantizers import keras_load_quantized_model as mct_quantizers_load # Load with custom of inferable objects
-from model_compression_toolkit import keras_load_quantized_model as mct_load # Load with custom of inferable+trainable objects
+from mct_quantizers import keras_load_quantized_model as mct_quantizers_load  # Load with custom of inferable objects
+from model_compression_toolkit import \
+    keras_load_quantized_model as mct_load  # Load with custom of inferable+trainable objects
 
 layers = keras.layers
-
-
 
 
 class TestExportingQATModelBase(unittest.TestCase):
 
     def get_model(self):
-        i = keras.Input(shape=(224,224,3))
-        x = layers.Conv2D(3,3)(i)
-        model = keras.models.Model(i,x)
+        i = keras.Input(shape=(224, 224, 3))
+        x = layers.Conv2D(3, 3)(i)
+        model = keras.models.Model(i, x)
         return model
 
     def get_dataset(self):
         yield [np.random.rand(1, 224, 224, 3)]
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities('tensorflow','default')
+        return mct.get_target_platform_capabilities('tensorflow', 'default')
 
     def get_serialization_format(self):
         return mct.exporter.KerasExportSerializationFormat.KERAS_H5
@@ -70,7 +70,7 @@ class TestExportingQATModelBase(unittest.TestCase):
         images = next(self.get_dataset())
 
         self.qat_ready, _, _ = mct.qat.keras_quantization_aware_training_init(model,
-                                                                         self.get_dataset)
+                                                                              self.get_dataset)
         _qat_ready_model_path = tempfile.mkstemp('.h5')[1]
         keras.models.save_model(self.qat_ready, _qat_ready_model_path)
         self.qat_ready = mct_load(_qat_ready_model_path)
@@ -102,29 +102,34 @@ class TestExportingQATModelBase(unittest.TestCase):
         images = next(self.get_dataset())
         a = self.infer(self.final_model, images)
         b = self.infer(self.loaded_model, images)
-        diff = np.max(np.abs(a-b))
+        diff = np.max(np.abs(a - b))
         assert diff == 0, f'QAT Model before and after export to h5 should ' \
                           f'predict identical predictions but diff is ' \
                           f'{diff}'
 
-        holder_layers_finalized_model = get_layers_from_model_by_type(self.final_model, KerasActivationQuantizationHolder)
+        holder_layers_finalized_model = get_layers_from_model_by_type(self.final_model,
+                                                                      KerasActivationQuantizationHolder)
         holder_layers_loaded_model = get_layers_from_model_by_type(self.loaded_model, TFOpLambda)
 
-        _finalized_first_activation_q_params = holder_layers_finalized_model[0].get_config()['activation_holder_quantizer']['config']
+        _finalized_first_activation_q_params = \
+        holder_layers_finalized_model[0].get_config()['activation_holder_quantizer']['config']
         _min, _max = get_minmax_from_qparams(_finalized_first_activation_q_params)
         self.assertTrue(_min == holder_layers_loaded_model[0].inbound_nodes[0].call_kwargs['min'])
         self.assertTrue(_max == holder_layers_loaded_model[0].inbound_nodes[0].call_kwargs['max'])
-        self.assertTrue(_finalized_first_activation_q_params['num_bits'] == holder_layers_loaded_model[0].inbound_nodes[0].call_kwargs['num_bits'])
+        self.assertTrue(_finalized_first_activation_q_params['num_bits'] ==
+                        holder_layers_loaded_model[0].inbound_nodes[0].call_kwargs['num_bits'])
 
-        _finalized_second_activation_q_params = holder_layers_finalized_model[1].get_config()['activation_holder_quantizer']['config']
+        _finalized_second_activation_q_params = \
+        holder_layers_finalized_model[1].get_config()['activation_holder_quantizer']['config']
         _min, _max = get_minmax_from_qparams(_finalized_second_activation_q_params)
         self.assertTrue(_min == holder_layers_loaded_model[1].inbound_nodes[0].call_kwargs['min'])
         self.assertTrue(_max == holder_layers_loaded_model[1].inbound_nodes[0].call_kwargs['max'])
-        self.assertTrue(_finalized_second_activation_q_params['num_bits'] == holder_layers_loaded_model[1].inbound_nodes[0].call_kwargs['num_bits'])
+        self.assertTrue(_finalized_second_activation_q_params['num_bits'] ==
+                        holder_layers_loaded_model[1].inbound_nodes[0].call_kwargs['num_bits'])
 
         conv_finalized_model = get_layers_from_model_by_type(self.final_model, layers.Conv2D)[0]
         conv_loaded_model = get_layers_from_model_by_type(self.loaded_model, layers.Conv2D)[0]
-        self.assertTrue(np.all(conv_finalized_model.get_quantized_weights()['kernel']==conv_loaded_model.kernel))
+        self.assertTrue(np.all(conv_finalized_model.get_quantized_weights()['kernel'] == conv_loaded_model.kernel))
 
 
 class TestExportingQATModelTFLite(TestExportingQATModelBase):
@@ -152,14 +157,15 @@ class TestExportingQATModelTFLite(TestExportingQATModelBase):
     def test_exported_qat_model(self):
         self.export_qat_model()
         # Compare scales from tflite model to the fully-quantized model
-        exported_model_scales=[]
+        exported_model_scales = []
         for op in self.loaded_model._get_ops_details():
             if op['op_name'] == 'QUANTIZE':
                 # Take scale from quant params of the output tensor of QUANTIZE op
-                exported_model_scales.append(self.loaded_model.get_tensor_details()[op['outputs'][0]]['quantization_parameters']['scales'][0])
+                exported_model_scales.append(
+                    self.loaded_model.get_tensor_details()[op['outputs'][0]]['quantization_parameters']['scales'][0])
 
         # Get Kernel values
-        tflite_kernel=None
+        tflite_kernel = None
         for t in self.loaded_model.get_tensor_details():
             if len(t['shape']) == 4 and np.all(t['shape'] == np.asarray([3, 3, 3, 3])):
                 tflite_kernel = self.loaded_model.tensor(t['index'])()
@@ -184,10 +190,5 @@ class TestExportingQATModelTFLite(TestExportingQATModelBase):
 
         conv_layer = get_layers_from_model_by_type(self.final_model, layers.Conv2D)[0]
         finalized_kernel = conv_layer.get_quantized_weights()['kernel']
-        kernels_diff=np.max(np.abs(finalized_kernel-tflite_kernel.transpose((1,2,3,0))))
-        self.assertTrue(kernels_diff==0, f'Kernels should be identical but diff of {kernels_diff} was found')
-
-
-
-
-
+        kernels_diff = np.max(np.abs(finalized_kernel - tflite_kernel.transpose((1, 2, 3, 0))))
+        self.assertTrue(kernels_diff == 0, f'Kernels should be identical but diff of {kernels_diff} was found')
