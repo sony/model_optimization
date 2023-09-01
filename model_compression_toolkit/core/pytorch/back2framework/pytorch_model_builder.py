@@ -14,7 +14,7 @@
 # ==============================================================================
 from abc import abstractmethod
 from functools import partial
-from typing import Tuple, Any, Dict, List, Union, Callable
+from typing import Any, Callable, Dict, List, Mapping, Sequence, Tuple, Union
 
 import torch
 from networkx import topological_sort
@@ -23,6 +23,7 @@ from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
+from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.user_info import UserInformation
@@ -117,7 +118,7 @@ def _find_by_node_name(node_to_output_tensors_dict: dict, node_name: str):
 
 
 def _generate_outputs(
-        out_nodes: List[BaseNode],
+        out_nodes: List[OutTensor],
         node_to_output_tensors_dict: dict):
     """
     Args:
@@ -127,13 +128,19 @@ def _generate_outputs(
     Returns:
         List of output tensor/s for the model
     """
+    def _gen_order(order):
+        if isinstance(order, Mapping):
+            return {k:_gen_order(n) for k,n in order.items()}
+        elif isinstance(order, Sequence):
+            return tuple([_gen_order(n) for n in order])
+        pt_node=node_to_output_tensors_dict[order]
+        return pt_node if not isinstance(pt_node,Sequence) else pt_node[0] if len(pt_node)==1 else pt_node
+    
     output = []
-    for n in out_nodes:
-        out_tensors_of_n = _find_by_node_name(node_to_output_tensors_dict, n.name)
-        if len(out_tensors_of_n) > 1:
-            output.append(out_tensors_of_n)
-        else:
-            output += out_tensors_of_n
+    for node in out_nodes:
+        pt_out=_gen_order(node.output_order)
+        output.append(pt_out)
+            
     return output
 
 
@@ -281,7 +288,7 @@ class PytorchModel(torch.nn.Module):
             outputs = _generate_outputs(self.append2output,
                                         node_to_output_tensors_dict_float if self.return_float_outputs else node_to_output_tensors_dict)
         else:
-            outputs = _generate_outputs([ot.node for ot in self.graph.get_outputs()],
+            outputs = _generate_outputs(self.graph.get_outputs(),
                                         node_to_output_tensors_dict_float if self.return_float_outputs else node_to_output_tensors_dict)
             if len(outputs) == 1:
                 outputs = outputs[0]

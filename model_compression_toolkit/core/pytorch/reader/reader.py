@@ -103,7 +103,7 @@ def remove_broken_nodes_from_graph(graph):
         (for example: "assert").
 
     """
-    output_nodes = [n.node for n in graph.output_nodes]
+    output_nodes = [n for nodes in graph.output_nodes for n in nodes.node]
     # make a list of all the nodes with no output
     nodes_list = [n for n, d in graph.out_degree if d == 0 and n not in output_nodes]
     nodes_to_remove = []

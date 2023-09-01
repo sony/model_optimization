@@ -13,7 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 import inspect
-from typing import Dict, List, Tuple, Callable
+from typing import Callable, Dict, List, Mapping, Sequence, Tuple
+
 import torch
 from torch.fx import GraphModule
 
@@ -99,7 +100,7 @@ def nodes_builder(model: GraphModule,
         elif node.op == PLACEHOLDER:
             node_type = DummyPlaceHolder
         elif node.op == OUTPUT:
-            output_nodes += node.all_input_nodes
+            output_nodes.append((node.all_input_nodes, node.args[0]))
             continue
         elif node.op == CALL_METHOD:
             if hasattr(torch, node.target):
@@ -221,8 +222,17 @@ def nodes_builder(model: GraphModule,
         nodes.append(graph_node)
 
     # generate graph outputs list
-    for node in output_nodes:
-        outputs.append(OutTensor(fx_node_2_graph_node[node], output_nodes.index(node)))
+    def _map_fx_nodes(output_order):
+        if isinstance(output_order, Mapping):
+            return {k: _map_fx_nodes(v) for k, v in output_order.items()}
+        elif isinstance(output_order, Sequence):
+            return tuple([_map_fx_nodes(v) for v in output_order])
+
+        return fx_node_2_graph_node[output_order]
+
+    for nodes, output_order in output_nodes:
+        out_nodes=[fx_node_2_graph_node[node] for node in nodes]
+        outputs.append(OutTensor(out_nodes, _map_fx_nodes(output_order)))
 
     return nodes, inputs, outputs, fx_node_2_graph_node
 
