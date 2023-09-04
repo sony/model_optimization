@@ -24,15 +24,17 @@ from enum import Enum
 import torch
 from torch.utils.data import DataLoader
 
-from pytorch_fw.ultralytics_lib.replacers import C2fModuleReplacer, DetectModuleReplacer, YOLOReplacer, DetectionModelModuleReplacer
+from tutorials.quick_start.pytorch_fw.ultralytics_lib.replacers import C2fModuleReplacer, \
+    DetectModuleReplacer, YOLOReplacer, DetectionModelModuleReplacer
 from torchvision.transforms import transforms
 
-from pytorch_fw.ultralytics_lib.replacers import prepare_model_for_ultralytics_val
-from pytorch_fw.utils import get_representative_dataset
-from common.model_lib import BaseModelLib
-from common.constants import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, COCO_DATASET, VALIDATION_DATASET_FOLDER
+from tutorials.quick_start.pytorch_fw.ultralytics_lib.replacers import prepare_model_for_ultralytics_val
+from tutorials.quick_start.pytorch_fw.utils import get_representative_dataset
+from tutorials.quick_start.common.model_lib import BaseModelLib
+from tutorials.quick_start.common.constants import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, \
+    COCO_DATASET, VALIDATION_DATASET_FOLDER
 
-from common.results import DatasetInfo
+from tutorials.quick_start.common.results import DatasetInfo
 
 from ultralytics.yolo.data.dataset import YOLODataset
 from ultralytics.yolo.utils.torch_utils import initialize_weights

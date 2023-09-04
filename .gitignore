@@ -3,4 +3,4 @@ scratch_pad.py
 **/__pycache__/
 ./docs/build
 ./docs/_build
-tutorials/.ipynb_checkpoints
+tutorials/notebooks/.ipynb_checkpoints
