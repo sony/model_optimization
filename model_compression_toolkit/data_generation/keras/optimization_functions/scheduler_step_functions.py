@@ -1,8 +1,7 @@
 from functools import partial
-from typing import Tuple, Callable, Dict
+from typing import Callable, Dict
 
 import numpy as np
-from keras.optimizers.schedules.learning_rate_schedule import PiecewiseConstantDecay
 
 from model_compression_toolkit.data_generation.common.enums import SchedulerType
 
