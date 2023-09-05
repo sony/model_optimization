@@ -49,7 +49,7 @@ class BaseKerasDataGenerationTest:
                  n_images: int = 32,
                  output_image_size: int = (32, 32),
                  n_iter: int = 10,
-                 optimizer_type: OptimizerType = OptimizerType.RADAM,
+                 optimizer_type: OptimizerType = OptimizerType.ADAM,
                  scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU,
                  data_gen_batch_size=8,
                  initial_lr=1.0,
