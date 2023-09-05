@@ -12,12 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.constants import FOUND_TORCH, FOUND_TF
 
-if FOUND_TF:
-    from model_compression_toolkit.data_generation.keras.keras_data_generation import (
-        tensorflow_data_generation_experimental, get_tensorflow_data_generation_config)
+# Define a constant for the image input key.
+IMAGE_INPUT = 'image_input'
 
-if FOUND_TORCH:
-    from model_compression_toolkit.data_generation.pytorch.pytorch_data_generation import (
-        pytorch_data_generation_experimental, get_pytorch_data_generation_config)
+# Define constants for image axes.
+BATCH_AXIS, H_AXIS, W_AXIS, CHANNEL_AXIS = 0, 1, 2, 3
+
+# Default initial learning rate constant.
+DEFAULT_INITIAL_LR = 1
+
+# Default batch size for data generator.
+DEFAULT_DATA_GEN_BS = 8
+
+# Default number of iterations.
+DEFAULT_N_ITER = 500
+
+# Default output loss multiplier.
+DEFAULT_OUTPUT_LOSS_MULTIPLIER = 0.001
+
+# Minimum value for image pixel intensity.
+IMAGE_MIN_VAL = 0.0
+
+# Maximum value for image pixel intensity.
+IMAGE_MAX_VAL = 255.0
+

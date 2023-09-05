@@ -198,7 +198,7 @@ if FOUND_TORCH:
         output_loss_fn = output_loss_function_dict.get(data_generation_config.output_loss_type)
 
         # Check if the output loss type is valid
-        if bn_alignment_loss_fn is None:
+        if output_loss_fn is None:
             Logger.exception(
                 f'Invalid output_loss_type {data_generation_config.output_loss_type}. Please choose one of {OutputLossType.get_values()}')
 

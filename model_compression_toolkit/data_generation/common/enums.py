@@ -65,9 +65,15 @@ class ImageNormalizationType(EnumBaseClass):
     """
     An enum for choosing the image normalization type.
     TORCHVISION: Normalize the images using torchvision normalization.
+    MOBILENET: Normalize the images using keras mobilenet normalization.
+    EFFICIENTNET: Normalize the images using keras efficientnet normalization.
+    RESNET50: Normalize the images using keras resnet50 normalization.
     NO_NORMALIZATION: Do not apply any normalization.
     """
     TORCHVISION = 'torchvision'
+    MOBILENET = 'mobilenet'
+    EFFICIENTNET = 'efficientnet'
+    RESNET50 = 'resnet50'
     NO_NORMALIZATION = 'no_normalization'
 
 
@@ -83,7 +89,6 @@ class BNLayerWeightingType(EnumBaseClass):
     GRAD = 'grad'
 
 
-
 class BatchNormAlignemntLossType(EnumBaseClass):
     """
     An enum for choosing the BatchNorm alignment loss type.
@@ -97,9 +102,11 @@ class OutputLossType(EnumBaseClass):
     An enum for choosing the output loss type.
     NONE: No output loss is applied.
     MIN_MAX_DIFF: Use min-max difference as the output loss.
+    MARGINAL_MIN_MAX_DIFF: Use marginal min-max difference as the output loss.
     """
     NONE = 'none'
     MIN_MAX_DIFF = 'min_max_diff'
+    MARGINAL_MIN_MAX_DIFF = 'marginal_min_max_diff'
 
 
 class SchedulerType(EnumBaseClass):
@@ -110,3 +117,15 @@ class SchedulerType(EnumBaseClass):
     """
     REDUCE_ON_PLATEAU = 'reduce_on_plateau'
     STEP = 'step'
+
+
+class OptimizerType(EnumBaseClass):
+    """
+    An enum for choosing the optimizer type.
+    RADAM: Use the RADAM optimizer.
+    ADAM: Use the ADAM optimizer.
+    SGD: Use the SGD optimizer.
+    """
+    RADAM = 'radam'
+    ADAM = 'adam'
+    SGD = 'sgd'
