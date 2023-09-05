@@ -30,6 +30,7 @@ from tests.common_tests.function_tests.test_threshold_selection import TestThres
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
 
+
 if FOUND_ONNX:
     from tests.pytorch_tests.function_tests.test_export_pytorch_fully_quantized_model import TestPyTorchFakeQuantExporter
 
@@ -88,6 +89,7 @@ if found_pytorch:
     from tests.pytorch_tests.function_tests.test_activation_quantization_holder_gptq import \
         TestGPTQModelBuilderWithActivationHolder as TestGPTQModelBuilderWithActivationHolderPytorch
     from tests.pytorch_tests.exporter_tests.test_runner import PytorchExporterTestsRunner
+    from tests.data_generation_tests.pytorch.test_pytorch_data_generation_runner import PytorchDataGenerationTestRunner
 
 
 if __name__ == '__main__':
@@ -155,6 +157,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(pytorch_gptq_soft_quantier_test))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchTrainableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchExporterTestsRunner))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchDataGenerationTestRunner))
 
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)

@@ -44,8 +44,8 @@ class TestExportONNXWeightUniform2BitsQuantizers(BasePytorchONNXCustomOpsExportT
 
         conv_qparams = self._get_onnx_node_attributes(pot_q_nodes[1])
 
-        assert np.all(wrapped_quantized_model.layer_activation_holder_quantizer.activation_holder_quantizer.min_range.astype(np.float32) == conv_qparams['min_range'])
-        assert np.all(wrapped_quantized_model.layer_activation_holder_quantizer.activation_holder_quantizer.max_range.astype(np.float32) == conv_qparams['max_range'])
+        assert np.all(wrapped_quantized_model.layer_activation_holder_quantizer.activation_holder_quantizer.min_range == conv_qparams['min_range'])
+        assert np.all(wrapped_quantized_model.layer_activation_holder_quantizer.activation_holder_quantizer.max_range == conv_qparams['max_range'])
         assert wrapped_quantized_model.layer_activation_holder_quantizer.activation_holder_quantizer.num_bits == \
                conv_qparams['num_bits']
 

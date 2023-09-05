@@ -252,6 +252,8 @@ class TestGetKerasTPC(unittest.TestCase):
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)  # Latest
         self.assertTrue(tpc.version == 'v1')
 
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1_pot')
+        self.assertTrue(tpc.version == 'v1_pot')
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1_lut')
         self.assertTrue(tpc.version == 'v1_lut')
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1')
@@ -262,6 +264,9 @@ class TestGetKerasTPC(unittest.TestCase):
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1_lut")
         self.assertTrue(tpc.version == 'v1_lut')
+
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1_pot")
+        self.assertTrue(tpc.version == 'v1_pot')
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, TFLITE_TP_MODEL, "v1")
         self.assertTrue(tpc.version == 'v1')

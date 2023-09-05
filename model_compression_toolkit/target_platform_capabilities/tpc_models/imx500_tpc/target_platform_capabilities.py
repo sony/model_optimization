@@ -24,10 +24,12 @@ if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_keras_tpc_latest
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tpc_keras import get_keras_tpc as get_keras_tpc_v1
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1_lut.tpc_keras import get_keras_tpc as get_keras_tpc_v1_lut
+    from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1_pot.tpc_keras import get_keras_tpc as get_keras_tpc_v1_pot
 
     # Keras: TPC versioning
     keras_tpc_models_dict = {'v1': get_keras_tpc_v1(),
                              'v1_lut': get_keras_tpc_v1_lut(),
+                             'v1_pot': get_keras_tpc_v1_pot(),
                              LATEST: get_keras_tpc_latest()}
 
 ###############################
@@ -38,9 +40,12 @@ if FOUND_TORCH:
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_pytorch_tpc_latest
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v1
+    from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1_pot.tpc_pytorch import \
+        get_pytorch_tpc as get_pytorch_tpc_v1_pot
 
     # Pytorch: TPC versioning
     pytorch_tpc_models_dict = {'v1': get_pytorch_tpc_v1(),
+                               'v1_pot': get_pytorch_tpc_v1_pot(),
                                LATEST: get_pytorch_tpc_latest()}
 
 tpc_dict = {TENSORFLOW: keras_tpc_models_dict,
