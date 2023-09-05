@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from collections import namedtuple
-
+# from collections import namedtuple
+from dataclasses import dataclass
 from copy import copy, deepcopy
 from typing import List, Tuple, Any, Mapping, Sequence
 
@@ -35,8 +35,11 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
 
 # nodes contains all input nodes contributing to outputs of the model
 # output_order contains order (list, dict, or simple node)
-OutTensor = namedtuple('OutTensor', 'node output_order')
-
+# OutTensor = namedtuple('OutTensor', 'node output_order')
+@dataclass
+class OutTensor:
+    node:BaseNode
+    output_order:BaseNode|list[BaseNode]|dict[str,BaseNode]
 
 class Graph(nx.MultiDiGraph, GraphSearches):
     """

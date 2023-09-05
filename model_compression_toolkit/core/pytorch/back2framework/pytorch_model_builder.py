@@ -138,7 +138,7 @@ def _generate_outputs(
     
     output = []
     for node in out_nodes:
-        pt_out=_gen_order(node.output_order)
+        pt_out=_gen_order(node.output_order if isinstance(node, OutTensor) else node)
         output.append(pt_out)
             
     return output
