@@ -172,14 +172,14 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
 
     def compute_bn_loss(self,
                         input_imgs: tf.Tensor,
-                        batch_stats_holder: KerasOriginalBNStatsHolder,
+                        batch_stats_holder: BatchStatsHolder,
                         activation_extractor: KerasActivationExtractor) -> tf.Tensor:
         """
         Compute the batch norm alignment loss.
 
         Args:
             input_imgs (Any): the input images.
-            batch_stats_holder (KerasOriginalBNStatsHolder): batch stats holder.
+            batch_stats_holder (BatchStatsHolder): batch stats holder.
             activation_extractor (ActivationExtractor): extractor for layer activations.
 
         Returns:
@@ -261,7 +261,7 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
     def update_statistics(self,
                           input_imgs: tf.Tensor,
                           batch_index: int,
-                          batch_stats_holder: KerasOriginalBNStatsHolder,
+                          batch_stats_holder: BatchStatsHolder,
                           activation_extractor: KerasActivationExtractor):
         """
         Update the statistics for the images at the specified batch index.
@@ -269,7 +269,7 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
         Args:
             input_imgs (Any): the input images.
             batch_index (int): the index of the batch.
-            batch_stats_holder (KerasOriginalBNStatsHolder): batch stats holder.
+            batch_stats_holder (BatchStatsHolder): batch stats holder.
             activation_extractor (ActivationExtractor): extractor for layer activations.
         """
         if self.use_all_data_stats:
@@ -376,14 +376,14 @@ class KerasAllImagesStatsHolder(AllImagesStatsHolder):
         return [KerasBatchStatsHolder(self.mean_axis) for _ in range(self.n_batches)]
 
     def update_batch_stats(self,
-                           batch_stats_holder: KerasOriginalBNStatsHolder,
+                           batch_stats_holder: BatchStatsHolder,
                            input_imgs: tf.Tensor,
                            activation_extractor: KerasActivationExtractor):
         """
         Update the batch statistics for a given batch.
 
         Args:
-            batch_stats_holder (KerasOriginalBNStatsHolder): batch stats holder.
+            batch_stats_holder (BatchStatsHolder): batch stats holder.
             input_imgs (tf.Tensor): the input images for which to calculate the statistics.
             activation_extractor (ActivationsExtractor): the activation extractor object.
         """
@@ -392,13 +392,13 @@ class KerasAllImagesStatsHolder(AllImagesStatsHolder):
                                                           activation_extractor=activation_extractor)
 
     def get_stats(self,
-                  batch_stats_holder: KerasOriginalBNStatsHolder,
+                  batch_stats_holder: BatchStatsHolder,
                   layer_name: str) -> Tuple[tf.Tensor, tf.Tensor]:
         """
         Get the statistics for a given batch and layer.
 
         Args:
-            batch_stats_holder (KerasOriginalBNStatsHolder): batch stats holder.
+            batch_stats_holder (BatchStatsHolder): batch stats holder.
             layer_name (str): the name of the layer.
 
         Returns:

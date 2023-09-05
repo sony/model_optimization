@@ -46,7 +46,6 @@ if FOUND_TF:
     from model_compression_toolkit.data_generation.keras.constants import DEFAULT_N_ITER, DEFAULT_DATA_GEN_BS, \
         DEFAULT_INITIAL_LR, DEFAULT_OUTPUT_LOSS_MULTIPLIER
 
-
     # Function to create a DataGenerationConfig object with the specified configuration parameters for Tensorflow
     def get_tensorflow_data_generation_config(
             n_iter: int = DEFAULT_N_ITER,
@@ -304,7 +303,6 @@ if FOUND_TF:
         finalized_imgs = all_imgs_opt_handler.get_finilized_data_loader()
         Logger.info(f'Total time to generate {len(finalized_imgs)} images (seconds): {int(time.time() - total_time)}')
         return finalized_imgs
-
 
     # Compute the gradients and the loss for the batch
     @tf.function

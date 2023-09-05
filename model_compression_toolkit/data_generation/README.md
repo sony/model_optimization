@@ -25,7 +25,7 @@ from model_compression_toolkit.data_generation import get_pytorch_data_generatio
 # Set the configuration parameters for data generation
 data_gen_config = get_pytorch_data_generation_config(n_iter=500,  # Number of iterations
                                                      data_gen_batch_size=32, # Batch size for data generation
-                                                     image_padding=32, # image manipulation when generating data                                                     
+                                                     extra_pixels=32, # image manipulation when generating data                                                     
                                                      # ... (other configuration parameters)
                                                      )
 
@@ -45,7 +45,7 @@ from model_compression_toolkit.data_generation import get_tensorflow_data_genera
 # Set the configuration parameters for data generation
 data_gen_config = get_tensorflow_data_generation_config(n_iter=500,  # Number of iterations
                                                         data_gen_batch_size=32, # Batch size for data generation
-                                                        image_padding=32, # image manipulation when generating data                                                     
+                                                        extra_pixels=32, # image manipulation when generating data                                                     
                                                         # ... (other configuration parameters)
                                                         )
 
