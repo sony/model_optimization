@@ -84,7 +84,7 @@ if FOUND_TF:
             image_granularity (ImageGranularity): The granularity of the images for optimization.
             image_pipeline_type (ImagePipelineType): The type of image pipeline to use.
             image_normalization_type (ImageNormalizationType): The type of image normalization to use.
-            extra_pixels (int): Extra pixels add to the input image size. Defaults to 0.
+            extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
             activations_loss_fn (Callable): Activation loss function to use during optimization.
             bn_layer_types (List): List of BatchNorm layer types to be considered for data generation.
             clip_images (bool): Whether to clip images during optimization.
@@ -305,15 +305,13 @@ if FOUND_TF:
         return finalized_imgs
 
     # Compute the gradients and the loss for the batch
-    @tf.function
     def keras_compute_grads(imgs_to_optimize: tf.Tensor,
                             batch_stats_holder: KerasBatchStatsHolder,
                             activation_extractor: KerasActivationExtractor,
                             all_imgs_opt_handler: KerasImagesOptimizationHandler) -> (
             Tuple)[List[tf.Tensor], tf.Tensor, tf.Tensor, tf.Tensor]:
         """
-        This function run part of the training step, calculating the losses and the gradients for the batch,
-        wrapped by a tf.function for acceleration.
+        This function run part of the training step, calculating the losses and the gradients for the batch.
 
         Args:
             imgs_to_optimize (tf.Tensor): The images to optimize for the batch.

@@ -92,7 +92,7 @@ if FOUND_TORCH:
             image_granularity (ImageGranularity): The granularity of the images for optimization.
             image_pipeline_type (ImagePipelineType): The type of image pipeline to use.
             image_normalization_type (ImageNormalizationType): The type of image normalization to use.
-            extra_pixels (int): Extra pixels add to the input image size. Defaults to 0.
+            extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
             activations_loss_fn (Callable): Activation loss function to use during optimization.
             bn_layer_types (List): List of BatchNorm layer types to be considered for data generation.
             clip_images (bool): Whether to clip images during optimization.

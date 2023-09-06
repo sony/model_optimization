@@ -59,7 +59,7 @@ class DataGenerationConfig:
             layer_weighting_type (BNLayerWeightingType): Type of layer weighting. Defaults to None.
             image_pipeline_type (ImagePipelineType): Type of image pipeline. Defaults to None.
             image_normalization_type (ImageNormalizationType): Type of image normalization. Defaults to None.
-            extra_pixels (int): Extra pixels add to the input image size. Defaults to 0.
+            extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
             activations_loss_fn (Callable): Loss function for activations. Defaults to None.
             bn_layer_types (List): List of BatchNorm layer types. Defaults to [].
             clip_images (bool): Flag to enable image clipping. Defaults to True.

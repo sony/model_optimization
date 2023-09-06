@@ -114,7 +114,9 @@ class KerasActivationExtractor(ActivationExtractor):
         # If the last layer is linear add the output of the layer to the layers to optimize
         if self.last_linear_layer is not None:
             self.layer_list.append(self.last_linear_layer)
-            self.outputs_list.append(self.last_linear_layer.output)
+            if self.last_linear_layer is not self.model.layers[-1]:
+                self.outputs_list.append(self.last_linear_layer.output)
+        self.outputs_list.append(self.model.output)
 
         # Create an intermediate model with the outputs defined before.
         self.intermediate_model = tf.keras.Model(inputs=self.model.input,
@@ -128,6 +130,21 @@ class KerasActivationExtractor(ActivationExtractor):
             list: A list of bn layer names for which to extract input activations.
         """
         return self.bn_layer_names
+
+    @tf.function
+    def run_on_inputs(self,
+                      inputs: tf.Tensor) -> List[tf.Tensor]:
+        """
+        Run the model on the given inputs and return the intermediate outputs,
+        wrapped by a tf.function for acceleration.
+
+        Args:
+            inputs (Tensor): Input tensor.
+
+        Returns:
+            List[Tensor]: Intermediate output tensors.
+        """
+        return self.intermediate_model(inputs=inputs)
 
     def run_model(self,
                   inputs: tf.Tensor) -> tf.Tensor:
@@ -145,7 +162,7 @@ class KerasActivationExtractor(ActivationExtractor):
         self.bn_var = []
 
         # Run the model on inputs
-        intermediate_outputs = self.intermediate_model(inputs=inputs)
+        intermediate_outputs = self.run_on_inputs(inputs=inputs)
 
         # Iterate over layers to extract stats
         for i, layer in enumerate(self.layer_list):
@@ -157,12 +174,10 @@ class KerasActivationExtractor(ActivationExtractor):
                 mean, var = tf.nn.moments(x=input_data, axes=self.mean_axis, keepdims=False)
                 self.bn_mean.append(mean)
                 self.bn_var.append(var)
-            else:
+            elif layer == self.last_linear_layer:
                 self.last_linear_layer_output = intermediate_outputs[i]
-
-        # Run the model to get the output of the model
-        output = self.model(inputs)
-        return output
+        # Last intermediate output is the output of the model
+        return intermediate_outputs[-1]
 
     def get_activation(self,
                        layer_name: str) -> Dict:

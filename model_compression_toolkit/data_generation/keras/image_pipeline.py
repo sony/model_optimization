@@ -82,7 +82,7 @@ class TensorflowCropFlipImagePipeline(BaseImagePipeline):
 
         Args:
             output_image_size (Tuple): The output image size.
-            extra_pixels (int): Extra pixels add to the input image size. Defaults to 0.
+            extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
         """
         super(TensorflowCropFlipImagePipeline, self, ).__init__(output_image_size, extra_pixels)
 
@@ -155,7 +155,7 @@ class TensorflowIdentityImagePipeline(BaseImagePipeline):
 
         Args:
             output_image_size (Tuple): The output image size.
-            extra_pixels (int): Extra pixels add to the input image size. Defaults to 0.
+            extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
         """
         super(TensorflowIdentityImagePipeline, self, ).__init__(output_image_size, extra_pixels)
         self.extra_pixels = extra_pixels

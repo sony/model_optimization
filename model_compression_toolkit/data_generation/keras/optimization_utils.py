@@ -272,11 +272,10 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
             batch_stats_holder (BatchStatsHolder): batch stats holder.
             activation_extractor (ActivationExtractor): extractor for layer activations.
         """
-        if self.use_all_data_stats:
-            self.all_imgs_stats_holder.update_batch_stats(
-                batch_stats_holder=batch_stats_holder,
-                input_imgs=input_imgs,
-                activation_extractor=activation_extractor)
+        self.all_imgs_stats_holder.update_batch_stats(
+            batch_stats_holder=batch_stats_holder,
+            input_imgs=input_imgs,
+            activation_extractor=activation_extractor)
         self.batched_images_for_optimization[batch_index] = input_imgs
 
     def optimization_step(self,
