@@ -16,6 +16,8 @@
 import unittest
 
 from model_compression_toolkit.constants import FOUND_ONNXRUNTIME, FOUND_ONNX
+from tests.pytorch_tests.exporter_tests.custom_ops_tests.test_export_lut_symmetric_onnx_quantizers import \
+    TestExportONNXWeightLUTSymmetric2BitsQuantizers, TestExportONNXWeightLUTPOT2BitsQuantizers
 from tests.pytorch_tests.exporter_tests.custom_ops_tests.test_export_pot_onnx_quantizers import \
     TestExportONNXWeightPOT2BitsQuantizers
 from tests.pytorch_tests.exporter_tests.custom_ops_tests.test_export_symmetric_onnx_quantizers import \
@@ -40,3 +42,10 @@ class PytorchExporterTestsRunner(unittest.TestCase):
 
     def test_uniform2bits_custom_quantizer_onnx(self):
         TestExportONNXWeightUniform2BitsQuantizers().run_test()
+
+    def test_lut_pot2bits_custom_quantizer_onnx(self):
+        TestExportONNXWeightLUTPOT2BitsQuantizers().run_test()
+
+    def test_lut_sym2bits_custom_quantizer_onnx(self):
+        TestExportONNXWeightLUTSymmetric2BitsQuantizers().run_test()
+
