@@ -64,10 +64,11 @@ def get_weights_inferable_quantizer_kwargs(node_qc: NodeWeightsQuantizationConfi
 
     elif quantization_method in [QuantizationMethod.LUT_POT_QUANTIZER, QuantizationMethod.LUT_SYM_QUANTIZER]:
         return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.weights_n_bits,
-                qi_inferable_quantizers_constants.LUT_VALUES: node_qc.weights_quantization_params[LUT_VALUES].flatten(),
-                qi_inferable_quantizers_constants.THRESHOLD: node_qc.weights_quantization_params[SCALE_PER_CHANNEL].flatten(),
+                qi_inferable_quantizers_constants.LUT_VALUES: node_qc.weights_quantization_params[LUT_VALUES].flatten().tolist(),
+                qi_inferable_quantizers_constants.THRESHOLD: node_qc.weights_quantization_params[SCALE_PER_CHANNEL].flatten().tolist(),
                 qi_inferable_quantizers_constants.PER_CHANNEL: node_qc.weights_per_channel_threshold,
-                qi_inferable_quantizers_constants.CHANNEL_AXIS: node_qc.weights_channels_axis}
+                qi_inferable_quantizers_constants.CHANNEL_AXIS: node_qc.weights_channels_axis,
+                qi_inferable_quantizers_constants.INPUT_RANK: len(node_qc.weights_quantization_params[SCALE_PER_CHANNEL].shape)}
                 # TODO: Add LUT_VALUES_BITWIDTH & EPS to node quantization config
 
     else:
@@ -106,10 +107,8 @@ def get_activation_inferable_quantizer_kwargs(node_qc: NodeActivationQuantizatio
 
     elif quantization_method in [QuantizationMethod.LUT_POT_QUANTIZER]:
         return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.activation_n_bits,
-                qi_inferable_quantizers_constants.LUT_VALUES: np.asarray(
-                    [node_qc.activation_quantization_params[LUT_VALUES]]),
-                qi_inferable_quantizers_constants.THRESHOLD: np.asarray(
-                    [node_qc.activation_quantization_params[THRESHOLD]]),
+                qi_inferable_quantizers_constants.LUT_VALUES: node_qc.activation_quantization_params[LUT_VALUES].flatten().tolist(),
+                qi_inferable_quantizers_constants.THRESHOLD: [node_qc.activation_quantization_params[THRESHOLD]],
                 qi_inferable_quantizers_constants.SIGNED: node_qc.activation_quantization_params.get(SIGNED)}
         # TODO: Add LUT_VALUES_BITWIDTH & EPS to node quantization config
     else:

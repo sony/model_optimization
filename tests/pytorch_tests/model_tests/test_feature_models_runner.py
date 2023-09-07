@@ -277,7 +277,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_lut_activation_quantizer(self):
         """
-        This test checks that activation are quantized correctly using LUT quantizer
+        This test checks that activation are quantized correctly using LUT quantizer.
         """
         LUTActivationQuantizerTest(self).run_test()
 
