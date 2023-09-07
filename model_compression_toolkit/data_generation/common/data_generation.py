@@ -13,113 +13,109 @@
 # limitations under the License.
 # ==============================================================================
 # Import required modules and classes
-import time
-from typing import Callable, Any, List
+from typing import Any, Tuple, Dict, Callable, List
 
-import torch
-from tqdm import tqdm
-
-from model_compression_toolkit.core.pytorch.utils import get_working_device
 from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig
+from model_compression_toolkit.data_generation.common.enums import ImagePipelineType, ImageNormalizationType, \
+    BNLayerWeightingType, DataInitType, BatchNormAlignemntLossType, OutputLossType
 from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
-from model_compression_toolkit.data_generation.common.model_info_exctractors import ActivationExtractor, \
-    OriginalBNStatsHolder
-from model_compression_toolkit.data_generation.common.optimization_utils import ImagesOptimizationHandler
 from model_compression_toolkit.logger import Logger
 
 
-def data_generation(
+def get_data_generation_classes(
         data_generation_config: DataGenerationConfig,
-        activation_extractor: ActivationExtractor,
-        orig_bn_stats_holder: OriginalBNStatsHolder,
-        all_imgs_opt_handler: ImagesOptimizationHandler,
-        image_pipeline: BaseImagePipeline,
-        bn_layer_weighting_fn: Callable,
-        bn_alignment_loss_fn: Callable,
-        output_loss_fn: Callable,
-        output_loss_multiplier: float
-) -> List[Any]:
+        output_image_size: Tuple,
+        n_images: int,
+        image_pipeline_dict: Dict,
+        image_normalization_dict: Dict,
+        bn_layer_weighting_function_dict: Dict,
+        image_initialization_function_dict: Dict,
+        bn_alignment_loss_function_dict: Dict,
+        output_loss_function_dict: Dict) \
+        -> Tuple[BaseImagePipeline, List[List[float]], Callable, Callable, Callable, Any]:
     """
-    Function to perform data generation using the provided model and data generation configuration.
+    Function to create a DataGenerationConfig object with the specified configuration parameters.
 
     Args:
         data_generation_config (DataGenerationConfig): Configuration for data generation.
-        activation_extractor (ActivationExtractor): The activation extractor for the model.
-        orig_bn_stats_holder (OriginalBNStatsHolder): Object to hold original BatchNorm statistics.
-        all_imgs_opt_handler (ImagesOptimizationHandler): Handles the images optimization process.
-        image_pipeline (Callable): Callable image pipeline for image manipulation.
-        bn_layer_weighting_fn (Callable): Function to compute layer weighting for the BatchNorm alignment loss .
-        bn_alignment_loss_fn (Callable): Function to compute BatchNorm alignment loss.
-        output_loss_fn (Callable): Function to compute output loss.
-        output_loss_multiplier (float): Multiplier for the output loss.
+        output_image_size (Tuple): The desired output image size.
+        n_images (int): The number of random samples.
+        image_pipeline_dict (Dict): Dictionary mapping ImagePipelineType to corresponding image pipeline classes.
+        image_normalization_dict (Dict): Dictionary mapping ImageNormalizationType to corresponding
+        normalization values.
+        bn_layer_weighting_function_dict (Dict): Dictionary of layer weighting functions.
+        image_initialization_function_dict (Dict): Dictionary of image initialization functions.
+        bn_alignment_loss_function_dict (Dict): Dictionary of batch normalization alignment loss functions.
+        output_loss_function_dict (Dict): Dictionary of output loss functions.
 
     Returns:
-        List: Finalized list containing generated images.
+        image_pipeline (BaseImagePipeline): The image pipeline for processing images during optimization.
+        normalization (List[List[float]]): The image normalization values for processing images during optimization.
+        bn_layer_weighting_fn (Callable): Function to compute layer weighting for the BatchNorm alignment loss.
+        bn_alignment_loss_fn (Callable): Function to compute BatchNorm alignment loss.
+        output_loss_fn (Callable): Function to compute output loss.
+        init_dataset (Any): The initial dataset used for image generation.
     """
+    # Get the image pipeline class corresponding to the specified type
+    image_pipeline = (
+        image_pipeline_dict.get(data_generation_config.image_pipeline_type)(
+            output_image_size=output_image_size,
+            extra_pixels=data_generation_config.extra_pixels))
 
-    # Compute the layer weights based on orig_bn_stats_holder
-    bn_layer_weights = bn_layer_weighting_fn(orig_bn_stats_holder)
+    # Check if the image pipeline type is valid
+    if image_pipeline is None:
+        Logger.exception(
+            f'Invalid image_pipeline_type {data_generation_config.image_pipeline_type}.'
+            f'Please choose one of {ImagePipelineType.get_values()}')
 
-    # Get the current time to measure the total time taken
-    total_time = time.time()
+    # Get the normalization values corresponding to the specified type
+    normalization = image_normalization_dict.get(data_generation_config.image_normalization_type)
 
-    # Create a tqdm progress bar for iterating over data_generation_config.n_iter iterations
-    ibar = tqdm(range(data_generation_config.n_iter))
+    # Check if the image normalization type is valid
+    if normalization is None:
+        Logger.exception(
+            f'Invalid image_normalization_type {data_generation_config.image_normalization_type}.'
+            f'Please choose one of {ImageNormalizationType.get_values()}')
 
-    # Perform data generation iterations
-    for i_ter in ibar:
+    # Get the layer weighting function corresponding to the specified type
+    bn_layer_weighting_fn = bn_layer_weighting_function_dict.get(data_generation_config.layer_weighting_type)
 
-        # Randomly reorder the batches
-        all_imgs_opt_handler.random_batch_reorder()
+    if bn_layer_weighting_fn is None:
+        Logger.exception(
+            f'Invalid layer_weighting_type {data_generation_config.layer_weighting_type}.'
+            f'Please choose one of {BNLayerWeightingType.get_values()}')
 
-        # Iterate over each batch
-        for i_batch in range(all_imgs_opt_handler.n_batches):
-            # Get the random batch index
-            random_batch_index = all_imgs_opt_handler.get_random_batch_index(i_batch)
+    # Get the image initialization function corresponding to the specified type
+    image_initialization_fn = image_initialization_function_dict.get(data_generation_config.data_init_type)
 
-            # Get the images to optimize and the optimizer for the batch
-            imgs_to_optimize = all_imgs_opt_handler.get_images_by_batch_index(random_batch_index)
+    # Check if the data initialization type is valid
+    if image_initialization_fn is None:
+        Logger.exception(
+            f'Invalid data_init_type {data_generation_config.data_init_type}.'
+            f'Please choose one of {DataInitType.get_values()}')
 
-            # Zero gradients
-            all_imgs_opt_handler.zero_grad(random_batch_index)
+    # Get the BatchNorm alignment loss function corresponding to the specified type
+    bn_alignment_loss_fn = bn_alignment_loss_function_dict.get(data_generation_config.bn_alignment_loss_type)
 
-            # Perform image input manipulation
-            input_imgs = image_pipeline.image_input_manipulation(imgs_to_optimize)
+    # Check if the BatchNorm alignment loss type is valid
+    if bn_alignment_loss_fn is None:
+        Logger.exception(
+            f'Invalid bn_alignment_loss_type {data_generation_config.bn_alignment_loss_type}.'
+            f'Please choose one of {BatchNormAlignemntLossType.get_values()}')
 
-            # Forward pass to extract activations
-            output = activation_extractor.run_model(input_imgs)
+    # Get the output loss function corresponding to the specified type
+    output_loss_fn = output_loss_function_dict.get(data_generation_config.output_loss_type)
 
-            # Compute BatchNorm alignment loss
-            bn_loss = all_imgs_opt_handler.compute_bn_loss(input_imgs=input_imgs,
-                                                           batch_index=random_batch_index,
-                                                           activation_extractor=activation_extractor,
-                                                           orig_bn_stats_holder=orig_bn_stats_holder,
-                                                           bn_alignment_loss_fn=bn_alignment_loss_fn,
-                                                           bn_layer_weights=bn_layer_weights)
+    # Check if the output loss type is valid
+    if output_loss_fn is None:
+        Logger.exception(
+            f'Invalid output_loss_type {data_generation_config.output_loss_type}.'
+            f'Please choose one of {OutputLossType.get_values()}')
 
+    # Initialize the dataset for data generation
+    init_dataset = image_initialization_fn(
+        n_images=n_images,
+        size=image_pipeline.get_image_input_size(),
+        batch_size=data_generation_config.data_gen_batch_size)
 
-            # Compute output loss
-            output_loss = output_loss_fn(output_imgs=output) if output_loss_multiplier > 0 else torch.zeros(1).to(get_working_device())
-
-            # Compute total loss
-            total_loss = bn_loss + output_loss_multiplier * output_loss
-
-            # Perform optimiztion step
-            all_imgs_opt_handler.optimization_step(random_batch_index, total_loss, i_ter)
-
-            # Update the statistics based on the updated images
-            if all_imgs_opt_handler.use_all_data_stats:
-                final_imgs = image_pipeline.image_output_finalize(imgs_to_optimize)
-                all_imgs_opt_handler.update_statistics(input_imgs=final_imgs,
-                                                       batch_index=random_batch_index,
-                                                       activation_extractor=activation_extractor)
-
-        ibar.set_description(f"Total Loss: {total_loss.item():.5f}, "
-                            f"BN Loss: {bn_loss.item():.5f}, "
-                            f"Output Loss: {output_loss.item():.5f}")
-
-
-    # Return a list containing the finalized generated images
-    finalized_imgs = all_imgs_opt_handler.get_finalized_images()
-    Logger.info(f'Total time to generate {len(finalized_imgs)} images (seconds): {int(time.time() - total_time)}')
-    return finalized_imgs
+    return image_pipeline, normalization, bn_layer_weighting_fn, bn_alignment_loss_fn, output_loss_fn, init_dataset

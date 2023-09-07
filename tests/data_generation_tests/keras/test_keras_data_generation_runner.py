@@ -45,16 +45,10 @@ class KerasDataGenerationTestRunner(unittest.TestCase):
                                     extra_pixels=1).run_test()
 
     def test_keras_image_normalization_types(self):
-        BaseKerasDataGenerationTest(self, image_normalization_type=ImageNormalizationType.MOBILENET).run_test()
-        BaseKerasDataGenerationTest(self, image_normalization_type=ImageNormalizationType.RESNET50).run_test()
-        BaseKerasDataGenerationTest(self, image_normalization_type=ImageNormalizationType.EFFICIENTNET).run_test()
+        BaseKerasDataGenerationTest(self, image_normalization_type=ImageNormalizationType.KERAS_APPLICATIONS).run_test()
         BaseKerasDataGenerationTest(self, image_normalization_type=ImageNormalizationType.NO_NORMALIZATION).run_test()
 
     def test_keras_output_loss_types(self):
         BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.NONE).run_test()
         BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.MIN_MAX_DIFF).run_test()
         BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.MARGINAL_MIN_MAX_DIFF).run_test()
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -65,15 +65,11 @@ class ImageNormalizationType(EnumBaseClass):
     """
     An enum for choosing the image normalization type.
     TORCHVISION: Normalize the images using torchvision normalization.
-    MOBILENET: Normalize the images using keras mobilenet normalization.
-    EFFICIENTNET: Normalize the images using keras efficientnet normalization.
-    RESNET50: Normalize the images using keras resnet50 normalization.
+    KERAS_APPLICATIONS: Normalize the images using keras_applications imagenet normalization.
     NO_NORMALIZATION: Do not apply any normalization.
     """
     TORCHVISION = 'torchvision'
-    MOBILENET = 'mobilenet'
-    EFFICIENTNET = 'efficientnet'
-    RESNET50 = 'resnet50'
+    KERAS_APPLICATIONS = 'keras_applications'
     NO_NORMALIZATION = 'no_normalization'
 
 
@@ -117,15 +113,3 @@ class SchedulerType(EnumBaseClass):
     """
     REDUCE_ON_PLATEAU = 'reduce_on_plateau'
     STEP = 'step'
-
-
-class OptimizerType(EnumBaseClass):
-    """
-    An enum for choosing the optimizer type.
-    RADAM: Use the RADAM optimizer.
-    ADAM: Use the ADAM optimizer.
-    SGD: Use the SGD optimizer.
-    """
-    RADAM = 'radam'
-    ADAM = 'adam'
-    SGD = 'sgd'

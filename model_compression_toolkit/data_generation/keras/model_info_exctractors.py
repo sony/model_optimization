@@ -1,4 +1,18 @@
-from typing import List, Type, Dict, Tuple, Callable
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+from typing import List, Dict, Tuple, Callable
 
 import tensorflow as tf
 from keras.layers import Dense, Conv2D
@@ -17,7 +31,7 @@ class KerasOriginalBNStatsHolder(OriginalBNStatsHolder):
 
     def __init__(self,
                  model: tf.keras.Model,
-                 bn_layer_types: Type[List] = [BatchNormalization]):
+                 bn_layer_types: List = [BatchNormalization]):
         """
         Initializes the KerasOriginalBNStatsHolder.
 
@@ -81,8 +95,8 @@ class KerasActivationExtractor(ActivationExtractor):
         # Create a list of BatchNormalization layer names from the model.
         self.bn_layer_names = [layer.name for layer in model.layers if isinstance(layer,
                                                                                   tuple(layer_types_to_extract_inputs))]
-        self.num_bn_layers = len(self.bn_layer_names)
-        print("Num. of BatchNorm layers =", self.num_bn_layers)
+        self.num_layers = len(self.bn_layer_names)
+        print(f'Number of layers = {self.num_layers}')
 
         # Initialize stats containers
         self.activations = {}
@@ -122,12 +136,25 @@ class KerasActivationExtractor(ActivationExtractor):
         self.intermediate_model = tf.keras.Model(inputs=self.model.input,
                                                  outputs=self.outputs_list)
 
-    def get_bn_layer_names(self):
+    def get_layer_input_activation(self,
+                                   layer_name: str) -> Dict:
+        """
+        Get the activation data for a specific layer.
+
+        Args:
+            layer_name: Name of the layer to retrieve activation data for.
+
+        Returns:
+            Layer and input data for the layer
+        """
+        return self.activations.get(layer_name)
+
+    def get_extractor_layer_names(self) -> List:
         """
         Get a list of the bn layer names for which to extract input activations.
 
         Returns:
-            list: A list of bn layer names for which to extract input activations.
+            List: A list of bn layer names for which to extract input activations.
         """
         return self.bn_layer_names
 
@@ -178,19 +205,6 @@ class KerasActivationExtractor(ActivationExtractor):
                 self.last_linear_layer_output = intermediate_outputs[i]
         # Last intermediate output is the output of the model
         return intermediate_outputs[-1]
-
-    def get_activation(self,
-                       layer_name: str) -> Dict:
-        """
-        Get the activation data for a specific layer.
-
-        Args:
-            layer_name: Name of the layer to retrieve activation data for.
-
-        Returns:
-            Layer and input data for the layer
-        """
-        return self.activations.get(layer_name)
 
     def get_model_last_layer(self):
         """

@@ -13,9 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 from typing import Dict, Callable
-from model_compression_toolkit.data_generation.common.enums import OutputLossType
 import tensorflow as tf
 
+from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.data_generation.common.enums import OutputLossType
 from model_compression_toolkit.data_generation.keras.model_info_exctractors import KerasActivationExtractor
 
 
@@ -24,7 +25,6 @@ def marginal_min_max_diff(
         output_imgs: tf.Tensor,
         activation_extractor: KerasActivationExtractor,
         tape: tf.GradientTape,
-        weights_last_layer: tf.Tensor,
         eps: float = 1e-6,
         **kwargs) -> tf.Tensor:
     """
@@ -36,17 +36,24 @@ def marginal_min_max_diff(
         output_imgs (tf.Tensor): Output images or tensors.
         activation_extractor (KerasActivationExtractor): Activation extractor object.
         tape (tf.GradientTape): TensorFlow tape for recording operations.
-        weights_last_layer (tf.Tensor): Weights of the last layer.
         eps (float, optional): Small constant to prevent division by zero.
         **kwargs: Additional keyword arguments.
 
     Returns:
         tf.Tensor: The calculated loss.
     """
+    if activation_extractor.last_linear_layer is None:
+        Logger.exception(
+            f'Cannot compute marginal min max output loss for the input model. The marginal min max output loss '
+            f'requires linear layer without a following BatchNormalization layer. Please choose one of '
+            f'{OutputLossType.get_values()}.')
+
     with tape.stop_recording():
+        weights_last_layer = activation_extractor.last_linear_layer.get_weights()[0]
         weights_norm = tf.norm(weights_last_layer, axis=-2)
         weights_norm = tf.squeeze(weights_norm)
-        last_bn_layer = activation_extractor.get_activation(activation_extractor.get_bn_layer_names()[-1])
+        last_bn_layer = activation_extractor.get_layer_input_activation(
+            activation_extractor.get_extractor_layer_names()[-1])
         last_bn_layer_norm = tf.norm(tf.reduce_mean(last_bn_layer['input_data'], [1, 2]), axis=-1)
 
     # Get last linear layer min max

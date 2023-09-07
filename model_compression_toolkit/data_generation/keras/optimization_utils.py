@@ -1,14 +1,28 @@
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
 from typing import Iterator, Any, Callable, Tuple, Optional, List
 
 import numpy as np
 import tensorflow as tf
 
+from model_compression_toolkit.data_generation.common.constants import IMAGE_INPUT
 from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig
 from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
 from model_compression_toolkit.data_generation.common.optimization_utils import ImagesOptimizationHandler, \
     BatchOptimizationHolder, AllImagesStatsHolder, BatchStatsHolder
-from model_compression_toolkit.data_generation.keras.constants import IMAGE_INPUT, IMAGE_MIN_VAL, IMAGE_MAX_VAL
-from model_compression_toolkit.data_generation.keras.image_pipeline import image_normalization_dict
+from model_compression_toolkit.data_generation.keras.constants import IMAGE_MIN_VAL, IMAGE_MAX_VAL
 from model_compression_toolkit.data_generation.keras.model_info_exctractors import KerasActivationExtractor, \
     KerasOriginalBNStatsHolder
 
@@ -20,6 +34,8 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
                  image_pipeline: BaseImagePipeline,
                  activation_extractor: KerasActivationExtractor,
                  scheduler: Any,
+                 normalization_mean: List[float],
+                 normalization_std: List[float],
                  data_generation_config: DataGenerationConfig,
                  bn_layer_weights_fn: Callable,
                  bn_loss_fn: Callable,
@@ -35,6 +51,8 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
             image_pipeline (BaseImagePipeline): The image pipeline for processing images.
             activation_extractor (ActivationExtractor): Extractor for layer activations.
             scheduler (Any): The scheduler responsible for adjusting the learning rate of the optimizer over time.
+            normalization_mean (List[float]): The mean values for image normalization.
+            normalization_std (List[float]): The standard deviation values for image normalization.
             data_generation_config (DataGenerationConfig): Configuration for data generation.
             bn_layer_weights_fn (Callable): Function to compute layer weighting for the BatchNorm alignment loss .
             bn_loss_fn (Callable): Function to compute BatchNorm alignment loss.
@@ -53,12 +71,12 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
         self.output_loss_fn = output_loss_fn
         self.output_loss_multiplier = data_generation_config.output_loss_multiplier
 
-        # Image valid grid, each image value can only be 0 - 255 before normalization
-        self.image_normalization = image_normalization_dict[data_generation_config.image_normalization_type]
-        self.normalization_mean = self.image_normalization[0]
-        self.normalization_std = self.image_normalization[1]
+        # Image valid grid, each image value can only be
+        # IMAGE_MIN_VAL( default set to 0) - IMAGE_MAX_VAL ( default set to 255) before normalization
+        self.normalization_mean = normalization_mean
+        self.normalization_std = normalization_std
         self.valid_grid = []
-        for i, (mean, var) in enumerate(zip(self.image_normalization[0], self.image_normalization[1])):
+        for i, (mean, var) in enumerate(zip(self.normalization_mean, self.normalization_std)):
             min_val = (IMAGE_MIN_VAL - mean) / var
             max_val = (IMAGE_MAX_VAL - mean) / var
             self.valid_grid.append((min_val, max_val))
@@ -231,32 +249,7 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
         return self.output_loss_multiplier * self.output_loss_fn(
             output_imgs=output_imgs,
             activation_extractor=activation_extractor,
-            tape=tape,
-            weights_last_layer=
-            self.get_model_output_weight_norm(model=self.model, activation_extractor=activation_extractor)) \
-            if self.output_loss_multiplier > 0 else tf.zeros(1)
-
-    def get_model_output_weight_norm(self,
-                                     model: tf.keras.Model,
-                                     activation_extractor: KerasActivationExtractor) -> Optional[tf.Tensor]:
-        """
-        Get the weight tensor of the last Dense or Conv2D layer in the model.
-
-        Args:
-            model (Model): The model to retrieve the weight tensor from.
-            activation_extractor (ActivationExtractor): Extractor for layer activations.
-
-        Returns:
-            Optional[tf.Tensor]: The weight tensor of the last linear layer, or None if not found.
-        """
-        # Iterate through the layers in reverse order.
-        for layer in reversed(model.layers):
-            if isinstance(layer, activation_extractor.linear_layers):
-                # Return the weight tensor of the layer.
-                return layer.weights[0] if layer.weights else None
-
-        # If no suitable layer is found, return None.
-        return None
+            tape=tape) if self.output_loss_multiplier > 0 else tf.zeros(1)
 
     def update_statistics(self,
                           input_imgs: tf.Tensor,
@@ -434,8 +427,8 @@ class KerasBatchStatsHolder(BatchStatsHolder):
         self.update_layer_stats(IMAGE_INPUT, imgs_mean, imgs_second_moment)
 
         # Extract statistics of intermediate convolution outputs before the BatchNorm layers
-        for bn_layer_name in activation_extractor.get_bn_layer_names():
-            bn_input_activations = activation_extractor.get_activation(layer_name=bn_layer_name)
+        for bn_layer_name in activation_extractor.get_extractor_layer_names():
+            bn_input_activations = activation_extractor.get_layer_input_activation(layer_name=bn_layer_name)
             collected_mean, collected_second_moment = tf.nn.moments(x=bn_input_activations['input_data'],
                                                                     axes=self.mean_axis, keepdims=False)
             self.update_layer_stats(bn_layer_name=bn_layer_name,

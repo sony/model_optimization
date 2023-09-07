@@ -20,7 +20,7 @@ from torch.nn import Module
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 from model_compression_toolkit.data_generation.common.model_info_exctractors import OriginalBNStatsHolder, \
     ActivationExtractor
-from model_compression_toolkit.data_generation.pytorch.constants import IMAGE_INPUT, NUM_INPUT_CHANNELS
+from model_compression_toolkit.data_generation.common.constants import IMAGE_INPUT, NUM_INPUT_CHANNELS
 
 
 class PytorchOriginalBNStatsHolder(OriginalBNStatsHolder):
@@ -138,21 +138,12 @@ class PytorchActivationExtractor(ActivationExtractor):
         """
         return self.hooks.get(layer_name).input
 
-    def get_num_extractor_layers(self) -> int:
-        """
-        Get the number of hooked layers in the model.
-
-        Returns:
-            int: Number of hooked layers in the model.
-        """
-        return self.num_layers
-
-    def get_extractor_layer_names(self) -> list:
+    def get_extractor_layer_names(self) -> List:
         """
         Get a list of the hooked layer names.
 
         Returns:
-            list: A list of the hooked layer names.
+            List: A list of the hooked layer names.
         """
         return list(self.hooks.keys())
 

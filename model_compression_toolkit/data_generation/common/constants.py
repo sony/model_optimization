@@ -12,5 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-# Axis indices for tensor dimensions
-BATCH_AXIS, CHANNEL_AXIS, H_AXIS, W_AXIS = 0, 1, 2, 3
+# Common constants for Data Generation
+
+# Define a constant for the image input key.
+IMAGE_INPUT = 'image_input'
+
+# Define a constant for the number of channels in input image.
+NUM_INPUT_CHANNELS = 3
+
+# Default initial learning rate constant.
+DEFAULT_INITIAL_LR = 5
+
+# Default output loss multiplier.
+DEFAULT_OUTPUT_LOSS_MULTIPLIER = 0.0001
+
+# Default batch size for data generator.
+DEFAULT_DATA_GEN_BS = 32
+
+# Default number of iterations.
+DEFAULT_N_ITER = 500

@@ -23,7 +23,7 @@ import numpy as np
 from torch.utils.data import Dataset, DataLoader
 
 from model_compression_toolkit.data_generation.common.enums import DataInitType
-from model_compression_toolkit.data_generation.pytorch.constants import NUM_INPUT_CHANNELS
+from model_compression_toolkit.data_generation.common.constants import NUM_INPUT_CHANNELS
 
 
 class RandomDataset(Dataset):
@@ -133,7 +133,7 @@ def default_data_init_fn(
 
 
 # Dictionary of image initialization functions
-image_initilization_function_dict: Dict[DataInitType, Callable] = {
+image_initialization_function_dict: Dict[DataInitType, Callable] = {
     DataInitType.Gaussian: partial(default_data_init_fn, sample_fn=gaussian_sample),
     DataInitType.Diverse: partial(default_data_init_fn, sample_fn=diverse_sample),
 }

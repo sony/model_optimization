@@ -17,11 +17,12 @@ from typing import List
 
 import keras
 from keras.layers import ReLU
+from tensorflow.keras.optimizers.legacy import Optimizer, Adam
 from tensorflow.keras.layers import Conv2D, Input, BatchNormalization, Dense, GlobalAveragePooling2D
 
 from model_compression_toolkit.data_generation import tensorflow_data_generation_experimental, \
     get_tensorflow_data_generation_config
-from model_compression_toolkit.data_generation.common.enums import (OptimizerType, SchedulerType,
+from model_compression_toolkit.data_generation.common.enums import (SchedulerType,
                                                                     BatchNormAlignemntLossType, OutputLossType,
                                                                     DataInitType, BNLayerWeightingType,
                                                                     ImageGranularity,
@@ -49,7 +50,7 @@ class BaseKerasDataGenerationTest:
                  n_images: int = 32,
                  output_image_size: int = (32, 32),
                  n_iter: int = 10,
-                 optimizer_type: OptimizerType = OptimizerType.ADAM,
+                 optimizer: Optimizer = Adam,
                  scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU,
                  data_gen_batch_size=8,
                  initial_lr=1.0,
@@ -60,7 +61,7 @@ class BaseKerasDataGenerationTest:
                  layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
                  image_granularity=ImageGranularity.BatchWise,
                  image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP_FLIP,
-                 image_normalization_type: ImageNormalizationType = ImageNormalizationType.MOBILENET,
+                 image_normalization_type: ImageNormalizationType = ImageNormalizationType.KERAS_APPLICATIONS,
                  extra_pixels: int = 0,
                  bn_layer_types: List = [BatchNormalization]
                  ):
@@ -69,7 +70,7 @@ class BaseKerasDataGenerationTest:
         self.n_images = n_images
         self.output_image_size = output_image_size
         self.n_iter = n_iter
-        self.optimizer_type = optimizer_type
+        self.optimizer = optimizer
         self.scheduler_type = scheduler_type
         self.data_gen_batch_size = data_gen_batch_size
         self.initial_lr = initial_lr
@@ -90,7 +91,7 @@ class BaseKerasDataGenerationTest:
             n_iter=self.n_iter,
             data_gen_batch_size=self.data_gen_batch_size,
             initial_lr=self.initial_lr,
-            optimizer_type=self.optimizer_type,
+            optimizer=self.optimizer,
             scheduler_type=self.scheduler_type,
             image_normalization_type=self.image_normalization_type,
             layer_weighting_type=self.layer_weighting_type,

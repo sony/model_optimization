@@ -59,7 +59,7 @@ generated_images = tensorflow_data_generation_experimental(model=my_model,  # Py
 
 ## Configuration Parameters
 
-The `get_pytorch_data_generation_config()` and `get_tensorflow_data_generation_config()`functions allow you to customize various configuration parameters for data generation. Here are the essential parameters that can be tailored to your specific needs:
+The `get_pytorch_data_generation_config()` and `get_tensorflow_data_generation_config()` functions allow you to customize various configuration parameters for data generation. Here are the essential parameters that can be tailored to your specific needs:
 - **'n_iter'** (int):  The number of iterations for the data generation optimization process. Controls the number of iterations used during the optimization process for generating data. Higher values may improve data quality at the cost of increased computation time.
 - **'optimizer'** (Optimizer): The optimizer used during data generation to update the generated images. Specifies the optimization algorithm used to update the generated images during the data generation process. Common optimizers include RAdam, Adam, SGD, etc.
 - **'data_gen_batch_size'** (int): The batch size used during data generation optimization. Determines the number of images processed in each optimization step. A larger batch size may speed up the optimization but requires more memory.

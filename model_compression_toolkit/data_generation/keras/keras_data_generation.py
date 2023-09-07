@@ -17,15 +17,20 @@ from typing import Callable, Tuple, List
 from tqdm import tqdm
 
 from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.data_generation.common.constants import DEFAULT_N_ITER, DEFAULT_DATA_GEN_BS
+from model_compression_toolkit.data_generation.common.data_generation import get_data_generation_classes
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig, \
     ImageGranularity
 from model_compression_toolkit.data_generation.common.enums import BatchNormAlignemntLossType, DataInitType, \
-    BNLayerWeightingType, ImagePipelineType, ImageNormalizationType, SchedulerType, OptimizerType, OutputLossType
+    BNLayerWeightingType, ImagePipelineType, ImageNormalizationType, SchedulerType, OutputLossType
 
 if FOUND_TF:
     import tensorflow as tf
     from tensorflow.keras.layers import BatchNormalization
+    from tensorflow.keras.optimizers.legacy import Optimizer, Adam
+    from model_compression_toolkit.data_generation.keras.constants import DEFAULT_KERAS_INITIAL_LR, \
+        DEFAULT_KERAS_OUTPUT_LOSS_MULTIPLIER
     from model_compression_toolkit.data_generation.keras.image_pipeline import (image_pipeline_dict,
                                                                                 image_normalization_dict)
     from model_compression_toolkit.data_generation.keras.model_info_exctractors import (KerasActivationExtractor,
@@ -35,24 +40,21 @@ if FOUND_TF:
     from model_compression_toolkit.data_generation.keras.optimization_functions.bn_layer_weighting_functions import \
         bn_layer_weighting_function_dict
     from model_compression_toolkit.data_generation.keras.optimization_functions.image_initilization import \
-        image_initilization_function_dict
+        image_initialization_function_dict
     from model_compression_toolkit.data_generation.keras.optimization_utils import KerasImagesOptimizationHandler, \
         KerasBatchStatsHolder
     from model_compression_toolkit.data_generation.keras.optimization_functions.output_loss_functions import \
         output_loss_function_dict
-    from model_compression_toolkit.data_generation.keras.optimization_functions.optimizer_types import optimizers_dict
     from model_compression_toolkit.data_generation.keras.optimization_functions.scheduler_step_functions import \
         scheduler_step_function_dict
-    from model_compression_toolkit.data_generation.keras.constants import DEFAULT_N_ITER, DEFAULT_DATA_GEN_BS, \
-        DEFAULT_INITIAL_LR, DEFAULT_OUTPUT_LOSS_MULTIPLIER
 
     # Function to create a DataGenerationConfig object with the specified configuration parameters for Tensorflow
     def get_tensorflow_data_generation_config(
             n_iter: int = DEFAULT_N_ITER,
-            optimizer_type: OptimizerType = OptimizerType.ADAM,
+            optimizer: Optimizer = Adam,
             data_gen_batch_size: int = DEFAULT_DATA_GEN_BS,
-            initial_lr: float = DEFAULT_INITIAL_LR,
-            output_loss_multiplier: float = DEFAULT_OUTPUT_LOSS_MULTIPLIER,
+            initial_lr: float = DEFAULT_KERAS_INITIAL_LR,
+            output_loss_multiplier: float = DEFAULT_KERAS_OUTPUT_LOSS_MULTIPLIER,
             scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU,
             bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
             output_loss_type: OutputLossType = OutputLossType.MARGINAL_MIN_MAX_DIFF,
@@ -60,7 +62,7 @@ if FOUND_TF:
             layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
             image_granularity: ImageGranularity = ImageGranularity.BatchWise,
             image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP_FLIP,
-            image_normalization_type: ImageNormalizationType = ImageNormalizationType.MOBILENET,
+            image_normalization_type: ImageNormalizationType = ImageNormalizationType.KERAS_APPLICATIONS,
             extra_pixels: int = 0,
             activations_loss_fn: Callable = None,
             bn_layer_types: List = [BatchNormalization],
@@ -72,7 +74,7 @@ if FOUND_TF:
 
         Args:
             n_iter (int): Number of iterations for the data generation process.
-            optimizer_type (OptimizerType): The optimizer type to use for the data generation process.
+            optimizer (Optimizer): The optimizer to use for the data generation process.
             data_gen_batch_size (int): Batch size for data generation.
             initial_lr (float): Initial learning rate for the optimizer.
             output_loss_multiplier (float): Multiplier for the output loss during optimization.
@@ -93,14 +95,6 @@ if FOUND_TF:
         Returns:
             DataGenerationConfig: Data generation configuration object.
         """
-        # Get the optimizer class corresponding to the specified type
-        optimizer = optimizers_dict.get(optimizer_type)
-
-        # Check if the optimizer type is valid
-        if optimizer is None:
-            Logger.exception(
-                f'Invalid optimizer_type {optimizer_type}.'
-                f'Please choose one of {OptimizerType.get_values()}')
 
         # Create and return a DataGenerationConfig object with the specified parameters
         return DataGenerationConfig(
@@ -141,44 +135,24 @@ if FOUND_TF:
         Returns:
             Tensor: Finalized generated images.
         """
+        # Get Data Generation functions and classes
+        image_pipeline, normalization, bn_layer_weighting_fn, bn_alignment_loss_fn, output_loss_fn, \
+            init_dataset = get_data_generation_classes(data_generation_config=data_generation_config,
+                                                       output_image_size=output_image_size,
+                                                       n_images=n_images,
+                                                       image_pipeline_dict=image_pipeline_dict,
+                                                       image_normalization_dict=image_normalization_dict,
+                                                       bn_layer_weighting_function_dict=
+                                                       bn_layer_weighting_function_dict,
+                                                       image_initialization_function_dict=
+                                                       image_initialization_function_dict,
+                                                       bn_alignment_loss_function_dict=bn_alignment_loss_function_dict,
+                                                       output_loss_function_dict=output_loss_function_dict)
 
-        # Get the image pipeline class corresponding to the specified type
-        image_pipeline = (
-            image_pipeline_dict.get(data_generation_config.image_pipeline_type)(
-                output_image_size=output_image_size,
-                extra_pixels=data_generation_config.extra_pixels))
-
-        # Check if the image pipeline type is valid
-        if image_pipeline is None:
+        if not all(normalization[1]):
             Logger.exception(
-                f'Invalid image_pipeline_type {data_generation_config.image_pipeline_type}.'
-                f'Please choose one of {ImagePipelineType.get_values()}')
-
-        # Get the normalization function corresponding to the specified type
-        normalization = image_normalization_dict.get(data_generation_config.image_normalization_type)
-
-        # Check if the image normalization type is valid
-        if normalization is None:
-            Logger.exception(
-                f'Invalid image_normalization_type {data_generation_config.image_normalization_type}.'
-                f'Please choose one of {ImageNormalizationType.get_values()}')
-
-        # Get the layer weighting function corresponding to the specified type
-        bn_layer_weighting_fn = bn_layer_weighting_function_dict.get(data_generation_config.layer_weighting_type)
-
-        if bn_layer_weighting_fn is None:
-            Logger.exception(
-                f'Invalid layer_weighting_type {data_generation_config.layer_weighting_type}.'
-                f'Please choose one of {BNLayerWeightingType.get_values()}')
-
-        # Get the image initialization function corresponding to the specified type
-        image_initialization_fn = image_initilization_function_dict.get(data_generation_config.data_init_type)
-
-        # Check if the data initialization type is valid
-        if image_initialization_fn is None:
-            Logger.exception(
-                f'Invalid data_init_type {data_generation_config.data_init_type}.'
-                f'Please choose one of {DataInitType.get_values()}')
+                f'Invalid normalization std {normalization[1]} set to zero,'
+                f'will lead to division by zero., Please choose non-zero normalization std')
 
         # Get the scheduler functions corresponding to the specified scheduler type
         scheduler_get_fn = scheduler_step_function_dict.get(data_generation_config.scheduler_type)
@@ -193,32 +167,8 @@ if FOUND_TF:
         scheduler = scheduler_get_fn(n_iter=data_generation_config.n_iter,
                                      initial_lr=data_generation_config.initial_lr)
 
-        # Get the BatchNorm alignment loss function corresponding to the specified type
-        bn_alignment_loss_fn = bn_alignment_loss_function_dict.get(data_generation_config.bn_alignment_loss_type)
-
-        # Check if the BatchNorm alignment loss type is valid
-        if bn_alignment_loss_fn is None:
-            Logger.exception(
-                f'Invalid bn_alignment_loss_type {data_generation_config.bn_alignment_loss_type}.'
-                f'Please choose one of {BatchNormAlignemntLossType.get_values()}')
-
-        # Get the output loss function corresponding to the specified type
-        output_loss_fn = output_loss_function_dict.get(data_generation_config.output_loss_type)
-
-        # Check if the output loss type is valid
-        if output_loss_fn is None:
-            Logger.exception(
-                f'Invalid output_loss_type {data_generation_config.output_loss_type}.'
-                f'Please choose one of {OutputLossType.get_values()}')
-
         # Set the model to eval mode
         model.trainable = False
-
-        # Initialize the dataset for data generation
-        num_batches, init_dataset = image_initialization_fn(
-            n_images=n_images,
-            image_size=image_pipeline.get_image_input_size(),
-            batch_size=data_generation_config.data_gen_batch_size)
 
         # Create an activation extractor object to extract activations from the model
         activation_extractor = KerasActivationExtractor(model=model,
@@ -231,9 +181,6 @@ if FOUND_TF:
         # Create an orig_bn_stats_holder object to hold original BatchNorm statistics
         orig_bn_stats_holder = KerasOriginalBNStatsHolder(model=model,
                                                           bn_layer_types=data_generation_config.bn_layer_types)
-        if orig_bn_stats_holder.get_num_bn_layers() == 0:
-            Logger.exception(
-                f'Data generation requires a model with at least one BatchNorm layer.')
 
         # Create an ImagesOptimizationHandler object for handling optimization
         all_imgs_opt_handler = KerasImagesOptimizationHandler(
@@ -242,6 +189,8 @@ if FOUND_TF:
             image_pipeline=image_pipeline,
             activation_extractor=activation_extractor,
             scheduler=scheduler,
+            normalization_mean=normalization[0],
+            normalization_std=normalization[1],
             model=model,
             bn_layer_weights_fn=bn_layer_weighting_fn,
             bn_loss_fn=bn_alignment_loss_fn,
@@ -363,12 +312,10 @@ if FOUND_TF:
 
 else:
     def get_tensorflow_data_generation_config(*args, **kwargs):
-        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                        'when using get_tensorflow_data_generation_config. '
+        Logger.critical('Installing tensorflow is mandatory when using get_tensorflow_data_generation_config. '
                         'Could not find Tensorflow package.')  # pragma: no cover
 
 
     def tensorflow_data_generation_experimental(*args, **kwargs):
-        Logger.critical('Installing tensorflow and tensorflow_model_optimization is mandatory '
-                        'when using pytorch_data_generation_experimental. '
+        Logger.critical('Installing tensorflow is mandatory when using pytorch_data_generation_experimental. '
                         'Could not find Tensorflow package.')  # pragma: no cover
