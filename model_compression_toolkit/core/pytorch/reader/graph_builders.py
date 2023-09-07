@@ -23,8 +23,22 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-from model_compression_toolkit.core.pytorch.constants import OUTPUT, PLACEHOLDER, TENSOR_META, CALL_FUNCTION, TYPE, \
-    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, GET_ATTR, CONSTANT, BUFFER
+from model_compression_toolkit.core.pytorch.constants import (
+    OUTPUT,
+    PLACEHOLDER,
+    TENSOR_META,
+    CALL_FUNCTION,
+    TYPE,
+    CALL_METHOD,
+    BIAS,
+    FUNCTIONAL_OP,
+    OP_CALL_KWARGS,
+    OP_CALL_ARGS,
+    INPUTS_AS_LIST,
+    GET_ATTR,
+    CONSTANT,
+    BUFFER,
+)
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, ConstantHolder, BufferHolder
 from model_compression_toolkit.logger import Logger
 
@@ -43,23 +57,24 @@ def extract_holder_weights(constant_name, node_target, model, weights, to_numpy)
     Returns:
         Updated weights dictionary.
     """
-    named_parameters_weights = {constant_name: to_numpy(parameter) for name, parameter in
-                                model.named_parameters() if node_target == name}
-    named_buffer_weights = {constant_name: to_numpy(parameter) for name, parameter in
-                            model.named_buffers() if node_target == name}
+    named_parameters_weights = {
+        constant_name: to_numpy(parameter) for name, parameter in model.named_parameters() if node_target == name
+    }
+    named_buffer_weights = {
+        constant_name: to_numpy(parameter) for name, parameter in model.named_buffers() if node_target == name
+    }
     if len(named_parameters_weights) + len(named_buffer_weights) > 1:
         raise Exception(
-            f'Constant parameter can only have one tensor. Here we have '
-            f'{len(named_parameters_weights)+ len(named_buffer_weights)}')
+            f"Constant parameter can only have one tensor. Here we have "
+            f"{len(named_parameters_weights)+ len(named_buffer_weights)}"
+        )
 
     weights.update(named_parameters_weights)
     weights.update(named_buffer_weights)
     return weights
 
 
-def nodes_builder(model: GraphModule,
-                  module_dict: Dict,
-                  to_numpy: Callable) -> Tuple[List, List, List, Dict]:
+def nodes_builder(model: GraphModule, module_dict: Dict, to_numpy: Callable) -> Tuple[List, List, List, Dict]:
     """
     Build a node from a fx node. A node contains all information to reconstruct the model module or call function
     it's representing in the model: operation, module configuration, weights, input/output shape.
@@ -94,9 +109,13 @@ def nodes_builder(model: GraphModule,
             node_type = node.target
             if node_type == getattr:
                 node_has_activation = False
-                Logger.warning(
-                    'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
-                    'converting the model.')
+                # technically, tensor ops like shape have no quantization issue
+                if node.args[1] not in ("shape"):
+                    Logger.warning(
+                        "Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when "
+                        "converting the model."
+                        f" FX call_function getattr {node.args=} {node.kwargs=}"
+                    )
         elif node.op == PLACEHOLDER:
             node_type = DummyPlaceHolder
         elif node.op == OUTPUT:
@@ -108,7 +127,7 @@ def nodes_builder(model: GraphModule,
             elif hasattr(torch.Tensor, node.target):
                 node_type = getattr(torch.Tensor, node.target)
             else:
-                raise Exception(f'Call method of type \'{node.target}\' is currently not supported.')
+                raise Exception(f"Call method of type '{node.target}' is currently not supported.")
         elif node.op == GET_ATTR:
             if node.meta[TYPE] == torch.Tensor:
                 node_type = BufferHolder
@@ -116,18 +135,24 @@ def nodes_builder(model: GraphModule,
                 node_type = ConstantHolder
             node_has_activation = False
             Logger.warning(
-                'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
-                'converting the model.')
+                "Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when "
+                "converting the model."
+                f' FX get_attr {"buffer" if isinstance(node_type,BufferHolder) else "constant"}'
+            )
         else:
-            raise Exception(f'Unknown node type: {node.name}')
+            raise Exception(f"Unknown node type: {node.name}")
 
         # extract layer weights and named buffers
         weights = {}
         if node.target in module_dict.keys():
-            named_parameters_weights = {name: to_numpy(parameter) for name, parameter in
-                                        module_dict[node.target].named_parameters()}
-            named_buffer_weights = {name: to_numpy(parameter) for name, parameter in
-                                    module_dict[node.target].named_buffers() if len(parameter.shape) > 0}
+            named_parameters_weights = {
+                name: to_numpy(parameter) for name, parameter in module_dict[node.target].named_parameters()
+            }
+            named_buffer_weights = {
+                name: to_numpy(parameter)
+                for name, parameter in module_dict[node.target].named_buffers()
+                if len(parameter.shape) > 0
+            }
             weights.update(named_parameters_weights)
             weights.update(named_buffer_weights)
 
@@ -177,10 +202,14 @@ def nodes_builder(model: GraphModule,
         # initiate graph nodes
         if node.op in [CALL_METHOD, CALL_FUNCTION]:
             graph_node_type = FunctionalNode
-            inputs_as_list1 = len(node.args) > 0 and isinstance(node.args[0], (list, tuple)) and all(
-                [isinstance(n, torch.fx.node.Node) for n in node.args[0]])
-            inputs_as_list = inputs_as_list1 or \
-                             (len(node.args) > 0 and node.args[0].op == PLACEHOLDER and node.args[0].meta[TYPE] in (list, tuple))
+            inputs_as_list1 = (
+                len(node.args) > 0
+                and isinstance(node.args[0], (list, tuple))
+                and all([isinstance(n, torch.fx.node.Node) for n in node.args[0]])
+            )
+            inputs_as_list = inputs_as_list1 or (
+                len(node.args) > 0 and node.args[0].op == PLACEHOLDER and node.args[0].meta[TYPE] in (list, tuple)
+            )
             if inputs_as_list:
                 num_inputs = 1
             else:
@@ -197,21 +226,25 @@ def nodes_builder(model: GraphModule,
                 if isinstance(arg, torch.fx.node.Node):
                     op_call_args.remove(arg)
 
-            kwargs = {FUNCTIONAL_OP: node_type,
-                      OP_CALL_ARGS: op_call_args,
-                      OP_CALL_KWARGS: node_kwargs,
-                      INPUTS_AS_LIST: inputs_as_list}
+            kwargs = {
+                FUNCTIONAL_OP: node_type,
+                OP_CALL_ARGS: op_call_args,
+                OP_CALL_KWARGS: node_kwargs,
+                INPUTS_AS_LIST: inputs_as_list,
+            }
         else:
             graph_node_type = BaseNode
             kwargs = {}
-        graph_node = graph_node_type(name=node.name,
-                                     framework_attr=framework_attr,
-                                     input_shape=input_shape,
-                                     output_shape=output_shape,
-                                     weights=weights,
-                                     layer_class=node_type,
-                                     has_activation=node_has_activation,
-                                     **kwargs)
+        graph_node = graph_node_type(
+            name=node.name,
+            framework_attr=framework_attr,
+            input_shape=input_shape,
+            output_shape=output_shape,
+            weights=weights,
+            layer_class=node_type,
+            has_activation=node_has_activation,
+            **kwargs,
+        )
 
         # generate graph inputs list
         if node.op == PLACEHOLDER:
@@ -231,14 +264,13 @@ def nodes_builder(model: GraphModule,
         return fx_node_2_graph_node[output_order]
 
     for nodes, output_order in output_nodes:
-        out_nodes=[fx_node_2_graph_node[node] for node in nodes]
+        out_nodes = [fx_node_2_graph_node[node] for node in nodes]
         outputs.append(OutTensor(out_nodes, _map_fx_nodes(output_order)))
 
     return nodes, inputs, outputs, fx_node_2_graph_node
 
 
-def edges_builder(model: GraphModule,
-                   fx_node_2_graph_node: Dict) -> List:
+def edges_builder(model: GraphModule, fx_node_2_graph_node: Dict) -> List:
     """
 
     Args:
@@ -248,13 +280,12 @@ def edges_builder(model: GraphModule,
     Returns:
         List of graph edges
     """
-    src_index = 0 # in fx src_index is always zero because fx uses the getitem operator to fetch node outputs
+    src_index = 0  # in fx src_index is always zero because fx uses the getitem operator to fetch node outputs
     edges = []
     connectivity_dict = {}
     for node in model.graph.nodes:
         if node.op != OUTPUT:
             for input_node in node.all_input_nodes:
-
                 # n_edges_for_input_node is for the case that the input node appears more than
                 # once as the input of the node, for example add(x, x)
                 n_edges_for_input_node = sum([1 for a in node.args if input_node == a])
@@ -270,8 +301,7 @@ def edges_builder(model: GraphModule,
     for node in model.graph.nodes:
         out_nodes = connectivity_dict.get(node)
         if out_nodes:
-            for (out_node, dst_index) in out_nodes:
-                edges.append(
-                    Edge(fx_node_2_graph_node[node], fx_node_2_graph_node[out_node], src_index, dst_index))
+            for out_node, dst_index in out_nodes:
+                edges.append(Edge(fx_node_2_graph_node[node], fx_node_2_graph_node[out_node], src_index, dst_index))
 
     return edges
