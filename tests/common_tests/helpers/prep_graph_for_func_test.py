@@ -21,7 +21,8 @@ from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
-from model_compression_toolkit.core.runner import get_finalized_graph, read_model_to_graph, _init_tensorboard_writer, \
+from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
+from model_compression_toolkit.core.runner import _init_tensorboard_writer, \
     _prepare_model_for_quantization
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_tp_model, \
@@ -48,19 +49,13 @@ def prepare_graph_with_configs(in_model,
     tpc = get_tpc_func("function_test", _tp)
 
     # Read Model
-    graph = read_model_to_graph(in_model,
-                                representative_data_gen=representative_dataset,
-                                tpc=tpc,
-                                fw_info=fw_info,
-                                fw_impl=fw_impl)
-
-    # Finalize graph with quantization configs
-    graph = get_finalized_graph(graph,
-                                tpc=tpc,
-                                quant_config=qc,
-                                fw_info=fw_info,
-                                fw_impl=fw_impl,
-                                mixed_precision_enable=mixed_precision_enabled)
+    graph = graph_preparation_runner(in_model,
+                                     representative_data_gen=representative_dataset,
+                                     quantization_config=qc,
+                                     fw_info=fw_info,
+                                     fw_impl=fw_impl,
+                                     tpc=tpc,
+                                     mixed_precision_enable=mixed_precision_enabled)
 
     return graph
 
@@ -126,15 +121,16 @@ def prepare_graph_set_bit_widths(in_model,
         for _ in range(n_iter):
             yield representative_data_gen()
 
-    graph = read_model_to_graph(in_model,
-                                _representative_data_gen,
-                                tpc,
-                                fw_info,
-                                fw_impl)
+    graph = graph_preparation_runner(in_model,
+                                     representative_data_gen=_representative_data_gen,
+                                     quantization_config=quantization_config,
+                                     fw_info=fw_info,
+                                     fw_impl=fw_impl,
+                                     tpc=tpc,
+                                     mixed_precision_enable=core_config.mixed_precision_enable)
 
     tg = _prepare_model_for_quantization(graph,
                                          _representative_data_gen,
-                                         tpc,
                                          core_config,
                                          fw_info,
                                          tb_w,
