@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from typing import List
+from tqdm.auto import tqdm
 
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -49,7 +50,7 @@ def calculate_quantization_params(graph: Graph,
     # Create a list of nodes to compute their thresholds
     nodes_list: List[BaseNode] = nodes if specific_nodes else graph.nodes()
 
-    for n in nodes_list:  # iterate only nodes that we should compute their thresholds
+    for n in tqdm(nodes_list):  # iterate only nodes that we should compute their thresholds
         for candidate_qc in n.candidates_quantization_cfg:
             if n.is_weights_quantization_enabled():
                 # If node's weights should be quantized, we compute its weights' quantization parameters

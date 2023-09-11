@@ -363,6 +363,7 @@ def _prepare_model_for_quantization(graph: Graph,
     ######################################
     # Calculate quantization params
     ######################################
+    Logger.info('Compute quantization params')
     calculate_quantization_params(transformed_graph,
                                   fw_info,
                                   fw_impl=fw_impl)

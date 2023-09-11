@@ -129,7 +129,7 @@ def nodes_builder(model: GraphModule, module_dict: Dict, to_numpy: Callable) -> 
             else:
                 raise Exception(f"Call method of type '{node.target}' is currently not supported.")
         elif node.op == GET_ATTR:
-            if node.meta[TYPE] == torch.Tensor:
+            if node.meta[TYPE] in (torch.Tensor, torch.nn.Parameter):
                 node_type = BufferHolder
             else:
                 node_type = ConstantHolder
@@ -169,7 +169,7 @@ def nodes_builder(model: GraphModule, module_dict: Dict, to_numpy: Callable) -> 
         if node.op != PLACEHOLDER:
             for input_node in node.all_input_nodes:
                 tensor_meta = input_node.meta
-                if tensor_meta[TYPE] == torch.Tensor:
+                if tensor_meta[TYPE] in (torch.Tensor, torch.nn.Parameter):
                     input_shape += [list(tensor_meta[TENSOR_META].shape)]
                 elif tensor_meta[TYPE] == tuple:
                     input_shape += [list(n.shape) for n in tensor_meta[TENSOR_META]]
