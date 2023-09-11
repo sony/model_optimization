@@ -255,6 +255,10 @@ if FOUND_TF:
              >>> quantized_model = mct.qat.keras_quantization_aware_training_finalize(quantized_model)
 
          """
+
+        eager_status = tf.config.functions_run_eagerly()
+        tf.config.run_functions_eagerly(True)
+
         def _export(layer):
             if isinstance(layer, KerasQuantizationWrapper):
                 layer = layer.convert_to_inferable_quantizers()
@@ -271,6 +275,8 @@ if FOUND_TF:
 
         # clone each layer in the model and apply _export to layers with TrainableQuantizeWrappers
         exported_model = tf.keras.models.clone_model(in_model, input_tensors=None, clone_function=_export)
+
+        tf.config.run_functions_eagerly(eager_status)
 
         return exported_model
 
