@@ -20,17 +20,17 @@ from model_compression_toolkit.data_generation.common.enums import OutputLossTyp
 from model_compression_toolkit.data_generation.keras.model_info_exctractors import KerasActivationExtractor
 
 
-# Function to calculate the marginal min-max difference loss
-def marginal_min_max_diff(
+# Function to calculate the regularized min-max difference loss
+def regularized_min_max_diff(
         output_imgs: tf.Tensor,
         activation_extractor: KerasActivationExtractor,
         tape: tf.GradientTape,
         eps: float = 1e-6,
         **kwargs) -> tf.Tensor:
     """
-    Calculate the marginal min-max difference loss.
+    Calculate the regularized min-max difference loss.
 
-    This function calculates the marginal min-max difference loss based on the provided inputs.
+    This function calculates the regularized min-max difference loss based on the provided inputs.
 
     Args:
         output_imgs (tf.Tensor): Output images or tensors.
@@ -42,14 +42,14 @@ def marginal_min_max_diff(
     Returns:
         tf.Tensor: The calculated loss.
     """
-    if activation_extractor.last_linear_layer is None:
+    if activation_extractor.last_linear_layers is None:
         Logger.exception(
-            f'Cannot compute marginal min max output loss for the input model. The marginal min max output loss '
+            f'Cannot compute regularized min max output loss for the input model. The regularized min max output loss '
             f'requires linear layer without a following BatchNormalization layer. Please choose one of '
             f'{OutputLossType.get_values()}.')
 
     with tape.stop_recording():
-        weights_last_layer = activation_extractor.last_linear_layer.get_weights()[0]
+        weights_last_layer = activation_extractor.last_linear_layers.get_weights()[0]
         weights_norm = tf.norm(weights_last_layer, axis=-2)
         weights_norm = tf.squeeze(weights_norm)
         last_bn_layer = activation_extractor.get_layer_input_activation(
@@ -57,22 +57,30 @@ def marginal_min_max_diff(
         last_bn_layer_norm = tf.norm(tf.reduce_mean(last_bn_layer['input_data'], [1, 2]), axis=-1)
 
     # Get last linear layer min max
-    last_linear_layer_output = tf.squeeze(activation_extractor.last_linear_layer_output)
+    last_linear_layer_outputs = tf.squeeze(activation_extractor.last_linear_layer_output)
 
-    last_layer_out_max = tf.reduce_max(last_linear_layer_output, axis=-1)
-    last_layer_out_argmax = tf.argmax(last_linear_layer_output, axis=-1)
+    # In case the last linear layer has more than one output
+    if not isinstance(last_linear_layer_outputs, (list, tuple)):
+        last_linear_layer_outputs = [last_linear_layer_outputs]
 
-    last_layer_out_min = tf.reduce_min(last_linear_layer_output, axis=-1)
-    last_layer_out_argmin = tf.argmin(last_linear_layer_output, axis=-1)
+    output_loss = tf.zeros(1)
 
-    # Add regularization for min max value
-    last_layer_reg_min = tf.abs(tf.abs(last_layer_out_min) -
-                                last_bn_layer_norm * tf.gather(weights_norm, last_layer_out_argmin))
-    last_layer_reg_max = tf.abs(tf.abs(last_layer_out_max) -
-                                last_bn_layer_norm * tf.gather(weights_norm, last_layer_out_argmax))
-    last_layer_dynamic_loss = 1 / (last_layer_out_max - last_layer_out_min + eps)
+    for last_linear_layer_output in last_linear_layer_outputs:
+        last_layer_out_max = tf.reduce_max(last_linear_layer_output, axis=-1)
+        last_layer_out_argmax = tf.argmax(last_linear_layer_output, axis=-1)
 
-    output_loss = tf.reduce_mean(last_layer_reg_min + last_layer_reg_max + last_layer_dynamic_loss)
+        last_layer_out_min = tf.reduce_min(last_linear_layer_output, axis=-1)
+        last_layer_out_argmin = tf.argmin(last_linear_layer_output, axis=-1)
+
+        # Add regularization for min max value
+        last_layer_reg_min = tf.abs(tf.abs(last_layer_out_min) -
+                                    last_bn_layer_norm * tf.gather(weights_norm, last_layer_out_argmin))
+        last_layer_reg_max = tf.abs(tf.abs(last_layer_out_max) -
+                                    last_bn_layer_norm * tf.gather(weights_norm, last_layer_out_argmax))
+        last_layer_dynamic_loss = 1 / (last_layer_out_max - last_layer_out_min + eps)
+
+        output_loss += tf.reduce_mean(last_layer_reg_min + last_layer_reg_max + last_layer_dynamic_loss)
+
     return output_loss
 
 
@@ -120,5 +128,5 @@ def no_output_loss(
 output_loss_function_dict: Dict[OutputLossType, Callable] = {
     OutputLossType.NONE: no_output_loss,
     OutputLossType.MIN_MAX_DIFF: min_max_diff,
-    OutputLossType.MARGINAL_MIN_MAX_DIFF: marginal_min_max_diff,
+    OutputLossType.REGULARIZED_MIN_MAX_DIFF: regularized_min_max_diff,
 }

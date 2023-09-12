@@ -24,15 +24,26 @@ from model_compression_toolkit.data_generation.common.enums import SchedulerType
 # Customized for gradient taping
 class CustomReduceLROnPlateau:
     def __init__(self,
-                 factor: float = 0.5,  # Factor by which the learning rate will be reduced.
-                 patience: int = 10,  # Number of epochs with no improvement after which learning rate will be reduced.
-                 min_delta: float = 1e-4,  # Minimum change in monitored value to qualify as improvement.
-                 cooldown: int = 0,  # Number of epochs to wait before resuming normal operation after reducing
-                 # learning rate.
-                 min_lr: float = 1e-6,  # Lower bound on the learning rate.
-                 sign_number: int = 4,  # Number of significant digits to consider for comparisons.
-                 optim_lr=None,  # Optimizer learning rate variable (e.g., tf.Variable).
+                 factor: float = 0.5,
+                 patience: int = 10,
+                 min_delta: float = 1e-4,
+                 cooldown: int = 0,
+                 min_lr: float = 1e-6,
+                 sign_number: int = 4,
+                 optim_lr=None,
                  ):
+        """
+        Initialize a custom learning rate scheduler based on ReduceLROnPlateau.
+
+        Args:
+            factor (float): Factor by which the learning rate will be reduced.
+            patience (int): Number of epochs with no improvement after which learning rate will be reduced.
+            min_delta (float): Minimum change in monitored value to qualify as an improvement.
+            cooldown (int): Number of epochs to wait before resuming after reducing the learning rate.
+            min_lr (float): Lower bound on the learning rate.
+            sign_number (int): Number of significant digits to consider for comparisons when checking for improvement.
+            optim_lr (tf.Variable): Optimizer learning rate variable to synchronize with the reduced learning rate.
+        """
 
         self.optim_lr = optim_lr
         self.factor = factor
@@ -57,21 +68,13 @@ class CustomReduceLROnPlateau:
         self.cooldown_counter = 0
         self.wait = 0
 
-    def on_train_begin(self, logs=None):
-        """
-        Initialize the learning rate scheduler at the beginning of training.
-        """
-        self._reset()
-
     def on_epoch_end(self,
-                     epoch: int,
                      loss: float,
                      logs=None):
         """
         Update the learning rate based on the validation loss at the end of each epoch.
 
         Args:
-            epoch (int): Current epoch.
             loss (float): Validation loss value.
             logs (dict): Dictionary of training metrics and logs.
 

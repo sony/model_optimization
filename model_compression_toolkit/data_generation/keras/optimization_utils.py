@@ -12,17 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Iterator, Any, Callable, Tuple, Optional, List
+from typing import Iterator, Any, Callable, Tuple, List, Dict
 
 import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit.data_generation.common.constants import IMAGE_INPUT
 from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig
+from model_compression_toolkit.data_generation.common.enums import ImageGranularity
 from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
 from model_compression_toolkit.data_generation.common.optimization_utils import ImagesOptimizationHandler, \
     BatchOptimizationHolder, AllImagesStatsHolder, BatchStatsHolder
-from model_compression_toolkit.data_generation.keras.constants import IMAGE_MIN_VAL, IMAGE_MAX_VAL
+from model_compression_toolkit.data_generation.keras.constants import IMAGE_MIN_VAL, IMAGE_MAX_VAL, BATCH_AXIS, \
+    H_AXIS, W_AXIS
 from model_compression_toolkit.data_generation.keras.model_info_exctractors import KerasActivationExtractor, \
     KerasOriginalBNStatsHolder
 
@@ -37,9 +39,6 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
                  normalization_mean: List[float],
                  normalization_std: List[float],
                  data_generation_config: DataGenerationConfig,
-                 bn_layer_weights_fn: Callable,
-                 bn_loss_fn: Callable,
-                 output_loss_fn: Callable,
                  orig_bn_stats_holder: KerasOriginalBNStatsHolder,
                  eps: float = 1e-6):
         """
@@ -54,22 +53,12 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
             normalization_mean (List[float]): The mean values for image normalization.
             normalization_std (List[float]): The standard deviation values for image normalization.
             data_generation_config (DataGenerationConfig): Configuration for data generation.
-            bn_layer_weights_fn (Callable): Function to compute layer weighting for the BatchNorm alignment loss .
-            bn_loss_fn (Callable): Function to compute BatchNorm alignment loss.
-            output_loss_fn (Callable): Function to compute output loss.
             orig_bn_stats_holder (OriginalBNStatsHolder): Object to hold original BatchNorm statistics.
             eps (float): A small value added for numerical stability.
         """
         self.data_generation_config = data_generation_config
         self.optimizer = data_generation_config.optimizer
         self.orig_bn_stats_holder = orig_bn_stats_holder
-
-        # Set the batch normalization bn layer weights function, bn loss function,
-        # output loss function, and output loss multiplier.
-        self.bn_layer_weights_fn = bn_layer_weights_fn
-        self.bn_loss_fn = bn_loss_fn
-        self.output_loss_fn = output_loss_fn
-        self.output_loss_multiplier = data_generation_config.output_loss_multiplier
 
         # Image valid grid, each image value can only be
         # IMAGE_MIN_VAL( default set to 0) - IMAGE_MAX_VAL ( default set to 255) before normalization
@@ -99,7 +88,10 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
                                                              eps=eps)
 
         # Set the mean axis based on the image granularity
-        self.mean_axis = activation_extractor.mean_axis
+        if self.image_granularity == ImageGranularity.ImageWise:
+            self.mean_axis = [H_AXIS, W_AXIS]
+        else:
+            self.mean_axis = [BATCH_AXIS, H_AXIS, W_AXIS]
 
         # Create BatchOptimizationHolder objects for each batch in the initial dataset
         self.batch_opt_holders_list = []
@@ -166,20 +158,20 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
         else:
             return z
 
-    def get_accumulated_stats_per_layer(self, layer_name: str) -> Tuple[tf.Tensor, tf.Tensor]:
+    def get_layer_accumulated_stats(self, layer_name: str) -> Tuple[tf.Tensor, tf.Tensor]:
         """
         Get the accumulated activation statistics for a layer.
 
         Args:
             layer_name (str): the name of the layer.
 
-        Returns: Tuple[tf.Tensor, tf.Tensor]: The averaged activation statistics (mean and second moment) on all the
-        batches for the specified layer.
+        Returns:
+            Tuple[tf.Tensor, tf.Tensor]: The averaged activation statistics (mean and second moment) on all the
+            batches for the specified layer.
         """
         total_mean, total_second_moment = 0, 0
         for i_batch in range(self.n_batches):
-            batch_stats_holder = self.all_imgs_stats_holder.batches_stats_holder_list[i_batch]
-            mean, second_moment = self.all_imgs_stats_holder.get_stats(batch_stats_holder=batch_stats_holder,
+            mean, second_moment = self.all_imgs_stats_holder.get_stats(batch_index=i_batch,
                                                                        layer_name=layer_name)
             total_mean += mean
             total_second_moment += second_moment
@@ -190,33 +182,34 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
 
     def compute_bn_loss(self,
                         input_imgs: tf.Tensor,
-                        batch_stats_holder: BatchStatsHolder,
-                        activation_extractor: KerasActivationExtractor) -> tf.Tensor:
+                        batch_index: int,
+                        activation_extractor: KerasActivationExtractor,
+                        bn_layer_weights: Dict,
+                        bn_alignment_loss_fn: Callable) -> tf.Tensor:
         """
         Compute the batch norm alignment loss.
 
         Args:
-            input_imgs (Any): the input images.
-            batch_stats_holder (BatchStatsHolder): batch stats holder.
-            activation_extractor (ActivationExtractor): extractor for layer activations.
+            input_imgs (Any): The input images.
+            batch_index (int): The index of the batch.
+            activation_extractor (ActivationExtractor): Extractor for layer activations.
+            bn_layer_weights (Dict): Weights to multiply the loss for each layer.
+            bn_alignment_loss_fn (Callable): Function to compute BatchNorm alignment loss.
 
         Returns:
-            Any: the computed batch norm alignment loss.
+            Any: The computed batch norm alignment loss.
         """
 
-        self.all_imgs_stats_holder.update_batch_stats(batch_stats_holder=batch_stats_holder,
+        self.all_imgs_stats_holder.update_batch_stats(batch_index=batch_index,
                                                       input_imgs=input_imgs,
                                                       activation_extractor=activation_extractor)
 
         # Initialize variables for accumulating mean and variance differences
         total_bn_loss, total_mean_diff, total_var_diff = 0, 0, 0
 
-        # Iterate over each BN layer
-        layer_weights = self.bn_layer_weights_fn(orig_bn_stats_holder=self.orig_bn_stats_holder)
-
         for layer_name in self.orig_bn_stats_holder.get_bn_layer_names():
             # Get the layer weight for the current BN layer
-            layer_weight = layer_weights.get(layer_name)
+            layer_weight = bn_layer_weights.get(layer_name)
 
             # Get the mean and variance from the original BN statistics
             bn_layer_mean = self.orig_bn_stats_holder.get_mean(bn_layer_name=layer_name)
@@ -225,48 +218,35 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
             # Get the mean and variance from the current batch's statistics
             if self.use_all_data_stats:
                 # If using all data statistics, retrieve the accumulated statistics from all batches
-                imgs_layer_mean, imgs_layer_var = self.get_accumulated_stats_per_layer(layer_name=layer_name)
+                imgs_layer_mean, imgs_layer_var = self.get_layer_accumulated_stats(layer_name=layer_name)
             else:
                 # Otherwise, retrieve the statistics from the current batch
                 imgs_layer_mean, imgs_layer_var = (
-                    self.all_imgs_stats_holder.get_stats(batch_stats_holder=batch_stats_holder, layer_name=layer_name))
+                    self.all_imgs_stats_holder.get_stats(batch_index=batch_index, layer_name=layer_name))
 
             bn_layer_std = tf.sqrt(bn_layer_var + self.eps)
             imgs_layer_std = tf.sqrt(imgs_layer_var + self.eps)
 
-            total_bn_loss += layer_weight * self.bn_loss_fn(bn_mean=bn_layer_mean,
-                                                            input_mean=imgs_layer_mean,
-                                                            bn_std=bn_layer_std,
-                                                            input_std=imgs_layer_std)
+            total_bn_loss += layer_weight * bn_alignment_loss_fn(bn_mean=bn_layer_mean,
+                                                                 input_mean=imgs_layer_mean,
+                                                                 bn_std=bn_layer_std,
+                                                                 input_std=imgs_layer_std)
         return total_bn_loss
-
-    def compute_output_loss(self,
-                            output_imgs: tf.Tensor,
-                            activation_extractor: KerasActivationExtractor,
-                            tape: tf.GradientTape
-                            ) -> tf.Tensor:
-        # If output_loss_multiplier is zero return 0
-        return self.output_loss_multiplier * self.output_loss_fn(
-            output_imgs=output_imgs,
-            activation_extractor=activation_extractor,
-            tape=tape) if self.output_loss_multiplier > 0 else tf.zeros(1)
 
     def update_statistics(self,
                           input_imgs: tf.Tensor,
                           batch_index: int,
-                          batch_stats_holder: BatchStatsHolder,
                           activation_extractor: KerasActivationExtractor):
         """
         Update the statistics for the images at the specified batch index.
 
         Args:
-            input_imgs (Any): the input images.
-            batch_index (int): the index of the batch.
-            batch_stats_holder (BatchStatsHolder): batch stats holder.
-            activation_extractor (ActivationExtractor): extractor for layer activations.
+            input_imgs (Any): The input images.
+            batch_index (int): The index of the batch.
+            activation_extractor (ActivationExtractor): Extractor for layer activations.
         """
         self.all_imgs_stats_holder.update_batch_stats(
-            batch_stats_holder=batch_stats_holder,
+            batch_index=batch_index,
             input_imgs=input_imgs,
             activation_extractor=activation_extractor)
         self.batched_images_for_optimization[batch_index] = input_imgs
@@ -295,14 +275,14 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
         optimizer.apply_gradients(zip(gradients, [images]))
 
         # Perform scheduler step
-        scheduler.on_epoch_end(epoch=i_ter, loss=tf.reduce_mean(loss))
+        scheduler.on_epoch_end(loss=tf.reduce_mean(loss))
 
     def get_finilized_data_loader(self) -> np.ndarray:
         """
         Create and return a ndarray of the generated images.
 
         Returns:
-            np.ndarray: the generated images.
+            List[np.ndarray]: List containing the generated images.
         """
         finalized_images = []
 
@@ -312,9 +292,9 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
             batch_imgs = self.get_images_by_batch_index(i_batch)
 
             # Apply the image_pipeline's image_output_finalize method to finalize the batch of images
-            finalized_batch = self.image_pipeline.image_output_finalize(batch_imgs)
-            finalized_images.append(finalized_batch)
-        return tf.concat(finalized_images, axis=0).numpy()
+            finalized_batch = self.image_pipeline.image_output_finalize(batch_imgs).numpy()
+            finalized_images += np.split(finalized_batch, indices_or_sections=self.batch_size, axis=BATCH_AXIS)
+        return finalized_images
 
 
 class KerasBatchOptimizationHolder(BatchOptimizationHolder):
@@ -368,36 +348,37 @@ class KerasAllImagesStatsHolder(AllImagesStatsHolder):
         return [KerasBatchStatsHolder(self.mean_axis) for _ in range(self.n_batches)]
 
     def update_batch_stats(self,
-                           batch_stats_holder: BatchStatsHolder,
+                           batch_index: int,
                            input_imgs: tf.Tensor,
                            activation_extractor: KerasActivationExtractor):
         """
         Update the batch statistics for a given batch.
 
         Args:
-            batch_stats_holder (BatchStatsHolder): batch stats holder.
-            input_imgs (tf.Tensor): the input images for which to calculate the statistics.
-            activation_extractor (ActivationsExtractor): the activation extractor object.
+            batch_index (int): The index of the batch.
+            input_imgs (tf.Tensor): The input images for which to calculate the statistics.
+            activation_extractor (ActivationsExtractor): The activation extractor object.
         """
-        batch_stats_holder.clear()
-        batch_stats_holder.calc_bn_stats_from_activations(input_imgs=input_imgs,
-                                                          activation_extractor=activation_extractor)
+        self.batches_stats_holder_list[batch_index].clear()
+        self.batches_stats_holder_list[batch_index].calc_bn_stats_from_activations(input_imgs=input_imgs,
+                                                                                   activation_extractor=
+                                                                                   activation_extractor)
 
     def get_stats(self,
-                  batch_stats_holder: BatchStatsHolder,
+                  batch_index: int,
                   layer_name: str) -> Tuple[tf.Tensor, tf.Tensor]:
         """
         Get the statistics for a given batch and layer.
 
         Args:
-            batch_stats_holder (BatchStatsHolder): batch stats holder.
-            layer_name (str): the name of the layer.
+            batch_index (int): The index of the batch.
+            layer_name (str): The name of the layer.
 
         Returns:
-            Tuple[tf.Tensor, tf.Tensor]: the mean and second moment for the specified batch and layer.
+            Tuple[tf.Tensor, tf.Tensor]: The mean and second moment for the specified batch and layer.
         """
-        mean = batch_stats_holder.get_mean(bn_layer_name=layer_name)
-        second_moment = batch_stats_holder.get_second_moment(bn_layer_name=layer_name)
+        mean = self.batches_stats_holder_list[batch_index].get_mean(bn_layer_name=layer_name)
+        second_moment = self.batches_stats_holder_list[batch_index].get_second_moment(bn_layer_name=layer_name)
         return mean, second_moment
 
 
@@ -409,6 +390,7 @@ class KerasBatchStatsHolder(BatchStatsHolder):
     and standard deviation statistics related to the activations of each layer
     for a particular batch of images.
     """
+
     def calc_bn_stats_from_activations(self,
                                        input_imgs: tf.Tensor,
                                        activation_extractor: KerasActivationExtractor):

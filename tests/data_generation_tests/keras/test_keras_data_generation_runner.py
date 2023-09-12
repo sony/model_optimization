@@ -52,4 +52,4 @@ class KerasDataGenerationTestRunner(unittest.TestCase):
     def test_keras_output_loss_types(self):
         BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.NONE).run_test()
         BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.MIN_MAX_DIFF).run_test()
-        BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.MARGINAL_MIN_MAX_DIFF).run_test()
+        BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.REGULARIZED_MIN_MAX_DIFF).run_test()

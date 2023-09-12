@@ -98,11 +98,11 @@ class OutputLossType(EnumBaseClass):
     An enum for choosing the output loss type.
     NONE: No output loss is applied.
     MIN_MAX_DIFF: Use min-max difference as the output loss.
-    MARGINAL_MIN_MAX_DIFF: Use marginal min-max difference as the output loss.
+    REGULARIZED_MIN_MAX_DIFF: Use regularized min-max difference as the output loss.
     """
     NONE = 'none'
     MIN_MAX_DIFF = 'min_max_diff'
-    MARGINAL_MIN_MAX_DIFF = 'marginal_min_max_diff'
+    REGULARIZED_MIN_MAX_DIFF = 'regularized_min_max_diff'
 
 
 class SchedulerType(EnumBaseClass):

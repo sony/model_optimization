@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import time
-from typing import Callable, Tuple, List
+from typing import Callable, Tuple, List, Dict
 from tqdm import tqdm
 
 from model_compression_toolkit.constants import FOUND_TF
@@ -57,7 +57,7 @@ if FOUND_TF:
             output_loss_multiplier: float = DEFAULT_KERAS_OUTPUT_LOSS_MULTIPLIER,
             scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU,
             bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
-            output_loss_type: OutputLossType = OutputLossType.MARGINAL_MIN_MAX_DIFF,
+            output_loss_type: OutputLossType = OutputLossType.REGULARIZED_MIN_MAX_DIFF,
             data_init_type: DataInitType = DataInitType.Gaussian,
             layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
             image_granularity: ImageGranularity = ImageGranularity.BatchWise,
@@ -133,7 +133,7 @@ if FOUND_TF:
             data_generation_config (DataGenerationConfig): Configuration for data generation.
 
         Returns:
-            Tensor: Finalized generated images.
+            List[tf.Tensor]: Finalized list containing generated images.
         """
         # Get Data Generation functions and classes
         image_pipeline, normalization, bn_layer_weighting_fn, bn_alignment_loss_fn, output_loss_fn, \
@@ -192,10 +192,10 @@ if FOUND_TF:
             normalization_mean=normalization[0],
             normalization_std=normalization[1],
             model=model,
-            bn_layer_weights_fn=bn_layer_weighting_fn,
-            bn_loss_fn=bn_alignment_loss_fn,
-            output_loss_fn=output_loss_fn,
             orig_bn_stats_holder=orig_bn_stats_holder)
+
+        # Compute the layer weights based on orig_bn_stats_holder
+        bn_layer_weights = bn_layer_weighting_fn(orig_bn_stats_holder=orig_bn_stats_holder)
 
         # Get the current time to measure the total time taken
         total_time = time.time()
@@ -217,17 +217,20 @@ if FOUND_TF:
                 # Get the images to optimize and the optimizer for the batch
                 imgs_to_optimize = all_imgs_opt_handler.get_images_by_batch_index(batch_index=random_batch_index)
 
-                # Get the batch stats holder for the batch
-                batch_stats_holder = all_imgs_opt_handler.all_imgs_stats_holder.batches_stats_holder_list[
-                    random_batch_index]
-
                 # Compute the gradients and the loss for the batch
                 gradients, total_loss, bn_loss, output_loss = keras_compute_grads(imgs_to_optimize=imgs_to_optimize,
-                                                                                  batch_stats_holder=batch_stats_holder,
+                                                                                  batch_index=random_batch_index,
                                                                                   activation_extractor=
                                                                                   activation_extractor,
                                                                                   all_imgs_opt_handler=
-                                                                                  all_imgs_opt_handler)
+                                                                                  all_imgs_opt_handler,
+                                                                                  bn_layer_weights=bn_layer_weights,
+                                                                                  bn_alignment_loss_fn=
+                                                                                  bn_alignment_loss_fn,
+                                                                                  output_loss_fn=output_loss_fn,
+                                                                                  output_loss_multiplier=
+                                                                                  data_generation_config.
+                                                                                  output_loss_multiplier)
 
                 # Perform optimization step
                 all_imgs_opt_handler.optimization_step(batch_index=random_batch_index,
@@ -241,7 +244,6 @@ if FOUND_TF:
                     final_imgs = image_pipeline.image_output_finalize(images=imgs_to_optimize)
                     all_imgs_opt_handler.update_statistics(input_imgs=final_imgs,
                                                            batch_index=random_batch_index,
-                                                           batch_stats_holder=batch_stats_holder,
                                                            activation_extractor=activation_extractor)
 
             ibar.set_description(f"Total Loss: {total_loss.numpy().mean().item():.5f}, "
@@ -249,24 +251,33 @@ if FOUND_TF:
                                  f"Output Loss: {output_loss.numpy().mean().item():.5f}")
 
         # Return a list containing the finalized generated images
-        finalized_imgs = all_imgs_opt_handler.get_finilized_data_loader()
-        Logger.info(f'Total time to generate {len(finalized_imgs)} images (seconds): {int(time.time() - total_time)}')
-        return finalized_imgs
+        generated_images_list = all_imgs_opt_handler.get_finilized_data_loader()
+        Logger.info(f'Total time to generate {len(generated_images_list)} images (seconds): '
+                    f'{int(time.time() - total_time)}')
+        return generated_images_list
 
     # Compute the gradients and the loss for the batch
     def keras_compute_grads(imgs_to_optimize: tf.Tensor,
-                            batch_stats_holder: KerasBatchStatsHolder,
+                            batch_index: int,
                             activation_extractor: KerasActivationExtractor,
-                            all_imgs_opt_handler: KerasImagesOptimizationHandler) -> (
+                            all_imgs_opt_handler: KerasImagesOptimizationHandler,
+                            bn_layer_weights: Dict,
+                            bn_alignment_loss_fn: Callable,
+                            output_loss_fn: Callable,
+                            output_loss_multiplier: float) -> (
             Tuple)[List[tf.Tensor], tf.Tensor, tf.Tensor, tf.Tensor]:
         """
         This function run part of the training step, calculating the losses and the gradients for the batch.
 
         Args:
             imgs_to_optimize (tf.Tensor): The images to optimize for the batch.
-            batch_stats_holder (KerasBatchStatsHolder): Stats holder for the batch.
-            activation_extractor (KerasActivationExtractor): extractor for layer activations.
+            batch_index (int): The index of the batch.
+            activation_extractor (KerasActivationExtractor): Extractor for layer activations.
             all_imgs_opt_handler (KerasImagesOptimizationHandler): Handles the images optimization process.
+            bn_layer_weights (Dict): weights to multiply the loss for each layer.
+            bn_alignment_loss_fn (Callable): Function to compute BatchNorm alignment loss.
+            output_loss_fn (Callable): Function to compute output loss.
+            output_loss_multiplier (float): Multiplier for the output loss.
 
         Returns:
     Returns:
@@ -289,13 +300,17 @@ if FOUND_TF:
 
             # Compute BatchNorm alignment loss
             bn_loss = all_imgs_opt_handler.compute_bn_loss(input_imgs=input_imgs,
-                                                           batch_stats_holder=batch_stats_holder,
-                                                           activation_extractor=activation_extractor)
+                                                           batch_index=batch_index,
+                                                           activation_extractor=activation_extractor,
+                                                           bn_alignment_loss_fn=bn_alignment_loss_fn,
+                                                           bn_layer_weights=bn_layer_weights)
 
             # Compute output loss
-            output_loss = all_imgs_opt_handler.compute_output_loss(output_imgs=output,
-                                                                   activation_extractor=activation_extractor,
-                                                                   tape=tape)
+            # If output_loss_multiplier is zero return 0
+            output_loss = output_loss_multiplier * output_loss_fn(
+                output_imgs=output,
+                activation_extractor=activation_extractor,
+                tape=tape) if output_loss_multiplier > 0 else tf.zeros(1)
 
             # Compute total loss
             total_loss = bn_loss + output_loss

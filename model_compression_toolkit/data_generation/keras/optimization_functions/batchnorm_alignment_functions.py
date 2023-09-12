@@ -27,13 +27,13 @@ def l2_square(bn_mean: tf.Tensor,
     Compute the L2 Square loss for batch normalization alignment.
 
     Args:
-        bn_mean (Tensor): The mean of the batch normalization layer from the original statistics.
-        input_mean (Tensor): The mean of the batch normalization layer from the current batch statistics.
-        bn_std (Tensor): The standard deviation of the batch normalization layer from the original statistics.
-        input_std (Tensor): The standard deviation of the batch normalization layer from the current batch statistics.
+        bn_mean (tf.Tensor): The mean of the batch normalization layer from the original statistics.
+        input_mean (tf.Tensor): The mean of the batch normalization layer from the current batch statistics.
+        bn_std (tf.Tensor): The standard deviation of the batch normalization layer from the original statistics.
+        input_std (tf.Tensor): The standard deviation of the batch normalization layer from the current batch statistics.
 
     Returns:
-        Tensor: The L2 Square loss value for batch normalization alignment.
+        tf.Tensor: The L2 Square loss value for batch normalization alignment.
     """
     return tf.norm(input_mean - bn_mean, axis=-1) ** 2 / bn_mean.shape[0] + \
         tf.norm(input_std - bn_std, axis=-1) ** 2 / bn_std.shape[0]

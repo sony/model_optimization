@@ -21,7 +21,6 @@ from tensorflow.keras.layers import BatchNormalization
 from model_compression_toolkit.data_generation.common.enums import ImageGranularity
 from model_compression_toolkit.data_generation.common.model_info_exctractors import OriginalBNStatsHolder, \
     ActivationExtractor
-from model_compression_toolkit.data_generation.keras.constants import H_AXIS, W_AXIS, BATCH_AXIS
 
 
 class KerasOriginalBNStatsHolder(OriginalBNStatsHolder):
@@ -89,47 +88,39 @@ class KerasActivationExtractor(ActivationExtractor):
         self.model = model
         self.image_input_manipulation = image_input_manipulation
         self.image_granularity = image_granularity
-        self.layer_types_to_extract_inputs = layer_types_to_extract_inputs
+        self.layer_types_to_extract_inputs = tuple(layer_types_to_extract_inputs)
         self.linear_layers = linear_layers
 
         # Create a list of BatchNormalization layer names from the model.
         self.bn_layer_names = [layer.name for layer in model.layers if isinstance(layer,
-                                                                                  tuple(layer_types_to_extract_inputs))]
+                                                                                  self.layer_types_to_extract_inputs)]
         self.num_layers = len(self.bn_layer_names)
         print(f'Number of layers = {self.num_layers}')
 
         # Initialize stats containers
         self.activations = {}
-        self.bn_mean = []
-        self.bn_var = []
 
         # Initialize the last linear layer output variable as None In case the last layer is a linear layer (conv,
         # dense) last_linear_layer_output will assign with the last linear layer output value, if not the value will
         # stay None
         self.last_linear_layer_output = None
 
-        # Set the mean axis based on the image granularity
-        if self.image_granularity == ImageGranularity.ImageWise:
-            self.mean_axis = [H_AXIS, W_AXIS]
-        else:
-            self.mean_axis = [BATCH_AXIS, H_AXIS, W_AXIS]
-
         # Get the last layer, if the last layer is linear (conv, dense)
-        self.last_linear_layer = self.get_model_last_layer()
+        self.last_linear_layers = self.get_model_last_layer()
 
         # Create list for the layers we use for optimization
         self.layer_list = [layer for layer in self.model.layers if
-                           isinstance(layer, tuple(self.layer_types_to_extract_inputs))]
+                           isinstance(layer, self.layer_types_to_extract_inputs)]
 
         # Create list of outputs to the intermediate model
         # We want the input of each BN layer
         self.outputs_list = [layer.input for layer in self.layer_list]
 
         # If the last layer is linear add the output of the layer to the layers to optimize
-        if self.last_linear_layer is not None:
-            self.layer_list.append(self.last_linear_layer)
-            if self.last_linear_layer is not self.model.layers[-1]:
-                self.outputs_list.append(self.last_linear_layer.output)
+        if self.last_linear_layers is not None:
+            self.layer_list.append(self.last_linear_layers)
+            if self.last_linear_layers is not self.model.layers[-1]:
+                self.outputs_list.append(self.last_linear_layers.output)
         self.outputs_list.append(self.model.output)
 
         # Create an intermediate model with the outputs defined before.
@@ -184,24 +175,17 @@ class KerasActivationExtractor(ActivationExtractor):
         Returns:
             Tensor: Output tensor.
         """
-        # Initialize stats containers
-        self.bn_mean = []
-        self.bn_var = []
 
         # Run the model on inputs
         intermediate_outputs = self.run_on_inputs(inputs=inputs)
 
         # Iterate over layers to extract stats
         for i, layer in enumerate(self.layer_list):
-            if isinstance(layer, tuple(self.layer_types_to_extract_inputs)):
+            if isinstance(layer, self.layer_types_to_extract_inputs):
                 input_data = intermediate_outputs[i]
                 # Save the layer and its input data in the dictionary
                 self.activations[layer.name] = {'layer': layer, 'input_data': input_data}
-
-                mean, var = tf.nn.moments(x=input_data, axes=self.mean_axis, keepdims=False)
-                self.bn_mean.append(mean)
-                self.bn_var.append(var)
-            elif layer == self.last_linear_layer:
+            elif layer == self.last_linear_layers:
                 self.last_linear_layer_output = intermediate_outputs[i]
         # Last intermediate output is the output of the model
         return intermediate_outputs[-1]
@@ -216,7 +200,7 @@ class KerasActivationExtractor(ActivationExtractor):
         last_layer = None
         for layer in reversed(self.model.layers):
             if isinstance(layer, self.linear_layers):
-                if not any(isinstance(node.layer, tuple(self.layer_types_to_extract_inputs))
+                if not any(isinstance(node.layer, self.layer_types_to_extract_inputs)
                            for node in layer._outbound_nodes):
                     last_layer = layer
                     break
@@ -227,5 +211,3 @@ class KerasActivationExtractor(ActivationExtractor):
         Remove the stats containers.
         """
         self.activations = {}
-        self.bn_mean = []
-        self.bn_var = []
