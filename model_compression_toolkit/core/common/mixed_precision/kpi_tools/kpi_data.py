@@ -20,8 +20,8 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
+from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.core.runner import read_model_to_graph, get_finalized_graph
 
 
 def compute_kpi_data(in_model: Any,
@@ -47,19 +47,13 @@ def compute_kpi_data(in_model: Any,
 
     """
 
-    graph = read_model_to_graph(in_model,
-                                representative_data_gen,
-                                tpc,
-                                fw_info,
-                                fw_impl)
-
-    transformed_graph = get_finalized_graph(graph,
-                                            tpc,
-                                            core_config.quantization_config,
-                                            fw_info,
-                                            tb_w=None,
-                                            fw_impl=fw_impl,
-                                            mixed_precision_enable=core_config.mixed_precision_enable)
+    transformed_graph = graph_preparation_runner(in_model,
+                                                 representative_data_gen,
+                                                 core_config.quantization_config,
+                                                 fw_info,
+                                                 fw_impl,
+                                                 tpc,
+                                                 mixed_precision_enable=core_config.mixed_precision_enable)
 
     # Compute parameters sum
     weights_params = compute_nodes_weights_params(graph=transformed_graph, fw_info=fw_info)

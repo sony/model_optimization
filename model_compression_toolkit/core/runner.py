@@ -20,11 +20,10 @@ from typing import Callable, Tuple, Any, List, Dict
 import numpy as np
 from tqdm import tqdm
 
-from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import FrameworkInfo
+from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
@@ -35,19 +34,12 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_searc
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
-from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
-from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
 from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
     statistics_correction_runner
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.core.common.substitutions.linear_collapsing_substitution import \
-    linear_collapsing_substitute
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
     WeightsFinalBitwidthConfigVisualizer, \
@@ -89,15 +81,17 @@ def core_runner(in_model: Any,
 
     """
 
-    graph = read_model_to_graph(in_model,
-                                representative_data_gen,
-                                tpc,
-                                fw_info,
-                                fw_impl)
+    graph = graph_preparation_runner(in_model,
+                                     representative_data_gen,
+                                     core_config.quantization_config,
+                                     fw_info,
+                                     fw_impl,
+                                     tpc,
+                                     tb_w,
+                                     mixed_precision_enable=core_config.mixed_precision_enable)
 
     tg = _prepare_model_for_quantization(graph,
                                          representative_data_gen,
-                                         tpc,
                                          core_config,
                                          fw_info,
                                          tb_w,
@@ -161,92 +155,6 @@ def core_runner(in_model: Any,
     return tg, bit_widths_config
 
 
-def get_finalized_graph(initial_graph: Graph,
-                        tpc: TargetPlatformCapabilities,
-                        quant_config: QuantizationConfig = DEFAULTCONFIG,
-                        fw_info: FrameworkInfo = None,
-                        tb_w: TensorboardWriter = None,
-                        fw_impl: FrameworkImplementation = None,
-                        mixed_precision_enable: bool = False) -> Graph:
-    """
-    Applies all edit operation (edit, substitutions, etc.) on the model's graph, to prepare it for the quantization
-    process. All future graph substitutions and operations that change the graph should be added to this method.
-
-    Args:
-        initial_graph (Graph): Graph to apply the changes to.
-        tpc (TargetPlatformCapabilities): TargetPlatformCapabilities object that describes the desired inference target platform (includes fusing patterns MCT should handle).
-        quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be
-        quantized.
-        fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
-        kernel channels indices, groups of layers by how they should be quantized, etc.)
-        tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
-        fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
-        mixed_precision_enable: is mixed precision enabled.
-
-    Returns: Graph object that represents the model, after applying all required modifications to it.
-
-    """
-
-    ######################################
-    # Graph substitution (prepare graph)
-    ######################################
-    graph = substitute(initial_graph, fw_impl.get_substitutions_prepare_graph(fw_info))
-
-    if tb_w is not None:
-        tb_w.add_graph(graph, 'after_graph_preparation')
-
-    #########################################
-    # Set prior info to nodes
-    ##########################################
-    for node in graph.nodes:
-        node.prior_info = fw_impl.get_node_prior_info(node=node,
-                                                      fw_info=fw_info,
-                                                      graph=graph)
-    ##################################################
-    # Graph substitution (pre statistics collection)
-    ##################################################
-    transformed_graph = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection(quant_config))
-    if quant_config.linear_collapsing:
-        transformed_graph = linear_collapsing_substitute(transformed_graph, fw_impl.get_linear_collapsing_substitution())
-    if quant_config.residual_collapsing:
-        transformed_graph = substitute(transformed_graph, fw_impl.get_residual_collapsing_substitution())
-
-    if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'pre_statistics_collection_substitutions')
-
-    ######################################
-    # Add quantization configurations
-    ######################################
-    transformed_graph = set_quantization_configuration_to_graph(graph=transformed_graph,
-                                                                quant_config=quant_config,
-                                                                mixed_precision_enable=mixed_precision_enable)
-
-    ######################################
-    # Layer fusing
-    ######################################
-    transformed_graph = fusion(transformed_graph, tpc)
-
-    ######################################
-    # Channel equalization
-    ######################################
-    transformed_graph = substitute(transformed_graph,
-                                   fw_impl.get_substitutions_channel_equalization(quant_config,
-                                                                                  fw_info))
-
-    if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'after_graph_marking')
-
-    ######################################
-    # Filter nodes' candidates
-    ######################################
-    transformed_graph = filter_nodes_candidates(transformed_graph)
-
-    if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'after_candidates_filtering')
-
-    return transformed_graph
-
-
 def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
     """
     Create a TensorBoardWriter object initialized with the logger dir path if it was set,
@@ -292,9 +200,8 @@ def read_model_to_graph(in_model: Any,
     return graph
 
 
-def _prepare_model_for_quantization(graph: Graph,
+def _prepare_model_for_quantization(transformed_graph: Graph,
                                     representative_data_gen: Callable,
-                                    tpc: TargetPlatformCapabilities,
                                     core_config: CoreConfig = CoreConfig(),
                                     fw_info: FrameworkInfo = None,
                                     tb_w: TensorboardWriter = None,
@@ -309,7 +216,6 @@ def _prepare_model_for_quantization(graph: Graph,
 
     Args:
         representative_data_gen (Callable): Dataset used for calibration.
-        tpc (TargetPlatformCapabilities): TargetPlatformCapabilities object which holds target specific capabilities.
         core_config (CoreConfig): CoreConfig containing parameters of how the model should be quantized.
         fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
         kernel channels indices, groups of layers by how they should be quantized, etc.)
@@ -319,16 +225,6 @@ def _prepare_model_for_quantization(graph: Graph,
     Returns:
         Graph object that represents the model, contains thresholds, and ready for quantization.
     """
-    if tb_w is not None:
-        tb_w.add_graph(graph, 'initial_graph')
-
-    transformed_graph = get_finalized_graph(graph,
-                                            tpc,
-                                            core_config.quantization_config,
-                                            fw_info,
-                                            tb_w,
-                                            fw_impl,
-                                            mixed_precision_enable=core_config.mixed_precision_enable)
 
     ######################################
     # Graph analyzing (attaching statistics collectors)
