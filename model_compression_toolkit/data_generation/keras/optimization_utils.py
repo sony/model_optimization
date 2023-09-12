@@ -125,8 +125,7 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
             for i_batch in range(self.n_batches):
                 input_imgs = self.image_pipeline.image_output_finalize(images=self.get_images_by_batch_index(i_batch))
                 output = activation_extractor.run_model(inputs=input_imgs)
-                batch_stats_holder = self.all_imgs_stats_holder.batches_stats_holder_list[i_batch]
-                self.all_imgs_stats_holder.update_batch_stats(batch_stats_holder=batch_stats_holder,
+                self.all_imgs_stats_holder.update_batch_stats(batch_index=i_batch,
                                                               input_imgs=input_imgs,
                                                               activation_extractor=activation_extractor)
 
