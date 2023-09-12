@@ -129,8 +129,8 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
         self.n_batches = len(self.batch_opt_holders_list)
         self.random_batch_reorder()
         self.all_imgs_stats_holder = PytorchAllImagesStatsHolder(n_batches=self.n_batches,
-                                                               batch_size=self.batch_size,
-                                                               mean_axis=self.mean_axis)
+                                                                 batch_size=self.batch_size,
+                                                                 mean_axis=self.mean_axis)
 
         # Initialize statistics if using all data stats
         if self.use_all_data_stats:
