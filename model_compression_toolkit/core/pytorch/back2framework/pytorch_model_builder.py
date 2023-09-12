@@ -129,6 +129,14 @@ def _generate_outputs(
         List of output tensor/s for the model
     """
     def _gen_order(order):
+        """Generates Pytorch output nodes from Graph Nodes whether as tensors, sequence or dict of tensors.
+
+        Args:
+            order: tensor, sequence or dict of Graph nodes
+
+        Returns:
+            Pytorch output nodes.
+        """
         if isinstance(order, Mapping):
             return {k:_gen_order(n) for k,n in order.items()}
         elif isinstance(order, Sequence):

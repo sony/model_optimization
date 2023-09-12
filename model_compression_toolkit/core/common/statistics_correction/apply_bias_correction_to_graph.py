@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import copy
+from tqdm.auto import tqdm
 
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
@@ -36,7 +37,7 @@ def apply_bias_correction_to_graph(graph_to_apply_bias_correction: Graph,
     """
 
     graph = copy.deepcopy(graph_to_apply_bias_correction)
-    for n in graph.nodes:
+    for n in tqdm(graph.nodes):
         if n.is_weights_quantization_enabled() and core_config.quantization_config.weights_bias_correction \
                 and not n.final_weights_quantization_cfg.weights_second_moment_correction:
             # If a kernel was quantized and weights bias correction is enabled in n.quantization_cfg,

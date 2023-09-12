@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-# from collections import namedtuple
 from dataclasses import dataclass
 from copy import copy, deepcopy
 from typing import List, Tuple, Any, Mapping, Sequence
@@ -33,13 +32,12 @@ from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 
-# nodes contains all input nodes contributing to outputs of the model
-# output_order contains order (list, dict, or simple node)
-# OutTensor = namedtuple('OutTensor', 'node output_order')
 @dataclass
 class OutTensor:
-    node:BaseNode
-    output_order:BaseNode|list[BaseNode]|dict[str,BaseNode]
+    """Dataclass to keep maintain info about output tensors in list, dict, or as simple tensor."""
+
+    node: BaseNode
+    output_order: BaseNode | list[BaseNode] | dict[str, BaseNode]
 
 class Graph(nx.MultiDiGraph, GraphSearches):
     """
@@ -379,7 +377,15 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         graph_outputs = self.get_outputs()
         new_graph_outputs = copy(graph_outputs)
 
-        def _replace_order(order):
+        def _replace_order(order: Any):
+            """recursively replaces FX nodes by Graph nodes in output node.
+
+            Args:
+                order: tensor, sequence or dict of FX tensors
+
+            Returns:
+                Graph Node, sequence or dict of Graph Nodes
+            """
             if isinstance(order, Mapping):
                 return {k:_replace_order(v) for k,v in order.items()}
             elif isinstance(order, Sequence):

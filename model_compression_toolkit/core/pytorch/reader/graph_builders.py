@@ -96,10 +96,12 @@ def nodes_builder(model: GraphModule,
                 node_has_activation = False
                 Logger.warning(
                     'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
-                    'converting the model.')
+                    'converting the model.'
+                    f" FX call_function getattr {node.args=} {node.kwargs=}")
         elif node.op == PLACEHOLDER:
             node_type = DummyPlaceHolder
         elif node.op == OUTPUT:
+            # args[0] contains how output tensors should be returned (list or dict of tensors...)
             output_nodes.append((node.all_input_nodes, node.args[0]))
             continue
         elif node.op == CALL_METHOD:
@@ -117,7 +119,8 @@ def nodes_builder(model: GraphModule,
             node_has_activation = False
             Logger.warning(
                 'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
-                'converting the model.')
+                'converting the model.'
+                f' FX get_attr {"buffer" if isinstance(node_type,BufferHolder) else "constant"}')
         else:
             raise Exception(f'Unknown node type: {node.name}')
 
@@ -223,6 +226,14 @@ def nodes_builder(model: GraphModule,
 
     # generate graph outputs list
     def _map_fx_nodes(output_order):
+        """Recursively maps output FX nodes to Graph nodes
+
+        Args:
+            output_order: expected FX output
+
+        Returns:
+            Graph node output
+        """
         if isinstance(output_order, Mapping):
             return {k: _map_fx_nodes(v) for k, v in output_order.items()}
         elif isinstance(output_order, Sequence):
