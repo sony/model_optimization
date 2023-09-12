@@ -64,7 +64,6 @@ if FOUND_TF:
             image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP_FLIP,
             image_normalization_type: ImageNormalizationType = ImageNormalizationType.KERAS_APPLICATIONS,
             extra_pixels: int = 0,
-            activations_loss_fn: Callable = None,
             bn_layer_types: List = [BatchNormalization],
             clip_images: bool = True,
             reflection: bool = True,
@@ -87,7 +86,6 @@ if FOUND_TF:
             image_pipeline_type (ImagePipelineType): The type of image pipeline to use.
             image_normalization_type (ImageNormalizationType): The type of image normalization to use.
             extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
-            activations_loss_fn (Callable): Activation loss function to use during optimization.
             bn_layer_types (List): List of BatchNorm layer types to be considered for data generation.
             clip_images (bool): Whether to clip images during optimization.
             reflection (bool): Whether to use reflection during optimization.
@@ -111,7 +109,6 @@ if FOUND_TF:
             image_pipeline_type=image_pipeline_type,
             image_normalization_type=image_normalization_type,
             extra_pixels=extra_pixels,
-            activations_loss_fn=activations_loss_fn,
             bn_layer_types=bn_layer_types,
             clip_images=clip_images,
             reflection=reflection,
