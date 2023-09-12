@@ -20,12 +20,6 @@ IMAGE_INPUT = 'image_input'
 # Define a constant for the number of channels in input image.
 NUM_INPUT_CHANNELS = 3
 
-# Default initial learning rate constant.
-DEFAULT_INITIAL_LR = 5
-
-# Default output loss multiplier.
-DEFAULT_OUTPUT_LOSS_MULTIPLIER = 0.0001
-
 # Default batch size for data generator.
 DEFAULT_DATA_GEN_BS = 32
 

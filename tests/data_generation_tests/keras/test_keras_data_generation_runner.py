@@ -36,6 +36,7 @@ class KerasDataGenerationTestRunner(unittest.TestCase):
     def test_keras_image_granularity_types(self):
         BaseKerasDataGenerationTest(self, image_granularity=ImageGranularity.ImageWise).run_test()
         BaseKerasDataGenerationTest(self, image_granularity=ImageGranularity.BatchWise).run_test()
+        BaseKerasDataGenerationTest(self, image_granularity=ImageGranularity.AllImages).run_test()
 
     def test_keras_image_pipeline_types(self):
         BaseKerasDataGenerationTest(self, image_pipeline_type=ImagePipelineType.IDENTITY).run_test()

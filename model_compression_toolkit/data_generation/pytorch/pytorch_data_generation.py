@@ -19,14 +19,14 @@ from tqdm import tqdm
 
 from model_compression_toolkit.constants import FOUND_TORCH
 from model_compression_toolkit.core.pytorch.utils import set_model
-from model_compression_toolkit.data_generation.common.constants import (DEFAULT_N_ITER, DEFAULT_DATA_GEN_BS,
-                                                                        DEFAULT_INITIAL_LR,
-                                                                        DEFAULT_OUTPUT_LOSS_MULTIPLIER)
+from model_compression_toolkit.data_generation.common.constants import DEFAULT_N_ITER, DEFAULT_DATA_GEN_BS
 from model_compression_toolkit.data_generation.common.data_generation import get_data_generation_classes
 from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig
 from model_compression_toolkit.data_generation.common.enums import ImageGranularity, SchedulerType, \
     BatchNormAlignemntLossType, DataInitType, BNLayerWeightingType, ImagePipelineType, ImageNormalizationType, \
     OutputLossType
+from model_compression_toolkit.data_generation.pytorch.constants import DEFAULT_PYTORCH_INITIAL_LR, \
+    DEFAULT_PYTORCH_OUTPUT_LOSS_MULTIPLIER
 from model_compression_toolkit.data_generation.pytorch.image_pipeline import image_pipeline_dict, \
     image_normalization_dict, BaseImagePipeline
 from model_compression_toolkit.data_generation.pytorch.model_info_exctractors import PytorchActivationExtractor, \
@@ -58,8 +58,8 @@ if FOUND_TORCH:
             n_iter: int = DEFAULT_N_ITER,
             optimizer: Optimizer = RAdam,
             data_gen_batch_size=DEFAULT_DATA_GEN_BS,
-            initial_lr=DEFAULT_INITIAL_LR,
-            output_loss_multiplier=DEFAULT_OUTPUT_LOSS_MULTIPLIER,
+            initial_lr=DEFAULT_PYTORCH_INITIAL_LR,
+            output_loss_multiplier=DEFAULT_PYTORCH_OUTPUT_LOSS_MULTIPLIER,
             scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU,
             bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
             output_loss_type: OutputLossType = OutputLossType.MIN_MAX_DIFF,
