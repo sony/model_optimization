@@ -39,7 +39,7 @@ def graph_preparation_runner(in_model: Any,
                              fw_impl: FrameworkImplementation,
                              tpc: TargetPlatformCapabilities,
                              tb_w: TensorboardWriter = None,
-                             mixed_precision_enable: bool = False):
+                             mixed_precision_enable: bool = False) -> Graph:
     """
     Quantize a trained model using post-training quantization.
     First, the model graph is optimized using several transformations (e.g. folding BatchNormalization to preceding
