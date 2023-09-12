@@ -32,7 +32,7 @@ class PytorchIdentityImagePipeline(BaseImagePipeline):
 
         Args:
             output_image_size (int): The output image size.
-            extra_pixels (int): Extra pixels add to the input image size (not used in identity pipeline).
+            extra_pixels (int): Extra pixels to add to the input image size (not used in identity pipeline).
         """
         super(PytorchIdentityImagePipeline, self).__init__(output_image_size)
 
@@ -80,7 +80,7 @@ class PytorchRandomCropImagePipeline(BaseImagePipeline):
 
         Args:
             output_image_size (int): The output image size.
-            extra_pixels (int): Extra pixels add to the input image size. Defaults to 0.
+            extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
         """
         super(PytorchRandomCropImagePipeline, self).__init__(output_image_size)
         self.extra_pixels = extra_pixels
@@ -131,7 +131,7 @@ class PytorchRandomCropFlipImagePipeline(BaseImagePipeline):
 
         Args:
             output_image_size (int): The output image size.
-            extra_pixels (int): Extra pixels add to the input image size. Defaults to 0.
+            extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
         """
         super(PytorchRandomCropFlipImagePipeline, self).__init__(output_image_size)
         self.extra_pixels = extra_pixels

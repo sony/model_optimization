@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import torch
-
 # Axis indices for tensor dimensions
 BATCH_AXIS, CHANNEL_AXIS, H_AXIS, W_AXIS = 0, 1, 2, 3
-IMAGE_INPUT = 'image_input'
-NUM_INPUT_CHANNELS = 3
+
+# Default initial learning rate constant.
+DEFAULT_PYTORCH_INITIAL_LR = 5
+
+# Default output loss multiplier.
+DEFAULT_PYTORCH_OUTPUT_LOSS_MULTIPLIER = 1e-4

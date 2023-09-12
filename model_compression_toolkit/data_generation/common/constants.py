@@ -12,12 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.constants import FOUND_TORCH, FOUND_TF
+# Common constants for Data Generation
 
-if FOUND_TF:
-    from model_compression_toolkit.data_generation.keras.keras_data_generation import (
-        tensorflow_data_generation_experimental, get_tensorflow_data_generation_config)
+# Define a constant for the image input key.
+IMAGE_INPUT = 'image_input'
 
-if FOUND_TORCH:
-    from model_compression_toolkit.data_generation.pytorch.pytorch_data_generation import (
-        pytorch_data_generation_experimental, get_pytorch_data_generation_config)
+# Define a constant for the number of channels in input image.
+NUM_INPUT_CHANNELS = 3
+
+# Default batch size for data generator.
+DEFAULT_DATA_GEN_BS = 32
+
+# Default number of iterations.
+DEFAULT_N_ITER = 500

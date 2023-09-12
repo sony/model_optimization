@@ -37,7 +37,6 @@ class DataGenerationConfig:
                  image_pipeline_type: ImagePipelineType = None,
                  image_normalization_type: ImageNormalizationType = None,
                  extra_pixels: int = 0,
-                 activations_loss_fn: Callable = None,
                  bn_layer_types: List = [],
                  clip_images: bool = True,
                  reflection: bool = True,
@@ -59,8 +58,7 @@ class DataGenerationConfig:
             layer_weighting_type (BNLayerWeightingType): Type of layer weighting. Defaults to None.
             image_pipeline_type (ImagePipelineType): Type of image pipeline. Defaults to None.
             image_normalization_type (ImageNormalizationType): Type of image normalization. Defaults to None.
-            extra_pixels (int): Extra pixels add to the input image size. Defaults to 0.
-            activations_loss_fn (Callable): Loss function for activations. Defaults to None.
+            extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
             bn_layer_types (List): List of BatchNorm layer types. Defaults to [].
             clip_images (bool): Flag to enable image clipping. Defaults to True.
             reflection (bool): Flag to enable reflection. Defaults to True.
@@ -79,7 +77,6 @@ class DataGenerationConfig:
         self.extra_pixels = extra_pixels
         self.data_init_type = data_init_type
         self.layer_weighting_type = layer_weighting_type
-        self.activations_loss_fn = activations_loss_fn
         self.bn_layer_types = bn_layer_types
         self.clip_images = clip_images
         self.reflection = reflection

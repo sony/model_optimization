@@ -76,6 +76,8 @@ if found_tf:
         KerasTrainableInfrastructureTestRunner
     from tests.keras_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as keras_gptq_soft_quantizer_test
     from tests.keras_tests.function_tests.test_activation_quantization_holder_gptq import TestGPTQModelBuilderWithActivationHolder
+    from tests.data_generation_tests.keras.test_keras_data_generation_runner import KerasDataGenerationTestRunner
+
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -139,6 +141,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasTrainableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(keras_gptq_soft_quantizer_test))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasDataGenerationTestRunner))
 
     if found_pytorch:
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQModelBuilderWithActivationHolderPytorch))
