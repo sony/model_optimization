@@ -50,6 +50,7 @@ if FOUND_TORCH:
     from torch import Tensor
     from torch.nn import Module
     from torch.optim import RAdam, Optimizer
+    from torch.fx import symbolic_trace
 
     from model_compression_toolkit.core.pytorch.utils import get_working_device
 
@@ -69,7 +70,6 @@ if FOUND_TORCH:
             image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP,
             image_normalization_type: ImageNormalizationType = ImageNormalizationType.TORCHVISION,
             extra_pixels: int = 0,
-            activations_loss_fn: Callable = None,
             bn_layer_types: List = [torch.nn.BatchNorm2d],
             clip_images: bool = True,
             reflection: bool = True,
@@ -92,7 +92,6 @@ if FOUND_TORCH:
             image_pipeline_type (ImagePipelineType): The type of image pipeline to use.
             image_normalization_type (ImageNormalizationType): The type of image normalization to use.
             extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
-            activations_loss_fn (Callable): Activation loss function to use during optimization.
             bn_layer_types (List): List of BatchNorm layer types to be considered for data generation.
             clip_images (bool): Whether to clip images during optimization.
             reflection (bool): Whether to use reflection during optimization.
@@ -118,7 +117,6 @@ if FOUND_TORCH:
             image_pipeline_type=image_pipeline_type,
             image_normalization_type=image_normalization_type,
             extra_pixels=extra_pixels,
-            activations_loss_fn=activations_loss_fn,
             bn_layer_types=bn_layer_types,
             clip_images=clip_images,
             reflection=reflection
@@ -142,7 +140,10 @@ if FOUND_TORCH:
         Returns:
             List[Tensor]: Finalized list containing generated images.
         """
-        # Get Data Generation functions and classes
+        # get a static graph representation of the model using torch.fx
+        fx_model = symbolic_trace(model)
+		
+		# Get Data Generation functions and classes
         image_pipeline, normalization, bn_layer_weighting_fn, bn_alignment_loss_fn, output_loss_fn, \
             init_dataset = get_data_generation_classes(data_generation_config=data_generation_config,
                                                        output_image_size=output_image_size,
@@ -172,7 +173,10 @@ if FOUND_TORCH:
         set_model(model)
 
         # Create an activation extractor object to extract activations from the model
-        activation_extractor = PytorchActivationExtractor(model, data_generation_config.bn_layer_types)
+        activation_extractor = PytorchActivationExtractor(
+            model,
+            fx_model,
+            data_generation_config.bn_layer_types)
 
         # Create an orig_bn_stats_holder object to hold original BatchNorm statistics
         orig_bn_stats_holder = PytorchOriginalBNStatsHolder(model, data_generation_config.bn_layer_types)
@@ -197,16 +201,17 @@ if FOUND_TORCH:
                                                                    reflection=data_generation_config.reflection)
 
         # Perform data generation and obtain a list of generated images
-        generated_images_list = data_generation(data_generation_config=data_generation_config,
-                                                activation_extractor=activation_extractor,
-                                                orig_bn_stats_holder=orig_bn_stats_holder,
-                                                all_imgs_opt_handler=all_imgs_opt_handler,
-                                                image_pipeline=image_pipeline,
-                                                bn_layer_weighting_fn=bn_layer_weighting_fn,
-                                                bn_alignment_loss_fn=bn_alignment_loss_fn,
-                                                output_loss_fn=output_loss_fn,
-                                                output_loss_multiplier=data_generation_config.output_loss_multiplier,
-                                                )
+        generated_images_list = data_generation(
+            data_generation_config=data_generation_config,
+            activation_extractor=activation_extractor,
+            orig_bn_stats_holder=orig_bn_stats_holder,
+            all_imgs_opt_handler=all_imgs_opt_handler,
+            image_pipeline=image_pipeline,
+            bn_layer_weighting_fn=bn_layer_weighting_fn,
+            bn_alignment_loss_fn=bn_alignment_loss_fn,
+            output_loss_fn=output_loss_fn,
+            output_loss_multiplier=data_generation_config.output_loss_multiplier,
+        )
         # Return the list of finalized generated images
         return generated_images_list
 
@@ -281,8 +286,12 @@ if FOUND_TORCH:
                                                                bn_layer_weights=bn_layer_weights)
 
                 # Compute output loss
-                output_loss = output_loss_fn(output_imgs=output) if output_loss_multiplier > 0 else torch.zeros(1).to(
-                    get_working_device())
+                if output_loss_multiplier > 0:
+                    output_loss = output_loss_fn(
+                        output_imgs=output,
+                        activation_extractor=activation_extractor)
+                else:
+                    output_loss = torch.zeros(1).to(get_working_device())
 
                 # Compute total loss
                 total_loss = bn_loss + output_loss_multiplier * output_loss
@@ -299,7 +308,7 @@ if FOUND_TORCH:
 
             ibar.set_description(f"Total Loss: {total_loss.item():.5f}, "
                                  f"BN Loss: {bn_loss.item():.5f}, "
-                                 f"Output Loss: {output_loss.item():.5f}")
+                                 f"Output Loss: {output_loss_multiplier * output_loss.item():.5f}")
 
         # Return a list containing the finalized generated images
         finalized_imgs = all_imgs_opt_handler.get_finalized_images()
