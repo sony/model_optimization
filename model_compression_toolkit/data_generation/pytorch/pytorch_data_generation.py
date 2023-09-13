@@ -26,7 +26,7 @@ from model_compression_toolkit.data_generation.common.enums import ImageGranular
     BatchNormAlignemntLossType, DataInitType, BNLayerWeightingType, ImagePipelineType, ImageNormalizationType, \
     OutputLossType
 from model_compression_toolkit.data_generation.pytorch.constants import DEFAULT_PYTORCH_INITIAL_LR, \
-    DEFAULT_PYTORCH_OUTPUT_LOSS_MULTIPLIER
+    DEFAULT_PYTORCH_OUTPUT_LOSS_MULTIPLIER, DEFAULT_PYTORCH_BN_LAYER_TYPES, DEFAULT_PYTORCH_LAST_LAYER_TYPES
 from model_compression_toolkit.data_generation.pytorch.image_pipeline import image_pipeline_dict, \
     image_normalization_dict, BaseImagePipeline
 from model_compression_toolkit.data_generation.pytorch.model_info_exctractors import PytorchActivationExtractor, \
@@ -63,14 +63,15 @@ if FOUND_TORCH:
             output_loss_multiplier=DEFAULT_PYTORCH_OUTPUT_LOSS_MULTIPLIER,
             scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU,
             bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
-            output_loss_type: OutputLossType = OutputLossType.MIN_MAX_DIFF,
+            output_loss_type: OutputLossType = OutputLossType.REGULARIZED_MIN_MAX_DIFF,
             data_init_type: DataInitType = DataInitType.Diverse,
             layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
             image_granularity=ImageGranularity.AllImages,
             image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP,
             image_normalization_type: ImageNormalizationType = ImageNormalizationType.TORCHVISION,
             extra_pixels: int = 0,
-            bn_layer_types: List = [torch.nn.BatchNorm2d],
+            bn_layer_types: List = DEFAULT_PYTORCH_BN_LAYER_TYPES,
+            last_layer_types: List = DEFAULT_PYTORCH_LAST_LAYER_TYPES,
             clip_images: bool = True,
             reflection: bool = True,
     ) -> DataGenerationConfig:
@@ -93,6 +94,7 @@ if FOUND_TORCH:
             image_normalization_type (ImageNormalizationType): The type of image normalization to use.
             extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
             bn_layer_types (List): List of BatchNorm layer types to be considered for data generation.
+            last_layer_types (List): List of layer types to be considered for the output loss.
             clip_images (bool): Whether to clip images during optimization.
             reflection (bool): Whether to use reflection during optimization.
 
@@ -118,6 +120,7 @@ if FOUND_TORCH:
             image_normalization_type=image_normalization_type,
             extra_pixels=extra_pixels,
             bn_layer_types=bn_layer_types,
+            last_layer_types=last_layer_types,
             clip_images=clip_images,
             reflection=reflection
         )
@@ -176,7 +179,8 @@ if FOUND_TORCH:
         activation_extractor = PytorchActivationExtractor(
             model,
             fx_model,
-            data_generation_config.bn_layer_types)
+            data_generation_config.bn_layer_types,
+            data_generation_config.last_layer_types)
 
         # Create an orig_bn_stats_holder object to hold original BatchNorm statistics
         orig_bn_stats_holder = PytorchOriginalBNStatsHolder(model, data_generation_config.bn_layer_types)

@@ -50,7 +50,10 @@ def regularized_min_max_diff(
         activation_extractor: PytorchActivationExtractor,
         eps: float = 1e-6) -> Tensor:
     """
-    Calculate the minimum-maximum difference of output images.
+    Calculate the regularized minimum-maximum difference of output images. We want to maximize
+    the difference between the minimum and maximum values of the output, but also to regularize
+    their values so that they don't exceed the norm of the last layer's input times the norm of
+    the last layer's weights.
 
     Args:
         output_imgs (Tensor or List[Tensor]): The output of the model on images.
@@ -60,11 +63,16 @@ def regularized_min_max_diff(
     Returns:
         Tensor: The computed minimum-maximum difference loss.
     """
+    # get the input to the last linear layers of the model
     output_layers_inputs = activation_extractor.get_output_layer_input_activation()
+
+    # get the weights of the last linear layers of the model
     weights_output_layers = activation_extractor.get_output_layers_weights()
+
     if not isinstance(output_imgs, (list, tuple)):
         output_imgs = [output_imgs]
     output_loss = torch.zeros(1).to(get_working_device())
+
     for output_weight, output, last_layer_input in zip(weights_output_layers, output_imgs, output_layers_inputs):
         weights_norm = torch.linalg.norm(output_weight, dim=1)
         output = torch.reshape(output, [output.shape[0], -1])
@@ -73,7 +81,7 @@ def regularized_min_max_diff(
         last_layer_norm = torch.linalg.norm(last_layer_input, dim=1)
         reg_min = torch.abs(torch.abs(out_min) - 0.5 * last_layer_norm * weights_norm[out_argmin])
         reg_max = torch.abs(torch.abs(out_max) - 0.5 * last_layer_norm * weights_norm[out_argmax])
-        dynamic_loss = 1 / (out_max - out_min)
+        dynamic_loss = 1 / (out_max - out_min + eps)
         output_loss += torch.mean(reg_min + reg_max + dynamic_loss)
     return output_loss
 

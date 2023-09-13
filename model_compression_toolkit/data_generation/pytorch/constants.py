@@ -21,6 +21,13 @@ BATCH_AXIS, CHANNEL_AXIS, H_AXIS, W_AXIS = 0, 1, 2, 3
 DEFAULT_PYTORCH_INITIAL_LR = 16
 
 # Default output loss multiplier.
-DEFAULT_PYTORCH_OUTPUT_LOSS_MULTIPLIER = 5e-6
+DEFAULT_PYTORCH_OUTPUT_LOSS_MULTIPLIER = 5e-7
 
+# Default BatchNorm layer types
+DEFAULT_PYTORCH_BN_LAYER_TYPES = [torch.nn.BatchNorm2d]
+
+# Default last layer types
+DEFAULT_PYTORCH_LAST_LAYER_TYPES = [torch.nn.Linear, torch.nn.Conv2d]
+
+# Output string
 OUTPUT = 'output'
