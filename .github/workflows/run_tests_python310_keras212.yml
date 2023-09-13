@@ -1,6 +1,8 @@
 name: Python 3.10, Keras 2.12
 on:
   workflow_dispatch: # Allow manual triggers
+  schedule:
+    - cron: 0 0 * * *
   pull_request:
     branches:
       - main
