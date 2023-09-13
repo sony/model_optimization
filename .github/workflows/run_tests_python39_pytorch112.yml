@@ -1,6 +1,8 @@
 name: Python 3.9, Pytorch 1.12
 on:
   workflow_dispatch: # Allow manual triggers
+  schedule:
+    - cron: 0 0 * * *
   pull_request:
     branches:
       - main
