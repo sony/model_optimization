@@ -22,7 +22,7 @@
 import torch
 
 from common.model_lib import ModuleReplacer
-from ultralytics import YOLO
+from ultralytics_lib import YOLO
 from ultralytics.nn.modules import C2f, Detect
 from ultralytics.nn.tasks import DetectionModel
 from ultralytics.yolo.cfg import get_cfg

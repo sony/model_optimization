@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import timm
+import timm_lib
 from timm.data import create_dataset, create_loader, resolve_data_config
 
 from tutorials.quick_start.common.model_lib import BaseModelLib
@@ -33,10 +33,10 @@ class ModelLib(BaseModelLib):
         Args:
             args (dict): user arguments
         """
-        avialable_models = timm.list_models('')
+        avialable_models = timm_lib.list_models('')
         model_name = args[MODEL_NAME]
         if model_name in avialable_models:
-            self.model = timm.create_model(args[MODEL_NAME], pretrained=True)
+            self.model = timm_lib.create_model(args[MODEL_NAME], pretrained=True)
             self.data_config = resolve_data_config([], model=self.model)  # include the pre-processing
             self.dataset_name = IMAGENET_DATASET
             super().__init__(args)
