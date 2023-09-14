@@ -38,6 +38,7 @@ class DataGenerationConfig:
                  image_normalization_type: ImageNormalizationType = None,
                  extra_pixels: int = 0,
                  bn_layer_types: List = [],
+                 last_layer_types: List = [],
                  clip_images: bool = True,
                  reflection: bool = True,
                  ):
@@ -60,6 +61,7 @@ class DataGenerationConfig:
             image_normalization_type (ImageNormalizationType): Type of image normalization. Defaults to None.
             extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
             bn_layer_types (List): List of BatchNorm layer types. Defaults to [].
+            last_layer_types (List): List of layer types. Defaults to [].
             clip_images (bool): Flag to enable image clipping. Defaults to True.
             reflection (bool): Flag to enable reflection. Defaults to True.
         """
@@ -78,6 +80,7 @@ class DataGenerationConfig:
         self.data_init_type = data_init_type
         self.layer_weighting_type = layer_weighting_type
         self.bn_layer_types = bn_layer_types
+        self.last_layer_types = last_layer_types
         self.clip_images = clip_images
         self.reflection = reflection
 

@@ -138,6 +138,26 @@ class ActivationExtractor:
         """
         raise NotImplemented
 
+    @abstractmethod
+    def get_output_layer_input_activation(self) -> List:
+        """
+        Get the input activation tensors of all the output layers that are Linear or Conv2d.
+
+        Returns:
+            Any: Input activation tensors of all the output layers that are Linear or Conv2d.
+        """
+        raise NotImplemented
+
+    @abstractmethod
+    def get_output_layers_weights(self) -> List:
+        """
+        Get the weight tensors of all the output layers that are Linear or Conv2d.
+
+        Returns:
+            List: Weight tensors of all the output layers that are Linear or Conv2d.
+        """
+        raise NotImplemented
+
     def get_num_extractor_layers(self) -> int:
         """
         Get the number of layers for which to extract input activations.

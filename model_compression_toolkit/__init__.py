@@ -24,6 +24,7 @@ from model_compression_toolkit import ptq
 from model_compression_toolkit import qat
 from model_compression_toolkit import exporter
 from model_compression_toolkit import gptq
+from model_compression_toolkit import data_generation
 from model_compression_toolkit.trainable_infrastructure.keras.load_model import keras_load_quantized_model
 
 
