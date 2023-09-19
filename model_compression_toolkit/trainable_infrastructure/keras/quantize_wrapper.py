@@ -98,7 +98,7 @@ if FOUND_TF:
             return inferable_quantizers_wrapper
 
 else:
-    class KerasQuantizationWrapper(object):
+    class KerasTrainableQuantizationWrapper:
         def __init__(self,
                      layer,
                      weights_quantizers: Dict[str, BaseTrainableQuantizer] = None):
@@ -110,5 +110,5 @@ else:
                 weights_quantizers: A dictionary between a weight's name to its quantizer.
             """
             Logger.critical('Installing tensorflow is mandatory '
-                            'when using KerasQuantizationWrapper. '
+                            'when using KerasTrainableQuantizationWrapper. '
                             'Could not find Tensorflow package.')  # pragma: no cover
