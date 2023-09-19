@@ -110,7 +110,7 @@ if __name__ == '__main__':
     # In this example, we use a pre-defined platform that allows us to set a non-uniform (LUT) quantizer
     # for low precision weights candidates.
     # The used platform is attached to a Pytorch layers representation.
-    target_platform_cap = mct.get_target_platform_capabilities('pytorch', 'default', 'v3_lut')
+    target_platform_cap = mct.get_target_platform_capabilities('pytorch', 'default', 'v1_lut')
 
     # Get KPI information to constraint your model's memory size.
     # Retrieve a KPI object with helpful information of each KPI metric,
