@@ -19,6 +19,8 @@ from os import walk, getcwd
 from os.path import join, isdir, isfile
 import requests
 import re
+import os
+os.environ['CURL_CA_BUNDLE'] = ''
 
 
 class TestDocsLinks(unittest.TestCase):
