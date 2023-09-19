@@ -25,10 +25,10 @@ else:
     from keras.engine.base_layer import Layer
 
 from mct_quantizers import KerasQuantizationWrapper
-from mct_quantizers.logger import Logger
 
 layers = keras.layers
 
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import BaseKerasExporter
 
 from tensorflow.python.keras.engine import base_layer_utils

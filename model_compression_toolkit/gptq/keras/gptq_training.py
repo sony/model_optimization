@@ -26,13 +26,14 @@ from model_compression_toolkit.core.keras.back2framework.keras_model_builder imp
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.keras.quantizer.quantization_builder import quantization_builder
 from model_compression_toolkit.logger import Logger
-from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
+from mct_quantizers import KerasActivationQuantizationHolder
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.engine.base_layer import TensorFlowOpLayer
 else:
     from keras.engine.base_layer import TensorFlowOpLayer
 
+from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
@@ -131,7 +132,7 @@ class KerasGPTQTrainer(GPTQTrainer):
 
     def gptq_wrapper(self,
                      n: common.BaseNode,
-                     layer: Layer) -> Union[KerasQuantizationWrapper, Layer]:
+                     layer: Layer) -> Union[KerasTrainableQuantizationWrapper, Layer]:
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping.
 
@@ -146,7 +147,7 @@ class KerasGPTQTrainer(GPTQTrainer):
             weights_quantizers, _ = quantization_builder(n,
                                                          self.gptq_config) # TODO: split quantizers building into two functions: for weights and activations
             if len(weights_quantizers) > 0:
-                return KerasQuantizationWrapper(layer,
+                return KerasTrainableQuantizationWrapper(layer,
                                                    weights_quantizers=weights_quantizers)
         return layer
 
@@ -318,7 +319,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         graph = copy.copy(self.graph_quant)
 
         for layer in self.fxp_model.layers:
-            if isinstance(layer, KerasQuantizationWrapper):
+            if isinstance(layer, KerasTrainableQuantizationWrapper):
                 node = graph.find_node_by_name(layer.layer.name)
                 if len(node) == 0 and isinstance(layer.layer, TensorFlowOpLayer):
                     node = graph.find_node_by_name('_'.join(layer.layer.name.split('_')[3:]))

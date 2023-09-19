@@ -47,4 +47,7 @@ class TestUnsupportedCustomLayer(unittest.TestCase):
         with self.assertRaises(Exception) as e:
             mct.ptq.keras_post_training_quantization_experimental(model,
                                                                   lambda _: [np.random.randn(1, 3, 3, 3)])
-        self.assertEqual(expected_error, str(e.exception))
+        # Remove class object path to compare with expected error message
+        err_msg = str(e.exception)
+        err_msg = err_msg[:err_msg.find('<class ')+8] + err_msg[err_msg.find('test_unsupported_custom_layer'):]
+        self.assertEqual(expected_error, err_msg)

@@ -11,7 +11,7 @@ from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.gptq.keras.quantizer.soft_rounding.symmetric_soft_quantizer import \
     SymmetricSoftRoundingGPTQ
 from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig
-from mct_quantizers import KerasQuantizationWrapper
+from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
@@ -40,7 +40,7 @@ def wrap_test_model(model, per_channel=False, param_learning=False):
 
     def _wrap(layer):
         if isinstance(layer, Conv2D):
-            return KerasQuantizationWrapper(layer, weights_quantizers={'kernel': sq})
+            return KerasTrainableQuantizationWrapper(layer, weights_quantizers={'kernel': sq})
         else:
             return layer
     return clone_model(model, clone_function=_wrap)
