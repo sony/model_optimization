@@ -1,8 +1,9 @@
 from typing import List, Any, Tuple
 
 import tensorflow as tf
-from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
+from mct_quantizers import KerasActivationQuantizationHolder
 
+from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.ptq import keras_post_training_quantization_experimental
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
@@ -141,7 +142,7 @@ class BaseKerasLayerTest(BaseLayerTest):
             if not isinstance(layer, InputLayer):
                 if isinstance(layer, KerasActivationQuantizationHolder):
                     assert layer.activation_holder_quantizer.get_config()['num_bits'] == 8
-                if isinstance(layer, KerasQuantizationWrapper):
+                if isinstance(layer, KerasTrainableQuantizationWrapper):
                     # Assert the kernel op outputs are quantized
                     assert isinstance(layer.outbound_nodes[0].layer, KerasActivationQuantizationHolder)
                     assert len(layer.weights_quantizers) > 0
@@ -156,7 +157,7 @@ class BaseKerasLayerTest(BaseLayerTest):
             # Check there are no fake-quant layers
             self.unit_test.assertFalse(isinstance(layer, KerasActivationQuantizationHolder))
             if not isinstance(layer, InputLayer):
-                if isinstance(layer, KerasQuantizationWrapper):
+                if isinstance(layer, KerasTrainableQuantizationWrapper):
                     assert len(layer.activation_quantizers) == 0
                     assert len(layer.weights_quantizers.keys()) == 0
                     # check unchanged weights

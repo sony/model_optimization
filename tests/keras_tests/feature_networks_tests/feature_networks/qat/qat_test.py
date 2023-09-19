@@ -21,8 +21,8 @@ from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.qat import TrainingMethod
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
-from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder, \
-    KerasQuantizationWrapper
+from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
+from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder, KerasQuantizationWrapper
 from mct_quantizers.common.base_inferable_quantizer import QuantizerID
 
 from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
@@ -88,10 +88,10 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
     def compare(self, quantized_model, float_model, loaded_model, input_x=None, quantization_info=None):
         if self.test_loading:
             for lo, ll in zip(quantized_model.layers, loaded_model.layers):
-                if isinstance(ll, KerasQuantizationWrapper):
-                    self.unit_test.assertTrue(isinstance(lo, KerasQuantizationWrapper))
-                if isinstance(lo, KerasQuantizationWrapper):
-                    self.unit_test.assertTrue(isinstance(ll, KerasQuantizationWrapper))
+                if isinstance(ll, KerasTrainableQuantizationWrapper):
+                    self.unit_test.assertTrue(isinstance(lo, KerasTrainableQuantizationWrapper))
+                if isinstance(lo, KerasTrainableQuantizationWrapper):
+                    self.unit_test.assertTrue(isinstance(ll, KerasTrainableQuantizationWrapper))
                     for w_ll, w_lo in zip(ll.weights, lo.weights):
                         self.unit_test.assertTrue(np.all(w_ll.numpy() == w_lo.numpy()))
 
@@ -136,9 +136,6 @@ class QuantizationAwareTrainingQuantizersTest(QuantizationAwareTrainingTest):
                 dw_weight = w_select[0]
                 quantized_dw_weight = quantizer(dw_weight, False)
         self.unit_test.assertTrue(np.all(dw_weight == quantized_dw_weight))
-
-
-
 
 
 class QuantizationAwareTrainingQuantizerHolderTest(QuantizationAwareTrainingTest):

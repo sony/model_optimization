@@ -3,7 +3,7 @@ import unittest
 import keras
 import numpy as np
 from keras.layers import ReLU
-from mct_quantizers import KerasActivationQuantizationHolder, KerasQuantizationWrapper
+from mct_quantizers import KerasActivationQuantizationHolder
 from tensorflow.keras.layers import Conv2D, Input
 
 import model_compression_toolkit as mct

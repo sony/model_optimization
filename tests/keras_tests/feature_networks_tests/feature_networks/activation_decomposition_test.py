@@ -17,7 +17,6 @@
 import tensorflow as tf
 
 from model_compression_toolkit.core.keras.constants import ACTIVATION, LINEAR
-from mct_quantizers import KerasQuantizationWrapper
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.utils import get_layers_from_model_by_type
