@@ -15,9 +15,6 @@ jobs:
         with:
           python-version: 3.8
 
-      - name: Edit requirements mct-quantizers name # Remove the entire line in requirements.txt so no need special care for the specified version
-        run: |
-          sed -i "/mct-quantizers/c\mct-quantizers-nightly" requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -37,5 +34,3 @@ jobs:
       - name: Post publish import test
         run: |
           pip install mct-nightly
-          pip list
-          [ "$(pip list | grep mct-quantizers-nightly | wc -l)" = "1" ] || (echo "not one line" && exit 1)
