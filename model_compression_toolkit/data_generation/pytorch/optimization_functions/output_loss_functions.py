@@ -67,18 +67,21 @@ def regularized_min_max_diff(
     output_layers_inputs = activation_extractor.get_output_layer_input_activation()
 
     # get the weights of the last linear layers of the model
-    weights_output_layers = activation_extractor.get_output_layers_weights()
+    weights_output_layers = activation_extractor.get_last_linear_layers_weights()
 
     if not isinstance(output_imgs, (list, tuple)):
+        output_imgs = torch.reshape(output_imgs, [output_imgs.shape[0], output_imgs.shape[1], -1])
+        output_imgs = torch.mean(output_imgs, dim=-1)
         output_imgs = [output_imgs]
     output_loss = torch.zeros(1).to(get_working_device())
 
     for output_weight, output, last_layer_input in zip(weights_output_layers, output_imgs, output_layers_inputs):
-        weights_norm = torch.linalg.norm(output_weight, dim=1)
-        output = torch.reshape(output, [output.shape[0], -1])
+        weights_norm = torch.linalg.norm(output_weight.squeeze(), dim=1)
         out_max, out_argmax = torch.max(output, dim=1)
         out_min, out_argmin = torch.min(output, dim=1)
-        last_layer_norm = torch.linalg.norm(last_layer_input, dim=1)
+        last_layer_avg = torch.reshape(last_layer_input, [last_layer_input.shape[0], last_layer_input.shape[1], -1])
+        last_layer_avg = torch.mean(last_layer_avg, dim=-1)
+        last_layer_norm = torch.linalg.norm(last_layer_avg, dim=1)
         reg_min = torch.abs(torch.abs(out_min) - 0.5 * last_layer_norm * weights_norm[out_argmin])
         reg_max = torch.abs(torch.abs(out_max) - 0.5 * last_layer_norm * weights_norm[out_argmax])
         dynamic_loss = 1 / (out_max - out_min + eps)
