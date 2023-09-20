@@ -42,9 +42,12 @@ if FOUND_TORCH:
         get_pytorch_tpc as get_pytorch_tpc_v1
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1_pot.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v1_pot
+    from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1_lut.tpc_pytorch import get_pytorch_tpc as get_pytorch_tpc_v1_lut
+
 
     # Pytorch: TPC versioning
     pytorch_tpc_models_dict = {'v1': get_pytorch_tpc_v1(),
+                               'v1_lut': get_pytorch_tpc_v1_lut(),
                                'v1_pot': get_pytorch_tpc_v1_pot(),
                                LATEST: get_pytorch_tpc_latest()}
 
