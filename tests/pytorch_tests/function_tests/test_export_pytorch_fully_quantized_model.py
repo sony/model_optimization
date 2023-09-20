@@ -108,7 +108,7 @@ if FOUND_ONNX:
             def test_onnx_inference(self):
                 import onnxruntime
 
-                ort_session = onnxruntime.InferenceSession(SAVED_MODEL_PATH_ONNX)
+                ort_session = onnxruntime.InferenceSession(SAVED_MODEL_PATH_ONNX, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
 
                 def to_numpy(tensor):
                     return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
@@ -163,7 +163,7 @@ if FOUND_ONNX:
             def test_onnx_inference(self):
                 import onnxruntime
 
-                ort_session = onnxruntime.InferenceSession(SAVED_MP_MODEL_PATH_ONNX)
+                ort_session = onnxruntime.InferenceSession(SAVED_MP_MODEL_PATH_ONNX, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
 
                 def to_numpy(tensor):
                     return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
