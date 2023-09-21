@@ -44,6 +44,7 @@ the [results CSV](tutorials/quick_start/results/model_quantization_results.csv).
 In addition, a set of [notebooks](tutorials/notebooks) are provided for an easy start. For example:
 * [MobileNet with Tensorflow](tutorials/notebooks/example_keras_mobilenet.py).
 * [MobileNetV2 with PyTorch](tutorials/notebooks/example_pytorch_mobilenet_v2.py).
+* [Data Generation for ResNet18 with PyTorch](tutorials/notebooks/example_pytorch_data_generation.ipynb).
 
 
 ### Supported Versions
@@ -65,7 +66,13 @@ Currently, MCT is being tested on various Python, Pytorch and TensorFlow version
 
 
 ## Supported Features
+MCT offers a range of powerful features to optimize neural network models for efficient deployment. These supported features include:
 
+### Data Generation
+MCT provides tools for generating synthetic images based on the statistics stored in a model's batch normalization layers. These generated images are valuable for various compression tasks where image data is required, such as quantization and pruning. 
+You can customize data generation configurations to suit your specific needs. [Go to the Data Generation page.](model_compression_toolkit/data_generation/README.md)
+
+### Quantization
 MCT supports different quantization methods:
 * Post-training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental)
 * Gradient-based post-training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_gradient_post_training_quantization_experimental.html#ug-pytorch-gradient-post-training-quantization-experimental)
@@ -117,11 +124,11 @@ For more results, please see [1]
 We quantized classification networks from the torchvision library. 
 In the following table we present the ImageNet validation results for these models:
 
-| Network Name              | Float Accuracy  | 8Bit Accuracy   | 
-|---------------------------|-----------------|-----------------| 
-| MobileNet V2 [3]          | 71.886          | 71.444          |
-| ResNet-18 [3]             | 69.86           | 69.63           |
-| SqueezeNet 1.1 [3]        | 58.128          | 57.678          |
+| Network Name              | Float Accuracy  | 8Bit Accuracy   | Data-Free 8Bit Accuracy |
+|---------------------------|-----------------|-----------------|-------------------------|
+| MobileNet V2 [3]          | 71.886          | 71.444          |71.29|
+| ResNet-18 [3]             | 69.86           | 69.63           |69.53|
+| SqueezeNet 1.1 [3]        | 58.128          | 57.678          ||
 
 For more results, please refer to [quick start](https://github.com/sony/model_optimization/tree/main/tutorials/quick_start).
 

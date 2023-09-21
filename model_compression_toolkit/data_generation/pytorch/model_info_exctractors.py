@@ -127,8 +127,9 @@ class PytorchActivationExtractor(ActivationExtractor):
         self.num_layers = sum([1 if isinstance(layer, tuple(layer_types_to_extract_inputs)) else 0 for layer in model.modules()])
         print(f'Number of layers = {self.num_layers}')
         self.hooks = {}  # Dictionary to store InputHook instances by layer name
-        self.output_layers_hooks = {}  # Dictionary to store InputHook instances by layer name
+        self.last_linear_layers_hooks = {}  # Dictionary to store InputHook instances by layer name
         self.hook_handles = []  # List to store hook handles
+        self.last_linear_layer_weights = [] # list of the last linear layers' weights
 
         # set hooks for batch norm layers
         self._set_hooks_for_layers()
@@ -153,24 +154,26 @@ class PytorchActivationExtractor(ActivationExtractor):
         This function finds the output layers of the model and adds hooks to the input activation of
         those layers.
         """
-        output_nodes = []
-        self.out_module_weights = []
-
-        # Find the output nodes in the graph
         for node in self.fx_model.graph.nodes:
-            if node.op == OUTPUT:
-                output_nodes += node.all_input_nodes
 
-        # Add hooks to the output layers if they are a Linear or Conv2d layer
-        for out in output_nodes:
-            for name, module in self.model.named_modules():
-                if name == out.target:
-                    if isinstance(module, self.last_layer_types_to_extract_inputs):
-                        self.out_module_weights.append(module.weight.data.clone())
-                        hook = InputHook()  # Create an InputHook instance
-                        self.output_layers_hooks.update({name: hook})
-                        hook_handle = module.register_forward_hook(hook.hook)  # Register the hook on the module
-                        self.hook_handles.append(hook_handle)
+            # Find the output nodes in the graph
+            if node.op == 'output':
+                found_linear_node = False
+                nodes_to_search = node.all_input_nodes
+
+                # Search graph from the output node and back until we find a linear node
+                for node_to_search in nodes_to_search:
+                    for name, module in self.model.named_modules():
+                        if name == node_to_search.target:
+                            if isinstance(module, Linear) or isinstance(module, Conv2d):
+                                self.last_linear_layer_weights.append(module.weight.data.clone())
+                                hook = InputHook()  # Create an InputHook instance
+                                self.last_linear_layers_hooks.update({name: hook})
+                                hook_handle = module.register_forward_hook(hook.hook)  # Register the hook on the module
+                                self.hook_handles.append(hook_handle)
+                                found_linear_node = True
+                    if not found_linear_node:
+                        nodes_to_search += node_to_search.all_input_nodes
 
     def get_layer_input_activation(self, layer_name: str) -> Tensor:
         """
@@ -191,16 +194,16 @@ class PytorchActivationExtractor(ActivationExtractor):
         Returns:
             List: Input activation tensors of all the output layers that are Linear or Conv2d.
         """
-        return [v.input for v in self.output_layers_hooks.values()]
+        return [v.input for v in self.last_linear_layers_hooks.values()]
 
-    def get_output_layers_weights(self) -> List:
+    def get_last_linear_layers_weights(self) -> List:
         """
-        Get the weight tensors of all the output layers that are Linear or Conv2d.
+        Get the weight tensors of all the last linear layers.
 
         Returns:
-            List: Weight tensors of all the output layers that are Linear or Conv2d.
+            List: Weight tensors of all the last linear layers.
         """
-        return self.out_module_weights
+        return self.last_linear_layer_weights
 
     def get_num_extractor_layers(self) -> int:
         """
@@ -226,7 +229,7 @@ class PytorchActivationExtractor(ActivationExtractor):
         """
         for hook in self.hooks:
             hook.clear()
-        for hook in self.output_layers_hooks:
+        for hook in self.last_linear_layers_hooks:
             hook.clear()
 
     def remove(self):

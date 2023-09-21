@@ -149,12 +149,12 @@ class ActivationExtractor:
         raise NotImplemented
 
     @abstractmethod
-    def get_output_layers_weights(self) -> List:
+    def get_last_linear_layers_weights(self) -> List:
         """
-        Get the weight tensors of all the output layers that are Linear or Conv2d.
+        Get the weight tensors of all the last linear layers.
 
         Returns:
-            List: Weight tensors of all the output layers that are Linear or Conv2d.
+            List: Weight tensors of all the last linear layers.
         """
         raise NotImplemented
 
