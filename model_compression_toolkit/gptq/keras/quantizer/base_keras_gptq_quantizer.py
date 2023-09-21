@@ -26,7 +26,7 @@ if FOUND_TF:
     import tensorflow as tf
 
     from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
-    from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
+    from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 
     class BaseKerasGPTQTrainableQuantizer(BaseKerasTrainableQuantizer):
         """

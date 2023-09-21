@@ -19,7 +19,7 @@ import tensorflow as tf
 from tensorflow import TensorShape
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
+from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from mct_quantizers import QuantizationTarget, mark_quantizer
 from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import \

@@ -89,6 +89,9 @@ if FOUND_TF:
             for w in self.weights:
                 if _weight_name(w.name) in weight_keys:
                     layer_weights_list[weight_keys.index(_weight_name(w.name))] = w
+            # Verify all the weights in the list are ready. The "set_weights" method expects all the layer's weights
+            if not all(w is not None for w in layer_weights_list):
+                Logger.error(f'Not all weights are set for layer {self.layer.name}')
             assert all(w is not None for w in layer_weights_list)
             inferable_quantizers_wrapper.set_weights(layer_weights_list)
 
@@ -99,9 +102,7 @@ if FOUND_TF:
 
 else:
     class KerasTrainableQuantizationWrapper:
-        def __init__(self,
-                     layer,
-                     weights_quantizers: Dict[str, BaseTrainableQuantizer] = None):
+        def __init__(self, *args, **kwargs):
             """
             Keras Quantization Wrapper takes a keras layer and quantizers and infer a quantized layer.
 

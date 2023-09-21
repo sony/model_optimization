@@ -3,7 +3,7 @@ from typing import List, Any, Tuple
 import tensorflow as tf
 from mct_quantizers import KerasActivationQuantizationHolder
 
-from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
+from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.ptq import keras_post_training_quantization_experimental
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model

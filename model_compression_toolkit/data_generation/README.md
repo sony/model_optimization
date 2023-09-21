@@ -19,7 +19,7 @@ pip install model-compression-toolkit
 ## Usage
 ### PyTorch
 Explore a Jupyter Notebook example showcasing data generation with ResNet18, including visualizations, and a practical example of Post Training Quantization:
-* [Data Generation for Resnet18 with PyTorch](tutorials/notebooks/example_pytorch_data_generation.ipynb).
+* [Data Generation for Resnet18 with PyTorch](../../tutorials/notebooks/example_pytorch_data_generation.ipynb).
 
 Below, you will find a straightforward usage example:
 ```python
