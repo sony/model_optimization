@@ -21,4 +21,5 @@ jobs:
           pip install requests==2.27.1
       - name: Run unittests
         run: |
+          export CURL_CA_BUNDLE=''
           python -m unittest tests/doc_tests/test_docs_links.py -v

@@ -22,11 +22,10 @@ else:
     from keras.engine.base_layer import Layer
 
 from keras.models import Model
-from mct_quantizers import KerasActivationQuantizationHolder, QuantizationTarget
+from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder, QuantizationTarget
 from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
 from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
 
-from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
@@ -74,7 +73,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
     def mixed_precision_wrapper(self,
                                 n: common.BaseNode,
-                                layer: Layer) -> Union[KerasTrainableQuantizationWrapper, Layer]:
+                                layer: Layer) -> Union[KerasQuantizationWrapper, Layer]:
         """
         A function which takes a computational graph node and a keras layer and perform the quantization
         wrapping for mixed precision.
@@ -94,10 +93,10 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         if n.is_weights_quantization_enabled():
             kernel_attributes = self.fw_info.get_kernel_op_attributes(n.type)
             if n.name in weights_conf_nodes_names:
-                return KerasTrainableQuantizationWrapper(layer,
-                                                         weights_quantizers={attr: ConfigurableWeightsQuantizer(
-                                                             **self._get_weights_configurable_quantizer_kwargs(n, attr))
-                                                             for attr in kernel_attributes})
+                return KerasQuantizationWrapper(layer,
+                                                weights_quantizers={attr: ConfigurableWeightsQuantizer(
+                                                    **self._get_weights_configurable_quantizer_kwargs(n, attr))
+                                                    for attr in kernel_attributes})
             else:
                 node_weights_qc = n.get_unique_weights_candidates()
                 if not len(node_weights_qc) == 1:
@@ -110,9 +109,9 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                 kwargs = get_inferable_quantizer_kwargs(node_weights_qc[0].weights_quantization_cfg,
                                                         QuantizationTarget.Weights)
 
-                return KerasTrainableQuantizationWrapper(layer,
-                                                         weights_quantizers={attr: quantier_for_node(**kwargs)
-                                                                             for attr in kernel_attributes})
+                return KerasQuantizationWrapper(layer,
+                                                weights_quantizers={attr: quantier_for_node(**kwargs)
+                                                                    for attr in kernel_attributes})
 
         return layer
 
@@ -204,11 +203,11 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                      f'{len(activation_quantizers)} quantizers were found for node {n}')
 
     def build_model(self) -> Tuple[Model, UserInformation,
-                                   Dict[str, Union[KerasTrainableQuantizationWrapper, KerasActivationQuantizationHolder]]]:
+                                   Dict[str, Union[KerasQuantizationWrapper, KerasActivationQuantizationHolder]]]:
         """
         Build a Keras mixed-precision model and return it.
         Used the basic Keras model builder to build the model, and adding a mapping between each configurable node to
-        a list of layers (from the new model) that are matching to the node (either KerasTrainableQuantizationWrapper or
+        a list of layers (from the new model) that are matching to the node (either KerasQuantizationWrapper or
         KerasActivationQuantizationHolder type layers).
         This mapping is used during mixed precision metric computation to enforce pairs of weights-activation bit-width
         candidates when configuring a model.
@@ -225,9 +224,9 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         return model, user_info, conf_node2layers
 
     @staticmethod
-    def _get_weights_quant_layers(n: BaseNode, layers_list: List[Layer]) -> List[KerasTrainableQuantizationWrapper]:
+    def _get_weights_quant_layers(n: BaseNode, layers_list: List[Layer]) -> List[KerasQuantizationWrapper]:
         """
-        Filters KerasTrainableQuantizationWrapper layers from an MP model that are matching to the given graph node.
+        Filters KerasQuantizationWrapper layers from an MP model that are matching to the given graph node.
 
         Args:
             n: A configurable graph node.
@@ -236,7 +235,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         Returns: A list of layers that responsible for the node's weights quantization.
 
         """
-        return [_l for _l in layers_list if isinstance(_l, KerasTrainableQuantizationWrapper) and _l.layer.name == n.name]
+        return [_l for _l in layers_list if isinstance(_l, KerasQuantizationWrapper) and _l.layer.name == n.name]
 
     @staticmethod
     def _get_activation_quant_layers(n: BaseNode, layers_list: List[Layer]) -> List[KerasActivationQuantizationHolder]:
@@ -252,14 +251,14 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         """
         return [_l for _l in layers_list if isinstance(_l, KerasActivationQuantizationHolder)
                 and (_l.inbound_nodes[0].inbound_layers.name == n.name or
-                     (isinstance(_l.inbound_nodes[0].inbound_layers, KerasTrainableQuantizationWrapper) and
+                     (isinstance(_l.inbound_nodes[0].inbound_layers, KerasQuantizationWrapper) and
                       _l.inbound_nodes[0].inbound_layers.layer.name == n.name))]
 
     def _find_layers_in_model_by_node(self, n: BaseNode, layers_list: List[Layer]) -> \
-            List[Union[KerasTrainableQuantizationWrapper, KerasActivationQuantizationHolder]]:
+            List[Union[KerasQuantizationWrapper, KerasActivationQuantizationHolder]]:
         """
         Retries layers from an MP model that are matching to the given graph node, that is, these are either
-        KerasTrainableQuantizationWrapper layers or KerasActivationQuantizationHolder layers that are responsible for the graph
+        KerasQuantizationWrapper layers or KerasActivationQuantizationHolder layers that are responsible for the graph
         configurable model quantization.
 
         Args:

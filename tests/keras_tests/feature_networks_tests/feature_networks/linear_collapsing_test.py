@@ -18,7 +18,7 @@ import model_compression_toolkit as mct
 import tensorflow as tf
 from tensorflow.keras.layers import Conv2D
 
-from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
+from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest

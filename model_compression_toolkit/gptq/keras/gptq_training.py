@@ -33,7 +33,7 @@ if version.parse(tf.__version__) >= version.parse("2.13"):
 else:
     from keras.engine.base_layer import TensorFlowOpLayer
 
-from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
+from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2

@@ -17,7 +17,7 @@ import tensorflow as tf
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.trainable_infrastructure.common.constants import FQ_MIN, FQ_MAX
-from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
+from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.qat import TrainingMethod
 
 from mct_quantizers import mark_quantizer, QuantizationMethod, QuantizationTarget

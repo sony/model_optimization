@@ -24,7 +24,7 @@ from model_compression_toolkit.trainable_infrastructure.common.constants import 
 from model_compression_toolkit.qat import TrainingMethod
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
+from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from mct_quantizers import QuantizationTarget, mark_quantizer
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
 from model_compression_toolkit import constants as C

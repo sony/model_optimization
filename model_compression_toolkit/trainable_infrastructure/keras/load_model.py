@@ -24,7 +24,7 @@ if FOUND_TF:
     import tensorflow as tf
     from tensorflow.python.saved_model.load_options import LoadOptions
     from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
-    from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
+    from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
     keras = tf.keras
 
     def keras_load_quantized_model(filepath: str, custom_objects: Any = None, compile: bool = True,

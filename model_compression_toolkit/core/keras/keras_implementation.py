@@ -17,11 +17,10 @@ from typing import List, Any, Tuple, Callable, Dict
 
 import numpy as np
 import tensorflow as tf
-from mct_quantizers import KerasActivationQuantizationHolder
+from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
 
-from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence, compute_cs, compute_mse
@@ -384,7 +383,7 @@ class KerasImplementation(FrameworkImplementation):
                                      set_layer_to_bitwidth=partial(set_layer_to_bitwidth,
                                                                    weights_quantizer_type=ConfigurableWeightsQuantizer,
                                                                    activation_quantizer_type=ConfigurableActivationQuantizer,
-                                                                   weights_quant_layer_type=KerasTrainableQuantizationWrapper,
+                                                                   weights_quant_layer_type=KerasQuantizationWrapper,
                                                                    activation_quant_layer_type=KerasActivationQuantizationHolder),
                                      disable_activation_for_metric=disable_activation_for_metric)
 
