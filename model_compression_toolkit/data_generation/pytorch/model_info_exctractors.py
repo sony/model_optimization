@@ -161,7 +161,7 @@ class PytorchActivationExtractor(ActivationExtractor):
                 found_linear_node = False
                 nodes_to_search = node.all_input_nodes
 
-                # Search graph from the output node and back untill we find a linear node
+                # Search graph from the output node and back until we find a linear node
                 for node_to_search in nodes_to_search:
                     for name, module in self.model.named_modules():
                         if name == node_to_search.target:
