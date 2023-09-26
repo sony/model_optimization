@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>GradientPTQConfigV2 Class &#8212; MCT Documentation: ver 1.9.0</title>
+    <title>GradientPTQConfigV2 Class &#8212; MCT Documentation: ver 1.10.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">GradientPTQConfigV2 Class</a></li> 
       </ul>
     </div>  
@@ -50,7 +50,7 @@
 <dd><p>Configuration to use for quantization with GradientPTQV2 (experimental).</p>
 <p>Initialize a GradientPTQConfigV2.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n_epochs</strong> (<em>int</em>) – Number of representative dataset epochs to train.</p></li>
 <li><p><strong>optimizer</strong> (<em>Any</em>) – Optimizer to use.</p></li>
@@ -75,7 +75,7 @@ accordingly. see example in multiple_tensors_mse_loss</p></li>
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_v1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_ptq_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_v1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.gptq.GradientPTQConfigV2.from_v1" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize a GradientPTQConfigV2 from GradientPTQConfig instance.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n_ptq_iter</strong> (<em>int</em>) – Number of PTQ calibration iters (length of representative dataset).</p></li>
 <li><p><strong>config_v1</strong> (<a class="reference internal" href="#model_compression_toolkit.gptq.GradientPTQConfig" title="model_compression_toolkit.gptq.GradientPTQConfig"><em>GradientPTQConfig</em></a>) – A GPTQ config to convert to V2.</p></li>
@@ -96,7 +96,7 @@ accordingly. see example in multiple_tensors_mse_loss</p></li>
 <dd><p>Configuration to use for quantization with GradientPTQ (experimental).</p>
 <p>Initialize a GradientPTQConfig.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n_iter</strong> (<em>int</em>) – Number of iterations to train.</p></li>
 <li><p><strong>optimizer</strong> (<em>Any</em>) – Optimizer to use.</p></li>
@@ -128,7 +128,7 @@ accordingly. see example in multiple_tensors_mse_loss</p></li>
 <dd><p>Configuration to use for computing the Hessian-based weights for GPTQ loss metric.</p>
 <p>Initialize a GPTQHessianWeightsConfig.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>hessians_num_samples</strong> (<em>int</em>) – Number of samples to use for computing the Hessian-based weights.</p></li>
 <li><p><strong>norm_weights</strong> (<em>bool</em>) – Whether to normalize the returned weights (to get values between 0 and 1).</p></li>
@@ -178,7 +178,7 @@ accordingly. see example in multiple_tensors_mse_loss</p></li>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">GradientPTQConfigV2 Class</a></li> 
       </ul>
     </div>

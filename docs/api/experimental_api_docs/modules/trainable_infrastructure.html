@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>trainable_infrastructure Module &#8212; MCT Documentation: ver 1.9.0</title>
+    <title>trainable_infrastructure Module &#8212; MCT Documentation: ver 1.10.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">trainable_infrastructure Module</a></li> 
       </ul>
     </div>  
@@ -64,7 +64,7 @@ It adds to the base quantizer a get_config and from_config functions to enable l
 <dd><p>This class is a base quantizer which validates provided quantization config and defines an abstract function which any quantizer needs to implement.
 This class adds to the base quantizer a get_config and from_config functions to enable loading and saving the keras model.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>quantization_config</strong> – quantizer config class contains all the information about a quantizer configuration.</p>
 </dd>
 </dl>
@@ -81,7 +81,7 @@ It adds to the base quantizer a get_config and from_config functions to enable l
 <dd><p>This class is a base Pytorch quantizer which validates the provided quantization config and defines an
 abstract function which any quantizer needs to implement.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>quantization_config</strong> – quantizer config class contains all the information about the quantizer configuration.</p>
 </dd>
 </dl>
@@ -96,7 +96,7 @@ abstract function which any quantizer needs to implement.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.trainable_infrastructure.</span></span><span class="sig-name descname"><span class="pre">TrainableQuantizerWeightsConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_quantization_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_weights_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_channels_axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_per_channel_threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_quantization_candidates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.trainable_infrastructure.TrainableQuantizerWeightsConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attributes for configuring weights trainable quantizer.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>weights_quantization_method</strong> (<a class="reference internal" href="target_platform.html#model_compression_toolkit.target_platform.QuantizationMethod" title="model_compression_toolkit.target_platform.QuantizationMethod"><em>QuantizationMethod</em></a>) – Which method to use from QuantizationMethod for weights quantization.</p></li>
 <li><p><strong>weights_n_bits</strong> (<em>int</em>) – Number of bits to quantize the coefficients.</p></li>
@@ -135,7 +135,7 @@ abstract function which any quantizer needs to implement.</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.trainable_infrastructure.</span></span><span class="sig-name descname"><span class="pre">TrainableQuantizerActivationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">activation_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_quantization_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_activation_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_quantization_candidates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.trainable_infrastructure.TrainableQuantizerActivationConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attributes for configuring activations trainable quantizer.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>activation_quantization_method</strong> (<a class="reference internal" href="target_platform.html#model_compression_toolkit.target_platform.QuantizationMethod" title="model_compression_toolkit.target_platform.QuantizationMethod"><em>QuantizationMethod</em></a>) – Which method to use from QuantizationMethod for activation quantization.</p></li>
 <li><p><strong>activation_n_bits</strong> (<em>int</em>) – Number of bits to quantize the activations.</p></li>
@@ -204,7 +204,7 @@ abstract function which any quantizer needs to implement.</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">trainable_infrastructure Module</a></li> 
       </ul>
     </div>
