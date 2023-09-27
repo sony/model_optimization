@@ -45,10 +45,10 @@ jobs:
           pip install tensorflow
       - name: Run Commom Tests
         run: |
-          python -m unittest discover tests/common_tests --verbose &
+          python -m unittest discover tests/common_tests --verbose
       - name: Run Tensorflow Tests
         run: |
-          python -m unittest discover tests/keras_tests --verbose &
+          python -m unittest discover tests/keras_tests --verbose
       - name: Uninstall TF and install torch
         run: |
           pip uninstall tensorflow -y
