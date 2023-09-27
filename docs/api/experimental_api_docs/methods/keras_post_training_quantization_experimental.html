@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Keras Post Training Quantization &#8212; MCT Documentation: ver 1.9.0</title>
+    <title>Keras Post Training Quantization &#8212; MCT Documentation: ver 1.10.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Keras Post Training Quantization</a></li> 
       </ul>
     </div>  
@@ -58,7 +58,7 @@ a mixed-precision configuration, and set a bit-width for each layer. The model i
 In order to limit the maximal model’s size, a target KPI need to be passed after weights_memory
 is set (in bytes).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>in_model</strong> (<em>Model</em>) – Keras model to quantize.</p></li>
 <li><p><strong>representative_data_gen</strong> (<em>Callable</em>) – Dataset used for calibration.</p></li>
@@ -68,7 +68,7 @@ is set (in bytes).</p>
 <li><p><strong>new_experimental_exporter</strong> (<em>bool</em>) – Whether to wrap the quantized model using quantization information or not. Enabled by default. Experimental and subject to future changes.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A quantized model and information the user may need to handle the quantized model.</p>
 </dd>
 </dl>
@@ -98,7 +98,7 @@ In this example a random dataset of 10 batches each containing 4 images is used.
 <p>If mixed precision is desired, create a MCT core config with a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
 The candidates bitwidth for quantization should be defined in the target platform model.
 In this example we use 1 image to search mixed-precision configuration:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">CoreConfig</span><span class="p">(</span><span class="n">mixed_precision_config</span><span class="o">=</span><span class="n">mct</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">MixedPrecisionQuantizationConfigV2</span><span class="p">(</span><span class="n">num_ofimages</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">CoreConfig</span><span class="p">(</span><span class="n">mixed_precision_config</span><span class="o">=</span><span class="n">mct</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">MixedPrecisionQuantizationConfigV2</span><span class="p">(</span><span class="n">num_of_images</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>For mixed-precision set a target KPI object:
@@ -145,7 +145,7 @@ quantized model:</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Keras Post Training Quantization</a></li> 
       </ul>
     </div>

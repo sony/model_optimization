@@ -251,7 +251,7 @@ can be used as follows:
 TargetPlatformModel Code Example
 ===================================
 
-.. literalinclude:: ../../../../../model_compression_toolkit/target_platform_capabilities/tpc_models/default_tpc/v3/tp_model.py
+.. literalinclude:: ../../../../../model_compression_toolkit/target_platform_capabilities/tpc_models/imx500_tpc/v1/tp_model.py
     :language: python
     :lines: 15-156
 
@@ -348,7 +348,7 @@ to the TargetPlatformCapabilities like in the following example:
 TargetPlatformCapabilities Code Example
 ===========================================
 
-.. literalinclude:: ../../../../../model_compression_toolkit/target_platform_capabilities/tpc_models/default_tpc/v3/tpc_keras.py
+.. literalinclude:: ../../../../../model_compression_toolkit/target_platform_capabilities/tpc_models/imx500_tpc/v1/tp_model.py
     :language: python
     :lines: 15-86
 

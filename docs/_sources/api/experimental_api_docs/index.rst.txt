@@ -34,6 +34,10 @@ Functions
 - :ref:`keras_kpi_data_experimental<ug-keras_kpi_data_experimental>`: A function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of Keras models (experimental).
 - :ref:`pytorch_kpi_data_experimental<ug-pytorch_kpi_data_experimental>`: A function to compute KPI data that can be used to calculate the desired target KPI for mixed-precision quantization of PyTorch models (experimental).
 - :ref:`keras_load_quantized_model<ug-keras_load_quantized_model>`: A function to load a quantized keras model (experimental).
+- :ref:`tensorflow_data_generation_experimental<ug-tensorflow_data_generation_experimental>`: A function to generate data for a Keras model (experimental).
+- :ref:`get_tensorflow_data_generation_config<ug-get_tensorflow_data_generation_config>`: A function to generate a DataGenerationConfig for Tensorflow data generation(experimental).
+- :ref:`pytorch_data_generation_experimental<ug-pytorch_data_generation_experimental>`: A function to generate data for a Pytorch model (experimental).
+- :ref:`get_pytorch_data_generation_config<ug-get_pytorch_data_generation_config>`: A function to load a DataGenerationConfig for Pytorch data generation (experimental).
 
 
 Modules

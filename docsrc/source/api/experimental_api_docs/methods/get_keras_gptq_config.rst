@@ -7,4 +7,4 @@
 Get GradientPTQConfig for Keras Models
 =======================================
 
-.. autofunction:: model_compression_toolkit.get_keras_gptq_config
+.. autofunction:: model_compression_toolkit.gptq.get_keras_gptq_config

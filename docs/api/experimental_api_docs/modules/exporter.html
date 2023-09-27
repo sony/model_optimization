@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>exporter Module &#8212; MCT Documentation: ver 1.9.0</title>
+    <title>exporter Module &#8212; MCT Documentation: ver 1.10.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">exporter Module</a></li> 
       </ul>
     </div>  
@@ -62,7 +62,7 @@ Note that this feature is experimental and subject to future changes. If you hav
 <dt class="sig sig-object py" id="model_compression_toolkit.exporter.KerasExportSerializationFormat">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.exporter.</span></span><span class="sig-name descname"><span class="pre">KerasExportSerializationFormat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.exporter.KerasExportSerializationFormat" title="Permalink to this definition">¶</a></dt>
 <dd><p>Specify which serialization format to use for exporting a quantized Keras model.</p>
-<p>KERAS_H5 - .h5 file format</p>
+<p>KERAS_H5 - .keras (TF2.13 and above) or .h5 (TF2.12 and below) file format</p>
 <p>TFLITE - .tflite file format</p>
 </dd></dl>
 
@@ -93,7 +93,7 @@ will be saved to h5 model) or the combination of KerasExportSerializationFormat.
 saved to tflite model) with QuantizationFormat.FAKELY_QUANT or QuantizationFormat.INT8 (where weights and
 activations are represented using 8bits integers).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> – Model to export.</p></li>
 <li><p><strong>save_model_path</strong> – Path to save the model.</p></li>
@@ -104,10 +104,10 @@ activations are represented using 8bits integers).</p>
 <li><p><strong>KerasExportSerializationFormat.KERAS_H5</strong><strong>)</strong><strong>.</strong> – </p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Custom objects dictionary needed to load the model.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code>]</p>
 </dd>
 </dl>
@@ -140,7 +140,7 @@ activations are represented using 8bits integers).</p>
 <p>Allows to export a Pytorch model that was quantized via MCT.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.exporter.pytorch_export_model">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.exporter.</span></span><span class="sig-name descname"><span class="pre">pytorch_export_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_model_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repr_dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_layer_exportable_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">is_pytorch_layer_exportable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serialization_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PytorchExportSerializationFormat.TORCHSCRIPT</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.exporter.pytorch_export_model" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.exporter.</span></span><span class="sig-name descname"><span class="pre">pytorch_export_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_model_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repr_dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_layer_exportable_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">is_pytorch_layer_exportable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serialization_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PytorchExportSerializationFormat.TORCHSCRIPT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_onnx_custom_quantizer_ops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.exporter.pytorch_export_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Export a PyTorch quantized model to a torchscript or onnx model.
 The model will be saved to the path in save_model_path.
 Currently, pytorch_export_model supports only QuantizationFormat.FAKELY_QUANT (where weights
@@ -148,7 +148,7 @@ and activations are float fakely-quantized values) and PytorchExportSerializatio
 (where the model will be saved to TorchScript model) or PytorchExportSerializationFormat.ONNX
 (where the model will be saved to ONNX model).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> – Model to export.</p></li>
 <li><p><strong>save_model_path</strong> – Path to save the model.</p></li>
@@ -158,9 +158,10 @@ and activations are float fakely-quantized values) and PytorchExportSerializatio
 <li><p><strong>is_layer_exportable_fn</strong> – Callable to check whether a layer can be exported or not.</p></li>
 <li><p><strong>serialization_format</strong> – Format to export the model according to (by default</p></li>
 <li><p><strong>PytorchExportSerializationFormat.TORCHSCRIPT</strong><strong>)</strong><strong>.</strong> – </p></li>
+<li><p><strong>use_onnx_custom_quantizer_ops</strong> – Whether to export quantizers ops in ONNX or not (affects only if serialization_format==PytorchExportSerializationFormat.ONNX). Experimental</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
 </dl>
@@ -231,7 +232,7 @@ and activations are float fakely-quantized values) and PytorchExportSerializatio
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">exporter Module</a></li> 
       </ul>
     </div>

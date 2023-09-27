@@ -49,4 +49,4 @@ from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from model_compression_toolkit.gptq.keras.quantization_facade import get_keras_gptq_config
 from model_compression_toolkit.gptq.pytorch.quantization_facade import get_pytorch_gptq_config
 
-__version__ = "1.9.0"
+__version__ = "1.10.0"

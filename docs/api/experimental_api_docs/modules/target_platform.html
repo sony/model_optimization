@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>target_platform Module &#8212; MCT Documentation: ver 1.9.0</title>
+    <title>target_platform Module &#8212; MCT Documentation: ver 1.10.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>  
@@ -101,7 +101,7 @@ Quantization configuration of different operators can be created using OpQuantiz
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">OpQuantizationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">activation_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_per_channel_threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_weights_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_activation_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantization_preserving</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_zero_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_multiplier_nbits</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.OpQuantizationConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>OpQuantizationConfig is a class to configure the quantization parameters of an operator.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>activation_quantization_method</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.QuantizationMethod" title="model_compression_toolkit.target_platform.QuantizationMethod"><em>QuantizationMethod</em></a>) – Which method to use from QuantizationMethod for activation quantization.</p></li>
 <li><p><strong>weights_quantization_method</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.QuantizationMethod" title="model_compression_toolkit.target_platform.QuantizationMethod"><em>QuantizationMethod</em></a>) – Which method to use from QuantizationMethod for weights quantization.</p></li>
@@ -152,7 +152,7 @@ configuration options for an operator:</p>
 <dd><p>Wrap a set of quantization configurations to consider during the quantization
 of an operator.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>quantization_config_list</strong> (<em>List</em><em>[</em><a class="reference internal" href="#model_compression_toolkit.target_platform.OpQuantizationConfig" title="model_compression_toolkit.target_platform.OpQuantizationConfig"><em>OpQuantizationConfig</em></a><em>]</em>) – List of possible OpQuantizationConfig to gather.</p></li>
 <li><p><strong>base_config</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.OpQuantizationConfig" title="model_compression_toolkit.target_platform.OpQuantizationConfig"><em>OpQuantizationConfig</em></a>) – Fallback OpQuantizationConfig to use when optimizing the model in a non mixed-precision manner.</p></li>
@@ -195,7 +195,7 @@ group operators by common properties and configure patterns of operators to fuse
 The model contains definition of operators, quantization configurations of them, and
 fusing patterns so that multiple operators will be combined into a single operator.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>default_qco</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.QuantizationConfigOptions" title="model_compression_toolkit.target_platform.QuantizationConfigOptions"><em>QuantizationConfigOptions</em></a>) – Default QuantizationConfigOptions to use for operators that their QuantizationConfigOptions are not defined in the model.</p></li>
 <li><p><strong>name</strong> (<em>str</em>) – Name of the model.</p></li>
@@ -230,7 +230,7 @@ in the default QuantizationConfigOptions will guide MCT how this operator should
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">OperatorsSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qc_options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.OperatorsSet" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set of operators that are represented by a unique label.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<em>str</em>) – Set’s label (must be unique in a TargetPlatformModel).</p></li>
 <li><p><strong>qc_options</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.QuantizationConfigOptions" title="model_compression_toolkit.target_platform.QuantizationConfigOptions"><em>QuantizationConfigOptions</em></a>) – Configuration options to use for this set of operations.</p></li>
@@ -273,7 +273,7 @@ quantization is applied between them when they appear in a model:</p>
 <dt class="sig sig-object py" id="model_compression_toolkit.target_platform.Fusing">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">Fusing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operator_groups_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.Fusing" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>name</strong> – Name of component.</p>
 </dd>
 </dl>
@@ -329,7 +329,7 @@ of [fc_opset, relu_opset], of course).</p>
 <dd><p>Concatenate a list of operator sets to treat them similarly in different places (like fusing).</p>
 <p>Group a list of operation sets.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>*opsets</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.OperatorsSet" title="model_compression_toolkit.target_platform.OperatorsSet"><em>OperatorsSet</em></a>) – List of operator sets to group.</p>
 </dd>
 </dl>
@@ -365,7 +365,7 @@ can be used as follows:</p>
 
 
 <span class="k">def</span> <span class="nf">get_tp_model</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">TargetPlatformModel</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A method that generates a default target platform model, with base 8-bit quantization configuration and 8, 4, 2</span>
 <span class="sd">    bits configuration list for mixed-precision quantization.</span>
 <span class="sd">    NOTE: in order to generate a target platform model with different configurations but with the same Operators Sets</span>
@@ -379,11 +379,11 @@ can be used as follows:</p>
     <span class="k">return</span> <span class="n">generate_tp_model</span><span class="p">(</span><span class="n">default_config</span><span class="o">=</span><span class="n">base_config</span><span class="p">,</span>
                              <span class="n">base_config</span><span class="o">=</span><span class="n">base_config</span><span class="p">,</span>
                              <span class="n">mixed_precision_cfg_list</span><span class="o">=</span><span class="n">mixed_precision_cfg_list</span><span class="p">,</span>
-                             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;default_tp_model&#39;</span><span class="p">)</span>
+                             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;imx500_tp_model&#39;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">get_op_quantization_configs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">OpQuantizationConfig</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">OpQuantizationConfig</span><span class="p">]]:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates a default configuration object for 8-bit quantization, to be used to set a default TargetPlatformModel.</span>
 <span class="sd">    In addition, creates a default configuration objects list (with 8, 4 and 2 bit quantization) to be used as</span>
 <span class="sd">    default configuration for mixed-precision quantization.</span>
@@ -396,7 +396,7 @@ can be used as follows:</p>
     <span class="c1"># should be quantized on the modeled hardware:</span>
     <span class="n">eight_bits</span> <span class="o">=</span> <span class="n">tp</span><span class="o">.</span><span class="n">OpQuantizationConfig</span><span class="p">(</span>
         <span class="n">activation_quantization_method</span><span class="o">=</span><span class="n">tp</span><span class="o">.</span><span class="n">QuantizationMethod</span><span class="o">.</span><span class="n">POWER_OF_TWO</span><span class="p">,</span>
-        <span class="n">weights_quantization_method</span><span class="o">=</span><span class="n">tp</span><span class="o">.</span><span class="n">QuantizationMethod</span><span class="o">.</span><span class="n">POWER_OF_TWO</span><span class="p">,</span>
+        <span class="n">weights_quantization_method</span><span class="o">=</span><span class="n">tp</span><span class="o">.</span><span class="n">QuantizationMethod</span><span class="o">.</span><span class="n">SYMMETRIC</span><span class="p">,</span>
         <span class="n">activation_n_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
         <span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
         <span class="n">weights_per_channel_threshold</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -423,7 +423,7 @@ can be used as follows:</p>
                       <span class="n">base_config</span><span class="p">:</span> <span class="n">OpQuantizationConfig</span><span class="p">,</span>
                       <span class="n">mixed_precision_cfg_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OpQuantizationConfig</span><span class="p">],</span>
                       <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TargetPlatformModel</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generates TargetPlatformModel with default defined Operators Sets, based on the given base configuration and</span>
 <span class="sd">    mixed-precision configurations options list.</span>
 
@@ -462,13 +462,13 @@ can be used as follows:</p>
 
         <span class="c1"># May suit for operations like: Dropout, Reshape, etc.</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;NoQuantization&quot;</span><span class="p">,</span>
-                         <span class="n">tp</span><span class="o">.</span><span class="n">get_default_quantization_config_options</span><span class="p">()</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span>
-                             <span class="n">enable_weights_quantization</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                             <span class="n">enable_activation_quantization</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+                        <span class="n">tp</span><span class="o">.</span><span class="n">get_default_quantization_config_options</span><span class="p">()</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span>
+                            <span class="n">enable_weights_quantization</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                            <span class="n">enable_activation_quantization</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
 
         <span class="c1"># Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects</span>
         <span class="n">mixed_precision_configuration_options</span> <span class="o">=</span> <span class="n">tp</span><span class="o">.</span><span class="n">QuantizationConfigOptions</span><span class="p">(</span><span class="n">mixed_precision_cfg_list</span><span class="p">,</span>
-                                                                              <span class="n">base_config</span><span class="o">=</span><span class="n">base_config</span><span class="p">)</span>
+                                                                             <span class="n">base_config</span><span class="o">=</span><span class="n">base_config</span><span class="p">)</span>
 
         <span class="c1"># Define operator sets that use mixed_precision_configuration_options:</span>
         <span class="n">conv</span> <span class="o">=</span> <span class="n">tp</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;Conv&quot;</span><span class="p">,</span> <span class="n">mixed_precision_configuration_options</span><span class="p">)</span>
@@ -515,7 +515,7 @@ an OperationsSetToLayers can be used:</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">OperationsSetToLayers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op_set_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.OperationsSetToLayers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Associate an OperatorsSet to a list of framework’s layers.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>op_set_name</strong> (<em>str</em>) – Name of OperatorsSet to associate with layers.</p></li>
 <li><p><strong>layers</strong> (<em>List</em><em>[</em><em>Any</em><em>]</em>) – List of layers/FilterLayerParams to associate with OperatorsSet.</p></li>
@@ -547,7 +547,7 @@ For that, LayerFilterParams can be used:</p>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">LayerFilterParams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">conditions</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.LayerFilterParams" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wrap a layer with filters to filter framework’s layers by their attributes.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>layer</strong> – Layer to match when filtering.</p></li>
 <li><p><strong>*conditions</strong> (<em>AttributeFilter</em>) – List of conditions to satisfy.</p></li>
@@ -603,7 +603,7 @@ which attaches the layers representations to OperatorsSets in a TargetPlatformMo
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">TargetPlatformCapabilities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tp_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'base'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attach framework information to a modeled hardware.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tp_model</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.TargetPlatformModel" title="model_compression_toolkit.target_platform.TargetPlatformModel"><em>TargetPlatformModel</em></a>) – Modeled hardware to attach framework information to.</p></li>
 <li><p><strong>name</strong> (<em>str</em>) – Name of the TargetPlatformCapabilities.</p></li>
@@ -619,78 +619,78 @@ to the TargetPlatformCapabilities like in the following example:</p>
 </section>
 <section id="targetplatformcapabilities-code-example">
 <h2>TargetPlatformCapabilities Code Example<a class="headerlink" href="#targetplatformcapabilities-code-example" title="Permalink to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
-<span class="kn">from</span> <span class="nn">packaging</span> <span class="kn">import</span> <span class="n">version</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="k">if</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;2.6&quot;</span><span class="p">):</span>
-    <span class="kn">from</span> <span class="nn">tensorflow.keras.layers</span> <span class="kn">import</span> <span class="n">Conv2D</span><span class="p">,</span> <span class="n">DepthwiseConv2D</span><span class="p">,</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Reshape</span><span class="p">,</span> <span class="n">ZeroPadding2D</span><span class="p">,</span> \
-        <span class="n">Dropout</span><span class="p">,</span> \
-        <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">,</span> <span class="n">PReLU</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Cropping2D</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">Conv2D</span><span class="p">,</span> <span class="n">DepthwiseConv2D</span><span class="p">,</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Reshape</span><span class="p">,</span> <span class="n">ZeroPadding2D</span><span class="p">,</span> \
-        <span class="n">Dropout</span><span class="p">,</span> <span class="n">MaxPooling2D</span><span class="p">,</span> <span class="n">Activation</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">,</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">,</span> <span class="n">PReLU</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Cropping2D</span>
-
-<span class="kn">from</span> <span class="nn">model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.v3.tp_model</span> <span class="kn">import</span> <span class="n">get_tp_model</span>
 <span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
-<span class="kn">from</span> <span class="nn">model_compression_toolkit.target_platform_capabilities.tpc_models.default_tpc.v3</span> <span class="kn">import</span> <span class="n">__version__</span> <span class="k">as</span> <span class="n">TPC_VERSION</span>
+<span class="kn">from</span> <span class="nn">model_compression_toolkit.target_platform_capabilities.target_platform</span> <span class="kn">import</span> <span class="n">OpQuantizationConfig</span><span class="p">,</span> \
+    <span class="n">TargetPlatformModel</span>
+<span class="kn">from</span> <span class="nn">model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format</span> <span class="kn">import</span> \
+    <span class="n">QuantizationFormat</span>
 
 <span class="n">tp</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">target_platform</span>
 
 
-<span class="k">def</span> <span class="nf">get_keras_tpc</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">tp</span><span class="o">.</span><span class="n">TargetPlatformCapabilities</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    get a Keras TargetPlatformCapabilities object with default operation sets to layers mapping.</span>
-<span class="sd">    Returns: a Keras TargetPlatformCapabilities object for the given TargetPlatformModel.</span>
+<span class="k">def</span> <span class="nf">get_tp_model</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">TargetPlatformModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A method that generates a default target platform model, with base 8-bit quantization configuration and 8, 4, 2</span>
+<span class="sd">    bits configuration list for mixed-precision quantization.</span>
+<span class="sd">    NOTE: in order to generate a target platform model with different configurations but with the same Operators Sets</span>
+<span class="sd">    (for tests, experiments, etc.), use this method implementation as a test-case, i.e., override the</span>
+<span class="sd">    &#39;get_op_quantization_configs&#39; method and use its output to call &#39;generate_tp_model&#39; with your configurations.</span>
+
+<span class="sd">    Returns: A TargetPlatformModel object.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">default_tp_model</span> <span class="o">=</span> <span class="n">get_tp_model</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">generate_keras_tpc</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;default_keras_tpc&#39;</span><span class="p">,</span> <span class="n">tp_model</span><span class="o">=</span><span class="n">default_tp_model</span><span class="p">)</span>
+    <span class="n">base_config</span><span class="p">,</span> <span class="n">mixed_precision_cfg_list</span> <span class="o">=</span> <span class="n">get_op_quantization_configs</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">generate_tp_model</span><span class="p">(</span><span class="n">default_config</span><span class="o">=</span><span class="n">base_config</span><span class="p">,</span>
+                             <span class="n">base_config</span><span class="o">=</span><span class="n">base_config</span><span class="p">,</span>
+                             <span class="n">mixed_precision_cfg_list</span><span class="o">=</span><span class="n">mixed_precision_cfg_list</span><span class="p">,</span>
+                             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;imx500_tp_model&#39;</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">generate_keras_tpc</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tp_model</span><span class="p">:</span> <span class="n">tp</span><span class="o">.</span><span class="n">TargetPlatformModel</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.</span>
+<span class="k">def</span> <span class="nf">get_op_quantization_configs</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">OpQuantizationConfig</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">OpQuantizationConfig</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a default configuration object for 8-bit quantization, to be used to set a default TargetPlatformModel.</span>
+<span class="sd">    In addition, creates a default configuration objects list (with 8, 4 and 2 bit quantization) to be used as</span>
+<span class="sd">    default configuration for mixed-precision quantization.</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        name: Name of the TargetPlatformCapabilities.</span>
-<span class="sd">        tp_model: TargetPlatformModel object.</span>
+<span class="sd">    Returns: An OpQuantizationConfig config object and a list of OpQuantizationConfig objects.</span>
 
-<span class="sd">    Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Create a quantization config.</span>
+    <span class="c1"># A quantization configuration defines how an operator</span>
+    <span class="c1"># should be quantized on the modeled hardware:</span>
+    <span class="n">eight_bits</span> <span class="o">=</span> <span class="n">tp</span><span class="o">.</span><span class="n">OpQuantizationConfig</span><span class="p">(</span>
+        <span class="n">activation_quantization_method</span><span class="o">=</span><span class="n">tp</span><span class="o">.</span><span class="n">QuantizationMethod</span><span class="o">.</span><span class="n">POWER_OF_TWO</span><span class="p">,</span>
+        <span class="n">weights_quantization_method</span><span class="o">=</span><span class="n">tp</span><span class="o">.</span><span class="n">QuantizationMethod</span><span class="o">.</span><span class="n">SYMMETRIC</span><span class="p">,</span>
+        <span class="n">activation_n_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">weights_per_channel_threshold</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">enable_weights_quantization</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">enable_activation_quantization</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">quantization_preserving</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">fixed_scale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">fixed_zero_point</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">weights_multiplier_nbits</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
-    <span class="n">keras_tpc</span> <span class="o">=</span> <span class="n">tp</span><span class="o">.</span><span class="n">TargetPlatformCapabilities</span><span class="p">(</span><span class="n">tp_model</span><span class="p">,</span>
-                                              <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
-                                              <span class="n">version</span><span class="o">=</span><span class="n">TPC_VERSION</span><span class="p">)</span>
+    <span class="c1"># To quantize a model using mixed-precision, create</span>
+    <span class="c1"># a list with more than one OpQuantizationConfig.</span>
+    <span class="c1"># In this example, we quantize some operations&#39; weights</span>
+    <span class="c1"># using 2, 4 or 8 bits, and when using 2 or 4 bits, it&#39;s possible</span>
+    <span class="c1"># to quantize the operations&#39; activations using LUT.</span>
+    <span class="n">four_bits</span> <span class="o">=</span> <span class="n">eight_bits</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">two_bits</span> <span class="o">=</span> <span class="n">eight_bits</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">mixed_precision_cfg_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">eight_bits</span><span class="p">,</span> <span class="n">four_bits</span><span class="p">,</span> <span class="n">two_bits</span><span class="p">]</span>
 
-    <span class="k">with</span> <span class="n">keras_tpc</span><span class="p">:</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;NoQuantization&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">Reshape</span><span class="p">,</span>
-                                                    <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">,</span>
-                                                    <span class="n">Flatten</span><span class="p">,</span>
-                                                    <span class="n">Cropping2D</span><span class="p">,</span>
-                                                    <span class="n">ZeroPadding2D</span><span class="p">,</span>
-                                                    <span class="n">Dropout</span><span class="p">,</span>
-                                                    <span class="n">MaxPooling2D</span><span class="p">,</span>
-                                                    <span class="n">tf</span><span class="o">.</span><span class="n">split</span><span class="p">,</span>
-                                                    <span class="n">tf</span><span class="o">.</span><span class="n">quantization</span><span class="o">.</span><span class="n">fake_quant_with_min_max_vars</span><span class="p">,</span>
-                                                    <span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">argmax</span><span class="p">,</span>
-                                                    <span class="n">tf</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-                                                    <span class="n">tf</span><span class="o">.</span><span class="n">__operators__</span><span class="o">.</span><span class="n">getitem</span><span class="p">,</span>
-                                                    <span class="n">tf</span><span class="o">.</span><span class="n">compat</span><span class="o">.</span><span class="n">v1</span><span class="o">.</span><span class="n">shape</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">eight_bits</span><span class="p">,</span> <span class="n">mixed_precision_cfg_list</span>
 
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Conv&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">Conv2D</span><span class="p">,</span>
-                                          <span class="n">DepthwiseConv2D</span><span class="p">,</span>
-                                          <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">conv2d</span><span class="p">,</span>
-                                          <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">depthwise_conv2d</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;FullyConnected&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">Dense</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;AnyReLU&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span>
-                                             <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu6</span><span class="p">,</span>
-                                             <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">ReLU</span><span class="p">,</span> <span class="n">negative_slope</span><span class="o">=</span><span class="mf">0.0</span><span class="p">),</span>
-                                             <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">)])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Add&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">Add</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Sub&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">subtract</span><span class="p">,</span> <span class="n">Subtract</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Mul&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">multiply</span><span class="p">,</span> <span class="n">Multiply</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Div&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">divide</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;PReLU&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">PReLU</span><span class="p">])</span>
-        <span class="n">tp</span><span class="o">.</span><span class="n">OperationsSetToLayers</span><span class="p">(</span><span class="s2">&quot;Swish&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">swish</span><span class="p">,</span> <span class="n">tp</span><span class="o">.</span><span class="n">LayerFilterParams</span><span class="p">(</span><span class="n">Activation</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;swish&quot;</span><span class="p">)])</span>
+
+<span class="k">def</span> <span class="nf">generate_tp_model</span><span class="p">(</span><span class="n">default_config</span><span class="p">:</span> <span class="n">OpQuantizationConfig</span><span class="p">,</span>
+                      <span class="n">base_config</span><span class="p">:</span> <span class="n">OpQuantizationConfig</span><span class="p">,</span>
+                      <span class="n">mixed_precision_cfg_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OpQuantizationConfig</span><span class="p">],</span>
+                      <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TargetPlatformModel</span><span class="p">:</span>
+    <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    Generates TargetPlatformModel with default defined Operators Sets, based on the given base configuration and</span>
 </pre></div>
 </div>
 </section>
@@ -744,7 +744,7 @@ to the TargetPlatformCapabilities like in the following example:</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.9.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>

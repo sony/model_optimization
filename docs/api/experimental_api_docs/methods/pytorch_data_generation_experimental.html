@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Load Quantized Keras Model &#8212; MCT Documentation: ver 1.10.0</title>
+    <title>Pytorch Data Generation &#8212; MCT Documentation: ver 1.10.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -32,7 +32,7 @@
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Load Quantized Keras Model</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Pytorch Data Generation</a></li> 
       </ul>
     </div>  
 
@@ -41,23 +41,31 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="load-quantized-keras-model">
-<span id="ug-keras-load-quantized-model"></span><h1>Load Quantized Keras Model<a class="headerlink" href="#load-quantized-keras-model" title="Permalink to this heading">¶</a></h1>
+  <section id="pytorch-data-generation">
+<span id="ug-pytorch-data-generation-experimental"></span><h1>Pytorch Data Generation<a class="headerlink" href="#pytorch-data-generation" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="model_compression_toolkit.keras_load_quantized_model">
-<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">keras_load_quantized_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_objects</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.keras_load_quantized_model" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function wraps the keras load model and adds trainable quantizers classes to its custom objects.</p>
+<dt class="sig sig-object py" id="model_compression_toolkit.data_generation.pytorch_data_generation_experimental">
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.data_generation.</span></span><span class="sig-name descname"><span class="pre">pytorch_data_generation_experimental</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_images</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_image_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_generation_config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.data_generation.pytorch_data_generation_experimental" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to perform data generation using the provided model and data generation configuration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>filepath</strong> – the model file path.</p></li>
-<li><p><strong>custom_objects</strong> – Additional custom objects</p></li>
-<li><p><strong>compile</strong> – Boolean, whether to compile the model after loading.</p></li>
-<li><p><strong>options</strong> – Optional <cite>tf.saved_model.LoadOptions</cite> object that specifies options for loading from SavedModel.</p></li>
+<li><p><strong>model</strong> (<em>Module</em>) – PyTorch model to generate data for.</p></li>
+<li><p><strong>n_images</strong> (<em>int</em>) – Number of images to generate.</p></li>
+<li><p><strong>output_image_size</strong> (<em>Tuple</em>) – Size of the output images.</p></li>
+<li><p><strong>data_generation_config</strong> (<em>DataGenerationConfig</em>) – Configuration for data generation.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Finalized list containing generated images.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Tensor]</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+</dd>
 </dl>
-<p>Returns: A keras Model</p>
 </dd></dl>
 
 </section>
@@ -90,7 +98,7 @@
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
         <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Load Quantized Keras Model</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Pytorch Data Generation</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
