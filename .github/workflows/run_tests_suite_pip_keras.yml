@@ -21,8 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install tensorflow
-          pip install torch torchvision
+          pip install twine wheel
       - name: Build WHL file
         run: |
           version=$(python -c 'import model_compression_toolkit; print(model_compression_toolkit.__version__)')
@@ -41,8 +40,19 @@ jobs:
       - name: Remove MCT code
         run: |
           rm -rf model_compression_toolkit
-      - name: Run Tests
+      - name: Install TF
+        run: |
+          pip install tensorflow
+      - name: Run Commom Tests
         run: |
           python -m unittest discover tests/common_tests --verbose &
+      - name: Run Tensorflow Tests
+        run: |
           python -m unittest discover tests/keras_tests --verbose &
+      - name: Uninstall TF and install torch
+        run: |
+          pip uninstall tensorflow -y
+          pip install torch torchvision onnx onnxruntime onnxruntime-extensions
+      - name: Run Pytorch Tests
+        run: |
           python -m unittest discover tests/pytorch_tests --verbose
