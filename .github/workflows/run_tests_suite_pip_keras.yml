@@ -2,10 +2,6 @@ name: Test pip install
 on:
   workflow_dispatch: # Allow manual triggers
     inputs:
-      mct_version:
-        description: 'MCT version'
-        required: true
-        default: 'v1.7.0'
       python_version:
         description: 'Python version'
         required: false
@@ -24,7 +20,6 @@ jobs:
           python-version: ${{  inputs.python_version  }}
       - name: Install dependencies
         run: |
-          git checkout tags/${{  inputs.mct_version  }}
           pip install -r requirements.txt
           pip install tensorflow
           pip install torch torchvision
