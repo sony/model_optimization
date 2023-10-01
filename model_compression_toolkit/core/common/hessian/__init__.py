@@ -1,0 +1,2 @@
+from model_compression_toolkit.core.common.hessian.hessian_service import hessian_service
+from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig, HessianMode, HessianGranularity

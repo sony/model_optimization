@@ -25,6 +25,7 @@ from model_compression_toolkit.core.keras.keras_implementation import KerasImple
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs, \
     prepare_graph_with_quantization_parameters
+import model_compression_toolkit.core.common.hessian as hess
 
 keras = tf.keras
 layers = keras.layers
@@ -67,6 +68,9 @@ class TestSensitivityEvalWithOutputReplacementNodes(unittest.TestCase):
                                                            generate_keras_tpc,
                                                            input_shape=(1, 16, 16, 3),
                                                            mixed_precision_enabled=True)
+
+        hess.hessian_service.set_graph(graph=graph)
+        hess.hessian_service.set_fw_impl(keras_impl)
 
         se = keras_impl.get_sensitivity_evaluator(graph,
                                                   MixedPrecisionQuantizationConfigV2(use_grad_based_weights=True),

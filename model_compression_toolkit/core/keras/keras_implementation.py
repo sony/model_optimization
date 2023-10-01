@@ -21,6 +21,12 @@ from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantization
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
 
+from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig, HessianMode
+from model_compression_toolkit.core.keras.hessian.activation_hessian_calculator_keras import \
+    ActivationHessianCalculatorKeras
+from model_compression_toolkit.core.keras.hessian.hessian_calculator_keras import HessianCalculatorKeras
+from model_compression_toolkit.core.keras.hessian.weights_hessian_calculator_keras import WeightsHessianCalculatorKeras
+from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence, compute_cs, compute_mse
@@ -458,6 +464,12 @@ class KerasImplementation(FrameworkImplementation):
             return compute_cs
         return compute_mse
 
+    def get_framwork_hessian_calculator(self, hessian_cfg:HessianConfig):
+        if hessian_cfg.mode==HessianMode.ACTIVATIONS:
+            return ActivationHessianCalculatorKeras
+        elif hessian_cfg.mode==HessianMode.WEIGHTS:
+            return WeightsHessianCalculatorKeras
+
     def model_grad(self,
                    graph_float: common.Graph,
                    model_input_tensors: Dict[BaseNode, np.ndarray],
@@ -488,7 +500,7 @@ class KerasImplementation(FrameworkImplementation):
         point's output has on the model's output.
 
         """
-
+        raise Exception
         return keras_iterative_approx_jacobian_trace(graph_float, model_input_tensors, interest_points, output_list,
                                                      all_outputs_indices, alpha, n_iter, norm_weights=norm_weights)
 

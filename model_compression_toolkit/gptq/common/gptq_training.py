@@ -16,6 +16,8 @@ import copy
 from abc import ABC, abstractmethod
 import numpy as np
 from typing import Callable, List, Any
+
+from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig, HessianMode, HessianGranularity
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -24,7 +26,7 @@ from model_compression_toolkit.gptq.common.gptq_framework_implementation import 
 from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
-
+from model_compression_toolkit.core.common.hessian import hessian_service
 
 class GPTQTrainer(ABC):
     """
@@ -67,7 +69,13 @@ class GPTQTrainer(ABC):
                                                                        fw_info=self.fw_info)
 
         self.fxp_model, self.gptq_user_info = self.build_gptq_model()
-
+        self.gptq_hessian_config = HessianConfig(mode=HessianMode.ACTIVATIONS,
+                                                 granularity=HessianGranularity.PER_LAYER,
+                                                 nodes_names_for_hessian_computation=self.compare_points,
+                                                 alpha=0,
+                                                 norm_weights=self.gptq_config.hessian_weights_config.norm_weights,
+                                                 num_iterations=self.gptq_config.hessian_weights_config.hessians_n_iter
+                                                 )
     def get_optimizer_with_param(self,
                                  flattened_trainable_weights: List[Any],
                                  flattened_bias_weights: List[Any],
@@ -132,24 +140,31 @@ class GPTQTrainer(ABC):
             images = self._generate_images_batch(representative_data_gen,
                                                  self.gptq_config.hessian_weights_config.hessians_num_samples)
 
-            model_output_replacement = self._get_model_output_replacement()
-
             points_apprx_jacobians_weights = []
             for i in range(1, images.shape[0] + 1):
                 Logger.info(f"Computing Jacobian-based weights approximation for image sample {i} out of {images.shape[0]}...")
+                images = [images[i - 1:i]] * len(self.graph_float.get_inputs())  # TODO: change to image per input
+                hessian_data = hessian_service.fetch_hessian(self.gptq_hessian_config,
+                                                             images[i - 1:i])
+                image_ip_gradients = []
+                for ip in self.compare_points:
+                    image_ip_gradients.append(hessian_data[ip])
+
                 # Note that in GPTQ loss weights computation we assume that there aren't replacement output nodes,
                 # therefore, output_list is just the graph outputs, and we don't need the tuning factor for
                 # defining the output weights (since the output layer is not a compare point).
-                image_ip_gradients = self.fw_impl.model_grad(self.graph_float,
-                                                             {inode: self.fw_impl.to_tensor(images[i - 1:i]) for inode
-                                                              in
-                                                              self.graph_float.get_inputs()},
-                                                             self.compare_points,
-                                                             output_list=model_output_replacement,
-                                                             all_outputs_indices=[],
-                                                             alpha=0,
-                                                             norm_weights=self.gptq_config.hessian_weights_config.norm_weights,
-                                                             n_iter=self.gptq_config.hessian_weights_config.hessians_n_iter)
+
+                # model_output_replacement = self._get_model_output_replacement()
+                # image_ip_gradients = self.fw_impl.model_grad(self.graph_float,
+                #                                              {inode: self.fw_impl.to_tensor(images[i - 1:i]) for inode
+                #                                               in
+                #                                               self.graph_float.get_inputs()},
+                #                                              self.compare_points,
+                #                                              output_list=model_output_replacement,
+                #                                              all_outputs_indices=[],
+                #                                              alpha=0,
+                #                                              norm_weights=self.gptq_config.hessian_weights_config.norm_weights,
+                #                                              n_iter=self.gptq_config.hessian_weights_config.hessians_n_iter)
                 points_apprx_jacobians_weights.append(image_ip_gradients)
             if self.gptq_config.hessian_weights_config.log_norm:
                 mean_jacobian_weights = np.mean(points_apprx_jacobians_weights, axis=0)

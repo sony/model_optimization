@@ -21,6 +21,7 @@ import numpy as np
 from tqdm import tqdm
 
 from model_compression_toolkit.core.common import FrameworkInfo
+from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -45,7 +46,7 @@ from model_compression_toolkit.core.common.visualization.final_config_visualizer
     WeightsFinalBitwidthConfigVisualizer, \
     ActivationFinalBitwidthConfigVisualizer
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
-
+from model_compression_toolkit.core.common.hessian import hessian_service
 
 def core_runner(in_model: Any,
                 representative_data_gen: Callable,
@@ -89,6 +90,13 @@ def core_runner(in_model: Any,
                                      tpc,
                                      tb_w,
                                      mixed_precision_enable=core_config.mixed_precision_enable)
+
+    core_hessian_configs = [] #todo: create hessian configs from core config
+    hessian_configs = core_hessian_configs
+    hessian_service.set_graph(graph)
+    hessian_service.add_hessian_configurations(hessian_configs)
+    hessian_service.set_fw_impl(fw_impl)
+
 
     tg = _prepare_model_for_quantization(graph,
                                          representative_data_gen,

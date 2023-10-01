@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+
 import glob
 import os
 import unittest
@@ -95,6 +97,8 @@ class TestFileLogger(unittest.TestCase):
 
     def plot_tensor_sizes(self):
         model = SingleOutputNet()
+        print('%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+        print([l.name for l in model.layers])
         base_config, _ = get_op_quantization_configs()
         tpc_model = generate_tp_model_with_activation_mp(
             base_cfg=base_config,
@@ -102,6 +106,11 @@ class TestFileLogger(unittest.TestCase):
                                          (4, 8), (4, 4), (4, 2),
                                          (2, 8), (2, 4), (2, 2)])
         tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
+
+        # Hessian manager assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP
+        cfg = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
+        cfg.use_grad_based_weights=False
+
         # compare max tensor size with plotted max tensor size
         tg = prepare_graph_set_bit_widths(in_model=model,
                                           fw_impl=KerasImplementation(),
@@ -109,7 +118,7 @@ class TestFileLogger(unittest.TestCase):
                                           representative_data_gen=random_datagen,
                                           tpc=tpc,
                                           network_editor=[],
-                                          quant_config=DEFAULT_MIXEDPRECISION_CONFIG,
+                                          quant_config=cfg,
                                           target_kpi=mct.core.KPI(),
                                           n_iter=1, analyze_similarity=True)
         tensors_sizes = [4.0 * n.get_total_output_params() / 1000000.0
@@ -127,6 +136,8 @@ class TestFileLogger(unittest.TestCase):
     def test_steps_by_order(self):
         # Test Single Output Mixed Precision model Logger
         self.model = SingleOutputNet()
+        print('%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+        print([l.name for l in self.model.layers])
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
         def rep_data():
@@ -148,6 +159,8 @@ class TestFileLogger(unittest.TestCase):
 
         # Test Multiple Outputs model Logger
         self.model = MultipleOutputsNet()
+        print('%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+        print([l.name for l in self.model.layers])
         quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(self.model,
                                                                                rep_data,
                                                                                target_kpi=mct.core.KPI(np.inf),
