@@ -80,7 +80,7 @@ class TestHessianService(unittest.TestCase):
         num_hessians = self.hessian_service._count_cache()
         self.assertTrue(num_hessians == 1)
 
-    def test_double_hessian_computation(self):
+    def test_double_configurations_hessian_computation(self):
         self.hessian_service.clear_cache()
 
         config1 = hess.HessianConfig(
@@ -107,6 +107,26 @@ class TestHessianService(unittest.TestCase):
         num_hessians = self.hessian_service._count_cache()
         self.assertTrue(num_hessians == 2)
 
+    def test_double_images_hessian_computation(self):
+        self.hessian_service.clear_cache()
+
+        config1 = hess.HessianConfig(
+            mode=hess.HessianMode.ACTIVATIONS,
+            granularity=hess.HessianGranularity.PER_LAYER,
+            nodes_names_for_hessian_computation=list(self.graph.nodes),
+            alpha=0.5,
+            num_iterations=10
+        )
+
+        images = next(representative_dataset())
+        self.hessian_service.fetch_hessian(config1, images)
+        self.assertTrue(len(self.hessian_service.fetch_hessian(config1)) == 1)
+
+        images2 = next(representative_dataset())
+        self.hessian_service.fetch_hessian(config1, images2)
+        self.assertTrue(len(self.hessian_service.fetch_hessian(config1)) == 2)
+        num_hessians = self.hessian_service._count_cache()
+        self.assertTrue(num_hessians == 2)
 
 if __name__ == "__main__":
     unittest.main()

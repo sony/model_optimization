@@ -45,7 +45,7 @@ class HessianService:
         self.hessian_cfg_to_hessian_data={}
 
     def _count_cache(self):
-        return len([x.values() for x in self.hessian_cfg_to_hessian_data.values()])
+        return sum([len(x.values()) for x in self.hessian_cfg_to_hessian_data.values()])
 
     def compute(self, hessian_cfg:HessianConfig, input_images: List[Any]):
         if len(hessian_cfg.nodes_names_for_hessian_computation) == 1:
