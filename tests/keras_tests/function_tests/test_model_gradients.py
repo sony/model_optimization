@@ -102,8 +102,6 @@ class TestModelGradients(unittest.TestCase):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
 
-        # input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
-        # output_nodes = [o.node for o in graph.output_nodes]
 
         all_output_indices = [len(interest_points) - 1] if output_indices is None else output_indices
 
@@ -118,12 +116,6 @@ class TestModelGradients(unittest.TestCase):
         hessian_data = hessian_common.hessian_service.fetch_hessian(hessian_cfg=hessian_cfg,
                                                      input_images=images)
         x = [hessian_data[ip] for ip in interest_points]
-        # x = keras_impl.model_grad(graph_float=graph,
-        #                           model_input_tensors=input_tensors,
-        #                           interest_points=interest_points,
-        #                           output_list=output_nodes,
-        #                           all_outputs_indices=all_output_indices,
-        #                           alpha=0.3)
 
         # Checking that the weights were computed and normalized correctly
         # In rare occasions, the output tensor has all zeros, so the gradients for all interest points are zeros.
@@ -140,9 +132,6 @@ class TestModelGradients(unittest.TestCase):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
 
-        input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
-        output_nodes = [o.node for o in graph.output_nodes]
-
         hessian_common.hessian_service.set_graph(graph=graph)
         hessian_common.hessian_service.set_fw_impl(keras_impl)
         hessian_cfg = hessian_common.HessianConfig(mode=hessian_common.HessianMode.ACTIVATIONS,
@@ -155,25 +144,12 @@ class TestModelGradients(unittest.TestCase):
                                                                     input_images=images)
         x = [hessian_data[ip] for ip in interest_points]
 
-        # x = keras_impl.model_grad(graph_float=graph,
-        #                           model_input_tensors=input_tensors,
-        #                           interest_points=interest_points,
-        #                           output_list=output_nodes,
-        #                           all_outputs_indices=[len(interest_points) - 1],
-        #                           alpha=0)
 
         # These are the expected values of the normalized gradients (gradients should be 2 and 1
         # with respect to input and mult layer, respectively)
         self.assertTrue(np.isclose(x[0], np.float32(0.8), 1e-1))
         self.assertTrue(np.isclose(x[1], np.float32(0.2), 1e-1))
         self.assertTrue(np.isclose(x[2], np.float32(0.0)))
-
-        # y = keras_impl.model_grad(graph_float=graph,
-        #                           model_input_tensors=input_tensors,
-        #                           interest_points=interest_points,
-        #                           output_list=output_nodes,
-        #                           all_outputs_indices=[len(interest_points) - 1],
-        #                           alpha=1)
 
         hessian_cfg = hessian_common.HessianConfig(mode=hessian_common.HessianMode.ACTIVATIONS,
                                                    granularity=hessian_common.HessianGranularity.PER_LAYER,
@@ -224,17 +200,6 @@ class TestModelGradients(unittest.TestCase):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
 
-        input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
-        output_nodes = [graph.get_topo_sorted_nodes()[-2]]
-        output_indices = [len(interest_points) - 2, len(interest_points) - 1]
-
-        # x = keras_impl.model_grad(graph_float=graph,
-        #                           model_input_tensors=input_tensors,
-        #                           interest_points=interest_points,
-        #                           output_list=output_nodes,
-        #                           all_outputs_indices=output_indices,
-        #                           alpha=0.3)
-
         hessian_common.hessian_service.set_graph(graph=graph)
         hessian_common.hessian_service.set_fw_impl(keras_impl)
 
@@ -251,13 +216,6 @@ class TestModelGradients(unittest.TestCase):
         # Checking that the weights where computed and normalized correctly
         self.assertTrue(np.isclose(np.sum(x), 1))
 
-        # Checking replacement output correction
-        # y = keras_impl.model_grad(graph_float=graph,
-        #                           model_input_tensors=input_tensors,
-        #                           interest_points=interest_points,
-        #                           output_list=output_nodes,
-        #                           all_outputs_indices=output_indices,
-        #                           alpha=0)
         hessian_cfg = hessian_common.HessianConfig(mode=hessian_common.HessianMode.ACTIVATIONS,
                                                    granularity=hessian_common.HessianGranularity.PER_LAYER,
                                                    search_output_replacement=True,
@@ -288,16 +246,6 @@ class TestModelGradients(unittest.TestCase):
 
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [sorted_graph_nodes[-1]]
-
-        # input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
-        # output_nodes = [sorted_graph_nodes[-1]]
-        # output_indices = [len(interest_points) - 1]
-        #
-        # x = keras_impl.model_grad(graph_float=graph,
-        #                           model_input_tensors=input_tensors,
-        #                           interest_points=interest_points,
-        #                           output_list=output_nodes,
-        #                           all_outputs_indices=output_indices)
 
         hessian_common.hessian_service.set_graph(graph=graph)
         hessian_common.hessian_service.set_fw_impl(keras_impl)

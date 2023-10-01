@@ -23,7 +23,7 @@ class HessianService:
     def __init__(self):
 
         self.hessian_cfg_to_hessian_data = {}  # Dictionary to store Hessians by configuration and image list
-        self.hessian_configurations = []  # hessian_configurations
+        self._hessian_configurations = []  # hessian_configurations
         self.input_data = None  # input_data
         self.graph = None  # graph
         self.fw_impl = None
@@ -36,7 +36,16 @@ class HessianService:
         self.fw_impl = fw_impl
 
     def add_hessian_configurations(self, hessian_configurations: List[HessianConfig]):
-        self.hessian_configurations.extend(hessian_configurations)
+        self._hessian_configurations.extend(hessian_configurations)
+
+    def _set_hessian_configurations(self, hessian_configurations: List[HessianConfig]):
+        self._hessian_configurations = hessian_configurations
+
+    def clear_cache(self):
+        self.hessian_cfg_to_hessian_data={}
+
+    def _count_cache(self):
+        return len([x.values() for x in self.hessian_cfg_to_hessian_data.values()])
 
     def compute(self, hessian_cfg:HessianConfig, input_images: List[Any]):
         if len(hessian_cfg.nodes_names_for_hessian_computation) == 1:
@@ -55,7 +64,12 @@ class HessianService:
         else:
             self.hessian_cfg_to_hessian_data[hessian_cfg] = {id(input_images): hessian}
 
-    def fetch_hessian(self, hessian_cfg:HessianConfig, input_images:List[Any]):
+    def fetch_hessian(self, hessian_cfg:HessianConfig, input_images:List[Any]=None):
+        if input_images is None:
+            if hessian_cfg in self.hessian_cfg_to_hessian_data:
+                return self.hessian_cfg_to_hessian_data[hessian_cfg]
+            return {}
+
         if hessian_cfg in self.hessian_cfg_to_hessian_data:
             if id(input_images) in self.hessian_cfg_to_hessian_data[hessian_cfg]:
                 return self.hessian_cfg_to_hessian_data[hessian_cfg][id(input_images)]

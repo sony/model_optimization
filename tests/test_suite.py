@@ -30,7 +30,6 @@ from tests.common_tests.function_tests.test_threshold_selection import TestThres
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
 
-
 if FOUND_ONNX:
     from tests.pytorch_tests.function_tests.test_export_pytorch_fully_quantized_model import TestPyTorchFakeQuantExporter
 
@@ -40,6 +39,7 @@ found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util
 
 if found_tf:
     import tensorflow as tf
+    from tests.keras_tests.function_tests.test_hessian_service import TestHessianService
     from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
     from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
     from tests.keras_tests.function_tests.test_tensorboard_writer import TestFileLogger
@@ -110,6 +110,7 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianService))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQModelBuilderWithActivationHolder))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ExporterTestsRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityMetricInterestPoints))

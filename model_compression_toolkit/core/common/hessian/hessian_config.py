@@ -14,6 +14,9 @@
 # ==============================================================================
 
 from enum import Enum
+from typing import List
+
+from model_compression_toolkit.core.common import BaseNode
 
 
 class HessianMode(Enum):
@@ -31,7 +34,7 @@ class HessianConfig:
     def __init__(self,
                  mode: HessianMode,
                  granularity: HessianGranularity,
-                 nodes_names_for_hessian_computation, # interest points
+                 nodes_names_for_hessian_computation: List[BaseNode], # interest points
                  alpha: float = 0.3,
                  num_iterations: int = 50,
                  norm_weights: bool = True,
@@ -46,3 +49,22 @@ class HessianConfig:
         self.norm_weights = norm_weights
         self.search_output_replacement = search_output_replacement
 
+    def __eq__(self, other):
+        if isinstance(other, HessianConfig):
+            return (self.mode == other.mode and
+                    self.granularity == other.granularity and
+                    self.nodes_names_for_hessian_computation == other.nodes_names_for_hessian_computation and
+                    self.alpha == other.alpha and
+                    self.num_iterations == other.num_iterations and
+                    self.norm_weights == other.norm_weights and
+                    self.search_output_replacement == other.search_output_replacement)
+        return False
+
+    def __hash__(self):
+        return hash((self.mode,
+                     self.granularity,
+                     tuple(self.nodes_names_for_hessian_computation),
+                     self.alpha,
+                     self.num_iterations,
+                     self.norm_weights,
+                     self.search_output_replacement))
