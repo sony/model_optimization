@@ -1,18 +1,28 @@
-from typing import List, Any, Dict
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+from typing import List, Any
 
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig
 
 
 class HessianService:
-    def __init__(self,
-                 # graph: Graph,
-                 # hessian_configurations: List[HessianConfig],
-                 # input_data: List[Any],
-                 # hessian_compute_class: type
-                 ):
+    def __init__(self):
 
-        self.hessian_cfg_to_hessian_data = {}  # Dictionary to store Hessians by configuration
+        self.hessian_cfg_to_hessian_data = {}  # Dictionary to store Hessians by configuration and image list
         self.hessian_configurations = []  # hessian_configurations
         self.input_data = None  # input_data
         self.graph = None  # graph
@@ -27,9 +37,6 @@ class HessianService:
 
     def add_hessian_configurations(self, hessian_configurations: List[HessianConfig]):
         self.hessian_configurations.extend(hessian_configurations)
-
-    # def set_input_data(self, input_data: List[Any]):
-    #     self.input_data = input_data
 
     def compute(self, hessian_cfg:HessianConfig, input_images: List[Any]):
         if len(hessian_cfg.nodes_names_for_hessian_computation) == 1:
