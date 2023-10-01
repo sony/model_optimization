@@ -55,7 +55,8 @@ def core_runner(in_model: Any,
                 fw_impl: FrameworkImplementation,
                 tpc: TargetPlatformCapabilities,
                 target_kpi: KPI = None,
-                tb_w: TensorboardWriter = None):
+                tb_w: TensorboardWriter = None,
+                additional_hessian_configs: List[HessianConfig]=None):
     """
     Quantize a trained model using post-training quantization.
     First, the model graph is optimized using several transformations (e.g. folding BatchNormalization to preceding
@@ -92,11 +93,13 @@ def core_runner(in_model: Any,
                                      mixed_precision_enable=core_config.mixed_precision_enable)
 
     core_hessian_configs = [] #todo: create hessian configs from core config
-    hessian_configs = core_hessian_configs
+    if additional_hessian_configs:
+        core_hessian_configs.extend(additional_hessian_configs)
+
     hessian_service.set_graph(graph)
-    hessian_service.add_hessian_configurations(hessian_configs)
     hessian_service.set_fw_impl(fw_impl)
 
+    hessian_service.add_hessian_configurations(core_hessian_configs)
 
     tg = _prepare_model_for_quantization(graph,
                                          representative_data_gen,
