@@ -44,7 +44,11 @@ class HessianService:
     def clear_cache(self):
         self.hessian_cfg_to_hessian_data={}
 
-    def _count_cache(self):
+    def count_cache(self, hessian_cfg: HessianConfig=None):
+        if hessian_cfg:
+            if hessian_cfg in self.hessian_cfg_to_hessian_data:
+                return len(self.hessian_cfg_to_hessian_data[hessian_cfg])
+            return 0
         return sum([len(x.values()) for x in self.hessian_cfg_to_hessian_data.values()])
 
     def compute(self, hessian_cfg:HessianConfig, input_images: List[Any]):
@@ -73,6 +77,8 @@ class HessianService:
         if hessian_cfg in self.hessian_cfg_to_hessian_data:
             if id(input_images) in self.hessian_cfg_to_hessian_data[hessian_cfg]:
                 return self.hessian_cfg_to_hessian_data[hessian_cfg][id(input_images)]
+
+        # TODO: it may be better to compute different hessians before, or use other existing copmutations. So a phase of smarter computation and fetching can be added here
 
         self.compute(hessian_cfg, input_images)
         return self.hessian_cfg_to_hessian_data[hessian_cfg][id(input_images)]

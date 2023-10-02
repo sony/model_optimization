@@ -202,28 +202,39 @@ class SensitivityEvaluation:
         to be used for the distance metric weighted average computation.
         """
 
+        number_of_images = self.quant_config.num_of_images
+        existing_computations_count = hessian_service.count_cache(self.hessian_cfg)
+        images_to_compute_count = number_of_images - existing_computations_count
+
+        batch_ip_gradients = []
         grad_per_batch = []
+
+        # Use existing computations for the config to save time
+        existing_computations = hessian_service.fetch_hessian(self.hessian_cfg)
+        for image_id, node_to_score in existing_computations.items():
+            image_ip_gradients = []
+            for ip in self.interest_points:
+                image_ip_gradients.append(node_to_score[ip])
+            batch_ip_gradients.append(image_ip_gradients)
+            grad_per_batch.append(np.mean(batch_ip_gradients, axis=0))
+
+        newly_computed = 0
         for images in self.images_batches:
-            batch_ip_gradients = []
             for i in range(1, images[0].shape[0] + 1):
                 Logger.info(f"Computing Jacobian-based weights approximation for image sample {i} out of {images[0].shape[0]}...")
-                if True:
-                    images_list_for_hessian = [images[0][i - 1:i]] * len(self.graph.get_inputs()) # TODO: change to image per input
-                    hessian_data = hessian_service.fetch_hessian(self.hessian_cfg,
-                                                                 images_list_for_hessian)
-                    image_ip_gradients=[]
-                    for ip in self.interest_points:
-                        image_ip_gradients.append(hessian_data[ip])
-                else:
-                    image_ip_gradients = self.fw_impl.model_grad(self.graph,
-                                                                 {inode: images[0][i - 1:i] for inode in
-                                                                  self.graph.get_inputs()},
-                                                                 self.interest_points,
-                                                                 self.outputs_replacement_nodes,
-                                                                 self.output_nodes_indices,
-                                                                 self.quant_config.output_grad_factor,
-                                                                 norm_weights=self.quant_config.norm_weights)
+
+                images_list_for_hessian = [images[0][i - 1:i]] * len(self.graph.get_inputs()) # TODO: change to image per input
+                hessian_data = hessian_service.fetch_hessian(self.hessian_cfg,
+                                                             images_list_for_hessian)
+                image_ip_gradients=[]
+                for ip in self.interest_points:
+                    image_ip_gradients.append(hessian_data[ip])
+
                 batch_ip_gradients.append(image_ip_gradients)
+                newly_computed = newly_computed + 1
+
+                if newly_computed >= images_to_compute_count:
+                    break # If we computed enough hessian scores we can stop
             grad_per_batch.append(np.mean(batch_ip_gradients, axis=0))
         return np.mean(grad_per_batch, axis=0)
 

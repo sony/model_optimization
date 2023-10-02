@@ -77,7 +77,7 @@ class TestHessianService(unittest.TestCase):
         hessian_data2 = self.hessian_service.fetch_hessian(config2, images)
         self.assertTrue(len(self.hessian_service.fetch_hessian(config2)) == 1)
         self.assertEqual(hessian_data1, hessian_data2)
-        num_hessians = self.hessian_service._count_cache()
+        num_hessians = self.hessian_service.count_cache()
         self.assertTrue(num_hessians == 1)
 
     def test_double_configurations_hessian_computation(self):
@@ -104,7 +104,7 @@ class TestHessianService(unittest.TestCase):
         self.assertTrue(len(self.hessian_service.fetch_hessian(config1)) == 1)
         self.hessian_service.fetch_hessian(config2, images)
         self.assertTrue(len(self.hessian_service.fetch_hessian(config2)) == 1)
-        num_hessians = self.hessian_service._count_cache()
+        num_hessians = self.hessian_service.count_cache()
         self.assertTrue(num_hessians == 2)
 
     def test_double_images_hessian_computation(self):
@@ -125,7 +125,7 @@ class TestHessianService(unittest.TestCase):
         images2 = next(representative_dataset())
         self.hessian_service.fetch_hessian(config1, images2)
         self.assertTrue(len(self.hessian_service.fetch_hessian(config1)) == 2)
-        num_hessians = self.hessian_service._count_cache()
+        num_hessians = self.hessian_service.count_cache()
         self.assertTrue(num_hessians == 2)
 
 if __name__ == "__main__":
