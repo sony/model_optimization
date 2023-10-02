@@ -103,6 +103,14 @@ Main features:
 * <ins>Visualization:</ins> You can use TensorBoard to observe useful information for troubleshooting the quantized model's performance (for example, the model in different phases of the quantization, collected statistics, similarity between layers of the float and quantized model and bit-width configuration for mixed-precision quantization). For more details, please read the [visualization documentation](https://sony.github.io/model_optimization/docs/guidelines/visualization.html).   
 * <ins>Target Platform Capabilities:</ins> The Target Platform Capabilities (TPC) describes the target platform (an edge device with dedicated hardware). For more details, please read the [TPC README](model_compression_toolkit/target_platform_capabilities/README.md).   
 
+### Enhanced Post-Training Quantization (EPTQ)
+As part of the GPTQ we provide an advanced optimization algorithm called EPTQ.
+
+The specifications of the algorithm are detailed in the paper: _"**EPTQ: Enhanced Post-Training Quantization via Label-Free Hessian**"_ [4].
+
+More details on the how to use EPTQ via MCT can be found in the [EPTQ guidelines](model_compression_toolkit/gptq/README.md).
+
+
 
 #### Experimental features 
 
@@ -148,3 +156,5 @@ MCT aims at keeping a more up-to-date fork and welcomes contributions from anyon
 [2] [MobilNet](https://keras.io/api/applications/mobilenet/#mobilenet-function) from Keras applications.
 
 [3] [TORCHVISION.MODELS](https://pytorch.org/vision/stable/models.html) 
+
+[4] Gordon, O., Habi, H. V., & Netzer, A., 2023. [EPTQ: Enhanced Post-Training Quantization via Label-Free Hessian. arXiv preprint](https://arxiv.org/abs/2309.11531)
