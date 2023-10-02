@@ -17,22 +17,40 @@ from tensorflow.python.util.object_identity import Reference as TFReference
 
 
 class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
+    """
+    Hessian w.r.t activation for Keras graph computation.
+    """
 
     def __init__(self,
                  graph: Graph,
                  config: HessianConfig,
                  input_images: List[tf.Tensor],
                  fw_impl):
+        """
+
+        Args:
+            graph: Float graph to compute its hessian data.
+            config: HessianConfig to use for during Hessian computation.
+            input_images: List of images to use the the computaion (image per graph input).
+            fw_impl: Framework implementation to use during computation.
+        """
 
         super(ActivationHessianCalculatorKeras, self).__init__(graph=graph,
                                                                config=config,
                                                                input_images=input_images,
                                                                fw_impl=fw_impl)
 
-    def compute(self):
-        if self.config.granularity==HessianGranularity.PER_LAYER:
+    def compute(self) -> Dict[BaseNode, float]:
+        """
+        Compute the hessian of the float graph based on the configuration and images that in
+        the calculator.
+
+        Returns: Dictionary from interest point to hessian score.
+
+        """
+        if self.config.granularity == HessianGranularity.PER_LAYER:
             output_list = self._get_model_output_replacement()
-            all_outputs_indices=[]
+            all_outputs_indices = []
             if self.config.search_output_replacement:
                 all_outputs_indices = self._update_ips_with_outputs_replacements(output_list,
                                                                                  self.config.nodes_names_for_hessian_computation)
@@ -54,7 +72,8 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
                 concat_axis_dim = [o.shape[0] for o in r_outputs]
                 if not all(d == concat_axis_dim[0] for d in concat_axis_dim):
                     Logger.critical(
-                        "Can't concat model's outputs for gradients calculation since the shape of the first axis "  # pragma: no cover
+                        "Can't concat model's outputs for gradients calculation since the shape of the first axis "  
+                        # pragma: no cover
                         "is not equal in all outputs.")
 
                 output = tf.concat(r_outputs, axis=1)
@@ -85,29 +104,39 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
                     ipts_jac_trace_approx.append(2 * tf.reduce_mean(trace_jv) / output.shape[
                         -1])  # Get averaged squared jacobian trace approximation
 
-                ipts_jac_trace_approx = tf.reduce_mean([ipts_jac_trace_approx], axis=0)  # Just to get one tensor instead of list of tensors with single element
+                ipts_jac_trace_approx = tf.reduce_mean([ipts_jac_trace_approx],
+                                                       axis=0)  # Just to get one tensor instead of list of tensors with single element
 
                 if self.config.norm_weights:
                     normalized_ipts_jac_trace_approx = self._normalize_weights(ipts_jac_trace_approx,
-                                              all_outputs_indices,
-                                              self.config.alpha)
+                                                                               all_outputs_indices,
+                                                                               self.config.alpha)
                     return self._attach_interst_point_names_to_scores(normalized_ipts_jac_trace_approx)
                 else:
                     return self._attach_interst_point_names_to_scores(ipts_jac_trace_approx)
         else:
             raise NotImplemented
 
+    def _attach_interst_point_names_to_scores(self, scores: List[float]) -> Dict[BaseNode, float]:
+        """
+        Create a dictionary of node to score based on the passed scores and the interest points
+        in the hessian configuration.
 
-    def _attach_interst_point_names_to_scores(self, scores: List[float]):
+        Args:
+            scores: Hessian scores to attach to interest points.
+
+        Returns: Dictionary from interest point to hessian score.
+
+        """
         res = {}
-        assert len(self.config.nodes_names_for_hessian_computation)==len(scores)
+        assert len(self.config.nodes_names_for_hessian_computation) == len(scores)
         for point_name, score in zip(self.config.nodes_names_for_hessian_computation, scores):
-            res[point_name]=score
+            res[point_name] = score
         return res
 
     def _update_ips_with_outputs_replacements(self,
-                                              outputs_replacement_nodes,
-                                              interest_points):
+                                              outputs_replacement_nodes: List[BaseNode],
+                                              interest_points: List[BaseNode]):
         """
         Updates the list of interest points with the set of pre-calculated replacement outputs.
         Also, returns the indices of all output nodes (original, replacements and nodes in between them) in a
@@ -116,7 +145,6 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
         Returns: A list of indices of the output nodes in the sorted interest points list.
 
         """
-        # todo: make sure in GPTQ outputs_replacement_nodes is an empty list (more specificaly the returned list from this function should be an empty list
 
         replacement_outputs_to_ip = [r_node for r_node in outputs_replacement_nodes if
                                      r_node not in interest_points]
@@ -128,7 +156,6 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
         output_indices = [interest_points.index(n.node) for n in self.graph.get_outputs()]
         replacement_indices = [interest_points.index(n) for n in outputs_replacement_nodes]
         return list(set(output_indices + replacement_indices))
-
 
     def _normalize_weights(self,
                            jacobians_traces: List,
@@ -209,24 +236,21 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
         return replacement_outputs
 
     def _get_model_outputs_for_single_image(self,
-                                   output_list: List[str],
-                                   gradient_tape: tf.GradientTape) -> Tuple[List[tf.Tensor], List[tf.Tensor]]:
+                                            output_list: List[str],
+                                            gradient_tape: tf.GradientTape) -> Tuple[List[tf.Tensor], List[tf.Tensor]]:
         """
         Computes the model's output according to the given graph representation on the given input,
         while recording necessary intermediate tensors for gradients computation.
 
         Args:
-            graph_float: Graph to build its corresponding Keras model.
-            model_input_tensors: A mapping between model input nodes to an input batch.
-            interest_points: List of nodes which we want to get their feature map as output, to calculate distance
-            metric.
             output_list: List of nodes that considered as model's output for the purpose of gradients computation.
             gradient_tape: A GradientTape object for recording necessary info for computing gradients.
 
         Returns: A list of output tensors and a list of activation tensors of all interest points.
 
         """
-        model_input_tensors = {inode: self.fw_impl.to_tensor(self.input_images[i]) for i, inode in enumerate(self.graph.get_inputs())}
+        model_input_tensors = {inode: self.fw_impl.to_tensor(self.input_images[i]) for i, inode in
+                               enumerate(self.graph.get_inputs())}
 
         node_to_output_tensors_dict = dict()
 
@@ -242,12 +266,13 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
             op_func = oh.get_node_op_function(n)  # Get node operation function
 
             input_tensors = self._build_input_tensors_list(n,
-                                                     self.graph,
-                                                     node_to_output_tensors_dict)  # Fetch Node inputs
+                                                           self.graph,
+                                                           node_to_output_tensors_dict)  # Fetch Node inputs
+
             out_tensors_of_n = self._run_operation(n,  # Run node operation and fetch outputs
-                                             input_tensors,
-                                             op_func,
-                                             input_nodes_to_input_tensors)
+                                                   input_tensors,
+                                                   op_func,
+                                                   input_nodes_to_input_tensors)
 
             # Gradients can be computed only on float32 tensors
             if isinstance(out_tensors_of_n, list):
@@ -275,9 +300,8 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
 
     def _build_input_tensors_list(self,
                                   node: BaseNode,
-                                 graph: Graph,
-                                 node_to_output_tensors_dict: Dict[BaseNode, List[TFReference]]) -> List[
-        List[TFReference]]:
+                                  graph: Graph,
+                                  node_to_output_tensors_dict: Dict[BaseNode, List[TFReference]]) -> List[List[TFReference]]:
         """
         Given a node, build a list of input tensors the node gets. The list is built
         based on the node's incoming edges and previous nodes' output tensors.
@@ -300,10 +324,10 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
         return input_tensors
 
     def _run_operation(self,
-                      n: BaseNode,
-                      input_tensors: List[List[TFReference]],
-                      op_func: Layer,
-                      input_nodes_to_input_tensors: Dict[BaseNode, Any]) -> List[TFReference]:
+                       n: BaseNode,
+                       input_tensors: List[List[TFReference]],
+                       op_func: Layer,
+                       input_nodes_to_input_tensors: Dict[BaseNode, Any]) -> List[TFReference]:
         """
         Applying the layer (op_func) to the input tensors (input_tensors).
 
@@ -335,7 +359,3 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
                 out_tensors_of_n = op_func(input_tensors)
 
         return out_tensors_of_n
-
-
-
-
