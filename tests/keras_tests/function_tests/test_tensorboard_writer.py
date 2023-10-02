@@ -97,8 +97,6 @@ class TestFileLogger(unittest.TestCase):
 
     def plot_tensor_sizes(self):
         model = SingleOutputNet()
-        print('%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-        print([l.name for l in model.layers])
         base_config, _ = get_op_quantization_configs()
         tpc_model = generate_tp_model_with_activation_mp(
             base_cfg=base_config,
@@ -136,8 +134,6 @@ class TestFileLogger(unittest.TestCase):
     def test_steps_by_order(self):
         # Test Single Output Mixed Precision model Logger
         self.model = SingleOutputNet()
-        print('%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-        print([l.name for l in self.model.layers])
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
         def rep_data():
@@ -159,8 +155,6 @@ class TestFileLogger(unittest.TestCase):
 
         # Test Multiple Outputs model Logger
         self.model = MultipleOutputsNet()
-        print('%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-        print([l.name for l in self.model.layers])
         quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(self.model,
                                                                                rep_data,
                                                                                target_kpi=mct.core.KPI(np.inf),
