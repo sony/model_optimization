@@ -464,45 +464,20 @@ class KerasImplementation(FrameworkImplementation):
             return compute_cs
         return compute_mse
 
-    def get_framwork_hessian_calculator(self, hessian_cfg:HessianConfig):
-        if hessian_cfg.mode==HessianMode.ACTIVATIONS:
+    def get_framwork_hessian_calculator(self, hessian_cfg:HessianConfig) -> type:
+        """
+        Get Keras hessian calculator based on the hessian configuration.
+        Args:
+            hessian_cfg: HessianConfig to search for the desired calculator.
+
+        Returns: HessianCalculatorKeras to use for the hessian computation for this configuration.
+
+        """
+        if hessian_cfg.mode == HessianMode.ACTIVATIONS:
             return ActivationHessianCalculatorKeras
-        elif hessian_cfg.mode==HessianMode.WEIGHTS:
+        elif hessian_cfg.mode == HessianMode.WEIGHTS:
             return WeightsHessianCalculatorKeras
 
-    def model_grad(self,
-                   graph_float: common.Graph,
-                   model_input_tensors: Dict[BaseNode, np.ndarray],
-                   interest_points: List[BaseNode],
-                   output_list: List[BaseNode],
-                   all_outputs_indices: List[int],
-                   alpha: float = 0.3,
-                   n_iter: int = 50,
-                   norm_weights: bool = True) -> List[float]:
-        """
-        Calls a Keras model gradient calculation function, which computes the jacobian-based weights of the model's
-        outputs with respect to the feature maps of the set of given interest points.
-
-        Args:
-            graph_float: Graph to build its corresponding Keras model.
-            model_input_tensors: A mapping between model input nodes to an input batch.
-            interest_points: List of nodes which we want to get their feature map as output, to calculate distance metric.
-            output_list: List of nodes that considered as model's output for the purpose of gradients computation.
-            all_outputs_indices: Indices of the model outputs and outputs replacements (if exists),
-                in a topological sorted interest points list
-            alpha:A tuning parameter to allow calibration between the contribution of the output feature maps returned
-                weights and the other feature maps weights (since the gradient of the output layers does not provide a
-                compatible weight for the distance metric computation).
-            n_iter: The number of random iterations to calculate the approximated  jacobian-based weights for each interest point.
-            norm_weights: Whether to normalize the returned weights (to get values between 0 and 1).
-
-        Returns: A list of (possibly normalized) jacobian-based weights to be considered as the relevancy that each interest
-        point's output has on the model's output.
-
-        """
-        raise Exception
-        return keras_iterative_approx_jacobian_trace(graph_float, model_input_tensors, interest_points, output_list,
-                                                     all_outputs_indices, alpha, n_iter, norm_weights=norm_weights)
 
     def is_node_compatible_for_metric_outputs(self,
                                               node: BaseNode) -> Any:
