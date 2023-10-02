@@ -21,12 +21,27 @@ from model_compression_toolkit.core.common.hessian.hessian_config import Hessian
 
 
 class HessianCalculator(ABC):
+    """
+       Abstract base class for a Hessian calculator.
+
+       The Hessian matrix represents the second order partial derivatives
+       of a function, and this class provides a structure to compute the
+       Hessian for given inputs using a specified forward implementation.
+    """
 
     def __init__(self,
                  graph: Graph,
                  config: HessianConfig,
                  input_images: List[Any],
                  fw_impl):
+        """
+
+        Args:
+            graph (Graph): Graph representation of the float model for which Hessian is to be computed.
+            config (HessianConfig): Configuration parameters for Hessian computation.
+            input_images (List[Any]): List of input images for the hessian computation.
+            fw_impl (FrameworkImplementation): Framework implementation used for the computation.
+        """
         self.graph = graph
         self.config = config
         self.input_images = input_images
@@ -34,4 +49,9 @@ class HessianCalculator(ABC):
 
     @abstractmethod
     def compute(self):
+        """
+        Abstract method to compute the Hessian.
+        Concrete implementations of this class should provide the method to
+        compute the Hessian based on the initialized parameters.
+        """
         raise NotImplemented
