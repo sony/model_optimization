@@ -122,7 +122,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_pre
     MixedPercisionSearchTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest, MixedPrecisionActivationDisabled, \
     MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationKPINonConfNodesTest, \
-    MixedPercisionSearchTotalKPINonConfNodesTest
+    MixedPercisionSearchTotalKPINonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest
 from tests.keras_tests.feature_networks_tests.feature_networks.old_api_test import OldApiTest
 
 layers = tf.keras.layers
@@ -207,6 +207,9 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_mixed_precision_search(self):
         MixedPercisionSearchTest(self).run_test()
+
+    def test_mixed_precision_for_part_weights_layers(self):
+        MixedPercisionSearchPartWeightsLayersTest(self).run_test()
 
     def test_mixed_precision_activation_disabled(self):
         MixedPrecisionActivationDisabled(self).run_test()

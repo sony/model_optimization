@@ -16,9 +16,10 @@
 
 import numpy as np
 import tensorflow as tf
-from keras.layers import DepthwiseConv2D, ReLU
 
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights
+from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
+    QuantizationFormat
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
@@ -123,6 +124,75 @@ class MixedPercisionSearchTest(MixedPercisionBaseTest):
             quantization_info.final_kpi.total_memory,
             "Running weights mixed-precision with unconstrained KPI, "
             "final weights and activation memory sum should be equal to total memory.")
+
+
+class MixedPercisionSearchPartWeightsLayersTest(MixedPercisionBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test, val_batch_size=2)
+
+    def get_tpc(self):
+        # Building a TPC that gives Conv layers mixed precision candidates and Dense layers a fixed candidate.
+        # Both layers that have weights to quantized, so we want to verify that finalizing the model is successful.
+        # Note that this is important that the quantization config options would include also activation quantization.
+        cfg, mixed_precision_cfg_list = get_op_quantization_configs()
+
+        two_bit_cfg = mixed_precision_cfg_list[2]
+
+        weight_mixed_cfg = tp.QuantizationConfigOptions(
+            mixed_precision_cfg_list,
+            base_config=cfg,
+        )
+
+        weight_fixed_cfg = tp.QuantizationConfigOptions(
+            [two_bit_cfg],
+            base_config=two_bit_cfg,
+        )
+
+        tp_model = tp.TargetPlatformModel(weight_fixed_cfg, name="mp_part_weights_layers_test")
+        with tp_model:
+            tp_model.set_quantization_format(QuantizationFormat.FAKELY_QUANT)
+
+            tp.OperatorsSet("Weights_mp", weight_mixed_cfg)
+            tp.OperatorsSet("Weights_fixed", weight_fixed_cfg)
+
+        keras_tpc = tp.TargetPlatformCapabilities(tp_model, name="mp_part_weights_layers_test")
+
+        with keras_tpc:
+            tp.OperationsSetToLayers(
+                "Weights_fixed",
+                [layers.Dense],
+            )
+
+            tp.OperationsSetToLayers(
+                "Weights_mp",
+                [layers.Conv2D],
+            )
+
+        return keras_tpc
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Conv2D(32, 4)(inputs)
+        x = layers.Dense(32)(x)
+        model = keras.Model(inputs=inputs, outputs=x)
+        return model
+
+    def get_kpi(self):
+        # kpi is infinity -> should give best model - 8bits
+        return KPI(np.inf)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        # We just needed to verify that the graph finalization is working without failing.
+        # The actual quantization is not interesting for the sake of this test, so we just verify some
+        # degenerated things to see that everything worked.
+        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg == [0])  # kpi is infinity -> should give best model - 8bits
+
+        dense_layer = get_layers_from_model_by_type(quantized_model, layers.Dense)
+        self.unit_test.assertTrue(len(dense_layer) == 1)
+        dense_layer = dense_layer[0]
+        for i in range(32):  # quantized to 2 bits per channel
+            self.unit_test.assertTrue(
+                np.unique(dense_layer.get_quantized_weights()['kernel'][:, i]).flatten().shape[0] <= 4)
 
 
 class MixedPercisionSearchKPI4BitsAvgTest(MixedPercisionBaseTest):

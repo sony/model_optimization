@@ -16,14 +16,18 @@ import torch
 import numpy as np
 from torch.nn import Conv2d
 
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, KPI
+from model_compression_toolkit.core import KPI
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights
 from model_compression_toolkit.core.common.user_info import UserInformation
+from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
+    QuantizationFormat
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model, get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 import model_compression_toolkit as mct
+
+tp = mct.target_platform
 
 """
 This test checks the Mixed Precision feature.
@@ -87,6 +91,82 @@ class MixedPercisionSearch8Bit(MixedPercisionBaseTest):
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.compare_results(quantization_info, quantized_models, float_model, 0)
 
+
+class MixedPercisionSearchPartWeightsLayers(MixedPercisionBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def get_tpc(self):
+        # Building a TPC that gives Conv layers mixed precision candidates and Dense layers a fixed candidate.
+        # Both layers that have weights to quantized, so we want to verify that finalizing the model is successful.
+        # Note that this is important that the quantization config options would include also activation quantization.
+        cfg, mixed_precision_cfg_list = get_op_quantization_configs()
+
+        two_bit_cfg = mixed_precision_cfg_list[2]
+
+        weight_mixed_cfg = tp.QuantizationConfigOptions(
+            mixed_precision_cfg_list,
+            base_config=cfg,
+        )
+
+        weight_fixed_cfg = tp.QuantizationConfigOptions(
+            [two_bit_cfg],
+            base_config=two_bit_cfg,
+        )
+
+        tp_model = tp.TargetPlatformModel(weight_fixed_cfg, name="mp_part_weights_layers_test")
+        with tp_model:
+            tp_model.set_quantization_format(QuantizationFormat.FAKELY_QUANT)
+
+            tp.OperatorsSet("Weights_mp", weight_mixed_cfg)
+            tp.OperatorsSet("Weights_fixed", weight_fixed_cfg)
+
+        pytorch_tpc = tp.TargetPlatformCapabilities(tp_model, name="mp_part_weights_layers_test")
+
+        with pytorch_tpc:
+            tp.OperationsSetToLayers(
+                "Weights_fixed",
+                [torch.nn.Linear],
+            )
+
+            tp.OperationsSetToLayers(
+                "Weights_mp",
+                [torch.nn.Conv2d],
+            )
+
+        return {'mixed_precision_model': pytorch_tpc}
+
+    def create_feature_network(self, input_shape):
+        class ConvLinearModel(torch.nn.Module):
+            def __init__(self, _input_shape):
+                super(ConvLinearModel, self).__init__()
+                _, in_channels, _, _ = _input_shape[0]
+                self.conv = torch.nn.Conv2d(in_channels, 3, kernel_size=3)
+                self.linear = torch.nn.Linear(30, 64)
+
+            def forward(self, inp):
+                x = self.conv(inp)
+                output = self.linear(x)
+                return output
+
+        return ConvLinearModel(input_shape)
+
+    def get_kpi(self):
+        return KPI(np.inf)
+
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        # We just needed to verify that the graph finalization is working without failing.
+        # The actual quantization is not interesting for the sake of this test, so we just verify some
+        # degenerated things to see that everything worked.
+        self.unit_test.assertTrue(
+            quantization_info.mixed_precision_cfg == [0])  # kpi is infinity -> should give best model - 8bits
+
+        quantized_model = quantized_models['mixed_precision_model']
+        linear_layer = quantized_model.linear
+        q_weights = linear_layer.get_quantized_weights()['weight'].detach().cpu().numpy()
+        for i in range(q_weights.shape[0]):
+            self.unit_test.assertTrue(
+                np.unique(q_weights[i, :]).flatten().shape[0] <= 4)
 
 class MixedPercisionSearch2Bit(MixedPercisionBaseTest):
     def __init__(self, unit_test):
