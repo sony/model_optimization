@@ -50,20 +50,21 @@ def set_bit_widths(mixed_precision_enable: bool,
                 _set_node_final_qc(bit_widths_config,
                                    node,
                                    node_index_in_graph)
-            elif node.is_activation_quantization_enabled():
-                # If we are here, this means that we are in weights-only mixed-precision
-                # (i.e., activations are quantized with fixed bitwidth or not quantized)
-                # and that this node doesn't have weights to quantize
-                assert len(node.candidates_quantization_cfg) > 0, \
-                    "Node need to have at least one quantization configuration in order to quantize its activation"
-                node.final_activation_quantization_cfg = copy.deepcopy(node.candidates_quantization_cfg[0].activation_quantization_cfg)
-            elif node.is_weights_quantization_enabled():
-                # If we are here, this means that we are in activation-only mixed-precision
-                # (i.e., weights are quantized with fixed bitwidth or not quantized)
-                # and that this node doesn't have activations to quantize
-                assert len(node.candidates_quantization_cfg) > 0, \
-                    "Node need to have at least one quantization configuration in order to quantize its activation"
-                node.final_weights_quantization_cfg = copy.deepcopy(node.candidates_quantization_cfg[0].weights_quantization_cfg)
+            else:
+                if node.is_activation_quantization_enabled():
+                    # If we are here, this means that we are in weights-only mixed-precision
+                    # (i.e., activations are quantized with fixed bitwidth or not quantized)
+                    # and that this node doesn't have weights to quantize
+                    assert len(node.candidates_quantization_cfg) > 0, \
+                        "Node need to have at least one quantization configuration in order to quantize its activation"
+                    node.final_activation_quantization_cfg = copy.deepcopy(node.candidates_quantization_cfg[0].activation_quantization_cfg)
+                if node.is_weights_quantization_enabled():
+                    # If we are here, this means that we are in activation-only mixed-precision
+                    # (i.e., weights are quantized with fixed bitwidth or not quantized)
+                    # and that this node doesn't have activations to quantize
+                    assert len(node.candidates_quantization_cfg) > 0, \
+                        "Node need to have at least one quantization configuration in order to quantize its activation"
+                    node.final_weights_quantization_cfg = copy.deepcopy(node.candidates_quantization_cfg[0].weights_quantization_cfg)
 
     # When working in non-mixed-precision mode, there's only one bitwidth, and we simply set the
     # only candidate of the node as its final weight and activation quantization configuration.
