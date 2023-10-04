@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from model_compression_toolkit.core.common.hessian.hessian_service import hessian_service
-from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig, HessianMode, HessianGranularity
+from model_compression_toolkit.core.common.hessian.hessian_request import HessianRequest, HessianMode, HessianGranularity
+from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig
+from model_compression_toolkit.core.common.hessian.hessian_service import HessianService
+import model_compression_toolkit.core.common.hessian.hessian_utils as hessian_utils

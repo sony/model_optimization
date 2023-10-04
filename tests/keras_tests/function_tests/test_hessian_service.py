@@ -6,6 +6,8 @@ from tensorflow import initializers
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input
 
 import model_compression_toolkit.core.common.hessian as hess
+from model_compression_toolkit.core.common.hessian import HessianService, HessianConfig, HessianRequest, HessianMode, \
+    HessianGranularity
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
@@ -24,13 +26,13 @@ def basic_model(input_shape):
 
 
 def representative_dataset(num_of_inputs=1):
-    yield [np.random.randn(1, 8, 8, 3).astype(np.float32)] * num_of_inputs
+    yield [np.random.randn(2, 8, 8, 3).astype(np.float32)] * num_of_inputs
 
 
 class TestHessianService(unittest.TestCase):
 
     def setUp(self):
-        self.hessian_service = hess.hessian_service
+
         input_shape = (8, 8, 3)
         self.float_model = basic_model(input_shape)
         self.keras_impl = KerasImplementation()
@@ -39,94 +41,56 @@ class TestHessianService(unittest.TestCase):
                                                 DEFAULT_KERAS_INFO,
                                                 representative_dataset,
                                                 generate_keras_tpc)
-        self.hessian_service.set_graph(self.graph)
+        hessian_cfg = HessianConfig()
+        self.hessian_service = HessianService(graph=self.graph,
+                                              representative_dataset=representative_dataset,
+                                              fw_impl=self.keras_impl,
+                                              hessian_configuration=hessian_cfg)
+
         self.assertEqual(self.hessian_service.graph, self.graph)
-        self.hessian_service.set_fw_impl(self.keras_impl)
         self.assertEqual(self.hessian_service.fw_impl, self.keras_impl)
 
-    def test_add_hessian_configurations(self):
-        self.hessian_service._set_hessian_configurations([])
-        hessian_configs = [hess.HessianConfig(nodes_names_for_hessian_computation=[],
-                                              granularity=hess.HessianGranularity.PER_LAYER,
-                                              mode=hess.HessianMode.ACTIVATIONS)]
-        self.hessian_service.add_hessian_configurations(hessian_configs)
-        self.assertEqual(self.hessian_service._hessian_configurations, hessian_configs)
+    def test_fetch_hessian(self):
+        request = HessianRequest(mode=HessianMode.ACTIVATIONS,
+                                 granularity=HessianGranularity.PER_TENSOR,
+                                 target_node=list(self.graph.nodes)[1])
+        hessian = self.hessian_service.fetch_hessian(request, 2)
+        self.assertEqual(len(hessian), 2)
 
-    def test_reused_hessian_computation(self):
+    def test_clear_cache(self):
         self.hessian_service.clear_cache()
+        request = HessianRequest(mode=HessianMode.ACTIVATIONS,
+                                 granularity=HessianGranularity.PER_TENSOR,
+                                 target_node=list(self.graph.nodes)[1])
+        self.assertEqual(self.hessian_service.count_cache_of_request(request), 0)
 
-        config1 = hess.HessianConfig(
-            mode=hess.HessianMode.ACTIVATIONS,
-            granularity=hess.HessianGranularity.PER_LAYER,
-            nodes_names_for_hessian_computation=list(self.graph.nodes),
-            alpha=0.5,
-            num_iterations=10
-        )
-
-        config2 = hess.HessianConfig(
-            mode=hess.HessianMode.ACTIVATIONS,
-            granularity=hess.HessianGranularity.PER_LAYER,
-            nodes_names_for_hessian_computation=list(self.graph.nodes),
-            alpha=0.5,
-            num_iterations=10
-        )
-
-        images = next(representative_dataset())
-        hessian_data1 = self.hessian_service.fetch_hessian(config1, images)
-        self.assertTrue(len(self.hessian_service.fetch_hessian(config1)) == 1)
-        hessian_data2 = self.hessian_service.fetch_hessian(config2, images)
-        self.assertTrue(len(self.hessian_service.fetch_hessian(config2)) == 1)
-        self.assertEqual(hessian_data1, hessian_data2)
-        num_hessians = self.hessian_service.count_cache()
-        self.assertTrue(num_hessians == 1)
-
-    def test_double_configurations_hessian_computation(self):
+        self.hessian_service.fetch_hessian(request, 1)
+        self.assertEqual(self.hessian_service.count_cache_of_request(request), 1)
         self.hessian_service.clear_cache()
+        self.assertEqual(self.hessian_service.count_cache_of_request(request), 0)
 
-        config1 = hess.HessianConfig(
-            mode=hess.HessianMode.ACTIVATIONS,
-            granularity=hess.HessianGranularity.PER_LAYER,
-            nodes_names_for_hessian_computation=list(self.graph.nodes),
-            alpha=0.5,
-            num_iterations=10
-        )
 
-        config2 = hess.HessianConfig(
-            mode=hess.HessianMode.ACTIVATIONS,
-            granularity=hess.HessianGranularity.PER_LAYER,
-            nodes_names_for_hessian_computation=list(self.graph.nodes),
-            alpha=0.3,
-            num_iterations=10
-        )
-
-        images = next(representative_dataset())
-        self.hessian_service.fetch_hessian(config1, images)
-        self.assertTrue(len(self.hessian_service.fetch_hessian(config1)) == 1)
-        self.hessian_service.fetch_hessian(config2, images)
-        self.assertTrue(len(self.hessian_service.fetch_hessian(config2)) == 1)
-        num_hessians = self.hessian_service.count_cache()
-        self.assertTrue(num_hessians == 2)
-
-    def test_double_images_hessian_computation(self):
+    def test_double_fetch_hessian(self):
         self.hessian_service.clear_cache()
+        request = HessianRequest(mode=HessianMode.ACTIVATIONS,
+                                 granularity=HessianGranularity.PER_TENSOR,
+                                 target_node=list(self.graph.nodes)[1])
+        hessian = self.hessian_service.fetch_hessian(request, 2)
+        self.assertEqual(len(hessian), 2)
+        self.assertEqual(self.hessian_service.count_cache_of_request(request), 2)
 
-        config1 = hess.HessianConfig(
-            mode=hess.HessianMode.ACTIVATIONS,
-            granularity=hess.HessianGranularity.PER_LAYER,
-            nodes_names_for_hessian_computation=list(self.graph.nodes),
-            alpha=0.5,
-            num_iterations=10
-        )
+        hessian = self.hessian_service.fetch_hessian(request, 2)
+        self.assertEqual(len(hessian), 2)
+        self.assertEqual(self.hessian_service.count_cache_of_request(request), 2)
 
-        images = next(representative_dataset())
-        self.hessian_service.fetch_hessian(config1, images)
-        self.assertTrue(len(self.hessian_service.fetch_hessian(config1)) == 1)
+    def test_populate_cache_to_size(self):
+        self.hessian_service.clear_cache()
+        request = HessianRequest(mode=HessianMode.ACTIVATIONS,
+                                 granularity=HessianGranularity.PER_TENSOR,
+                                 target_node=list(self.graph.nodes)[1])
+        self.hessian_service._populate_cache_to_size(request, 2)
+        self.assertEqual(self.hessian_service.count_cache_of_request(request), 2)
 
-        images2 = next(representative_dataset())
-        self.hessian_service.fetch_hessian(config1, images2)
-        self.assertTrue(len(self.hessian_service.fetch_hessian(config1)) == 2)
-        num_hessians = self.hessian_service.count_cache()
-        self.assertTrue(num_hessians == 2)
 
 if __name__ == "__main__":
     unittest.main()

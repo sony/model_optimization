@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from model_compression_toolkit.constants import HESSIAN_OUTPUT_ALPHA, HESSIAN_NUM_ITERATIONS
 
 
 class HessianConfig:
@@ -20,10 +21,10 @@ class HessianConfig:
     """
 
     def __init__(self,
-                 alpha: float = 0.3,
-                 num_iterations: int = 50,
-                 norm_weights: bool = True,
-                 search_output_replacement: bool = False
+                 alpha: float = HESSIAN_OUTPUT_ALPHA,
+                 num_iterations: int = HESSIAN_NUM_ITERATIONS,
+                 # norm_weights: bool = True,
+                 # search_output_replacement: bool = False
                  ):
         """
 
@@ -38,8 +39,8 @@ class HessianConfig:
         """
         self.alpha = alpha
         self.num_iterations = num_iterations
-        self.norm_weights = norm_weights
-        self.search_output_replacement = search_output_replacement
+        # self.norm_weights = norm_weights
+        # self.search_output_replacement = search_output_replacement
 
     def __eq__(self, other):
         """
@@ -47,9 +48,10 @@ class HessianConfig:
         """
         if isinstance(other, HessianConfig):
             return (self.alpha == other.alpha and
-                    self.num_iterations == other.num_iterations and
-                    self.norm_weights == other.norm_weights and
-                    self.search_output_replacement == other.search_output_replacement)
+                    self.num_iterations == other.num_iterations
+                    # self.norm_weights == other.norm_weights and
+                    # self.search_output_replacement == other.search_output_replacement
+                    )
         return False
 
     def __hash__(self):
@@ -57,6 +59,7 @@ class HessianConfig:
         Computes the hash of the HessianConfig object for dictionary usage or other hashing requirements.
         """
         return hash((self.alpha,
-                     self.num_iterations,
-                     self.norm_weights,
-                     self.search_output_replacement))
+                     self.num_iterations
+                     # self.norm_weights,
+                     # self.search_output_replacement
+                     ))

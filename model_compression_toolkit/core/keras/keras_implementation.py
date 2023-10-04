@@ -21,7 +21,8 @@ from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantization
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
 
-from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig, HessianMode
+from model_compression_toolkit.core.common.hessian import HessianRequest, HessianMode, HessianService
+from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig
 from model_compression_toolkit.core.keras.hessian.activation_hessian_calculator_keras import \
     ActivationHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.hessian_calculator_keras import HessianCalculatorKeras
@@ -365,7 +366,8 @@ class KerasImplementation(FrameworkImplementation):
                                   quant_config: MixedPrecisionQuantizationConfigV2,
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
-                                  disable_activation_for_metric: bool = False) -> SensitivityEvaluation:
+                                  disable_activation_for_metric: bool = False,
+                                  hessian_service: HessianService = None) -> SensitivityEvaluation:
         """
         Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
         configuration (comparing to the float model).
@@ -391,7 +393,8 @@ class KerasImplementation(FrameworkImplementation):
                                                                    activation_quantizer_type=ConfigurableActivationQuantizer,
                                                                    weights_quant_layer_type=KerasQuantizationWrapper,
                                                                    activation_quant_layer_type=KerasActivationQuantizationHolder),
-                                     disable_activation_for_metric=disable_activation_for_metric)
+                                     disable_activation_for_metric=disable_activation_for_metric,
+                                     hessian_service=hessian_service)
 
     def get_node_prior_info(self,
                             node: BaseNode,
@@ -464,7 +467,7 @@ class KerasImplementation(FrameworkImplementation):
             return compute_cs
         return compute_mse
 
-    def get_framwork_hessian_calculator(self, hessian_cfg:HessianConfig) -> type:
+    def get_framwork_hessian_calculator(self, hessian_request: HessianRequest) -> type:
         """
         Get Keras hessian calculator based on the hessian configuration.
         Args:
@@ -473,9 +476,9 @@ class KerasImplementation(FrameworkImplementation):
         Returns: HessianCalculatorKeras to use for the hessian computation for this configuration.
 
         """
-        if hessian_cfg.mode == HessianMode.ACTIVATIONS:
+        if hessian_request.mode == HessianMode.ACTIVATIONS:
             return ActivationHessianCalculatorKeras
-        elif hessian_cfg.mode == HessianMode.WEIGHTS:
+        elif hessian_request.mode == HessianMode.WEIGHTS:
             return WeightsHessianCalculatorKeras
 
 

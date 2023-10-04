@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import List
 
 from enum import Enum
 
@@ -44,7 +45,7 @@ class HessianRequest:
     def __init__(self,
                  mode: HessianMode,
                  granularity: HessianGranularity,
-                 target_node: BaseNode
+                 target_node: BaseNode,
                  ):
         """
 
@@ -56,7 +57,29 @@ class HessianRequest:
         """
         self.mode = mode  # activations or weights
         self.granularity = granularity  # per element, per layer, per channel
-        self.target_node = target_node
+        self.target_node = target_node # TODO: extend it list of nodes
+
+
+# class MultiNodeHessianRequest:
+#
+#     def __init__(self,
+#                  mode: HessianMode,
+#                  granularity: HessianGranularity,
+#                  target_nodes: List[BaseNode],
+#                  ):
+#
+#         self.mode = mode
+#         self.granularity = granularity
+#         self.target_nodes = target_nodes
+#
+#         multi_request_by_node = []
+#         for target_node in target_nodes:
+#             request = HessianRequest(mode=mode,
+#                                      granularity=granularity,
+#                                      target_node=target_node)
+#             multi_request_by_node.append(request)
+#         self.multi_request_by_node = multi_request_by_node
+
 
     # def __eq__(self, other):
     #     """

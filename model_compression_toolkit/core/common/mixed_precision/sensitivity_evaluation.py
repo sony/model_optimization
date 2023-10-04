@@ -21,10 +21,11 @@ from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig, HessianMode, HessianGranularity
+
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.hessian import hessian_service
+from model_compression_toolkit.core.common.hessian import hessian_service, HessianRequest, HessianMode, \
+    HessianGranularity, HessianService
 
 
 class SensitivityEvaluation:
@@ -40,7 +41,9 @@ class SensitivityEvaluation:
                  fw_info: FrameworkInfo,
                  fw_impl: Any,
                  set_layer_to_bitwidth: Callable,
-                 disable_activation_for_metric: bool = False):
+                 disable_activation_for_metric: bool = False,
+                 hessian_service: HessianService = None
+                 ):
         """
         Initiates all relevant objects to manage a sensitivity evaluation for MP search.
         Create an object that allows to compute the sensitivity metric of an MP model (the sensitivity
@@ -70,6 +73,11 @@ class SensitivityEvaluation:
         self.fw_impl = fw_impl
         self.set_layer_to_bitwidth = set_layer_to_bitwidth
         self.disable_activation_for_metric = disable_activation_for_metric
+        if self.quant_config.use_grad_based_weights:
+            if not hessian_service:
+                Logger.error(f"When using hessian approximations for sensitivity evaluation, "
+                             f"hessian service must be provided but is {hessian_service}")
+            self.hessian_service = hessian_service
 
         # Get interest points for distance measurement and a list of sorted configurable nodes names
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
@@ -114,13 +122,6 @@ class SensitivityEvaluation:
                 f"{self.outputs_replacement_nodes} and {self.output_nodes_indices} " \
                 f"should've been assigned before computing the gradient-based weights."
 
-            self.hessian_cfg = HessianConfig(mode=HessianMode.ACTIVATIONS,
-                                             granularity=HessianGranularity.PER_LAYER,
-                                             nodes_names_for_hessian_computation=self.interest_points,
-                                             alpha=self.quant_config.output_grad_factor,
-                                             norm_weights=self.quant_config.norm_weights,
-                                             search_output_replacement=True
-                                             )
             self.interest_points_gradients = self._compute_gradient_based_weights()
             self.quant_config.distance_weighting_method = lambda d: self.interest_points_gradients
 
@@ -201,41 +202,23 @@ class SensitivityEvaluation:
         Returns: A vector of weights, one for each interest point,
         to be used for the distance metric weighted average computation.
         """
+        compare_point_to_trace_hessian_approximations = {}
+        for target_node in self.interest_points:
+            hessian_request = HessianRequest(mode=HessianMode.ACTIVATIONS,
+                                             granularity=HessianGranularity.PER_TENSOR,
+                                             target_node=target_node)
+            node_approximations = self.hessian_service.fetch_hessian(hessian_request=hessian_request,
+                                                                     required_size=self.quant_config.num_of_images)
+            compare_point_to_trace_hessian_approximations[target_node] = node_approximations
 
-        number_of_images = self.quant_config.num_of_images
-        existing_computations_count = hessian_service.count_cache(self.hessian_cfg)
-        images_to_compute_count = number_of_images - existing_computations_count
-
-        batch_ip_gradients = []
         grad_per_batch = []
-
-        # Use existing computations for the config to save time
-        existing_computations = hessian_service.fetch_hessian(self.hessian_cfg)
-        for image_id, node_to_score in existing_computations.items():
-            image_ip_gradients = []
-            for ip in self.interest_points:
-                image_ip_gradients.append(node_to_score[ip])
-            batch_ip_gradients.append(image_ip_gradients)
-            grad_per_batch.append(np.mean(batch_ip_gradients, axis=0))
-
-        newly_computed = 0
-        for images in self.images_batches:
-            for i in range(1, images[0].shape[0] + 1):
-                Logger.info(f"Computing Jacobian-based weights approximation for image sample {i} out of {images[0].shape[0]}...")
-
-                images_list_for_hessian = [images[0][i - 1:i]] * len(self.graph.get_inputs()) # TODO: change to image per input
-                hessian_data = hessian_service.fetch_hessian(self.hessian_cfg,
-                                                             images_list_for_hessian)
-                image_ip_gradients=[]
-                for ip in self.interest_points:
-                    image_ip_gradients.append(hessian_data[ip])
-
-                batch_ip_gradients.append(image_ip_gradients)
-                newly_computed = newly_computed + 1
-
-                if newly_computed >= images_to_compute_count:
-                    break # If we computed enough hessian scores we can stop
-            grad_per_batch.append(np.mean(batch_ip_gradients, axis=0))
+        for image_idx in range(self.quant_config.num_of_images):
+            batch_ip_gradients = []
+            for target_node in self.interest_points:
+                assert isinstance(compare_point_to_trace_hessian_approximations[target_node][image_idx], list)
+                assert len(compare_point_to_trace_hessian_approximations[target_node][image_idx]) == 1
+                batch_ip_gradients.append(compare_point_to_trace_hessian_approximations[target_node][image_idx][0])
+            grad_per_batch.append(batch_ip_gradients)
         return np.mean(grad_per_batch, axis=0)
 
     def _configure_bitwidths_model(self,

@@ -9,7 +9,8 @@ from model_compression_toolkit.constants import MIN_JACOBIANS_ITER, JACOBIANS_CO
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig, HessianMode, HessianGranularity
+from model_compression_toolkit.core.common.hessian import HessianRequest, HessianGranularity
+from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig
 from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler
 from model_compression_toolkit.core.keras.hessian.hessian_calculator_keras import HessianCalculatorKeras
 from model_compression_toolkit.logger import Logger
@@ -23,9 +24,10 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
 
     def __init__(self,
                  graph: Graph,
-                 config: HessianConfig,
+                 hessian_config: HessianConfig,
                  input_images: List[tf.Tensor],
-                 fw_impl):
+                 fw_impl,
+                 hessian_request: HessianRequest):
         """
 
         Args:
@@ -36,11 +38,12 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
         """
 
         super(ActivationHessianCalculatorKeras, self).__init__(graph=graph,
-                                                               config=config,
+                                                               hessian_config=hessian_config,
                                                                input_images=input_images,
-                                                               fw_impl=fw_impl)
+                                                               fw_impl=fw_impl,
+                                                               hessian_request=hessian_request)
 
-    def compute(self) -> Dict[BaseNode, float]:
+    def compute(self) -> List[tf.Tensor]:
         """
         Compute the hessian of the float graph based on the configuration and images that in
         the calculator.
@@ -48,12 +51,12 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
         Returns: Dictionary from interest point to hessian score.
 
         """
-        if self.config.granularity == HessianGranularity.PER_LAYER:
+        if self.hessian_request.granularity == HessianGranularity.PER_TENSOR:
             output_list = self._get_model_output_replacement()
             all_outputs_indices = []
-            if self.config.search_output_replacement:
-                all_outputs_indices = self._update_ips_with_outputs_replacements(output_list,
-                                                                                 self.config.nodes_names_for_hessian_computation)
+            # if self.hessian_config.search_output_replacement:
+            #     all_outputs_indices = self._update_ips_with_outputs_replacements(output_list,
+            #                                                                      self.config.nodes_names_for_hessian_computation)
 
             with tf.GradientTape(persistent=True, watch_accessed_variables=False) as g:
                 outputs, interest_points_tensors = self._get_model_outputs_for_single_image(output_list,
@@ -81,7 +84,7 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
                 ipts_jac_trace_approx = []
                 for ipt in tqdm(interest_points_tensors):  # Per Interest point activation tensor
                     trace_jv = []
-                    for j in range(self.config.num_iterations):  # Approximation iterations
+                    for j in range(self.hessian_config.num_iterations):  # Approximation iterations
                         # Getting a random vector with normal distribution
                         v = tf.random.normal(shape=output.shape)
                         f_v = tf.reduce_sum(v * output)
@@ -107,32 +110,33 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
                 ipts_jac_trace_approx = tf.reduce_mean([ipts_jac_trace_approx],
                                                        axis=0)  # Just to get one tensor instead of list of tensors with single element
 
-                if self.config.norm_weights:
-                    normalized_ipts_jac_trace_approx = self._normalize_weights(ipts_jac_trace_approx,
-                                                                               all_outputs_indices,
-                                                                               self.config.alpha)
-                    return self._attach_interst_point_names_to_scores(normalized_ipts_jac_trace_approx)
-                else:
-                    return self._attach_interst_point_names_to_scores(ipts_jac_trace_approx)
+                return ipts_jac_trace_approx.numpy().tolist()
+                # if self.config.norm_weights:
+                #     normalized_ipts_jac_trace_approx = self._normalize_weights(ipts_jac_trace_approx,
+                #                                                                all_outputs_indices,
+                #                                                                self.config.alpha)
+                #     return self._attach_interst_point_names_to_scores(normalized_ipts_jac_trace_approx)
+                # else:
+                #     return self._attach_interst_point_names_to_scores(ipts_jac_trace_approx)
         else:
             raise NotImplemented
 
-    def _attach_interst_point_names_to_scores(self, scores: List[float]) -> Dict[BaseNode, float]:
-        """
-        Create a dictionary of node to score based on the passed scores and the interest points
-        in the hessian configuration.
-
-        Args:
-            scores: Hessian scores to attach to interest points.
-
-        Returns: Dictionary from interest point to hessian score.
-
-        """
-        res = {}
-        assert len(self.config.nodes_names_for_hessian_computation) == len(scores)
-        for point_name, score in zip(self.config.nodes_names_for_hessian_computation, scores):
-            res[point_name] = score
-        return res
+    # def _attach_interst_point_names_to_scores(self, scores: List[float]) -> Dict[BaseNode, float]:
+    #     """
+    #     Create a dictionary of node to score based on the passed scores and the interest points
+    #     in the hessian configuration.
+    #
+    #     Args:
+    #         scores: Hessian scores to attach to interest points.
+    #
+    #     Returns: Dictionary from interest point to hessian score.
+    #
+    #     """
+    #     res = {}
+    #     assert len(self.config.nodes_names_for_hessian_computation) == len(scores)
+    #     for point_name, score in zip(self.config.nodes_names_for_hessian_computation, scores):
+    #         res[point_name] = score
+    #     return res
 
     def _update_ips_with_outputs_replacements(self,
                                               outputs_replacement_nodes: List[BaseNode],
@@ -157,62 +161,62 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
         replacement_indices = [interest_points.index(n) for n in outputs_replacement_nodes]
         return list(set(output_indices + replacement_indices))
 
-    def _normalize_weights(self,
-                           jacobians_traces: List,
-                           all_outputs_indices: List[int],
-                           alpha: float) -> List[float]:
-        """
-        Output layers or layers that come after the model's considered output layers,
-        are assigned with a constant normalized value, according to the given alpha variable and the number of such
-        layers.
-        Other layers returned weights are normalized by dividing the jacobian-based weights value by the sum of all
-        other values.
-
-        Args:
-            jacobians_traces: The approximated average jacobian-based weights of each interest point.
-            all_outputs_indices: A list of indices of all nodes that consider outputs.
-            alpha: A multiplication factor.
-
-        Returns: Normalized list of jacobian-based weights (for each interest point).
-
-        """
-
-        sum_without_outputs = sum(
-            [jacobians_traces[i] for i in range(len(jacobians_traces)) if i not in all_outputs_indices])
-        normalized_grads_weights = [self._get_normalized_weight(grad,
-                                                                i,
-                                                                sum_without_outputs,
-                                                                all_outputs_indices,
-                                                                alpha)
-                                    for i, grad in enumerate(jacobians_traces)]
-
-        return normalized_grads_weights
-
-    def _get_normalized_weight(self,
-                               grad: float,
-                               i: int,
-                               sum_without_outputs: float,
-                               all_outputs_indices: List[int],
-                               alpha: float) -> float:
-        """
-        Normalizes the node's gradient value. If it is an output or output replacement node than the normalized value is
-        a constant, otherwise, it is normalized by dividing with the sum of all gradient values.
-
-        Args:
-            grad: The gradient value.
-            i: The index of the node in the sorted interest points list.
-            sum_without_outputs: The sum of all gradients of nodes that are not considered outputs.
-            all_outputs_indices: A list of indices of all nodes that consider outputs.
-            alpha: A multiplication factor.
-
-        Returns: A normalized jacobian-based weights.
-
-        """
-
-        if i in all_outputs_indices:
-            return alpha / len(all_outputs_indices)
-        else:
-            return ((1 - alpha) * grad / (sum_without_outputs + EPS)).numpy()
+    # def _normalize_weights(self,
+    #                        jacobians_traces: List,
+    #                        all_outputs_indices: List[int],
+    #                        alpha: float) -> List[float]:
+    #     """
+    #     Output layers or layers that come after the model's considered output layers,
+    #     are assigned with a constant normalized value, according to the given alpha variable and the number of such
+    #     layers.
+    #     Other layers returned weights are normalized by dividing the jacobian-based weights value by the sum of all
+    #     other values.
+    #
+    #     Args:
+    #         jacobians_traces: The approximated average jacobian-based weights of each interest point.
+    #         all_outputs_indices: A list of indices of all nodes that consider outputs.
+    #         alpha: A multiplication factor.
+    #
+    #     Returns: Normalized list of jacobian-based weights (for each interest point).
+    #
+    #     """
+    #
+    #     sum_without_outputs = sum(
+    #         [jacobians_traces[i] for i in range(len(jacobians_traces)) if i not in all_outputs_indices])
+    #     normalized_grads_weights = [self._get_normalized_weight(grad,
+    #                                                             i,
+    #                                                             sum_without_outputs,
+    #                                                             all_outputs_indices,
+    #                                                             alpha)
+    #                                 for i, grad in enumerate(jacobians_traces)]
+    #
+    #     return normalized_grads_weights
+    #
+    # def _get_normalized_weight(self,
+    #                            grad: float,
+    #                            i: int,
+    #                            sum_without_outputs: float,
+    #                            all_outputs_indices: List[int],
+    #                            alpha: float) -> float:
+    #     """
+    #     Normalizes the node's gradient value. If it is an output or output replacement node than the normalized value is
+    #     a constant, otherwise, it is normalized by dividing with the sum of all gradient values.
+    #
+    #     Args:
+    #         grad: The gradient value.
+    #         i: The index of the node in the sorted interest points list.
+    #         sum_without_outputs: The sum of all gradients of nodes that are not considered outputs.
+    #         all_outputs_indices: A list of indices of all nodes that consider outputs.
+    #         alpha: A multiplication factor.
+    #
+    #     Returns: A normalized jacobian-based weights.
+    #
+    #     """
+    #
+    #     if i in all_outputs_indices:
+    #         return alpha / len(all_outputs_indices)
+    #     else:
+    #         return ((1 - alpha) * grad / (sum_without_outputs + EPS)).numpy()
 
     def _get_model_output_replacement(self) -> List[str]:
         """
@@ -281,10 +285,10 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
             else:
                 out_tensors_of_n = tf.dtypes.cast(out_tensors_of_n, tf.float32)
 
-            print(n.name)
-            print([ip.name for ip in self.config.nodes_names_for_hessian_computation])
+            # print(n.name)
+            # print([ip.name for ip in self.config.nodes_names_for_hessian_computation])
 
-            if n.name in [ip.name for ip in self.config.nodes_names_for_hessian_computation]:
+            if n.name==self.hessian_request.target_node.name:
                 # Recording the relevant feature maps onto the gradient tape
                 gradient_tape.watch(out_tensors_of_n)
                 interest_points_tensors.append(out_tensors_of_n)

@@ -95,6 +95,24 @@ def model_with_output_replacements(input_shape):
 def representative_dataset(num_of_inputs=1):
     yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]*num_of_inputs
 
+def _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha, num_of_inputs=1):
+    hessian_service = hessian_common.HessianService(graph=graph,
+                                                    representative_dataset=functools.partial(representative_dataset, num_of_inputs=num_of_inputs),
+                                                    hessian_configuration=hessian_common.HessianConfig(alpha=alpha),
+                                                    fw_impl=keras_impl)
+    x = []
+    for interest_point in interest_points:
+        request = hessian_common.HessianRequest(mode=hessian_common.HessianMode.ACTIVATIONS,
+                                                granularity=hessian_common.HessianGranularity.PER_TENSOR,
+                                                target_node=interest_point)
+        hessian_data = hessian_service.fetch_hessian(request, 1)
+        hessian_data_per_image = hessian_data[0]
+        assert isinstance(hessian_data_per_image, list)
+        assert len(hessian_data_per_image) == 1
+        x.append(hessian_data_per_image[0])
+    x = hessian_common.hessian_utils.normalize_weights(x, alpha=alpha, all_outputs_indices=[len(interest_points) - 1])
+    return x
+
 
 class TestModelGradients(unittest.TestCase):
 
@@ -105,17 +123,7 @@ class TestModelGradients(unittest.TestCase):
 
         all_output_indices = [len(interest_points) - 1] if output_indices is None else output_indices
 
-        hessian_common.hessian_service.set_graph(graph=graph)
-        hessian_common.hessian_service.set_fw_impl(keras_impl)
-        hessian_cfg = hessian_common.HessianConfig(mode=hessian_common.HessianMode.ACTIVATIONS,
-                                                   granularity=hessian_common.HessianGranularity.PER_LAYER,
-                                                   search_output_replacement=True,
-                                                   nodes_names_for_hessian_computation=interest_points,
-                                                   alpha=0.3)
-        images = next(representative_dataset(num_of_inputs=num_of_inputs))
-        hessian_data = hessian_common.hessian_service.fetch_hessian(hessian_cfg=hessian_cfg,
-                                                     input_images=images)
-        x = [hessian_data[ip] for ip in interest_points]
+        x = _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha=0.3, num_of_inputs=num_of_inputs)
 
         # Checking that the weights were computed and normalized correctly
         # In rare occasions, the output tensor has all zeros, so the gradients for all interest points are zeros.
@@ -132,18 +140,7 @@ class TestModelGradients(unittest.TestCase):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
 
-        hessian_common.hessian_service.set_graph(graph=graph)
-        hessian_common.hessian_service.set_fw_impl(keras_impl)
-        hessian_cfg = hessian_common.HessianConfig(mode=hessian_common.HessianMode.ACTIVATIONS,
-                                                   granularity=hessian_common.HessianGranularity.PER_LAYER,
-                                                   search_output_replacement=True,
-                                                   nodes_names_for_hessian_computation=interest_points,
-                                                   alpha=0)
-        images = next(representative_dataset())
-        hessian_data = hessian_common.hessian_service.fetch_hessian(hessian_cfg=hessian_cfg,
-                                                                    input_images=images)
-        x = [hessian_data[ip] for ip in interest_points]
-
+        x = _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha=0)
 
         # These are the expected values of the normalized gradients (gradients should be 2 and 1
         # with respect to input and mult layer, respectively)
@@ -151,14 +148,7 @@ class TestModelGradients(unittest.TestCase):
         self.assertTrue(np.isclose(x[1], np.float32(0.2), 1e-1))
         self.assertTrue(np.isclose(x[2], np.float32(0.0)))
 
-        hessian_cfg = hessian_common.HessianConfig(mode=hessian_common.HessianMode.ACTIVATIONS,
-                                                   granularity=hessian_common.HessianGranularity.PER_LAYER,
-                                                   search_output_replacement=True,
-                                                   nodes_names_for_hessian_computation=interest_points,
-                                                   alpha=1)
-        hessian_data = hessian_common.hessian_service.fetch_hessian(hessian_cfg=hessian_cfg,
-                                                                    input_images=images)
-        y = [hessian_data[ip] for ip in interest_points]
+        y = _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha=1)
 
         self.assertTrue(np.isclose(y[0], np.float32(0.0)))
         self.assertTrue(np.isclose(y[1], np.float32(0.0)))
@@ -191,45 +181,6 @@ class TestModelGradients(unittest.TestCase):
         self._run_model_grad_test(graph, keras_impl, output_indices=[len(sorted_graph_nodes) - 1,
                                                                      len(sorted_graph_nodes) - 2])
 
-    def test_model_grad_with_output_replacements(self):
-        input_shape = (8, 8, 3)
-        in_model = model_with_output_replacements(input_shape)
-        keras_impl = KerasImplementation()
-        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
-
-        sorted_graph_nodes = graph.get_topo_sorted_nodes()
-        interest_points = [n for n in sorted_graph_nodes]
-
-        hessian_common.hessian_service.set_graph(graph=graph)
-        hessian_common.hessian_service.set_fw_impl(keras_impl)
-
-        hessian_cfg = hessian_common.HessianConfig(mode=hessian_common.HessianMode.ACTIVATIONS,
-                                                   granularity=hessian_common.HessianGranularity.PER_LAYER,
-                                                   search_output_replacement=True,
-                                                   nodes_names_for_hessian_computation=interest_points,
-                                                   alpha=0.3)
-        images = next(representative_dataset())
-        hessian_data = hessian_common.hessian_service.fetch_hessian(hessian_cfg=hessian_cfg,
-                                                                    input_images=images)
-        x = [hessian_data[ip] for ip in interest_points]
-
-        # Checking that the weights where computed and normalized correctly
-        self.assertTrue(np.isclose(np.sum(x), 1))
-
-        hessian_cfg = hessian_common.HessianConfig(mode=hessian_common.HessianMode.ACTIVATIONS,
-                                                   granularity=hessian_common.HessianGranularity.PER_LAYER,
-                                                   search_output_replacement=True,
-                                                   nodes_names_for_hessian_computation=interest_points,
-                                                   alpha=0)
-        images = next(representative_dataset())
-        hessian_data = hessian_common.hessian_service.fetch_hessian(hessian_cfg=hessian_cfg,
-                                                                    input_images=images)
-        y = [hessian_data[ip] for ip in interest_points]
-
-        # Checking that the weights where computed and normalized correctly
-        self.assertTrue(np.isclose(np.sum(y), 1))
-        self.assertTrue(y[-1] == np.float32(0))
-        self.assertTrue(y[-2] == np.float32(0))
 
     def test_inputs_as_list_model_grad(self):
         input_shape = (8, 8, 3)
@@ -238,25 +189,3 @@ class TestModelGradients(unittest.TestCase):
         graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
         self._run_model_grad_test(graph, keras_impl, num_of_inputs=2)
 
-    def test_model_grad_single_point(self):
-        input_shape = (8, 8, 3)
-        in_model = basic_model(input_shape)
-        keras_impl = KerasImplementation()
-        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
-
-        sorted_graph_nodes = graph.get_topo_sorted_nodes()
-        interest_points = [sorted_graph_nodes[-1]]
-
-        hessian_common.hessian_service.set_graph(graph=graph)
-        hessian_common.hessian_service.set_fw_impl(keras_impl)
-
-        hessian_cfg = hessian_common.HessianConfig(mode=hessian_common.HessianMode.ACTIVATIONS,
-                                                   granularity=hessian_common.HessianGranularity.PER_LAYER,
-                                                   search_output_replacement=True,
-                                                   nodes_names_for_hessian_computation=interest_points)
-        images = next(representative_dataset())
-        hessian_data = hessian_common.hessian_service.fetch_hessian(hessian_cfg=hessian_cfg,
-                                                                    input_images=images)
-        x = [hessian_data[ip] for ip in interest_points]
-
-        self.assertTrue(len(x) == 1 and x[0] == 1.0)

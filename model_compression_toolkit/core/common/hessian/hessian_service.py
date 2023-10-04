@@ -12,109 +12,93 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from typing import List, Any, Dict
+import numpy as np
+from typing import List, Any, Dict, Callable
 
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig
+from model_compression_toolkit.core.common.hessian.hessian_request import HessianRequest
+from model_compression_toolkit.logger import Logger
 
 
 class HessianService:
     """
     A service to manage, store, and compute Hessian data.
     """
-    def __init__(self):
-        self.hessian_cfg_to_hessian_data = {}  # Dictionary to store Hessians by configuration and image list
-        self._hessian_configurations = []  # hessian_configurations
-        self.input_data = None  # input_data
-        self.graph = None  # float graph
-        self.fw_impl = None
 
-    def set_graph(self, graph: Graph):
-        """Set the float graph for the service."""
+    def __init__(self,
+                 graph: Graph,
+                 representative_dataset: Callable,
+                 hessian_configuration: HessianConfig,
+                 fw_impl
+                 ):
+
         self.graph = graph
-
-    def set_fw_impl(self, fw_impl):
-        """Set the framework implementation for the service."""
+        self.representative_dataset = representative_dataset
+        # if not len(next(self.representative_dataset()))==len(self.graph.get_inputs()):
+        #     Logger.error(f"Graph has {len(self.graph.get_inputs())} inputs, but representative dataset returns a list of {len(next(self.representative_dataset()))} inputs. Their length muse be identical.")
+        self.hessian_configuration = hessian_configuration
         self.fw_impl = fw_impl
 
-    def add_hessian_configurations(self, hessian_configurations: List[HessianConfig]):
-        """Extend the current list of Hessian configurations with additional configurations."""
-        self._hessian_configurations.extend(hessian_configurations)
-
-    def _set_hessian_configurations(self, hessian_configurations: List[HessianConfig]):
-        """Set the list of Hessian configurations."""
-        self._hessian_configurations = hessian_configurations
+        self.hessian_request_to_score_list = {}  # Dictionary to store Hessians by configuration and image list
 
     def clear_cache(self):
         """Clear the cached Hessian data."""
-        self.hessian_cfg_to_hessian_data={}
+        self.hessian_request_to_score_list={}
 
-    def count_cache(self,
-                    hessian_cfg: HessianConfig=None) -> int:
+    def count_cache_of_request(self, hessian_request:HessianRequest) -> int:
         """
         Count the cached Hessian data.
         If a specific configuration is provided, it counts for that configuration.
         Otherwise, it counts for all configurations.
         """
-        if hessian_cfg:
-            if hessian_cfg in self.hessian_cfg_to_hessian_data:
-                return len(self.hessian_cfg_to_hessian_data[hessian_cfg])
-            return 0
-        return sum([len(x.values()) for x in self.hessian_cfg_to_hessian_data.values()])
+        if hessian_request in self.hessian_request_to_score_list:
+            return len(self.hessian_request_to_score_list[hessian_request])
+        return 0
 
-    def compute(self,
-                hessian_cfg:HessianConfig,
-                input_images: List[Any]):
+    def _sample_single_image_per_input(self):
+        images = next(self.representative_dataset())
+        assert isinstance(images, list)
+        res = []
+        for image in images:
+            if image.shape[0]==1:
+                res.append(image)
+            else:
+                res.append(np.expand_dims(image[0],0))
+        for image in res:
+            assert image.shape[0]==1
+        return res
+
+    def compute(self, hessian_request:HessianRequest):
         """
         Compute the Hessian based on the provided configuration and input images.
         Store the computed Hessian in the cache.
         """
-        if len(hessian_cfg.nodes_names_for_hessian_computation) == 1:
-            # Only one compare point, nothing else to "weight"
-            hessian = {hessian_cfg.nodes_names_for_hessian_computation[0]: 1.0}
+
+        fw_hessian_calculator = self.fw_impl.get_framwork_hessian_calculator(hessian_request=hessian_request)
+        images = self._sample_single_image_per_input()
+        hessian_calculator = fw_hessian_calculator(graph=self.graph,
+                                                   hessian_config=self.hessian_configuration,
+                                                   input_images=images,
+                                                   fw_impl=self.fw_impl,
+                                                   hessian_request=hessian_request)
+        hessian = hessian_calculator.compute()
+
+        if hessian_request in self.hessian_request_to_score_list:
+            self.hessian_request_to_score_list[hessian_request].append(hessian)
         else:
-            fw_hessian_calculator = self.fw_impl.get_framwork_hessian_calculator(hessian_cfg)
-            hessian_calculator = fw_hessian_calculator(graph=self.graph,
-                                                       config=hessian_cfg,
-                                                       input_images=input_images,
-                                                       fw_impl=self.fw_impl)
-            hessian = hessian_calculator.compute()
+            self.hessian_request_to_score_list[hessian_request] = [hessian]
 
-        if hessian_cfg in self.hessian_cfg_to_hessian_data:
-            self.hessian_cfg_to_hessian_data[hessian_cfg][id(input_images)] = hessian
-        else:
-            self.hessian_cfg_to_hessian_data[hessian_cfg] = {id(input_images): hessian}
-
-    def fetch_hessian(self,
-                      hessian_cfg:HessianConfig,
-                      input_images:List[Any]=None) -> Dict[BaseNode, float]:
-        """
-        Fetch the Hessian for a given configuration and input images.
-        If the Hessian isn't already computed, it will compute it on-the-fly.
-
-        Args:
-            hessian_cfg: Hessian configuration for the desired hessian data.
-            input_images: Images to use as inputs for the float graph.
-
-        Returns:
-            Dictionary from interest point to hessian score.
-        """
-        if input_images is None:
-            if hessian_cfg in self.hessian_cfg_to_hessian_data:
-                return self.hessian_cfg_to_hessian_data[hessian_cfg]
-            return {}
-
-        if hessian_cfg in self.hessian_cfg_to_hessian_data:
-            if id(input_images) in self.hessian_cfg_to_hessian_data[hessian_cfg]:
-                return self.hessian_cfg_to_hessian_data[hessian_cfg][id(input_images)]
-
-        # TODO: it may be better to compute different hessians before, or use other existing copmutations. So a phase of smarter computation and fetching can be added here
-
-        # Computing the Hessian if it's not already available
-        self.compute(hessian_cfg, input_images)
-        return self.hessian_cfg_to_hessian_data[hessian_cfg][id(input_images)]
+    def fetch_hessian(self, hessian_request: HessianRequest, required_size: int) -> Dict[BaseNode, float]:
+        self._populate_cache_to_size(hessian_request, required_size)
+        return self.hessian_request_to_score_list[hessian_request]
 
 
-# Instantiating the Hessian service
-hessian_service = HessianService()
+    def _populate_cache_to_size(self, hessian_request: HessianRequest, required_size: int):
+        current_existing_hessians = self.count_cache_of_request(hessian_request)
+        if required_size > current_existing_hessians:
+            left_to_compute = required_size - current_existing_hessians
+            for _ in range(left_to_compute):
+                self.compute(hessian_request)
+
+

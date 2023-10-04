@@ -14,9 +14,10 @@
 # ==============================================================================
 
 from abc import ABC, abstractmethod
-from typing import List, Any, Dict
+from typing import List, Any
 
 from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.hessian import HessianRequest
 from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig
 
 
@@ -31,9 +32,10 @@ class HessianCalculator(ABC):
 
     def __init__(self,
                  graph: Graph,
-                 config: HessianConfig,
+                 hessian_config: HessianConfig,
                  input_images: List[Any],
-                 fw_impl):
+                 fw_impl,
+                 hessian_request: HessianRequest):
         """
 
         Args:
@@ -43,9 +45,10 @@ class HessianCalculator(ABC):
             fw_impl (FrameworkImplementation): Framework implementation used for the computation.
         """
         self.graph = graph
-        self.config = config
+        self.hessian_config = hessian_config
         self.input_images = input_images
         self.fw_impl = fw_impl
+        self.hessian_request = hessian_request
 
     @abstractmethod
     def compute(self):

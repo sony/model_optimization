@@ -23,6 +23,7 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
+from model_compression_toolkit.core.common.hessian import HessianRequest, HessianService
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
@@ -46,6 +47,10 @@ class FrameworkImplementation(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} did not supply a constants module.')  # pragma: no cover
 
+    @abstractmethod
+    def get_framwork_hessian_calculator(self, hessian_request: HessianRequest) -> type:
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_framwork_hessian_calculator method.')  # pragma: no cover
     @abstractmethod
     def to_numpy(self, tensor: Any) -> np.ndarray:
         """
@@ -294,6 +299,7 @@ class FrameworkImplementation(ABC):
                                   quant_config: MixedPrecisionQuantizationConfigV2,
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
+                                  hessian_service: HessianService,
                                   disable_activation_for_metric: bool = False) -> SensitivityEvaluation:
         """
         Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision

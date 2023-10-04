@@ -22,6 +22,7 @@ from tqdm import tqdm
 
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig
+from model_compression_toolkit.core.common.hessian.hessian_service import HessianService
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -46,7 +47,6 @@ from model_compression_toolkit.core.common.visualization.final_config_visualizer
     WeightsFinalBitwidthConfigVisualizer, \
     ActivationFinalBitwidthConfigVisualizer
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
-from model_compression_toolkit.core.common.hessian import hessian_service
 
 def core_runner(in_model: Any,
                 representative_data_gen: Callable,
@@ -55,8 +55,7 @@ def core_runner(in_model: Any,
                 fw_impl: FrameworkImplementation,
                 tpc: TargetPlatformCapabilities,
                 target_kpi: KPI = None,
-                tb_w: TensorboardWriter = None,
-                additional_hessian_configs: List[HessianConfig]=None):
+                tb_w: TensorboardWriter = None):
     """
     Quantize a trained model using post-training quantization.
     First, the model graph is optimized using several transformations (e.g. folding BatchNormalization to preceding
@@ -92,14 +91,10 @@ def core_runner(in_model: Any,
                                      tb_w,
                                      mixed_precision_enable=core_config.mixed_precision_enable)
 
-    core_hessian_configs = [] #todo: create hessian configs from core config
-    if additional_hessian_configs:
-        core_hessian_configs.extend(additional_hessian_configs)
-
-    hessian_service.set_graph(graph)
-    hessian_service.set_fw_impl(fw_impl)
-
-    hessian_service.add_hessian_configurations(core_hessian_configs)
+    hessian_service = HessianService(graph=graph,
+                                     representative_dataset=representative_data_gen,
+                                     hessian_configuration=core_config.hessian_cfg,
+                                     fw_impl=fw_impl)
 
     tg = _prepare_model_for_quantization(graph,
                                          representative_data_gen,
@@ -120,7 +115,8 @@ def core_runner(in_model: Any,
                                                  fw_impl,
                                                  target_kpi,
                                                  core_config.mixed_precision_config,
-                                                 representative_data_gen)
+                                                 representative_data_gen,
+                                                 hessian_service=hessian_service)
         else:
             Logger.warning(
                 f'Mixed Precision has overwrite bit-width configuration{core_config.mixed_precision_config.configuration_overwrite}')
@@ -163,7 +159,7 @@ def core_runner(in_model: Any,
                 figure = visual.plot_config_bitwidth()
                 tb_w.add_figure(figure, f'Activation final bit-width config')
 
-    return tg, bit_widths_config
+    return tg, bit_widths_config, hessian_service
 
 
 def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
