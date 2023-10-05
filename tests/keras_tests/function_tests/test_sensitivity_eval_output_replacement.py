@@ -69,16 +69,16 @@ class TestSensitivityEvalWithOutputReplacementNodes(unittest.TestCase):
                                                            input_shape=(1, 16, 16, 3),
                                                            mixed_precision_enabled=True)
 
-        hessian_service = hess.TraceHessianService(graph=graph,
-                                                   representative_dataset=representative_dataset,
-                                                   trace_hessian_configuration=hess.TraceHessianConfig(),
-                                                   fw_impl=keras_impl)
+        trace_hessian_service = hess.TraceHessianService(graph=graph,
+                                                         representative_dataset=representative_dataset,
+                                                         trace_hessian_configuration=hess.TraceHessianConfig(),
+                                                         fw_impl=keras_impl)
 
         se = keras_impl.get_sensitivity_evaluator(graph,
                                                   MixedPrecisionQuantizationConfigV2(use_grad_based_weights=True),
                                                   representative_dataset,
                                                   DEFAULT_KERAS_INFO,
-                                                  hessian_service=hessian_service)
+                                                  trace_hessian_service=trace_hessian_service)
 
         # If the output replacement nodes for MP sensitivity evaluation has been computed correctly then the ReLU layer
         # should be added to the interest points and included in the output nodes list for metric computation purposes.
