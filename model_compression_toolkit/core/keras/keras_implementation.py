@@ -21,12 +21,12 @@ from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantization
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
 
-from model_compression_toolkit.core.common.hessian import HessianRequest, HessianMode, HessianService
-from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig
-from model_compression_toolkit.core.keras.hessian.activation_hessian_calculator_keras import \
-    ActivationHessianCalculatorKeras
-from model_compression_toolkit.core.keras.hessian.hessian_calculator_keras import HessianCalculatorKeras
-from model_compression_toolkit.core.keras.hessian.weights_hessian_calculator_keras import WeightsHessianCalculatorKeras
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianMode, TraceHessianService
+from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
+from model_compression_toolkit.core.keras.hessian.activation_trace_hessian_calculator_keras import \
+    ActivationTraceHessianCalculatorKeras
+from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
+from model_compression_toolkit.core.keras.hessian.weights_trace_hessian_calculator_keras import WeightsTraceHessianCalculatorKeras
 from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
@@ -367,7 +367,7 @@ class KerasImplementation(FrameworkImplementation):
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
                                   disable_activation_for_metric: bool = False,
-                                  hessian_service: HessianService = None) -> SensitivityEvaluation:
+                                  trace_hessian_service: TraceHessianService = None) -> SensitivityEvaluation:
         """
         Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
         configuration (comparing to the float model).
@@ -378,6 +378,7 @@ class KerasImplementation(FrameworkImplementation):
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
+            trace_hessian_service: TraceHessianService to fetch approximations of the hessian traces for the float model.
 
         Returns:
             A SensitivityEvaluation object.
@@ -394,7 +395,7 @@ class KerasImplementation(FrameworkImplementation):
                                                                    weights_quant_layer_type=KerasQuantizationWrapper,
                                                                    activation_quant_layer_type=KerasActivationQuantizationHolder),
                                      disable_activation_for_metric=disable_activation_for_metric,
-                                     hessian_service=hessian_service)
+                                     trace_hessian_service=trace_hessian_service)
 
     def get_node_prior_info(self,
                             node: BaseNode,
@@ -467,19 +468,19 @@ class KerasImplementation(FrameworkImplementation):
             return compute_cs
         return compute_mse
 
-    def get_framwork_hessian_calculator(self, hessian_request: HessianRequest) -> type:
+    def get_trace_hessian_calculator(self, hessian_request: TraceHessianRequest) -> type:
         """
         Get Keras hessian calculator based on the hessian configuration.
         Args:
             hessian_cfg: HessianConfig to search for the desired calculator.
 
-        Returns: HessianCalculatorKeras to use for the hessian computation for this configuration.
+        Returns: TraceHessianCalculatorKeras to use for the hessian computation for this configuration.
 
         """
-        if hessian_request.mode == HessianMode.ACTIVATIONS:
-            return ActivationHessianCalculatorKeras
-        elif hessian_request.mode == HessianMode.WEIGHTS:
-            return WeightsHessianCalculatorKeras
+        if hessian_request.mode == TraceHessianMode.ACTIVATIONS:
+            return ActivationTraceHessianCalculatorKeras
+        elif hessian_request.mode == TraceHessianMode.WEIGHTS:
+            return WeightsTraceHessianCalculatorKeras
 
 
     def is_node_compatible_for_metric_outputs(self,

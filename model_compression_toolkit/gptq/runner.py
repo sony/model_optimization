@@ -17,7 +17,7 @@ from typing import Callable
 
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.hessian import HessianService
+from model_compression_toolkit.core.common.hessian import TraceHessianService
 from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
     apply_statistics_correction
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
@@ -39,7 +39,7 @@ def _apply_gptq(gptq_config: GradientPTQConfigV2,
                 tg_bias: Graph,
                 fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation,
-                hessian_service: HessianService) -> Graph:
+                hessian_service: TraceHessianService) -> Graph:
     """
     Apply GPTQ to improve accuracy of quantized model.
     Build two models from a graph: A teacher network (float model) and a student network (quantized model).
@@ -82,7 +82,7 @@ def gptq_runner(tg: Graph,
                 fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation,
                 tb_w: TensorboardWriter,
-                hessian_service: HessianService = None) -> Graph:
+                hessian_service: TraceHessianService = None) -> Graph:
     """
     Quantize a graph that has final weights candidates quantization configurations.
     Before we quantize the graph weights, we apply GPTQ to get an improved graph.

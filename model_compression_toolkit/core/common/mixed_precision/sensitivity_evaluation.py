@@ -24,8 +24,8 @@ from model_compression_toolkit.core.common.graph.functional_node import Function
 
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.hessian import hessian_service, HessianRequest, HessianMode, \
-    HessianGranularity, HessianService
+from model_compression_toolkit.core.common.hessian import trace_hessian_service, TraceHessianRequest, TraceHessianMode, \
+    TraceHessianGranularity, TraceHessianService
 
 
 class SensitivityEvaluation:
@@ -42,7 +42,7 @@ class SensitivityEvaluation:
                  fw_impl: Any,
                  set_layer_to_bitwidth: Callable,
                  disable_activation_for_metric: bool = False,
-                 hessian_service: HessianService = None
+                 trace_hessian_service: TraceHessianService = None
                  ):
         """
         Initiates all relevant objects to manage a sensitivity evaluation for MP search.
@@ -74,10 +74,10 @@ class SensitivityEvaluation:
         self.set_layer_to_bitwidth = set_layer_to_bitwidth
         self.disable_activation_for_metric = disable_activation_for_metric
         if self.quant_config.use_grad_based_weights:
-            if not hessian_service:
-                Logger.error(f"When using hessian approximations for sensitivity evaluation, "
-                             f"hessian service must be provided but is {hessian_service}")
-            self.hessian_service = hessian_service
+            if not trace_hessian_service:
+                Logger.error(f"When using trace hessian approximations for sensitivity evaluation, "
+                             f"trace hessian service must be provided but is {trace_hessian_service}")
+            self.trace_hessian_service = trace_hessian_service
 
         # Get interest points for distance measurement and a list of sorted configurable nodes names
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
@@ -204,11 +204,11 @@ class SensitivityEvaluation:
         """
         compare_point_to_trace_hessian_approximations = {}
         for target_node in self.interest_points:
-            hessian_request = HessianRequest(mode=HessianMode.ACTIVATIONS,
-                                             granularity=HessianGranularity.PER_TENSOR,
-                                             target_node=target_node)
-            node_approximations = self.hessian_service.fetch_hessian(hessian_request=hessian_request,
-                                                                     required_size=self.quant_config.num_of_images)
+            trace_hessian_request = TraceHessianRequest(mode=TraceHessianMode.ACTIVATIONS,
+                                                  granularity=TraceHessianGranularity.PER_TENSOR,
+                                                  target_node=target_node)
+            node_approximations = self.trace_hessian_service.fetch_hessian(trace_hessian_request=trace_hessian_request,
+                                                                           required_size=self.quant_config.num_of_images)
             compare_point_to_trace_hessian_approximations[target_node] = node_approximations
 
         grad_per_batch = []

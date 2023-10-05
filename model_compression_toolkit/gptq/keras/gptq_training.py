@@ -20,7 +20,7 @@ from packaging import version
 from tensorflow.keras.layers import Layer
 from tqdm import tqdm
 
-from model_compression_toolkit.core.common.hessian import HessianService
+from model_compression_toolkit.core.common.hessian import TraceHessianService
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
@@ -60,7 +60,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo,
                  representative_data_gen: Callable,
-                 hessian_service: HessianService = None):
+                 hessian_service: TraceHessianService = None):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
         Use the dataset generator to pass images through the teacher and student networks to get intermediate

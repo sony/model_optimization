@@ -17,11 +17,11 @@ from abc import ABC, abstractmethod
 from typing import List, Any
 
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian import HessianRequest
-from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest
+from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
 
 
-class HessianCalculator(ABC):
+class TraceHessianCalculator(ABC):
     """
        Abstract base class for a Hessian calculator.
 
@@ -32,23 +32,23 @@ class HessianCalculator(ABC):
 
     def __init__(self,
                  graph: Graph,
-                 hessian_config: HessianConfig,
+                 trace_hessian_config: TraceHessianConfig,
                  input_images: List[Any],
                  fw_impl,
-                 hessian_request: HessianRequest):
+                 trace_hessian_request: TraceHessianRequest):
         """
 
         Args:
             graph (Graph): Graph representation of the float model for which Hessian is to be computed.
-            config (HessianConfig): Configuration parameters for Hessian computation.
+            trace_hessian_config (TraceHessianConfig): Configuration parameters for Hessian computation.
             input_images (List[Any]): List of input images for the hessian computation.
             fw_impl (FrameworkImplementation): Framework implementation used for the computation.
         """
         self.graph = graph
-        self.hessian_config = hessian_config
+        self.hessian_config = trace_hessian_config
         self.input_images = input_images
         self.fw_impl = fw_impl
-        self.hessian_request = hessian_request
+        self.hessian_request = trace_hessian_request
 
     @abstractmethod
     def compute(self):

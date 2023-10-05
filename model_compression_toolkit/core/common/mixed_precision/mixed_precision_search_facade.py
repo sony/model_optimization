@@ -20,7 +20,7 @@ from typing import List, Callable, Dict
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian import HessianService
+from model_compression_toolkit.core.common.hessian import TraceHessianService
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_functions_mapping import kpi_functions_mapping
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -51,7 +51,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
                      mp_config: MixedPrecisionQuantizationConfigV2,
                      representative_data_gen: Callable,
                      search_method: BitWidthSearchMethod = BitWidthSearchMethod.INTEGER_PROGRAMMING,
-                     hessian_service: HessianService=None) -> List[int]:
+                     trace_hessian_service: TraceHessianService=None) -> List[int]:
     """
     Search for an MP configuration for a given graph. Given a search_method method (by default, it's linear
     programming), we use the sensitivity_evaluator object that provides a function to compute an
@@ -101,7 +101,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
         representative_data_gen=representative_data_gen,
         fw_info=fw_info,
         disable_activation_for_metric=disable_activation_for_metric,
-        hessian_service=hessian_service)
+        trace_hessian_service=trace_hessian_service)
 
     # Each pair of (KPI method, KPI aggregation) should match to a specific provided kpi target
     kpi_functions = kpi_functions_mapping

@@ -15,16 +15,14 @@
 from model_compression_toolkit.constants import HESSIAN_OUTPUT_ALPHA, HESSIAN_NUM_ITERATIONS
 
 
-class HessianConfig:
+class TraceHessianConfig:
     """
     Configuration class for Hessian computation.
     """
 
     def __init__(self,
                  alpha: float = HESSIAN_OUTPUT_ALPHA,
-                 num_iterations: int = HESSIAN_NUM_ITERATIONS,
-                 # norm_weights: bool = True,
-                 # search_output_replacement: bool = False
+                 num_iterations: int = HESSIAN_NUM_ITERATIONS
                  ):
         """
 
@@ -33,24 +31,17 @@ class HessianConfig:
             returned weights and the other feature maps weights (since the gradient of the output layers does not
             provide a compatible weight for the distance metric computation).
             num_iterations: Number of iterations for computation approximation.
-            norm_weights: Whether to normalize the scores or not.
-            search_output_replacement: Specifies if output replacement is to be searched during computation if output
-            is not compitable for hessian computation.
         """
         self.alpha = alpha
         self.num_iterations = num_iterations
-        # self.norm_weights = norm_weights
-        # self.search_output_replacement = search_output_replacement
 
     def __eq__(self, other):
         """
         Checks equality of two HessianConfig objects.
         """
-        if isinstance(other, HessianConfig):
+        if isinstance(other, TraceHessianConfig):
             return (self.alpha == other.alpha and
                     self.num_iterations == other.num_iterations
-                    # self.norm_weights == other.norm_weights and
-                    # self.search_output_replacement == other.search_output_replacement
                     )
         return False
 
@@ -60,6 +51,4 @@ class HessianConfig:
         """
         return hash((self.alpha,
                      self.num_iterations
-                     # self.norm_weights,
-                     # self.search_output_replacement
                      ))

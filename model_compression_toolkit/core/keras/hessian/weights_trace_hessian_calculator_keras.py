@@ -3,18 +3,18 @@ from typing import List, Dict
 import tensorflow as tf
 
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig
-from model_compression_toolkit.core.keras.hessian.hessian_calculator_keras import HessianCalculatorKeras
+from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
+from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
 
 
-class WeightsHessianCalculatorKeras(HessianCalculatorKeras):
+class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
     """
     Hessian w.r.t weights for Keras graph computation.
     """
 
     def __init__(self,
                  graph: Graph,
-                 config: HessianConfig,
+                 config: TraceHessianConfig,
                  input_images: List[tf.Tensor],
                  fw_impl):
         """
@@ -26,10 +26,10 @@ class WeightsHessianCalculatorKeras(HessianCalculatorKeras):
             fw_impl: Framework implementation to use during computation.
         """
 
-        super(WeightsHessianCalculatorKeras, self).__init__(graph=graph,
-                                                            config=config,
-                                                            input_images=input_images,
-                                                            fw_impl=fw_impl)
+        super(WeightsTraceHessianCalculatorKeras, self).__init__(graph=graph,
+                                                                 config=config,
+                                                                 input_images=input_images,
+                                                                 fw_impl=fw_impl)
 
     def compute(self) -> Dict[BaseNode, float]:
         """

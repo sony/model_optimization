@@ -21,8 +21,8 @@ import numpy as np
 from tqdm import tqdm
 
 from model_compression_toolkit.core.common import FrameworkInfo
-from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig
-from model_compression_toolkit.core.common.hessian.hessian_service import HessianService
+from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
+from model_compression_toolkit.core.common.hessian.trace_hessian_service import TraceHessianService
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -91,10 +91,10 @@ def core_runner(in_model: Any,
                                      tb_w,
                                      mixed_precision_enable=core_config.mixed_precision_enable)
 
-    hessian_service = HessianService(graph=graph,
-                                     representative_dataset=representative_data_gen,
-                                     hessian_configuration=core_config.hessian_cfg,
-                                     fw_impl=fw_impl)
+    trace_hessian_service = TraceHessianService(graph=graph,
+                                                representative_dataset=representative_data_gen,
+                                                trace_hessian_configuration=core_config.hessian_cfg,
+                                                fw_impl=fw_impl)
 
     tg = _prepare_model_for_quantization(graph,
                                          representative_data_gen,
@@ -116,7 +116,7 @@ def core_runner(in_model: Any,
                                                  target_kpi,
                                                  core_config.mixed_precision_config,
                                                  representative_data_gen,
-                                                 hessian_service=hessian_service)
+                                                 trace_hessian_service=trace_hessian_service)
         else:
             Logger.warning(
                 f'Mixed Precision has overwrite bit-width configuration{core_config.mixed_precision_config.configuration_overwrite}')
@@ -159,7 +159,7 @@ def core_runner(in_model: Any,
                 figure = visual.plot_config_bitwidth()
                 tb_w.add_figure(figure, f'Activation final bit-width config')
 
-    return tg, bit_widths_config, hessian_service
+    return tg, bit_widths_config, trace_hessian_service
 
 
 def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:

@@ -9,25 +9,25 @@ from model_compression_toolkit.constants import MIN_JACOBIANS_ITER, JACOBIANS_CO
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-from model_compression_toolkit.core.common.hessian import HessianRequest, HessianGranularity
-from model_compression_toolkit.core.common.hessian.hessian_config import HessianConfig
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianGranularity
+from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
 from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler
-from model_compression_toolkit.core.keras.hessian.hessian_calculator_keras import HessianCalculatorKeras
+from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
 from model_compression_toolkit.logger import Logger
 from tensorflow.python.util.object_identity import Reference as TFReference
 
 
-class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
+class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
     """
     Hessian w.r.t activation for Keras graph computation.
     """
 
     def __init__(self,
                  graph: Graph,
-                 hessian_config: HessianConfig,
+                 trace_hessian_config: TraceHessianConfig,
                  input_images: List[tf.Tensor],
                  fw_impl,
-                 hessian_request: HessianRequest):
+                 trace_hessian_request: TraceHessianRequest):
         """
 
         Args:
@@ -37,11 +37,11 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
             fw_impl: Framework implementation to use during computation.
         """
 
-        super(ActivationHessianCalculatorKeras, self).__init__(graph=graph,
-                                                               hessian_config=hessian_config,
-                                                               input_images=input_images,
-                                                               fw_impl=fw_impl,
-                                                               hessian_request=hessian_request)
+        super(ActivationTraceHessianCalculatorKeras, self).__init__(graph=graph,
+                                                                    trace_hessian_config=trace_hessian_config,
+                                                                    input_images=input_images,
+                                                                    fw_impl=fw_impl,
+                                                                    trace_hessian_request=trace_hessian_request)
 
     def compute(self) -> List[tf.Tensor]:
         """
@@ -51,10 +51,10 @@ class ActivationHessianCalculatorKeras(HessianCalculatorKeras):
         Returns: Dictionary from interest point to hessian score.
 
         """
-        if self.hessian_request.granularity == HessianGranularity.PER_TENSOR:
+        if self.hessian_request.granularity == TraceHessianGranularity.PER_TENSOR:
             output_list = self._get_model_output_replacement()
             all_outputs_indices = []
-            # if self.hessian_config.search_output_replacement:
+            # if self.trace_hessian_config.search_output_replacement:
             #     all_outputs_indices = self._update_ips_with_outputs_replacements(output_list,
             #                                                                      self.config.nodes_names_for_hessian_computation)
 

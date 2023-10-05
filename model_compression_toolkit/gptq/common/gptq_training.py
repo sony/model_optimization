@@ -25,9 +25,9 @@ from model_compression_toolkit.gptq.common.gptq_framework_implementation import 
 from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.hessian import HessianService, HessianRequest, HessianMode, \
-    HessianGranularity
-from model_compression_toolkit.core.common.hessian import hessian_utils as hessian_utils
+from model_compression_toolkit.core.common.hessian import TraceHessianService, TraceHessianRequest, TraceHessianMode, \
+    TraceHessianGranularity
+from model_compression_toolkit.core.common.hessian import trace_hessian_utils as hessian_utils
 
 
 class GPTQTrainer(ABC):
@@ -41,7 +41,7 @@ class GPTQTrainer(ABC):
                  gptq_config: GradientPTQConfig,
                  fw_impl: GPTQFrameworkImplemantation,
                  fw_info: FrameworkInfo,
-                 hessian_service: HessianService = None):
+                 hessian_service: TraceHessianService = None):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
         Use the dataset generator to pass images through the teacher and student networks to get intermediate
@@ -81,8 +81,8 @@ class GPTQTrainer(ABC):
         # Note that in GPTQ loss weights computation we assume that there aren't replacement output nodes,
         # therefore, output_list is just the graph outputs, and we don't need the tuning factor for
         # defining the output weights (since the output layer is not a compare point).
-        # self.gptq_hessian_config = HessianConfig(mode=HessianMode.ACTIVATIONS,
-        #                                          granularity=HessianGranularity.PER_LAYER,
+        # self.gptq_hessian_config = HessianConfig(mode=TraceHessianMode.ACTIVATIONS,
+        #                                          granularity=TraceHessianGranularity.PER_LAYER,
         #                                          nodes_names_for_hessian_computation=self.compare_points,
         #                                          alpha=0,
         #                                          norm_weights=self.gptq_config.hessian_weights_config.norm_weights,
@@ -152,10 +152,10 @@ class GPTQTrainer(ABC):
 
             compare_point_to_trace_hessian_approximations = {}
             for target_node in self.compare_points:
-                hessian_request = HessianRequest(mode=HessianMode.ACTIVATIONS,
-                                                 granularity=HessianGranularity.PER_TENSOR,
-                                                 target_node=target_node)
-                node_approximations = self.hessian_service.fetch_hessian(hessian_request=hessian_request,
+                trace_hessian_request = TraceHessianRequest(mode=TraceHessianMode.ACTIVATIONS,
+                                                            granularity=TraceHessianGranularity.PER_TENSOR,
+                                                            target_node=target_node)
+                node_approximations = self.hessian_service.fetch_hessian(trace_hessian_request=trace_hessian_request,
                                                                          required_size=self.gptq_config.hessian_weights_config.hessians_num_samples)
                 compare_point_to_trace_hessian_approximations[target_node] = node_approximations
 
@@ -283,7 +283,7 @@ def gptq_training(graph_float: Graph,
                   representative_data_gen: Callable,
                   fw_impl: GPTQFrameworkImplemantation,
                   fw_info: FrameworkInfo,
-                  hessian_service: HessianService) -> Graph:
+                  hessian_service: TraceHessianService) -> Graph:
     """
     GPTQ training process using knowledge distillation with a teacher network (float model) and a student network (quantized model).
     Args:

@@ -96,15 +96,15 @@ def representative_dataset(num_of_inputs=1):
     yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]*num_of_inputs
 
 def _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha, num_of_inputs=1):
-    hessian_service = hessian_common.HessianService(graph=graph,
-                                                    representative_dataset=functools.partial(representative_dataset, num_of_inputs=num_of_inputs),
-                                                    hessian_configuration=hessian_common.HessianConfig(alpha=alpha),
-                                                    fw_impl=keras_impl)
+    hessian_service = hessian_common.TraceHessianService(graph=graph,
+                                                         representative_dataset=functools.partial(representative_dataset, num_of_inputs=num_of_inputs),
+                                                         trace_hessian_configuration=hessian_common.TraceHessianConfig(alpha=alpha),
+                                                         fw_impl=keras_impl)
     x = []
     for interest_point in interest_points:
-        request = hessian_common.HessianRequest(mode=hessian_common.HessianMode.ACTIVATIONS,
-                                                granularity=hessian_common.HessianGranularity.PER_TENSOR,
-                                                target_node=interest_point)
+        request = hessian_common.TraceHessianRequest(mode=hessian_common.TraceHessianMode.ACTIVATIONS,
+                                                     granularity=hessian_common.TraceHessianGranularity.PER_TENSOR,
+                                                     target_node=interest_point)
         hessian_data = hessian_service.fetch_hessian(request, 1)
         hessian_data_per_image = hessian_data[0]
         assert isinstance(hessian_data_per_image, list)
