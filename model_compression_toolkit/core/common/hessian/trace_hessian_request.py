@@ -21,16 +21,21 @@ from model_compression_toolkit.core.common import BaseNode
 
 class TraceHessianMode(Enum):
     """
-    Enumeration representing the mode in which the Hessian is
-    computed (w.r.t weights or activations of interest points).
+    Enum representing the mode for trace Hessian's trace information computation.
+
+    This determines whether the Hessian's trace approximation is computed w.r.t weights or w.r.t activations.
+    Note: This is not the actual Hessian's trace but an approximation.
     """
-    WEIGHTS = 0
-    ACTIVATIONS = 1
+    WEIGHTS = 0         # Hessian approximation based on weights
+    ACTIVATIONS = 1     # Hessian approximation based on activations
 
 
 class TraceHessianGranularity(Enum):
     """
-    Granularity of the Hessian computation.
+    Enum representing the granularity level for Hessian's trace information computation.
+
+    This determines the number the Hessian approximations is computed for some node.
+    Note: This is not the actual Hessian's trace but an approximation.
     """
     PER_ELEMENT = 0
     PER_OUTPUT_CHANNEL = 1
@@ -39,7 +44,11 @@ class TraceHessianGranularity(Enum):
 
 class TraceHessianRequest:
     """
-    Configuration class for Hessian request.
+    Request configuration for the trace of the Hessian approximation.
+
+    This class defines the parameters for the approximation of the trace of the Hessian matrix.
+    It specifies the mode (weights/activations), granularity (element/channel/tensor), and the target node.
+    Note: This does not compute the actual Hessian's trace but approximates it.
     """
 
     def __init__(self,
@@ -48,13 +57,12 @@ class TraceHessianRequest:
                  target_node: BaseNode,
                  ):
         """
-
-        Args:
-            mode: Determines whether to compute Hessian based on activations or weights
-            granularity: Specifies the granularity (element, layer, channel) of Hessian computation
-            target_node: Node to compute its trace hessian.
-
+        Attributes:
+            mode (TraceHessianMode): Mode of Hessian's trace approximation (weights or activations).
+            granularity (TraceHessianGranularity): Granularity level for the approximation.
+            target_node (BaseNode): The node in the float graph for which the Hessian's trace approximation is targeted.
         """
+
         self.mode = mode  # activations or weights
         self.granularity = granularity  # per element, per layer, per channel
         self.target_node = target_node # TODO: extend it list of nodes

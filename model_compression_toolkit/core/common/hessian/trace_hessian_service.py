@@ -13,17 +13,26 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
-from typing import List, Any, Dict, Callable
+from typing import Callable, List, Any
 
-from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.hessian.trace_hessian_calculator import TraceHessianCalculator
+from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
 from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest
+from model_compression_toolkit.logger import Logger
 
 
 class TraceHessianService:
     """
-    A service to manage, store, and compute Hessian data.
+    A service to manage, store, and compute approximation of the trace of the Hessian.
+
+    This class provides functionalities to compute approximation of the trace of the Hessian matrix based on the provided configuration
+    and input images (from representative_dataset).
+    It also offers cache management capabilities for efficient computation and retrieval.
+
+    Note:
+    - The trace of the Hessian provides valuable information about the curvature of the loss function.
+    - Computation can be computationally heavy and time-consuming.
+    - The computed trace is an approximation.
     """
 
     def __init__(self,
@@ -32,71 +41,122 @@ class TraceHessianService:
                  trace_hessian_configuration: TraceHessianConfig,
                  fw_impl
                  ):
+        """
 
+        Args:
+            graph: Float graph.
+            representative_dataset: A callable that provides a dataset for sampling.
+            trace_hessian_configuration: Configuration for trace of the Hessian approximation computation.
+            fw_impl: Framework-specific implementation for trace Hessian approximation computation.
+        """
         self.graph = graph
         self.representative_dataset = representative_dataset
         self.trace_hessian_configuration = trace_hessian_configuration
         self.fw_impl = fw_impl
 
-        self.trace_hessian_request_to_score_list = {}  # Dictionary to store Hessians by configuration and image list
 
-    def clear_cache(self):
-        """Clear the cached Hessian data."""
+        self.trace_hessian_request_to_score_list = {}
+
+    def _clear_cache(self):
+        """Clears the cached approximations of the trace of the Hessian."""
         self.trace_hessian_request_to_score_list={}
 
     def count_cache_of_request(self, hessian_request:TraceHessianRequest) -> int:
         """
-        Count the cached Hessian data.
-        If a specific configuration is provided, it counts for that configuration.
-        Otherwise, it counts for all configurations.
-        """
-        if hessian_request in self.trace_hessian_request_to_score_list:
-            return len(self.trace_hessian_request_to_score_list[hessian_request])
-        return 0
+        Counts the cached approximations of the trace of the Hessian for a specific request.
 
-    def _sample_single_image_per_input(self):
+        Args:
+            hessian_request: The request configuration for which to count the cached data.
+
+        Returns:
+            Number of cached approximations for the given request.
+        """
+        # Check if the request is in the cache and return its count, otherwise return 0
+        return len(self.trace_hessian_request_to_score_list.get(hessian_request, []))
+
+    def _sample_single_image_per_input(self) -> List[Any]:
+        """
+        Samples a single image per input from the representative dataset.
+
+        Returns:
+            List: List of sampled images.
+        """
         images = next(self.representative_dataset())
-        assert isinstance(images, list)
-        res = []
-        for image in images:
-            if image.shape[0]==1:
-                res.append(image)
-            else:
-                res.append(np.expand_dims(image[0],0))
-        for image in res:
-            assert image.shape[0]==1
-        return res
+        if not isinstance(images, list):
+            Logger.error(f'Images expected to be a list but is of type {type(images)}')
+
+        # Ensure each image is a single sample, if not, take the first sample
+        return [np.expand_dims(image[0], 0) if image.shape[0] != 1 else image for image in images]
 
     def compute(self, trace_hessian_request:TraceHessianRequest):
         """
-        Compute the Hessian based on the provided configuration and input images.
-        Store the computed Hessian in the cache.
-        """
+        Computes an approximation of the trace of the Hessian based on the
+        provided request configuration and stores it in the cache.
 
+        Args:
+            trace_hessian_request: Configuration for which to compute the approximation.
+        """
+        # Get the framework-specific calculator for trace Hessian approximation
         fw_hessian_calculator = self.fw_impl.get_trace_hessian_calculator(hessian_request=trace_hessian_request)
+        # Sample images for the computation
         images = self._sample_single_image_per_input()
+
+        # Initialize the calculator with the necessary parameters
         trace_hessian_calculator = fw_hessian_calculator(graph=self.graph,
                                                          trace_hessian_config=self.trace_hessian_configuration,
                                                          input_images=images,
                                                          fw_impl=self.fw_impl,
                                                          trace_hessian_request=trace_hessian_request)
+        # Compute the approximation
         trace_hessian = trace_hessian_calculator.compute()
 
+        # Store the computed approximation in the cache
         if trace_hessian_request in self.trace_hessian_request_to_score_list:
             self.trace_hessian_request_to_score_list[trace_hessian_request].append(trace_hessian)
         else:
             self.trace_hessian_request_to_score_list[trace_hessian_request] = [trace_hessian]
 
-    def fetch_hessian(self, trace_hessian_request: TraceHessianRequest, required_size: int) -> Dict[BaseNode, float]:
+
+
+    def fetch_hessian(self,
+                      trace_hessian_request:
+                      TraceHessianRequest, required_size: int) -> List[List[float]]:
+        """
+        Fetches the computed approximations of the trace of the Hessian for the given 
+        request and required size.
+
+        Args:
+            trace_hessian_request: Configuration for which to fetch the approximation.
+            required_size: Number of approximations required.
+
+        Returns:
+            List[List[float]]: List of computed approximations.
+            The outer list is per image (thus, has the length as required_size).
+            The inner list length dependent on the granularity (1 for per-tensor, 
+            OC for per-output-channel when the requested node has OC output-channels, etc.)
+        """
+        # Ensure the cache has the required number of approximations
         self._populate_cache_to_size(trace_hessian_request, required_size)
+
+        # Return the cached approximations for the given request
         return self.trace_hessian_request_to_score_list[trace_hessian_request]
 
 
-    def _populate_cache_to_size(self, trace_hessian_request: TraceHessianRequest, required_size: int):
+    def _populate_cache_to_size(self,
+                                trace_hessian_request: TraceHessianRequest,
+                                required_size: int):
+        """
+        Ensures that the cache has the required size of trace Hessian approximations for the given request.
+
+        Args:
+            trace_hessian_request: Configuration for which to ensure the cache size.
+            required_size: Required number of trace Hessian approximations.
+        """
+        # Get the current number of cached approximations for the request
         current_existing_hessians = self.count_cache_of_request(trace_hessian_request)
-        if required_size > current_existing_hessians:
-            left_to_compute = required_size - current_existing_hessians
-            for _ in range(left_to_compute):
-                self.compute(trace_hessian_request)
+
+        # Compute the required number of approximations to meet the required size
+        for _ in range(required_size - current_existing_hessians):
+            self.compute(trace_hessian_request)
 
 

@@ -17,7 +17,12 @@ from model_compression_toolkit.constants import HESSIAN_OUTPUT_ALPHA, HESSIAN_NU
 
 class TraceHessianConfig:
     """
-    Configuration class for Hessian computation.
+    Configuration for Hessian-based information computation, specifically for the trace of the Hessian.
+
+    This class is used to define parameters for the approximation of the trace of the Hessian matrix.
+    It's important to note that this does not compute the actual Hessian but approximates some Hessian-based data.
+    The computation can be computationally heavy and is based on the trace of the Hessian.
+
     """
 
     def __init__(self,
@@ -25,19 +30,22 @@ class TraceHessianConfig:
                  num_iterations: int = HESSIAN_NUM_ITERATIONS
                  ):
         """
-
-        Args:
-            alpha: A tuning parameter to allow calibration between the contribution of the output feature maps
-            returned weights and the other feature maps weights (since the gradient of the output layers does not
-            provide a compatible weight for the distance metric computation).
-            num_iterations: Number of iterations for computation approximation.
+        Attributes:
+            alpha (float): A tuning parameter to calibrate the contribution of the output feature maps.
+            num_iterations (int): Number of iterations for computation approximation.
         """
         self.alpha = alpha
         self.num_iterations = num_iterations
 
     def __eq__(self, other):
         """
-        Checks equality of two HessianConfig objects.
+        Checks the equality of this configuration with another object.
+
+        Args:
+            other: The object to compare with.
+
+        Returns:
+            bool: True if the other object is an instance of TraceHessianConfig and has the same attributes, False otherwise.
         """
         if isinstance(other, TraceHessianConfig):
             return (self.alpha == other.alpha and
@@ -47,7 +55,10 @@ class TraceHessianConfig:
 
     def __hash__(self):
         """
-        Computes the hash of the HessianConfig object for dictionary usage or other hashing requirements.
+        Computes a hash value for this configuration based on its attributes.
+
+        Returns:
+            The hash value of this configuration.
         """
         return hash((self.alpha,
                      self.num_iterations

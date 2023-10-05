@@ -23,11 +23,11 @@ from model_compression_toolkit.core.common.hessian.trace_hessian_config import T
 
 class TraceHessianCalculator(ABC):
     """
-       Abstract base class for a Hessian calculator.
+    Abstract base class for computing an approximation of the trace of the Hessian.
 
-       The Hessian matrix represents the second order partial derivatives
-       of a function, and this class provides a structure to compute the
-       Hessian for given inputs using a specified forward implementation.
+    This class provides a structure for implementing different methods to compute
+    the trace of the Hessian approximation based on the provided configuration,
+    input images, and other parameters.
     """
 
     def __init__(self,
@@ -37,12 +37,12 @@ class TraceHessianCalculator(ABC):
                  fw_impl,
                  trace_hessian_request: TraceHessianRequest):
         """
-
         Args:
-            graph (Graph): Graph representation of the float model for which Hessian is to be computed.
-            trace_hessian_config (TraceHessianConfig): Configuration parameters for Hessian computation.
-            input_images (List[Any]): List of input images for the hessian computation.
-            fw_impl (FrameworkImplementation): Framework implementation used for the computation.
+            graph: Computational graph for the float model.
+            trace_hessian_config: Configuration for the approximation of the trace of the Hessian.
+            input_images: List of input images for the computation.
+            fw_impl: Framework-specific implementation for trace Hessian computation.
+            trace_hessian_request: Configuration request for which to compute the trace Hessian approximation.
         """
         self.graph = graph
         self.hessian_config = trace_hessian_config
@@ -51,10 +51,11 @@ class TraceHessianCalculator(ABC):
         self.hessian_request = trace_hessian_request
 
     @abstractmethod
-    def compute(self):
+    def compute(self) -> List[float]:
         """
-        Abstract method to compute the Hessian.
-        Concrete implementations of this class should provide the method to
-        compute the Hessian based on the initialized parameters.
+        Abstract method to compute the approximation of the trace of the Hessian.
+
+        This method should be implemented by subclasses to provide the specific
+        computation method for the trace Hessian approximation.
         """
-        raise NotImplemented
+        raise NotImplemented(f'{self.__class__.__name__} have to implement compute method.')  # pragma: no cover

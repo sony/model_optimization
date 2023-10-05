@@ -105,7 +105,7 @@ class TestFileLogger(unittest.TestCase):
                                          (2, 8), (2, 4), (2, 2)])
         tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
 
-        # Hessian manager assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP
+        # Hessian service assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP
         cfg = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
         cfg.use_grad_based_weights=False
 

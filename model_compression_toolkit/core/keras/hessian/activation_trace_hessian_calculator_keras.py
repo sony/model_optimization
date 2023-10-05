@@ -55,7 +55,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             output_list = self._get_model_output_replacement()
             all_outputs_indices = []
             # if self.trace_hessian_config.search_output_replacement:
-            #     all_outputs_indices = self._update_ips_with_outputs_replacements(output_list,
+            #     outputs_indices = self._update_ips_with_outputs_replacements(output_list,
             #                                                                      self.config.nodes_names_for_hessian_computation)
 
             with tf.GradientTape(persistent=True, watch_accessed_variables=False) as g:
@@ -113,7 +113,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                 return ipts_jac_trace_approx.numpy().tolist()
                 # if self.config.norm_weights:
                 #     normalized_ipts_jac_trace_approx = self._normalize_weights(ipts_jac_trace_approx,
-                #                                                                all_outputs_indices,
+                #                                                                outputs_indices,
                 #                                                                self.config.alpha)
                 #     return self._attach_interst_point_names_to_scores(normalized_ipts_jac_trace_approx)
                 # else:
@@ -162,8 +162,8 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         return list(set(output_indices + replacement_indices))
 
     # def _normalize_weights(self,
-    #                        jacobians_traces: List,
-    #                        all_outputs_indices: List[int],
+    #                        trace_hessian_approximations: List,
+    #                        outputs_indices: List[int],
     #                        alpha: float) -> List[float]:
     #     """
     #     Output layers or layers that come after the model's considered output layers,
@@ -173,8 +173,8 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
     #     other values.
     #
     #     Args:
-    #         jacobians_traces: The approximated average jacobian-based weights of each interest point.
-    #         all_outputs_indices: A list of indices of all nodes that consider outputs.
+    #         trace_hessian_approximations: The approximated average jacobian-based weights of each interest point.
+    #         outputs_indices: A list of indices of all nodes that consider outputs.
     #         alpha: A multiplication factor.
     #
     #     Returns: Normalized list of jacobian-based weights (for each interest point).
@@ -182,13 +182,13 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
     #     """
     #
     #     sum_without_outputs = sum(
-    #         [jacobians_traces[i] for i in range(len(jacobians_traces)) if i not in all_outputs_indices])
+    #         [trace_hessian_approximations[i] for i in range(len(trace_hessian_approximations)) if i not in outputs_indices])
     #     normalized_grads_weights = [self._get_normalized_weight(grad,
     #                                                             i,
     #                                                             sum_without_outputs,
-    #                                                             all_outputs_indices,
+    #                                                             outputs_indices,
     #                                                             alpha)
-    #                                 for i, grad in enumerate(jacobians_traces)]
+    #                                 for i, grad in enumerate(trace_hessian_approximations)]
     #
     #     return normalized_grads_weights
     #
@@ -196,7 +196,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
     #                            grad: float,
     #                            i: int,
     #                            sum_without_outputs: float,
-    #                            all_outputs_indices: List[int],
+    #                            outputs_indices: List[int],
     #                            alpha: float) -> float:
     #     """
     #     Normalizes the node's gradient value. If it is an output or output replacement node than the normalized value is
@@ -206,15 +206,15 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
     #         grad: The gradient value.
     #         i: The index of the node in the sorted interest points list.
     #         sum_without_outputs: The sum of all gradients of nodes that are not considered outputs.
-    #         all_outputs_indices: A list of indices of all nodes that consider outputs.
+    #         outputs_indices: A list of indices of all nodes that consider outputs.
     #         alpha: A multiplication factor.
     #
     #     Returns: A normalized jacobian-based weights.
     #
     #     """
     #
-    #     if i in all_outputs_indices:
-    #         return alpha / len(all_outputs_indices)
+    #     if i in outputs_indices:
+    #         return alpha / len(outputs_indices)
     #     else:
     #         return ((1 - alpha) * grad / (sum_without_outputs + EPS)).numpy()
 

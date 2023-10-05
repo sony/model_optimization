@@ -110,7 +110,7 @@ def _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alp
         assert isinstance(hessian_data_per_image, list)
         assert len(hessian_data_per_image) == 1
         x.append(hessian_data_per_image[0])
-    x = hessian_common.hessian_utils.normalize_weights(x, alpha=alpha, all_outputs_indices=[len(interest_points) - 1])
+    x = hessian_common.hessian_utils.normalize_weights(x, alpha=alpha, outputs_indices=[len(interest_points) - 1])
     return x
 
 

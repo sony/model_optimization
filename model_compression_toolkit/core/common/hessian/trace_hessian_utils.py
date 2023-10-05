@@ -12,39 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import numpy as np
 from typing import List
 
 from model_compression_toolkit.constants import EPS, HESSIAN_OUTPUT_ALPHA
 
 
-def normalize_weights(jacobians_traces: List,
-                      all_outputs_indices: List[int],
+def normalize_weights(trace_hessian_approximations: List,
+                      outputs_indices: List[int],
                       alpha: float = HESSIAN_OUTPUT_ALPHA) -> List[float]:
     """
-    Output layers or layers that come after the model's considered output layers,
-    are assigned with a constant normalized value, according to the given alpha variable and the number of such
-    layers.
-    Other layers returned weights are normalized by dividing the jacobian-based weights value by the sum of all
-    other values.
+    Normalize trace Hessian approximations. Output layers or layers after the model's considered output layers
+    are assigned a constant normalized value. Other layers' weights are normalized by dividing the
+    trace Hessian approximations value by the sum of all other values.
 
     Args:
-        jacobians_traces: The approximated average jacobian-based weights of each interest point.
-        all_outputs_indices: A list of indices of all nodes that consider outputs.
-        alpha: A multiplication factor.
+        trace_hessian_approximations: Approximated average jacobian-based weights for each interest point.
+        outputs_indices: Indices of all nodes considered as outputs.
+        alpha: Multiplication factor.
 
-    Returns: Normalized list of jacobian-based weights (for each interest point).
-
+    Returns:
+            Normalized list of trace Hessian approximations for each interest point.
     """
 
     sum_without_outputs = sum(
-        [jacobians_traces[i] for i in range(len(jacobians_traces)) if i not in all_outputs_indices])
+        [trace_hessian_approximations[i] for i in range(len(trace_hessian_approximations)) if i not in outputs_indices])
     normalized_grads_weights = [_get_normalized_weight(grad,
                                                        i,
                                                        sum_without_outputs,
-                                                       all_outputs_indices,
+                                                       outputs_indices,
                                                        alpha)
-                                for i, grad in enumerate(jacobians_traces)]
+                                for i, grad in enumerate(trace_hessian_approximations)]
 
     return normalized_grads_weights
 
@@ -52,24 +49,25 @@ def normalize_weights(jacobians_traces: List,
 def _get_normalized_weight(grad: float,
                            i: int,
                            sum_without_outputs: float,
-                           all_outputs_indices: List[int],
+                           outputs_indices: List[int],
                            alpha: float) -> float:
     """
-    Normalizes the node's gradient value. If it is an output or output replacement node than the normalized value is
-    a constant, otherwise, it is normalized by dividing with the sum of all gradient values.
+    Normalizes the node's trace Hessian approximation value. If it is an output or output
+    replacement node than the normalized value is a constant, otherwise, it is normalized
+     by dividing with the sum of all trace Hessian approximations values.
 
     Args:
-        grad: The gradient value.
+        grad: The approximation value.
         i: The index of the node in the sorted interest points list.
-        sum_without_outputs: The sum of all gradients of nodes that are not considered outputs.
-        all_outputs_indices: A list of indices of all nodes that consider outputs.
+        sum_without_outputs: The sum of all approximations of nodes that are not considered outputs.
+        outputs_indices: A list of indices of nodes that consider outputs.
         alpha: A multiplication factor.
 
-    Returns: A normalized jacobian-based weights.
+    Returns: A normalized trace Hessian approximation.
 
     """
 
-    if i in all_outputs_indices:
-        return alpha / len(all_outputs_indices)
+    if i in outputs_indices:
+        return alpha / len(outputs_indices)
     else:
         return ((1 - alpha) * grad / (sum_without_outputs + EPS))
