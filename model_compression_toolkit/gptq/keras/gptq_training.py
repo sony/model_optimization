@@ -60,7 +60,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo,
                  representative_data_gen: Callable,
-                 hessian_service: TraceHessianService = None):
+                 trace_hessian_service: TraceHessianService = None):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
         Use the dataset generator to pass images through the teacher and student networks to get intermediate
@@ -80,7 +80,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                          gptq_config,
                          fw_impl,
                          fw_info,
-                         hessian_service=hessian_service)
+                         trace_hessian_service=trace_hessian_service)
 
         self.loss_list = []
         self.input_scale = 1
@@ -112,7 +112,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
-        self.weights_for_average_loss = self.compute_hessian_based_weights(representative_data_gen)
+        self.weights_for_average_loss = self.compute_hessian_based_weights()
 
         self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
 

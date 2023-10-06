@@ -93,7 +93,7 @@ def core_runner(in_model: Any,
 
     trace_hessian_service = TraceHessianService(graph=graph,
                                                 representative_dataset=representative_data_gen,
-                                                trace_hessian_configuration=core_config.hessian_cfg,
+                                                trace_hessian_configuration=core_config.trace_hessian_cfg,
                                                 fw_impl=fw_impl)
 
     tg = _prepare_model_for_quantization(graph,

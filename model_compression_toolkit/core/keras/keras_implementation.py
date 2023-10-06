@@ -470,7 +470,7 @@ class KerasImplementation(FrameworkImplementation):
         """
         Get Keras hessian calculator based on the hessian configuration.
         Args:
-            hessian_cfg: HessianConfig to search for the desired calculator.
+            trace_hessian_cfg: HessianConfig to search for the desired calculator.
 
         Returns: TraceHessianCalculatorKeras to use for the hessian computation for this configuration.
 

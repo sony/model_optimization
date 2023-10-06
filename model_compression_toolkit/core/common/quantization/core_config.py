@@ -26,7 +26,7 @@ class CoreConfig:
                  quantization_config: QuantizationConfig = QuantizationConfig(),
                  mixed_precision_config: MixedPrecisionQuantizationConfigV2 = None,
                  debug_config: DebugConfig = DebugConfig(),
-                 hessian_cfg: TraceHessianConfig = TraceHessianConfig()
+                 trace_hessian_cfg: TraceHessianConfig = TraceHessianConfig()
                  ):
         """
 
@@ -34,11 +34,12 @@ class CoreConfig:
             quantization_config (QuantizationConfig): Config for quantization.
             mixed_precision_config (MixedPrecisionQuantizationConfigV2): Config for mixed precision quantization (optional, default=None).
             debug_config (DebugConfig): Config for debugging and editing the network quantization process.
+            trace_hessian_cfg (TraceHessianConfig): Configuration for the trace hessian service computation.
         """
         self.quantization_config = quantization_config
         self.mixed_precision_config = mixed_precision_config
         self.debug_config = debug_config
-        self.hessian_cfg = hessian_cfg
+        self.trace_hessian_cfg = trace_hessian_cfg
 
     @property
     def mixed_precision_enable(self):
@@ -46,4 +47,4 @@ class CoreConfig:
 
     @property
     def init_hessian_service(self):
-        return self.hessian_cfg is not None
+        return self.trace_hessian_cfg is not None

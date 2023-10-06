@@ -68,6 +68,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
         mp_config: Mixed-precision quantization configuration.
         representative_data_gen: Dataset to use for retrieving images for the models inputs.
         search_method: BitWidthSearchMethod to define which searching method to use.
+        trace_hessian_service: TraceHessianService to fetch Hessian traces approximations.
 
     Returns:
         A MP configuration for the graph (list of integers, where the index in the list, is the node's

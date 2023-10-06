@@ -258,7 +258,7 @@ if FOUND_TF:
             for _ in range(n_iter):
                 yield representative_data_gen()
 
-        # Ignore hessian_service since it is not used here
+        # Ignore trace_hessian_service since it is not used here
         tg, bit_widths_config, _ = core_runner(in_model=in_model,
                                                representative_data_gen=_representative_data_gen,
                                                core_config=core_config,

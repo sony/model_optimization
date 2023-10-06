@@ -67,7 +67,7 @@ def _apply_gptq(gptq_config: GradientPTQConfigV2,
                                 representative_data_gen,
                                 fw_impl,
                                 fw_info,
-                                hessian_service=hessian_service)
+                                trace_hessian_service=hessian_service)
 
         if tb_w is not None:
             tb_w.add_graph(tg_bias, 'after_gptq')

@@ -1,3 +1,18 @@
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 from typing import List, Tuple, Dict, Any
 
 import tensorflow as tf
@@ -19,9 +34,8 @@ from tensorflow.python.util.object_identity import Reference as TFReference
 
 class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
     """
-    Hessian w.r.t activation for Keras graph computation.
+    Keras implementation of the Trace Hessian Calculator for activations.
     """
-
     def __init__(self,
                  graph: Graph,
                  trace_hessian_config: TraceHessianConfig,
@@ -29,40 +43,35 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                  fw_impl,
                  trace_hessian_request: TraceHessianRequest):
         """
-
         Args:
-            graph: Float graph to compute its hessian data.
-            config: HessianConfig to use for during Hessian computation.
-            input_images: List of images to use the the computaion (image per graph input).
-            fw_impl: Framework implementation to use during computation.
+            graph: Computational graph for the float model.
+            trace_hessian_config: Configuration for the approximation of the trace of the Hessian.
+            input_images: List of input images for the computation.
+            fw_impl: Framework-specific implementation for trace Hessian approximation computation.
+            trace_hessian_request: Configuration request for which to compute the trace Hessian approximation.
         """
-
         super(ActivationTraceHessianCalculatorKeras, self).__init__(graph=graph,
                                                                     trace_hessian_config=trace_hessian_config,
                                                                     input_images=input_images,
                                                                     fw_impl=fw_impl,
                                                                     trace_hessian_request=trace_hessian_request)
 
-    def compute(self) -> List[tf.Tensor]:
+    def compute(self) -> List[float]:
         """
-        Compute the hessian of the float graph based on the configuration and images that in
-        the calculator.
+        Compute the approximation of the trace of the Hessian w.r.t a node's activations.
 
-        Returns: Dictionary from interest point to hessian score.
-
+        Returns:
+            List[float]: Approximated trace of the Hessian for an interest point.
         """
         if self.hessian_request.granularity == TraceHessianGranularity.PER_TENSOR:
             output_list = self._get_model_output_replacement()
-            all_outputs_indices = []
-            # if self.trace_hessian_config.search_output_replacement:
-            #     outputs_indices = self._update_ips_with_outputs_replacements(output_list,
-            #                                                                      self.config.nodes_names_for_hessian_computation)
 
+            # Record operations for automatic differentiation
             with tf.GradientTape(persistent=True, watch_accessed_variables=False) as g:
                 outputs, interest_points_tensors = self._get_model_outputs_for_single_image(output_list,
                                                                                             gradient_tape=g)
-                # Concat outputs
-                # First, we need to unfold all outputs that are given as list, to extract the actual output tensors
+
+                # Unfold and concatenate all outputs to form a single tensor
                 unfold_outputs = []
                 for output in outputs:
                     if isinstance(output, List):
@@ -72,16 +81,17 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
                 r_outputs = [tf.reshape(output, shape=[output.shape[0], -1]) for output in unfold_outputs]
 
+                # Ensure all outputs have the same shape for concatenation
                 concat_axis_dim = [o.shape[0] for o in r_outputs]
                 if not all(d == concat_axis_dim[0] for d in concat_axis_dim):
                     Logger.critical(
-                        "Can't concat model's outputs for gradients calculation since the shape of the first axis "  
-                        # pragma: no cover
+                        "Can't concat model's outputs for gradients calculation since the shape of the first axis " # pragma: no cover  
                         "is not equal in all outputs.")
 
                 output = tf.concat(r_outputs, axis=1)
 
-                ipts_jac_trace_approx = []
+                # List to store the approximated trace of the Hessian for each interest point
+                trace_approx_by_node = []
                 for ipt in tqdm(interest_points_tensors):  # Per Interest point activation tensor
                     trace_jv = []
                     for j in range(self.hessian_config.num_iterations):  # Approximation iterations
@@ -90,12 +100,12 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                         f_v = tf.reduce_sum(v * output)
 
                         with g.stop_recording():
-                            # Computing the jacobian approximation by getting the gradient of (output * v)
+                            # Computing the approximation by getting the gradient of (output * v)
                             jac_v = g.gradient(f_v, ipt, unconnected_gradients=tf.UnconnectedGradients.ZERO)
                             jac_v = tf.reshape(jac_v, [jac_v.shape[0], -1])
                             jac_trace_approx = tf.reduce_mean(tf.reduce_sum(tf.pow(jac_v, 2.0)))
 
-                            # If the change to the mean Jacobian approximation is insignificant we stop the calculation
+                            # If the change to the mean approximation is insignificant we stop the calculation
                             if j > MIN_JACOBIANS_ITER:
                                 new_mean = np.mean([jac_trace_approx, *trace_jv])
                                 delta = new_mean - np.mean(trace_jv)
@@ -104,39 +114,16 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                                     break
 
                             trace_jv.append(jac_trace_approx)
-                    ipts_jac_trace_approx.append(2 * tf.reduce_mean(trace_jv) / output.shape[
-                        -1])  # Get averaged squared jacobian trace approximation
+                    trace_approx_by_node.append(2 * tf.reduce_mean(trace_jv) / output.shape[
+                        -1])  # Get averaged squared trace approximation
 
-                ipts_jac_trace_approx = tf.reduce_mean([ipts_jac_trace_approx],
+                trace_approx_by_node = tf.reduce_mean([trace_approx_by_node],
                                                        axis=0)  # Just to get one tensor instead of list of tensors with single element
 
-                return ipts_jac_trace_approx.numpy().tolist()
-                # if self.config.norm_weights:
-                #     normalized_ipts_jac_trace_approx = self._normalize_weights(ipts_jac_trace_approx,
-                #                                                                outputs_indices,
-                #                                                                self.config.alpha)
-                #     return self._attach_interst_point_names_to_scores(normalized_ipts_jac_trace_approx)
-                # else:
-                #     return self._attach_interst_point_names_to_scores(ipts_jac_trace_approx)
+                return trace_approx_by_node.numpy().tolist()
         else:
-            raise NotImplemented
+            Logger.error(f"{self.hessian_request.granularity} is not supported for Keras activation hessian's trace approx calculator")
 
-    # def _attach_interst_point_names_to_scores(self, scores: List[float]) -> Dict[BaseNode, float]:
-    #     """
-    #     Create a dictionary of node to score based on the passed scores and the interest points
-    #     in the hessian configuration.
-    #
-    #     Args:
-    #         scores: Hessian scores to attach to interest points.
-    #
-    #     Returns: Dictionary from interest point to hessian score.
-    #
-    #     """
-    #     res = {}
-    #     assert len(self.config.nodes_names_for_hessian_computation) == len(scores)
-    #     for point_name, score in zip(self.config.nodes_names_for_hessian_computation, scores):
-    #         res[point_name] = score
-    #     return res
 
     def _update_ips_with_outputs_replacements(self,
                                               outputs_replacement_nodes: List[BaseNode],
@@ -160,63 +147,6 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         output_indices = [interest_points.index(n.node) for n in self.graph.get_outputs()]
         replacement_indices = [interest_points.index(n) for n in outputs_replacement_nodes]
         return list(set(output_indices + replacement_indices))
-
-    # def _normalize_weights(self,
-    #                        trace_hessian_approximations: List,
-    #                        outputs_indices: List[int],
-    #                        alpha: float) -> List[float]:
-    #     """
-    #     Output layers or layers that come after the model's considered output layers,
-    #     are assigned with a constant normalized value, according to the given alpha variable and the number of such
-    #     layers.
-    #     Other layers returned weights are normalized by dividing the jacobian-based weights value by the sum of all
-    #     other values.
-    #
-    #     Args:
-    #         trace_hessian_approximations: The approximated average jacobian-based weights of each interest point.
-    #         outputs_indices: A list of indices of all nodes that consider outputs.
-    #         alpha: A multiplication factor.
-    #
-    #     Returns: Normalized list of jacobian-based weights (for each interest point).
-    #
-    #     """
-    #
-    #     sum_without_outputs = sum(
-    #         [trace_hessian_approximations[i] for i in range(len(trace_hessian_approximations)) if i not in outputs_indices])
-    #     normalized_grads_weights = [self._get_normalized_weight(grad,
-    #                                                             i,
-    #                                                             sum_without_outputs,
-    #                                                             outputs_indices,
-    #                                                             alpha)
-    #                                 for i, grad in enumerate(trace_hessian_approximations)]
-    #
-    #     return normalized_grads_weights
-    #
-    # def _get_normalized_weight(self,
-    #                            grad: float,
-    #                            i: int,
-    #                            sum_without_outputs: float,
-    #                            outputs_indices: List[int],
-    #                            alpha: float) -> float:
-    #     """
-    #     Normalizes the node's gradient value. If it is an output or output replacement node than the normalized value is
-    #     a constant, otherwise, it is normalized by dividing with the sum of all gradient values.
-    #
-    #     Args:
-    #         grad: The gradient value.
-    #         i: The index of the node in the sorted interest points list.
-    #         sum_without_outputs: The sum of all gradients of nodes that are not considered outputs.
-    #         outputs_indices: A list of indices of all nodes that consider outputs.
-    #         alpha: A multiplication factor.
-    #
-    #     Returns: A normalized jacobian-based weights.
-    #
-    #     """
-    #
-    #     if i in outputs_indices:
-    #         return alpha / len(outputs_indices)
-    #     else:
-    #         return ((1 - alpha) * grad / (sum_without_outputs + EPS)).numpy()
 
     def _get_model_output_replacement(self) -> List[str]:
         """
@@ -284,9 +214,6 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                     out_tensors_of_n[i] = tf.dtypes.cast(t, tf.float32)
             else:
                 out_tensors_of_n = tf.dtypes.cast(out_tensors_of_n, tf.float32)
-
-            # print(n.name)
-            # print([ip.name for ip in self.config.nodes_names_for_hessian_computation])
 
             if n.name==self.hessian_request.target_node.name:
                 # Recording the relevant feature maps onto the gradient tape

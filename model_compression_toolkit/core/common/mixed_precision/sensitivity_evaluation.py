@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.graph.functional_node import Function
 
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.hessian import trace_hessian_service, TraceHessianRequest, TraceHessianMode, \
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianMode, \
     TraceHessianGranularity, TraceHessianService
 
 
@@ -65,6 +65,8 @@ class SensitivityEvaluation:
             set_layer_to_bitwidth: A fw-dependent function that allows to configure a configurable MP model
                     with a specific bit-width configuration.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
+            trace_hessian_service: TraceHessianService to fetch Hessian traces approximations.
+
         """
         self.graph = graph
         self.quant_config = quant_config
@@ -197,29 +199,44 @@ class SensitivityEvaluation:
 
     def _compute_gradient_based_weights(self) -> np.ndarray:
         """
-        Computes the gradient-based weights using the framework's model_grad method per batch of images.
-
-        Returns: A vector of weights, one for each interest point,
-        to be used for the distance metric weighted average computation.
+        Compute gradient-based weights using trace Hessian approximations for each interest point.
         """
+        # Dictionary to store the trace Hessian approximations for each interest point (target node)
         compare_point_to_trace_hessian_approximations = {}
+
+        # Iterate over each interest point to fetch the trace Hessian approximations
         for target_node in self.interest_points:
+            # Create a request for trace Hessian approximation with specific configurations
+            # (here we use per-tensor approximation of the Hessian's trace w.r.t the node's activations)
             trace_hessian_request = TraceHessianRequest(mode=TraceHessianMode.ACTIVATIONS,
-                                                  granularity=TraceHessianGranularity.PER_TENSOR,
-                                                  target_node=target_node)
+                                                        granularity=TraceHessianGranularity.PER_TENSOR,
+                                                        target_node=target_node)
+
+            # Fetch the trace Hessian approximations for the current interest point
             node_approximations = self.trace_hessian_service.fetch_hessian(trace_hessian_request=trace_hessian_request,
                                                                            required_size=self.quant_config.num_of_images)
+            # Store the fetched approximations in the dictionary
             compare_point_to_trace_hessian_approximations[target_node] = node_approximations
 
-        grad_per_batch = []
+        # List to store the approximations for each image
+        approx_by_image = []
+        # Iterate over each image
         for image_idx in range(self.quant_config.num_of_images):
-            batch_ip_gradients = []
+            # List to store approximations for the current image for each interest point
+            approx_by_image_per_interest_point = []
+            # Iterate over each interest point to gather approximations
             for target_node in self.interest_points:
+                # Ensure the approximation for the current interest point and image is a list
                 assert isinstance(compare_point_to_trace_hessian_approximations[target_node][image_idx], list)
+                # Ensure the approximation list contains only one element (since, granularity is per-tensor)
                 assert len(compare_point_to_trace_hessian_approximations[target_node][image_idx]) == 1
-                batch_ip_gradients.append(compare_point_to_trace_hessian_approximations[target_node][image_idx][0])
-            grad_per_batch.append(batch_ip_gradients)
-        return np.mean(grad_per_batch, axis=0)
+                # Append the single approximation value to the list for the current image
+                approx_by_image_per_interest_point.append(compare_point_to_trace_hessian_approximations[target_node][image_idx][0])
+            # Append the approximations for the current image to the main list
+            approx_by_image.append(approx_by_image_per_interest_point)
+
+        # Return the mean approximation value across all images for each interest point
+        return np.mean(approx_by_image, axis=0)
 
     def _configure_bitwidths_model(self,
                                    mp_model_configuration: List[int],

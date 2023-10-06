@@ -1,42 +1,54 @@
-from typing import List, Dict
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+from typing import List
 
 import tensorflow as tf
 
-from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest
 from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
 from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
+from model_compression_toolkit.logger import Logger
 
 
 class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
     """
-    Hessian w.r.t weights for Keras graph computation.
+    Keras-specific implementation of the Trace Hessian approximation computation w.r.t to a node's weights.
     """
 
     def __init__(self,
                  graph: Graph,
-                 config: TraceHessianConfig,
+                 trace_hessian_config: TraceHessianConfig,
                  input_images: List[tf.Tensor],
-                 fw_impl):
+                 fw_impl,
+                 trace_hessian_request: TraceHessianRequest):
         """
 
         Args:
-            graph: Float graph to compute its hessian data.
-            config: HessianConfig to use for during Hessian computation.
-            input_images: List of images to use the the computaion (image per graph input).
-            fw_impl: Framework implementation to use during computation.
+            graph: Computational graph for the float model.
+            trace_hessian_config: Configuration for the approximation of the trace of the Hessian.
+            input_images: List of input images for the computation.
+            fw_impl: Framework-specific implementation for trace Hessian computation.
+            trace_hessian_request: Configuration request for which to compute the trace Hessian approximation.
         """
-
         super(WeightsTraceHessianCalculatorKeras, self).__init__(graph=graph,
-                                                                 config=config,
+                                                                 trace_hessian_config=trace_hessian_config,
                                                                  input_images=input_images,
-                                                                 fw_impl=fw_impl)
+                                                                 fw_impl=fw_impl,
+                                                                 trace_hessian_request=trace_hessian_request)
 
-    def compute(self) -> Dict[BaseNode, float]:
-        """
-        Compute the hessian of the float graph based on the configuration and images that in
-        the calculator.
-
-        Returns: Dictionary from interest point to hessian score.
-
-        """
-        raise NotImplemented
+    def compute(self):
+        Logger.error(f"Hessian trace approx w.r.t weights is not supported for now")

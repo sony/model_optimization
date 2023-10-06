@@ -41,7 +41,7 @@ class GPTQTrainer(ABC):
                  gptq_config: GradientPTQConfig,
                  fw_impl: GPTQFrameworkImplemantation,
                  fw_info: FrameworkInfo,
-                 hessian_service: TraceHessianService = None):
+                 trace_hessian_service: TraceHessianService = None):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
         Use the dataset generator to pass images through the teacher and student networks to get intermediate
@@ -54,6 +54,7 @@ class GPTQTrainer(ABC):
             gptq_config: GradientPTQConfig with parameters about the tuning process.
             fw_impl: Framework implementation
             fw_info: Framework information
+            trace_hessian_service: TraceHessianService for fetching and computing Hessian's trace approximation.
         """
         self.graph_float = copy.deepcopy(graph_float)
         self.graph_quant = copy.deepcopy(graph_quant)
@@ -73,21 +74,11 @@ class GPTQTrainer(ABC):
 
         self.fxp_model, self.gptq_user_info = self.build_gptq_model()
         if self.gptq_config.use_hessian_based_weights:
-            if not hessian_service:
+            if not trace_hessian_service:
                 Logger.error(f"When using hessian approximations for GPTQ fine-tuning, "
-                             f"hessian service must be provided but is {hessian_service}")
-            self.hessian_service = hessian_service
+                             f"hessian service must be provided but is {trace_hessian_service}")
+            self.hessian_service = trace_hessian_service
 
-        # Note that in GPTQ loss weights computation we assume that there aren't replacement output nodes,
-        # therefore, output_list is just the graph outputs, and we don't need the tuning factor for
-        # defining the output weights (since the output layer is not a compare point).
-        # self.gptq_hessian_config = HessianConfig(mode=TraceHessianMode.ACTIVATIONS,
-        #                                          granularity=TraceHessianGranularity.PER_LAYER,
-        #                                          nodes_names_for_hessian_computation=self.compare_points,
-        #                                          alpha=0,
-        #                                          norm_weights=self.gptq_config.hessian_weights_config.norm_weights,
-        #                                          num_iterations=self.gptq_config.hessian_weights_config.hessians_n_iter
-        #                                          )
     def get_optimizer_with_param(self,
                                  flattened_trainable_weights: List[Any],
                                  flattened_bias_weights: List[Any],
@@ -137,19 +128,8 @@ class GPTQTrainer(ABC):
         return optimizer_with_param
 
 
-    def compute_hessian_based_weights(self,
-                                      representative_data_gen: Callable) -> np.ndarray:
-        """
-        Computes the Hessian-based weights using the framework's model_grad method per batch of images.
-
-        Args:
-            representative_data_gen: Dataset used for inference to compute the Hessian-based weights.
-
-        Returns: A vector of weights, one for each compare point,
-        to be used for the loss metric weighted average computation when running GPTQ training.
-        """
+    def compute_hessian_based_weights(self) -> np.ndarray:
         if self.gptq_config.use_hessian_based_weights:
-
             compare_point_to_trace_hessian_approximations = {}
             for target_node in self.compare_points:
                 trace_hessian_request = TraceHessianRequest(mode=TraceHessianMode.ACTIVATIONS,
@@ -159,21 +139,21 @@ class GPTQTrainer(ABC):
                                                                          required_size=self.gptq_config.hessian_weights_config.hessians_num_samples)
                 compare_point_to_trace_hessian_approximations[target_node] = node_approximations
 
-            points_apprx_jacobians_weights = []
+            trace_hessian_approx_by_image = []
             for image_idx in range(self.gptq_config.hessian_weights_config.hessians_num_samples):
-                approx_by_image = []
+                approx_by_interest_point = []
                 for target_node in self.compare_points:
                     assert isinstance(compare_point_to_trace_hessian_approximations[target_node][image_idx], list)
                     assert len(compare_point_to_trace_hessian_approximations[target_node][image_idx])==1
-                    approx_by_image.append(compare_point_to_trace_hessian_approximations[target_node][image_idx][0])
+                    approx_by_interest_point.append(compare_point_to_trace_hessian_approximations[target_node][image_idx][0])
 
                 if self.gptq_config.hessian_weights_config.norm_weights:
-                    approx_by_image = hessian_utils.normalize_weights(approx_by_image,
+                    approx_by_interest_point = hessian_utils.normalize_weights(approx_by_interest_point,
                                                                       [])
-                points_apprx_jacobians_weights.append(approx_by_image)
+                trace_hessian_approx_by_image.append(approx_by_interest_point)
 
             if self.gptq_config.hessian_weights_config.log_norm:
-                mean_jacobian_weights = np.mean(points_apprx_jacobians_weights, axis=0)
+                mean_jacobian_weights = np.mean(trace_hessian_approx_by_image, axis=0)
                 mean_jacobian_weights = np.where(mean_jacobian_weights != 0, mean_jacobian_weights,
                                                  np.partition(mean_jacobian_weights, 1)[1])
                 log_weights = np.log10(mean_jacobian_weights)
@@ -183,7 +163,7 @@ class GPTQTrainer(ABC):
 
                 return log_weights - np.min(log_weights)
             else:
-                return np.mean(points_apprx_jacobians_weights, axis=0)
+                return np.mean(trace_hessian_approx_by_image, axis=0)
         else:
             num_nodes = len(self.compare_points)
             return np.asarray([1 / num_nodes for _ in range(num_nodes)])
@@ -283,7 +263,7 @@ def gptq_training(graph_float: Graph,
                   representative_data_gen: Callable,
                   fw_impl: GPTQFrameworkImplemantation,
                   fw_info: FrameworkInfo,
-                  hessian_service: TraceHessianService) -> Graph:
+                  trace_hessian_service: TraceHessianService=None) -> Graph:
     """
     GPTQ training process using knowledge distillation with a teacher network (float model) and a student network (quantized model).
     Args:
@@ -293,6 +273,7 @@ def gptq_training(graph_float: Graph,
         representative_data_gen: Dataset to use for inputs of the models.
         fw_impl: Framework implementation
         fw_info: Framework information
+        trace_hessian_service: TraceHessianService to fetch Hessian traces approximations.
 
     Returns:
         Quantized graph for export
@@ -307,7 +288,7 @@ def gptq_training(graph_float: Graph,
                                     fw_impl,
                                     fw_info,
                                     representative_data_gen,
-                                    hessian_service=hessian_service)
+                                    trace_hessian_service=trace_hessian_service)
 
     # Training process
     gptq_trainer.train(representative_data_gen)
