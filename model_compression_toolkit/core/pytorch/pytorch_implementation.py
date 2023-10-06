@@ -32,6 +32,7 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
     create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianMode
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
@@ -73,6 +74,10 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.vi
     VirtualActivationWeightsComposition
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
+from model_compression_toolkit.core.pytorch.hessian.activation_trace_hessian_calculator_pytorch import \
+    ActivationTraceHessianCalculatorPytorch
+from model_compression_toolkit.core.pytorch.hessian.weights_trace_hessian_calculator_pytorch import \
+    WeightsTraceHessianCalculatorPytorch
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_activation_quantizer import \
     ConfigurableActivationQuantizer
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_weights_quantizer import \
@@ -534,3 +539,17 @@ class PytorchImplementation(FrameworkImplementation):
         """
 
         return model(*inputs)
+
+    def get_trace_hessian_calculator(self, trace_hessian_request: TraceHessianRequest) -> type:
+        """
+        Get Pytorch trace hessian approximations calculator based on the trace hessian request.
+        Args:
+            trace_hessian_request: TraceHessianRequest to search for the desired calculator.
+
+        Returns: TraceHessianCalculatorPytorch to use for the trace hessian approximation computation for this request.
+
+        """
+        if trace_hessian_request.mode == TraceHessianMode.ACTIVATIONS:
+            return ActivationTraceHessianCalculatorPytorch
+        elif trace_hessian_request.mode == TraceHessianMode.WEIGHTS:
+            return WeightsTraceHessianCalculatorPytorch
