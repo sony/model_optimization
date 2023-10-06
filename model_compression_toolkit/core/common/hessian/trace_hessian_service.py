@@ -97,7 +97,7 @@ class TraceHessianService:
             trace_hessian_request: Configuration for which to compute the approximation.
         """
         # Get the framework-specific calculator for trace Hessian approximation
-        fw_hessian_calculator = self.fw_impl.get_trace_hessian_calculator(hessian_request=trace_hessian_request)
+        fw_hessian_calculator = self.fw_impl.get_trace_hessian_calculator(trace_hessian_request=trace_hessian_request)
         # Sample images for the computation
         images = self._sample_single_image_per_input()
 

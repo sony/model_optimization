@@ -466,18 +466,18 @@ class KerasImplementation(FrameworkImplementation):
             return compute_cs
         return compute_mse
 
-    def get_trace_hessian_calculator(self, hessian_request: TraceHessianRequest) -> type:
+    def get_trace_hessian_calculator(self, trace_hessian_request: TraceHessianRequest) -> type:
         """
-        Get Keras hessian calculator based on the hessian configuration.
+        Get Keras trace hessian approximations calculator based on the trace hessian request.
         Args:
-            trace_hessian_cfg: HessianConfig to search for the desired calculator.
+            trace_hessian_request: TraceHessianRequest to search for the desired calculator.
 
-        Returns: TraceHessianCalculatorKeras to use for the hessian computation for this configuration.
+        Returns: TraceHessianCalculatorKeras to use for the trace hessian approximation computation for this request.
 
         """
-        if hessian_request.mode == TraceHessianMode.ACTIVATIONS:
+        if trace_hessian_request.mode == TraceHessianMode.ACTIVATIONS:
             return ActivationTraceHessianCalculatorKeras
-        elif hessian_request.mode == TraceHessianMode.WEIGHTS:
+        elif trace_hessian_request.mode == TraceHessianMode.WEIGHTS:
             return WeightsTraceHessianCalculatorKeras
 
 

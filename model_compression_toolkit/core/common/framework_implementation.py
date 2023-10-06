@@ -48,15 +48,13 @@ class FrameworkImplementation(ABC):
         raise NotImplemented(f'{self.__class__.__name__} did not supply a constants module.')  # pragma: no cover
 
     @abstractmethod
-    def get_trace_hessian_calculator(self, hessian_request: TraceHessianRequest) -> type:
+    def get_trace_hessian_calculator(self, trace_hessian_request: TraceHessianRequest) -> type:
         """
-        Get framework calculator for approximations of the hessian traces.
-
+        Get framework trace hessian approximations calculator based on the trace hessian request.
         Args:
-            hessian_request: Request for the calculator to be used.
+            trace_hessian_request: TraceHessianRequest to search for the desired calculator.
 
-        Returns:
-            Trace hessian calculator based on the request.
+        Returns: TraceHessianCalculator to use for the trace hessian approximation computation for this request.
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_trace_hessian_calculator method.')  # pragma: no cover
