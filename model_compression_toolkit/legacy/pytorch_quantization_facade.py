@@ -115,13 +115,14 @@ if FOUND_TORCH:
             for _ in range(n_iter):
                 yield representative_data_gen()
 
-        tg, bit_widths_config = core_runner(in_model=in_module,
-                                            representative_data_gen=_representative_data_gen,
-                                            core_config=core_config,
-                                            fw_info=fw_info,
-                                            fw_impl=fw_impl,
-                                            tpc=target_platform_capabilities,
-                                            tb_w=tb_w)
+        # Ignore trace hessian service as we do not use it here
+        tg, bit_widths_config, _ = core_runner(in_model=in_module,
+                                               representative_data_gen=_representative_data_gen,
+                                               core_config=core_config,
+                                               fw_info=fw_info,
+                                               fw_impl=fw_impl,
+                                               tpc=target_platform_capabilities,
+                                               tb_w=tb_w)
 
         if gptq_config is None:
             tg = ptq_runner(tg, _representative_data_gen, core_config, fw_info, fw_impl, tb_w)
@@ -243,14 +244,15 @@ if FOUND_TORCH:
             for _ in range(n_iter):
                 yield representative_data_gen()
 
-        tg, bit_widths_config = core_runner(in_model=in_model,
-                                            representative_data_gen=_representative_data_gen,
-                                            core_config=core_config,
-                                            fw_info=fw_info,
-                                            fw_impl=fw_impl,
-                                            tpc=target_platform_capabilities,
-                                            target_kpi=target_kpi,
-                                            tb_w=tb_w)
+        # Ignore hessian service as it is not used here
+        tg, bit_widths_config, _ = core_runner(in_model=in_model,
+                                               representative_data_gen=_representative_data_gen,
+                                               core_config=core_config,
+                                               fw_info=fw_info,
+                                               fw_impl=fw_impl,
+                                               tpc=target_platform_capabilities,
+                                               target_kpi=target_kpi,
+                                               tb_w=tb_w)
 
         if gptq_config is None:
             tg = ptq_runner(tg, _representative_data_gen, core_config, fw_info, fw_impl, tb_w)

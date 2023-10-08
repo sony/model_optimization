@@ -32,7 +32,7 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
     create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianMode
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianMode, TraceHessianService
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
@@ -40,8 +40,8 @@ from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework import get_pytorch_model_builder
-from model_compression_toolkit.core.pytorch.back2framework.model_gradients import \
-    pytorch_iterative_approx_jacobian_trace
+# from model_compression_toolkit.core.pytorch.back2framework.model_gradients import \
+#     pytorch_iterative_approx_jacobian_trace
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
     pytorch_batchnorm_folding, pytorch_batchnorm_forward_folding
@@ -340,7 +340,9 @@ class PytorchImplementation(FrameworkImplementation):
                                   quant_config: MixedPrecisionQuantizationConfigV2,
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
-                                  disable_activation_for_metric: bool = False) -> SensitivityEvaluation:
+                                  disable_activation_for_metric: bool = False,
+                                  trace_hessian_service: TraceHessianService = None
+                                  ) -> SensitivityEvaluation:
         """
         Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
         configuration (comparing to the float model).
@@ -351,6 +353,7 @@ class PytorchImplementation(FrameworkImplementation):
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
+            trace_hessian_service: TraceHessianService to fetch approximations of the hessian traces for the float model.
 
         Returns:
             A SensitivityEvaluation object.
@@ -366,7 +369,8 @@ class PytorchImplementation(FrameworkImplementation):
                                                                    activation_quantizer_type=ConfigurableActivationQuantizer,
                                                                    weights_quant_layer_type=PytorchQuantizationWrapper,
                                                                    activation_quant_layer_type=PytorchActivationQuantizationHolder),
-                                     disable_activation_for_metric=disable_activation_for_metric)
+                                     disable_activation_for_metric=disable_activation_for_metric,
+                                     trace_hessian_service=trace_hessian_service)
 
     def get_node_prior_info(self,
                             node: BaseNode,
@@ -455,9 +459,9 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: A list of (possibly normalized) jacobian-based weights to be considered as the relevancy that each interest
         point's output has on the model's output.
         """
-
-        return pytorch_iterative_approx_jacobian_trace(graph_float, model_input_tensors, interest_points, output_list,
-                                                       all_outputs_indices, alpha, n_iter, norm_weights=norm_weights)
+        raise Exception
+        # return pytorch_iterative_approx_jacobian_trace(graph_float, model_input_tensors, interest_points, output_list,
+        #                                                all_outputs_indices, alpha, n_iter, norm_weights=norm_weights)
 
     def is_node_compatible_for_metric_outputs(self,
                                               node: BaseNode) -> bool:

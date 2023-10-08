@@ -19,6 +19,7 @@ from typing import List, Any
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest
 from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
+from model_compression_toolkit.logger import Logger
 
 
 class TraceHessianCalculator(ABC):
@@ -45,8 +46,12 @@ class TraceHessianCalculator(ABC):
             trace_hessian_request: Configuration request for which to compute the trace Hessian approximation.
         """
         self.graph = graph
+        for output_node in graph.get_outputs():
+            if not fw_impl.is_node_compatible_for_metric_outputs(output_node.node):
+                Logger.error(f"All graph outputs should support metric outputs, but node {output_node.node} was found.")
         self.hessian_config = trace_hessian_config
-        self.input_images = input_images
+        self.input_images = fw_impl.to_tensor(input_images)
+        # self.input_images = input_images
         self.fw_impl = fw_impl
         self.hessian_request = trace_hessian_request
 

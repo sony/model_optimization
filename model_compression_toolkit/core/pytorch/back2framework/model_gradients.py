@@ -32,181 +32,181 @@ from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy, 
 from model_compression_toolkit.logger import Logger
 
 
-def build_input_tensors_list(node: BaseNode,
-                             graph: Graph,
-                             inputs: Dict[BaseNode, List],
-                             node_to_output_tensors_dict: Dict[BaseNode, List]) -> List[List]:
-    """
-    Given a node, build a list of input tensors the node gets. The list is built
-    based on the node's incoming edges and previous nodes' output tensors.
-    Args:
-        node: Node to build its input tensors list.
-        graph: Graph the node is in.
-        inputs: list of input tensors to model
-        node_to_output_tensors_dict: A dictionary from a node to its output tensors.
-    Returns:
-        A list of the node's input tensors.
-    """
-    if node.type == DummyPlaceHolder:
-        input_tensors = [inputs[node]]
-    else:
-        input_tensors = []
-        # Go over a sorted list of the node's incoming edges, and for each source node get its output tensors.
-        # Append them in a result list.
-        for ie in graph.incoming_edges(node, sort_by_attr=EDGE_SINK_INDEX):
-            _input_tensors = node_to_output_tensors_dict[ie.source_node]
-            input_tensors.append(_input_tensors)
-        input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
-    return input_tensors
-
-
-def run_operation(n: BaseNode,
-                  input_tensors: List,
-                  op_func: Any) -> List[torch.Tensor]:
-    """
-    Applying the layer (op_func) to the input tensors (input_tensors).
-    If quantized is set to True, and the layer's corresponding node (n) has quantization
-    attributes, an additional fake-quantization node is built and appended to the layer.
-    Args:
-        n: The corresponding node of the layer it runs.
-        input_tensors: List of Pytorch tensors that are the layer's inputs.
-        op_func: Module/functional to apply to the input tensors.
-    Returns:
-        A list of Pytorch tensors. The Module/functional output tensors after applying the
-        Module/functional to the input tensors.
-    """
-
-    op_call_args = n.op_call_args if isinstance(n, FunctionalNode) else []
-    functional_kwargs = n.op_call_kwargs if isinstance(n, FunctionalNode) else {}
-    if isinstance(n, FunctionalNode) and n.inputs_as_list:
-        out_tensors_of_n = op_func(input_tensors, *op_call_args, **functional_kwargs)
-    else:
-        out_tensors_of_n = op_func(*input_tensors + op_call_args, **functional_kwargs)
-
-    return out_tensors_of_n
-
-
-def generate_outputs(
-        out_nodes: List[BaseNode],
-        node_to_output_tensors_dict: dict):
-    """
-    Args:
-        out_nodes: List of output nodes.
-        node_to_output_tensors_dict: A dictionary from a node to its output tensors.
-    Returns: List of output tensor/s for the model
-    """
-    output = []
-    for n in out_nodes:
-        out_tensors_of_n = node_to_output_tensors_dict.get(n)
-        if len(out_tensors_of_n) > 1 or isinstance(out_tensors_of_n[0], tuple):
-            if isinstance(out_tensors_of_n[0], tuple):
-                out_tensors_of_n = out_tensors_of_n[0]
-            out_tensors_of_n = [torch.cat(out_tensors_of_n)]
-            output.append(torch.concat(out_tensors_of_n))
-        else:
-            output += out_tensors_of_n
-    return output
-
-
-class PytorchModelGradients(torch.nn.Module):
-    """
-    A Pytorch Module class for producing differentiable outputs from a given model's graph representation.
-    """
-    def __init__(self,
-                 graph_float: common.Graph,
-                 interest_points: List[BaseNode],
-                 output_list: List[BaseNode]):
-        """
-        Construct a PytorchModelGradients model.
-
-        Args:
-            graph_float: Model's Graph representation to evaluate the outputs according to.
-            interest_points: List of nodes in the graph which we want to produce outputs for.
-            output_list: List of nodes that considered as model's output for the purpose of gradients computation.
-        """
-
-        super(PytorchModelGradients, self).__init__()
-        self.graph_float = graph_float
-        self.node_sort = list(topological_sort(graph_float))
-        self.interest_points = interest_points
-        self.output_list = output_list
-        self.interest_points_tensors = []
-
-        for n in self.node_sort:
-            if not isinstance(n, FunctionalNode):
-                if n.type == BufferHolder:
-                    self.add_module(n.name, node_builder(n))
-                    self.get_submodule(n.name). \
-                        register_buffer(n.name,
-                                        torch.Tensor(n.get_weights_by_keys(BUFFER)).to(get_working_device()))
-                else:
-                    self.add_module(n.name, node_builder(n))
-
-    def forward(self,
-                *args: Any) -> Any:
-        """
-        Args:
-            args: argument input tensors to model, which is a mappings between an input node and its input tensor.
-
-        Returns:
-            A list of output tensors for each of the model's pre-defined interest points.
-        """
-
-        input_node_to_input_tensor = args[0]
-        node_to_output_tensors_dict = dict()
-        for n in self.node_sort:
-            input_tensors = build_input_tensors_list(n,
-                                                     self.graph_float,
-                                                     input_node_to_input_tensor,
-                                                     node_to_output_tensors_dict)
-
-            op_func = n.type if isinstance(n, FunctionalNode) else getattr(self, n.name)
-            out_tensors_of_n = run_operation(n,  # Run node operation and fetch outputs
-                                             input_tensors,
-                                             op_func=op_func)
-
-            if isinstance(out_tensors_of_n, list) or isinstance(out_tensors_of_n, tuple):
-                output_t = []
-                for t in out_tensors_of_n:
-                    if n in self.interest_points:
-                        if t.requires_grad:
-                            t.retain_grad()
-                            self.interest_points_tensors.append(t)
-                        else:
-                            # We get here in case we have an output node, which is an interest point,
-                            # but it is not differentiable. We need to add this dummy tensor in order to include this
-                            # node in the future weights computation.
-                            # Note that this call is excluded from tests coverage,
-                            # since we do not suppose to get here - there is no valid operation that is both
-                            # non-differentiable and return output as a list or a tuple
-                            self.interest_points_tensors.append(torch.tensor([0.0],  # pragma: no cover
-                                                                             requires_grad=True,
-                                                                             device=t.device))
-                            break  # pragma: no cover
-                    output_t.append(t)
-                if isinstance(out_tensors_of_n, tuple):
-                    # If the node's output is a Tuple, then we want to keep it as a Tuple
-                    output_t = [tuple(output_t)]
-                node_to_output_tensors_dict.update({n: output_t})
-            else:
-                assert isinstance(out_tensors_of_n, torch.Tensor)
-                if n in self.interest_points:
-                    if out_tensors_of_n.requires_grad:
-                        out_tensors_of_n.retain_grad()
-                        self.interest_points_tensors.append(out_tensors_of_n)
-                    else:
-                        # We get here in case we have an output node, which is an interest point,
-                        # but it is not differentiable. We need to add this dummy tensor in order to include this
-                        # node in the future weights computation.
-                        self.interest_points_tensors.append(torch.tensor([0.0],
-                                                                         requires_grad=True,
-                                                                         device=out_tensors_of_n.device))
-                node_to_output_tensors_dict.update({n: [out_tensors_of_n]})
-
-        outputs = generate_outputs(self.output_list,
-                                   node_to_output_tensors_dict)
-
-        return outputs
+# def build_input_tensors_list(node: BaseNode,
+#                              graph: Graph,
+#                              inputs: Dict[BaseNode, List],
+#                              node_to_output_tensors_dict: Dict[BaseNode, List]) -> List[List]:
+#     """
+#     Given a node, build a list of input tensors the node gets. The list is built
+#     based on the node's incoming edges and previous nodes' output tensors.
+#     Args:
+#         node: Node to build its input tensors list.
+#         graph: Graph the node is in.
+#         inputs: list of input tensors to model
+#         node_to_output_tensors_dict: A dictionary from a node to its output tensors.
+#     Returns:
+#         A list of the node's input tensors.
+#     """
+#     if node.type == DummyPlaceHolder:
+#         input_tensors = [inputs[node]]
+#     else:
+#         input_tensors = []
+#         # Go over a sorted list of the node's incoming edges, and for each source node get its output tensors.
+#         # Append them in a result list.
+#         for ie in graph.incoming_edges(node, sort_by_attr=EDGE_SINK_INDEX):
+#             _input_tensors = node_to_output_tensors_dict[ie.source_node]
+#             input_tensors.append(_input_tensors)
+#         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
+#     return input_tensors
+#
+#
+# def run_operation(n: BaseNode,
+#                   input_tensors: List,
+#                   op_func: Any) -> List[torch.Tensor]:
+#     """
+#     Applying the layer (op_func) to the input tensors (input_tensors).
+#     If quantized is set to True, and the layer's corresponding node (n) has quantization
+#     attributes, an additional fake-quantization node is built and appended to the layer.
+#     Args:
+#         n: The corresponding node of the layer it runs.
+#         input_tensors: List of Pytorch tensors that are the layer's inputs.
+#         op_func: Module/functional to apply to the input tensors.
+#     Returns:
+#         A list of Pytorch tensors. The Module/functional output tensors after applying the
+#         Module/functional to the input tensors.
+#     """
+#
+#     op_call_args = n.op_call_args if isinstance(n, FunctionalNode) else []
+#     functional_kwargs = n.op_call_kwargs if isinstance(n, FunctionalNode) else {}
+#     if isinstance(n, FunctionalNode) and n.inputs_as_list:
+#         out_tensors_of_n = op_func(input_tensors, *op_call_args, **functional_kwargs)
+#     else:
+#         out_tensors_of_n = op_func(*input_tensors + op_call_args, **functional_kwargs)
+#
+#     return out_tensors_of_n
+#
+#
+# def generate_outputs(
+#         out_nodes: List[BaseNode],
+#         node_to_output_tensors_dict: dict):
+#     """
+#     Args:
+#         out_nodes: List of output nodes.
+#         node_to_output_tensors_dict: A dictionary from a node to its output tensors.
+#     Returns: List of output tensor/s for the model
+#     """
+#     output = []
+#     for n in out_nodes:
+#         out_tensors_of_n = node_to_output_tensors_dict.get(n)
+#         if len(out_tensors_of_n) > 1 or isinstance(out_tensors_of_n[0], tuple):
+#             if isinstance(out_tensors_of_n[0], tuple):
+#                 out_tensors_of_n = out_tensors_of_n[0]
+#             out_tensors_of_n = [torch.cat(out_tensors_of_n)]
+#             output.append(torch.concat(out_tensors_of_n))
+#         else:
+#             output += out_tensors_of_n
+#     return output
+#
+#
+# class PytorchModelGradients(torch.nn.Module):
+#     """
+#     A Pytorch Module class for producing differentiable outputs from a given model's graph representation.
+#     """
+#     def __init__(self,
+#                  graph_float: common.Graph,
+#                  interest_points: List[BaseNode],
+#                  output_list: List[BaseNode]):
+#         """
+#         Construct a PytorchModelGradients model.
+#
+#         Args:
+#             graph_float: Model's Graph representation to evaluate the outputs according to.
+#             interest_points: List of nodes in the graph which we want to produce outputs for.
+#             output_list: List of nodes that considered as model's output for the purpose of gradients computation.
+#         """
+#
+#         super(PytorchModelGradients, self).__init__()
+#         self.graph_float = graph_float
+#         self.node_sort = list(topological_sort(graph_float))
+#         self.interest_points = interest_points
+#         self.output_list = output_list
+#         self.interest_points_tensors = []
+#
+#         for n in self.node_sort:
+#             if not isinstance(n, FunctionalNode):
+#                 if n.type == BufferHolder:
+#                     self.add_module(n.name, node_builder(n))
+#                     self.get_submodule(n.name). \
+#                         register_buffer(n.name,
+#                                         torch.Tensor(n.get_weights_by_keys(BUFFER)).to(get_working_device()))
+#                 else:
+#                     self.add_module(n.name, node_builder(n))
+#
+#     def forward(self,
+#                 *args: Any) -> Any:
+#         """
+#         Args:
+#             args: argument input tensors to model, which is a mappings between an input node and its input tensor.
+#
+#         Returns:
+#             A list of output tensors for each of the model's pre-defined interest points.
+#         """
+#
+#         input_node_to_input_tensor = args[0]
+#         node_to_output_tensors_dict = dict()
+#         for n in self.node_sort:
+#             input_tensors = build_input_tensors_list(n,
+#                                                      self.graph_float,
+#                                                      input_node_to_input_tensor,
+#                                                      node_to_output_tensors_dict)
+#
+#             op_func = n.type if isinstance(n, FunctionalNode) else getattr(self, n.name)
+#             out_tensors_of_n = run_operation(n,  # Run node operation and fetch outputs
+#                                              input_tensors,
+#                                              op_func=op_func)
+#
+#             if isinstance(out_tensors_of_n, list) or isinstance(out_tensors_of_n, tuple):
+#                 output_t = []
+#                 for t in out_tensors_of_n:
+#                     if n in self.interest_points:
+#                         if t.requires_grad:
+#                             t.retain_grad()
+#                             self.interest_points_tensors.append(t)
+#                         else:
+#                             # We get here in case we have an output node, which is an interest point,
+#                             # but it is not differentiable. We need to add this dummy tensor in order to include this
+#                             # node in the future weights computation.
+#                             # Note that this call is excluded from tests coverage,
+#                             # since we do not suppose to get here - there is no valid operation that is both
+#                             # non-differentiable and return output as a list or a tuple
+#                             self.interest_points_tensors.append(torch.tensor([0.0],  # pragma: no cover
+#                                                                              requires_grad=True,
+#                                                                              device=t.device))
+#                             break  # pragma: no cover
+#                     output_t.append(t)
+#                 if isinstance(out_tensors_of_n, tuple):
+#                     # If the node's output is a Tuple, then we want to keep it as a Tuple
+#                     output_t = [tuple(output_t)]
+#                 node_to_output_tensors_dict.update({n: output_t})
+#             else:
+#                 assert isinstance(out_tensors_of_n, torch.Tensor)
+#                 if n in self.interest_points:
+#                     if out_tensors_of_n.requires_grad:
+#                         out_tensors_of_n.retain_grad()
+#                         self.interest_points_tensors.append(out_tensors_of_n)
+#                     else:
+#                         # We get here in case we have an output node, which is an interest point,
+#                         # but it is not differentiable. We need to add this dummy tensor in order to include this
+#                         # node in the future weights computation.
+#                         self.interest_points_tensors.append(torch.tensor([0.0],
+#                                                                          requires_grad=True,
+#                                                                          device=out_tensors_of_n.device))
+#                 node_to_output_tensors_dict.update({n: [out_tensors_of_n]})
+#
+#         outputs = generate_outputs(self.output_list,
+#                                    node_to_output_tensors_dict)
+#
+#         return outputs
 
 
 def pytorch_iterative_approx_jacobian_trace(graph_float: common.Graph,
@@ -317,54 +317,54 @@ def pytorch_iterative_approx_jacobian_trace(graph_float: common.Graph,
         return ipts_jac_trace_approx
 
 
-def _normalize_weights(jacobians_traces: np.ndarray,
-                       all_outputs_indices: List[int],
-                       alpha: float) -> List[float]:
-    """
-    Output layers or layers that come after the model's considered output layers,
-    are assigned with a constant normalized value, according to the given alpha variable and the number of such layers.
-    Other layers returned weights are normalized by dividing the jacobian-based weights value by the sum of all other values.
-
-    Args:
-        jacobians_traces: The approximated average jacobian-based weights of each interest point.
-        all_outputs_indices: A list of indices of all nodes that consider outputs.
-        alpha: A multiplication factor.
-
-    Returns: Normalized list of jacobian-based weights (for each interest point).
-
-    """
-
-    jacobians_without_outputs = [jacobians_traces[i] for i in range(len(jacobians_traces))
-                                 if i not in all_outputs_indices]
-    sum_without_outputs = sum(jacobians_without_outputs)
-
-    normalized_grads_weights = [_get_normalized_weight(grad, i, sum_without_outputs, all_outputs_indices, alpha)
-                                for i, grad in enumerate(jacobians_traces)]
-
-    return normalized_grads_weights
-
-
-def _get_normalized_weight(grad: torch.Tensor,
-                           i: int,
-                           sum_without_outputs: float,
-                           all_outputs_indices: List[int],
-                           alpha: float) -> float:
-    """
-    Normalizes the node's gradient value. If it is an output or output replacement node than the normalized value is
-    a constant, otherwise, it is normalized by dividing with the sum of all gradient values.
-
-    Args:
-        grad: The gradient value tensor.
-        i: The index of the node in the sorted interest points list.
-        sum_without_outputs: The sum of all gradients of nodes that are not considered outputs.
-        all_outputs_indices: A list of indices of all nodes that consider outputs.
-        alpha: A multiplication factor.
-
-    Returns: A normalized jacobian-based weights.
-
-    """
-
-    if i in all_outputs_indices:
-        return alpha / len(all_outputs_indices)
-    else:
-        return ((1 - alpha) * grad / (sum_without_outputs + EPS)).item()
+# def _normalize_weights(jacobians_traces: np.ndarray,
+#                        all_outputs_indices: List[int],
+#                        alpha: float) -> List[float]:
+#     """
+#     Output layers or layers that come after the model's considered output layers,
+#     are assigned with a constant normalized value, according to the given alpha variable and the number of such layers.
+#     Other layers returned weights are normalized by dividing the jacobian-based weights value by the sum of all other values.
+#
+#     Args:
+#         jacobians_traces: The approximated average jacobian-based weights of each interest point.
+#         all_outputs_indices: A list of indices of all nodes that consider outputs.
+#         alpha: A multiplication factor.
+#
+#     Returns: Normalized list of jacobian-based weights (for each interest point).
+#
+#     """
+#
+#     jacobians_without_outputs = [jacobians_traces[i] for i in range(len(jacobians_traces))
+#                                  if i not in all_outputs_indices]
+#     sum_without_outputs = sum(jacobians_without_outputs)
+#
+#     normalized_grads_weights = [_get_normalized_weight(grad, i, sum_without_outputs, all_outputs_indices, alpha)
+#                                 for i, grad in enumerate(jacobians_traces)]
+#
+#     return normalized_grads_weights
+#
+#
+# def _get_normalized_weight(grad: torch.Tensor,
+#                            i: int,
+#                            sum_without_outputs: float,
+#                            all_outputs_indices: List[int],
+#                            alpha: float) -> float:
+#     """
+#     Normalizes the node's gradient value. If it is an output or output replacement node than the normalized value is
+#     a constant, otherwise, it is normalized by dividing with the sum of all gradient values.
+#
+#     Args:
+#         grad: The gradient value tensor.
+#         i: The index of the node in the sorted interest points list.
+#         sum_without_outputs: The sum of all gradients of nodes that are not considered outputs.
+#         all_outputs_indices: A list of indices of all nodes that consider outputs.
+#         alpha: A multiplication factor.
+#
+#     Returns: A normalized jacobian-based weights.
+#
+#     """
+#
+#     if i in all_outputs_indices:
+#         return alpha / len(all_outputs_indices)
+#     else:
+#         return ((1 - alpha) * grad / (sum_without_outputs + EPS)).item()

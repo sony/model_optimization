@@ -109,6 +109,8 @@ class TraceHessianService:
                                                          trace_hessian_request=trace_hessian_request)
         # Compute the approximation
         trace_hessian = trace_hessian_calculator.compute()
+        if (len(trace_hessian)>1):
+            print('bug')
 
         # Store the computed approximation in the cache
         if trace_hessian_request in self.trace_hessian_request_to_score_list:
