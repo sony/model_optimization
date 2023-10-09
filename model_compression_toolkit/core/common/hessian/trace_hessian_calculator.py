@@ -49,9 +49,14 @@ class TraceHessianCalculator(ABC):
         for output_node in graph.get_outputs():
             if not fw_impl.is_node_compatible_for_metric_outputs(output_node.node):
                 Logger.error(f"All graph outputs should support metric outputs, but node {output_node.node} was found.")
+
         self.hessian_config = trace_hessian_config
         self.input_images = fw_impl.to_tensor(input_images)
-        # self.input_images = input_images
+
+        # Validate representative dataset has same inputs as graph
+        if len(self.input_images)!=len(graph.get_inputs()):
+            Logger.error(f"Graph has {len(graph.get_inputs())} inputs, but provided representative dataset returns {len(self.input_images)} inputs")
+
         self.fw_impl = fw_impl
         self.hessian_request = trace_hessian_request
 

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
 import numpy as np
 from typing import Callable, List, Any
 
@@ -53,7 +54,6 @@ class TraceHessianService:
         self.representative_dataset = representative_dataset
         self.trace_hessian_configuration = trace_hessian_configuration
         self.fw_impl = fw_impl
-
 
         self.trace_hessian_request_to_score_list = {}
 

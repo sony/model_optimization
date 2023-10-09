@@ -158,10 +158,10 @@ class GPTQTrainer(ABC):
                 trace_hessian_approx_by_image.append(approx_by_interest_point)
 
             if self.gptq_config.hessian_weights_config.log_norm:
-                mean_jacobian_weights = np.mean(trace_hessian_approx_by_image, axis=0)
-                mean_jacobian_weights = np.where(mean_jacobian_weights != 0, mean_jacobian_weights,
-                                                 np.partition(mean_jacobian_weights, 1)[1])
-                log_weights = np.log10(mean_jacobian_weights)
+                mean_approx_scores = np.mean(trace_hessian_approx_by_image, axis=0)
+                mean_approx_scores = np.where(mean_approx_scores != 0, mean_approx_scores,
+                                                 np.partition(mean_approx_scores, 1)[1])
+                log_weights = np.log10(mean_approx_scores)
 
                 if self.gptq_config.hessian_weights_config.scale_log_norm:
                     return (log_weights - np.min(log_weights)) / (np.max(log_weights) - np.min(log_weights))
