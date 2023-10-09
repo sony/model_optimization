@@ -96,19 +96,17 @@ class TraceHessianService:
         Args:
             trace_hessian_request: Configuration for which to compute the approximation.
         """
-        # Get the framework-specific calculator for trace Hessian approximation
-        fw_hessian_calculator = self.fw_impl.get_trace_hessian_calculator(trace_hessian_request=trace_hessian_request)
         # Sample images for the computation
         images = self._sample_single_image_per_input()
 
-        # Initialize the calculator with the necessary parameters
-        trace_hessian_calculator = fw_hessian_calculator(graph=self.graph,
-                                                         trace_hessian_config=self.trace_hessian_configuration,
-                                                         input_images=images,
-                                                         fw_impl=self.fw_impl,
-                                                         trace_hessian_request=trace_hessian_request)
+        # Get the framework-specific calculator for trace Hessian approximation
+        fw_hessian_calculator = self.fw_impl.get_trace_hessian_calculator(graph=self.graph,
+                                                                          trace_hessian_config=self.trace_hessian_configuration,
+                                                                          input_images=images,
+                                                                          trace_hessian_request=trace_hessian_request)
+
         # Compute the approximation
-        trace_hessian = trace_hessian_calculator.compute()
+        trace_hessian = fw_hessian_calculator.compute()
 
         # Store the computed approximation in the cache
         if trace_hessian_request in self.trace_hessian_request_to_score_list:

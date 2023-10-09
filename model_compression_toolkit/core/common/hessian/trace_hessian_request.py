@@ -58,11 +58,11 @@ class TraceHessianRequest:
                  ):
         """
         Attributes:
-            mode (TraceHessianMode): Mode of Hessian's trace approximation (weights or activations).
+            mode (TraceHessianMode): Mode of Hessian's trace approximation (w.r.t weights or activations).
             granularity (TraceHessianGranularity): Granularity level for the approximation.
             target_node (BaseNode): The node in the float graph for which the Hessian's trace approximation is targeted.
         """
 
-        self.mode = mode  # activations or weights
+        self.mode = mode  # w.r.t activations or weights
         self.granularity = granularity  # per element, per layer, per channel
         self.target_node = target_node # TODO: extend it list of nodes

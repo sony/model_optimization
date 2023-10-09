@@ -27,6 +27,7 @@ from model_compression_toolkit.core.keras.hessian.activation_trace_hessian_calcu
     ActivationTraceHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.weights_trace_hessian_calculator_keras import WeightsTraceHessianCalculatorKeras
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
@@ -466,7 +467,11 @@ class KerasImplementation(FrameworkImplementation):
             return compute_cs
         return compute_mse
 
-    def get_trace_hessian_calculator(self, trace_hessian_request: TraceHessianRequest) -> type:
+    def get_trace_hessian_calculator(self,
+                                     graph: Graph,
+                                     trace_hessian_config: TraceHessianConfig,
+                                     input_images: List[Any],
+                                     trace_hessian_request: TraceHessianRequest):
         """
         Get Keras trace hessian approximations calculator based on the trace hessian request.
         Args:
@@ -476,9 +481,19 @@ class KerasImplementation(FrameworkImplementation):
 
         """
         if trace_hessian_request.mode == TraceHessianMode.ACTIVATIONS:
-            return ActivationTraceHessianCalculatorKeras
+            return ActivationTraceHessianCalculatorKeras(graph=graph,
+                                                         trace_hessian_request=trace_hessian_request,
+                                                         trace_hessian_config=trace_hessian_config,
+                                                         input_images=input_images,
+                                                         fw_impl=self)
         elif trace_hessian_request.mode == TraceHessianMode.WEIGHTS:
-            return WeightsTraceHessianCalculatorKeras
+            return WeightsTraceHessianCalculatorKeras(graph=graph,
+                                                      trace_hessian_request=trace_hessian_request,
+                                                      trace_hessian_config=trace_hessian_config,
+                                                      input_images=input_images,
+                                                      fw_impl=self)
+        else:
+            Logger.error(f"Keras does not support hessian mode of {trace_hessian_request.mode}")
 
 
     def is_node_compatible_for_metric_outputs(self,

@@ -32,7 +32,8 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
     create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianMode, TraceHessianService
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianMode, TraceHessianService, \
+    TraceHessianConfig
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
@@ -430,39 +431,6 @@ class PytorchImplementation(FrameworkImplementation):
             return compute_cs
         return compute_mse
 
-    def model_grad(self,
-                   graph_float: common.Graph,
-                   model_input_tensors: Dict[BaseNode, torch.Tensor],
-                   interest_points: List[BaseNode],
-                   output_list: List[BaseNode],  # dummy - not used in pytorch
-                   all_outputs_indices: List[int],
-                   alpha: float = 0.3,
-                   n_iter: int = 50,
-                   norm_weights: bool = True) -> List[float]:
-        """
-        Calls a PyTorch specific model gradient calculation function, which computes the  jacobian-based weights of the model's
-        outputs with respect to the feature maps of the set of given interest points.
-
-        Args:
-            graph_float: Graph to build its corresponding Keras model.
-            model_input_tensors: A mapping between model input nodes to an input batch.
-            interest_points: List of nodes which we want to get their feature map as output, to calculate distance metric.
-            output_list: List of nodes that considered as model's output for the purpose of gradients computation.
-            all_outputs_indices: Indices of the model outputs and outputs replacements (if exists),
-                in a topological sorted interest points list.
-            alpha: A tuning parameter to allow calibration between the contribution of the output feature maps returned
-                weights and the other feature maps weights (since the gradient of the output layers does not provide a
-                compatible weight for the distance metric computation).
-            n_iter: The number of random iterations to calculate the approximated  jacobian-based weights for each interest point.
-            norm_weights: Whether to normalize the returned weights (to get values between 0 and 1).
-
-        Returns: A list of (possibly normalized) jacobian-based weights to be considered as the relevancy that each interest
-        point's output has on the model's output.
-        """
-        raise Exception
-        # return pytorch_iterative_approx_jacobian_trace(graph_float, model_input_tensors, interest_points, output_list,
-        #                                                all_outputs_indices, alpha, n_iter, norm_weights=norm_weights)
-
     def is_node_compatible_for_metric_outputs(self,
                                               node: BaseNode) -> bool:
         """
@@ -544,16 +512,31 @@ class PytorchImplementation(FrameworkImplementation):
 
         return model(*inputs)
 
-    def get_trace_hessian_calculator(self, trace_hessian_request: TraceHessianRequest) -> type:
+    def get_trace_hessian_calculator(self,
+                                     graph: Graph,
+                                     trace_hessian_config: TraceHessianConfig,
+                                     input_images: List[Any],
+                                     trace_hessian_request: TraceHessianRequest):
         """
         Get Pytorch trace hessian approximations calculator based on the trace hessian request.
         Args:
+            input_images: Images to use for computation.
+            graph: Float graph to compute the approximation of its different nodes.
+            trace_hessian_config: TraceHessianConfig with configuration for different parameters of the computation.
             trace_hessian_request: TraceHessianRequest to search for the desired calculator.
 
         Returns: TraceHessianCalculatorPytorch to use for the trace hessian approximation computation for this request.
 
         """
         if trace_hessian_request.mode == TraceHessianMode.ACTIVATIONS:
-            return ActivationTraceHessianCalculatorPytorch
+            return ActivationTraceHessianCalculatorPytorch(graph=graph,
+                                                         trace_hessian_request=trace_hessian_request,
+                                                         trace_hessian_config=trace_hessian_config,
+                                                         input_images=input_images,
+                                                         fw_impl=self)
         elif trace_hessian_request.mode == TraceHessianMode.WEIGHTS:
-            return WeightsTraceHessianCalculatorPytorch
+            return WeightsTraceHessianCalculatorPytorch(graph=graph,
+                                                         trace_hessian_request=trace_hessian_request,
+                                                         trace_hessian_config=trace_hessian_config,
+                                                         input_images=input_images,
+                                                         fw_impl=self)
