@@ -45,6 +45,3 @@ class CoreConfig:
     def mixed_precision_enable(self):
         return self.mixed_precision_config is not None
 
-    @property
-    def init_hessian_service(self):
-        return self.trace_hessian_cfg is not None
