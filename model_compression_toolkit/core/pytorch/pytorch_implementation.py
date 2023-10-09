@@ -41,8 +41,6 @@ from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework import get_pytorch_model_builder
-# from model_compression_toolkit.core.pytorch.back2framework.model_gradients import \
-#     pytorch_iterative_approx_jacobian_trace
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
     pytorch_batchnorm_folding, pytorch_batchnorm_forward_folding

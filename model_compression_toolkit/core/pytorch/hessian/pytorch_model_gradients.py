@@ -97,23 +97,19 @@ class PytorchModelGradients(torch.nn.Module):
     def __init__(self,
                  graph_float: Graph,
                  trace_hessian_request: TraceHessianRequest
-                 # interest_points: List[BaseNode],
-                 # output_list: List[BaseNode]
                  ):
         """
         Construct a PytorchModelGradients model.
 
         Args:
             graph_float: Model's Graph representation to evaluate the outputs according to.
-            interest_points: List of nodes in the graph which we want to produce outputs for.
-            output_list: List of nodes that considered as model's output for the purpose of gradients computation.
+            trace_hessian_request: TraceHessianRequest to build the model according to.
         """
 
         super(PytorchModelGradients, self).__init__()
         self.graph_float = graph_float
         self.trace_hessian_request = trace_hessian_request
         self.node_sort = list(topological_sort(graph_float))
-        # self.interest_points = interest_points
         self.output_list = [o.node for o in graph_float.output_nodes]
         self.interest_points_tensors = []
 
