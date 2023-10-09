@@ -68,8 +68,6 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
 
             model_grads_net = PytorchModelGradients(graph_float=self.graph,
                                                     trace_hessian_request=self.hessian_request
-                                                    # interest_points=interest_points,
-                                                    # output_list=output_list
                                                     )
 
             # Run model inference
@@ -136,7 +134,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
 
 
             return ipts_jac_trace_approx.tolist()
-            # if norm_weights:
-            #     return _normalize_weights(ipts_jac_trace_approx, all_outputs_indices, alpha)
-            # else:
-            #     return ipts_jac_trace_approx
+
+        else:
+            Logger.error(f"{self.hessian_request.granularity} is not supported for Pytorch activation hessian's trace approx calculator")
+
