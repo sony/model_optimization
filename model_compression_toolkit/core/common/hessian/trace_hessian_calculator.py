@@ -48,7 +48,7 @@ class TraceHessianCalculator(ABC):
         self.graph = graph
         for output_node in graph.get_outputs():
             if not fw_impl.is_node_compatible_for_metric_outputs(output_node.node):
-                Logger.error(f"All graph outputs should support metric outputs, but node {output_node.node} was found.")
+                Logger.error(f"All graph outputs should support metric outputs, but node {output_node.node} was found with layer type {output_node.node.type}.")
 
         self.hessian_config = trace_hessian_config
         self.input_images = fw_impl.to_tensor(input_images)

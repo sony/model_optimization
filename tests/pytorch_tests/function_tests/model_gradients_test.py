@@ -393,9 +393,7 @@ class ModelGradientsOutputReplacementTest(BasePytorchTest):
                                                  interest_points=ipts,
                                                  pytorch_impl=pytorch_impl,
                                                  alpha=0.3)
-        self.unit_test.assertEqual(f'All graph outputs should support metric outputs, but node argmax:argmax was found.', str(e.exception))
-
-
+        self.unit_test.assertTrue("All graph outputs should support metric outputs" in str(e.exception))
 
 
 class ModelGradientsMultipleOutputsModelTest(BasePytorchTest):
