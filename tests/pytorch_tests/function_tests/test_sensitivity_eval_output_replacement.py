@@ -107,7 +107,12 @@ class TestSensitivityEvalWithArgmaxOutputReplacementNodes(TestSensitivityEvalWit
 
     def run_test(self, seed=0, **kwargs):
         model = argmax_output_model()
-        self.verify_test_for_model(model)
+        with self.unit_test.assertRaises(Exception) as e:
+            self.verify_test_for_model(model)
+        self.unit_test.assertEqual(f"All graph outputs should support metric outputs, but node argmax:argmax was found.",
+                                   str(e.exception))
+
+
 
 
 class TestSensitivityEvalWithSoftmaxOutputReplacementNodes(TestSensitivityEvalWithOutputReplacementBase):
@@ -117,4 +122,8 @@ class TestSensitivityEvalWithSoftmaxOutputReplacementNodes(TestSensitivityEvalWi
 
     def run_test(self, seed=0, **kwargs):
         model = softmax_output_model()
-        self.verify_test_for_model(model)
+        with self.unit_test.assertRaises(Exception) as e:
+            self.verify_test_for_model(model)
+        self.unit_test.assertEqual(
+            f"All graph outputs should support metric outputs, but node softmax:softmax was found.",
+            str(e.exception))
