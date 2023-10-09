@@ -55,8 +55,8 @@ class DwconvToConv(common.BaseSubstitution):
                    graph: Graph,
                    dwconv_node: BaseNode) -> Graph:
         """
-        Replace DepthwiseConv2D to Conv2D (with groups = #output_channels) for regularity of MCT quantization
-        parameters.
+        Replace DepthwiseConv2D to Conv2D (with groups parameter equals num of input_channels) for regularity of MCT
+        quantization parameters.
         Args:
             graph: Graph we apply the substitution on.
             dw_conv_node: DepthwiseConv2D node to replace.
