@@ -96,6 +96,8 @@ class TraceHessianService:
         Args:
             trace_hessian_request: Configuration for which to compute the approximation.
         """
+        Logger.info(f"Computing Hessian-trace approximation for a sample.")
+
         # Sample images for the computation
         images = self._sample_single_image_per_input()
 

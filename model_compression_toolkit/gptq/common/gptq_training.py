@@ -129,6 +129,11 @@ class GPTQTrainer(ABC):
 
 
     def compute_hessian_based_weights(self) -> np.ndarray:
+        """
+
+        Returns: Trace hessian approximations per layer w.r.t activations of the interest points.
+
+        """
         if self.gptq_config.use_hessian_based_weights:
             compare_point_to_trace_hessian_approximations = {}
             for target_node in self.compare_points:
