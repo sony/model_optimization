@@ -91,11 +91,19 @@ class TestSensitivityEvalWithOutputReplacementNodes(unittest.TestCase):
 
     def test_output_replacement_argmax(self):
         model = argmax_output_model((16, 16, 3))
-        self.verify_test_for_model(model)
+        with self.assertRaises(Exception) as e:
+            self.verify_test_for_model(model)
+        self.assertEqual(
+            f"All graph outputs should support metric outputs, but node argmax_v2:tf.math.argmax was found.",
+            str(e.exception))
 
     def test_output_replacement_softmax(self):
         model = softmax_output_model((16, 16, 3))
-        self.verify_test_for_model(model)
+        with self.assertRaises(Exception) as e:
+            self.verify_test_for_model(model)
+        self.assertEqual(
+            f"All graph outputs should support metric outputs, but node softmax_v2:tf.nn.softmax was found.",
+            str(e.exception))
 
 
 if __name__ == '__main__':
