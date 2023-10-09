@@ -75,6 +75,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     tf.compat.v1.gather,
                                                     tf.nn.top_k,
                                                     tf.__operators__.getitem,
+                                                    tf.image.combined_non_max_suppression,
                                                     tf.compat.v1.shape])
 
         tp.OperationsSetToLayers("Conv", [Conv2D,
