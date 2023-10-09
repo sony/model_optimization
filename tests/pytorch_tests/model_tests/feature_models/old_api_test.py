@@ -42,7 +42,7 @@ class OldApiTest(BasePytorchTest):
         self.num_calibration_iter = 100
         self.mp_enable = mp_enable
         self.gptq_enable = gptq_enable
-        self.input_shape = (1, 3, 8, 8)
+        self.input_shape = [(1, 3, 8, 8)]
 
     def get_mp_tpc(self):
         base_config, _ = get_op_quantization_configs()
