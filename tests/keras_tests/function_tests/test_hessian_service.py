@@ -58,38 +58,38 @@ class TestHessianService(unittest.TestCase):
         self.assertEqual(len(hessian), 2)
 
     def test_clear_cache(self):
-        self.hessian_service._clear_cache()
+        self.hessian_service._clear_saved_hessian_info()
         request = TraceHessianRequest(mode=TraceHessianMode.ACTIVATIONS,
                                       granularity=TraceHessianGranularity.PER_TENSOR,
                                       target_node=list(self.graph.nodes)[1])
-        self.assertEqual(self.hessian_service.count_cache_of_request(request), 0)
+        self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 0)
 
         self.hessian_service.fetch_hessian(request, 1)
-        self.assertEqual(self.hessian_service.count_cache_of_request(request), 1)
-        self.hessian_service._clear_cache()
-        self.assertEqual(self.hessian_service.count_cache_of_request(request), 0)
+        self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 1)
+        self.hessian_service._clear_saved_hessian_info()
+        self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 0)
 
 
     def test_double_fetch_hessian(self):
-        self.hessian_service._clear_cache()
+        self.hessian_service._clear_saved_hessian_info()
         request = TraceHessianRequest(mode=TraceHessianMode.ACTIVATIONS,
                                       granularity=TraceHessianGranularity.PER_TENSOR,
                                       target_node=list(self.graph.nodes)[1])
         hessian = self.hessian_service.fetch_hessian(request, 2)
         self.assertEqual(len(hessian), 2)
-        self.assertEqual(self.hessian_service.count_cache_of_request(request), 2)
+        self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 2)
 
         hessian = self.hessian_service.fetch_hessian(request, 2)
         self.assertEqual(len(hessian), 2)
-        self.assertEqual(self.hessian_service.count_cache_of_request(request), 2)
+        self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 2)
 
     def test_populate_cache_to_size(self):
-        self.hessian_service._clear_cache()
+        self.hessian_service._clear_saved_hessian_info()
         request = TraceHessianRequest(mode=TraceHessianMode.ACTIVATIONS,
                                       granularity=TraceHessianGranularity.PER_TENSOR,
                                       target_node=list(self.graph.nodes)[1])
-        self.hessian_service._populate_cache_to_size(request, 2)
-        self.assertEqual(self.hessian_service.count_cache_of_request(request), 2)
+        self.hessian_service._populate_saved_info_to_size(request, 2)
+        self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 2)
 
 
 if __name__ == "__main__":

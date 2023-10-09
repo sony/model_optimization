@@ -57,21 +57,21 @@ class TraceHessianService:
 
         self.trace_hessian_request_to_score_list = {}
 
-    def _clear_cache(self):
-        """Clears the cached approximations of the trace of the Hessian."""
+    def _clear_saved_hessian_info(self):
+        """Clears the saved info approximations."""
         self.trace_hessian_request_to_score_list={}
 
-    def count_cache_of_request(self, hessian_request:TraceHessianRequest) -> int:
+    def count_saved_info_of_request(self, hessian_request:TraceHessianRequest) -> int:
         """
-        Counts the cached approximations of the trace of the Hessian for a specific request.
+        Counts the saved approximations of the trace of the Hessian for a specific request.
 
         Args:
-            hessian_request: The request configuration for which to count the cached data.
+            hessian_request: The request configuration for which to count the saved data.
 
         Returns:
-            Number of cached approximations for the given request.
+            Number of saved approximations for the given request.
         """
-        # Check if the request is in the cache and return its count, otherwise return 0
+        # Check if the request is in the saved info and return its count, otherwise return 0
         return len(self.trace_hessian_request_to_score_list.get(hessian_request, []))
 
     def _sample_single_image_per_input(self) -> List[Any]:
@@ -108,7 +108,7 @@ class TraceHessianService:
         # Compute the approximation
         trace_hessian = fw_hessian_calculator.compute()
 
-        # Store the computed approximation in the cache
+        # Store the computed approximation in the saved info
         if trace_hessian_request in self.trace_hessian_request_to_score_list:
             self.trace_hessian_request_to_score_list[trace_hessian_request].append(trace_hessian)
         else:
@@ -133,25 +133,25 @@ class TraceHessianService:
             The inner list length dependent on the granularity (1 for per-tensor, 
             OC for per-output-channel when the requested node has OC output-channels, etc.)
         """
-        # Ensure the cache has the required number of approximations
-        self._populate_cache_to_size(trace_hessian_request, required_size)
+        # Ensure the saved info has the required number of approximations
+        self._populate_saved_info_to_size(trace_hessian_request, required_size)
 
-        # Return the cached approximations for the given request
+        # Return the saved approximations for the given request
         return self.trace_hessian_request_to_score_list[trace_hessian_request]
 
 
-    def _populate_cache_to_size(self,
-                                trace_hessian_request: TraceHessianRequest,
-                                required_size: int):
+    def _populate_saved_info_to_size(self,
+                                     trace_hessian_request: TraceHessianRequest,
+                                     required_size: int):
         """
-        Ensures that the cache has the required size of trace Hessian approximations for the given request.
+        Ensures that the saved info has the required size of trace Hessian approximations for the given request.
 
         Args:
-            trace_hessian_request: Configuration for which to ensure the cache size.
+            trace_hessian_request: Configuration for which to ensure the saved info size.
             required_size: Required number of trace Hessian approximations.
         """
-        # Get the current number of cached approximations for the request
-        current_existing_hessians = self.count_cache_of_request(trace_hessian_request)
+        # Get the current number of saved approximations for the request
+        current_existing_hessians = self.count_saved_info_of_request(trace_hessian_request)
 
         # Compute the required number of approximations to meet the required size
         for _ in range(required_size - current_existing_hessians):
