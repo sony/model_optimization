@@ -20,7 +20,7 @@ https://github.com/RangiLyu/nanodet
 
 import numpy as np
 from keras.utils import plot_model
-from keras.utils.layer_utils import get_source_inputs
+from keras.utils import get_source_inputs
 from keras.layers import Input, Conv2D, MaxPool2D, GlobalMaxPooling2D, GlobalAveragePooling2D, \
     BatchNormalization, DepthwiseConv2D, Concatenate, Lambda, UpSampling2D, Add, Reshape, ZeroPadding2D, LeakyReLU, \
     Resizing, ReLU, Softmax
