@@ -108,7 +108,7 @@ class FunctionTestRunner(unittest.TestCase):
         ModelGradientsAdvancedModelTest(self).run_test()
         ModelGradientsMultipleOutputsTest(self).run_test()
         ModelGradientsOutputReplacementTest(self).run_test()
-        # ModelGradientsMultipleOutputsModelTest(self).run_test()
+        ModelGradientsMultipleOutputsModelTest(self).run_test()
         ModelGradientsNonDifferentiableNodeModelTest(self).run_test()
 
     def test_layer_fusing(self):

@@ -129,9 +129,14 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                 ipts_jac_trace_approx.append(2 * torch.mean(torch.stack(trace_jv)) / output.shape[
                     -1])  # Get averaged jacobian trace approximation
 
+            # If a node has multiple outputs, it means that multiple approximations were computed
+            # (one per output since granularity is per-tensor). In this case we average the approximations.
+            if len(ipts_jac_trace_approx)>1:
+                # Stack tensors and compute the average
+                ipts_jac_trace_approx = [torch.stack(ipts_jac_trace_approx).mean()]
+
             ipts_jac_trace_approx = torch_tensor_to_numpy(torch.Tensor(
                 ipts_jac_trace_approx))  # Just to get one tensor instead of list of tensors with single element
-
 
             return ipts_jac_trace_approx.tolist()
 
