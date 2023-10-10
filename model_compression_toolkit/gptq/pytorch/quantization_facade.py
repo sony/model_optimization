@@ -168,14 +168,14 @@ if FOUND_TORCH:
         # ---------------------- #
         # Core Runner
         # ---------------------- #
-        graph, bit_widths_config, trace_hessian_service = core_runner(in_model=model,
-                                                                      representative_data_gen=representative_data_gen,
-                                                                      core_config=core_config,
-                                                                      fw_info=DEFAULT_PYTORCH_INFO,
-                                                                      fw_impl=fw_impl,
-                                                                      tpc=target_platform_capabilities,
-                                                                      target_kpi=target_kpi,
-                                                                      tb_w=tb_w)
+        graph, bit_widths_config, hessian_info_service = core_runner(in_model=model,
+                                                                     representative_data_gen=representative_data_gen,
+                                                                     core_config=core_config,
+                                                                     fw_info=DEFAULT_PYTORCH_INFO,
+                                                                     fw_impl=fw_impl,
+                                                                     tpc=target_platform_capabilities,
+                                                                     target_kpi=target_kpi,
+                                                                     tb_w=tb_w)
 
         # ---------------------- #
         # GPTQ Runner
@@ -188,7 +188,7 @@ if FOUND_TORCH:
                                  DEFAULT_PYTORCH_INFO,
                                  fw_impl,
                                  tb_w,
-                                 trace_hessian_service=trace_hessian_service)
+                                 hessian_info_service=hessian_info_service)
 
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen, tb_w, graph_gptq, fw_impl, DEFAULT_PYTORCH_INFO)

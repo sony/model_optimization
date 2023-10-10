@@ -24,8 +24,8 @@ from model_compression_toolkit.core.common.graph.functional_node import Function
 
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianMode, \
-    TraceHessianGranularity, TraceHessianService
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, \
+    HessianInfoGranularity, HessianInfoService
 
 
 class SensitivityEvaluation:
@@ -42,7 +42,7 @@ class SensitivityEvaluation:
                  fw_impl: Any,
                  set_layer_to_bitwidth: Callable,
                  disable_activation_for_metric: bool = False,
-                 trace_hessian_service: TraceHessianService = None
+                 hessian_info_service: HessianInfoService = None
                  ):
         """
         Initiates all relevant objects to manage a sensitivity evaluation for MP search.
@@ -65,7 +65,7 @@ class SensitivityEvaluation:
             set_layer_to_bitwidth: A fw-dependent function that allows to configure a configurable MP model
                     with a specific bit-width configuration.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
-            trace_hessian_service: TraceHessianService to fetch Hessian traces approximations.
+            hessian_info_service: HessianInfoService to fetch Hessian traces approximations.
 
         """
         self.graph = graph
@@ -76,10 +76,10 @@ class SensitivityEvaluation:
         self.set_layer_to_bitwidth = set_layer_to_bitwidth
         self.disable_activation_for_metric = disable_activation_for_metric
         if self.quant_config.use_grad_based_weights:
-            if not trace_hessian_service:
-                Logger.error(f"When using trace hessian approximations for sensitivity evaluation, "
-                             f"trace hessian service must be provided but is {trace_hessian_service}")
-            self.trace_hessian_service = trace_hessian_service
+            if not isinstance(hessian_info_service, HessianInfoService):
+                Logger.error(f"When using hessian based approximations for sensitivity evaluation, "
+                             f" an HessianInfoService object must be provided but is {hessian_info_service}")
+            self.hessian_info_service = hessian_info_service
 
         # Get interest points for distance measurement and a list of sorted configurable nodes names
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
@@ -208,13 +208,13 @@ class SensitivityEvaluation:
         for target_node in self.interest_points:
             # Create a request for trace Hessian approximation with specific configurations
             # (here we use per-tensor approximation of the Hessian's trace w.r.t the node's activations)
-            trace_hessian_request = TraceHessianRequest(mode=TraceHessianMode.ACTIVATIONS,
-                                                        granularity=TraceHessianGranularity.PER_TENSOR,
+            trace_hessian_request = TraceHessianRequest(mode=HessianMode.ACTIVATIONS,
+                                                        granularity=HessianInfoGranularity.PER_TENSOR,
                                                         target_node=target_node)
 
             # Fetch the trace Hessian approximations for the current interest point
-            node_approximations = self.trace_hessian_service.fetch_hessian(trace_hessian_request=trace_hessian_request,
-                                                                           required_size=self.quant_config.num_of_images)
+            node_approximations = self.hessian_info_service.fetch_hessian(trace_hessian_request=trace_hessian_request,
+                                                                          required_size=self.quant_config.num_of_images)
             # Store the fetched approximations in the dictionary
             compare_point_to_trace_hessian_approximations[target_node] = node_approximations
 

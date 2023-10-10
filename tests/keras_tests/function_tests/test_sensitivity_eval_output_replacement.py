@@ -69,9 +69,9 @@ class TestSensitivityEvalWithOutputReplacementNodes(unittest.TestCase):
                                                            input_shape=(1, 16, 16, 3),
                                                            mixed_precision_enabled=True)
 
-        trace_hessian_service = hess.TraceHessianService(graph=graph,
-                                                         representative_dataset=representative_dataset,
-                                                         fw_impl=keras_impl)
+        trace_hessian_service = hess.HessianInfoService(graph=graph,
+                                                        representative_dataset=representative_dataset,
+                                                        fw_impl=keras_impl)
 
         se = keras_impl.get_sensitivity_evaluator(graph,
                                                   MixedPrecisionQuantizationConfigV2(use_grad_based_weights=True),

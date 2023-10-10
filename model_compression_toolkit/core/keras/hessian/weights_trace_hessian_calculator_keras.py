@@ -17,6 +17,7 @@ from typing import List
 
 import tensorflow as tf
 
+from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest
 from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
@@ -25,14 +26,15 @@ from model_compression_toolkit.logger import Logger
 
 class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
     """
-    Keras-specific implementation of the Trace Hessian approximation computation w.r.t to a node's weights.
+    Keras-specific implementation of the Trace Hessian approximation computation w.r.t a node's weights.
     """
 
     def __init__(self,
                  graph: Graph,
                  input_images: List[tf.Tensor],
                  fw_impl,
-                 trace_hessian_request: TraceHessianRequest):
+                 trace_hessian_request: TraceHessianRequest,
+                 num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
 
         Args:
@@ -40,11 +42,13 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             input_images: List of input images for the computation.
             fw_impl: Framework-specific implementation for trace Hessian computation.
             trace_hessian_request: Configuration request for which to compute the trace Hessian approximation.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
         """
         super(WeightsTraceHessianCalculatorKeras, self).__init__(graph=graph,
                                                                  input_images=input_images,
                                                                  fw_impl=fw_impl,
-                                                                 trace_hessian_request=trace_hessian_request)
+                                                                 trace_hessian_request=trace_hessian_request,
+                                                                 num_iterations_for_approximation=num_iterations_for_approximation)
 
     def compute(self):
         Logger.error(f"Hessian trace approx w.r.t weights is not supported for now")

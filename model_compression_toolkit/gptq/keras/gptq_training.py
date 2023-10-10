@@ -20,7 +20,7 @@ from packaging import version
 from tensorflow.keras.layers import Layer
 from tqdm import tqdm
 
-from model_compression_toolkit.core.common.hessian import TraceHessianService
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
@@ -60,7 +60,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo,
                  representative_data_gen: Callable,
-                 trace_hessian_service: TraceHessianService = None):
+                 hessian_info_service: HessianInfoService = None):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
         Use the dataset generator to pass images through the teacher and student networks to get intermediate
@@ -74,13 +74,15 @@ class KerasGPTQTrainer(GPTQTrainer):
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
             fw_info: Framework information.
             representative_data_gen: Dataset to use for inputs of the models.
+            hessian_info_service: HessianInfoService for fetching and computing Hessian's trace approximation.
+
         """
         super().__init__(graph_float,
                          graph_quant,
                          gptq_config,
                          fw_impl,
                          fw_info,
-                         trace_hessian_service=trace_hessian_service)
+                         hessian_info_service=hessian_info_service)
 
         self.loss_list = []
         self.input_scale = 1

@@ -25,7 +25,7 @@ from model_compression_toolkit.constants import MIN_JACOBIANS_ITER, JACOBIANS_CO
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianGranularity
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianInfoGranularity
 from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler
 from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
 from model_compression_toolkit.logger import Logger
@@ -64,7 +64,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         Returns:
             List[float]: Approximated trace of the Hessian for an interest point.
         """
-        if self.hessian_request.granularity == TraceHessianGranularity.PER_TENSOR:
+        if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
             output_list = self._get_model_output_replacement()
 
             # Record operations for automatic differentiation

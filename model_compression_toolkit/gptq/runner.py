@@ -17,7 +17,7 @@ from typing import Callable
 
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.hessian import TraceHessianService
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
     apply_statistics_correction
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
@@ -39,7 +39,7 @@ def _apply_gptq(gptq_config: GradientPTQConfigV2,
                 tg_bias: Graph,
                 fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation,
-                trace_hessian_service: TraceHessianService = None) -> Graph:
+                hessian_info_service: HessianInfoService = None) -> Graph:
     """
     Apply GPTQ to improve accuracy of quantized model.
     Build two models from a graph: A teacher network (float model) and a student network (quantized model).
@@ -54,7 +54,7 @@ def _apply_gptq(gptq_config: GradientPTQConfigV2,
         tg_bias: Graph of quantized model.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).
         fw_impl: Framework implementation per framework
-        trace_hessian_service: TraceHessianService to fetch approximations of the hessian traces for the float model.
+        hessian_info_service: HessianInfoService to fetch approximations of the hessian traces for the float model.
     Returns:
 
     """
@@ -68,7 +68,7 @@ def _apply_gptq(gptq_config: GradientPTQConfigV2,
                                 representative_data_gen,
                                 fw_impl,
                                 fw_info,
-                                trace_hessian_service=trace_hessian_service)
+                                hessian_info_service=hessian_info_service)
 
         if tb_w is not None:
             tb_w.add_graph(tg_bias, 'after_gptq')
@@ -83,7 +83,7 @@ def gptq_runner(tg: Graph,
                 fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation,
                 tb_w: TensorboardWriter,
-                trace_hessian_service: TraceHessianService = None) -> Graph:
+                hessian_info_service: HessianInfoService = None) -> Graph:
     """
     Quantize a graph that has final weights candidates quantization configurations.
     Before we quantize the graph weights, we apply GPTQ to get an improved graph.
@@ -97,7 +97,7 @@ def gptq_runner(tg: Graph,
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.)
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tb_w: A TensorBoardWriter object initialized with the logger dir path if it was set, or None otherwise.
-        trace_hessian_service: TraceHessianService to fetch approximations of the hessian traces for the float model.
+        hessian_info_service: HessianInfoService to fetch approximations of the hessian traces for the float model.
 
     Returns:
         A graph after model weights GPTQ fine-tuning.
@@ -121,6 +121,6 @@ def gptq_runner(tg: Graph,
                           tg_bias,
                           fw_info,
                           fw_impl,
-                          trace_hessian_service=trace_hessian_service)
+                          hessian_info_service=hessian_info_service)
 
     return tg_gptq

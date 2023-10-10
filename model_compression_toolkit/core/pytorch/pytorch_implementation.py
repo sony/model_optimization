@@ -33,7 +33,7 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
     create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianMode, TraceHessianService
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
@@ -340,7 +340,7 @@ class PytorchImplementation(FrameworkImplementation):
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
                                   disable_activation_for_metric: bool = False,
-                                  trace_hessian_service: TraceHessianService = None
+                                  hessian_info_service: HessianInfoService = None
                                   ) -> SensitivityEvaluation:
         """
         Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
@@ -352,7 +352,7 @@ class PytorchImplementation(FrameworkImplementation):
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
-            trace_hessian_service: TraceHessianService to fetch approximations of the hessian traces for the float model.
+            hessian_info_service: HessianInfoService to fetch approximations of the hessian traces for the float model.
 
         Returns:
             A SensitivityEvaluation object.
@@ -369,7 +369,7 @@ class PytorchImplementation(FrameworkImplementation):
                                                                    weights_quant_layer_type=PytorchQuantizationWrapper,
                                                                    activation_quant_layer_type=PytorchActivationQuantizationHolder),
                                      disable_activation_for_metric=disable_activation_for_metric,
-                                     trace_hessian_service=trace_hessian_service)
+                                     hessian_info_service=hessian_info_service)
 
     def get_node_prior_info(self,
                             node: BaseNode,
@@ -526,13 +526,13 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: TraceHessianCalculatorPytorch to use for the trace hessian approximation computation for this request.
 
         """
-        if trace_hessian_request.mode == TraceHessianMode.ACTIVATIONS:
+        if trace_hessian_request.mode == HessianMode.ACTIVATIONS:
             return ActivationTraceHessianCalculatorPytorch(graph=graph,
                                                            trace_hessian_request=trace_hessian_request,
                                                            input_images=input_images,
                                                            fw_impl=self,
                                                            num_iterations_for_approximation=num_iterations_for_approximation)
-        elif trace_hessian_request.mode == TraceHessianMode.WEIGHTS:
+        elif trace_hessian_request.mode == HessianMode.WEIGHTS:
             return WeightsTraceHessianCalculatorPytorch(graph=graph,
                                                         trace_hessian_request=trace_hessian_request,
                                                         input_images=input_images,

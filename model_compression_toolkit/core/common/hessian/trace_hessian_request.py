@@ -19,23 +19,23 @@ from enum import Enum
 from model_compression_toolkit.core.common import BaseNode
 
 
-class TraceHessianMode(Enum):
+class HessianMode(Enum):
     """
-    Enum representing the mode for trace Hessian's trace information computation.
+    Enum representing the mode for Hessian information computation.
 
-    This determines whether the Hessian's trace approximation is computed w.r.t weights or w.r.t activations.
-    Note: This is not the actual Hessian's trace but an approximation.
+    This determines whether the Hessian's approximation is computed w.r.t weights or w.r.t activations.
+    Note: This is not the actual Hessian but an approximation.
     """
     WEIGHTS = 0         # Hessian approximation based on weights
     ACTIVATIONS = 1     # Hessian approximation based on activations
 
 
-class TraceHessianGranularity(Enum):
+class HessianInfoGranularity(Enum):
     """
-    Enum representing the granularity level for Hessian's trace information computation.
+    Enum representing the granularity level for Hessian information computation.
 
     This determines the number the Hessian approximations is computed for some node.
-    Note: This is not the actual Hessian's trace but an approximation.
+    Note: This is not the actual Hessian but an approximation.
     """
     PER_ELEMENT = 0
     PER_OUTPUT_CHANNEL = 1
@@ -52,14 +52,14 @@ class TraceHessianRequest:
     """
 
     def __init__(self,
-                 mode: TraceHessianMode,
-                 granularity: TraceHessianGranularity,
+                 mode: HessianMode,
+                 granularity: HessianInfoGranularity,
                  target_node: BaseNode,
                  ):
         """
         Attributes:
-            mode (TraceHessianMode): Mode of Hessian's trace approximation (w.r.t weights or activations).
-            granularity (TraceHessianGranularity): Granularity level for the approximation.
+            mode (HessianMode): Mode of Hessian's trace approximation (w.r.t weights or activations).
+            granularity (HessianInfoGranularity): Granularity level for the approximation.
             target_node (BaseNode): The node in the float graph for which the Hessian's trace approximation is targeted.
         """
 

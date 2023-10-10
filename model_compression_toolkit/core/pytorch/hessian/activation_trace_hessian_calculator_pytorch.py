@@ -21,7 +21,7 @@ import numpy as np
 
 from model_compression_toolkit.constants import MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE, HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianGranularity
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianInfoGranularity
 from model_compression_toolkit.core.pytorch.hessian.pytorch_model_gradients import PytorchModelGradients
 from model_compression_toolkit.core.pytorch.hessian.trace_hessian_calculator_pytorch import \
     TraceHessianCalculatorPytorch
@@ -61,7 +61,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
         Returns:
             List[float]: Approximated trace of the Hessian for an interest point.
         """
-        if self.hessian_request.granularity == TraceHessianGranularity.PER_TENSOR:
+        if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
             # Set inputs to require_grad
             for input_tensor in self.input_images:
                 input_tensor.requires_grad_()

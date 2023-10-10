@@ -22,16 +22,17 @@ from model_compression_toolkit.core.common.hessian.trace_hessian_request import 
 from model_compression_toolkit.logger import Logger
 
 
-class TraceHessianService:
+class HessianInfoService:
     """
-    A service to manage, store, and compute approximation of the trace of the Hessian.
+    A service to manage, store, and compute approximation of the Hessian-based information.
 
-    This class provides functionalities to compute approximation of the trace of the Hessian matrix based on the provided configuration
+    This class provides functionalities to compute approximation based on the Hessian matrix based
+    on the different parameters (such as number of iterations for approximating the info)
     and input images (from representative_dataset).
     It also offers cache management capabilities for efficient computation and retrieval.
 
     Note:
-    - The trace of the Hessian provides valuable information about the curvature of the loss function.
+    - The Hessian provides valuable information about the curvature of the loss function.
     - Computation can be computationally heavy and time-consuming.
     - The computed trace is an approximation.
     """

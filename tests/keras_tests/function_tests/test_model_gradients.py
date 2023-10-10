@@ -96,13 +96,13 @@ def representative_dataset(num_of_inputs=1):
     yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]*num_of_inputs
 
 def _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha, num_of_inputs=1):
-    hessian_service = hessian_common.TraceHessianService(graph=graph,
-                                                         representative_dataset=functools.partial(representative_dataset, num_of_inputs=num_of_inputs),
-                                                         fw_impl=keras_impl)
+    hessian_service = hessian_common.HessianInfoService(graph=graph,
+                                                        representative_dataset=functools.partial(representative_dataset, num_of_inputs=num_of_inputs),
+                                                        fw_impl=keras_impl)
     x = []
     for interest_point in interest_points:
-        request = hessian_common.TraceHessianRequest(mode=hessian_common.TraceHessianMode.ACTIVATIONS,
-                                                     granularity=hessian_common.TraceHessianGranularity.PER_TENSOR,
+        request = hessian_common.TraceHessianRequest(mode=hessian_common.HessianMode.ACTIVATIONS,
+                                                     granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
                                                      target_node=interest_point)
         hessian_data = hessian_service.fetch_hessian(request, 1)
         hessian_data_per_image = hessian_data[0]
@@ -115,7 +115,7 @@ def _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alp
 
 class TestModelGradients(unittest.TestCase):
     # TODO: change tests to ignore the normalization and check
-    #  closeness to ACTUAL hessian values on small models.
+    #  closeness to ACTUAL hessian values on small trained models.
 
     def _run_model_grad_test(self, graph, keras_impl, output_indices=None, num_of_inputs=1):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
