@@ -222,8 +222,6 @@ def _get_normalized_hessian_trace_approx(representative_data_gen,
 
     hessian_service = hessian_common.TraceHessianService(graph=graph,
                                                          representative_dataset=representative_data_gen,
-                                                         trace_hessian_configuration=hessian_common.TraceHessianConfig(
-                                                             alpha=alpha),
                                                          fw_impl=pytorch_impl)
     x = []
     for interest_point in interest_points:
@@ -233,8 +231,6 @@ def _get_normalized_hessian_trace_approx(representative_data_gen,
         hessian_data = hessian_service.fetch_hessian(request, 1)
         hessian_data_per_image = hessian_data[0]
         assert isinstance(hessian_data_per_image, list)
-        if not len(hessian_data_per_image)==1:
-            print('d')
         assert len(hessian_data_per_image) == 1
         x.append(hessian_data_per_image[0])
     x = hessian_common.hessian_utils.normalize_weights(x, alpha=alpha, outputs_indices=[len(interest_points) - 1])

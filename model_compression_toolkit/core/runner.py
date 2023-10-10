@@ -21,7 +21,6 @@ import numpy as np
 from tqdm import tqdm
 
 from model_compression_toolkit.core.common import FrameworkInfo
-from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
 from model_compression_toolkit.core.common.hessian.trace_hessian_service import TraceHessianService
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.logger import Logger
@@ -93,7 +92,6 @@ def core_runner(in_model: Any,
 
     trace_hessian_service = TraceHessianService(graph=graph,
                                                 representative_dataset=representative_data_gen,
-                                                trace_hessian_configuration=core_config.trace_hessian_cfg,
                                                 fw_impl=fw_impl)
 
     tg = _prepare_model_for_quantization(graph,

@@ -15,12 +15,12 @@
 
 from typing import Dict, List
 
+from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest
 from model_compression_toolkit.core.common.hessian.trace_hessian_calculator import TraceHessianCalculator
 import tensorflow as tf
 
-from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
 
 class TraceHessianCalculatorKeras(TraceHessianCalculator):
     """
@@ -29,23 +29,23 @@ class TraceHessianCalculatorKeras(TraceHessianCalculator):
     """
     def __init__(self,
                  graph: Graph,
-                 trace_hessian_config: TraceHessianConfig,
                  input_images: List[tf.Tensor],
                  fw_impl,
-                 trace_hessian_request: TraceHessianRequest):
+                 trace_hessian_request: TraceHessianRequest,
+                 num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
 
         Args:
             graph: Computational graph for the float model.
-            trace_hessian_config: Configuration for the approximation of the trace of the Hessian.
             input_images: List of input images for the computation.
             fw_impl: Framework-specific implementation for trace Hessian computation.
             trace_hessian_request: Configuration request for which to compute the trace Hessian approximation.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
         """
         super(TraceHessianCalculatorKeras, self).__init__(graph=graph,
-                                                          trace_hessian_config=trace_hessian_config,
                                                           input_images=input_images,
                                                           fw_impl=fw_impl,
-                                                          trace_hessian_request=trace_hessian_request)
+                                                          trace_hessian_request=trace_hessian_request,
+                                                          num_iterations_for_approximation=num_iterations_for_approximation)
 
 

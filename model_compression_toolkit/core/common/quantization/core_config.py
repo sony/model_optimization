@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.core.common.hessian import TraceHessianConfig
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfigV2
@@ -25,8 +24,7 @@ class CoreConfig:
     def __init__(self,
                  quantization_config: QuantizationConfig = QuantizationConfig(),
                  mixed_precision_config: MixedPrecisionQuantizationConfigV2 = None,
-                 debug_config: DebugConfig = DebugConfig(),
-                 trace_hessian_cfg: TraceHessianConfig = TraceHessianConfig()
+                 debug_config: DebugConfig = DebugConfig()
                  ):
         """
 
@@ -34,12 +32,10 @@ class CoreConfig:
             quantization_config (QuantizationConfig): Config for quantization.
             mixed_precision_config (MixedPrecisionQuantizationConfigV2): Config for mixed precision quantization (optional, default=None).
             debug_config (DebugConfig): Config for debugging and editing the network quantization process.
-            trace_hessian_cfg (TraceHessianConfig): Configuration for the trace hessian service computation.
         """
         self.quantization_config = quantization_config
         self.mixed_precision_config = mixed_precision_config
         self.debug_config = debug_config
-        self.trace_hessian_cfg = trace_hessian_cfg
 
     @property
     def mixed_precision_enable(self):

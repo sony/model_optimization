@@ -71,7 +71,6 @@ class TestSensitivityEvalWithOutputReplacementNodes(unittest.TestCase):
 
         trace_hessian_service = hess.TraceHessianService(graph=graph,
                                                          representative_dataset=representative_dataset,
-                                                         trace_hessian_configuration=hess.TraceHessianConfig(),
                                                          fw_impl=keras_impl)
 
         se = keras_impl.get_sensitivity_evaluator(graph,

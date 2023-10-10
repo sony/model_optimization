@@ -98,7 +98,6 @@ def representative_dataset(num_of_inputs=1):
 def _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha, num_of_inputs=1):
     hessian_service = hessian_common.TraceHessianService(graph=graph,
                                                          representative_dataset=functools.partial(representative_dataset, num_of_inputs=num_of_inputs),
-                                                         trace_hessian_configuration=hessian_common.TraceHessianConfig(alpha=alpha),
                                                          fw_impl=keras_impl)
     x = []
     for interest_point in interest_points:
@@ -115,14 +114,13 @@ def _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alp
 
 
 class TestModelGradients(unittest.TestCase):
+    # TODO: change tests to ignore the normalization and check
+    #  closeness to ACTUAL hessian values on small models.
 
     def _run_model_grad_test(self, graph, keras_impl, output_indices=None, num_of_inputs=1):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
-
-
         all_output_indices = [len(interest_points) - 1] if output_indices is None else output_indices
-
         x = _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha=0.3, num_of_inputs=num_of_inputs)
 
         # Checking that the weights were computed and normalized correctly

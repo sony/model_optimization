@@ -21,8 +21,8 @@ from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantization
 from tensorflow.keras.models import Model
 from tensorflow.python.layers.base import Layer
 
+from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianMode, TraceHessianService
-from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
 from model_compression_toolkit.core.keras.hessian.activation_trace_hessian_calculator_keras import \
     ActivationTraceHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
@@ -469,13 +469,16 @@ class KerasImplementation(FrameworkImplementation):
 
     def get_trace_hessian_calculator(self,
                                      graph: Graph,
-                                     trace_hessian_config: TraceHessianConfig,
                                      input_images: List[Any],
-                                     trace_hessian_request: TraceHessianRequest):
+                                     trace_hessian_request: TraceHessianRequest,
+                                     num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
         Get Keras trace hessian approximations calculator based on the trace hessian request.
         Args:
+            input_images: Images to use for computation.
+            graph: Float graph to compute the approximation of its different nodes.
             trace_hessian_request: TraceHessianRequest to search for the desired calculator.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
 
         Returns: TraceHessianCalculatorKeras to use for the trace hessian approximation computation for this request.
 
@@ -483,15 +486,15 @@ class KerasImplementation(FrameworkImplementation):
         if trace_hessian_request.mode == TraceHessianMode.ACTIVATIONS:
             return ActivationTraceHessianCalculatorKeras(graph=graph,
                                                          trace_hessian_request=trace_hessian_request,
-                                                         trace_hessian_config=trace_hessian_config,
                                                          input_images=input_images,
-                                                         fw_impl=self)
+                                                         fw_impl=self,
+                                                         num_iterations_for_approximation=num_iterations_for_approximation)
         elif trace_hessian_request.mode == TraceHessianMode.WEIGHTS:
             return WeightsTraceHessianCalculatorKeras(graph=graph,
                                                       trace_hessian_request=trace_hessian_request,
-                                                      trace_hessian_config=trace_hessian_config,
                                                       input_images=input_images,
-                                                      fw_impl=self)
+                                                      fw_impl=self,
+                                                      num_iterations_for_approximation=num_iterations_for_approximation)
         else:
             Logger.error(f"Keras does not support hessian mode of {trace_hessian_request.mode}")
 

@@ -19,10 +19,9 @@ from torch import autograd
 from tqdm import tqdm
 import numpy as np
 
-from model_compression_toolkit.constants import MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE
+from model_compression_toolkit.constants import MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE, HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianGranularity
-from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
 from model_compression_toolkit.core.pytorch.hessian.pytorch_model_gradients import PytorchModelGradients
 from model_compression_toolkit.core.pytorch.hessian.trace_hessian_calculator_pytorch import \
     TraceHessianCalculatorPytorch
@@ -36,23 +35,24 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
     """
     def __init__(self,
                  graph: Graph,
-                 trace_hessian_config: TraceHessianConfig,
                  input_images: List[torch.Tensor],
                  fw_impl,
-                 trace_hessian_request: TraceHessianRequest):
+                 trace_hessian_request: TraceHessianRequest,
+                 num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
         Args:
             graph: Computational graph for the float model.
-            trace_hessian_config: Configuration for the approximation of the trace of the Hessian.
             input_images: List of input images for the computation.
             fw_impl: Framework-specific implementation for trace Hessian approximation computation.
             trace_hessian_request: Configuration request for which to compute the trace Hessian approximation.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
+
         """
         super(ActivationTraceHessianCalculatorPytorch, self).__init__(graph=graph,
-                                                                      trace_hessian_config=trace_hessian_config,
                                                                       input_images=input_images,
                                                                       fw_impl=fw_impl,
-                                                                      trace_hessian_request=trace_hessian_request)
+                                                                      trace_hessian_request=trace_hessian_request,
+                                                                      num_iterations_for_approximation=num_iterations_for_approximation)
 
     def compute(self) -> List[float]:
         """
@@ -96,12 +96,12 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             ipts_jac_trace_approx = []
             for ipt in tqdm(model_grads_net.interest_points_tensors):  # Per Interest point activation tensor
                 trace_jv = []
-                for j in range(self.hessian_config.num_iterations):  # Approximation iterations
+                for j in range(self.num_iterations_for_approximation):  # Approximation iterations
                     # Getting a random vector with normal distribution
                     v = torch.randn(output.shape, device=device)
                     f_v = torch.sum(v * output)
 
-                    # Computing the jacobian approximation by getting the gradient of (output * v)
+                    # Computing the hessian trace approximation by getting the gradient of (output * v)
                     jac_v = autograd.grad(outputs=f_v,
                                           inputs=ipt,
                                           retain_graph=True,

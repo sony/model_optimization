@@ -25,6 +25,7 @@ from torch.nn import Conv2d, ConvTranspose2d, Linear
 from torch.nn import Module, Sigmoid, Softmax
 
 import model_compression_toolkit.core.pytorch.constants as pytorch_constants
+from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
@@ -32,8 +33,7 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
     create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianMode, TraceHessianService, \
-    TraceHessianConfig
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianMode, TraceHessianService
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
@@ -512,29 +512,29 @@ class PytorchImplementation(FrameworkImplementation):
 
     def get_trace_hessian_calculator(self,
                                      graph: Graph,
-                                     trace_hessian_config: TraceHessianConfig,
                                      input_images: List[Any],
-                                     trace_hessian_request: TraceHessianRequest):
+                                     trace_hessian_request: TraceHessianRequest,
+                                     num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
         Get Pytorch trace hessian approximations calculator based on the trace hessian request.
         Args:
             input_images: Images to use for computation.
             graph: Float graph to compute the approximation of its different nodes.
-            trace_hessian_config: TraceHessianConfig with configuration for different parameters of the computation.
             trace_hessian_request: TraceHessianRequest to search for the desired calculator.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
 
         Returns: TraceHessianCalculatorPytorch to use for the trace hessian approximation computation for this request.
 
         """
         if trace_hessian_request.mode == TraceHessianMode.ACTIVATIONS:
             return ActivationTraceHessianCalculatorPytorch(graph=graph,
-                                                         trace_hessian_request=trace_hessian_request,
-                                                         trace_hessian_config=trace_hessian_config,
-                                                         input_images=input_images,
-                                                         fw_impl=self)
+                                                           trace_hessian_request=trace_hessian_request,
+                                                           input_images=input_images,
+                                                           fw_impl=self,
+                                                           num_iterations_for_approximation=num_iterations_for_approximation)
         elif trace_hessian_request.mode == TraceHessianMode.WEIGHTS:
             return WeightsTraceHessianCalculatorPytorch(graph=graph,
-                                                         trace_hessian_request=trace_hessian_request,
-                                                         trace_hessian_config=trace_hessian_config,
-                                                         input_images=input_images,
-                                                         fw_impl=self)
+                                                        trace_hessian_request=trace_hessian_request,
+                                                        input_images=input_images,
+                                                        fw_impl=self,
+                                                        num_iterations_for_approximation=num_iterations_for_approximation)

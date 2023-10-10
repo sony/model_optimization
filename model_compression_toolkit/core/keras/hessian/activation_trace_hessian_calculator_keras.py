@@ -20,12 +20,12 @@ from tensorflow.python.keras.engine.base_layer import Layer
 from tqdm import tqdm
 import numpy as np
 
-from model_compression_toolkit.constants import MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE, EPS
+from model_compression_toolkit.constants import MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE, EPS, \
+    HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianGranularity
-from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
 from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler
 from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
 from model_compression_toolkit.logger import Logger
@@ -38,23 +38,24 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
     """
     def __init__(self,
                  graph: Graph,
-                 trace_hessian_config: TraceHessianConfig,
                  input_images: List[tf.Tensor],
                  fw_impl,
-                 trace_hessian_request: TraceHessianRequest):
+                 trace_hessian_request: TraceHessianRequest,
+                 num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
         Args:
             graph: Computational graph for the float model.
-            trace_hessian_config: Configuration for the approximation of the trace of the Hessian.
             input_images: List of input images for the computation.
             fw_impl: Framework-specific implementation for trace Hessian approximation computation.
             trace_hessian_request: Configuration request for which to compute the trace Hessian approximation.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
+
         """
         super(ActivationTraceHessianCalculatorKeras, self).__init__(graph=graph,
-                                                                    trace_hessian_config=trace_hessian_config,
                                                                     input_images=input_images,
                                                                     fw_impl=fw_impl,
-                                                                    trace_hessian_request=trace_hessian_request)
+                                                                    trace_hessian_request=trace_hessian_request,
+                                                                    num_iterations_for_approximation=num_iterations_for_approximation)
 
     def compute(self) -> List[float]:
         """
@@ -94,7 +95,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                 trace_approx_by_node = []
                 for ipt in tqdm(interest_points_tensors):  # Per Interest point activation tensor
                     trace_jv = []
-                    for j in range(self.hessian_config.num_iterations):  # Approximation iterations
+                    for j in range(self.num_iterations_for_approximation):  # Approximation iterations
                         # Getting a random vector with normal distribution
                         v = tf.random.normal(shape=output.shape)
                         f_v = tf.reduce_sum(v * output)

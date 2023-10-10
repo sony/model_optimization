@@ -16,8 +16,8 @@
 import numpy as np
 from typing import Callable, List, Any
 
+from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian.trace_hessian_config import TraceHessianConfig
 from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest
 from model_compression_toolkit.logger import Logger
 
@@ -39,21 +39,20 @@ class TraceHessianService:
     def __init__(self,
                  graph: Graph,
                  representative_dataset: Callable,
-                 trace_hessian_configuration: TraceHessianConfig,
-                 fw_impl
+                 fw_impl,
+                 num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS
                  ):
         """
 
         Args:
             graph: Float graph.
             representative_dataset: A callable that provides a dataset for sampling.
-            trace_hessian_configuration: Configuration for trace of the Hessian approximation computation.
             fw_impl: Framework-specific implementation for trace Hessian approximation computation.
         """
         self.graph = graph
         self.representative_dataset = representative_dataset
-        self.trace_hessian_configuration = trace_hessian_configuration
         self.fw_impl = fw_impl
+        self.num_iterations_for_approximation = num_iterations_for_approximation
 
         self.trace_hessian_request_to_score_list = {}
 
@@ -103,9 +102,9 @@ class TraceHessianService:
 
         # Get the framework-specific calculator for trace Hessian approximation
         fw_hessian_calculator = self.fw_impl.get_trace_hessian_calculator(graph=self.graph,
-                                                                          trace_hessian_config=self.trace_hessian_configuration,
                                                                           input_images=images,
-                                                                          trace_hessian_request=trace_hessian_request)
+                                                                          trace_hessian_request=trace_hessian_request,
+                                                                          num_iterations_for_approximation=self.num_iterations_for_approximation)
 
         # Compute the approximation
         trace_hessian = fw_hessian_calculator.compute()

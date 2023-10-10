@@ -5,8 +5,7 @@ import numpy as np
 from tensorflow import initializers
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input
 
-import model_compression_toolkit.core.common.hessian as hess
-from model_compression_toolkit.core.common.hessian import TraceHessianService, TraceHessianConfig, TraceHessianRequest, TraceHessianMode, \
+from model_compression_toolkit.core.common.hessian import TraceHessianService, TraceHessianRequest, TraceHessianMode, \
     TraceHessianGranularity
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation

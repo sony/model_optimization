@@ -17,13 +17,14 @@ from typing import Callable, Any, List, Tuple, Dict
 
 import numpy as np
 
+from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianService, TraceHessianConfig
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, TraceHessianService
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
@@ -50,16 +51,16 @@ class FrameworkImplementation(ABC):
     @abstractmethod
     def get_trace_hessian_calculator(self,
                                      graph: Graph,
-                                     trace_hessian_config: TraceHessianConfig,
                                      input_images: List[Any],
-                                     trace_hessian_request: TraceHessianRequest):
+                                     trace_hessian_request: TraceHessianRequest,
+                                     num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
         Get framework trace hessian approximations calculator based on the trace hessian request.
         Args:
             input_images: Images to use for computation.
             graph: Float graph to compute the approximation of its different nodes.
-            trace_hessian_config: TraceHessianConfig with configuration for different parameters of the computation.
             trace_hessian_request: TraceHessianRequest to search for the desired calculator.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
 
         Returns: TraceHessianCalculator to use for the trace hessian approximation computation for this request.
         """
