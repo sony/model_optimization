@@ -23,6 +23,10 @@ from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste 
     STEActivationQATQuantizer
 from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.uniform_ste import STEUniformWeightQATQuantizer, \
     STEUniformActivationQATQuantizer
+from model_compression_toolkit.qat.pytorch.quantizer.lsq.symmetric_lsq import LSQWeightQATQuantizer, \
+    LSQActivationQATQuantizer
+from model_compression_toolkit.qat.pytorch.quantizer.lsq.uniform_lsq import LSQUniformWeightQATQuantizer, \
+    LSQUniformActivationQATQuantizer
 from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
     BasePytorchTrainableQuantizer
 from tests.trainable_infrastructure_tests.pytorch.trainable_pytorch.test_pytorch_base_quantizer import \
@@ -69,6 +73,27 @@ class PytorchTrainableInfrastructureTestRunner(unittest.TestCase):
                                   quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_id=TrainingMethod.STE,
                                   expected_quantizer_class=STEUniformActivationQATQuantizer).run_test()
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.SYMMETRIC,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
+                                  quantizer_id=TrainingMethod.LSQ,
+                                  expected_quantizer_class=LSQWeightQATQuantizer).run_test()
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
+                                  quant_method=QuantizationMethod.UNIFORM,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
+                                  quantizer_id=TrainingMethod.LSQ,
+                                  expected_quantizer_class=LSQUniformWeightQATQuantizer).run_test()
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.SYMMETRIC,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
+                                  quantizer_id=TrainingMethod.LSQ,
+                                  expected_quantizer_class=LSQActivationQATQuantizer).run_test()
+        TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
+                                  quant_method=QuantizationMethod.UNIFORM,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
+                                  quantizer_id=TrainingMethod.LSQ,
+                                  expected_quantizer_class=LSQUniformActivationQATQuantizer).run_test()
+
 
 
 if __name__ == '__main__':
