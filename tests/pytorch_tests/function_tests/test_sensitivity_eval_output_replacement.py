@@ -109,7 +109,7 @@ class TestSensitivityEvalWithArgmaxOutputReplacementNodes(TestSensitivityEvalWit
         model = argmax_output_model()
         with self.unit_test.assertRaises(Exception) as e:
             self.verify_test_for_model(model)
-        self.assertTrue("All graph outputs should support metric outputs" in str(e.exception))
+        self.unit_test.assertTrue("All graph outputs should support metric outputs" in str(e.exception))
 
 
 
