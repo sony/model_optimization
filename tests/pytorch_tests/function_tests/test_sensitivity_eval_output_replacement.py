@@ -78,7 +78,7 @@ class TestSensitivityEvalWithOutputReplacementBase(BasePytorchTest):
                                                            generate_pytorch_tpc,
                                                            input_shape=(1, 3, 16, 16),
                                                            mixed_precision_enabled=True)
-        trace_hessian_service = HessianInfoService(graph=graph,
+        hessian_info_service = HessianInfoService(graph=graph,
                                                    fw_impl=pytorch_impl,
                                                    representative_dataset=self.representative_data_gen)
 
@@ -86,7 +86,7 @@ class TestSensitivityEvalWithOutputReplacementBase(BasePytorchTest):
                                                     MixedPrecisionQuantizationConfigV2(use_grad_based_weights=True),
                                                     self.representative_data_gen,
                                                     DEFAULT_PYTORCH_INFO,
-                                                    trace_hessian_service=trace_hessian_service)
+                                                    hessian_info_service=hessian_info_service)
 
         # If the output replacement nodes for MP sensitivity evaluation has been computed correctly then the ReLU layer
         # should be added to the interest points and included in the output nodes list for metric computation purposes.
