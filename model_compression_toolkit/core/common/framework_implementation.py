@@ -314,7 +314,7 @@ class FrameworkImplementation(ABC):
                                   quant_config: MixedPrecisionQuantizationConfigV2,
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
-                                  trace_info_service: HessianInfoService = None,
+                                  hessian_info_service: HessianInfoService = None,
                                   disable_activation_for_metric: bool = False) -> SensitivityEvaluation:
         """
         Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
@@ -326,7 +326,7 @@ class FrameworkImplementation(ABC):
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
-            trace_info_service: HessianInfoService to fetch Hessian traces approximations.
+            hessian_info_service: HessianInfoService to fetch Hessian traces approximations.
 
         Returns:
             A function that computes the metric.

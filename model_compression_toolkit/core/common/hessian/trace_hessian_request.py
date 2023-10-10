@@ -27,7 +27,7 @@ class HessianMode(Enum):
     Note: This is not the actual Hessian but an approximation.
     """
     WEIGHTS = 0         # Hessian approximation based on weights
-    ACTIVATIONS = 1     # Hessian approximation based on activations
+    ACTIVATION = 1     # Hessian approximation based on activations
 
 
 class HessianInfoGranularity(Enum):

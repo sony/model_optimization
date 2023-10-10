@@ -90,9 +90,9 @@ def core_runner(in_model: Any,
                                      tb_w,
                                      mixed_precision_enable=core_config.mixed_precision_enable)
 
-    trace_info_service = HessianInfoService(graph=graph,
-                                            representative_dataset=representative_data_gen,
-                                            fw_impl=fw_impl)
+    hessian_info_service = HessianInfoService(graph=graph,
+                                              representative_dataset=representative_data_gen,
+                                              fw_impl=fw_impl)
 
     tg = _prepare_model_for_quantization(graph,
                                          representative_data_gen,
@@ -114,7 +114,7 @@ def core_runner(in_model: Any,
                                                  target_kpi,
                                                  core_config.mixed_precision_config,
                                                  representative_data_gen,
-                                                 trace_info_service=trace_info_service)
+                                                 hessian_info_service=hessian_info_service)
         else:
             Logger.warning(
                 f'Mixed Precision has overwrite bit-width configuration{core_config.mixed_precision_config.configuration_overwrite}')
@@ -157,7 +157,7 @@ def core_runner(in_model: Any,
                 figure = visual.plot_config_bitwidth()
                 tb_w.add_figure(figure, f'Activation final bit-width config')
 
-    return tg, bit_widths_config, trace_info_service
+    return tg, bit_widths_config, hessian_info_service
 
 
 def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:

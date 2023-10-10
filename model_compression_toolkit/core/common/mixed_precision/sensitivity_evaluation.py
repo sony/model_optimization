@@ -212,7 +212,7 @@ class SensitivityEvaluation:
         for target_node in self.interest_points:
             # Create a request for trace Hessian approximation with specific configurations
             # (here we use per-tensor approximation of the Hessian's trace w.r.t the node's activations)
-            trace_hessian_request = TraceHessianRequest(mode=HessianMode.ACTIVATIONS,
+            trace_hessian_request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
                                                         granularity=HessianInfoGranularity.PER_TENSOR,
                                                         target_node=target_node)
 

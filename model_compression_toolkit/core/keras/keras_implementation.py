@@ -483,7 +483,7 @@ class KerasImplementation(FrameworkImplementation):
         Returns: TraceHessianCalculatorKeras to use for the trace hessian approximation computation for this request.
 
         """
-        if trace_hessian_request.mode == HessianMode.ACTIVATIONS:
+        if trace_hessian_request.mode == HessianMode.ACTIVATION:
             return ActivationTraceHessianCalculatorKeras(graph=graph,
                                                          trace_hessian_request=trace_hessian_request,
                                                          input_images=input_images,

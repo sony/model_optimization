@@ -138,7 +138,7 @@ class GPTQTrainer(ABC):
         if self.gptq_config.use_hessian_based_weights:
             compare_point_to_trace_hessian_approximations = {}
             for target_node in self.compare_points:
-                trace_hessian_request = TraceHessianRequest(mode=HessianMode.ACTIVATIONS,
+                trace_hessian_request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
                                                             granularity=HessianInfoGranularity.PER_TENSOR,
                                                             target_node=target_node)
                 node_approximations = self.hessian_service.fetch_hessian(trace_hessian_request=trace_hessian_request,

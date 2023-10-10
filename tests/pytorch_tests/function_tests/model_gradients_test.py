@@ -216,7 +216,7 @@ def _get_normalized_hessian_trace_approx(representative_data_gen,
                                                         fw_impl=pytorch_impl)
     x = []
     for interest_point in interest_points:
-        request = hessian_common.TraceHessianRequest(mode=hessian_common.HessianMode.ACTIVATIONS,
+        request = hessian_common.TraceHessianRequest(mode=hessian_common.HessianMode.ACTIVATION,
                                                      granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
                                                      target_node=interest_point)
         hessian_data = hessian_service.fetch_hessian(request, 1)
