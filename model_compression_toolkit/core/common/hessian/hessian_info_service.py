@@ -63,7 +63,9 @@ class HessianInfoService:
 
     def count_saved_info_of_request(self, hessian_request:TraceHessianRequest) -> int:
         """
-        Counts the saved approximations of the trace of the Hessian for a specific request.
+        Counts the saved approximations of Hessian info (traces, for now) for a specific request.
+        If some approximations were computed for this request before, the amount of approximations (per image)
+        will be returned. If not, zero is returned.
 
         Args:
             hessian_request: The request configuration for which to count the saved data.

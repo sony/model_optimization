@@ -200,6 +200,10 @@ class SensitivityEvaluation:
     def _compute_gradient_based_weights(self) -> np.ndarray:
         """
         Compute gradient-based weights using trace Hessian approximations for each interest point.
+
+        Returns: A vector of weights, one for each interest point,
+         to be used for the distance metric weighted average computation.
+
         """
         # Dictionary to store the trace Hessian approximations for each interest point (target node)
         compare_point_to_trace_hessian_approximations = {}
