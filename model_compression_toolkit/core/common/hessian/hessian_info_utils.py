@@ -33,6 +33,8 @@ def normalize_weights(trace_hessian_approximations: List,
     Returns:
             Normalized list of trace Hessian approximations for each interest point.
     """
+    if len(trace_hessian_approximations)==1:
+        return [1.]
 
     sum_without_outputs = sum(
         [trace_hessian_approximations[i] for i in range(len(trace_hessian_approximations)) if i not in outputs_indices])
