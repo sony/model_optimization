@@ -77,6 +77,16 @@ def inputs_as_list_model(input_shape):
     outputs = ReLU()(x_bn)
     return keras.Model(inputs=[input1, input2], outputs=outputs)
 
+def multiple_outputs_node_model(input_shape):
+    inputs = Input(shape=input_shape)
+    x_conv = Conv2D(2, 3, padding='same', name="conv2d")(inputs)
+    x_bn = BatchNormalization()(x_conv)
+    x_relu = ReLU()(x_bn)
+    x_split = tf.split(x_relu, num_or_size_splits=2, axis=-1)
+    outputs = x_split[0]+x_split[1]
+    # outputs = x_relu
+    return keras.Model(inputs=inputs, outputs=outputs)
+
 
 def model_with_output_replacements(input_shape):
     random_uniform = initializers.random_uniform(0, 1)
@@ -186,4 +196,12 @@ class TestModelGradients(unittest.TestCase):
         keras_impl = KerasImplementation()
         graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
         self._run_model_grad_test(graph, keras_impl, num_of_inputs=2)
+
+    def test_multiple_outputs_node(self):
+        input_shape = (8, 8, 3)
+        in_model = multiple_outputs_node_model(input_shape)
+        keras_impl = KerasImplementation()
+        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset,
+                                           generate_keras_tpc)
+        self._run_model_grad_test(graph, keras_impl)
 

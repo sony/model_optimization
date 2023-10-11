@@ -93,8 +93,9 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
                 # List to store the approximated trace of the Hessian for each interest point
                 trace_approx_by_node = []
+                # Loop through each interest point activation tensor
                 for ipt in tqdm(interest_points_tensors):  # Per Interest point activation tensor
-                    trace_jv = []
+                    interest_point_scores = [] # List to store scores for each interest point
                     for j in range(self.num_iterations_for_approximation):  # Approximation iterations
                         # Getting a random vector with normal distribution
                         v = tf.random.normal(shape=output.shape)
@@ -102,24 +103,51 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
                         with g.stop_recording():
                             # Computing the approximation by getting the gradient of (output * v)
-                            jac_v = g.gradient(f_v, ipt, unconnected_gradients=tf.UnconnectedGradients.ZERO)
-                            jac_v = tf.reshape(jac_v, [jac_v.shape[0], -1])
-                            jac_trace_approx = tf.reduce_mean(tf.reduce_sum(tf.pow(jac_v, 2.0)))
+                            gradients = g.gradient(f_v, ipt, unconnected_gradients=tf.UnconnectedGradients.ZERO)
+                            # If a node has multiple outputs, gradients is a list of tensors. If it has only a single
+                            # output gradients is a tensor. To handle both cases, we first convert gradients to a
+                            # list if it's a single tensor.
+                            if not isinstance(gradients, list):
+                                gradients = [gradients]
 
-                            # If the change to the mean approximation is insignificant we stop the calculation
+                            # Compute the approximation per node's output
+                            score_approx_per_output = []
+                            for grad in gradients:
+                                grad = tf.reshape(grad, [grad.shape[0], -1])
+                                score_approx_per_output.append(tf.reduce_mean(tf.reduce_sum(tf.pow(grad, 2.0))))
+
+                            # If the change to the mean approximation is insignificant (to all outputs)
+                            # we stop the calculation.
                             if j > MIN_JACOBIANS_ITER:
-                                new_mean = np.mean([jac_trace_approx, *trace_jv])
-                                delta = new_mean - np.mean(trace_jv)
-                                if np.abs(delta) / (np.abs(new_mean) + 1e-6) < JACOBIANS_COMP_TOLERANCE:
-                                    trace_jv.append(jac_trace_approx)
+                                new_mean_per_output = []
+                                delta_per_output = []
+                                # Compute new means and deltas for each output index
+                                for output_idx, score_approx in enumerate(score_approx_per_output):
+                                    prev_scores_output = [x[output_idx] for x in interest_point_scores]
+                                    new_mean = np.mean([score_approx, *prev_scores_output])
+                                    delta = new_mean - np.mean(prev_scores_output)
+                                    new_mean_per_output.append(new_mean)
+                                    delta_per_output.append(delta)
+
+                                # Check if all outputs have converged
+                                is_converged = all([np.abs(delta) / (np.abs(new_mean) + 1e-6) < JACOBIANS_COMP_TOLERANCE for delta, new_mean in zip(delta_per_output, new_mean_per_output)])
+                                if is_converged:
+                                    interest_point_scores.append(score_approx_per_output)
                                     break
 
-                            trace_jv.append(jac_trace_approx)
-                    trace_approx_by_node.append(2 * tf.reduce_mean(trace_jv) / output.shape[
-                        -1])  # Get averaged squared trace approximation
+                            interest_point_scores.append(score_approx_per_output)
 
-                trace_approx_by_node = tf.reduce_mean([trace_approx_by_node],
-                                                       axis=0)  # Just to get one tensor instead of list of tensors with single element
+                    final_approx_per_output = []
+                    # Compute the final approximation for each output index
+                    num_node_outputs = len(interest_point_scores[0])
+                    for output_idx in range(num_node_outputs):
+                        final_approx_per_output.append(2 * tf.reduce_mean([x[output_idx] for x in interest_point_scores]) / output.shape[-1])
+
+                    # final_approx_per_output is a list of all approximations (one per output), thus we average them to
+                    # get the final score of a node.
+                    trace_approx_by_node.append(tf.reduce_mean(final_approx_per_output))  # Get averaged squared trace approximation
+
+                trace_approx_by_node = tf.reduce_mean([trace_approx_by_node], axis=0)  # Just to get one tensor instead of list of tensors with single element
 
                 return trace_approx_by_node.numpy().tolist()
         else:
