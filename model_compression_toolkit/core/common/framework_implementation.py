@@ -17,12 +17,14 @@ from typing import Callable, Any, List, Tuple, Dict
 
 import numpy as np
 
+from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
@@ -46,6 +48,24 @@ class FrameworkImplementation(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} did not supply a constants module.')  # pragma: no cover
 
+    @abstractmethod
+    def get_trace_hessian_calculator(self,
+                                     graph: Graph,
+                                     input_images: List[Any],
+                                     trace_hessian_request: TraceHessianRequest,
+                                     num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
+        """
+        Get framework trace hessian approximations calculator based on the trace hessian request.
+        Args:
+            input_images: Images to use for computation.
+            graph: Float graph to compute the approximation of its different nodes.
+            trace_hessian_request: TraceHessianRequest to search for the desired calculator.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
+
+        Returns: TraceHessianCalculator to use for the trace hessian approximation computation for this request.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_trace_hessian_calculator method.')  # pragma: no cover
     @abstractmethod
     def to_numpy(self, tensor: Any) -> np.ndarray:
         """
@@ -294,6 +314,7 @@ class FrameworkImplementation(ABC):
                                   quant_config: MixedPrecisionQuantizationConfigV2,
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
+                                  hessian_info_service: HessianInfoService = None,
                                   disable_activation_for_metric: bool = False) -> SensitivityEvaluation:
         """
         Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
@@ -305,6 +326,7 @@ class FrameworkImplementation(ABC):
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
+            hessian_info_service: HessianInfoService to fetch Hessian traces approximations.
 
         Returns:
             A function that computes the metric.
@@ -361,39 +383,6 @@ class FrameworkImplementation(ABC):
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_node_distance_fn method.')  # pragma: no cover
 
-    @abstractmethod
-    def model_grad(self,
-                   graph_float: common.Graph,
-                   model_input_tensors: Dict[BaseNode, np.ndarray],
-                   interest_points: List[BaseNode],
-                   output_list: List[BaseNode],
-                   all_outputs_indices: List[int],
-                   alpha: float = 0.3,
-                   n_iter: int = 50,
-                   norm_weights: bool = True) -> List[float]:
-        """
-        Calls a framework specific model gradient calculation function, which computes the jacobian-based weights of the model's
-        outputs with respect to the feature maps of the set of given interest points.
-
-        Args:
-            graph_float: Graph to build its corresponding Keras model.
-            model_input_tensors: A mapping between model input nodes to an input batch.
-            interest_points: List of nodes which we want to get their feature map as output, to calculate distance metric.
-            output_list: List of nodes that considered as model's output for the purpose of gradients computation.
-            all_outputs_indices: Indices of the model outputs and outputs replacements (if exists),
-                in a topological sorted interest points list.
-            alpha: A tuning parameter to allow calibration between the contribution of the output feature maps returned
-                weights and the other feature maps weights (since the gradient of the output layers does not provide a
-                compatible weight for the distance metric computation).
-            n_iter: The number of random iterations to calculate the approximated jacobian-based weights for each interest point.
-            norm_weights: Whether to normalize the returned weights (to get values between 0 and 1).
-
-        Returns: A list of (possibly normalized) jacobian-based weights to be considered as the relevancy that each interest
-        point's output has on the model's output.
-        """
-
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s model_grad method.')  # pragma: no cover
 
     @abstractmethod
     def is_node_compatible_for_metric_outputs(self,

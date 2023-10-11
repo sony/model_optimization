@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
 import torch
 from torch.nn import Conv2d, BatchNorm2d, ReLU, Linear
 
@@ -23,6 +24,7 @@ from model_compression_toolkit.core.pytorch.pytorch_implementation import Pytorc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
+import model_compression_toolkit.core.common.hessian as hessian_common
 
 """
 This test checks the BatchNorm info collection.
@@ -138,7 +140,7 @@ class node_with_multiple_outputs_model(torch.nn.Module):
         x = self.bn(x)
         x = self.relu(x)
         y, z, w = torch.split(x, split_size_or_sections=1, dim=1)
-        return y + z + w
+        return y, z, w
 
 
 class non_differentiable_node_model(torch.nn.Module):
@@ -189,20 +191,41 @@ class ModelGradientsCalculationTest(BasePytorchTest):
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, generate_pytorch_tpc)
-        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
-        output_list = [ipts[-1]]
-        model_grads = pytorch_impl.model_grad(graph_float=graph,
-                                              model_input_tensors=input_tensors,
-                                              interest_points=ipts,
-                                              output_list=output_list,
-                                              all_outputs_indices=[len(ipts) - 1],
-                                              alpha=0)
+        model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
+                                                           graph=graph,
+                                                           interest_points=ipts,
+                                                           pytorch_impl=pytorch_impl,
+                                                           alpha=0)
 
         self.unit_test.assertTrue(np.isclose(model_grads[0], 0.8, 1e-1))
         self.unit_test.assertTrue(np.isclose(model_grads[1], 0.2, 1e-1))
         self.unit_test.assertTrue(model_grads[2] == 0.0)
+
+
+
+def _get_normalized_hessian_trace_approx(representative_data_gen,
+                                         graph,
+                                         interest_points,
+                                         pytorch_impl,
+                                         alpha):
+
+    hessian_service = hessian_common.HessianInfoService(graph=graph,
+                                                        representative_dataset=representative_data_gen,
+                                                        fw_impl=pytorch_impl)
+    x = []
+    for interest_point in interest_points:
+        request = hessian_common.TraceHessianRequest(mode=hessian_common.HessianMode.ACTIVATION,
+                                                     granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
+                                                     target_node=interest_point)
+        hessian_data = hessian_service.fetch_hessian(request, 1)
+        hessian_data_per_image = hessian_data[0]
+        assert isinstance(hessian_data_per_image, list)
+        assert len(hessian_data_per_image) == 1
+        x.append(hessian_data_per_image[0])
+    x = hessian_common.hessian_utils.normalize_weights(x, alpha=alpha, outputs_indices=[len(interest_points) - 1])
+    return x
 
 
 class ModelGradientsBasicModelTest(BasePytorchTest):
@@ -221,21 +244,19 @@ class ModelGradientsBasicModelTest(BasePytorchTest):
         input_shapes = self.create_inputs_shape()
         yield self.generate_inputs(input_shapes)
 
+
     def run_test(self, seed=0):
         model_float = basic_model()
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, generate_pytorch_tpc)
-        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
-        output_list = [ipts[-1]]
-        model_grads = pytorch_impl.model_grad(graph_float=graph,
-                                              model_input_tensors=input_tensors,
-                                              interest_points=ipts,
-                                              output_list=output_list,
-                                              all_outputs_indices=[len(ipts) - 1],
-                                              alpha=0.3)
+        model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
+                                                           graph=graph,
+                                                           interest_points=ipts,
+                                                           pytorch_impl=pytorch_impl,
+                                                           alpha=0.3)
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
@@ -262,16 +283,13 @@ class ModelGradientsAdvancedModelTest(BasePytorchTest):
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, generate_pytorch_tpc)
-        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
-        output_list = [ipts[-1]]
-        model_grads = pytorch_impl.model_grad(graph_float=graph,
-                                              model_input_tensors=input_tensors,
-                                              interest_points=ipts,
-                                              output_list=output_list,
-                                              all_outputs_indices=[len(ipts) - 1],
-                                              alpha=0.3)
+        model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
+                                                           graph=graph,
+                                                           interest_points=ipts,
+                                                           pytorch_impl=pytorch_impl,
+                                                           alpha=0.3)
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
@@ -298,16 +316,13 @@ class ModelGradientsMultipleOutputsTest(BasePytorchTest):
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, generate_pytorch_tpc)
-        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
-        output_list = [o.node for o in graph.output_nodes]
-        model_grads = pytorch_impl.model_grad(graph_float=graph,
-                                              model_input_tensors=input_tensors,
-                                              interest_points=ipts,
-                                              output_list=output_list,
-                                              all_outputs_indices=[len(ipts) - 1, len(ipts) - 2],
-                                              alpha=0.3)
+        model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
+                                                           graph=graph,
+                                                           interest_points=ipts,
+                                                           pytorch_impl=pytorch_impl,
+                                                           alpha=0.3)
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
@@ -334,33 +349,14 @@ class ModelGradientsOutputReplacementTest(BasePytorchTest):
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, generate_pytorch_tpc)
-        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
-
         ipts = [n for n in graph.get_topo_sorted_nodes()]
-        output_list = [ipts[-2]]
-        output_indices = [len(ipts) - 2, len(ipts) - 1]
-
-        model_grads = pytorch_impl.model_grad(graph_float=graph,
-                                              model_input_tensors=input_tensors,
-                                              interest_points=ipts,
-                                              output_list=output_list,
-                                              all_outputs_indices=output_indices,
-                                              alpha=0.3)
-
-        # Checking that the weights where computed and normalized correctly
-        self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
-
-        model_grads_2 = pytorch_impl.model_grad(graph_float=graph,
-                                                model_input_tensors=input_tensors,
-                                                interest_points=ipts,
-                                                output_list=output_list,
-                                                all_outputs_indices=output_indices,
-                                                alpha=0)
-
-        # Checking that the weights where computed and normalized correctly
-        zero_count = len(list(filter(lambda v: v == np.float32(0), model_grads_2)))
-        self.unit_test.assertTrue(zero_count == 2)
-        self.unit_test.assertTrue(np.isclose(np.sum(model_grads_2), 1))
+        with self.unit_test.assertRaises(Exception) as e:
+            _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
+                                                 graph=graph,
+                                                 interest_points=ipts,
+                                                 pytorch_impl=pytorch_impl,
+                                                 alpha=0.3)
+        self.unit_test.assertTrue("All graph outputs should support metric outputs" in str(e.exception))
 
 
 class ModelGradientsMultipleOutputsModelTest(BasePytorchTest):
@@ -384,16 +380,13 @@ class ModelGradientsMultipleOutputsModelTest(BasePytorchTest):
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, generate_pytorch_tpc)
-        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
-        output_list = [ipt for ipt in ipts if 'split' in ipt.name]
-        model_grads = pytorch_impl.model_grad(graph_float=graph,
-                                              model_input_tensors=input_tensors,
-                                              interest_points=ipts,
-                                              output_list=output_list,
-                                              all_outputs_indices=[i for i, ipt in enumerate(ipts) if 'split' in ipt.name],
-                                              alpha=0.3)
+        model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
+                                                           graph=graph,
+                                                           interest_points=ipts,
+                                                           pytorch_impl=pytorch_impl,
+                                                           alpha=0.3)
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
@@ -420,16 +413,13 @@ class ModelGradientsNonDifferentiableNodeModelTest(BasePytorchTest):
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, generate_pytorch_tpc)
-        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [n for n in graph.get_topo_sorted_nodes()]
-        output_list = [ipts[-1]]
-        model_grads = pytorch_impl.model_grad(graph_float=graph,
-                                              model_input_tensors=input_tensors,
-                                              interest_points=ipts,
-                                              output_list=output_list,
-                                              all_outputs_indices=[len(ipts) - 1],
-                                              alpha=0.3)
+        model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
+                                                           graph=graph,
+                                                           interest_points=ipts,
+                                                           pytorch_impl=pytorch_impl,
+                                                           alpha=0.3)
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
@@ -444,14 +434,12 @@ class ModelGradientsSinglePointTest(ModelGradientsBasicModelTest):
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, generate_pytorch_tpc)
-        input_tensors = {inode: next(self.representative_data_gen())[0] for inode in graph.get_inputs()}
 
         ipts = [graph.get_topo_sorted_nodes()[-1]]
-        output_list = [ipts[-1]]
-        model_grads = pytorch_impl.model_grad(graph_float=graph,
-                                              model_input_tensors=input_tensors,
-                                              interest_points=ipts,
-                                              output_list=output_list,
-                                              all_outputs_indices=[len(ipts) - 1])
+        model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
+                                                           graph=graph,
+                                                           interest_points=ipts,
+                                                           pytorch_impl=pytorch_impl,
+                                                           alpha=0.3)
 
         self.unit_test.assertTrue(len(model_grads) == 1 and model_grads[0] == 1.0)

@@ -21,6 +21,7 @@ import numpy as np
 from tqdm import tqdm
 
 from model_compression_toolkit.core.common import FrameworkInfo
+from model_compression_toolkit.core.common.hessian.hessian_info_service import HessianInfoService
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -45,7 +46,6 @@ from model_compression_toolkit.core.common.visualization.final_config_visualizer
     WeightsFinalBitwidthConfigVisualizer, \
     ActivationFinalBitwidthConfigVisualizer
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
-
 
 def core_runner(in_model: Any,
                 representative_data_gen: Callable,
@@ -90,6 +90,10 @@ def core_runner(in_model: Any,
                                      tb_w,
                                      mixed_precision_enable=core_config.mixed_precision_enable)
 
+    hessian_info_service = HessianInfoService(graph=graph,
+                                              representative_dataset=representative_data_gen,
+                                              fw_impl=fw_impl)
+
     tg = _prepare_model_for_quantization(graph,
                                          representative_data_gen,
                                          core_config,
@@ -109,7 +113,8 @@ def core_runner(in_model: Any,
                                                  fw_impl,
                                                  target_kpi,
                                                  core_config.mixed_precision_config,
-                                                 representative_data_gen)
+                                                 representative_data_gen,
+                                                 hessian_info_service=hessian_info_service)
         else:
             Logger.warning(
                 f'Mixed Precision has overwrite bit-width configuration{core_config.mixed_precision_config.configuration_overwrite}')
@@ -152,7 +157,7 @@ def core_runner(in_model: Any,
                 figure = visual.plot_config_bitwidth()
                 tb_w.add_figure(figure, f'Activation final bit-width config')
 
-    return tg, bit_widths_config
+    return tg, bit_widths_config, hessian_info_service
 
 
 def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:

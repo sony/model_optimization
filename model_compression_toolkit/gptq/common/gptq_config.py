@@ -39,7 +39,7 @@ class GPTQHessianWeightsConfig:
                  norm_weights: bool = True,
                  log_norm: bool = True,
                  scale_log_norm: bool = False,
-                 hessians_n_iter: int = 50):
+                 hessians_n_iter: int = 50): #TODO: remove
 
         """
         Initialize a GPTQHessianWeightsConfig.

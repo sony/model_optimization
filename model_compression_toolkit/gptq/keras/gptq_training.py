@@ -20,6 +20,7 @@ from packaging import version
 from tensorflow.keras.layers import Layer
 from tqdm import tqdm
 
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
@@ -58,7 +59,8 @@ class KerasGPTQTrainer(GPTQTrainer):
                  gptq_config: GradientPTQConfigV2,
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo,
-                 representative_data_gen: Callable):
+                 representative_data_gen: Callable,
+                 hessian_info_service: HessianInfoService = None):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
         Use the dataset generator to pass images through the teacher and student networks to get intermediate
@@ -72,12 +74,15 @@ class KerasGPTQTrainer(GPTQTrainer):
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
             fw_info: Framework information.
             representative_data_gen: Dataset to use for inputs of the models.
+            hessian_info_service: HessianInfoService for fetching and computing Hessian's trace approximation.
+
         """
         super().__init__(graph_float,
                          graph_quant,
                          gptq_config,
                          fw_impl,
-                         fw_info)
+                         fw_info,
+                         hessian_info_service=hessian_info_service)
 
         self.loss_list = []
         self.input_scale = 1
@@ -109,7 +114,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
-        self.weights_for_average_loss = self.compute_hessian_based_weights(representative_data_gen)
+        self.weights_for_average_loss = self.compute_hessian_based_weights()
 
         self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
 

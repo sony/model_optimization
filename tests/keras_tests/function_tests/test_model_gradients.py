@@ -1,3 +1,5 @@
+import functools
+
 import keras
 import unittest
 
@@ -7,6 +9,7 @@ from tensorflow import initializers
 import numpy as np
 import tensorflow as tf
 
+import model_compression_toolkit.core.common.hessian as hessian_common
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
@@ -74,6 +77,16 @@ def inputs_as_list_model(input_shape):
     outputs = ReLU()(x_bn)
     return keras.Model(inputs=[input1, input2], outputs=outputs)
 
+def multiple_outputs_node_model(input_shape):
+    inputs = Input(shape=input_shape)
+    x_conv = Conv2D(2, 3, padding='same', name="conv2d")(inputs)
+    x_bn = BatchNormalization()(x_conv)
+    x_relu = ReLU()(x_bn)
+    x_split = tf.split(x_relu, num_or_size_splits=2, axis=-1)
+    outputs = x_split[0]+x_split[1]
+    # outputs = x_relu
+    return keras.Model(inputs=inputs, outputs=outputs)
+
 
 def model_with_output_replacements(input_shape):
     random_uniform = initializers.random_uniform(0, 1)
@@ -89,29 +102,38 @@ def model_with_output_replacements(input_shape):
     return keras.Model(inputs=inputs, outputs=outputs)
 
 
-def representative_dataset():
-    yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]
+def representative_dataset(num_of_inputs=1):
+    yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]*num_of_inputs
+
+def _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha, num_of_inputs=1):
+    hessian_service = hessian_common.HessianInfoService(graph=graph,
+                                                        representative_dataset=functools.partial(representative_dataset, num_of_inputs=num_of_inputs),
+                                                        fw_impl=keras_impl)
+    x = []
+    for interest_point in interest_points:
+        request = hessian_common.TraceHessianRequest(mode=hessian_common.HessianMode.ACTIVATION,
+                                                     granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
+                                                     target_node=interest_point)
+        hessian_data = hessian_service.fetch_hessian(request, 1)
+        hessian_data_per_image = hessian_data[0]
+        assert isinstance(hessian_data_per_image, list)
+        assert len(hessian_data_per_image) == 1
+        x.append(hessian_data_per_image[0])
+    x = hessian_common.hessian_utils.normalize_weights(x, alpha=alpha, outputs_indices=[len(interest_points) - 1])
+    return x
 
 
 class TestModelGradients(unittest.TestCase):
+    # TODO: change tests to ignore the normalization and check
+    #  closeness to ACTUAL hessian values on small trained models.
 
-    def _run_model_grad_test(self, graph, keras_impl, output_indices=None):
+    def _run_model_grad_test(self, graph, keras_impl, output_indices=None, num_of_inputs=1):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
-
-        input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
-        output_nodes = [o.node for o in graph.output_nodes]
-
         all_output_indices = [len(interest_points) - 1] if output_indices is None else output_indices
+        x = _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha=0.3, num_of_inputs=num_of_inputs)
 
-        x = keras_impl.model_grad(graph_float=graph,
-                                  model_input_tensors=input_tensors,
-                                  interest_points=interest_points,
-                                  output_list=output_nodes,
-                                  all_outputs_indices=all_output_indices,
-                                  alpha=0.3)
-
-        # Checking that the weihgts where computed and normalized correctly
+        # Checking that the weights were computed and normalized correctly
         # In rare occasions, the output tensor has all zeros, so the gradients for all interest points are zeros.
         # This is a pathological case that is not possible in real networks, so we just extend the assertion to prevent
         # the test from failing in this rare cases.
@@ -126,14 +148,7 @@ class TestModelGradients(unittest.TestCase):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
 
-        input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
-        output_nodes = [o.node for o in graph.output_nodes]
-        x = keras_impl.model_grad(graph_float=graph,
-                                  model_input_tensors=input_tensors,
-                                  interest_points=interest_points,
-                                  output_list=output_nodes,
-                                  all_outputs_indices=[len(interest_points) - 1],
-                                  alpha=0)
+        x = _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha=0)
 
         # These are the expected values of the normalized gradients (gradients should be 2 and 1
         # with respect to input and mult layer, respectively)
@@ -141,12 +156,8 @@ class TestModelGradients(unittest.TestCase):
         self.assertTrue(np.isclose(x[1], np.float32(0.2), 1e-1))
         self.assertTrue(np.isclose(x[2], np.float32(0.0)))
 
-        y = keras_impl.model_grad(graph_float=graph,
-                                  model_input_tensors=input_tensors,
-                                  interest_points=interest_points,
-                                  output_list=output_nodes,
-                                  all_outputs_indices=[len(interest_points) - 1],
-                                  alpha=1)
+        y = _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha=1)
+
         self.assertTrue(np.isclose(y[0], np.float32(0.0)))
         self.assertTrue(np.isclose(y[1], np.float32(0.0)))
         self.assertTrue(np.isclose(y[2], np.float32(1.0)))
@@ -178,67 +189,19 @@ class TestModelGradients(unittest.TestCase):
         self._run_model_grad_test(graph, keras_impl, output_indices=[len(sorted_graph_nodes) - 1,
                                                                      len(sorted_graph_nodes) - 2])
 
-    def test_model_grad_with_output_replacements(self):
-        input_shape = (8, 8, 3)
-        in_model = model_with_output_replacements(input_shape)
-        keras_impl = KerasImplementation()
-        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
-
-        sorted_graph_nodes = graph.get_topo_sorted_nodes()
-        interest_points = [n for n in sorted_graph_nodes]
-
-        input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
-        output_nodes = [graph.get_topo_sorted_nodes()[-2]]
-        output_indices = [len(interest_points) - 2, len(interest_points) - 1]
-
-        x = keras_impl.model_grad(graph_float=graph,
-                                  model_input_tensors=input_tensors,
-                                  interest_points=interest_points,
-                                  output_list=output_nodes,
-                                  all_outputs_indices=output_indices,
-                                  alpha=0.3)
-
-        # Checking that the weights where computed and normalized correctly
-        self.assertTrue(np.isclose(np.sum(x), 1))
-
-        # Checking replacement output correction
-        y = keras_impl.model_grad(graph_float=graph,
-                                  model_input_tensors=input_tensors,
-                                  interest_points=interest_points,
-                                  output_list=output_nodes,
-                                  all_outputs_indices=output_indices,
-                                  alpha=0)
-
-        # Checking that the weights where computed and normalized correctly
-        self.assertTrue(np.isclose(np.sum(y), 1))
-        self.assertTrue(y[-1] == np.float32(0))
-        self.assertTrue(y[-2] == np.float32(0))
 
     def test_inputs_as_list_model_grad(self):
         input_shape = (8, 8, 3)
         in_model = inputs_as_list_model(input_shape)
         keras_impl = KerasImplementation()
         graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
+        self._run_model_grad_test(graph, keras_impl, num_of_inputs=2)
 
+    def test_multiple_outputs_node(self):
+        input_shape = (8, 8, 3)
+        in_model = multiple_outputs_node_model(input_shape)
+        keras_impl = KerasImplementation()
+        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset,
+                                           generate_keras_tpc)
         self._run_model_grad_test(graph, keras_impl)
 
-    def test_model_grad_single_point(self):
-        input_shape = (8, 8, 3)
-        in_model = basic_model(input_shape)
-        keras_impl = KerasImplementation()
-        graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset, generate_keras_tpc)
-
-        sorted_graph_nodes = graph.get_topo_sorted_nodes()
-        interest_points = [sorted_graph_nodes[-1]]
-
-        input_tensors = {inode: next(representative_dataset())[0] for inode in graph.get_inputs()}
-        output_nodes = [sorted_graph_nodes[-1]]
-        output_indices = [len(interest_points) - 1]
-
-        x = keras_impl.model_grad(graph_float=graph,
-                                  model_input_tensors=input_tensors,
-                                  interest_points=interest_points,
-                                  output_list=output_nodes,
-                                  all_outputs_indices=output_indices)
-
-        self.assertTrue(len(x) == 1 and x[0] == 1.0)

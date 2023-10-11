@@ -206,14 +206,14 @@ if FOUND_TF:
 
         fw_impl = GPTQKerasImplemantation()
 
-        tg, bit_widths_config = core_runner(in_model=in_model,
-                                            representative_data_gen=representative_data_gen,
-                                            core_config=core_config,
-                                            fw_info=fw_info,
-                                            fw_impl=fw_impl,
-                                            tpc=target_platform_capabilities,
-                                            target_kpi=target_kpi,
-                                            tb_w=tb_w)
+        tg, bit_widths_config, hessian_info_service = core_runner(in_model=in_model,
+                                                                  representative_data_gen=representative_data_gen,
+                                                                  core_config=core_config,
+                                                                  fw_info=fw_info,
+                                                                  fw_impl=fw_impl,
+                                                                  tpc=target_platform_capabilities,
+                                                                  target_kpi=target_kpi,
+                                                                  tb_w=tb_w)
 
         tg_gptq = gptq_runner(tg,
                               core_config,
@@ -222,7 +222,8 @@ if FOUND_TF:
                               gptq_representative_data_gen if gptq_representative_data_gen else representative_data_gen,
                               fw_info,
                               fw_impl,
-                              tb_w)
+                              tb_w,
+                              hessian_info_service=hessian_info_service)
 
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen, tb_w, tg_gptq, fw_impl, fw_info)
