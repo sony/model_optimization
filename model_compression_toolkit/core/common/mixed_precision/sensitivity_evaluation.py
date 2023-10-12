@@ -126,6 +126,8 @@ class SensitivityEvaluation:
                 f"should've been assigned before computing the gradient-based weights."
 
             self.interest_points_gradients = self._compute_gradient_based_weights()
+            print(f"Hessian approximations {self.interest_points_gradients}")
+
             self.quant_config.distance_weighting_method = lambda d: self.interest_points_gradients
 
     def compute_metric(self,
@@ -239,7 +241,7 @@ class SensitivityEvaluation:
                 approx_by_image_per_interest_point.append(compare_point_to_trace_hessian_approximations[target_node][image_idx][0])
 
             if self.quant_config.norm_weights:
-                approx_by_image_per_interest_point = hessian_utils.normalize_weights(approx_by_image_per_interest_point, [])
+                approx_by_image_per_interest_point = hessian_utils.normalize_weights(approx_by_image_per_interest_point, self.output_nodes_indices)
 
             # Append the approximations for the current image to the main list
             approx_by_image.append(approx_by_image_per_interest_point)
