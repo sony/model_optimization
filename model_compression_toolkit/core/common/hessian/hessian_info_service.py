@@ -98,7 +98,7 @@ class HessianInfoService:
         Args:
             trace_hessian_request: Configuration for which to compute the approximation.
         """
-        Logger.info(f"Computing Hessian-trace approximation for a sample.")
+        Logger.debug(f"Computing Hessian-trace approximation for a node {trace_hessian_request.target_node}.")
 
         # Sample images for the computation
         images = self._sample_single_image_per_input()
@@ -137,6 +137,8 @@ class HessianInfoService:
             The inner list length dependent on the granularity (1 for per-tensor, 
             OC for per-output-channel when the requested node has OC output-channels, etc.)
         """
+        Logger.info(f"Ensuring {required_size} Hessian-trace approximation for node {trace_hessian_request.target_node}.")
+
         # Ensure the saved info has the required number of approximations
         self._populate_saved_info_to_size(trace_hessian_request, required_size)
 
@@ -156,6 +158,10 @@ class HessianInfoService:
         """
         # Get the current number of saved approximations for the request
         current_existing_hessians = self.count_saved_info_of_request(trace_hessian_request)
+
+        Logger.info(
+            f"Found {current_existing_hessians} Hessian-trace approximations for node {trace_hessian_request.target_node}."
+            f"{required_size - current_existing_hessians} approximations left to compute...")
 
         # Compute the required number of approximations to meet the required size
         for _ in range(required_size - current_existing_hessians):
