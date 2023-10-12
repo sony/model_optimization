@@ -161,7 +161,7 @@ class HessianInfoService:
 
         Logger.info(
             f"Found {current_existing_hessians} Hessian-trace approximations for node {trace_hessian_request.target_node}."
-            f"{required_size - current_existing_hessians} approximations left to compute...")
+            f" {required_size - current_existing_hessians} approximations left to compute...")
 
         # Compute the required number of approximations to meet the required size
         for _ in range(required_size - current_existing_hessians):
