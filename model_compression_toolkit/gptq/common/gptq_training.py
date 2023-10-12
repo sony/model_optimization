@@ -205,7 +205,7 @@ class GPTQTrainer(ABC):
         for image_idx in range(self.gptq_config.hessian_weights_config.hessians_num_samples):
             approx_by_interest_point = self._get_approximations_by_interest_point(approximations, image_idx)
             if self.gptq_config.hessian_weights_config.norm_weights:
-                approx_by_interest_point = hessian_utils.normalize_weights(approx_by_interest_point, [])
+                approx_by_interest_point = hessian_utils.normalize_weights(approx_by_interest_point, [], alpha=0)
             trace_hessian_approx_by_image.append(approx_by_interest_point)
         return trace_hessian_approx_by_image
 
