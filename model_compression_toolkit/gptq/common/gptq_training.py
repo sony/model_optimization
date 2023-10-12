@@ -243,56 +243,6 @@ class GPTQTrainer(ABC):
                 f"granularity=HessianInfoGranularity.PER_TENSOR) but has a length of {len(trace_approx)}"
             )
 
-    # def compute_hessian_based_weights(self) -> np.ndarray:
-    #     """
-    #
-    #     Returns: Trace hessian approximations per layer w.r.t activations of the interest points.
-    #
-    #     """
-    #     # TODO: Add comments + rewrtie the loops for better clarity
-    #     if self.gptq_config.use_hessian_based_weights:
-    #         compare_point_to_trace_hessian_approximations = {}
-    #         for target_node in self.compare_points:
-    #             trace_hessian_request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
-    #                                                         granularity=HessianInfoGranularity.PER_TENSOR,
-    #                                                         target_node=target_node)
-    #             node_approximations = self.hessian_service.fetch_hessian(trace_hessian_request=trace_hessian_request,
-    #                                                                      required_size=self.gptq_config.hessian_weights_config.hessians_num_samples)
-    #             compare_point_to_trace_hessian_approximations[target_node] = node_approximations
-    #
-    #         trace_hessian_approx_by_image = []
-    #         for image_idx in range(self.gptq_config.hessian_weights_config.hessians_num_samples):
-    #             approx_by_interest_point = []
-    #             for target_node in self.compare_points:
-    #                 if not isinstance(compare_point_to_trace_hessian_approximations[target_node][image_idx], list):
-    #                     Logger.error(f"Trace approx was expected to be a list but has a type of {type(compare_point_to_trace_hessian_approximations[target_node][image_idx])}")
-    #                 if not len(compare_point_to_trace_hessian_approximations[target_node][image_idx])==1:
-    #                     Logger.error(
-    #                         f"Trace approx was expected to be of length 1 (when computing approximations with "
-    #                         f"granularity=HessianInfoGranularity.PER_TENSOR but has a length of {len(compare_point_to_trace_hessian_approximations[target_node][image_idx])}")
-    #                 approx_by_interest_point.append(compare_point_to_trace_hessian_approximations[target_node][image_idx][0])
-    #
-    #             if self.gptq_config.hessian_weights_config.norm_weights:
-    #                 approx_by_interest_point = hessian_utils.normalize_weights(approx_by_interest_point,
-    #                                                                   [])
-    #             trace_hessian_approx_by_image.append(approx_by_interest_point)
-    #
-    #         if self.gptq_config.hessian_weights_config.log_norm:
-    #             mean_approx_scores = np.mean(trace_hessian_approx_by_image, axis=0)
-    #             mean_approx_scores = np.where(mean_approx_scores != 0, mean_approx_scores,
-    #                                              np.partition(mean_approx_scores, 1)[1])
-    #             log_weights = np.log10(mean_approx_scores)
-    #
-    #             if self.gptq_config.hessian_weights_config.scale_log_norm:
-    #                 return (log_weights - np.min(log_weights)) / (np.max(log_weights) - np.min(log_weights))
-    #
-    #             return log_weights - np.min(log_weights)
-    #         else:
-    #             return np.mean(trace_hessian_approx_by_image, axis=0)
-    #     else:
-    #         num_nodes = len(self.compare_points)
-    #         return np.asarray([1 / num_nodes for _ in range(num_nodes)])
-
     @staticmethod
     def _generate_images_batch(representative_data_gen: Callable, num_samples_for_loss: int) -> np.ndarray:
         """
