@@ -32,7 +32,7 @@ from model_compression_toolkit.core.keras.constants import KERNEL, BIAS, USE_BIA
     QUERY_SHAPE, KEY_SHAPE, VALUE_SHAPE, OUTPUT_SHAPE, ATTENTION_AXES, ACTIVATION, GROUPS, LINEAR, FILTERS, PADDING, \
     FUNCTION, DIMS, TARGET_SHAPE, F_STRIDED_SLICE, F_STACK, Q_KERNEL, Q_BIAS, K_KERNEL, K_BIAS, V_KERNEL, V_BIAS, \
     OUTPUT_KERNEL, OUTPUT_BIAS, F_MATMUL, TRANSPOSE_B, KERNEL_SIZE, AXIS, F_STRIDED_SLICE_BEGIN, F_STRIDED_SLICE_END, \
-    STRIDES, DILATIONS
+    STRIDES, DILATIONS, DATA_FORMAT
 
 
 class DwconvToConv(common.BaseSubstitution):
@@ -75,9 +75,10 @@ class DwconvToConv(common.BaseSubstitution):
         bias_key = self._get_weight_by_name(dwconv_node, BIAS)
         _reuse_params = {REUSE: dwconv_node.reuse, REUSE_GROUP: dwconv_node.reuse_group}
 
-        dwconv_fw_attr = {FILTERS: filters, KERNEL_SIZE: k_shape[0],
+        dwconv_fw_attr = {FILTERS: filters, KERNEL_SIZE: (k_shape[0], k_shape[1]),
                                                     STRIDES: dwconv_node.framework_attr[STRIDES],
                                                     PADDING: dwconv_node.framework_attr[PADDING],
+                                                    DATA_FORMAT: dwconv_node.framework_attr[DATA_FORMAT],
                                                     DILATIONS: dwconv_node.framework_attr[DILATIONS],
                                                     GROUPS: k_shape[2],
                                                     ACTIVATION: dwconv_node.framework_attr[ACTIVATION],
