@@ -126,8 +126,6 @@ class SensitivityEvaluation:
                 f"should've been assigned before computing the gradient-based weights."
 
             self.interest_points_gradients = self._compute_gradient_based_weights()
-            print(f"Hessian approximations {self.interest_points_gradients}")
-
             self.quant_config.distance_weighting_method = lambda d: self.interest_points_gradients
 
     def compute_metric(self,
