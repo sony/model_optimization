@@ -17,7 +17,7 @@ import copy
 import numpy as np
 from typing import Callable, Any, List
 
-from model_compression_toolkit.constants import AXIS
+from model_compression_toolkit.constants import AXIS, HESSIAN_OUTPUT_ALPHA
 from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
@@ -26,6 +26,7 @@ from model_compression_toolkit.core.common.model_builder_mode import ModelBuilde
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, \
     HessianInfoGranularity, HessianInfoService
+from model_compression_toolkit.core.common.hessian import hessian_info_utils as hessian_utils
 
 
 class SensitivityEvaluation:
@@ -236,6 +237,12 @@ class SensitivityEvaluation:
                 assert len(compare_point_to_trace_hessian_approximations[target_node][image_idx]) == 1
                 # Append the single approximation value to the list for the current image
                 approx_by_image_per_interest_point.append(compare_point_to_trace_hessian_approximations[target_node][image_idx][0])
+
+            if self.quant_config.norm_weights:
+                approx_by_image_per_interest_point = hessian_utils.normalize_weights(trace_hessian_approximations=approx_by_image_per_interest_point,
+                                                                                     outputs_indices=self.output_nodes_indices,
+                                                                                     alpha=HESSIAN_OUTPUT_ALPHA)
+
             # Append the approximations for the current image to the main list
             approx_by_image.append(approx_by_image_per_interest_point)
 

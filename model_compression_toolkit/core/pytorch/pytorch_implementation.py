@@ -86,6 +86,7 @@ from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 from model_compression_toolkit.core.pytorch.statistics_correction.apply_second_moment_correction import \
     pytorch_apply_second_moment_correction
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
+from model_compression_toolkit.logger import Logger
 
 
 class PytorchImplementation(FrameworkImplementation):
@@ -538,3 +539,19 @@ class PytorchImplementation(FrameworkImplementation):
                                                         input_images=input_images,
                                                         fw_impl=self,
                                                         num_iterations_for_approximation=num_iterations_for_approximation)
+
+    def sample_single_representative_dataset(self, representative_dataset: Callable):
+        """
+        Get a single sample (namely, batch size of 1) from a representative dataset.
+
+        Args:
+            representative_dataset: Callable which returns the representative dataset at any batch size.
+
+        Returns: List of inputs from representative_dataset where each sample has a batch size of 1.
+        """
+        images = next(representative_dataset())
+        if not isinstance(images, list):
+            Logger.error(f'Images expected to be a list but is of type {type(images)}')
+
+        # Ensure each image is a single sample, if not, take the first sample
+        return [torch.unsqueeze(image[0], 0) if image.shape[0] != 1 else image for image in images]

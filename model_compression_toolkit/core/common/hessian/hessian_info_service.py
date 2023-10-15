@@ -20,6 +20,7 @@ from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest
 from model_compression_toolkit.logger import Logger
+from functools import partial
 
 
 class HessianInfoService:
@@ -51,7 +52,11 @@ class HessianInfoService:
             fw_impl: Framework-specific implementation for trace Hessian approximation computation.
         """
         self.graph = graph
-        self.representative_dataset = representative_dataset
+
+        # Create a representative_data_gen with batch size of 1
+        self.representative_dataset = partial(fw_impl.sample_single_representative_dataset,
+                                              representative_dataset=representative_dataset)
+
         self.fw_impl = fw_impl
         self.num_iterations_for_approximation = num_iterations_for_approximation
 
@@ -76,19 +81,6 @@ class HessianInfoService:
         # Check if the request is in the saved info and return its count, otherwise return 0
         return len(self.trace_hessian_request_to_score_list.get(hessian_request, []))
 
-    def _sample_single_image_per_input(self) -> List[Any]:
-        """
-        Samples a single image per input from the representative dataset.
-
-        Returns:
-            List: List of sampled images.
-        """
-        images = next(self.representative_dataset())
-        if not isinstance(images, list):
-            Logger.error(f'Images expected to be a list but is of type {type(images)}')
-
-        # Ensure each image is a single sample, if not, take the first sample
-        return [np.expand_dims(image[0], 0) if image.shape[0] != 1 else image for image in images]
 
     def compute(self, trace_hessian_request:TraceHessianRequest):
         """
@@ -98,10 +90,10 @@ class HessianInfoService:
         Args:
             trace_hessian_request: Configuration for which to compute the approximation.
         """
-        Logger.info(f"Computing Hessian-trace approximation for a sample.")
+        Logger.debug(f"Computing Hessian-trace approximation for a node {trace_hessian_request.target_node}.")
 
         # Sample images for the computation
-        images = self._sample_single_image_per_input()
+        images = self.representative_dataset()
 
         # Get the framework-specific calculator for trace Hessian approximation
         fw_hessian_calculator = self.fw_impl.get_trace_hessian_calculator(graph=self.graph,
@@ -137,6 +129,8 @@ class HessianInfoService:
             The inner list length dependent on the granularity (1 for per-tensor, 
             OC for per-output-channel when the requested node has OC output-channels, etc.)
         """
+        Logger.info(f"Ensuring {required_size} Hessian-trace approximation for node {trace_hessian_request.target_node}.")
+
         # Ensure the saved info has the required number of approximations
         self._populate_saved_info_to_size(trace_hessian_request, required_size)
 
@@ -156,6 +150,10 @@ class HessianInfoService:
         """
         # Get the current number of saved approximations for the request
         current_existing_hessians = self.count_saved_info_of_request(trace_hessian_request)
+
+        Logger.info(
+            f"Found {current_existing_hessians} Hessian-trace approximations for node {trace_hessian_request.target_node}."
+            f" {required_size - current_existing_hessians} approximations left to compute...")
 
         # Compute the required number of approximations to meet the required size
         for _ in range(required_size - current_existing_hessians):

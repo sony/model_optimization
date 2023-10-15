@@ -66,6 +66,20 @@ class FrameworkImplementation(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_trace_hessian_calculator method.')  # pragma: no cover
+
+    @abstractmethod
+    def sample_single_representative_dataset(self, representative_dataset: Callable):
+        """
+        Get a single sample (namely, batch size of 1) from a representative dataset.
+
+        Args:
+            representative_dataset: Callable which returns the representative dataset at any batch size.
+
+        Returns: List of inputs from representative_dataset where each sample has a batch size of 1.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s sample_single_representative_dataset method.')  # pragma: no cover
+
     @abstractmethod
     def to_numpy(self, tensor: Any) -> np.ndarray:
         """
