@@ -15,7 +15,6 @@
 
 
 import os
-from functools import partial
 from typing import Callable, Tuple, Any, List, Dict
 
 import numpy as np
@@ -91,11 +90,8 @@ def core_runner(in_model: Any,
                                      tb_w,
                                      mixed_precision_enable=core_config.mixed_precision_enable)
 
-    single_sample_dataset = partial(fw_impl.sample_single_representative_dataset,
-                                    representative_dataset=representative_data_gen)
-
     hessian_info_service = HessianInfoService(graph=graph,
-                                              representative_dataset=single_sample_dataset,
+                                              representative_dataset=representative_data_gen,
                                               fw_impl=fw_impl)
 
     tg = _prepare_model_for_quantization(graph,

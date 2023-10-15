@@ -20,6 +20,7 @@ from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest
 from model_compression_toolkit.logger import Logger
+from functools import partial
 
 
 class HessianInfoService:
@@ -51,7 +52,11 @@ class HessianInfoService:
             fw_impl: Framework-specific implementation for trace Hessian approximation computation.
         """
         self.graph = graph
-        self.representative_dataset = representative_dataset
+
+        # Create a representative_data_gen with batch size of 1
+        self.representative_dataset = partial(fw_impl.sample_single_representative_dataset,
+                                              representative_dataset=representative_dataset)
+
         self.fw_impl = fw_impl
         self.num_iterations_for_approximation = num_iterations_for_approximation
 
