@@ -76,19 +76,6 @@ class HessianInfoService:
         # Check if the request is in the saved info and return its count, otherwise return 0
         return len(self.trace_hessian_request_to_score_list.get(hessian_request, []))
 
-    def _sample_single_image_per_input(self) -> List[Any]:
-        """
-        Samples a single image per input from the representative dataset.
-
-        Returns:
-            List: List of sampled images.
-        """
-        images = next(self.representative_dataset())
-        if not isinstance(images, list):
-            Logger.error(f'Images expected to be a list but is of type {type(images)}')
-
-        # Ensure each image is a single sample, if not, take the first sample
-        return [np.expand_dims(image[0], 0) if image.shape[0] != 1 else image for image in images]
 
     def compute(self, trace_hessian_request:TraceHessianRequest):
         """
@@ -101,7 +88,7 @@ class HessianInfoService:
         Logger.debug(f"Computing Hessian-trace approximation for a node {trace_hessian_request.target_node}.")
 
         # Sample images for the computation
-        images = self._sample_single_image_per_input()
+        images = self.representative_dataset()
 
         # Get the framework-specific calculator for trace Hessian approximation
         fw_hessian_calculator = self.fw_impl.get_trace_hessian_calculator(graph=self.graph,

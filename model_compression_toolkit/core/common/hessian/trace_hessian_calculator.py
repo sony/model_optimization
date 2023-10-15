@@ -58,6 +58,11 @@ class TraceHessianCalculator(ABC):
         if len(self.input_images)!=len(graph.get_inputs()):
             Logger.error(f"Graph has {len(graph.get_inputs())} inputs, but provided representative dataset returns {len(self.input_images)} inputs")
 
+        # Assert all inputs have a batch size of 1
+        for image in self.input_images:
+            if image.shape[0]!=1:
+                Logger.error(f"Hessian is calculated only for a single image (per input) but input shape is {image.shape}")
+
         self.fw_impl = fw_impl
         self.hessian_request = trace_hessian_request
 
