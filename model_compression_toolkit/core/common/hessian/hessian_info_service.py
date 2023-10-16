@@ -54,13 +54,29 @@ class HessianInfoService:
         self.graph = graph
 
         # Create a representative_data_gen with batch size of 1
-        self.representative_dataset = partial(fw_impl.sample_single_representative_dataset,
+        self.representative_dataset = partial(self._sample_single_representative_dataset,
                                               representative_dataset=representative_dataset)
 
         self.fw_impl = fw_impl
         self.num_iterations_for_approximation = num_iterations_for_approximation
 
         self.trace_hessian_request_to_score_list = {}
+
+    def _sample_single_representative_dataset(self, representative_dataset: Callable):
+        """
+        Get a single sample (namely, batch size of 1) from a representative dataset.
+
+        Args:
+            representative_dataset: Callable which returns the representative dataset at any batch size.
+
+        Returns: List of inputs from representative_dataset where each sample has a batch size of 1.
+        """
+        images = next(representative_dataset())
+        if not isinstance(images, list):
+            Logger.error(f'Images expected to be a list but is of type {type(images)}')
+
+        # Ensure each image is a single sample, if not, take the first sample
+        return [image[0:1, ...] if image.shape[0] != 1 else image for image in images]
 
     def _clear_saved_hessian_info(self):
         """Clears the saved info approximations."""

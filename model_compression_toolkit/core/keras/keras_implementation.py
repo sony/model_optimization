@@ -591,19 +591,3 @@ class KerasImplementation(FrameworkImplementation):
         """
 
         return model(inputs)
-
-    def sample_single_representative_dataset(self, representative_dataset: Callable):
-        """
-        Get a single sample (namely, batch size of 1) from a representative dataset.
-
-        Args:
-            representative_dataset: Callable which returns the representative dataset at any batch size.
-
-        Returns: List of inputs from representative_dataset where each sample has a batch size of 1.
-        """
-        images = next(representative_dataset())
-        if not isinstance(images, list):
-            Logger.error(f'Images expected to be a list but is of type {type(images)}')
-
-        # Ensure each image is a single sample, if not, take the first sample
-        return [tf.expand_dims(image[0], 0) if image.shape[0] != 1 else image for image in images]
