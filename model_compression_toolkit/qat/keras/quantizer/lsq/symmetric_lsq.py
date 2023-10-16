@@ -145,7 +145,7 @@ class LSQWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
             BaseKerasInferableQuantizer object.
         """
         if self.power_of_two:
-            thresholds = 2 ** np.ceil(np.log2(self.get_quantizer_variable(THRESHOLD_TENSOR)))
+            thresholds = 2 ** np.ceil(np.log2(self.get_quantizer_variable(THRESHOLD_TENSOR).numpy()))
             return WeightsPOTInferableQuantizer(num_bits=self.num_bits,
                                                 threshold=list(thresholds.flatten()),
                                                 per_channel=self.per_channel,
@@ -239,7 +239,7 @@ class LSQActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         """
 
         if self.power_of_two:
-            thresholds = 2 ** np.ceil(np.log2(self.get_quantizer_variable(THRESHOLD_TENSOR)))
+            thresholds = 2 ** np.ceil(np.log2(self.get_quantizer_variable(THRESHOLD_TENSOR).numpy()))
             return ActivationPOTInferableQuantizer(num_bits=self.num_bits,
                                                    # In activation quantization is per-tensor only - thus we pass
                                                    # the threshold as a list with a len of 1
