@@ -25,9 +25,9 @@ def ste_round(x: tf.Tensor) -> tf.Tensor:
     return error + x
 
 
-def ste_scale(x: tf.Tensor, scale=1.0) -> tf.Tensor:
+def grad_scale(x: tf.Tensor, scale=1.0) -> tf.Tensor:
     """
-    Return the scaled values of a tensor: return x in forward and x*scale in backward.
+    Return x in forward and x*scale in backward (for scaling the gradients).
     """
     x_scaled = scale * x
     error = tf.stop_gradient(x - x_scaled)

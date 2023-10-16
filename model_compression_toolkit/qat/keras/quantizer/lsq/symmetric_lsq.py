@@ -34,7 +34,7 @@ from model_compression_toolkit.trainable_infrastructure import TrainableQuantize
 from mct_quantizers.keras.quantizers import WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, \
     ActivationPOTInferableQuantizer, ActivationSymmetricInferableQuantizer
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
-from model_compression_toolkit.qat.keras.quantizer.quant_utils import ste_round, ste_scale
+from model_compression_toolkit.qat.keras.quantizer.quant_utils import ste_round, grad_scale
 
 
 def symmetric_lsq_quantizer(x: tf.Tensor,
@@ -50,7 +50,7 @@ def symmetric_lsq_quantizer(x: tf.Tensor,
         x: input to quantize
         thresholds: thresholds of quantization levels
         num_bits: number of bits for quantization
-        sign: whether if x is signed or not
+        sign: whether x is signed or not
         min_int: min clipping integer value
         max_int: max clipping integer value
         scale_factor: grad scale of LSQ algorithm
@@ -58,7 +58,7 @@ def symmetric_lsq_quantizer(x: tf.Tensor,
         A quantized tensor
     """
     delta = thresholds / (2 ** (num_bits - int(sign)))
-    delta_scaled = ste_scale(delta, scale_factor)
+    delta_scaled = grad_scale(delta, scale_factor)
     rounded = ste_round(x / delta_scaled)
     clipped = tf.math.minimum(tf.math.maximum(rounded, min_int), max_int)
     quantized = delta_scaled * clipped
