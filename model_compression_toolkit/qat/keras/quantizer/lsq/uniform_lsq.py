@@ -150,7 +150,7 @@ class LSQUniformActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
 
     def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         """
-        Initialize a STEUniformActivationQATQuantizer object with parameters to use
+        Initialize a LSQUniformActivationQATQuantizer object with parameters to use
         for the quantization.
 
         Args:

@@ -37,7 +37,7 @@ from model_compression_toolkit.trainable_infrastructure.common.base_trainable_qu
 from model_compression_toolkit.qat.keras.quantizer.quant_utils import ste_round, ste_scale
 
 
-def symmetric_quantizer(x, thresholds, num_bits, sign, min_int, max_int, scale_factor):
+def symmetric_lsq_quantizer(x, thresholds, num_bits, sign, min_int, max_int, scale_factor):
     delta = thresholds / (2 ** (num_bits - int(sign)))
     delta_scaled = ste_scale(delta, scale_factor)
     rounded = ste_round(x / delta_scaled)
@@ -115,7 +115,7 @@ class LSQWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         """
 
         thresholds = self.get_quantizer_variable(THRESHOLD_TENSOR)
-        q_tensor = symmetric_quantizer(inputs, thresholds, self.num_bits, C.WEIGHTS_SIGNED, self.min_int, self.max_int, self.scale_factor)
+        q_tensor = symmetric_lsq_quantizer(inputs, thresholds, self.num_bits, C.WEIGHTS_SIGNED, self.min_int, self.max_int, self.scale_factor)
         return q_tensor
 
     def convert2inferable(self) -> Union[WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer]:
@@ -151,7 +151,7 @@ class LSQActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
 
     def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         """
-        Initialize a STEActivationQATQuantizer object with parameters to use
+        Initialize a LSQActivationQATQuantizer object with parameters to use
         for the quantization.
 
         Args:
@@ -208,7 +208,7 @@ class LSQActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
         thresholds = self.get_quantizer_variable(THRESHOLD_TENSOR)
         n_channels = inputs.shape[-1]
         scale_factor = 1.0 / np.sqrt(self.max_int * n_channels)
-        q_tensor = symmetric_quantizer(inputs, thresholds, self.num_bits, self.sign, self.min_int, self.max_int, scale_factor)
+        q_tensor = symmetric_lsq_quantizer(inputs, thresholds, self.num_bits, self.sign, self.min_int, self.max_int, scale_factor)
         return q_tensor
 
     def convert2inferable(self) -> Union[ActivationPOTInferableQuantizer, ActivationSymmetricInferableQuantizer]:

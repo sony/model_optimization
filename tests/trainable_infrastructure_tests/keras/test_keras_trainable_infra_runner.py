@@ -22,8 +22,8 @@ from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste im
     STEActivationQATQuantizer
 from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformWeightQATQuantizer, \
     STEUniformActivationQATQuantizer
-from model_compression_toolkit.qat.keras.quantizer.LSQ.uniform_lsq import LSQUniformActivationQATQuantizer, LSQUniformWeightQATQuantizer
-from model_compression_toolkit.qat.keras.quantizer.LSQ.symmetric_lsq import LSQActivationQATQuantizer, LSQWeightQATQuantizer
+from model_compression_toolkit.qat.keras.quantizer.lsq.uniform_lsq import LSQUniformActivationQATQuantizer, LSQUniformWeightQATQuantizer
+from model_compression_toolkit.qat.keras.quantizer.lsq.symmetric_lsq import LSQActivationQATQuantizer, LSQWeightQATQuantizer
 from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
 from tests.trainable_infrastructure_tests.keras.trainable_keras.test_get_quantizers import \
     TestGetTrainableQuantizer
