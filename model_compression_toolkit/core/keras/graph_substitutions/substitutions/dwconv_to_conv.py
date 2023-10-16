@@ -75,22 +75,26 @@ class DwconvToConv(common.BaseSubstitution):
         bias_key = self._get_weight_by_name(dwconv_node, BIAS)
         _reuse_params = {REUSE: dwconv_node.reuse, REUSE_GROUP: dwconv_node.reuse_group}
 
-        dwconv_fw_attr = {FILTERS: filters, KERNEL_SIZE: (k_shape[0], k_shape[1]),
-                                                    STRIDES: dwconv_node.framework_attr[STRIDES],
-                                                    PADDING: dwconv_node.framework_attr[PADDING],
-                                                    DATA_FORMAT: dwconv_node.framework_attr[DATA_FORMAT],
-                                                    DILATIONS: dwconv_node.framework_attr[DILATIONS],
-                                                    GROUPS: k_shape[2],
-                                                    ACTIVATION: dwconv_node.framework_attr[ACTIVATION],
-                                                    USE_BIAS: dwconv_node.framework_attr[USE_BIAS]}
+        conv_fw_attr = dwconv_node.framework_attr
+        conv_fw_attr.update({FILTERS: filters,
+                               GROUPS: k_shape[2],
+                               'kernel_initializer': dwconv_node.framework_attr['depthwise_initializer'],
+                               'kernel_regularizer': dwconv_node.framework_attr['depthwise_regularizer'],
+                               'kernel_constraint': dwconv_node.framework_attr['depthwise_constraint']})
+
+        conv_fw_attr.pop('depth_multiplier')
+        conv_fw_attr.pop('depthwise_initializer')
+        conv_fw_attr.pop('depthwise_regularizer')
+        conv_fw_attr.pop('depthwise_constraint')
+
         if bias_key:
             b = dwconv_node.weights[bias_key].copy()
 
-            conv_node = BaseNode(dwconv_node.name, dwconv_fw_attr, dwconv_node.input_shape, dwconv_node.output_shape,
+            conv_node = BaseNode(dwconv_node.name, conv_fw_attr, dwconv_node.input_shape, dwconv_node.output_shape,
                                  {KERNEL: k, BIAS: b}, Conv2D,
                                  **_reuse_params)
         else:
-            conv_node = BaseNode(dwconv_node.name, dwconv_fw_attr, dwconv_node.input_shape, dwconv_node.output_shape,
+            conv_node = BaseNode(dwconv_node.name, conv_fw_attr, dwconv_node.input_shape, dwconv_node.output_shape,
                                  {KERNEL: k}, Conv2D,
                                  **_reuse_params)
 
