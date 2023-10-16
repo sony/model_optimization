@@ -45,12 +45,12 @@ class TrainingMethod(Enum):
 
     DQA -  DNN Quantization with Attention. Includes a smooth quantization introduces by DQA method
 
-    lsq - Learned Step size Quantization. Includes PowerOfTwo, symmetric & uniform quantizers: https://arxiv.org/pdf/1902.08153.pdf
+    LSQ - Learned Step size Quantization. Includes PowerOfTwo, symmetric & uniform quantizers: https://arxiv.org/pdf/1902.08153.pdf
 
     """
     STE = "STE",
     DQA = "DQA",
-    LSQ = "lsq"
+    LSQ = "LSQ"
 
 
 class QATConfig:

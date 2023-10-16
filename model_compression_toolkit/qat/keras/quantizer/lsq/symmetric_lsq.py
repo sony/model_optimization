@@ -37,7 +37,26 @@ from model_compression_toolkit.trainable_infrastructure.common.base_trainable_qu
 from model_compression_toolkit.qat.keras.quantizer.quant_utils import ste_round, ste_scale
 
 
-def symmetric_lsq_quantizer(x, thresholds, num_bits, sign, min_int, max_int, scale_factor):
+def symmetric_lsq_quantizer(x: tf.Tensor,
+                            thresholds: tf.Tensor,
+                            num_bits: int,
+                            sign: bool,
+                            min_int: int,
+                            max_int:int,
+                            scale_factor: float) -> tf.Tensor:
+    """
+    Symmetric quantizer according to LSQ algorithm: https://arxiv.org/pdf/1902.08153.pdf
+    Args:
+        x: input to quantize
+        thresholds: thresholds of quantization levels
+        num_bits: number of bits for quantization
+        sign: whether if x is signed or not
+        min_int: min clipping integer value
+        max_int: max clipping integer value
+        scale_factor: grad scale of LSQ algorithm
+    Returns:
+        A quantized tensor
+    """
     delta = thresholds / (2 ** (num_bits - int(sign)))
     delta_scaled = ste_scale(delta, scale_factor)
     rounded = ste_round(x / delta_scaled)
@@ -56,7 +75,7 @@ class LSQWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
 
     def __init__(self, quantization_config: TrainableQuantizerWeightsConfig):
         """
-        Initialize a TrainableWeightQuantizer object with parameters to use
+        Initialize a LSQWeightQATQuantizer object with parameters to use
         for the quantization.
 
         Args:
