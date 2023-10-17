@@ -64,7 +64,6 @@ class TestHessianInfoWeights(unittest.TestCase):
                                    granularity=granularity,
                                    num_scores=num_scores)
         self.assertTrue(isinstance(score, np.ndarray), f"scores expected to be a numpy array but is {type(score)}")
-
         self.assertTrue(score.shape == expected_shape,
                         f"Tensor shape is expected to be {expected_shape} but has shape {score.shape}")  # per tensor
         return score

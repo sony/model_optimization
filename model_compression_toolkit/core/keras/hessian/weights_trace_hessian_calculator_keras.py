@@ -55,7 +55,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
     def compute(self) -> np.ndarray:
         """
-        Compute the Hessian-based scores for w.r.t target node's weights.
+        Compute the Hessian-based scores w.r.t target node's weights.
         Currently, supported nodes are [Conv2D, Dense, Conv2DTranspose, DepthwiseConv2D].
         The computed scores are returned in a numpy array. The shape of the result differs
         according to the requested granularity. If for example the node is Conv2D with a kernel
@@ -68,7 +68,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
         """
         # Check if the target node's layer type is supported
-        if self.hessian_request.target_node.layer_class not in [Conv2D, Dense, Conv2DTranspose, DepthwiseConv2D]:
+        if not DEFAULT_KERAS_INFO.is_kernel_op(self.hessian_request.target_node.type):
             Logger.error(
                 f"{self.hessian_request.target_node.type} is not supported for Hessian info w.r.t weights.")
 
@@ -77,14 +77,19 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
         # Get the weight attributes for the target node type
         weight_attributes = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.hessian_request.target_node.type)
-        assert len(weight_attributes) == 1
 
         # Get the weight tensor for the target node
+        if len(weight_attributes) != 1:
+            Logger.error(f"Hessian scores w.r.t weights is supported, for now, for a single-weight node. Found {len(weight_attributes)}")
+
         weight_tensor = getattr(model.get_layer(self.hessian_request.target_node.name), weight_attributes[0])
 
         # Get the output channel index (needed for HessianInfoGranularity.PER_OUTPUT_CHANNEL case)
-        output_channel_axis, _ = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(
-            self.hessian_request.target_node.type)
+        output_channel_axis, _ = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(self.hessian_request.target_node.type)
+
+        # Get number of scores that should be calculated by the granularity.
+        num_of_scores = self._get_num_scores_by_granularity(weight_tensor,
+                                                            output_channel_axis)
 
         # Initiate a gradient tape for automatic differentiation
         with tf.GradientTape(persistent=True) as tape:
@@ -106,7 +111,9 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                 with tape.stop_recording():
                     # Compute gradients of f_v with respect to the weights
                     gradients = tape.gradient(f_v, weight_tensor)
-                    gradients = self._reshape_gradients(gradients, output_channel_axis)
+                    gradients = self._reshape_gradients(gradients,
+                                                        output_channel_axis,
+                                                        num_of_scores)
                     approx = tf.reduce_sum(tf.pow(gradients, 2.0), axis=1)
 
                     # If the change to the mean approximation is insignificant (to all outputs)
@@ -137,7 +144,8 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
     def _reshape_gradients(self,
                            gradients: tf.Tensor,
-                           output_channel_axis: int) -> tf.Tensor:
+                           output_channel_axis: int,
+                           num_of_scores: int) -> tf.Tensor:
         """
         Reshape the gradient tensor based on the requested granularity.
 
@@ -152,8 +160,6 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             tf.Tensor: Reshaped gradient tensor based on the granularity.
         """
         # Reshape the gradients based on the granularity (whole tensor, per channel, or per element)
-        num_of_scores = self._get_num_scores_by_granularity(gradients,
-                                                            output_channel_axis)
         if self.hessian_request.granularity != HessianInfoGranularity.PER_OUTPUT_CHANNEL:
             gradients = tf.reshape(gradients, [num_of_scores, -1])
         else:
@@ -165,13 +171,13 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         return gradients
 
     def _get_num_scores_by_granularity(self,
-                                       gradients: tf.Tensor,
+                                       weight_tensor: tf.Tensor,
                                        output_channel_axis: int) -> int:
         """
         Get the number of scores to be computed based on the granularity type.
 
         Args:
-            gradients (tf.Tensor): The gradient tensor.
+            weight_tensor (tf.Tensor): The weight tensor.
             output_channel_axis (int): Axis corresponding to the output channels.
 
         Returns:
@@ -180,8 +186,8 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
             return 1
         elif self.hessian_request.granularity == HessianInfoGranularity.PER_OUTPUT_CHANNEL:
-            return gradients.shape[output_channel_axis]
+            return weight_tensor.shape[output_channel_axis]
         elif self.hessian_request.granularity == HessianInfoGranularity.PER_ELEMENT:
-            return tf.size(gradients).numpy()
+            return tf.size(weight_tensor).numpy()
         else:
             Logger.error(f"Encountered an unexpected granularity {self.hessian_request.granularity} ")
