@@ -17,6 +17,7 @@ import copy
 import tensorflow as tf
 import numpy as np
 from keras.layers import DepthwiseConv2D
+from keras.layers import Conv2D
 
 from model_compression_toolkit.core.keras.constants import ACTIVATION, LINEAR
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
@@ -51,8 +52,8 @@ class BiasCorrectionDepthwiseTest(BaseKerasFeatureNetworkTest):
         return np.ones(*self.get_input_shapes())
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        dw_layer = get_layers_from_model_by_type(quantized_model, DepthwiseConv2D)[0]
-        error = float_model.layers[1].depthwise_kernel - dw_layer.get_quantized_weights()['depthwise_kernel']
+        dw_layer = get_layers_from_model_by_type(quantized_model, Conv2D)[0]
+        error = float_model.layers[1].depthwise_kernel - dw_layer.get_quantized_weights()['kernel']
         error = np.sum(error, axis=(0,1)).flatten()
         bias = dw_layer.weights[2]
         # Input mean is 1 so correction_term = quant_error * 1

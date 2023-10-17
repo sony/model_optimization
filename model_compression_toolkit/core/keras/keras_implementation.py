@@ -91,6 +91,7 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.sepa
     SeparableConvDecomposition, DEPTH_MULTIPLIER
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.shift_negative_activation import \
     keras_apply_shift_negative_correction
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.dwconv_to_conv import DwconvToConv
 from model_compression_toolkit.core.keras.keras_node_prior_info import create_node_prior_info
 from model_compression_toolkit.core.keras.reader.reader import model_reader
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
@@ -259,7 +260,8 @@ class KerasImplementation(FrameworkImplementation):
         """
         return [SeparableConvDecomposition(),
                 MultiHeadAttentionDecomposition(),
-                ActivationDecomposition()]
+                ActivationDecomposition(),
+                DwconvToConv()]
 
     def get_substitutions_pre_statistics_collection(self, quant_config: QuantizationConfig) -> \
             List[common.BaseSubstitution]:

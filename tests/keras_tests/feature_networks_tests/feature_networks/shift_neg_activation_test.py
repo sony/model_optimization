@@ -85,8 +85,14 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
                     avg_holder_layer = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[3]
                     self.unit_test.assertTrue(avg_holder_layer.activation_holder_quantizer.get_config()['signed'] == False)
 
-        attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(type(self.linear_op_to_test))[0]
-        linear_layer = get_layers_from_model_by_type(quantized_model, type(self.linear_op_to_test))[0]
+        # In case of DepthwiseConv2D with depth_multiplier != 1, we expected substition of Conv2D
+        is_dw_high_mult = isinstance(self.linear_op_to_test, layers.DepthwiseConv2D) and self.linear_op_to_test.depth_multiplier != 1
+        if is_dw_high_mult:
+            attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(layers.Conv2D)[0]
+            linear_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
+        else:
+            attr = DEFAULT_KERAS_INFO.get_kernel_op_attributes(type(self.linear_op_to_test))[0]
+            linear_layer = get_layers_from_model_by_type(quantized_model, type(self.linear_op_to_test))[0]
         q_w, q_b = linear_layer.get_quantized_weights()[attr].numpy(), linear_layer.layer.bias.numpy()
 
         # Take the ACTUAL value the activations were shifted by, from the Add layer the substitution needs to insert

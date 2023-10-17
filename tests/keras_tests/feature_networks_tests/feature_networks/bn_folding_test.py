@@ -77,9 +77,17 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
         # check the conv weights after the bn folding
         float_conv = float_model.layers[1]
 
+        # Check if it's a DepthwiseConv2D with depth_multiplier. In that case, assume substitution to Conv2D was done:
+        is_dw_high_mult = isinstance(float_conv, layers.DepthwiseConv2D) and (float_conv.depth_multiplier != 1)
+
         if float_conv.__class__ == layers.SeparableConv2D:
             float_kernel = float_conv.weights[1]
             float_bias = float_conv.weights[2]
+
+            quant_conv = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
+        elif is_dw_high_mult:
+            float_kernel = float_conv.weights[0]
+            float_bias = float_conv.weights[1]
 
             quant_conv = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
         else:
@@ -103,6 +111,10 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
         bias = float_beta + (float_bias - float_moving_mean) * weights_scale
         kernel = update_kernel_for_bn_folding_fn(conv_layer=float_conv, kernel=float_kernel.numpy(),
                                                  weights_scale=weights_scale.numpy())
+
+        if is_dw_high_mult:
+            ks = kernel.shape
+            kernel = np.reshape(kernel,[ks[0], ks[1], 1, ks[2] * ks[3]])
 
         self.unit_test.assertTrue(np.all(quant_kernel.numpy() == kernel))
         self.unit_test.assertTrue(np.all(quant_bias.numpy() == bias))
