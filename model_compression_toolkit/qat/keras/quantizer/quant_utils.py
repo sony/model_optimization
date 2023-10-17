@@ -17,6 +17,23 @@ import tensorflow as tf
 from typing import Tuple
 
 
+def ste_round(x: tf.Tensor) -> tf.Tensor:
+    """
+    Return the rounded values of a tensor.
+    """
+    error = tf.stop_gradient(tf.math.round(x) - x)
+    return error + x
+
+
+def grad_scale(x: tf.Tensor, scale=1.0) -> tf.Tensor:
+    """
+    Return x in forward and x*scale in backward (for scaling the gradients).
+    """
+    x_scaled = scale * x
+    error = tf.stop_gradient(x - x_scaled)
+    return error + x_scaled
+
+
 def adjust_range_to_include_zero(range_min: tf.Tensor,
                                  range_max: tf.Tensor,
                                  n_bits: int) -> Tuple[tf.Tensor, tf.Tensor]:
