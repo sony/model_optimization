@@ -13,15 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 
-import tensorflow as tf
 import functools
 import keras
 import numpy as np
 import unittest
 from keras.layers import Dense
-from keras.src.layers import Conv2DTranspose, DepthwiseConv2D
 from tensorflow import initializers
-from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input
+from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, Conv2DTranspose, DepthwiseConv2D
 
 import model_compression_toolkit as mct
 import model_compression_toolkit.core.common.hessian as hessian_common
