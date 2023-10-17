@@ -260,6 +260,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         self.enable_weights_quantization = op_cfg.enable_weights_quantization
         self.min_threshold = qc.min_threshold
         self.l_p_value = qc.l_p_value
+        self.simd_size = op_cfg.simd_size
 
 
     @property
@@ -367,7 +368,8 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                self.weights_per_channel_threshold == other.weights_per_channel_threshold and \
                self.enable_weights_quantization == other.enable_weights_quantization and \
                self.min_threshold == other.min_threshold and \
-               self.l_p_value == other.l_p_value
+               self.l_p_value == other.l_p_value and \
+               self.simd_size == other.simd_size
 
     def __hash__(self):
         return hash((self.weights_quantization_fn,
@@ -381,4 +383,5 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                      self.weights_per_channel_threshold,
                      self.enable_weights_quantization,
                      self.min_threshold,
-                     self.l_p_value))
+                     self.l_p_value,
+                     self.simd_size))
