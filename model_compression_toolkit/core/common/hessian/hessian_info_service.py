@@ -145,6 +145,9 @@ class HessianInfoService:
             The inner list length dependent on the granularity (1 for per-tensor, 
             OC for per-output-channel when the requested node has OC output-channels, etc.)
         """
+        if required_size==0:
+            return []
+
         Logger.info(f"Ensuring {required_size} Hessian-trace approximation for node {trace_hessian_request.target_node}.")
 
         # Ensure the saved info has the required number of approximations
