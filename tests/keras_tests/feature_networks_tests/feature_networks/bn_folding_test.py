@@ -204,7 +204,7 @@ class DepthwiseConv2DBNFoldingTest(BaseBatchNormalizationFolding):
 class DepthwiseConv2DBNFoldingHighMultiplierTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
         super().__init__(unit_test,
-                         linear_layer=layers.DepthwiseConv2D) # When depth_mult > 1 we assume DepthwiseConv2D was replaced with Conv2D
+                         linear_layer=layers.DepthwiseConv2D)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
