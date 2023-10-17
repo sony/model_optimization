@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
@@ -52,7 +52,17 @@ class TraceHessianCalculatorPytorch(TraceHessianCalculator):
                                                             trace_hessian_request=trace_hessian_request,
                                                             num_iterations_for_approximation=num_iterations_for_approximation)
 
-    def _concat_outputs(self, outputs):
+    def _concat_outputs(self, outputs: Union[torch.Tensor, List[torch.Tensor]]) -> torch.Tensor:
+        """
+        Concatenate model outputs into a single tensor.
+
+        Args:
+            outputs: Outputs to concatenate.
+
+        Returns:
+            torch.Tensor of the concatenation of outputs.
+
+        """
         unfold_outputs = self._unfold_outputs(outputs)
         r_outputs = [torch.reshape(output, shape=[output.shape[0], -1]) for output in unfold_outputs]
 

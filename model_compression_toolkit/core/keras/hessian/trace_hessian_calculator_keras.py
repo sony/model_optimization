@@ -15,7 +15,7 @@
 
 from model_compression_toolkit.core.common.hessian.trace_hessian_calculator import TraceHessianCalculator
 
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any, Union
 
 import tensorflow as tf
 from tensorflow.python.keras.engine.base_layer import Layer
@@ -56,7 +56,17 @@ class TraceHessianCalculatorKeras(TraceHessianCalculator):
                                                           trace_hessian_request=trace_hessian_request,
                                                           num_iterations_for_approximation=num_iterations_for_approximation)
 
-    def _concat_outputs(self, outputs):
+    def _concat_outputs(self, outputs: Union[tf.Tensor, List[tf.Tensor]]) -> tf.Tensor:
+        """
+        Concatenate model outputs into a single tensor.
+
+        Args:
+            outputs: Outputs to concatenate.
+
+        Returns:
+            tf.Tensor of the concatenation of outputs.
+
+        """
         unfold_outputs = self._unfold_outputs(outputs)
         r_outputs = [tf.reshape(output, shape=[output.shape[0], -1]) for output in unfold_outputs]
 
