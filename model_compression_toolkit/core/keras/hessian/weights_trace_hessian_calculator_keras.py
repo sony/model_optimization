@@ -15,7 +15,7 @@
 
 import numpy as np
 import tensorflow as tf
-from keras.src.layers import Conv2D, Dense, Conv2DTranspose, DepthwiseConv2D
+from keras.layers import Conv2D, Dense, Conv2DTranspose, DepthwiseConv2D
 from typing import List
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE
