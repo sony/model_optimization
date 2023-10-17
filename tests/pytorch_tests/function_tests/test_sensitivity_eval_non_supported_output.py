@@ -40,24 +40,7 @@ class argmax_output_model(torch.nn.Module):
         return output
 
 
-class softmax_output_model(torch.nn.Module):
-    def __init__(self):
-        super(softmax_output_model, self).__init__()
-        self.conv1 = torch.nn.Conv2d(3, 3, kernel_size=(3, 3))
-        self.bn1 = torch.nn.BatchNorm2d(3)
-        self.conv2 = torch.nn.Conv2d(3, 4, kernel_size=(5, 5))
-        self.relu = torch.nn.ReLU()
-
-    def forward(self, inp):
-        x = self.conv1(inp)
-        x = self.bn1(x)
-        x = self.conv2(x)
-        x = self.relu(x)
-        output = torch.softmax(x, dim=-1)
-        return output
-
-
-class TestSensitivityEvalWithOutputReplacementBase(BasePytorchTest):
+class TestSensitivityEvalWithNonSupportedOutputBase(BasePytorchTest):
     def create_inputs_shape(self):
         return [[1, 3, 16, 16]]
 
@@ -88,18 +71,8 @@ class TestSensitivityEvalWithOutputReplacementBase(BasePytorchTest):
                                                     DEFAULT_PYTORCH_INFO,
                                                     hessian_info_service=hessian_info_service)
 
-        # If the output replacement nodes for MP sensitivity evaluation has been computed correctly then the ReLU layer
-        # should be added to the interest points and included in the output nodes list for metric computation purposes.
-        relu_node = graph.get_topo_sorted_nodes()[-2]
 
-        self.unit_test.assertTrue(relu_node.type == torch.nn.ReLU)
-        self.unit_test.assertIn(relu_node, se.interest_points)
-        self.unit_test.assertEqual(len(se.outputs_replacement_nodes), 1)
-        self.unit_test.assertIn(relu_node, se.outputs_replacement_nodes)
-        self.unit_test.assertEqual(se.output_nodes_indices, [2, 3])
-
-
-class TestSensitivityEvalWithArgmaxOutputReplacementNodes(TestSensitivityEvalWithOutputReplacementBase):
+class TestSensitivityEvalWithArgmaxNode(TestSensitivityEvalWithNonSupportedOutputBase):
 
     def __init__(self, unit_test):
         super().__init__(unit_test)
@@ -108,19 +81,4 @@ class TestSensitivityEvalWithArgmaxOutputReplacementNodes(TestSensitivityEvalWit
         model = argmax_output_model()
         with self.unit_test.assertRaises(Exception) as e:
             self.verify_test_for_model(model)
-        self.unit_test.assertTrue("All graph outputs should support metric outputs" in str(e.exception))
-
-
-
-
-class TestSensitivityEvalWithSoftmaxOutputReplacementNodes(TestSensitivityEvalWithOutputReplacementBase):
-
-    def __init__(self, unit_test):
-        super().__init__(unit_test)
-
-    def run_test(self, seed=0, **kwargs):
-        model = softmax_output_model()
-        with self.unit_test.assertRaises(Exception) as e:
-            self.verify_test_for_model(model)
-        self.unit_test.assertTrue("All graph outputs should support metric outputs" in str(e.exception))
-
+        self.unit_test.assertTrue("All graph outputs should support Hessian computation" in str(e.exception))

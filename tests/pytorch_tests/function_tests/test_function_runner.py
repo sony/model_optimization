@@ -25,13 +25,13 @@ from tests.pytorch_tests.function_tests.kpi_data_test import TestKPIDataBasicAll
 from tests.pytorch_tests.function_tests.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, \
     LayerFusingTest4
 from tests.pytorch_tests.function_tests.model_gradients_test import ModelGradientsBasicModelTest, \
-    ModelGradientsCalculationTest, ModelGradientsAdvancedModelTest, ModelGradientsOutputReplacementTest, \
+    ModelGradientsCalculationTest, ModelGradientsAdvancedModelTest, \
     ModelGradientsMultipleOutputsModelTest, ModelGradientsNonDifferentiableNodeModelTest, \
     ModelGradientsMultipleOutputsTest, ModelGradientsSinglePointTest
 from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSetLayerToBitwidthWeights, \
     TestSetLayerToBitwidthActivation
-from tests.pytorch_tests.function_tests.test_sensitivity_eval_output_replacement import \
-    TestSensitivityEvalWithArgmaxOutputReplacementNodes, TestSensitivityEvalWithSoftmaxOutputReplacementNodes
+from tests.pytorch_tests.function_tests.test_sensitivity_eval_non_supported_output import \
+    TestSensitivityEvalWithArgmaxNode
 
 
 class FunctionTestRunner(unittest.TestCase):
@@ -107,7 +107,6 @@ class FunctionTestRunner(unittest.TestCase):
         ModelGradientsCalculationTest(self).run_test()
         ModelGradientsAdvancedModelTest(self).run_test()
         ModelGradientsMultipleOutputsTest(self).run_test()
-        ModelGradientsOutputReplacementTest(self).run_test()
         ModelGradientsMultipleOutputsModelTest(self).run_test()
         ModelGradientsNonDifferentiableNodeModelTest(self).run_test()
         ModelGradientsSinglePointTest(self).run_test()
@@ -131,10 +130,9 @@ class FunctionTestRunner(unittest.TestCase):
 
     def test_sensitivity_eval_outputs_replacement(self):
         """
-        This test checks the functionality output replacement nodes in sensitivity evaluation for mixed precision..
+        This test verifies failure on non supported output nodes in mixed precision with Hessian-based scores.
         """
-        TestSensitivityEvalWithArgmaxOutputReplacementNodes(self).run_test()
-        TestSensitivityEvalWithSoftmaxOutputReplacementNodes(self).run_test()
+        TestSensitivityEvalWithArgmaxNode(self).run_test()
 
     def test_get_gptq_config(self):
         """

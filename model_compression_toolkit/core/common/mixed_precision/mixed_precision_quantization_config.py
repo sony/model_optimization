@@ -31,7 +31,6 @@ class MixedPrecisionQuantizationConfigV2:
                  configuration_overwrite: List[int] = None,
                  num_interest_points_factor: float = 1.0,
                  use_grad_based_weights: bool = True,
-                 output_grad_factor: float = 0.1,
                  norm_weights: bool = True,
                  refine_mp_solution: bool = True):
         """
@@ -45,8 +44,7 @@ class MixedPrecisionQuantizationConfigV2:
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
             configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
             num_interest_points_factor (float): A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
-            use_grad_based_weights (bool): Whether to use gradient-based weights for weighted average distance metric computation.
-            output_grad_factor (float): A tuning parameter to be used for gradient-based weights.
+            use_grad_based_weights (bool): Whether to use Hessian-based scores for weighted average distance metric computation.
             norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
             refine_mp_solution (bool): Whether to try to improve the final mixed-precision configuration using a greedy algorithm that searches layers to increase their bit-width, or not.
 
@@ -65,12 +63,7 @@ class MixedPrecisionQuantizationConfigV2:
         self.num_interest_points_factor = num_interest_points_factor
 
         self.use_grad_based_weights = use_grad_based_weights
-        self.output_grad_factor = output_grad_factor
         self.norm_weights = norm_weights
-
-        if use_grad_based_weights is True:
-            Logger.info(f"Using gradient-based weights for mixed-precision distance metric with tuning factor "
-                        f"{output_grad_factor}")
 
 
 class MixedPrecisionQuantizationConfig(QuantizationConfig):

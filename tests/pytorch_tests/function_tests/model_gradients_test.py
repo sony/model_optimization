@@ -196,8 +196,7 @@ class ModelGradientsCalculationTest(BasePytorchTest):
         model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
                                                            graph=graph,
                                                            interest_points=ipts,
-                                                           pytorch_impl=pytorch_impl,
-                                                           alpha=0)
+                                                           pytorch_impl=pytorch_impl)
 
         self.unit_test.assertTrue(np.isclose(model_grads[0], 0.8, 1e-1))
         self.unit_test.assertTrue(np.isclose(model_grads[1], 0.2, 1e-1))
@@ -208,8 +207,7 @@ class ModelGradientsCalculationTest(BasePytorchTest):
 def _get_normalized_hessian_trace_approx(representative_data_gen,
                                          graph,
                                          interest_points,
-                                         pytorch_impl,
-                                         alpha):
+                                         pytorch_impl):
 
     hessian_service = hessian_common.HessianInfoService(graph=graph,
                                                         representative_dataset=representative_data_gen,
@@ -224,7 +222,7 @@ def _get_normalized_hessian_trace_approx(representative_data_gen,
         assert isinstance(hessian_data_per_image, list)
         assert len(hessian_data_per_image) == 1
         x.append(hessian_data_per_image[0])
-    x = hessian_common.hessian_utils.normalize_weights(x, alpha=alpha, outputs_indices=[len(interest_points) - 1])
+    x = hessian_common.hessian_utils.normalize_weights(x)
     return x
 
 
@@ -255,8 +253,7 @@ class ModelGradientsBasicModelTest(BasePytorchTest):
         model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
                                                            graph=graph,
                                                            interest_points=ipts,
-                                                           pytorch_impl=pytorch_impl,
-                                                           alpha=0.3)
+                                                           pytorch_impl=pytorch_impl)
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
@@ -288,8 +285,7 @@ class ModelGradientsAdvancedModelTest(BasePytorchTest):
         model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
                                                            graph=graph,
                                                            interest_points=ipts,
-                                                           pytorch_impl=pytorch_impl,
-                                                           alpha=0.3)
+                                                           pytorch_impl=pytorch_impl)
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
@@ -321,8 +317,7 @@ class ModelGradientsMultipleOutputsTest(BasePytorchTest):
         model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
                                                            graph=graph,
                                                            interest_points=ipts,
-                                                           pytorch_impl=pytorch_impl,
-                                                           alpha=0.3)
+                                                           pytorch_impl=pytorch_impl)
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
@@ -354,8 +349,7 @@ class ModelGradientsOutputReplacementTest(BasePytorchTest):
             _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
                                                  graph=graph,
                                                  interest_points=ipts,
-                                                 pytorch_impl=pytorch_impl,
-                                                 alpha=0.3)
+                                                 pytorch_impl=pytorch_impl)
         self.unit_test.assertTrue("All graph outputs should support metric outputs" in str(e.exception))
 
 
@@ -385,8 +379,7 @@ class ModelGradientsMultipleOutputsModelTest(BasePytorchTest):
         model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
                                                            graph=graph,
                                                            interest_points=ipts,
-                                                           pytorch_impl=pytorch_impl,
-                                                           alpha=0.3)
+                                                           pytorch_impl=pytorch_impl)
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
@@ -418,8 +411,7 @@ class ModelGradientsNonDifferentiableNodeModelTest(BasePytorchTest):
         model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
                                                            graph=graph,
                                                            interest_points=ipts,
-                                                           pytorch_impl=pytorch_impl,
-                                                           alpha=0.3)
+                                                           pytorch_impl=pytorch_impl)
 
         # Checking that the weights where computed and normalized correctly
         self.unit_test.assertTrue(np.isclose(np.sum(model_grads), 1))
@@ -439,7 +431,6 @@ class ModelGradientsSinglePointTest(ModelGradientsBasicModelTest):
         model_grads = _get_normalized_hessian_trace_approx(representative_data_gen=self.representative_data_gen,
                                                            graph=graph,
                                                            interest_points=ipts,
-                                                           pytorch_impl=pytorch_impl,
-                                                           alpha=0.3)
+                                                           pytorch_impl=pytorch_impl)
 
         self.unit_test.assertTrue(len(model_grads) == 1 and model_grads[0] == 1.0)

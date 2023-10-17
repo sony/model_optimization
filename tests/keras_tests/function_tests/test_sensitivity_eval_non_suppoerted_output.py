@@ -57,7 +57,7 @@ def representative_dataset():
     yield [np.random.randn(1, 16, 16, 3).astype(np.float32)]
 
 
-class TestSensitivityEvalWithOutputReplacementNodes(unittest.TestCase):
+class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
 
     def verify_test_for_model(self, model):
         keras_impl = KerasImplementation()
@@ -79,26 +79,11 @@ class TestSensitivityEvalWithOutputReplacementNodes(unittest.TestCase):
                                                   DEFAULT_KERAS_INFO,
                                                   hessian_info_service=hessian_info_service)
 
-        # If the output replacement nodes for MP sensitivity evaluation has been computed correctly then the ReLU layer
-        # should be added to the interest points and included in the output nodes list for metric computation purposes.
-        relu_node = graph.get_topo_sorted_nodes()[-2]
-        self.assertTrue(relu_node.type == layers.ReLU)
-        self.assertIn(relu_node, se.interest_points)
-        self.assertEqual(len(se.outputs_replacement_nodes), 1)
-        self.assertIn(relu_node, se.outputs_replacement_nodes)
-        self.assertEqual(se.output_nodes_indices, [2, 3])
-
     def test_output_replacement_argmax(self):
         model = argmax_output_model((16, 16, 3))
         with self.assertRaises(Exception) as e:
             self.verify_test_for_model(model)
-        self.assertTrue("All graph outputs should support metric outputs" in str(e.exception))
-
-    def test_output_replacement_softmax(self):
-        model = softmax_output_model((16, 16, 3))
-        with self.assertRaises(Exception) as e:
-            self.verify_test_for_model(model)
-        self.assertTrue("All graph outputs should support metric outputs" in str(e.exception))
+        self.assertTrue("All graph outputs should support Hessian computation" in str(e.exception))
 
 
 if __name__ == '__main__':

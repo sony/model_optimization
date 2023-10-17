@@ -47,9 +47,12 @@ class TraceHessianCalculator(ABC):
 
         """
         self.graph = graph
+
         for output_node in graph.get_outputs():
-            if not fw_impl.is_node_compatible_for_metric_outputs(output_node.node):
-                Logger.error(f"All graph outputs should support metric outputs, but node {output_node.node} was found with layer type {output_node.node.type}.")
+            if not fw_impl.is_output_node_compatible_for_hessian_computation(output_node.node):
+                Logger.error(f"All graph outputs should support Hessian computation, but node {output_node.node} "
+                             f"was found with layer type {output_node.node.type}. "
+                             f"Try to run MCT without Hessian info computation.")
 
         self.input_images = fw_impl.to_tensor(input_images)
         self.num_iterations_for_approximation = num_iterations_for_approximation
