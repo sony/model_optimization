@@ -74,7 +74,6 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
         # Construct the Keras float model for inference
         model, _ = FloatKerasModelBuilder(graph=self.graph).build_model()
-        # TODO: what to do in reuse
 
         # Get the weight attributes for the target node type
         weight_attributes = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.hessian_request.target_node.type)
@@ -107,11 +106,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                 with tape.stop_recording():
                     # Compute gradients of f_v with respect to the weights
                     gradients = tape.gradient(f_v, weight_tensor)
-
-                    # Reshape the gradients based on the granularity (whole tensor, per channel, or per element)
-                    num_of_scores = self._get_num_scores_by_granularity(gradients,
-                                                                        output_channel_axis)
-                    gradients = tf.reshape(gradients, [num_of_scores, -1])
+                    gradients = self._reshape_gradients(gradients, output_channel_axis)
                     approx = tf.reduce_sum(tf.pow(gradients, 2.0), axis=1)
 
                     # If the change to the mean approximation is insignificant (to all outputs)
@@ -120,7 +115,6 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                         # Compute new means and deltas
                         new_mean = tf.reduce_mean(tf.stack(approximation_per_iteration + approx), axis=0)
                         delta = new_mean - tf.reduce_mean(tf.stack(approximation_per_iteration), axis=0)
-
                         is_converged = np.all(np.abs(delta) / (np.abs(new_mean) + 1e-6) < JACOBIANS_COMP_TOLERANCE)
                         if is_converged:
                             approximation_per_iteration.append(approx)
@@ -140,6 +134,35 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             final_approx = tf.reshape(final_approx, weight_tensor.shape)
 
         return final_approx.numpy()
+
+    def _reshape_gradients(self,
+                           gradients: tf.Tensor,
+                           output_channel_axis: int) -> tf.Tensor:
+        """
+        Reshape the gradient tensor based on the requested granularity.
+
+        The gradients can be reshaped to represent the whole tensor, on a per-output-channel basis,
+        or on a per-element basis.
+
+        Args:
+            gradients (tf.Tensor): The gradient tensor to be reshaped.
+            output_channel_axis (int): The axis in the gradient tensor representing output channels.
+
+        Returns:
+            tf.Tensor: Reshaped gradient tensor based on the granularity.
+        """
+        # Reshape the gradients based on the granularity (whole tensor, per channel, or per element)
+        num_of_scores = self._get_num_scores_by_granularity(gradients,
+                                                            output_channel_axis)
+        if self.hessian_request.granularity != HessianInfoGranularity.PER_OUTPUT_CHANNEL:
+            gradients = tf.reshape(gradients, [num_of_scores, -1])
+        else:
+            # Slice the gradients, vectorize them and stack them along the first axis.
+            # If for example we have n output-channels, and each one of the filters have m
+            # elements, the gradients will have the shape of (n,m).
+            slices = tf.split(gradients, num_or_size_splits=num_of_scores, axis=output_channel_axis)
+            gradients = tf.stack([tf.reshape(slice, (-1,)) for slice in slices])
+        return gradients
 
     def _get_num_scores_by_granularity(self,
                                        gradients: tf.Tensor,

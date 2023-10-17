@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+import tensorflow as tf
 import functools
 import keras
 import numpy as np
@@ -49,22 +50,24 @@ def representative_dataset(input_shape):
 
 class TestHessianInfoWeights(unittest.TestCase):
 
-    def _fetch_scores(self, hessian_info, target_node, granularity):
+    def _fetch_scores(self, hessian_info, target_node, granularity, num_scores=1):
         request = hessian_common.TraceHessianRequest(mode=hessian_common.HessianMode.WEIGHTS,
                                                      granularity=granularity,
                                                      target_node=target_node)
-        info = hessian_info.fetch_hessian(request, 1)
-        assert len(info) == 1, f"fetched one score but {len(info)} scores were fetched"
-        return info[0]
+        info = hessian_info.fetch_hessian(request, num_scores)
+        assert len(info) == num_scores, f"fetched {num_scores} score but {len(info)} scores were fetched"
+        return np.mean(np.stack(info), axis=0)
 
-    def _test_score_shape(self, hessian_service, interest_point, granularity, expected_shape):
+    def _test_score_shape(self, hessian_service, interest_point, granularity, expected_shape, num_scores=1):
         score = self._fetch_scores(hessian_info=hessian_service,
                                    target_node=interest_point,  # linear op
-                                   granularity=granularity)
+                                   granularity=granularity,
+                                   num_scores=num_scores)
         self.assertTrue(isinstance(score, np.ndarray), f"scores expected to be a numpy array but is {type(score)}")
 
         self.assertTrue(score.shape == expected_shape,
                         f"Tensor shape is expected to be {expected_shape} but has shape {score.shape}")  # per tensor
+        return score
 
     def test_conv2d_granularity(self):
         input_shape = (1, 8, 8, 3)
@@ -188,3 +191,4 @@ class TestHessianInfoWeights(unittest.TestCase):
                                interest_points[1],
                                granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
                                expected_shape=(3, 3, 3, 1))
+
