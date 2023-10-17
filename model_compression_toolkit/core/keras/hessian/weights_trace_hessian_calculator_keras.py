@@ -23,8 +23,7 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianInfoGranularity
 from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras, \
-    _concat_outputs
+from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
 from model_compression_toolkit.logger import Logger
 
 
@@ -96,7 +95,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             outputs = model(self.input_images)
 
             # Combine outputs if the model returns multiple output tensors
-            output = _concat_outputs(outputs)
+            output = self._concat_outputs(outputs)
 
             approximation_per_iteration = []
             for j in range(self.num_iterations_for_approximation):  # Approximation iterations

@@ -22,6 +22,9 @@ from model_compression_toolkit.core.common.hessian.trace_hessian_calculator impo
 
 import torch
 
+from model_compression_toolkit.logger import Logger
+
+
 class TraceHessianCalculatorPytorch(TraceHessianCalculator):
     """
     Pytorch-specific implementation of the Trace Hessian approximation Calculator.
@@ -49,4 +52,15 @@ class TraceHessianCalculatorPytorch(TraceHessianCalculator):
                                                             trace_hessian_request=trace_hessian_request,
                                                             num_iterations_for_approximation=num_iterations_for_approximation)
 
+    def _concat_outputs(self, outputs):
+        unfold_outputs = self._unfold_outputs(outputs)
+        r_outputs = [torch.reshape(output, shape=[output.shape[0], -1]) for output in unfold_outputs]
+
+        concat_axis_dim = [o.shape[0] for o in r_outputs]
+        if not all(d == concat_axis_dim[0] for d in concat_axis_dim):
+            Logger.critical(
+                "Can't concat model's outputs for gradients calculation since the shape of the first axis "  # pragma: no cover
+                "is not equal in all outputs.")
+
+        return torch.concat(r_outputs, dim=1)
 

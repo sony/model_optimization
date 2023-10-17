@@ -75,3 +75,12 @@ class TraceHessianCalculator(ABC):
         computation method for the trace Hessian approximation.
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement compute method.')  # pragma: no cover
+
+    def _unfold_outputs(self, outputs):
+        unfold_outputs = []
+        for output in outputs:
+            if isinstance(output, List):
+                unfold_outputs += output
+            else:
+                unfold_outputs.append(output)
+        return unfold_outputs

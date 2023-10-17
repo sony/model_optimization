@@ -76,22 +76,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
 
             # Concat outputs
             # First, we need to unfold all outputs that are given as list, to extract the actual output tensors
-            unfold_outputs = []
-            for output in output_tensors:
-                if isinstance(output, List):
-                    unfold_outputs += output
-                else:
-                    unfold_outputs.append(output)
-
-            r_outputs = [torch.reshape(output, shape=[output.shape[0], -1]) for output in unfold_outputs]
-
-            concat_axis_dim = [o.shape[0] for o in r_outputs]
-            if not all(d == concat_axis_dim[0] for d in concat_axis_dim):
-                Logger.critical(
-                    "Can't concat model's outputs for gradients calculation since the shape of the first axis "  # pragma: no cover
-                    "is not equal in all outputs.")
-
-            output = torch.concat(r_outputs, dim=1)
+            output = self._concat_outputs(output_tensors)
 
             ipts_jac_trace_approx = []
             for ipt in tqdm(model_grads_net.interest_points_tensors):  # Per Interest point activation tensor
