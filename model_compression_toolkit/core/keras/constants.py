@@ -53,6 +53,13 @@ DIMS = 'dims'
 TARGET_SHAPE = 'target_shape'
 TRANSPOSE_A = 'transpose_a'
 TRANSPOSE_B = 'transpose_b'
+DEPTH_MULTIPLIER = 'depth_multiplier'
+DEPTHWISE_INITIALIZER = 'depthwise_initializer'
+DEPTHWISE_REGULARIZER = 'depthwise_regularizer'
+DEPTHWISE_CONSTRAINT = 'depthwise_constraint'
+KERNEL_INITIALIZER = 'kernel_initializer'
+KERNEL_REGULARIZER = 'kernel_regularizer'
+KERNEL_CONSTRAINT = 'kernel_constraint'
 
 # functional nodes attributes
 FUNCTION = 'function'
