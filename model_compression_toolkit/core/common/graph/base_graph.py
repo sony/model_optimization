@@ -31,7 +31,8 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 from model_compression_toolkit.core.common.collectors.statistics_collector import scale_statistics, shift_statistics
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
+    TargetPlatformCapabilities, LayerFilterParams
 
 OutTensor = namedtuple('OutTensor', 'node node_out_index')
 
@@ -93,10 +94,16 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         # validate graph nodes are either from the framework or a custom layer defined in the TPC
         tpc_layers = tpc.op_sets_to_layers.get_layers()
+        tpc_filtered_layers = {layer.layer: layer.kwargs for layer in tpc_layers if isinstance(layer, LayerFilterParams)}
         for n in self.nodes:
-            if n.is_custom and n.type not in tpc_layers:
+            is_node_in_tpc = n.type in tpc_layers
+            if n.is_custom and not is_node_in_tpc:
+                for _layer, _kwargs in tpc_filtered_layers.items():
+                    is_node_in_tpc = is_node_in_tpc or (n.type is _layer and
+                                                        all([n.framework_attr.get(k) == v for k, v in _kwargs.items()]))
+            if n.is_custom and not is_node_in_tpc:
                 Logger.error(f'MCT does not support optimizing Keras custom layers, but found layer of type {n.type}. '
-                             f'Please file a feature request or an issue if you believe this is an issue.')
+                             f'Please add the custom layer to TPC or file a feature request or an issue if you believe this is an issue.')
 
         self.tpc = tpc
 

@@ -32,6 +32,21 @@ class CustomIdentity(keras.layers.Layer):
         return inputs
 
 
+class CustomIdentityWithArg(keras.layers.Layer):
+
+    def __init__(self, dummy_arg, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dummy_arg = dummy_arg
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({"dummy_arg": self.dummy_arg})
+        return config
+
+    def call(self, inputs):
+        return inputs
+
+
 def get_tpc():
     """
     Assuming a target hardware that uses power-of-2 thresholds and quantizes weights and activations
@@ -68,7 +83,8 @@ def get_tpc():
     tpc = tp.TargetPlatformCapabilities(tp_model)
     with tpc:
         # No need to quantize Flatten and Dropout layers
-        tp.OperationsSetToLayers("NoQuantization", [CustomIdentity])
+        tp.OperationsSetToLayers("NoQuantization", [CustomIdentity,
+                                                    tp.LayerFilterParams(CustomIdentityWithArg, dummy_arg=0),])
 
     return tpc
 
@@ -78,6 +94,7 @@ class TestCustomLayer(unittest.TestCase):
     def test_custom_layer_in_tpc(self):
         inputs = layers.Input(shape=(3, 3, 3))
         x = CustomIdentity()(inputs)
+        x = CustomIdentityWithArg(0)(x)
         model = keras.Model(inputs=inputs, outputs=x)
 
         q_model, _ = mct.ptq.keras_post_training_quantization_experimental(model,
@@ -86,6 +103,7 @@ class TestCustomLayer(unittest.TestCase):
 
         # verify the custom layer is in the quantized model
         self.assertTrue(isinstance(q_model.layers[2], CustomIdentity), 'Custom layer should be in the quantized model')
+        self.assertTrue(isinstance(q_model.layers[3], CustomIdentityWithArg), 'Custom layer should be in the quantized model')
         # verify the custom layer isn't quantized
-        self.assertTrue(len(q_model.layers) == 3,
-                        'Quantized model should have only 3 layers: Input, KerasActivationQuantizationHolder & CustomIdentity')
+        self.assertTrue(len(q_model.layers) == 4,
+                        'Quantized model should have only 3 layers: Input, KerasActivationQuantizationHolder, CustomIdentity & CustomIdentityWithArg')

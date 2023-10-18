@@ -40,8 +40,8 @@ class TestUnsupportedCustomLayer(unittest.TestCase):
         model = keras.Model(inputs=inputs, outputs=x)
 
         expected_error = f'MCT does not support optimizing Keras custom layers, but found layer of type <class ' \
-                         f'\'test_unsupported_custom_layer.CustomIdentity\'>. Please file a feature request or an issue if ' \
-                         f'you believe this is an issue.'
+                         f'\'test_unsupported_custom_layer.CustomIdentity\'>. Please add the custom layer to TPC ' \
+                         f'or file a feature request or an issue if you believe this is an issue.'
 
         with self.assertRaises(Exception) as e:
             mct.ptq.keras_post_training_quantization_experimental(model,
