@@ -174,7 +174,7 @@ class HessianInfoService:
         Returns:
             TraceHessianRequest for all nodes in the reused group.
         """
-        father_nodes = [n for n in self.graph.nodes if not n.reuse and n.reuse_group]
+        father_nodes = [n for n in self.graph.nodes if not n.reuse and n.reuse_group==trace_hessian_request.target_node.reuse_group]
         if len(father_nodes)!=1:
             Logger.error(f"Each reused group has a single node in it which is not marked as"
                          f" reused but found {len(father_nodes)}")
