@@ -91,6 +91,13 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Args:
             tpc: TargetPlatformCapabilities object.
         """
+        # validate graph nodes are either from the framework or a custom layer defined in the TPC
+        tpc_layers = tpc.op_sets_to_layers.get_layers()
+        for n in self.nodes:
+            if n.is_custom and n.type not in tpc_layers:
+                Logger.error(f'MCT does not support optimizing Keras custom layers, but found layer of type {n.type}. '
+                             f'Please file a feature request or an issue if you believe this is an issue.')
+
         self.tpc = tpc
 
     def get_topo_sorted_nodes(self):

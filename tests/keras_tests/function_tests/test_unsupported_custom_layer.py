@@ -32,7 +32,6 @@ class CustomIdentity(keras.layers.Layer):
         return inputs
 
 
-
 class TestUnsupportedCustomLayer(unittest.TestCase):
 
     def test_raised_error_with_custom_layer(self):
