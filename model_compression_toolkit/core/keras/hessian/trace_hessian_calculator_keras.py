@@ -67,7 +67,7 @@ class TraceHessianCalculatorKeras(TraceHessianCalculator):
             tf.Tensor of the concatenation of the tensors.
 
         """
-        _unfold_tensors = self._unfold_tensors_list(tensors_to_concate)
+        _unfold_tensors = self.unfold_tensors_list(tensors_to_concate)
         _r_tensors = [tf.reshape(tensor, shape=[tensor.shape[0], -1]) for tensor in _unfold_tensors]
 
         # Ensure all tensors have the same shape for concatenation
