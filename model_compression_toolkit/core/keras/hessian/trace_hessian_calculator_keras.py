@@ -56,25 +56,25 @@ class TraceHessianCalculatorKeras(TraceHessianCalculator):
                                                           trace_hessian_request=trace_hessian_request,
                                                           num_iterations_for_approximation=num_iterations_for_approximation)
 
-    def _concat_outputs(self, outputs: Union[tf.Tensor, List[tf.Tensor]]) -> tf.Tensor:
+    def _concat_tensors(self, tensors_to_concate: Union[tf.Tensor, List[tf.Tensor]]) -> tf.Tensor:
         """
-        Concatenate model outputs into a single tensor.
+        Concatenate tensors into a single tensor.
 
         Args:
-            outputs: Outputs to concatenate.
+            tensors_to_concate: Tensors to concatenate.
 
         Returns:
-            tf.Tensor of the concatenation of outputs.
+            tf.Tensor of the concatenation of the tensors.
 
         """
-        unfold_outputs = self._unfold_outputs(outputs)
-        r_outputs = [tf.reshape(output, shape=[output.shape[0], -1]) for output in unfold_outputs]
+        _unfold_tensors = self._unfold_tensors_list(tensors_to_concate)
+        _r_tensors = [tf.reshape(tensor, shape=[tensor.shape[0], -1]) for tensor in _unfold_tensors]
 
-        # Ensure all outputs have the same shape for concatenation
-        concat_axis_dim = [o.shape[0] for o in r_outputs]
+        # Ensure all tensors have the same shape for concatenation
+        concat_axis_dim = [o.shape[0] for o in _r_tensors]
         if not all(d == concat_axis_dim[0] for d in concat_axis_dim):
             Logger.critical(
                 "Can't concat model's outputs for gradients calculation since the shape of the first axis "  # pragma: no cover  
                 "is not equal in all outputs.")
 
-        return tf.concat(r_outputs, axis=1)
+        return tf.concat(_r_tensors, axis=1)

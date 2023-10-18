@@ -76,7 +76,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
 
             # Concat outputs
             # First, we need to unfold all outputs that are given as list, to extract the actual output tensors
-            output = self._concat_outputs(output_tensors)
+            output = self._concat_tensors(output_tensors)
 
             ipts_jac_trace_approx = []
             for ipt in tqdm(model_grads_net.interest_points_tensors):  # Per Interest point activation tensor

@@ -99,7 +99,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             outputs = model(self.input_images)
 
             # Combine outputs if the model returns multiple output tensors
-            output = self._concat_outputs(outputs)
+            output = self._concat_tensors(outputs)
 
             approximation_per_iteration = []
             for j in range(self.num_iterations_for_approximation):  # Approximation iterations

@@ -52,25 +52,25 @@ class TraceHessianCalculatorPytorch(TraceHessianCalculator):
                                                             trace_hessian_request=trace_hessian_request,
                                                             num_iterations_for_approximation=num_iterations_for_approximation)
 
-    def _concat_outputs(self, outputs: Union[torch.Tensor, List[torch.Tensor]]) -> torch.Tensor:
+    def _concat_tensors(self, tensors_to_concate: Union[torch.Tensor, List[torch.Tensor]]) -> torch.Tensor:
         """
-        Concatenate model outputs into a single tensor.
+        Concatenate model tensors into a single tensor.
 
         Args:
-            outputs: Outputs to concatenate.
+            tensors_to_concate: Tensors to concatenate.
 
         Returns:
-            torch.Tensor of the concatenation of outputs.
+            torch.Tensor of the concatenation of tensors.
 
         """
-        unfold_outputs = self._unfold_outputs(outputs)
-        r_outputs = [torch.reshape(output, shape=[output.shape[0], -1]) for output in unfold_outputs]
+        _unfold_tensors = self._unfold_tensors_list(tensors_to_concate)
+        _r_tensors = [torch.reshape(tensor, shape=[tensor.shape[0], -1]) for tensor in _unfold_tensors]
 
-        concat_axis_dim = [o.shape[0] for o in r_outputs]
+        concat_axis_dim = [o.shape[0] for o in _r_tensors]
         if not all(d == concat_axis_dim[0] for d in concat_axis_dim):
             Logger.critical(
                 "Can't concat model's outputs for gradients calculation since the shape of the first axis "  # pragma: no cover
                 "is not equal in all outputs.")
 
-        return torch.concat(r_outputs, dim=1)
+        return torch.concat(_r_tensors, dim=1)
 

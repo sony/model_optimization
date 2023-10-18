@@ -76,23 +76,23 @@ class TraceHessianCalculator(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement compute method.')  # pragma: no cover
 
-    def _unfold_outputs(self, outputs: Any) -> List[Any]:
+    def _unfold_tensors_list(self, tensors_to_unfold: Any) -> List[Any]:
         """
-        Unfold (flatten) a nested output list.
+        Unfold (flatten) a nested tensors list.
 
-        Given a mixed list of single outputs and nested output lists,
+        Given a mixed list of single tensors and nested tensor lists,
         this method returns a flattened list where nested lists are expanded.
 
         Args:
-            outputs: Outputs to unfold.
+            tensors_to_unfold: Tensors to unfold.
 
         Returns:
-            A flattened list of outputs.
+            A flattened list of tensors.
         """
-        unfold_outputs = []
-        for output in outputs:
-            if isinstance(output, List):
-                unfold_outputs += output
+        unfold_tensors = []
+        for tensor in tensors_to_unfold:
+            if isinstance(tensor, List):
+                unfold_tensors += tensor
             else:
-                unfold_outputs.append(output)
-        return unfold_outputs
+                unfold_tensors.append(tensor)
+        return unfold_tensors

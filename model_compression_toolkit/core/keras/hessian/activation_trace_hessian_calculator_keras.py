@@ -73,7 +73,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                                                                                             gradient_tape=g)
 
                 # Unfold and concatenate all outputs to form a single tensor
-                output = self._concat_outputs(outputs)
+                output = self._concat_tensors(outputs)
 
                 # List to store the approximated trace of the Hessian for each interest point
                 trace_approx_by_node = []
