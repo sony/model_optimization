@@ -13,14 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 
-import numpy as np
-from typing import Callable, List, Any
+from functools import partial
+from typing import Callable, List
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest
 from model_compression_toolkit.logger import Logger
-from functools import partial
 
 
 class HessianInfoService:
@@ -94,6 +93,10 @@ class HessianInfoService:
         Returns:
             Number of saved approximations for the given request.
         """
+        # Replace request of a reused target node with a request of the 'reuse group'.
+        if hessian_request.target_node.reuse_group:
+            hessian_request = self._get_request_of_reuse_group(hessian_request)
+
         # Check if the request is in the saved info and return its count, otherwise return 0
         return len(self.trace_hessian_request_to_score_list.get(hessian_request, []))
 
@@ -150,11 +153,35 @@ class HessianInfoService:
 
         Logger.info(f"Ensuring {required_size} Hessian-trace approximation for node {trace_hessian_request.target_node}.")
 
+        # Replace request of a reused target node with a request of the 'reuse group'.
+        if trace_hessian_request.target_node.reuse_group:
+            trace_hessian_request = self._get_request_of_reuse_group(trace_hessian_request)
+
         # Ensure the saved info has the required number of approximations
         self._populate_saved_info_to_size(trace_hessian_request, required_size)
 
         # Return the saved approximations for the given request
         return self.trace_hessian_request_to_score_list[trace_hessian_request]
+
+    def _get_request_of_reuse_group(self, trace_hessian_request: TraceHessianRequest):
+        """
+        For each reused group we compute and fetch its members using a single request.
+        This method creates and returns a request for the reused group the node is in.
+
+        Args:
+            trace_hessian_request: Request to fetch its node's reused group request.
+
+        Returns:
+            TraceHessianRequest for all nodes in the reused group.
+        """
+        father_nodes = [n for n in self.graph.nodes if not n.reuse and n.reuse_group]
+        if len(father_nodes)!=1:
+            Logger.error(f"Each reused group has a single node in it which is not marked as"
+                         f" reused but found {len(father_nodes)}")
+        reused_group_request = TraceHessianRequest(target_node=father_nodes[0],
+                                                   granularity=trace_hessian_request.granularity,
+                                                   mode=trace_hessian_request.mode)
+        return reused_group_request
 
 
     def _populate_saved_info_to_size(self,
