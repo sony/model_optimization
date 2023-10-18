@@ -46,7 +46,7 @@ def representative_dataset(input_shape):
     yield [np.random.randn(*input_shape).astype(np.float32)]
 
 
-class TestHessianInfoWeights(unittest.TestCase):
+class TestHessianInfoCalculatorWeights(unittest.TestCase):
 
     def _fetch_scores(self, hessian_info, target_node, granularity, num_scores=1):
         request = hessian_common.TraceHessianRequest(mode=hessian_common.HessianMode.WEIGHTS,

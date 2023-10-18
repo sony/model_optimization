@@ -39,7 +39,7 @@ found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util
 
 if found_tf:
     import tensorflow as tf
-    from tests.keras_tests.function_tests.test_hessian_info_weights import TestHessianInfoWeights
+    from tests.keras_tests.function_tests.test_hessian_info_calculator_weights import TestHessianInfoCalculatorWeights
     from tests.keras_tests.function_tests.test_hessian_service import TestHessianService
     from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
     from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianInfoWeights))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianInfoCalculatorWeights))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianService))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQModelBuilderWithActivationHolder))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ExporterTestsRunner))
