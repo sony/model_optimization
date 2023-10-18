@@ -63,9 +63,9 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         simd_size=32
     )
     four_bits = eight_bits.clone_and_edit(weights_n_bits=4,
-                                          simd_size=64)
+                                          simd_size=eight_bits.simd_size*2)
     two_bits = eight_bits.clone_and_edit(weights_n_bits=2,
-                                         simd_size=128)
+                                         simd_size=eight_bits.simd_size*4)
     mixed_precision_cfg_list = [eight_bits, four_bits, two_bits]
     return eight_bits, mixed_precision_cfg_list
 

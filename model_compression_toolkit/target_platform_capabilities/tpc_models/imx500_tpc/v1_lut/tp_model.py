@@ -74,10 +74,10 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     # to quantize the operations' activations using LUT.
     four_bits_lut = eight_bits.clone_and_edit(weights_n_bits=4,
                                               weights_quantization_method=tp.QuantizationMethod.LUT_SYM_QUANTIZER,
-                                              simd_size=64)
+                                              simd_size=eight_bits.simd_size*2)
     two_bits_lut = eight_bits.clone_and_edit(weights_n_bits=2,
                                              weights_quantization_method=tp.QuantizationMethod.LUT_SYM_QUANTIZER,
-                                             simd_size=128)
+                                             simd_size=eight_bits.simd_size*4)
     mixed_precision_cfg_list = [eight_bits, four_bits_lut, two_bits_lut]
 
     return eight_bits, mixed_precision_cfg_list
