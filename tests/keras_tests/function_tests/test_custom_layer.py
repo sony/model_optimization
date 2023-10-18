@@ -87,5 +87,5 @@ class TestCustomLayer(unittest.TestCase):
         # verify the custom layer is in the quantized model
         self.assertTrue(isinstance(q_model.layers[2], CustomIdentity), 'Custom layer should be in the quantized model')
         # verify the custom layer isn't quantized
-        self.assertTrue(len(q_model.layers) == 2,
+        self.assertTrue(len(q_model.layers) == 3,
                         'Quantized model should have only 3 layers: Input, KerasActivationQuantizationHolder & CustomIdentity')
