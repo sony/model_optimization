@@ -88,6 +88,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
     def __init__(self, unit_test, weight_bits=2, activation_bits=4,
                  weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
                  activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                 training_method=mct.qat.TrainingMethod.STE,
                  finalize=False, test_loading=False):
 
         self.weight_bits = weight_bits
@@ -96,6 +97,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         self.weights_quantization_method = weights_quantization_method
         self.activation_quantization_method = activation_quantization_method
         self.test_loading = test_loading
+        self.training_method = training_method
         super().__init__(unit_test, input_shape=(3, 4, 4))
 
     def get_tpc(self):
@@ -120,6 +122,8 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         self._gen_fixed_input()
         model_float = self.create_networks()
         _tpc = self.get_tpc()
+        _qat_config = mct.qat.QATConfig(weight_training_method=self.training_method,
+                                        activation_training_method=self.training_method)
         ptq_model, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(model_float,
                                                                                            self.representative_data_gen_experimental,
                                                                                            target_platform_capabilities=_tpc,
@@ -128,6 +132,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
 
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(model_float,
                                                                                           self.representative_data_gen_experimental,
+                                                                                          qat_config=_qat_config,
                                                                                           target_platform_capabilities=_tpc)
         copy_of_qat_ready_model = copy.deepcopy(qat_ready_model)
 
@@ -164,13 +169,13 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         # check relevant layers are wrapped and correct quantizers were chosen
         for _, layer in qat_ready_model.named_children():
             if isinstance(layer, PytorchActivationQuantizationHolder):
-                q = [_q for _q in all_trainable_quantizers if _q.identifier == mct.qat.TrainingMethod.STE
+                q = [_q for _q in all_trainable_quantizers if _q.identifier == self.training_method
                      and _q.quantization_target == QuantizationTarget.Activation
                      and self.activation_quantization_method in _q.quantization_method]
                 self.unit_test.assertTrue(len(q) == 1)
                 self.unit_test.assertTrue(isinstance(layer.activation_holder_quantizer, q[0]))
             elif isinstance(layer, PytorchQuantizationWrapper) and isinstance(layer.layer, nn.Conv2d):
-                q = [_q for _q in all_trainable_quantizers if _q.identifier == mct.qat.TrainingMethod.STE
+                q = [_q for _q in all_trainable_quantizers if _q.identifier == self.training_method
                      and _q.quantization_target == QuantizationTarget.Weights
                      and self.weights_quantization_method in _q.quantization_method
                      and type(_q.identifier) == mct.qat.TrainingMethod]
