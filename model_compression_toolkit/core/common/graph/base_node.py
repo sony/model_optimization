@@ -469,7 +469,7 @@ class BaseNode:
         Returns:
             Whether the node matches to the LayerFilterParams properties.
         """
-        # check if passed argument is of type LayerFilterParams
+        # check if provided argument is of type LayerFilterParams
         if not isinstance(layer_filter_params, LayerFilterParams):
             return False
 
