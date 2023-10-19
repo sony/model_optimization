@@ -267,7 +267,7 @@ class TestHessianInfoCalculatorWeights(unittest.TestCase):
                                                mode=hessian_common.HessianMode.WEIGHTS,
                                                granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT))
         self.assertTrue(node2_count == 1)
-        self.assertTrue(len(hessian_service.hessian_info_db._lw_hessian_request_to_score_list)==1)
+        self.assertTrue(len(hessian_service.trace_hessian_request_to_score_list)==1)
 
     #########################################################
     # The following part checks different possible graph

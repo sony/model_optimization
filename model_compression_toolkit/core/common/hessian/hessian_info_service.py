@@ -18,7 +18,6 @@ from typing import Callable, List
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian.hessian_info_db import HessianInfoDB
 from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest
 from model_compression_toolkit.logger import Logger
 
@@ -59,7 +58,8 @@ class HessianInfoService:
 
         self.fw_impl = fw_impl
         self.num_iterations_for_approximation = num_iterations_for_approximation
-        self.hessian_info_db = HessianInfoDB()
+
+        self.trace_hessian_request_to_score_list = {}
 
     def _sample_single_representative_dataset(self, representative_dataset: Callable):
         """
@@ -79,7 +79,7 @@ class HessianInfoService:
 
     def _clear_saved_hessian_info(self):
         """Clears the saved info approximations."""
-        self.hessian_info_db.clear_saved_hessian_info()
+        self.trace_hessian_request_to_score_list={}
 
     def count_saved_info_of_request(self, hessian_request:TraceHessianRequest) -> int:
         """
@@ -97,7 +97,8 @@ class HessianInfoService:
         if hessian_request.target_node.reuse_group:
             hessian_request = self._get_request_of_reuse_group(hessian_request)
 
-        return self.hessian_info_db.count_saved_info_of_request(hessian_request)
+        # Check if the request is in the saved info and return its count, otherwise return 0
+        return len(self.trace_hessian_request_to_score_list.get(hessian_request, []))
 
 
     def compute(self, trace_hessian_request:TraceHessianRequest):
@@ -123,7 +124,12 @@ class HessianInfoService:
         trace_hessian = fw_hessian_calculator.compute()
 
         # Store the computed approximation in the saved info
-        self.hessian_info_db.add_to_stored_info(trace_hessian_request, trace_hessian)
+        if trace_hessian_request in self.trace_hessian_request_to_score_list:
+            self.trace_hessian_request_to_score_list[trace_hessian_request].append(trace_hessian)
+        else:
+            self.trace_hessian_request_to_score_list[trace_hessian_request] = [trace_hessian]
+
+
 
     def fetch_hessian(self,
                       trace_hessian_request:
@@ -155,7 +161,7 @@ class HessianInfoService:
         self._populate_saved_info_to_size(trace_hessian_request, required_size)
 
         # Return the saved approximations for the given request
-        return self.hessian_info_db.get_stored_info(trace_hessian_request)
+        return self.trace_hessian_request_to_score_list[trace_hessian_request]
 
     def _get_request_of_reuse_group(self, trace_hessian_request: TraceHessianRequest):
         """
