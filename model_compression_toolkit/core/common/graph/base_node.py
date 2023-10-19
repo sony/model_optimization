@@ -458,7 +458,6 @@ class BaseNode:
             return tpc.layer2qco.get(self.type)
         return tpc.tp_model.default_qco
 
-
     def is_match_filter_params(self, layer_filter_params: LayerFilterParams) -> bool:
         """
         Check if the node matches a LayerFilterParams according to its
@@ -470,6 +469,10 @@ class BaseNode:
         Returns:
             Whether the node matches to the LayerFilterParams properties.
         """
+        # check if passed argument is of type LayerFilterParams
+        if not isinstance(layer_filter_params, LayerFilterParams):
+            return False
+
         # Check the node has the same type as the layer in LayerFilterParams
         if layer_filter_params.layer != self.type:
             return False

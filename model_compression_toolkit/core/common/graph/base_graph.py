@@ -94,13 +94,12 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         # validate graph nodes are either from the framework or a custom layer defined in the TPC
         tpc_layers = tpc.op_sets_to_layers.get_layers()
-        tpc_filtered_layers = {layer.layer: layer.kwargs for layer in tpc_layers if isinstance(layer, LayerFilterParams)}
+        tpc_filtered_layers = [layer for layer in tpc_layers if isinstance(layer, LayerFilterParams)]
         for n in self.nodes:
-            is_node_in_tpc = n.type in tpc_layers
-            if n.is_custom and not is_node_in_tpc:
-                for _layer, _kwargs in tpc_filtered_layers.items():
-                    is_node_in_tpc = is_node_in_tpc or (n.type is _layer and
-                                                        all([n.framework_attr.get(k) == v for k, v in _kwargs.items()]))
+            is_node_in_tpc = n.type in tpc_layers or any([n.is_match_filter_params(filtered_layer)
+                                                          for filtered_layer in tpc_filtered_layers])
+            if n.is_custom and any([qc.enable_weights_quantization for qc in n.get_qco(tpc).quantization_config_list]):
+                Logger.error(f'MCT does not support optimizing Keras custom layers with weights quantization.')
             if n.is_custom and not is_node_in_tpc:
                 Logger.error(f'MCT does not support optimizing Keras custom layers, but found layer of type {n.type}. '
                              f'Please add the custom layer to TPC or file a feature request or an issue if you believe this is an issue.')
