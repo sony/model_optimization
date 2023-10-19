@@ -148,6 +148,12 @@ class HessianInfoService:
             The inner list length dependent on the granularity (1 for per-tensor, 
             OC for per-output-channel when the requested node has OC output-channels, etc.)
         """
+        num_keys = len(self.trace_hessian_request_to_score_list)
+        num_values = sum([len(list(v)) for v in self.trace_hessian_request_to_score_list.values()])
+        print(f"########### Keys: {num_keys}")
+        print(f"########### Values: {num_values}")
+
+
         if required_size==0:
             return []
 
