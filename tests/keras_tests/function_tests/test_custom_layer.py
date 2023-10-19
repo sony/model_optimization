@@ -69,7 +69,8 @@ def get_tpc():
         quantization_preserving=False,
         fixed_scale=1.0,
         fixed_zero_point=0,
-        weights_multiplier_nbits=0)
+        weights_multiplier_nbits=0,
+        simd_size=32)
 
     default_configuration_options = tp.QuantizationConfigOptions([default_config])
     tp_model = tp.TargetPlatformModel(default_configuration_options)
