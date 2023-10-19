@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from collections import namedtuple
+
 from typing import List
 
 from enum import Enum
@@ -41,6 +43,8 @@ class HessianInfoGranularity(Enum):
     PER_OUTPUT_CHANNEL = 1
     PER_TENSOR = 2
 
+
+LightWeightRequest = namedtuple('LightWeightHessianInfoRequest', 'mode granularity target_node_name')
 
 class TraceHessianRequest:
     """
