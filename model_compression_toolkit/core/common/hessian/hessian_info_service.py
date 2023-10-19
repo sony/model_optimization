@@ -17,8 +17,9 @@ from functools import partial
 from typing import Callable, List
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest
+from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest, HessianMode, \
+    HessianInfoGranularity
 from model_compression_toolkit.logger import Logger
 
 
@@ -101,7 +102,7 @@ class HessianInfoService:
         return len(self.trace_hessian_request_to_score_list.get(hessian_request, []))
 
 
-    def compute(self, trace_hessian_request:TraceHessianRequest):
+    def compute(self, trace_hessian_request:List[TraceHessianRequest]):
         """
         Computes an approximation of the trace of the Hessian based on the
         provided request configuration and stores it in the cache.
@@ -109,7 +110,8 @@ class HessianInfoService:
         Args:
             trace_hessian_request: Configuration for which to compute the approximation.
         """
-        Logger.debug(f"Computing Hessian-trace approximation for a node {trace_hessian_request.target_node}.")
+        for request in trace_hessian_request:
+            Logger.debug(f"Computing Hessian-trace approximation for node {request.target_node}.")
 
         # Sample images for the computation
         images = self.representative_dataset()
@@ -122,18 +124,33 @@ class HessianInfoService:
 
         # Compute the approximation
         trace_hessian = fw_hessian_calculator.compute()
+        for i, request in enumerate(trace_hessian_request):
+            # Store the computed approximation in the saved info
+            if request in self.trace_hessian_request_to_score_list:
+                self.trace_hessian_request_to_score_list[request].append(trace_hessian[i])
+            else:
+                self.trace_hessian_request_to_score_list[request] = [trace_hessian[i]]
 
-        # Store the computed approximation in the saved info
-        if trace_hessian_request in self.trace_hessian_request_to_score_list:
-            self.trace_hessian_request_to_score_list[trace_hessian_request].append(trace_hessian)
-        else:
-            self.trace_hessian_request_to_score_list[trace_hessian_request] = [trace_hessian]
+
+    def fetch_hessian_multiple_nodes(self,
+                                     mode: HessianMode,
+                                     granularity: HessianInfoGranularity,
+                                     target_node: List[BaseNode],
+                                     num_approximations: int
+                                     ):
+        requests = []
+        for node in target_node:
+            r = TraceHessianRequest(mode=mode,
+                                    granularity=granularity,
+                                    target_node=node)
+            requests.append(r)
+        return self.fetch_hessian(requests, num_approximations)
 
 
 
     def fetch_hessian(self,
-                      trace_hessian_request:
-                      TraceHessianRequest, required_size: int) -> List[List[float]]:
+                      trace_hessian_request: List[TraceHessianRequest],
+                      required_size: int) -> List[List[float]]:
         """
         Fetches the computed approximations of the trace of the Hessian for the given 
         request and required size.
@@ -148,26 +165,27 @@ class HessianInfoService:
             The inner list length dependent on the granularity (1 for per-tensor, 
             OC for per-output-channel when the requested node has OC output-channels, etc.)
         """
-        num_keys = len(self.trace_hessian_request_to_score_list)
-        num_values = sum([len(list(v)) for v in self.trace_hessian_request_to_score_list.values()])
-        print(f"########### Keys: {num_keys}")
-        print(f"########### Values: {num_values}")
-
 
         if required_size==0:
             return []
 
-        Logger.info(f"Ensuring {required_size} Hessian-trace approximation for node {trace_hessian_request.target_node}.")
+        # Logger.info(f"Ensuring {required_size} Hessian-trace approximation for node {trace_hessian_request.target_node}.")
 
-        # Replace request of a reused target node with a request of the 'reuse group'.
-        if trace_hessian_request.target_node.reuse_group:
-            trace_hessian_request = self._get_request_of_reuse_group(trace_hessian_request)
+        for i, request in enumerate(trace_hessian_request):
+            # Replace request of a reused target node with a request of the 'reuse group'.
+            if request.target_node.reuse_group:
+                group_request = self._get_request_of_reuse_group(request)
+                trace_hessian_request[i] = group_request
 
         # Ensure the saved info has the required number of approximations
         self._populate_saved_info_to_size(trace_hessian_request, required_size)
 
         # Return the saved approximations for the given request
-        return self.trace_hessian_request_to_score_list[trace_hessian_request]
+        res = []
+        for request in trace_hessian_request:
+            res.append(self.trace_hessian_request_to_score_list[request])
+        return res
+        # return self.trace_hessian_request_to_score_list[trace_hessian_request]
 
     def _get_request_of_reuse_group(self, trace_hessian_request: TraceHessianRequest):
         """
@@ -191,7 +209,7 @@ class HessianInfoService:
 
 
     def _populate_saved_info_to_size(self,
-                                     trace_hessian_request: TraceHessianRequest,
+                                     trace_hessian_request: List[TraceHessianRequest],
                                      required_size: int):
         """
         Ensures that the saved info has the required size of trace Hessian approximations for the given request.
@@ -201,11 +219,15 @@ class HessianInfoService:
             required_size: Required number of trace Hessian approximations.
         """
         # Get the current number of saved approximations for the request
-        current_existing_hessians = self.count_saved_info_of_request(trace_hessian_request)
+        current_approx = []
+        for request in trace_hessian_request:
+            current_approx.append(self.count_saved_info_of_request(request))
 
+        current_existing_hessians = min(current_approx)
         Logger.info(
-            f"Found {current_existing_hessians} Hessian-trace approximations for node {trace_hessian_request.target_node}."
+            f"Found {current_existing_hessians} Hessian-trace approximations."
             f" {required_size - current_existing_hessians} approximations left to compute...")
+
 
         # Compute the required number of approximations to meet the required size
         for _ in range(required_size - current_existing_hessians):

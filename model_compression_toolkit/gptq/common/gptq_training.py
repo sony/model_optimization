@@ -13,21 +13,21 @@
 # limitations under the License.
 # ==============================================================================
 import copy
-from abc import ABC, abstractmethod
 import numpy as np
+from abc import ABC, abstractmethod
 from typing import Callable, List, Any, Dict
 
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR
-from model_compression_toolkit.gptq.common.gptq_framework_implementation import GPTQFrameworkImplemantation
-from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
-from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
-from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.hessian import HessianInfoService, TraceHessianRequest, HessianMode, \
     HessianInfoGranularity
 from model_compression_toolkit.core.common.hessian import hessian_info_utils as hessian_utils
+from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR
+from model_compression_toolkit.gptq.common.gptq_framework_implementation import GPTQFrameworkImplemantation
+from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
+from model_compression_toolkit.logger import Logger
 
 
 class GPTQTrainer(ABC):
@@ -173,18 +173,16 @@ class GPTQTrainer(ABC):
         Returns:
             Mapping of target nodes to their hessian approximations.
         """
+
+
         approximations = {}
-        for target_node in self.compare_points:
-            trace_hessian_request = TraceHessianRequest(
-                mode=HessianMode.ACTIVATION,
-                granularity=HessianInfoGranularity.PER_TENSOR,
-                target_node=target_node
-            )
-            node_approximations = self.hessian_service.fetch_hessian(
-                trace_hessian_request=trace_hessian_request,
-                required_size=self.gptq_config.hessian_weights_config.hessians_num_samples
-            )
-            approximations[target_node] = node_approximations
+        scores = self.hessian_service.fetch_hessian_multiple_nodes(mode=HessianMode.ACTIVATION,
+                                                                   granularity=HessianInfoGranularity.PER_TENSOR,
+                                                                   target_node=self.compare_points,
+                                                                   num_approximations=self.gptq_config.hessian_weights_config.hessians_num_samples
+                                                                   )
+        for i, target_node in enumerate(self.compare_points):
+            approximations[target_node] = scores[i]
         return approximations
 
     def _process_hessian_approximations(self, approximations: Dict[BaseNode, List[List[float]]]) -> List:
@@ -224,7 +222,7 @@ class GPTQTrainer(ABC):
         for target_node in self.compare_points:
             trace_approx = approximations[target_node][image_idx]
             self._validate_trace_approximation(trace_approx)
-            approx_by_interest_point.append(trace_approx[0])
+            approx_by_interest_point.append(trace_approx)
         return approx_by_interest_point
 
     @staticmethod
@@ -235,12 +233,10 @@ class GPTQTrainer(ABC):
         Args:
             trace_approx: Trace approximation to validate.
         """
-        if not isinstance(trace_approx, list):
-            Logger.error(f"Trace approx was expected to be a list but has a type of {type(trace_approx)}")
-        if len(trace_approx) != 1:
+        if not isinstance(trace_approx, np.float32):
             Logger.error(
-                f"Trace approx was expected to be of length 1 (when computing approximations with "
-                f"granularity=HessianInfoGranularity.PER_TENSOR) but has a length of {len(trace_approx)}"
+                f"Trace approx was expected to be have a numpy float 32 scalar (when computing approximations with "
+                f"granularity=HessianInfoGranularity.PER_TENSOR) but is {trace_approx}"
             )
 
     @staticmethod

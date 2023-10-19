@@ -68,28 +68,37 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
         """
         # Check if the target node's layer type is supported
-        if not DEFAULT_KERAS_INFO.is_kernel_op(self.hessian_request.target_node.type):
-            Logger.error(
-                f"{self.hessian_request.target_node.type} is not supported for Hessian info w.r.t weights.")
+        for request in self.hessian_request:
+            if not DEFAULT_KERAS_INFO.is_kernel_op(request.target_node.type):
+                Logger.error(
+                    f"{request.target_node.type} is not supported for Hessian info w.r.t weights.")
 
         # Construct the Keras float model for inference
         model, _ = FloatKerasModelBuilder(graph=self.graph).build_model()
 
         # Get the weight attributes for the target node type
-        weight_attributes = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.hessian_request.target_node.type)
-
+        weight_attributes_list = [DEFAULT_KERAS_INFO.get_kernel_op_attributes(request.target_node.type) for request in self.hessian_request]
+        # weight_attributes = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.hessian_request.target_node.type)
+        weight_tensors = []
+        oc_axis_list = []
+        num_of_scores_list = []
         # Get the weight tensor for the target node
-        if len(weight_attributes) != 1:
-            Logger.error(f"Hessian scores w.r.t weights is supported, for now, for a single-weight node. Found {len(weight_attributes)}")
+        for request_idx, weight_attribute in enumerate(weight_attributes_list):
+            if len(weight_attribute) != 1:
+                Logger.error(f"Hessian scores w.r.t weights is supported, for now, for a single-weight node. Found {len(weight_attribute)}")
 
-        weight_tensor = getattr(model.get_layer(self.hessian_request.target_node.name), weight_attributes[0])
+            weight_tensor = getattr(model.get_layer(self.hessian_request[request_idx].target_node.name), weight_attribute[0])
+            weight_tensors.append(weight_tensor)
 
-        # Get the output channel index (needed for HessianInfoGranularity.PER_OUTPUT_CHANNEL case)
-        output_channel_axis, _ = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(self.hessian_request.target_node.type)
+            # Get the output channel index (needed for HessianInfoGranularity.PER_OUTPUT_CHANNEL case)
+            output_channel_axis, _ = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(self.hessian_request[request_idx].target_node.type)
+            oc_axis_list.append(output_channel_axis)
 
-        # Get number of scores that should be calculated by the granularity.
-        num_of_scores = self._get_num_scores_by_granularity(weight_tensor,
-                                                            output_channel_axis)
+            # Get number of scores that should be calculated by the granularity.
+            num_of_scores = self._get_num_scores_by_granularity(weight_tensor,
+                                                                output_channel_axis,
+                                                                self.hessian_request[request_idx].granularity)
+            num_of_scores_list.append(num_of_scores)
 
         # Initiate a gradient tape for automatic differentiation
         with tf.GradientTape(persistent=True) as tape:
@@ -110,42 +119,71 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                 # Stop recording operations for automatic differentiation
                 with tape.stop_recording():
                     # Compute gradients of f_v with respect to the weights
-                    gradients = tape.gradient(f_v, weight_tensor)
-                    gradients = self._reshape_gradients(gradients,
-                                                        output_channel_axis,
-                                                        num_of_scores)
-                    approx = tf.reduce_sum(tf.pow(gradients, 2.0), axis=1)
+                    approx_per_weight_tensor = []
+                    for request_idx, weight_tensor in enumerate(weight_tensors):
+                        gradients = tape.gradient(f_v, weight_tensor)
+                        gradients = self._reshape_gradients(gradients,
+                                                            oc_axis_list[request_idx],
+                                                            num_of_scores_list[request_idx],
+                                                            self.hessian_request[request_idx].granularity)
+                        approx = tf.reduce_sum(tf.pow(gradients, 2.0), axis=1)
+                        approx_per_weight_tensor.append(approx)
+
+                    approximation_per_iteration.append(approx_per_weight_tensor)
+                    interst_points_concat = tf.stack([tf.concat(x, axis=0) for x in approximation_per_iteration])
 
                     # If the change to the mean approximation is insignificant (to all outputs)
                     # we stop the calculation.
                     if j > MIN_JACOBIANS_ITER:
                         # Compute new means and deltas
-                        new_mean = tf.reduce_mean(tf.stack(approximation_per_iteration + approx), axis=0)
-                        delta = new_mean - tf.reduce_mean(tf.stack(approximation_per_iteration), axis=0)
+                        # approximation_per_iteration.append(approx_per_weight_tensor)
+                        # print(tf.stack(approximation_per_iteration).shape)
+
+                        # interst_points_concat shape = NUM_APPROX x NUM_SCORES_FOR_ALL_INTERST_POINTS
+                        # If for example 2 nodes are computed per-channel and the first has 3 output
+                        # channels and the second 2 output channels: NUM_SCORES_FOR_ALL_INTERST_POINTS=5
+                        new_mean = tf.reduce_mean(interst_points_concat, axis=0)
+                        # try:
+                        #     new_mean = tf.reduce_mean(tf.stack(approximation_per_iteration), axis=0)
+                        # except Exception as e:
+                        #     print(e)
+                        delta = new_mean - tf.reduce_mean(interst_points_concat[:-1, ...], axis=0)
                         is_converged = np.all(np.abs(delta) / (np.abs(new_mean) + 1e-6) < JACOBIANS_COMP_TOLERANCE)
                         if is_converged:
-                            approximation_per_iteration.append(approx)
+                            # approximation_per_iteration.append(approx)
                             break
 
-                    approximation_per_iteration.append(approx)
 
             # Compute the mean of the approximations
-            final_approx = tf.reduce_mean(tf.stack(approximation_per_iteration), axis=0)
 
-        if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
-            if final_approx.shape != (1,):
-                Logger.error(f"In HessianInfoGranularity.PER_TENSOR the score shape is expected"
-                             f"to be (1,) but is {final_approx.shape} ")
-        elif self.hessian_request.granularity == HessianInfoGranularity.PER_ELEMENT:
-            # Reshaping the scores to the original weight shape
-            final_approx = tf.reshape(final_approx, weight_tensor.shape)
+            final_approx = tf.reduce_mean(interst_points_concat, axis=0)
+            # Split the array
+            split_arrays = np.split(final_approx, np.cumsum(num_of_scores_list)[:-1])
 
-        return final_approx.numpy()
+            # Display the split arrays
+            # for split_arr in split_arrays:
+            #     print(split_arr)
+
+        res = []
+        for i, request in enumerate(self.hessian_request):
+            if request.granularity == HessianInfoGranularity.PER_TENSOR:
+                if final_approx.shape != (len(self.hessian_request),):
+                    Logger.error(f"In HessianInfoGranularity.PER_TENSOR the score shape is expected"
+                                 f"to be ({len(self.hessian_request)},) but is {final_approx.shape} ")
+                res = split_arrays
+            elif request.granularity == HessianInfoGranularity.PER_OUTPUT_CHANNEL:
+                res = split_arrays
+            elif request.granularity == HessianInfoGranularity.PER_ELEMENT:
+                # Reshaping the scores to the original weight shape
+                res.append(tf.reshape(split_arrays[i], weight_tensors[i].shape))
+
+        return res
 
     def _reshape_gradients(self,
                            gradients: tf.Tensor,
                            output_channel_axis: int,
-                           num_of_scores: int) -> tf.Tensor:
+                           num_of_scores: int,
+                           granularity: HessianInfoGranularity) -> tf.Tensor:
         """
         Reshape the gradient tensor based on the requested granularity.
 
@@ -160,7 +198,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             tf.Tensor: Reshaped gradient tensor based on the granularity.
         """
         # Reshape the gradients based on the granularity (whole tensor, per channel, or per element)
-        if self.hessian_request.granularity != HessianInfoGranularity.PER_OUTPUT_CHANNEL:
+        if granularity != HessianInfoGranularity.PER_OUTPUT_CHANNEL:
             gradients = tf.reshape(gradients, [num_of_scores, -1])
         else:
             # Slice the gradients, vectorize them and stack them along the first axis.
@@ -172,7 +210,8 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
     def _get_num_scores_by_granularity(self,
                                        weight_tensor: tf.Tensor,
-                                       output_channel_axis: int) -> int:
+                                       output_channel_axis: int,
+                                       granularity: HessianInfoGranularity) -> int:
         """
         Get the number of scores to be computed based on the granularity type.
 
@@ -183,11 +222,11 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         Returns:
             int: The number of scores.
         """
-        if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
+        if granularity == HessianInfoGranularity.PER_TENSOR:
             return 1
-        elif self.hessian_request.granularity == HessianInfoGranularity.PER_OUTPUT_CHANNEL:
+        elif granularity == HessianInfoGranularity.PER_OUTPUT_CHANNEL:
             return weight_tensor.shape[output_channel_axis]
-        elif self.hessian_request.granularity == HessianInfoGranularity.PER_ELEMENT:
+        elif granularity == HessianInfoGranularity.PER_ELEMENT:
             return tf.size(weight_tensor).numpy()
         else:
-            Logger.error(f"Encountered an unexpected granularity {self.hessian_request.granularity} ")
+            Logger.error(f"Encountered an unexpected granularity {granularity} ")
