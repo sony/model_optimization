@@ -208,24 +208,20 @@ class SensitivityEvaluation:
         """
         # Dictionary to store the trace Hessian approximations for each interest point (target node)
         compare_point_to_trace_hessian_approximations = {}
-        approximations_all_interest_points = self.hessian_info_service.fetch_hessian_multiple_nodes(mode=HessianMode.ACTIVATION,
-                                                                                                    granularity=HessianInfoGranularity.PER_TENSOR,
-                                                                                                    target_node=self.interest_points,
-                                                                                                    num_approximations=self.quant_config.num_of_images)
 
         # Iterate over each interest point to fetch the trace Hessian approximations
-        for i, target_node in enumerate(self.interest_points):
+        for target_node in self.interest_points:
             # Create a request for trace Hessian approximation with specific configurations
             # (here we use per-tensor approximation of the Hessian's trace w.r.t the node's activations)
-            # trace_hessian_request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
-            #                                             granularity=HessianInfoGranularity.PER_TENSOR,
-            #                                             target_node=target_node)
-            #
-            # # Fetch the trace Hessian approximations for the current interest point
-            # node_approximations = self.hessian_info_service.fetch_hessian(trace_hessian_request=trace_hessian_request,
-            #                                                               required_size=self.quant_config.num_of_images)
+            trace_hessian_request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
+                                                        granularity=HessianInfoGranularity.PER_TENSOR,
+                                                        target_node=target_node)
+
+            # Fetch the trace Hessian approximations for the current interest point
+            node_approximations = self.hessian_info_service.fetch_hessian(trace_hessian_request=trace_hessian_request,
+                                                                          required_size=self.quant_config.num_of_images)
             # Store the fetched approximations in the dictionary
-            compare_point_to_trace_hessian_approximations[target_node] = approximations_all_interest_points[i]
+            compare_point_to_trace_hessian_approximations[target_node] = node_approximations
 
         # List to store the approximations for each image
         approx_by_image = []
@@ -236,11 +232,11 @@ class SensitivityEvaluation:
             # Iterate over each interest point to gather approximations
             for target_node in self.interest_points:
                 # Ensure the approximation for the current interest point and image is a list
-                assert isinstance(compare_point_to_trace_hessian_approximations[target_node][image_idx], np.float32)
-                # # Ensure the approximation list contains only one element (since, granularity is per-tensor)
-                # assert len(compare_point_to_trace_hessian_approximations[target_node][image_idx]) == 1
+                assert isinstance(compare_point_to_trace_hessian_approximations[target_node][image_idx], list)
+                # Ensure the approximation list contains only one element (since, granularity is per-tensor)
+                assert len(compare_point_to_trace_hessian_approximations[target_node][image_idx]) == 1
                 # Append the single approximation value to the list for the current image
-                approx_by_image_per_interest_point.append(compare_point_to_trace_hessian_approximations[target_node][image_idx])
+                approx_by_image_per_interest_point.append(compare_point_to_trace_hessian_approximations[target_node][image_idx][0])
 
             if self.quant_config.norm_weights:
                 approx_by_image_per_interest_point = hessian_utils.normalize_weights(trace_hessian_approximations=approx_by_image_per_interest_point,

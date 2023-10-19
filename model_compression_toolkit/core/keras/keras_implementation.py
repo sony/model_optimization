@@ -470,7 +470,7 @@ class KerasImplementation(FrameworkImplementation):
     def get_trace_hessian_calculator(self,
                                      graph: Graph,
                                      input_images: List[Any],
-                                     trace_hessian_request: List[TraceHessianRequest],
+                                     trace_hessian_request: TraceHessianRequest,
                                      num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
         Get Keras trace hessian approximations calculator based on the trace hessian request.
@@ -483,13 +483,13 @@ class KerasImplementation(FrameworkImplementation):
         Returns: TraceHessianCalculatorKeras to use for the trace hessian approximation computation for this request.
 
         """
-        if trace_hessian_request[0].mode == HessianMode.ACTIVATION:
+        if trace_hessian_request.mode == HessianMode.ACTIVATION:
             return ActivationTraceHessianCalculatorKeras(graph=graph,
                                                          trace_hessian_request=trace_hessian_request,
                                                          input_images=input_images,
                                                          fw_impl=self,
                                                          num_iterations_for_approximation=num_iterations_for_approximation)
-        elif trace_hessian_request[0].mode == HessianMode.WEIGHTS:
+        elif trace_hessian_request.mode == HessianMode.WEIGHTS:
             return WeightsTraceHessianCalculatorKeras(graph=graph,
                                                       trace_hessian_request=trace_hessian_request,
                                                       input_images=input_images,

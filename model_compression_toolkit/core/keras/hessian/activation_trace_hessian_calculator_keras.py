@@ -40,7 +40,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                  graph: Graph,
                  input_images: List[tf.Tensor],
                  fw_impl,
-                 trace_hessian_request: List[TraceHessianRequest],
+                 trace_hessian_request: TraceHessianRequest,
                  num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
         Args:
@@ -64,7 +64,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         Returns:
             List[float]: Approximated trace of the Hessian for an interest point.
         """
-        if self.hessian_request[0].granularity == HessianInfoGranularity.PER_TENSOR:
+        if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
             output_list = self._get_model_output_replacement()
 
             # Record operations for automatic differentiation
@@ -131,7 +131,9 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                     # get the final score of a node.
                     trace_approx_by_node.append(tf.reduce_mean(final_approx_per_output))  # Get averaged squared trace approximation
 
-                return [approx.numpy() for approx in trace_approx_by_node]
+                trace_approx_by_node = tf.reduce_mean([trace_approx_by_node], axis=0)  # Just to get one tensor instead of list of tensors with single element
+
+                return trace_approx_by_node.numpy().tolist()
         else:
             Logger.error(f"{self.hessian_request.granularity} is not supported for Keras activation hessian's trace approx calculator")
 
@@ -226,8 +228,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             else:
                 out_tensors_of_n = tf.dtypes.cast(out_tensors_of_n, tf.float32)
 
-            if n.name in [request.target_node.name for request in self.hessian_request] or \
-                    (n.reuse and n.reuse_group in [request.target_node.name for request in self.hessian_request]):
+            if n.name==self.hessian_request.target_node.name:
                 # Recording the relevant feature maps onto the gradient tape
                 gradient_tape.watch(out_tensors_of_n)
                 interest_points_tensors.append(out_tensors_of_n)

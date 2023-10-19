@@ -67,14 +67,8 @@ class TestHessianService(unittest.TestCase):
         request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
                                       granularity=HessianInfoGranularity.PER_TENSOR,
                                       target_node=list(self.graph.nodes)[1])
-        hessian = self.hessian_service.fetch_hessian([request], 2)
-        self.assertEqual(len(hessian), 1)  # One request
-        self.assertEqual(len(hessian[0]), 2)  # Two approximations
-
-        hessian = self.hessian_service.fetch_hessian([request, request], 2)
-        self.assertEqual(len(hessian), 2)  # One request
-        self.assertEqual(len(hessian[0]), 2)  # Two approximations
-        self.assertEqual(len(hessian[1]), 2)  # Two approximations
+        hessian = self.hessian_service.fetch_hessian(request, 2)
+        self.assertEqual(len(hessian), 2)
 
     def test_clear_cache(self):
         self.hessian_service._clear_saved_hessian_info()
@@ -83,7 +77,7 @@ class TestHessianService(unittest.TestCase):
                                       target_node=list(self.graph.nodes)[1])
         self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 0)
 
-        self.hessian_service.fetch_hessian([request], 1)
+        self.hessian_service.fetch_hessian(request, 1)
         self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 1)
         self.hessian_service._clear_saved_hessian_info()
         self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 0)
@@ -94,14 +88,12 @@ class TestHessianService(unittest.TestCase):
         request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
                                       granularity=HessianInfoGranularity.PER_TENSOR,
                                       target_node=list(self.graph.nodes)[1])
-        hessian = self.hessian_service.fetch_hessian([request], 2)
-        self.assertEqual(len(hessian), 1) # One request
-        self.assertEqual(len(hessian[0]), 2) # Two approximations
+        hessian = self.hessian_service.fetch_hessian(request, 2)
+        self.assertEqual(len(hessian), 2)
         self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 2)
 
-        hessian = self.hessian_service.fetch_hessian([request], 2)
-        self.assertEqual(len(hessian), 1)  # One request
-        self.assertEqual(len(hessian[0]), 2)  # Two approximations
+        hessian = self.hessian_service.fetch_hessian(request, 2)
+        self.assertEqual(len(hessian), 2)
         self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 2)
 
     def test_populate_cache_to_size(self):
@@ -109,7 +101,7 @@ class TestHessianService(unittest.TestCase):
         request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
                                       granularity=HessianInfoGranularity.PER_TENSOR,
                                       target_node=list(self.graph.nodes)[1])
-        self.hessian_service._populate_saved_info_to_size([request], 2)
+        self.hessian_service._populate_saved_info_to_size(request, 2)
         self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 2)
 
 
