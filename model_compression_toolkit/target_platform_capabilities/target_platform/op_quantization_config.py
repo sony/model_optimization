@@ -35,7 +35,8 @@ class OpQuantizationConfig:
                  quantization_preserving: bool,
                  fixed_scale: float,
                  fixed_zero_point: int,
-                 weights_multiplier_nbits: int  # If None - set 8 in hptq, o.w use it
+                 weights_multiplier_nbits: int,  # If None - set 8 in hptq, o.w use it
+                 simd_size: int
                  ):
         """
 
@@ -51,6 +52,8 @@ class OpQuantizationConfig:
             fixed_scale (float): Scale to use for an operator quantization parameters.
             fixed_zero_point (int): Zero-point to use for an operator quantization parameters.
             weights_multiplier_nbits (int): Number of bits to use when quantizing in look-up-table.
+            simd_size (int): An integer representing the Single Instruction, Multiple Data (SIMD) width of an operator. It indicates the number of data elements that can be fetched and processed simultaneously in a single instruction.
+
         """
 
         self.activation_quantization_method = activation_quantization_method
@@ -64,6 +67,7 @@ class OpQuantizationConfig:
         self.fixed_scale = fixed_scale
         self.fixed_zero_point = fixed_zero_point
         self.eights_lut_values_bitwidth = weights_multiplier_nbits
+        self.simd_size = simd_size
 
     def get_info(self):
         """
@@ -108,7 +112,8 @@ class OpQuantizationConfig:
                self.weights_n_bits == other.weights_n_bits and \
                self.weights_per_channel_threshold == other.weights_per_channel_threshold and \
                self.enable_weights_quantization == other.enable_weights_quantization and \
-               self.enable_activation_quantization == other.enable_activation_quantization
+               self.enable_activation_quantization == other.enable_activation_quantization and \
+               self.simd_size==other.simd_size
 
 
 class QuantizationConfigOptions(object):
