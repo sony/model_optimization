@@ -26,5 +26,6 @@ jobs:
           pip install tensorflow==${{ inputs.tf-version }}
       - name: Run unittests
         run: |
-          for script in tests/keras_tests/exporter_tests tests/keras_tests/feature_networks_tests tests/keras_tests/function_tests tests/keras_tests/graph_tests tests/keras_tests/layer_tests; do python -m unittest discover $script -v & pids+=($!); done; for pid in ${pids[@]}; do wait $pid || exit 1; done
+          python -m unittest discover tests/keras_tests/function_tests -v
+          for script in tests/keras_tests/exporter_tests tests/keras_tests/feature_networks_tests tests/keras_tests/graph_tests tests/keras_tests/layer_tests; do python -m unittest discover $script -v & pids+=($!); done; for pid in ${pids[@]}; do wait $pid || exit 1; done
 
