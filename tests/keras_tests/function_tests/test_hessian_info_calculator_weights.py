@@ -129,6 +129,7 @@ class TestHessianInfoCalculatorWeights(unittest.TestCase):
                                interest_points[1],
                                granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
                                expected_shape=(3, 3, 3, 2))
+        del hessian_service
 
     def test_dense_granularity(self):
         input_shape = (1, 8)
@@ -160,6 +161,7 @@ class TestHessianInfoCalculatorWeights(unittest.TestCase):
                                interest_points[1],
                                granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
                                expected_shape=(8, 2))
+        del hessian_service
 
     def test_conv2dtranspose_granularity(self):
         input_shape = (1, 8, 8, 3)
@@ -191,6 +193,7 @@ class TestHessianInfoCalculatorWeights(unittest.TestCase):
                                interest_points[1],
                                granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
                                expected_shape=(3, 3, 2, 3))
+        del hessian_service
 
     def test_depthwiseconv2d_granularity(self):
         input_shape = (1, 8, 8, 3)
@@ -222,6 +225,7 @@ class TestHessianInfoCalculatorWeights(unittest.TestCase):
                                interest_points[1],
                                granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
                                expected_shape=(3, 3, 3, 1))
+        del hessian_service
 
     def test_reused_layer(self):
         input_shape = (1, 8, 8, 3)
@@ -268,6 +272,7 @@ class TestHessianInfoCalculatorWeights(unittest.TestCase):
                                                granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT))
         self.assertTrue(node2_count == 1)
         self.assertTrue(len(hessian_service.trace_hessian_request_to_score_list)==1)
+        del hessian_service
 
     #########################################################
     # The following part checks different possible graph
@@ -307,6 +312,8 @@ class TestHessianInfoCalculatorWeights(unittest.TestCase):
                                interest_points,
                                granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
                                expected_shape=(3, 3, 3, 2))
+
+        del hessian_service
 
 
     def test_multiple_inputs(self):
