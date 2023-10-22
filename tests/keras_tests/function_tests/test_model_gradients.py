@@ -84,7 +84,6 @@ def multiple_outputs_node_model(input_shape):
     x_relu = ReLU()(x_bn)
     x_split = tf.split(x_relu, num_or_size_splits=2, axis=-1)
     outputs = x_split[0]+x_split[1]
-    # outputs = x_relu
     return keras.Model(inputs=inputs, outputs=outputs)
 
 

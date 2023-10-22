@@ -73,23 +73,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                                                                                             gradient_tape=g)
 
                 # Unfold and concatenate all outputs to form a single tensor
-                unfold_outputs = []
-                for output in outputs:
-                    if isinstance(output, List):
-                        unfold_outputs += output
-                    else:
-                        unfold_outputs.append(output)
-
-                r_outputs = [tf.reshape(output, shape=[output.shape[0], -1]) for output in unfold_outputs]
-
-                # Ensure all outputs have the same shape for concatenation
-                concat_axis_dim = [o.shape[0] for o in r_outputs]
-                if not all(d == concat_axis_dim[0] for d in concat_axis_dim):
-                    Logger.critical(
-                        "Can't concat model's outputs for gradients calculation since the shape of the first axis " # pragma: no cover  
-                        "is not equal in all outputs.")
-
-                output = tf.concat(r_outputs, axis=1)
+                output = self._concat_tensors(outputs)
 
                 # List to store the approximated trace of the Hessian for each interest point
                 trace_approx_by_node = []
