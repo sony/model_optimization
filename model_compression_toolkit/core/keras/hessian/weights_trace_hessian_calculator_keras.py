@@ -132,6 +132,9 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             # Compute the mean of the approximations
             final_approx = tf.reduce_mean(tf.stack(approximation_per_iteration), axis=0)
 
+        # Free gradient tape
+        del tape
+
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
             if final_approx.shape != (1,):
                 Logger.error(f"In HessianInfoGranularity.PER_TENSOR the score shape is expected"

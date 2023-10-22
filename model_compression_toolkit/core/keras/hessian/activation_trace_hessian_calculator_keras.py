@@ -133,7 +133,10 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
                 trace_approx_by_node = tf.reduce_mean([trace_approx_by_node], axis=0)  # Just to get one tensor instead of list of tensors with single element
 
-                return trace_approx_by_node.numpy().tolist()
+            # Free gradient tape
+            del g
+            return trace_approx_by_node.numpy().tolist()
+
         else:
             Logger.error(f"{self.hessian_request.granularity} is not supported for Keras activation hessian's trace approx calculator")
 
