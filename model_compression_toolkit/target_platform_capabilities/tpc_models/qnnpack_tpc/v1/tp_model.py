@@ -66,7 +66,8 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         quantization_preserving=False,
         fixed_scale=None,
         fixed_zero_point=None,
-        weights_multiplier_nbits=None
+        weights_multiplier_nbits=None,
+        simd_size=None
     )
 
     mixed_precision_cfg_list = [] # No mixed precision

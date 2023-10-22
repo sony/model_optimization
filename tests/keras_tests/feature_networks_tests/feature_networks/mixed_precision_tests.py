@@ -45,7 +45,8 @@ def get_base_eight_bits_config_op():
             quantization_preserving=False,
             fixed_scale=None,
             fixed_zero_point=None,
-            weights_multiplier_nbits=None
+            weights_multiplier_nbits=None,
+            simd_size=None
         )
 
 

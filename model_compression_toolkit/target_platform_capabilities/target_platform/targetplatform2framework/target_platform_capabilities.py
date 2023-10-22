@@ -75,6 +75,15 @@ class TargetPlatformCapabilities(ImmutableClass):
             return None
         return self.get_layers_by_opset(opset)
 
+    def get_layers(self) -> List[Any]:
+        """
+        Get a list of layers of all OperatorsSet objects.
+
+        Returns:
+            List of layers/LayerFilterParams in the TPC.
+        """
+        return self.op_sets_to_layers.get_layers()
+
     def get_layers_by_opset(self, op: OperatorsSetBase) -> List[Any]:
         """
         Get a list of layers that are attached to an OperatorsSet by the OperatorsSet object.

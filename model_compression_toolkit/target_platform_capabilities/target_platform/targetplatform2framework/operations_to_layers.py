@@ -91,6 +91,18 @@ class OperationsToLayers:
         Logger.warning(f'{op.name} is not in model.')
         return []
 
+    def get_layers(self) -> Any:
+        """
+        Get list of layers of all OperatorsSet objects.
+
+        Returns:
+            List of Layers that are associated with the passed OperatorsSet object.
+        """
+        layers = []
+        for o in self.op_sets_to_layers:
+            layers.extend(o.layers)
+        return layers
+
     def __add__(self,
                 op_set_to_layers: OperationsSetToLayers):
         """

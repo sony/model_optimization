@@ -78,3 +78,24 @@ class TraceHessianCalculator(ABC):
         computation method for the trace Hessian approximation.
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement compute method.')  # pragma: no cover
+
+    def _unfold_tensors_list(self, tensors_to_unfold: Any) -> List[Any]:
+        """
+        Unfold (flatten) a nested tensors list.
+
+        Given a mixed list of single tensors and nested tensor lists,
+        this method returns a flattened list where nested lists are expanded.
+
+        Args:
+            tensors_to_unfold: Tensors to unfold.
+
+        Returns:
+            A flattened list of tensors.
+        """
+        unfold_tensors = []
+        for tensor in tensors_to_unfold:
+            if isinstance(tensor, List):
+                unfold_tensors += tensor
+            else:
+                unfold_tensors.append(tensor)
+        return unfold_tensors

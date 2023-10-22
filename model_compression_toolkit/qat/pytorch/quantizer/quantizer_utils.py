@@ -40,9 +40,22 @@ def ste_clip(x: torch.Tensor, min_val=-1.0, max_val=1.0) -> torch.Tensor:
     return (torch.clip(x, min=min_val, max=max_val) - x).detach() + x
 
 
-def fix_range_to_include_zero(range_min: torch.Tensor,
-                              range_max: torch.Tensor,
-                              n_bits: int) -> Tuple[torch.Tensor, torch.Tensor]:
+def grad_scale(x: torch.Tensor, scale=1.0) -> torch.Tensor:
+    """
+    Gradient scale
+    Args:
+        x: input variable
+        scale: scale factor
+    Returns:
+        x in forward and x*scale in backward (for scaling the gradients).
+    """
+    x_scaled = x * scale
+    return (x - x_scaled).detach() + x_scaled
+
+
+def adjust_range_to_include_zero(range_min: torch.Tensor,
+                                 range_max: torch.Tensor,
+                                 n_bits: int) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Adjusting the quantization range to include representation of 0.0 in the quantization grid.
     If quantization per-channel, then range_min and range_max should be tensors in the specific shape that allows
@@ -120,7 +133,7 @@ def uniform_quantizer(tensor_data: torch.Tensor,
         Quantized data.
     """
     # adjusts the quantization range so the quantization grid includes zero.
-    a, b = fix_range_to_include_zero(range_min, range_max, n_bits)
+    a, b = adjust_range_to_include_zero(range_min, range_max, n_bits)
 
     # Compute the step size of quantized values.
     delta_tensor = (b - a) / (2 ** n_bits - 1)

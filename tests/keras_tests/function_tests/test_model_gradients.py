@@ -87,10 +87,24 @@ def multiple_outputs_node_model(input_shape):
     return keras.Model(inputs=inputs, outputs=outputs)
 
 
+def model_with_output_replacements(input_shape):
+    random_uniform = initializers.random_uniform(0, 1)
+    inputs = Input(shape=input_shape)
+    x = Conv2D(2, 3, padding='same', name="conv2d")(inputs)
+    x_bn = BatchNormalization(gamma_initializer='random_normal', beta_initializer='random_normal',
+                              moving_mean_initializer='random_normal', moving_variance_initializer=random_uniform,
+                              name="bn1")(x)
+    x_relu = ReLU()(x_bn)
+    x_soft = tf.nn.softmax(x_relu)
+    outputs = tf.math.argmax(x_soft)
+
+    return keras.Model(inputs=inputs, outputs=outputs)
+
+
 def representative_dataset(num_of_inputs=1):
     yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]*num_of_inputs
 
-def _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, num_of_inputs=1):
+def _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha, num_of_inputs=1):
     hessian_service = hessian_common.HessianInfoService(graph=graph,
                                                         representative_dataset=functools.partial(representative_dataset, num_of_inputs=num_of_inputs),
                                                         fw_impl=keras_impl)
@@ -104,7 +118,7 @@ def _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, num
         assert isinstance(hessian_data_per_image, list)
         assert len(hessian_data_per_image) == 1
         x.append(hessian_data_per_image[0])
-    x = hessian_common.hessian_utils.normalize_weights(x)
+    x = hessian_common.hessian_utils.normalize_weights(x, alpha=alpha, outputs_indices=[len(interest_points) - 1])
     return x
 
 
@@ -116,7 +130,7 @@ class TestModelGradients(unittest.TestCase):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
         all_output_indices = [len(interest_points) - 1] if output_indices is None else output_indices
-        x = _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, num_of_inputs=num_of_inputs)
+        x = _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha=0.3, num_of_inputs=num_of_inputs)
 
         # Checking that the weights were computed and normalized correctly
         # In rare occasions, the output tensor has all zeros, so the gradients for all interest points are zeros.
@@ -133,7 +147,7 @@ class TestModelGradients(unittest.TestCase):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
 
-        x = _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl)
+        x = _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha=0)
 
         # These are the expected values of the normalized gradients (gradients should be 2 and 1
         # with respect to input and mult layer, respectively)
@@ -141,7 +155,7 @@ class TestModelGradients(unittest.TestCase):
         self.assertTrue(np.isclose(x[1], np.float32(0.2), 1e-1))
         self.assertTrue(np.isclose(x[2], np.float32(0.0)))
 
-        y = _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl)
+        y = _get_normalized_hessian_trace_approx(graph, interest_points, keras_impl, alpha=1)
 
         self.assertTrue(np.isclose(y[0], np.float32(0.0)))
         self.assertTrue(np.isclose(y[1], np.float32(0.0)))

@@ -66,3 +66,16 @@ class TraceHessianRequest:
         self.mode = mode  # w.r.t activations or weights
         self.granularity = granularity  # per element, per layer, per channel
         self.target_node = target_node # TODO: extend it list of nodes
+
+    def __eq__(self, other):
+        # Checks if the other object is an instance of TraceHessianRequest
+        # and then checks if all attributes are equal.
+        return isinstance(other, TraceHessianRequest) and \
+               self.mode == other.mode and \
+               self.granularity == other.granularity and \
+               self.target_node == other.target_node
+
+    def __hash__(self):
+        # Computes the hash based on the attributes.
+        # The use of a tuple here ensures that the hash is influenced by all the attributes.
+        return hash((self.mode, self.granularity, self.target_node))
