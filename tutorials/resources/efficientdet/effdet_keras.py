@@ -38,11 +38,9 @@ from typing import Dict
 
 
 class TorchWrapper(torch.nn.Module):
-    def __init__(self, model, merged_outputs=False, used_custom_layer=False):
+    def __init__(self, model):
         super(TorchWrapper, self).__init__()
         self.model = model
-        self.merged_outputs = merged_outputs
-        self.used_custom_layer = used_custom_layer
 
     @property
     def config(self):
@@ -52,22 +50,11 @@ class TorchWrapper(torch.nn.Module):
         device = x.device
         keras_input = x.detach().cpu().numpy().transpose((0, 2, 3, 1))
         outputs = self.model(keras_input)
-        if self.merged_outputs:
-            if self.used_custom_layer:
-                outs = [torch.Tensor(o.numpy()).to(device) for o in outputs]
-                outs[0] = outs[0][:, :, [1, 0, 3, 2]]  # reorder (y, x, y2, x2) to (x, y, x2, y2)
-                outs[0] = outs[0] * img_info['img_scale'].view((-1, 1, 1))  # scale to original image size
-                return torch.cat([outs[0], outs[1].unsqueeze(2), outs[2].unsqueeze(2)+1], 2)
-            else:
-                class_out, box_out = outputs
-                class_out = torch.Tensor(class_out.numpy()).to(device)
-                box_out = torch.Tensor(box_out.numpy()).to(device)
-                return [class_out, box_out]
-        else:
-            class_out, box_out = outputs
-            class_out = [torch.Tensor(c.numpy().transpose((0, 3, 1, 2))).to(device) for c in class_out]
-            box_out = [torch.Tensor(b.numpy().transpose((0, 3, 1, 2))).to(device) for b in box_out]
-            return [class_out, box_out]
+
+        outs = [torch.Tensor(o.numpy()).to(device) for o in outputs]
+        outs[0] = outs[0][:, :, [1, 0, 3, 2]]  # reorder (y, x, y2, x2) to (x, y, x2, y2)
+        outs[0] = outs[0] * img_info['img_scale'].view((-1, 1, 1))  # scale to original image size
+        return torch.cat([outs[0], outs[1].unsqueeze(2), outs[2].unsqueeze(2) + 1], 2)
 
 
 def get_act_layer(act_type):
@@ -680,25 +667,24 @@ class EfficientDetKeras:
         self.class_net.toggle_bn_level_first()
         self.box_net.toggle_bn_level_first()
 
-    def get_model(self, input_shape, merge_outputs=False, use_custom_layer=False):
+    def get_model(self, input_shape):
         _input = tf.keras.layers.Input(shape=input_shape)
         x = self.backbone(_input)
         x = self.fpn(x)
         x_class = self.class_net(x)
         x_box = self.box_net(x)
         outputs = [x_class, x_box]
-        if merge_outputs:
-            x_class = [tf.keras.layers.Reshape((-1, self.config.num_classes))(_x) for _x in x_class]
-            x_class = tf.keras.layers.Concatenate(axis=1)(x_class)
-            x_box = [tf.keras.layers.Reshape((-1, 4))(_x) for _x in x_box]
-            x_box = tf.keras.layers.Concatenate(axis=1)(x_box)
-            if use_custom_layer:
-                anchors = tf.constant(Anchors.from_config(self.config).boxes.detach().cpu().numpy())
 
-                ssd_pp = SSDPostProcess(anchors, [1, 1, 1, 1], [*self.config.image_size],
-                                        ScoreConverter.SIGMOID, score_threshold=0.001, iou_threshold=0.5,
-                                        max_detections=self.config.max_det_per_image)
-                outputs = ssd_pp((x_box, x_class))
-            else:
-                outputs = [x_class, x_box]
+        x_class = [tf.keras.layers.Reshape((-1, self.config.num_classes))(_x) for _x in x_class]
+        x_class = tf.keras.layers.Concatenate(axis=1)(x_class)
+        x_box = [tf.keras.layers.Reshape((-1, 4))(_x) for _x in x_box]
+        x_box = tf.keras.layers.Concatenate(axis=1)(x_box)
+
+        anchors = tf.constant(Anchors.from_config(self.config).boxes.detach().cpu().numpy())
+
+        ssd_pp = SSDPostProcess(anchors, [1, 1, 1, 1], [*self.config.image_size],
+                                ScoreConverter.SIGMOID, score_threshold=0.001, iou_threshold=0.5,
+                                max_detections=self.config.max_det_per_image)
+        outputs = ssd_pp((x_box, x_class))
+
         return tf.keras.Model(inputs=_input, outputs=outputs)
