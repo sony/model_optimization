@@ -15,7 +15,6 @@
 
 import numpy as np
 import tensorflow as tf
-from keras.layers import Conv2D, Dense, Conv2DTranspose, DepthwiseConv2D
 from typing import List
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE
@@ -116,6 +115,9 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                                                         num_of_scores)
                     approx = tf.reduce_sum(tf.pow(gradients, 2.0), axis=1)
 
+                    # Free gradients
+                    del gradients
+
                     # If the change to the mean approximation is insignificant (to all outputs)
                     # we stop the calculation.
                     if j > MIN_JACOBIANS_ITER:
@@ -131,6 +133,9 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
             # Compute the mean of the approximations
             final_approx = tf.reduce_mean(tf.stack(approximation_per_iteration), axis=0)
+
+        # Free gradient tape
+        del tape
 
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
             if final_approx.shape != (1,):
