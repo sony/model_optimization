@@ -7,8 +7,9 @@ from timm.models import parse_model_name, split_model_name_tag, is_model, build_
 from timm.models._efficientnet_builder import BN_EPS_TF_DEFAULT, decode_arch_def, round_channels
 from timm.models._builder import pretrained_cfg_for_features
 
-from effdet.effnet_blocks_keras import create_conv2d, SqueezeExcite, get_attn, handle_name, get_norm_act_layer, \
-    CondConvResidual, InvertedResidual, DepthwiseSeparableConv, EdgeResidual, ConvBnAct, BatchNormAct2d
+from tutorials.resources.efficientdet.effnet_blocks_keras import create_conv2d, SqueezeExcite, get_attn, \
+    handle_name, get_norm_act_layer, CondConvResidual, InvertedResidual, DepthwiseSeparableConv, EdgeResidual, \
+    ConvBnAct, BatchNormAct2d
 
 
 __all__ = ["EfficientNetBuilder", "decode_arch_def", "efficientnet_init_weights",
