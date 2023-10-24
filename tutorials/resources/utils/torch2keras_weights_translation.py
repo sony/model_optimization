@@ -1,3 +1,18 @@
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 from typing import Dict
 import tensorflow as tf
 import numpy as np
@@ -6,19 +21,36 @@ import numpy as np
 ln_patch = False
 
 
-def weight_translation(keras_name, pytorch_weights_dict, layer):
+def weight_translation(keras_name: str, pytorch_weights_dict: Dict[str, np.ndarray],
+                       layer: tf.keras.layers.Layer) -> np.ndarray:
+    """
+    Convert a keras weight name format to torch naming format, so the value of the weight can be
+    retrieved from the Torch model state_dict.
+
+    For example:
+    * Keras name: model_name/layer_name/kernel:0
+    is translated to:
+    * Torch name: model_name.layer_name.weight
+
+    Args:
+        keras_name: keras weight name
+        pytorch_weights_dict: the Torch model state_dict, as {name_str: weight value as numpy array}
+        layer: the Keras layer of the weight
+
+    Returns:
+        the weight value as a numpy array
+
+    """
     keras_name = keras_name.replace('/', '.')
     if ln_patch and (isinstance(layer, tf.keras.layers.LayerNormalization) or
                      (isinstance(layer, tf.keras.layers.BatchNormalization) and '_bn_patch' in layer.name)):
         if isinstance(layer, tf.keras.layers.LayerNormalization):
             if '.beta:0' in keras_name:
                 value = layer.weights[1].numpy()
-                assert np.all(value == 0), 'Ahh'
             elif '.gamma:0' in keras_name:
                 value = layer.weights[0].numpy()
-                assert np.all(value == 1), 'Ahh'
             else:
-                raise Exception('ahh')
+                raise Exception('Unknown LayerNorm weight name')
         elif isinstance(layer, tf.keras.layers.BatchNormalization):
             if '.beta:0' in keras_name:
                 value = pytorch_weights_dict.pop(keras_name.replace('_bn_patch', '').replace(".beta:0", ".bias"))
@@ -26,12 +58,10 @@ def weight_translation(keras_name, pytorch_weights_dict, layer):
                 value = pytorch_weights_dict.pop(keras_name.replace('_bn_patch', '').replace(".gamma:0", ".weight"))
             elif '.moving_mean:0' in keras_name:
                 value = layer.weights[2].numpy()
-                assert np.all(value == 0), 'Ahh'
             elif '.moving_variance:0' in keras_name:
                 value = layer.weights[3].numpy()
-                assert np.all(value == 1), 'Ahh'
             else:
-                raise Exception('ahh')
+                raise Exception('Unknown BatchNorm weight name')
         else:
             raise NotImplemented
     # Handling MHA layers
@@ -49,7 +79,7 @@ def weight_translation(keras_name, pytorch_weights_dict, layer):
             elif '.attention_output.' in keras_name:  # or '.key.' in keras_name or '.value.' in keras_name:
                 value = pytorch_weights_dict[keras_name.replace(".attention_output.bias:0", ".out_proj.bias")]
             else:
-                raise Exception('ahh')
+                raise Exception('Unknown MHA bias name')
         elif '.query.' in keras_name:
             value = pytorch_weights_dict[keras_name.replace(".query.kernel:0", ".qkv_proj.weight")]
             value = value[:int(value.shape[0]/3), :].transpose().reshape((int(value.shape[0]/3), layer._num_heads, -1))
@@ -63,7 +93,7 @@ def weight_translation(keras_name, pytorch_weights_dict, layer):
             value = pytorch_weights_dict[keras_name.replace(".attention_output.kernel:0", ".out_proj.weight")]
             value = value.transpose().reshape((layer._num_heads, -1, value.shape[-1]))
         else:
-            raise Exception('unknown weight in MHA')
+            raise Exception('Unknown MHA weight name')
 
     # Handle Convolution layers
     elif '.depthwise_kernel:0' in keras_name:
@@ -96,6 +126,16 @@ def weight_translation(keras_name, pytorch_weights_dict, layer):
 
 
 def load_state_dict(model: tf.keras.Model, state_dict: Dict[str, np.ndarray]):
+    """
+    Assign a Keras model weights according to a state_dict from the equivalent Torch model.
+    Args:
+        model: A Keras model
+        state_dict: the Torch model state_dict, as {name_str: weight value as numpy array}
+
+    Returns:
+        The same model object after assigning the weights
+
+    """
     for layer in model.layers:
         for w in layer.weights:
             w.assign(weight_translation(w.name, state_dict, layer))

@@ -1,3 +1,18 @@
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 import logging
 from collections import OrderedDict
 from functools import partial
@@ -56,6 +71,12 @@ class TorchWrapper(torch.nn.Module):
         outs[0] = outs[0] * img_info['img_scale'].view((-1, 1, 1))  # scale to original image size
         return torch.cat([outs[0], outs[1].unsqueeze(2), outs[2].unsqueeze(2) + 1], 2)
 
+
+# #######################################################################################
+# This file generates the Keras model. It's based on the EfficientDet repository in
+# https://github.com/rwightman/efficientdet-pytorch, and switched the Torch Modules
+# with Keras layers
+# #######################################################################################
 
 def get_act_layer(act_type):
     if act_type == 'relu6':
@@ -629,37 +650,6 @@ class EfficientDetKeras:
         self.fpn = BiFpn(self.config, feature_info, 'fpn')
         self.class_net = HeadNet(self.config, num_outputs=self.config.num_classes, name='class_net')
         self.box_net = HeadNet(self.config, num_outputs=4, name='box_net')
-
-    def reset_head(self, num_classes=None, aspect_ratios=None, num_scales=None, alternate_init=False):
-        reset_class_head = False
-        reset_box_head = False
-        set_config_writeable(self.config)
-        if num_classes is not None:
-            reset_class_head = True
-            self.config.num_classes = num_classes
-        if aspect_ratios is not None:
-            reset_box_head = True
-            self.config.aspect_ratios = aspect_ratios
-        if num_scales is not None:
-            reset_box_head = True
-            self.config.num_scales = num_scales
-        set_config_readonly(self.config)
-
-        if reset_class_head:
-            self.class_net = HeadNet(self.config, num_outputs=self.config.num_classes)
-            # for n, m in self.class_net.named_modules(prefix='class_net'):
-            #     if alternate_init:
-            #         _init_weight_alt(m, n)
-            #     else:
-            #         _init_weight(m, n)
-
-        if reset_box_head:
-            self.box_net = HeadNet(self.config, num_outputs=4)
-            # for n, m in self.box_net.named_modules(prefix='box_net'):
-            #     if alternate_init:
-            #         _init_weight_alt(m, n)
-            #     else:
-            #         _init_weight(m, n)
 
     def toggle_head_bn_level_first(self):
         """ Toggle the head batchnorm layers between being access with feature_level first vs repeat

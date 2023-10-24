@@ -13,4 +13,4 @@
 # limitations under the License.
 # ==============================================================================
 
-from tutorials.resources.utils.weights_translation import load_state_dict
+from tutorials.resources.utils.torch2keras_weights_translation import load_state_dict

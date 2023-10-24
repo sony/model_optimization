@@ -1,7 +1,20 @@
-import os
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 from functools import partial
 from typing import Any, Dict, Optional, Union, List
-from urllib.parse import urlsplit
 import tensorflow as tf
 from timm.models import parse_model_name, split_model_name_tag, is_model, build_model_with_cfg, FeatureInfo
 from timm.models._efficientnet_builder import BN_EPS_TF_DEFAULT, decode_arch_def, round_channels
@@ -14,6 +27,12 @@ from tutorials.resources.efficientdet.effnet_blocks_keras import create_conv2d, 
 
 __all__ = ["EfficientNetBuilder", "decode_arch_def", "efficientnet_init_weights",
            'resolve_bn_args', 'resolve_act_layer', 'round_channels', 'BN_MOMENTUM_TF_DEFAULT', 'BN_EPS_TF_DEFAULT']
+
+
+# #######################################################################################
+# This file generates the Keras model. It's based on the EfficientNet code in the timm
+# repository, and switched the Torch Modules with Keras layers
+# #######################################################################################
 
 
 def _log_info_if(_str, _versbose):
