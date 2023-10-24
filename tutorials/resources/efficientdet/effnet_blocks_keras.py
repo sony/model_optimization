@@ -130,11 +130,10 @@ def create_conv2d_pad(in_chs, out_chs, kernel_size, **kwargs):
 def create_pool2d(pool_type, kernel_size, stride=None, **kwargs):
     stride = stride or kernel_size
     padding = kwargs.pop('padding', '')
-    # padding, is_dynamic = get_padding_value(padding, kernel_size, stride=stride, **kwargs)
-    # padding = 'same', kernel_size = 3, stride = 2, kwargs = {} ==> padding, is_dynamic = 0, True
     padding, is_dynamic = padding.lower(), True
     if is_dynamic:
         if pool_type == 'avg':
+            raise NotImplemented
             return AvgPool2dSame(kernel_size, stride=stride, **kwargs)
         elif pool_type == 'max':
             # return MaxPool2dSame(kernel_size, stride=stride, **kwargs)
@@ -142,6 +141,7 @@ def create_pool2d(pool_type, kernel_size, stride=None, **kwargs):
         else:
             assert False, f'Unsupported pool type {pool_type}'
     else:
+        raise NotImplemented
         if pool_type == 'avg':
             return nn.AvgPool2d(kernel_size, stride=stride, padding=padding, **kwargs)
         elif pool_type == 'max':
