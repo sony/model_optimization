@@ -139,7 +139,8 @@ class TestFileLogger(unittest.TestCase):
         def rep_data():
             yield [np.random.randn(1, 8, 8, 3)]
 
-        mp_qc = mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1)
+        mp_qc = mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
+                                                            use_grad_based_weights=False)
         core_config = mct.core.CoreConfig(mixed_precision_config=mp_qc)
         quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(self.model,
                                                                                rep_data,

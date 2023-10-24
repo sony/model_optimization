@@ -44,6 +44,8 @@ def representative_dataset(num_of_inputs=1):
 
 
 class TestHessianService(unittest.TestCase):
+    def tearDown(self) -> None:
+        del self.hessian_service
 
     def setUp(self):
 

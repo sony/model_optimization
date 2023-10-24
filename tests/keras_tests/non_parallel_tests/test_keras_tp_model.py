@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import keras
 import unittest
 from functools import partial
 
@@ -24,10 +25,10 @@ from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 from model_compression_toolkit.core.common import BaseNode
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
-    from keras.src.layers import Conv2D, Conv2DTranspose, ReLU, Activation
+    from keras.src.layers import Conv2D, Conv2DTranspose, ReLU, Activation, BatchNormalization
     from keras.src import Input
 else:
-    from keras.layers import Conv2D, Conv2DTranspose, ReLU, Activation
+    from keras.layers import Conv2D, Conv2DTranspose, ReLU, Activation, BatchNormalization
     from keras import Input
 
 import model_compression_toolkit as mct
@@ -229,10 +230,15 @@ class TestKerasTPModel(unittest.TestCase):
 class TestGetKerasTPC(unittest.TestCase):
     def test_get_keras_tpc(self):
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
-        model = MobileNetV2()
+        input_shape = (1, 8, 8, 3)
+        input_tensor = Input(shape=input_shape[1:])
+        conv = Conv2D(3, 3)(input_tensor)
+        bn = BatchNormalization()(conv)
+        relu = ReLU()(bn)
+        model = keras.Model(inputs=input_tensor, outputs=relu)
 
         def rep_data():
-            yield [np.random.randn(1, 224, 224, 3)]
+            yield [np.random.randn(*input_shape)]
 
         quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                    rep_data,
@@ -240,7 +246,8 @@ class TestGetKerasTPC(unittest.TestCase):
                                                                                    new_experimental_exporter=True)
 
         core_config = mct.core.CoreConfig(
-            mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1))
+            mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
+                                                                               use_grad_based_weights=False))
         quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                    rep_data,
                                                                                    core_config=core_config,
