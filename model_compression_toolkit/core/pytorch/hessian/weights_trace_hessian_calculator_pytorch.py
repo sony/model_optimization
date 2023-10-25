@@ -57,6 +57,12 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
     def compute(self) -> np.ndarray:
         """
         Compute the Hessian-based scores w.r.t target node's weights.
+        The computed scores are returned in a numpy array. The shape of the result differs
+        according to the requested granularity. If for example the node is Conv2D with a kernel
+        shape of (2, 3, 3, 3) (namely, 3 input channels, 2 output channels and kernel size of 3x3)
+        and the required granularity is HessianInfoGranularity.PER_TENSOR the result shape will be (1,),
+        for HessianInfoGranularity.PER_OUTPUT_CHANNEL the shape will be (2,) and for
+        HessianInfoGranularity.PER_ELEMENT a shape of (2, 3, 3, 3).
 
         Returns:
             The computed scores as numpy ndarray for target node's weights.
@@ -107,8 +113,8 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                 approx = torch.sum(approx, dim=shape_channel_axis)
 
             if j > MIN_JACOBIANS_ITER:
-                new_mean = (torch.sum(torch.stack(approximation_per_iteration))+approx)/(j+1)
-                delta = new_mean - torch.mean(torch.stack(approximation_per_iteration))
+                new_mean = (torch.sum(torch.stack(approximation_per_iteration), dim=0) + approx)/(j+1)
+                delta = new_mean - torch.mean(torch.stack(approximation_per_iteration), dim=0)
                 converged_tensor = torch.abs(delta) / (torch.abs(new_mean) + HESSIAN_EPS) < JACOBIANS_COMP_TOLERANCE
                 if torch.all(converged_tensor):
                     break

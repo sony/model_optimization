@@ -33,7 +33,7 @@ from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSe
 from tests.pytorch_tests.function_tests.test_sensitivity_eval_output_replacement import \
     TestSensitivityEvalWithArgmaxOutputReplacementNodes, TestSensitivityEvalWithSoftmaxOutputReplacementNodes
 from tests.pytorch_tests.function_tests.test_hessian_info_weights import WeightsHessianTraceBasicModelTest, WeightsHessianTraceAdvanceModelTest, \
-WeightsHessianTraceMultipleOutputsModelTest
+WeightsHessianTraceMultipleOutputsModelTest, WeightsHessianTraceReuseModelTest
 
 
 class FunctionTestRunner(unittest.TestCase):
@@ -121,6 +121,7 @@ class FunctionTestRunner(unittest.TestCase):
         WeightsHessianTraceBasicModelTest(self).run_test()
         WeightsHessianTraceAdvanceModelTest(self).run_test()
         WeightsHessianTraceMultipleOutputsModelTest(self).run_test()
+        WeightsHessianTraceReuseModelTest(self).run_test()
 
     def test_layer_fusing(self):
         """

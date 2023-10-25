@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ class advanced_model(torch.nn.Module):
         self.conv2 = Conv2d(3, 3, kernel_size=1, stride=1)
         self.bn2 = BatchNorm2d(3)
         self.relu2 = ReLU()
-        self.dense = Linear(32, 7)
+        self.dense = Linear(8, 7)
 
     def forward(self, inp):
         x = self.conv1(inp)
@@ -76,7 +76,7 @@ class multiple_outputs_model(torch.nn.Module):
         self.conv2 = Conv2d(3, 3, kernel_size=1, stride=1)
         self.bn2 = BatchNorm2d(3)
         self.hswish = Hardswish()
-        self.dense = Linear(32, 7)
+        self.dense = Linear(8, 7)
 
     def forward(self, inp):
         x = self.conv1(inp)
@@ -87,6 +87,25 @@ class multiple_outputs_model(torch.nn.Module):
         x3 = self.hswish(x2)
         x3 = self.dense(x3)
         return x1, x2, x3
+
+
+class reused_model(torch.nn.Module):
+    def __init__(self):
+        super(reused_model, self).__init__()
+        self.conv1 = Conv2d(3, 3, kernel_size=1, stride=1)
+        self.bn1 = BatchNorm2d(3)
+        self.relu = ReLU()
+
+    def forward(self, inp):
+        x = self.conv1(inp)
+        x1 = self.bn1(x)
+        x1 = self.relu(x1)
+        x_split = torch.split(x1, split_size_or_sections=4, dim=-1)
+        x1 = self.conv1(x_split[0])
+        x2 = x_split[1]
+        x1 = self.relu(x1)
+        y = torch.concat([x1, x2], dim=-1)
+        return y
 
 
 def generate_inputs(inputs_shape):
@@ -130,7 +149,7 @@ class WeightsHessianTraceBasicModelTest(BasePytorchTest):
         self.val_batch_size = 1
 
     def create_inputs_shape(self):
-        return [[self.val_batch_size, 3, 32, 32]]
+        return [[self.val_batch_size, 3, 8, 8]]
 
     @staticmethod
     def generate_inputs(input_shapes):
@@ -164,10 +183,10 @@ class WeightsHessianTraceBasicModelTest(BasePytorchTest):
 class WeightsHessianTraceAdvanceModelTest(BasePytorchTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.val_batch_size = 4
+        self.val_batch_size = 2
 
     def create_inputs_shape(self):
-        return [[self.val_batch_size, 3, 32, 32]]
+        return [[self.val_batch_size, 3, 8, 8]]
 
     @staticmethod
     def generate_inputs(input_shapes):
@@ -207,7 +226,7 @@ class WeightsHessianTraceMultipleOutputsModelTest(BasePytorchTest):
         self.val_batch_size = 1
 
     def create_inputs_shape(self):
-        return [[self.val_batch_size, 3, 32, 32]]
+        return [[self.val_batch_size, 3, 8, 8]]
 
     @staticmethod
     def generate_inputs(input_shapes):
@@ -241,5 +260,43 @@ class WeightsHessianTraceMultipleOutputsModelTest(BasePytorchTest):
                                               granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT)
 
 
+class WeightsHessianTraceReuseModelTest(BasePytorchTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+        self.val_batch_size = 1
+
+    def create_inputs_shape(self):
+        return [[self.val_batch_size, 3, 8, 8]]
+
+    @staticmethod
+    def generate_inputs(input_shapes):
+        return generate_inputs(input_shapes)
+
+    def representative_data_gen(self):
+        input_shapes = self.create_inputs_shape()
+        yield self.generate_inputs(input_shapes)
+
+    def run_test(self, seed=0):
+        model_float = reused_model()
+        pytorch_impl = PytorchImplementation()
+        graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
+                                           self.representative_data_gen, generate_pytorch_tpc)
+        hessian_service = hessian_common.HessianInfoService(graph=graph,
+                                                            representative_dataset=self.representative_data_gen,
+                                                            fw_impl=pytorch_impl)
+        ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights)>0]
+        for ipt in ipts:
+            test_weights_hessian_trace_approx(hessian_service,
+                                              interest_point=ipt,
+                                              num_scores=1,
+                                              granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL)
+            test_weights_hessian_trace_approx(hessian_service,
+                                              interest_point=ipt,
+                                              num_scores=2,
+                                              granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
+            test_weights_hessian_trace_approx(hessian_service,
+                                              interest_point=ipt,
+                                              num_scores=3,
+                                              granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT)
 
 

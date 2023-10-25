@@ -17,7 +17,7 @@ import numpy as np
 import tensorflow as tf
 from typing import List
 
-from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE
+from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE, HESSIAN_EPS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianInfoGranularity
 from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
@@ -124,7 +124,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                         # Compute new means and deltas
                         new_mean = tf.reduce_mean(tf.stack(approximation_per_iteration + approx), axis=0)
                         delta = new_mean - tf.reduce_mean(tf.stack(approximation_per_iteration), axis=0)
-                        is_converged = np.all(np.abs(delta) / (np.abs(new_mean) + 1e-6) < JACOBIANS_COMP_TOLERANCE)
+                        is_converged = np.all(np.abs(delta) / (np.abs(new_mean) + HESSIAN_EPS) < JACOBIANS_COMP_TOLERANCE)
                         if is_converged:
                             approximation_per_iteration.append(approx)
                             break
