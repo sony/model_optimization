@@ -19,7 +19,7 @@ import importlib
 TENSORFLOW = 'tensorflow'
 PYTORCH = 'pytorch'
 FOUND_TF = importlib.util.find_spec(TENSORFLOW) is not None
-FOUND_TORCH = False#importlib.util.find_spec("torch") is not None
+FOUND_TORCH = importlib.util.find_spec("torch") is not None
 FOUND_ONNX = importlib.util.find_spec("onnx") is not None
 FOUND_ONNXRUNTIME = importlib.util.find_spec("onnxruntime") is not None
 FOUND_SONY_CUSTOM_LAYERS = importlib.util.find_spec('sony_custom_layers') is not None

@@ -20,7 +20,7 @@ from typing import Dict, Tuple
 from common.results import write_results, read_models_list, parse_results, QuantInfo, plot_results, DatasetInfo
 from common.library_mapping import find_modules
 from common.constants import MODEL_NAME, MODEL_LIBRARY, OUTPUT_RESULTS_FILE, TARGET_PLATFORM_NAME, \
-    TARGET_PLATFORM_VERSION, SKIP_FLOAT_VAL
+    TARGET_PLATFORM_VERSION
 
 
 # Script to Evaluate and Compress Pre-trained Neural Network Model(s) using MCT (Model Compression Toolkit)
@@ -48,8 +48,6 @@ def argument_handler():
                         help='Run according to a list of models and parameters taken from a csv file')
     parser.add_argument('--output_results_file', type=str, default='model_quantization_results.csv',
                         help='Run according to a list of models and parameters taken from a csv file')
-    parser.add_argument('--skip_float_evaluation', action='store_true', default=False,
-                        help='Flag to skip evaluation of the float model accuracy')
     parser.add_argument('--validation_set_limit', type=int, default=None,
                         help='Limits the number of images taken for evaluation')
     parser.add_argument('--export_model', action="store_true",
@@ -99,17 +97,12 @@ def quantization_flow(config: Dict) -> Tuple[float, float, QuantInfo, DatasetInf
     float_model = ml.get_model()
 
     # Evaluate the float model
-    if not config[SKIP_FLOAT_VAL]:
-        float_results, _ = ml.evaluate(float_model)
-    else:
-        float_results = -1
+    float_results, _ = ml.evaluate(float_model)
 
     # Select the target platform capabilities (https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/README.md)
     target_platform_cap = quant.get_tpc(config[TARGET_PLATFORM_NAME], config[TARGET_PLATFORM_VERSION])
 
     # Run model compression toolkit
-    # target_platform_cap.tp_model.default_qco.base_config.weights_n_bits = 16
-    # target_platform_cap.tp_model.default_qco.base_config.activation_n_bits = 16
     quantized_model, quantization_info = quant.quantize(float_model,
                                                         ml.get_representative_dataset,
                                                         target_platform_cap,
@@ -145,8 +138,6 @@ if __name__ == '__main__':
         models_list = read_models_list(args.models_list_csv)
         results_table = []
         for p in models_list:
-            if p[MODEL_NAME][0] == '#':
-                continue
 
             # Get next model and parameters from the list
             logging.info(f"Testing model: {p[MODEL_NAME]} from library: {p[MODEL_LIBRARY]}")

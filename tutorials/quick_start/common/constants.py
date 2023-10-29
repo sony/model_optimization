@@ -22,7 +22,6 @@ REPRESENTATIVE_DATASET_FOLDER = 'representative_dataset_folder'
 VALIDATION_DATASET_FOLDER = 'validation_dataset_folder'
 TARGET_PLATFORM_NAME = 'target_platform_name'
 TARGET_PLATFORM_VERSION = 'target_platform_version'
-SKIP_FLOAT_VAL = 'skip_float_evaluation'
 VALIDATION_SET_LIMIT = 'validation_set_limit'
 MP_WEIGHTS_COMPRESSION = 'mp_weights_compression'
 

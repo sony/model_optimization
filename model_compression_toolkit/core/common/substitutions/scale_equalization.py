@@ -158,7 +158,7 @@ def calculate_scale_correction(first_op2d_node: BaseNode) -> tuple:
     std_vector = np.abs(first_op2d_node.prior_info.std_output)
     mean_vector = first_op2d_node.prior_info.mean_output
 
-    fixed_second_moment_vector = np.maximum(fixed_second_moment_after_relu(mean_vector, std_vector), 1e-10)
+    fixed_second_moment_vector = fixed_second_moment_after_relu(mean_vector, std_vector)
     fixed_mean_vector = fixed_mean_after_relu(mean_vector, std_vector)
     fixed_std_vector = np.sqrt(fixed_second_moment_vector - np.power(fixed_mean_vector, 2))
 
