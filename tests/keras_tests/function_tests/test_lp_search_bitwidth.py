@@ -55,7 +55,7 @@ class MockMixedPrecisionSearchManager:
     def __init__(self, layer_to_kpi_mapping):
         self.layer_to_bitwidth_mapping = {0: [0, 1, 2]}
         self.layer_to_kpi_mapping = layer_to_kpi_mapping
-        self.compute_metric_fn = lambda x, y=None, z=None: 0
+        self.sensitivity_metric_fn = lambda x, y=None, z=None: 0
         self.min_kpi = {KPITarget.WEIGHTS: [[1], [1], [1]],
                         KPITarget.ACTIVATION: [[1], [1], [1]],
                         KPITarget.TOTAL: [[2], [2], [2]],
@@ -67,6 +67,9 @@ class MockMixedPrecisionSearchManager:
         self.max_kpi_config = [0]
         self.config_reconstruction_helper = MockReconstructionHelper()
         self.non_conf_kpi_dict = None
+
+    def compute_sensitivity_metric(self, x, y=None, z=None):
+        return self.sensitivity_metric_fn(x, y)
 
     def compute_kpi_matrix(self, target):
         # minus 1 is normalization by the minimal kpi (which is always 1 in this test)

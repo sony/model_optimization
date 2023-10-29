@@ -56,18 +56,7 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
 
     layer_to_metrics_mapping = _build_layer_to_metrics_mapping(search_manager, target_kpi)
 
-    # normalize metric for numerical stability
-    max_dist = max([max([d for b, d in dists.items()]) for layer, dists in layer_to_metrics_mapping.items()])
-    if max_dist >= search_manager.sensitivity_evaluator.quant_config.metric_normalization_threshold:
-        Logger.warning(f"The mixed precision distance metric values indicate a large error in the quantized model."
-                       f"this can cause numerical issues."
-                       f"The program will proceed with mixed precision search after scaling the metric values,"
-                       f"which can lead to unstable results.")
-        for layer, dists in layer_to_metrics_mapping.items():
-            for b, d in dists.items():
-                layer_to_metrics_mapping[layer][b] /= max_dist
-
-            # Init variables to find their values when solving the lp problem.
+    # Init variables to find their values when solving the lp problem.
     layer_to_indicator_vars_mapping, layer_to_objective_vars_mapping = _init_problem_vars(layer_to_metrics_mapping)
 
     # Add all equations and inequalities that define the problem.
@@ -270,9 +259,9 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
 
     if is_bops_target_kpi:
         origin_max_config = search_manager.config_reconstruction_helper.reconstruct_config_from_virtual_graph(search_manager.max_kpi_config)
-        max_config_value = search_manager.compute_metric_fn(origin_max_config)
+        max_config_value = search_manager.compute_sensitivity_metric(origin_max_config)
     else:
-        max_config_value = search_manager.compute_metric_fn(search_manager.max_kpi_config)
+        max_config_value = search_manager.compute_sensitivity_metric(search_manager.max_kpi_config)
 
     for node_idx, layer_possible_bitwidths_indices in tqdm(search_manager.layer_to_bitwidth_mapping.items(),
                                                            total=len(search_manager.layer_to_bitwidth_mapping)):
@@ -298,12 +287,12 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
                         original_base_config=origin_max_config)
                 origin_changed_nodes_indices = [i for i, c in enumerate(origin_max_config) if
                                                 c != origin_mp_model_configuration[i]]
-                layer_to_metrics_mapping[node_idx][bitwidth_idx] = search_manager.compute_metric_fn(
+                layer_to_metrics_mapping[node_idx][bitwidth_idx] = search_manager.compute_sensitivity_metric(
                     origin_mp_model_configuration,
                     origin_changed_nodes_indices,
                     origin_max_config)
             else:
-                layer_to_metrics_mapping[node_idx][bitwidth_idx] = search_manager.compute_metric_fn(
+                layer_to_metrics_mapping[node_idx][bitwidth_idx] = search_manager.compute_sensitivity_metric(
                     mp_model_configuration,
                     [node_idx],
                     search_manager.max_kpi_config)
