@@ -14,29 +14,30 @@
 # ==============================================================================
 import numpy as np
 import unittest
-from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
+import keras
+from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights, \
     get_last_layer_weights
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfigV2
-from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width, \
     BitWidthSearchMethod
 from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
     mp_integer_programming_search
+from model_compression_toolkit.core.common.model_collector import ModelCollector
+from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
-from model_compression_toolkit.core.common.model_collector import ModelCollector
-from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
+    get_op_quantization_configs
 from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
 
 
@@ -207,7 +208,12 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                             name="bitwidth_cfg_test")
 
         fw_info = DEFAULT_KERAS_INFO
-        in_model = MobileNetV2()
+        input_shape = (1, 8, 8, 3)
+        input_tensor = keras.layers.Input(shape=input_shape[1:])
+        conv = keras.layers.Conv2D(3, 3)(input_tensor)
+        bn = keras.layers.BatchNormalization()(conv)
+        relu = keras.layers.ReLU()(bn)
+        in_model = keras.Model(inputs=input_tensor, outputs=relu)
         keras_impl = KerasImplementation()
 
         def dummy_representative_dataset():
@@ -233,19 +239,19 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                             fw_info=DEFAULT_KERAS_INFO,
                             fw_impl=keras_impl)
 
-        for i in range(10):
-            mi.infer([np.random.randn(1, 224, 224, 3)])
+        for i in range(1):
+            mi.infer([np.random.randn(*input_shape)])
 
         def representative_data_gen():
-            yield [np.random.random((1, 224, 224, 3))]
+            yield [np.random.random(input_shape)]
 
         calculate_quantization_params(graph,
                                       fw_info,
                                       fw_impl=keras_impl)
-        keras_sens_eval = keras_impl.get_sensitivity_evaluator(graph,
-                                                               core_config.mixed_precision_config,
-                                                               representative_data_gen,
-                                                               fw_info=fw_info)
+        keras_impl.get_sensitivity_evaluator(graph,
+                                             core_config.mixed_precision_config,
+                                             representative_data_gen,
+                                             fw_info=fw_info)
 
         cfg = search_bit_width(graph_to_search_cfg=graph,
                                fw_info=DEFAULT_KERAS_INFO,

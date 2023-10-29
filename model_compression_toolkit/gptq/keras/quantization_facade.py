@@ -225,6 +225,8 @@ if FOUND_TF:
                               tb_w,
                               hessian_info_service=hessian_info_service)
 
+        del hessian_info_service
+
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen, tb_w, tg_gptq, fw_impl, fw_info)
 
