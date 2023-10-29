@@ -89,6 +89,9 @@ class MockMixedPrecisionSearchManager:
 
         return np.array(kpi_matrix)
 
+    def finalize_distance_metric(self, d):
+        return d
+
 
 class TestLpSearchBitwidth(unittest.TestCase):
 
