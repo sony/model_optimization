@@ -25,7 +25,7 @@ jobs:
           pip install -r requirements.txt
           pip install coverage
       - name: Prepare TF env
-        run: pip install tensorflow==2.13.*
+        run: pip install tensorflow==2.13.* sony-custom-layers
       - name: Run tensorflow testsuite
         run: coverage run --parallel-mode -m --omit "./tests*,*__init__.py" unittest tests/test_suite.py -v
       - name: Prepare Torch env
