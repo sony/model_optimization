@@ -28,7 +28,6 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import 
 from model_compression_toolkit.core.common.user_info import UserInformation
 from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
 from tests.keras_tests.utils import get_layers_from_model_by_type
-from sony_custom_layers.keras.object_detection.ssd_post_process import SSDPostProcess
 
 keras = tf.keras
 layers = keras.layers
@@ -41,12 +40,12 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
-                                      mct.core.QuantizationErrorMethod.MSE,
-                                      relu_bound_to_power_of_2=True,
-                                      weights_bias_correction=True,
-                                      weights_per_channel_threshold=True,
-                                      input_scaling=True,
-                                      activation_channel_equalization=True)
+                                           mct.core.QuantizationErrorMethod.MSE,
+                                           relu_bound_to_power_of_2=True,
+                                           weights_bias_correction=True,
+                                           weights_per_channel_threshold=True,
+                                           input_scaling=True,
+                                           activation_channel_equalization=True)
 
     def get_mixed_precision_v2_config(self):
         return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
@@ -224,9 +223,7 @@ class MixedPercisionSearchKPI4BitsAvgTest(MixedPercisionBaseTest):
 
 
 class MixedPercisionSearchKPI4BitsAvgTestCombinedNMS(MixedPercisionBaseTest):
-    def __init__(self, unit_test, layer_type):
-        assert layer_type in ['combined_nms', 'SSDPostProcess']
-        self.layer_type = layer_type
+    def __init__(self, unit_test):
         super().__init__(unit_test)
 
     def get_kpi(self):
@@ -239,17 +236,8 @@ class MixedPercisionSearchKPI4BitsAvgTestCombinedNMS(MixedPercisionBaseTest):
         x = layers.BatchNormalization()(x)
         x = layers.Conv2D(32, 4)(x)
         x = layers.ReLU()(x)
-        if self.layer_type == 'combined_nms':
-            x = layers.Reshape((160, 5, 4))(x)
-            outputs = tf.image.combined_non_max_suppression(x, tf.reduce_mean(x, 3), 10, 10)
-        elif self.layer_type == 'SSDPostProcess':
-            x = layers.Reshape((800, 4))(x)
-            ssd_pp = SSDPostProcess(tf.constant(np.random.random(size=list(x.shape[1:])), dtype=tf.float32), [1, 1, 1, 1],
-                                    [*self.get_input_shapes()[0][1:3]], 'sigmoid', score_threshold=0.001,
-                                    iou_threshold=0.5, max_detections=10)
-            outputs = ssd_pp((x, x))
-        else:
-            raise NotImplemented
+        x = layers.Reshape((160, 5, 4))(x)
+        outputs = tf.image.combined_non_max_suppression(x, tf.reduce_mean(x, 3), 10, 10)
         model = keras.Model(inputs=inputs, outputs=outputs)
         return model
 

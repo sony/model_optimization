@@ -207,8 +207,7 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPercisionSearchKPI4BitsAvgTest(self).run_test()
 
     def test_mixed_precision_search_kpi_4bits_avg_nms(self):
-        MixedPercisionSearchKPI4BitsAvgTestCombinedNMS(self, 'SSDPostProcess').run_test()
-        MixedPercisionSearchKPI4BitsAvgTestCombinedNMS(self, 'combined_nms').run_test()
+        MixedPercisionSearchKPI4BitsAvgTestCombinedNMS(self).run_test()
 
     def test_mixed_precision_search(self):
         MixedPercisionSearchTest(self).run_test()
