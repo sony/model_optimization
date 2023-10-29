@@ -64,7 +64,7 @@ class MixedPrecisionSearchManager:
         self.fw_impl = fw_impl
         self.sensitivity_evaluator = sensitivity_evaluator
         self.layer_to_bitwidth_mapping = self.get_search_space()
-        self.sensitivity_metric_fn = self.get_sensitivity_metric()
+        self.compute_metric_fn = self.get_sensitivity_metric()
 
         self.compute_kpi_functions = kpi_functions
         self.target_kpi = target_kpi
@@ -105,40 +105,6 @@ class MixedPrecisionSearchManager:
         # affects the expected loss.
 
         return self.sensitivity_evaluator.compute_metric
-
-    def compute_sensitivity_metric(self, mp_model_configuration: List[int],
-                                   node_idx: List[int] = None,
-                                   baseline_mp_configuration: List[int] = None) -> float:
-        """
-        Compute the sensitivity metric of the MP model for a given configuration
-        using the given sensitivity metric function.
-        In addition, checks for possible stability issues because of a very large values, and scaling the metric in
-        case there are such.
-
-        Args:
-            mp_model_configuration: Bitwidth configuration to use to configure the MP model.
-            node_idx: A list of nodes' indices to configure (instead of using the entire mp_model_configuration).
-            baseline_mp_configuration: A mixed-precision configuration to set the model back to after modifying it to
-                compute the metric for the given configuration.
-
-        Returns:
-            The sensitivity metric of the MP model for a given configuration.
-        """
-
-        metric_res = self.sensitivity_metric_fn(mp_model_configuration, node_idx, baseline_mp_configuration)
-
-        # normalize metric for numerical stability
-        max_dist = max([max([d for b, d in dists.items()]) for layer, dists in metric_res.items()])
-        if max_dist >= self.sensitivity_evaluator.quant_config.metric_normalization_threshold:
-            Logger.warning(f"The mixed precision distance metric values indicate a large error in the quantized model."
-                           f"this can cause numerical issues."
-                           f"The program will proceed with mixed precision search after scaling the metric values,"
-                           f"which can lead to unstable results.")
-            for layer, dists in metric_res.items():
-                for b, d in dists.items():
-                    metric_res[layer][b] /= max_dist
-
-        return metric_res
 
     def compute_min_kpis(self) -> Dict[KPITarget, np.ndarray]:
         """

@@ -259,9 +259,9 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
 
     if is_bops_target_kpi:
         origin_max_config = search_manager.config_reconstruction_helper.reconstruct_config_from_virtual_graph(search_manager.max_kpi_config)
-        max_config_value = search_manager.compute_sensitivity_metric(origin_max_config)
+        max_config_value = search_manager.compute_metric_fn(origin_max_config)
     else:
-        max_config_value = search_manager.compute_sensitivity_metric(search_manager.max_kpi_config)
+        max_config_value = search_manager.compute_metric_fn(search_manager.max_kpi_config)
 
     for node_idx, layer_possible_bitwidths_indices in tqdm(search_manager.layer_to_bitwidth_mapping.items(),
                                                            total=len(search_manager.layer_to_bitwidth_mapping)):
@@ -287,12 +287,12 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
                         original_base_config=origin_max_config)
                 origin_changed_nodes_indices = [i for i, c in enumerate(origin_max_config) if
                                                 c != origin_mp_model_configuration[i]]
-                layer_to_metrics_mapping[node_idx][bitwidth_idx] = search_manager.compute_sensitivity_metric(
+                layer_to_metrics_mapping[node_idx][bitwidth_idx] = search_manager.compute_metric_fn(
                     origin_mp_model_configuration,
                     origin_changed_nodes_indices,
                     origin_max_config)
             else:
-                layer_to_metrics_mapping[node_idx][bitwidth_idx] = search_manager.compute_sensitivity_metric(
+                layer_to_metrics_mapping[node_idx][bitwidth_idx] = search_manager.compute_metric_fn(
                     mp_model_configuration,
                     [node_idx],
                     search_manager.max_kpi_config)
