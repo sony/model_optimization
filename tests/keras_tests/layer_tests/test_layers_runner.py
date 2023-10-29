@@ -290,7 +290,7 @@ class LayerTest(unittest.TestCase):
                            [partial(tf.image.combined_non_max_suppression,
                                     max_output_size_per_class=5,
                                     max_total_size=5)],
-                            input_shape=(10, 5, 4)
+                           input_shape=(10, 5, 4)
                            ).run_test()
 
 

@@ -122,7 +122,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_pre
     MixedPercisionSearchTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest, MixedPrecisionActivationDisabled, \
     MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationKPINonConfNodesTest, \
-    MixedPercisionSearchTotalKPINonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionSearchKPI4BitsAvgTestCombinedNMS
+    MixedPercisionSearchTotalKPINonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
 from tests.keras_tests.feature_networks_tests.feature_networks.old_api_test import OldApiTest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
 
@@ -207,7 +207,7 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPercisionSearchKPI4BitsAvgTest(self).run_test()
 
     def test_mixed_precision_search_kpi_4bits_avg_nms(self):
-        MixedPercisionSearchKPI4BitsAvgTestCombinedNMS(self).run_test()
+        MixedPercisionCombinedNMSTest(self).run_test()
 
     def test_mixed_precision_search(self):
         MixedPercisionSearchTest(self).run_test()

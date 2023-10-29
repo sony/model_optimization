@@ -48,8 +48,7 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
                                            activation_channel_equalization=True)
 
     def get_mixed_precision_v2_config(self):
-        return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
-                                                           use_grad_based_weights=False)
+        return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, 3]]
@@ -222,9 +221,13 @@ class MixedPercisionSearchKPI4BitsAvgTest(MixedPercisionBaseTest):
             "final weights and activation memory sum should be equal to total memory.")
 
 
-class MixedPercisionSearchKPI4BitsAvgTestCombinedNMS(MixedPercisionBaseTest):
+class MixedPercisionCombinedNMSTest(MixedPercisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
+
+    def get_mixed_precision_v2_config(self):
+        return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
+                                                           use_grad_based_weights=False)
 
     def get_kpi(self):
         # kpi is for 4 bits on average
@@ -415,8 +418,8 @@ class MixedPercisionSearchLastLayerDistanceTest(MixedPercisionBaseTest):
 
     def get_mixed_precision_v2_config(self):
         return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
-                                                      distance_weighting_method=get_last_layer_weights,
-                                                      use_grad_based_weights=False)
+                                                           distance_weighting_method=get_last_layer_weights,
+                                                           use_grad_based_weights=False)
 
     def get_kpi(self):
         # kpi is infinity -> should give best model - 8bits

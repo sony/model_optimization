@@ -107,6 +107,7 @@ class BaseKerasLayerTest(BaseLayerTest):
         for i, layer in enumerate(layers):
             inputs = [Input(shape=s[1:]) for s in self.get_input_shapes()]
             if isinstance(layer, partial) and layer.func is tf.image.combined_non_max_suppression:
+                # need to identify the tf.image.combined_non_max_suppression because it has 2 separate inputs
                 outputs = layer(inputs[0], tf.reduce_mean(inputs[0], 3))
             elif self.is_inputs_a_list:
                 outputs = layer(inputs)
@@ -171,7 +172,8 @@ class BaseKerasLayerTest(BaseLayerTest):
         y = self.predict(float_model, input_tensors)
         y_hat = self.predict(quantized_model, input_tensors)
         if isinstance(y, list) or (isinstance(self.layers[0], partial) and
-                                     self.layers[0].func is tf.image.combined_non_max_suppression):
+                                   self.layers[0].func is tf.image.combined_non_max_suppression):
+            # the output of tf.image.combined_non_max_suppression is not a list but can be handled the same
             for fo, qo in zip(y, y_hat):
                 distance = np.sum(np.abs(fo - qo))
                 self.unit_test.assertTrue(distance == 0,
