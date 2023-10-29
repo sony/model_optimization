@@ -56,7 +56,18 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
 
     layer_to_metrics_mapping = _build_layer_to_metrics_mapping(search_manager, target_kpi)
 
-    # Init variables to find their values when solving the lp problem.
+    # normalize metric for numerical stability
+    max_dist = max([max([d for b, d in dists.items()]) for layer, dists in layer_to_metrics_mapping.items()])
+    if max_dist >= search_manager.sensitivity_evaluator.quant_config.metric_normalization_threshold:
+        Logger.warning(f"The mixed precision distance metric values indicate a large error in the quantized model."
+                       f"this can cause numerical issues."
+                       f"The program will proceed with mixed precision search after scaling the metric values,"
+                       f"which can lead to unstable results.")
+        for layer, dists in layer_to_metrics_mapping.items():
+            for b, d in dists.items():
+                layer_to_metrics_mapping[layer][b] /= max_dist
+
+            # Init variables to find their values when solving the lp problem.
     layer_to_indicator_vars_mapping, layer_to_objective_vars_mapping = _init_problem_vars(layer_to_metrics_mapping)
 
     # Add all equations and inequalities that define the problem.
