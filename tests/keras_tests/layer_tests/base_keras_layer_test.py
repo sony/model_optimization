@@ -1,4 +1,5 @@
 from typing import List, Any, Tuple
+from functools import partial
 
 import tensorflow as tf
 from mct_quantizers import KerasActivationQuantizationHolder
@@ -105,14 +106,15 @@ class BaseKerasLayerTest(BaseLayerTest):
         networks = []
         for i, layer in enumerate(layers):
             inputs = [Input(shape=s[1:]) for s in self.get_input_shapes()]
-            if self.is_inputs_a_list:
+            if isinstance(layer, partial) and layer.func is tf.image.combined_non_max_suppression:
+                outputs = layer(inputs[0], tf.reduce_mean(inputs[0], 3))
+            elif self.is_inputs_a_list:
                 outputs = layer(inputs)
             else:
                 outputs = layer(*inputs)
             m = Model(inputs=inputs, outputs=outputs)
             networks.append(m)
         return networks
-
 
     def compare(self, quantized_model: Model, float_model: Model, input_x=None, quantization_info=None):
         # Assert things that should happen when using FLOAT quantization mode
@@ -125,7 +127,7 @@ class BaseKerasLayerTest(BaseLayerTest):
 
         ####################################################################
         # Assert conditions that should be valid for ALL quantization modes
-        ####################################################################
+        ###################################################################
         self.unit_test.assertTrue(len(quantized_model.outputs) == len(float_model.outputs))
         self.unit_test.assertTrue(len(quantized_model.inputs) == len(float_model.inputs))
 
@@ -168,12 +170,12 @@ class BaseKerasLayerTest(BaseLayerTest):
         input_tensors = self.generate_inputs()
         y = self.predict(float_model, input_tensors)
         y_hat = self.predict(quantized_model, input_tensors)
-        if isinstance(y, list):
+        if isinstance(y, list) or (isinstance(self.layers[0], partial) and
+                                     self.layers[0].func is tf.image.combined_non_max_suppression):
             for fo, qo in zip(y, y_hat):
                 distance = np.sum(np.abs(fo - qo))
                 self.unit_test.assertTrue(distance == 0,
                                           msg=f'Outputs should be identical. Observed distance: {distance}')
-
         else:
             distance = np.sum(np.abs(y - y_hat))
             self.unit_test.assertTrue(distance == 0,
