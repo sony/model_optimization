@@ -13,11 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import List, Tuple, Dict, Any
+from typing import List
 
 from torch import autograd
 from tqdm import tqdm
-import numpy as np
 
 from model_compression_toolkit.constants import MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE, HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
@@ -76,7 +75,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
 
             # Concat outputs
             # First, we need to unfold all outputs that are given as list, to extract the actual output tensors
-            output = self._concat_tensors(output_tensors)
+            output = self.concat_tensors(output_tensors)
 
             ipts_jac_trace_approx = []
             for ipt in tqdm(model_grads_net.interest_points_tensors):  # Per Interest point activation tensor

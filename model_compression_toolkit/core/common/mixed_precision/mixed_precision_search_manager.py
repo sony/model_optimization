@@ -289,6 +289,30 @@ class MixedPrecisionSearchManager:
         config_kpi.set_kpi_by_target(kpis_dict)
         return config_kpi
 
+    def finalize_distance_metric(self, layer_to_metrics_mapping: Dict[int, Dict[int, float]]):
+        """
+        Finalizing the distance metric building.
+        The method checks to see if the maximal distance value is larger than a given threshold, and if so,
+        it scales all metric values to prevent possible numerical issues.
+        Modification to the dictionary is done inplace.
+
+        Args:
+            layer_to_metrics_mapping: A mapping between a node index to a mapping between
+            a bitwidth index to a distance value.
+
+        """
+        # normalize metric for numerical stability
+
+        max_dist = max([max([d for b, d in dists.items()]) for layer, dists in layer_to_metrics_mapping.items()])
+        if max_dist >= self.sensitivity_evaluator.quant_config.metric_normalization_threshold:
+            Logger.warning(f"The mixed precision distance metric values indicate a large error in the quantized model."
+                           f"this can cause numerical issues."
+                           f"The program will proceed with mixed precision search after scaling the metric values,"
+                           f"which can lead to unstable results.")
+            for layer, dists in layer_to_metrics_mapping.items():
+                for b, d in dists.items():
+                    layer_to_metrics_mapping[layer][b] /= max_dist
+
 
 class ConfigReconstructionHelper:
     """

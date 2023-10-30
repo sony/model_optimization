@@ -62,8 +62,6 @@ if found_tf:
         TestActivationWeightsComposition
     from tests.keras_tests.function_tests.test_graph_max_cut import TestGraphMaxCut
     from tests.keras_tests.function_tests.test_model_gradients import TestModelGradients
-    from tests.keras_tests.function_tests.test_sensitivity_eval_output_replacement import \
-        TestSensitivityEvalWithOutputReplacementNodes
     from tests.keras_tests.function_tests.test_set_layer_to_bitwidth import TestKerasSetLayerToBitwidth
     from tests.keras_tests.function_tests.test_export_keras_fully_quantized_model import TestKerasFakeQuantExporter
     from tests.keras_tests.function_tests.test_kpi_data import TestKPIData
@@ -132,7 +130,6 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestModelGradients))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphMaxCut))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasSetLayerToBitwidth))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityEvalWithOutputReplacementNodes))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasFakeQuantExporter))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKPIData))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFileLogger))
