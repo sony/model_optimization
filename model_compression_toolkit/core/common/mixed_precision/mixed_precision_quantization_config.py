@@ -32,7 +32,8 @@ class MixedPrecisionQuantizationConfigV2:
                  num_interest_points_factor: float = 1.0,
                  use_grad_based_weights: bool = True,
                  norm_weights: bool = True,
-                 refine_mp_solution: bool = True):
+                 refine_mp_solution: bool = True,
+                 metric_normalization_threshold: float = 1e10):
         """
         Class with mixed precision parameters to quantize the input model.
         Unlike QuantizationConfig, number of bits for quantization is a list of possible bit widths to
@@ -47,6 +48,7 @@ class MixedPrecisionQuantizationConfigV2:
             use_grad_based_weights (bool): Whether to use Hessian-based scores for weighted average distance metric computation.
             norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
             refine_mp_solution (bool): Whether to try to improve the final mixed-precision configuration using a greedy algorithm that searches layers to increase their bit-width, or not.
+            metric_normalization_threshold (float): A threshold for checking the mixed precision distance metric values, In case of values larger than this threshold, the metric will be scaled to prevent numerical issues.
 
         """
 
@@ -64,6 +66,8 @@ class MixedPrecisionQuantizationConfigV2:
 
         self.use_grad_based_weights = use_grad_based_weights
         self.norm_weights = norm_weights
+
+        self.metric_normalization_threshold = metric_normalization_threshold
 
 
 class MixedPrecisionQuantizationConfig(QuantizationConfig):

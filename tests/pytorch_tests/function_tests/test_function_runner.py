@@ -32,6 +32,8 @@ from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSe
     TestSetLayerToBitwidthActivation
 from tests.pytorch_tests.function_tests.test_sensitivity_eval_non_supported_output import \
     TestSensitivityEvalWithArgmaxNode
+from tests.pytorch_tests.function_tests.test_hessian_info_weights import WeightsHessianTraceBasicModelTest, WeightsHessianTraceAdvanceModelTest, \
+WeightsHessianTraceMultipleOutputsModelTest, WeightsHessianTraceReuseModelTest
 
 
 class FunctionTestRunner(unittest.TestCase):
@@ -111,6 +113,15 @@ class FunctionTestRunner(unittest.TestCase):
         ModelGradientsNonDifferentiableNodeModelTest(self).run_test()
         ModelGradientsSinglePointTest(self).run_test()
 
+    def test_weights_hessian_trace(self):
+        """
+        This test checks the weighes hessian trace approximation in Pytorch.
+        """
+        WeightsHessianTraceBasicModelTest(self).run_test()
+        WeightsHessianTraceAdvanceModelTest(self).run_test()
+        WeightsHessianTraceMultipleOutputsModelTest(self).run_test()
+        WeightsHessianTraceReuseModelTest(self).run_test()
+
     def test_layer_fusing(self):
         """
         This test checks the Fusion mechanism in Pytorch.
@@ -128,7 +139,7 @@ class FunctionTestRunner(unittest.TestCase):
         TestSetLayerToBitwidthWeights(self).run_test()
         TestSetLayerToBitwidthActivation(self).run_test()
 
-    def test_sensitivity_eval_outputs_replacement(self):
+    def test_sensitivity_eval_not_supported_output(self):
         """
         This test verifies failure on non supported output nodes in mixed precision with Hessian-based scores.
         """

@@ -18,8 +18,6 @@
 import importlib
 import unittest
 
-from packaging import version
-
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 #  ----------------  Individual test suites
@@ -38,17 +36,16 @@ found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util
     "torchvision") is not None
 
 if found_tf:
-    import tensorflow as tf
     from tests.keras_tests.function_tests.test_hessian_info_calculator import TestHessianInfoCalculatorWeights, \
         TestHessianInfoCalculatorActivation
     from tests.keras_tests.function_tests.test_hessian_service import TestHessianService
     from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
     from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
-    from tests.keras_tests.function_tests.test_tensorboard_writer import TestFileLogger
+    from tests.keras_tests.non_parallel_tests.test_tensorboard_writer import TestFileLogger
     from tests.keras_tests.function_tests.test_lut_quanitzer_params import TestLUTQuantizerParams
     from tests.keras_tests.function_tests.test_lut_activation_quanitzer_params import TestLUTActivationsQuantizerParams
     from tests.keras_tests.function_tests.test_lut_activation_quanitzer_fake_quant import TestLUTQuantizerFakeQuant
-    from tests.keras_tests.function_tests.test_lp_search_bitwidth import TestLpSearchBitwidth, \
+    from tests.keras_tests.non_parallel_tests.test_lp_search_bitwidth import TestLpSearchBitwidth, \
         TestSearchBitwidthConfiguration
     from tests.keras_tests.function_tests.test_bn_info_collection import TestBNInfoCollection
     from tests.keras_tests.graph_tests.test_graph_reading import TestGraphReading
@@ -58,7 +55,7 @@ if found_tf:
         TestSymmetricThresholdSelectionWeights
     from tests.keras_tests.function_tests.test_uniform_quantize_tensor import TestUniformQuantizeTensor
     from tests.keras_tests.function_tests.test_uniform_range_selection_weights import TestUniformRangeSelectionWeights
-    from tests.keras_tests.function_tests.test_keras_tp_model import TestKerasTPModel
+    from tests.keras_tests.non_parallel_tests.test_keras_tp_model import TestKerasTPModel
     from tests.keras_tests.function_tests.test_sensitivity_metric_interest_points import \
         TestSensitivityMetricInterestPoints
     from tests.keras_tests.function_tests.test_weights_activation_split_substitution import TestWeightsActivationSplit

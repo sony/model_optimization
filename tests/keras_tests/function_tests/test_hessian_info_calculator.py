@@ -143,6 +143,7 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
                                granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
                                mode=hessian_common.HessianMode.WEIGHTS,
                                expected_shape=(3, 3, 3, 2))
+        del hessian_service
 
     def test_dense_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=Dense(2), input_shape=(1, 8))
@@ -167,6 +168,7 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
                                granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
                                mode=hessian_common.HessianMode.WEIGHTS,
                                expected_shape=(8, 2))
+        del hessian_service
 
     def test_conv2dtranspose_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=Conv2DTranspose(filters=2, kernel_size=3))
@@ -191,6 +193,7 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
                                granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
                                mode=hessian_common.HessianMode.WEIGHTS,
                                expected_shape=(3, 3, 2, 3))
+        del hessian_service
 
     def test_depthwiseconv2d_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=DepthwiseConv2D(kernel_size=3))
@@ -215,6 +218,7 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
                                granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
                                mode=hessian_common.HessianMode.WEIGHTS,
                                expected_shape=(3, 3, 3, 1))
+        del hessian_service
 
     def test_reused_layer(self):
         input_shape = (1, 8, 8, 3)
@@ -263,6 +267,7 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
                                                granularity=hessian_common.HessianInfoGranularity.PER_TENSOR))
         self.assertTrue(node2_count == 1)
         self.assertTrue(len(hessian_service.trace_hessian_request_to_score_list) == 1)
+        del hessian_service
 
     #########################################################
     # The following part checks different possible graph
@@ -305,6 +310,8 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
                                granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
                                mode=hessian_common.HessianMode.WEIGHTS,
                                expected_shape=(3, 3, 3, 2))
+
+        del hessian_service
 
 
     def test_multiple_inputs(self):
@@ -436,6 +443,8 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
         self.assertTrue(node2_count == 1)
         self.assertTrue(len(hessian_service.trace_hessian_request_to_score_list) == 1)
 
+        del hessian_service
+
     #########################################################
     # The following part checks different possible graph
     # properties (#inputs/#outputs, for example).
@@ -468,6 +477,7 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
                                mode=hessian_common.HessianMode.ACTIVATION,
                                expected_shape=(1,))
 
+        del hessian_service
 
     def test_multiple_inputs(self):
         input_shape = (1, 8, 8, 3)

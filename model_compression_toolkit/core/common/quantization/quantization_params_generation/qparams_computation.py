@@ -33,8 +33,8 @@ def calculate_quantization_params(graph: Graph,
     to the given framework info), and create and attach a NodeQuantizationConfig to each node (containing the
     computed params).
     By default, the function goes over all nodes in the graph. However, the specific_nodes flag enables
-    to compute quantization paramss for specific nodes if the default behavior is unnecessary. For that,
-    a list of nodes nodes should be passed as well.
+    to compute quantization params for specific nodes if the default behavior is unnecessary. For that,
+    a list of nodes should be passed as well.
 
     Args:
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,

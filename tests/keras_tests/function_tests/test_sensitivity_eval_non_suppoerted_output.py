@@ -39,17 +39,6 @@ def argmax_output_model(input_shape):
     return model
 
 
-def softmax_output_model(input_shape):
-    inputs = layers.Input(shape=input_shape)
-    x = layers.Conv2D(32, 4)(inputs)
-    x = layers.BatchNormalization()(x)
-    x = layers.Conv2D(32, 4)(x)
-    x = layers.ReLU()(x)
-    outputs = tf.nn.softmax(x, axis=-1)
-    model = keras.Model(inputs=inputs, outputs=outputs)
-    return model
-
-
 def representative_dataset():
     yield [np.random.randn(1, 16, 16, 3).astype(np.float32)]
 
@@ -67,8 +56,8 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
                                                            mixed_precision_enabled=True)
 
         hessian_info_service = hess.HessianInfoService(graph=graph,
-                                                        representative_dataset=representative_dataset,
-                                                        fw_impl=keras_impl)
+                                                       representative_dataset=representative_dataset,
+                                                       fw_impl=keras_impl)
 
         se = keras_impl.get_sensitivity_evaluator(graph,
                                                   MixedPrecisionQuantizationConfigV2(use_grad_based_weights=True),
@@ -76,7 +65,7 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
                                                   DEFAULT_KERAS_INFO,
                                                   hessian_info_service=hessian_info_service)
 
-    def test_output_replacement_argmax(self):
+    def test_not_supported_output_argmax(self):
         model = argmax_output_model((16, 16, 3))
         with self.assertRaises(Exception) as e:
             self.verify_test_for_model(model)

@@ -457,7 +457,13 @@ def get_mp_interest_points(graph: Graph,
 
     interest_points_nodes = bound_num_interest_points(ip_nodes, num_ip_factor)
 
-    output_nodes = [n.node for n in graph.get_outputs()]
+    # We add output layers of the model to interest points
+    # in order to consider the model's output in the distance metric computation (and also to make sure
+    # all configurable layers are included in the configured mp model for metric computation purposes)
+    output_nodes = [n.node for n in graph.get_outputs() if n.node not in interest_points_nodes and
+                    (n.node.is_weights_quantization_enabled() or
+                     n.node.is_activation_quantization_enabled())]
+
     interest_points = [n for n in interest_points_nodes if n not in output_nodes]
 
     return interest_points
