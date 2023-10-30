@@ -1,18 +1,40 @@
 # Add 'test' label to any change in tests dir
-test:
-- tests/*
+auto:tests:
+- tests/**
 
-common:
-- model_compression_toolkit/core/common/*
+auto:docs:
+- docs/**
 
-keras:
-- model_compression_toolkit/core/keras/*
+auto:docsrc:
+- docsrc/**
 
-pytorch:
-- model_compression_toolkit/core/pytorch/*
+auto:core:
+- model_compression_toolkit/core/**
 
-docs:
-- docs/*
+auto:data_generation:
+- model_compression_toolkit/data_generation/**
 
-docsrc:
-- docsrc/*
+auto:exporter:
+- model_compression_toolkit/exporter/**
+
+auto:gptq:
+- model_compression_toolkit/gptq/**
+
+auto:legacy:
+- model_compression_toolkit/legacy/**
+
+auto:ptq:
+- model_compression_toolkit/ptq/**
+
+auto:qat:
+- model_compression_toolkit/qat/**
+
+auto:target_platform_capabilities:
+- model_compression_toolkit/target_platform_capabilities/**
+
+auto:trainable_infrastructure:
+- model_compression_toolkit/trainable_infrastructure/**
+
+auto:tutorials:
+- model_compression_toolkit/tutorials/**
+
