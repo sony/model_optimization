@@ -626,7 +626,7 @@ class EfficientDetKeras:
         self.class_net.toggle_bn_level_first()
         self.box_net.toggle_bn_level_first()
 
-    def get_model(self, input_shape, include_postprocess=False):
+    def get_model(self, input_shape):
         _input = tf.keras.layers.Input(shape=input_shape)
         x = self.backbone(_input)
         x = self.fpn(x)
@@ -638,16 +638,11 @@ class EfficientDetKeras:
         x_box = [tf.keras.layers.Reshape((-1, 4))(_x) for _x in x_box]
         x_box = tf.keras.layers.Concatenate(axis=1)(x_box)
 
-        if include_postprocess:
-            anchors = tf.constant(Anchors.from_config(self.config).boxes.detach().cpu().numpy())
-            ssd_pp = SSDPostProcess(anchors, [1, 1, 1, 1], [*self.config.image_size],
-                                    ScoreConverter.SIGMOID, score_threshold=0.001, iou_threshold=0.5,
-                                    max_detections=self.config.max_det_per_image)
-            outputs = ssd_pp((x_box, x_class))
+        anchors = tf.constant(Anchors.from_config(self.config).boxes.detach().cpu().numpy())
 
-            model = tf.keras.Model(inputs=_input, outputs=outputs)
-        else:
-            model = tf.keras.Model(inputs=_input, outputs=[x_box, x_class])
+        ssd_pp = SSDPostProcess(anchors, [1, 1, 1, 1], [*self.config.image_size],
+                                ScoreConverter.SIGMOID, score_threshold=0.001, iou_threshold=0.5,
+                                max_detections=self.config.max_det_per_image)
+        outputs = ssd_pp((x_box, x_class))
 
-        load_state_dict(model, self.config.url)
-        return model
+        return tf.keras.Model(inputs=_input, outputs=outputs)
