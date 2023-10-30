@@ -297,4 +297,7 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
                     [node_idx],
                     search_manager.max_kpi_config)
 
+    # Finalize distance metric mapping
+    search_manager.finalize_distance_metric(layer_to_metrics_mapping)
+
     return layer_to_metrics_mapping

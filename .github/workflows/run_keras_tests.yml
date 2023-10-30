@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt          
+          pip install -r requirements.txt
           pip install tensorflow==${{ inputs.tf-version }}
       - name: Run unittests
         # Some tests are sensitive to memory because we use tf gradients on a multi-thread/process
