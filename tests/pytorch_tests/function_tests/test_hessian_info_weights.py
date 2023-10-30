@@ -122,7 +122,7 @@ def get_expected_shape(weights_shape, granularity):
     if granularity==hessian_common.HessianInfoGranularity.PER_ELEMENT:
         return weights_shape
     elif granularity==hessian_common.HessianInfoGranularity.PER_TENSOR:
-        return ()
+        return (1,)
     else:
         return (weights_shape[0],)
 

@@ -124,5 +124,9 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
         # Compute the mean of the approximations
         final_approx = torch.mean(torch.stack(approximation_per_iteration), dim=0)
 
+        # Make sure all final shape are tensors and not scalar
+        if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
+            final_approx = final_approx.reshape(1)
+
         return final_approx.detach().cpu().numpy()
 
