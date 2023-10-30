@@ -626,7 +626,7 @@ class EfficientDetKeras:
         self.class_net.toggle_bn_level_first()
         self.box_net.toggle_bn_level_first()
 
-    def get_model(self, input_shape, load_state_dict=True):
+    def get_model(self, input_shape, load_state_dict_to_model=True):
         _input = tf.keras.layers.Input(shape=input_shape)
         x = self.backbone(_input)
         x = self.fpn(x)
@@ -646,6 +646,6 @@ class EfficientDetKeras:
         outputs = ssd_pp((x_box, x_class))
 
         model = tf.keras.Model(inputs=_input, outputs=outputs)
-        if load_state_dict:
+        if load_state_dict_to_model:
             load_state_dict(model, self.config.url)
         return model
