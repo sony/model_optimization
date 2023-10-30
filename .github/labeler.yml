@@ -1,40 +1,40 @@
-# Add 'auto:test' label to any change in tests dir
-auto:tests:
+# Add 'test' label to any change in tests dir
+tests:
 - tests/**
 
-auto:docs:
+docs:
 - docs/**
 
-auto:docsrc:
+docsrc:
 - docsrc/**
 
-auto:core:
+core:
 - model_compression_toolkit/core/**
 
-auto:data_generation:
+data_generation:
 - model_compression_toolkit/data_generation/**
 
-auto:exporter:
+exporter:
 - model_compression_toolkit/exporter/**
 
-auto:gptq:
+gptq:
 - model_compression_toolkit/gptq/**
 
-auto:legacy:
+legacy:
 - model_compression_toolkit/legacy/**
 
-auto:ptq:
+ptq:
 - model_compression_toolkit/ptq/**
 
-auto:qat:
+qat:
 - model_compression_toolkit/qat/**
 
-auto:target_platform_capabilities:
+target_platform_capabilities:
 - model_compression_toolkit/target_platform_capabilities/**
 
-auto:trainable_infrastructure:
+trainable_infrastructure:
 - model_compression_toolkit/trainable_infrastructure/**
 
-auto:tutorials:
+tutorials:
 - model_compression_toolkit/tutorials/**
 
