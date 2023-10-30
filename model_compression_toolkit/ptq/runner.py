@@ -47,6 +47,7 @@ def ptq_runner(tg: Graph,
         A graph after statistics correction
 
     """
+    print(1)
     #############################################
     # Statistics Correction
     #############################################
