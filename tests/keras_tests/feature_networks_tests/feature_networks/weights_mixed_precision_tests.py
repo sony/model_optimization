@@ -40,12 +40,12 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
-                                      mct.core.QuantizationErrorMethod.MSE,
-                                      relu_bound_to_power_of_2=True,
-                                      weights_bias_correction=True,
-                                      weights_per_channel_threshold=True,
-                                      input_scaling=True,
-                                      activation_channel_equalization=True)
+                                           mct.core.QuantizationErrorMethod.MSE,
+                                           relu_bound_to_power_of_2=True,
+                                           weights_bias_correction=True,
+                                           weights_per_channel_threshold=True,
+                                           input_scaling=True,
+                                           activation_channel_equalization=True)
 
     def get_mixed_precision_v2_config(self):
         return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1)
@@ -221,6 +221,47 @@ class MixedPercisionSearchKPI4BitsAvgTest(MixedPercisionBaseTest):
             "final weights and activation memory sum should be equal to total memory.")
 
 
+class MixedPercisionCombinedNMSTest(MixedPercisionBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def get_mixed_precision_v2_config(self):
+        return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
+                                                           use_grad_based_weights=False)
+
+    def get_kpi(self):
+        # kpi is for 4 bits on average
+        return KPI(17920 * 4 / 8)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Conv2D(32, 4)(inputs)
+        x = layers.BatchNormalization()(x)
+        x = layers.Conv2D(32, 4)(x)
+        x = layers.ReLU()(x)
+        x = layers.Reshape((160, 5, 4))(x)
+        outputs = tf.image.combined_non_max_suppression(x, tf.reduce_mean(x, 3), 10, 10)
+        model = keras.Model(inputs=inputs, outputs=outputs)
+        return model
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
+        assert (quantization_info.mixed_precision_cfg == [1, 1]).all()
+        for i in range(32):  # quantized per channel
+            self.unit_test.assertTrue(
+                np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16)
+        for i in range(32):  # quantized per channel
+            self.unit_test.assertTrue(
+                np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16)
+
+        # Verify final KPI
+        self.unit_test.assertTrue(
+            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory ==
+            quantization_info.final_kpi.total_memory,
+            "Running weights mixed-precision with unconstrained KPI, "
+            "final weights and activation memory sum should be equal to total memory.")
+
+
 class MixedPercisionSearchKPI2BitsAvgTest(MixedPercisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
@@ -377,8 +418,8 @@ class MixedPercisionSearchLastLayerDistanceTest(MixedPercisionBaseTest):
 
     def get_mixed_precision_v2_config(self):
         return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
-                                                      distance_weighting_method=get_last_layer_weights,
-                                                      use_grad_based_weights=False)
+                                                           distance_weighting_method=get_last_layer_weights,
+                                                           use_grad_based_weights=False)
 
     def get_kpi(self):
         # kpi is infinity -> should give best model - 8bits

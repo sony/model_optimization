@@ -60,6 +60,3 @@ class BiasCorrectionDepthwiseTest(BaseKerasFeatureNetworkTest):
         # TODO:
         # Increase atol due to a minor difference in Symmetric quantizer
         self.unit_test.assertTrue(np.isclose(error, bias, atol=1e-7).all())
-
-
-
