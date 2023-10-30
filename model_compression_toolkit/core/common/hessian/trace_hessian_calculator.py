@@ -49,7 +49,7 @@ class TraceHessianCalculator(ABC):
         self.graph = graph
 
         for output_node in graph.get_outputs():
-            if not fw_impl.is_output_node_compatible_for_hessian_computation(output_node.node):
+            if not fw_impl.is_output_node_compatible_for_hessian_score_computation(output_node.node):
                 Logger.error(f"All graph outputs should support Hessian computation, but node {output_node.node} "
                              f"was found with layer type {output_node.node.type}. "
                              f"Try to run MCT without Hessian info computation.")

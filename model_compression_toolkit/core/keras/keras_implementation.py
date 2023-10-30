@@ -500,8 +500,8 @@ class KerasImplementation(FrameworkImplementation):
         else:
             Logger.error(f"Keras does not support hessian mode of {trace_hessian_request.mode}")
 
-    def is_output_node_compatible_for_hessian_computation(self,
-                                                          node: BaseNode) -> Any:
+    def is_output_node_compatible_for_hessian_score_computation(self,
+                                                                node: BaseNode) -> Any:
         """
         Checks and returns whether the given node is compatible as output for Hessian-based information computation.
 
@@ -591,19 +591,3 @@ class KerasImplementation(FrameworkImplementation):
         """
 
         return model(inputs)
-
-    def sample_single_representative_dataset(self, representative_dataset: Callable):
-        """
-        Get a single sample (namely, batch size of 1) from a representative dataset.
-
-        Args:
-            representative_dataset: Callable which returns the representative dataset at any batch size.
-
-        Returns: List of inputs from representative_dataset where each sample has a batch size of 1.
-        """
-        images = next(representative_dataset())
-        if not isinstance(images, list):
-            Logger.error(f'Images expected to be a list but is of type {type(images)}')
-
-        # Ensure each image is a single sample, if not, take the first sample
-        return [tf.expand_dims(image[0], 0) if image.shape[0] != 1 else image for image in images]

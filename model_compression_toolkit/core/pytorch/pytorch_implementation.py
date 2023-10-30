@@ -430,8 +430,8 @@ class PytorchImplementation(FrameworkImplementation):
             return compute_cs
         return compute_mse
 
-    def is_output_node_compatible_for_hessian_computation(self,
-                                                          node: BaseNode) -> bool:
+    def is_output_node_compatible_for_hessian_score_computation(self,
+                                                                node: BaseNode) -> bool:
         """
         Checks and returns whether the given node is compatible as output for Hessian-based information computation.
 
@@ -539,19 +539,3 @@ class PytorchImplementation(FrameworkImplementation):
                                                         input_images=input_images,
                                                         fw_impl=self,
                                                         num_iterations_for_approximation=num_iterations_for_approximation)
-
-    def sample_single_representative_dataset(self, representative_dataset: Callable):
-        """
-        Get a single sample (namely, batch size of 1) from a representative dataset.
-
-        Args:
-            representative_dataset: Callable which returns the representative dataset at any batch size.
-
-        Returns: List of inputs from representative_dataset where each sample has a batch size of 1.
-        """
-        images = next(representative_dataset())
-        if not isinstance(images, list):
-            Logger.error(f'Images expected to be a list but is of type {type(images)}')
-
-        # Ensure each image is a single sample, if not, take the first sample
-        return [torch.unsqueeze(image[0], 0) if image.shape[0] != 1 else image for image in images]

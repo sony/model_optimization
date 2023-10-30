@@ -352,6 +352,8 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
                                mode=hessian_common.HessianMode.ACTIVATION,
                                expected_shape=(1,))
 
+        del hessian_service
+
     def test_dense_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=Dense(2), input_shape=(1, 8))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
@@ -365,6 +367,8 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
                                granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
                                mode=hessian_common.HessianMode.ACTIVATION,
                                expected_shape=(1,))
+
+        del hessian_service
 
     def test_conv2dtranspose_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=Conv2DTranspose(filters=2, kernel_size=3))
@@ -380,6 +384,8 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
                                mode=hessian_common.HessianMode.ACTIVATION,
                                expected_shape=(1,))
 
+        del hessian_service
+
     def test_depthwiseconv2d_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=DepthwiseConv2D(kernel_size=3))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
@@ -393,6 +399,8 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
                                granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
                                mode=hessian_common.HessianMode.ACTIVATION,
                                expected_shape=(1,))
+
+        del hessian_service
 
     def test_reused_layer(self):
         input_shape = (1, 8, 8, 3)
