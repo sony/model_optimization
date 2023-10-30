@@ -173,6 +173,7 @@ class BaseKerasLayerTest(BaseLayerTest):
         y_hat = self.predict(quantized_model, input_tensors)
         if isinstance(y, list) or (isinstance(self.layers[0], partial) and
                                    self.layers[0].func is tf.image.combined_non_max_suppression):
+            # the combined_non_max_suppression is wrapped in "partial"
             # the output of tf.image.combined_non_max_suppression is not a list but can be handled the same
             for fo, qo in zip(y, y_hat):
                 distance = np.sum(np.abs(fo - qo))
