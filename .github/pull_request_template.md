@@ -1,16 +1,13 @@
-## Change List:
+## Pull Request Description:
 
-
-Please select one contribution level:
-- [ ] Major feature
-- [ ] Minor feature 
-- [ ] Bug Fix
 
 ## Checklist before requesting a review:
-- [ ] All functions and files are well documented. 
-- [ ] All functions and classes have type hints.
-- [ ] There is a license in all files.
+- [ ] I set the appropriate labels on the pull request.
+- [ ] I have added/updated the release note draft (if necessary).
+- [ ] I have updated the documentation to reflect my changes (if necessary).
+- [ ] All function and files are well documented. 
+- [ ] All function and classes have type hints.
+- [ ] There is a licenses in all file.
 - [ ] The function and variable names are informative. 
 - [ ] I have checked for code duplications.
-- [ ] I have added a new unit test (if needed). 
-- [ ] There are no code duplications in this PR.
+- [ ] I have added new unittest (if necessary).
