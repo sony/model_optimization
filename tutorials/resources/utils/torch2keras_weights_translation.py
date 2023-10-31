@@ -15,6 +15,7 @@
 
 from typing import Dict
 import tensorflow as tf
+import torch
 import numpy as np
 
 
@@ -125,17 +126,25 @@ def weight_translation(keras_name: str, pytorch_weights_dict: Dict[str, np.ndarr
     return value
 
 
-def load_state_dict(model: tf.keras.Model, state_dict: Dict[str, np.ndarray]):
+def load_state_dict(model: tf.keras.Model, state_dict_url: str = None,
+                    state_dict_torch: Dict = None):
     """
     Assign a Keras model weights according to a state_dict from the equivalent Torch model.
     Args:
         model: A Keras model
-        state_dict: the Torch model state_dict, as {name_str: weight value as numpy array}
+        state_dict_url: the Torch model state_dict location
+        state_dict_torch: Torch model state_dict. If not None, will be used instead of state_dict_url
 
     Returns:
         The same model object after assigning the weights
 
     """
+    if state_dict_torch is None:
+        assert state_dict_url is not None, "either 'state_dict_url' or 'state_dict_torch' should not be None"
+        state_dict_torch = torch.hub.load_state_dict_from_url(state_dict_url, progress=False,
+                                                              map_location='cpu')
+    state_dict = {k: v.numpy() for k, v in state_dict_torch.items()}
+
     for layer in model.layers:
         for w in layer.weights:
             w.assign(weight_translation(w.name, state_dict, layer))

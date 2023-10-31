@@ -1,16 +1,9 @@
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# The following code was mostly duplicated from https://github.com/rwightman/efficientdet-pytorch
+# and changed to generate an equivalent Keras model.
+# Main changes:
+#   * Torch layers replaced with Keras layers
+#   * removed class inheritance from torch.nn.Module
+#   * changed "forward" class methods with "__call__"
 # ==============================================================================
 
 import logging
@@ -39,6 +32,7 @@ from effdet.config import get_fpn_config, set_config_readonly
 from effdet.efficientdet import get_feature_info
 from tutorials.resources.efficientdet.effnet_keras import create_model, handle_name
 from tutorials.resources.efficientdet.effnet_blocks_keras import create_conv2d, create_pool2d
+from tutorials.resources.utils.torch2keras_weights_translation import load_state_dict
 
 from sony_custom_layers.keras.object_detection.ssd_post_process import SSDPostProcess
 from sony_custom_layers.keras.object_detection import ScoreConverter
@@ -46,31 +40,6 @@ from sony_custom_layers.keras.object_detection import ScoreConverter
 _DEBUG = False
 _USE_SCALE = False
 _ACT_LAYER = tf.nn.swish
-
-
-import torch
-from typing import Dict
-
-
-class TorchWrapper(torch.nn.Module):
-    def __init__(self, model):
-        super(TorchWrapper, self).__init__()
-        self.model = model
-
-    @property
-    def config(self):
-        return self.model.config
-
-    def forward(self, x, img_info: Optional[Dict[str, torch.Tensor]] = None):
-        device = x.device
-        keras_input = x.detach().cpu().numpy().transpose((0, 2, 3, 1))
-        outputs = self.model(keras_input)
-
-        outs = [torch.Tensor(o.numpy()).to(device) for o in outputs]
-        outs[0] = outs[0][:, :, [1, 0, 3, 2]]  # reorder (y, x, y2, x2) to (x, y, x2, y2)
-        outs[0] = outs[0] * img_info['img_scale'].view((-1, 1, 1))  # scale to original image size
-        return torch.cat([outs[0], outs[1].unsqueeze(2), outs[2].unsqueeze(2) + 1], 2)
-
 
 # #######################################################################################
 # This file generates the Keras model. It's based on the EfficientDet repository in
@@ -657,13 +626,12 @@ class EfficientDetKeras:
         self.class_net.toggle_bn_level_first()
         self.box_net.toggle_bn_level_first()
 
-    def get_model(self, input_shape):
+    def get_model(self, input_shape, load_state_dict_to_model=True):
         _input = tf.keras.layers.Input(shape=input_shape)
         x = self.backbone(_input)
         x = self.fpn(x)
         x_class = self.class_net(x)
         x_box = self.box_net(x)
-        outputs = [x_class, x_box]
 
         x_class = [tf.keras.layers.Reshape((-1, self.config.num_classes))(_x) for _x in x_class]
         x_class = tf.keras.layers.Concatenate(axis=1)(x_class)
@@ -677,4 +645,7 @@ class EfficientDetKeras:
                                 max_detections=self.config.max_det_per_image)
         outputs = ssd_pp((x_box, x_class))
 
-        return tf.keras.Model(inputs=_input, outputs=outputs)
+        model = tf.keras.Model(inputs=_input, outputs=outputs)
+        if load_state_dict_to_model:
+            load_state_dict(model, self.config.url)
+        return model

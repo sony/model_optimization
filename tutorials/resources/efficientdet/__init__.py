@@ -13,4 +13,4 @@
 # limitations under the License.
 # ==============================================================================
 
-from tutorials.resources.efficientdet.effdet_keras import EfficientDetKeras, TorchWrapper
+from tutorials.resources.efficientdet.effdet_keras import EfficientDetKeras
