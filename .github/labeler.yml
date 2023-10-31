@@ -36,5 +36,5 @@ auto:trainable_infrastructure:
 - model_compression_toolkit/trainable_infrastructure/**
 
 auto:tutorials:
-- model_compression_toolkit/tutorials/**
+- tutorials/**
 
