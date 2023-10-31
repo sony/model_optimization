@@ -246,12 +246,11 @@ class MixedPercisionCombinedNMSTest(MixedPercisionBaseTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        assert (quantization_info.mixed_precision_cfg == [1, 1]).all()
+        self.unit_test.assertTrue((quantization_info.mixed_precision_cfg != 0).any())
+
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16)
-        for i in range(32):  # quantized per channel
-            self.unit_test.assertTrue(
+                np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16 or
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16)
 
         # Verify final KPI

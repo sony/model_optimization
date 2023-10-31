@@ -99,7 +99,7 @@ class SensitivityEvaluation:
             self.ips_batch_axis.append(n.framework_attr.get(AXIS) if not isinstance(n, FunctionalNode)
                                        else n.op_call_kwargs.get(AXIS))
 
-        self.output_points = [n.node for n in graph.get_outputs()]
+        self.output_points = get_output_nodes_for_metric(graph)
         self.out_ps_distance_fns = []
         self.out_ps_batch_axis = []
         for n in self.output_points:
@@ -367,7 +367,7 @@ class SensitivityEvaluation:
                                                              self.out_ps_distance_fns,
                                                              self.out_ps_batch_axis)
 
-            # Extending the dimensions for the concatination at the end in case we need to
+            # Extending the dimensions for the concatenation at the end in case we need to
             ips_distance = ips_distance if len(ips_distance.shape) > 1 else ips_distance[:, None]
             outputs_distance = outputs_distance if len(outputs_distance.shape) > 1 else outputs_distance[:, None]
             ipts_per_batch_distance.append(ips_distance)
@@ -390,17 +390,24 @@ class SensitivityEvaluation:
             ipts_distances: A matrix that contains the distances between the baseline and MP models
                 for each interest point.
             out_pts_distances: A matrix that contains the distances between the baseline and MP models
-            for each output point.
+                for each output point.
             metrics_weights_fn: A callable that produces the scores to compute weighted distance for interest points.
 
         Returns: Distance value.
         """
-        # Compute the distance between the baseline model's outputs and the MP model's outputs.
-        # The distance is the mean of distances over all images in the batch that was inferred.
-        mean_distance_per_layer = ipts_distances.mean(axis=1)
-        # Use weights such that every layer's distance is weighted differently (possibly).
-        return np.average(mean_distance_per_layer, weights=metrics_weights_fn(ipts_distances)) \
-            + out_pts_distances.mean(axis=1)
+        mean_ipts_distance = 0
+        if len(ipts_distances) > 0:
+            mean_distance_per_layer = ipts_distances.mean(axis=1)
+
+            # Use weights such that every layer's distance is weighted differently (possibly).
+            mean_ipts_distance = np.average(mean_distance_per_layer, weights=metrics_weights_fn(ipts_distances))
+
+        mean_output_distance = 0
+        if len(out_pts_distances) > 0:
+            mean_distance_per_output = out_pts_distances.mean(axis=1)
+            mean_output_distance = np.average(mean_distance_per_output)
+
+        return mean_output_distance + mean_ipts_distance
 
     def _get_images_batches(self, num_of_images: int) -> List[Any]:
         """
@@ -460,13 +467,26 @@ def get_mp_interest_points(graph: Graph,
     # We add output layers of the model to interest points
     # in order to consider the model's output in the distance metric computation (and also to make sure
     # all configurable layers are included in the configured mp model for metric computation purposes)
-    output_nodes = [n.node for n in graph.get_outputs() if n.node not in interest_points_nodes and
-                    (n.node.is_weights_quantization_enabled() or
-                     n.node.is_activation_quantization_enabled())]
+    output_nodes = get_output_nodes_for_metric(graph)
 
     interest_points = [n for n in interest_points_nodes if n not in output_nodes]
 
     return interest_points
+
+
+def get_output_nodes_for_metric(graph: Graph) -> List[BaseNode]:
+    """
+    Returns a list of output nodes that are also quantized (either weights or activation)
+    to be used as a set of output points in the distance metric computation.
+
+    Args:
+        graph: Graph to search for its MP configuration.
+
+    Returns: A list of output nodes.
+
+    """
+    return [n.node for n in graph.get_outputs() if (n.node.is_weights_quantization_enabled() or
+                                                    n.node.is_activation_quantization_enabled())]
 
 
 def bound_num_interest_points(sorted_ip_list: List[BaseNode], num_ip_factor: float) -> List[BaseNode]:
