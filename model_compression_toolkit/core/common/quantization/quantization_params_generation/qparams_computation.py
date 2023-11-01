@@ -50,12 +50,13 @@ def calculate_quantization_params(graph: Graph,
 
     Logger.info(f"Running quantization parameters search. "
                 f"This process might take some time, "
-                f"depending on the model size and the selected quantization methods.")
+                f"depending on the model size and the selected quantization methods.\n")
 
     # Create a list of nodes to compute their thresholds
     nodes_list: List[BaseNode] = nodes if specific_nodes else graph.nodes()
 
-    for n in tqdm(nodes_list):  # iterate only nodes that we should compute their thresholds
+    # for n in tqdm(nodes_list):  # iterate only nodes that we should compute their thresholds
+    for n in tqdm(nodes_list, "Calculating quantization params"):  # iterate only nodes that we should compute their thresholds
         for candidate_qc in n.candidates_quantization_cfg:
             if n.is_weights_quantization_enabled():
                 # If node's weights should be quantized, we compute its weights' quantization parameters
