@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from tqdm import tqdm
 from typing import List
 
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -21,6 +22,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     import get_activations_qparams
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_weights_computation import \
     get_weights_qparams, get_channels_axis
+from model_compression_toolkit.logger import Logger
 
 
 def calculate_quantization_params(graph: Graph,
@@ -46,10 +48,14 @@ def calculate_quantization_params(graph: Graph,
 
     """
 
+    Logger.info(f"Running quantization parameters search. "
+                f"This process might take some time, "
+                f"depending on the model size and the selected quantization methods.\n")
+
     # Create a list of nodes to compute their thresholds
     nodes_list: List[BaseNode] = nodes if specific_nodes else graph.nodes()
 
-    for n in nodes_list:  # iterate only nodes that we should compute their thresholds
+    for n in tqdm(nodes_list, "Calculating quantization params"):  # iterate only nodes that we should compute their thresholds
         for candidate_qc in n.candidates_quantization_cfg:
             if n.is_weights_quantization_enabled():
                 # If node's weights should be quantized, we compute its weights' quantization parameters
