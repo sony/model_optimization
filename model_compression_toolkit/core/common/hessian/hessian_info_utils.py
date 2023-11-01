@@ -17,7 +17,7 @@ import numpy as np
 from model_compression_toolkit.constants import EPS
 
 
-def normalize_weights(hessian_approximations: List) -> List[float]:
+def normalize_weights(hessian_approximations: List) -> np.ndarray:
     """
     Normalize Hessian information approximations by dividing the trace Hessian approximations value by the sum of all
     other values.
@@ -30,4 +30,5 @@ def normalize_weights(hessian_approximations: List) -> List[float]:
     """
     scores_vec = np.asarray(hessian_approximations)
 
-    return (scores_vec / (np.sum(scores_vec) + EPS)).tolist()
+    return scores_vec / (np.sum(scores_vec) + EPS)
+
