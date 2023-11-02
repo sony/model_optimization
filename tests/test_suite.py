@@ -36,7 +36,8 @@ found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util
     "torchvision") is not None
 
 if found_tf:
-    from tests.keras_tests.function_tests.test_hessian_info_calculator_weights import TestHessianInfoCalculatorWeights
+    from tests.keras_tests.function_tests.test_hessian_info_calculator import TestHessianInfoCalculatorWeights, \
+        TestHessianInfoCalculatorActivation
     from tests.keras_tests.function_tests.test_hessian_service import TestHessianService
     from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
     from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
@@ -61,7 +62,8 @@ if found_tf:
     from tests.keras_tests.function_tests.test_activation_weights_composition_substitution import \
         TestActivationWeightsComposition
     from tests.keras_tests.function_tests.test_graph_max_cut import TestGraphMaxCut
-    from tests.keras_tests.function_tests.test_model_gradients import TestModelGradients
+    from tests.keras_tests.function_tests.test_sensitivity_eval_non_suppoerted_output import \
+        TestSensitivityEvalWithNonSupportedOutputNodes
     from tests.keras_tests.function_tests.test_set_layer_to_bitwidth import TestKerasSetLayerToBitwidth
     from tests.keras_tests.function_tests.test_export_keras_fully_quantized_model import TestKerasFakeQuantExporter
     from tests.keras_tests.function_tests.test_kpi_data import TestKPIData
@@ -107,6 +109,7 @@ if __name__ == '__main__':
     # Add TF tests only if tensorflow is installed
     if found_tf:
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianInfoCalculatorWeights))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianInfoCalculatorActivation))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianService))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQModelBuilderWithActivationHolder))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ExporterTestsRunner))
@@ -127,9 +130,9 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasTPModel))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestWeightsActivationSplit))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationWeightsComposition))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestModelGradients))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphMaxCut))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasSetLayerToBitwidth))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityEvalWithNonSupportedOutputNodes))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasFakeQuantExporter))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKPIData))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFileLogger))

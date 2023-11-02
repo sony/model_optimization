@@ -205,7 +205,7 @@ class GPTQTrainer(ABC):
         for image_idx in range(self.gptq_config.hessian_weights_config.hessians_num_samples):
             approx_by_interest_point = self._get_approximations_by_interest_point(approximations, image_idx)
             if self.gptq_config.hessian_weights_config.norm_weights:
-                approx_by_interest_point = hessian_utils.normalize_weights(approx_by_interest_point, [], alpha=0)
+                approx_by_interest_point = hessian_utils.normalize_weights(approx_by_interest_point)
             trace_hessian_approx_by_image.append(approx_by_interest_point)
         return trace_hessian_approx_by_image
 
@@ -309,28 +309,6 @@ class GPTQTrainer(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s update_graph method.')  # pragma: no cover
-
-    def _get_model_output_replacement(self) -> List[BaseNode]:
-        """
-        If a model's output node is not compatible for the task of gradients computation we need to find a predecessor
-        node in the model's graph representation which is compatible and use it for the gradients' computation.
-        This method searches for this predecessor node for each output of the model.
-
-        Returns: A list of output replacement nodes.
-
-        """
-
-        replacement_outputs = []
-        for n in self.graph_float.get_outputs():
-            prev_node = n.node
-            while not self.fw_impl.is_node_compatible_for_metric_outputs(prev_node):
-                prev_node = self.graph_float.get_prev_nodes(n.node)
-                assert len(prev_node) == 1, "A none compatible output node has multiple inputs, " \
-                                            "which is incompatible for metric computation."
-                prev_node = prev_node[0]
-            replacement_outputs.append(prev_node)
-        return replacement_outputs
-
 
 def gptq_training(graph_float: Graph,
                   graph_quant: Graph,

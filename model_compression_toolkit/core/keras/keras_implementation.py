@@ -500,25 +500,23 @@ class KerasImplementation(FrameworkImplementation):
         else:
             Logger.error(f"Keras does not support hessian mode of {trace_hessian_request.mode}")
 
-
-    def is_node_compatible_for_metric_outputs(self,
-                                              node: BaseNode) -> Any:
+    def is_output_node_compatible_for_hessian_score_computation(self,
+                                                                node: BaseNode) -> Any:
         """
-        Checks and returns whether the given node is compatible as output for metric computation
-        purposes and gradient-based weights calculation.
+        Checks and returns whether the given node is compatible as output for Hessian-based information computation.
 
         Args:
             node: A BaseNode object.
 
-        Returns: Whether the node is compatible as output for metric computation or not.
+        Returns: Whether the node is compatible as output for Hessian-based information computation.
 
         """
 
         if node.layer_class == TFOpLambda:
             node_attr = getattr(node, 'framework_attr', None)
-            if node_attr is not None and (ARGMAX in node_attr[LAYER_NAME] or SOFTMAX in node_attr[LAYER_NAME]):
+            if node_attr is not None and (ARGMAX in node_attr[LAYER_NAME]):
                 return False
-        elif node.layer_class in [tf.nn.softmax, tf.keras.layers.Softmax, tf.math.argmax]:
+        elif node.layer_class in [tf.math.argmax]:
             return False
 
         return True

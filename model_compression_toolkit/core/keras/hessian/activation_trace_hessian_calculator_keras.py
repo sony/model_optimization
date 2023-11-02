@@ -65,7 +65,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             List[float]: Approximated trace of the Hessian for an interest point.
         """
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
-            output_list = self._get_model_output_replacement()
+            output_list = [n.node for n in self.graph.get_outputs()]
 
             # Record operations for automatic differentiation
             with tf.GradientTape(persistent=True, watch_accessed_variables=False) as g:
@@ -144,51 +144,6 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
         else:
             Logger.error(f"{self.hessian_request.granularity} is not supported for Keras activation hessian's trace approx calculator")
-
-
-    def _update_ips_with_outputs_replacements(self,
-                                              outputs_replacement_nodes: List[BaseNode],
-                                              interest_points: List[BaseNode]):
-        """
-        Updates the list of interest points with the set of pre-calculated replacement outputs.
-        Also, returns the indices of all output nodes (original, replacements and nodes in between them) in a
-        topological sorted interest points list (for later use in gradients computation and normalization).
-
-        Returns: A list of indices of the output nodes in the sorted interest points list.
-
-        """
-
-        replacement_outputs_to_ip = [r_node for r_node in outputs_replacement_nodes if
-                                     r_node not in interest_points]
-        updated_interest_points = interest_points + replacement_outputs_to_ip
-
-        # Re-sort interest points in a topological order according to the graph's sort
-        interest_points = [n for n in self.graph.get_topo_sorted_nodes() if n in updated_interest_points]
-
-        output_indices = [interest_points.index(n.node) for n in self.graph.get_outputs()]
-        replacement_indices = [interest_points.index(n) for n in outputs_replacement_nodes]
-        return list(set(output_indices + replacement_indices))
-
-    def _get_model_output_replacement(self) -> List[str]:
-        """
-        If a model's output node is not compatible for the task of gradients computation we need to find a predecessor
-        node in the model's graph representation which is compatible and use it for the gradients' computation.
-        This method searches for this predecessor node for each output of the model.
-
-        Returns: A list of output replacement nodes.
-
-        """
-
-        replacement_outputs = []
-        for n in self.graph.get_outputs():
-            prev_node = n.node
-            while not self.fw_impl.is_node_compatible_for_metric_outputs(prev_node):
-                prev_node = self.graph.get_prev_nodes(prev_node)
-                assert len(prev_node) == 1, "A none compatible output node has multiple inputs, " \
-                                            "which is incompatible for metric computation."
-                prev_node = prev_node[0]
-            replacement_outputs.append(prev_node)
-        return replacement_outputs
 
     def _get_model_outputs_for_single_image(self,
                                             output_list: List[str],
