@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ layers = keras.layers
 
 def argmax_output_model(input_shape):
     inputs = layers.Input(shape=input_shape)
-    x = layers.Conv2D(32, 4)(inputs)
+    x = layers.Conv2D(3, 3)(inputs)
     x = layers.BatchNormalization()(x)
-    x = layers.Conv2D(32, 4)(x)
+    x = layers.Conv2D(3, 3)(x)
     x = layers.ReLU()(x)
     outputs = tf.argmax(x, axis=-1)
     model = keras.Model(inputs=inputs, outputs=outputs)
@@ -40,7 +40,7 @@ def argmax_output_model(input_shape):
 
 
 def representative_dataset():
-    yield [np.random.randn(1, 16, 16, 3).astype(np.float32)]
+    yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]
 
 
 class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
@@ -52,7 +52,7 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
                                                            DEFAULT_KERAS_INFO,
                                                            representative_dataset,
                                                            generate_keras_tpc,
-                                                           input_shape=(1, 16, 16, 3),
+                                                           input_shape=(1, 8, 8, 3),
                                                            mixed_precision_enabled=True)
 
         hessian_info_service = hess.HessianInfoService(graph=graph,
@@ -66,7 +66,7 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
                                                   hessian_info_service=hessian_info_service)
 
     def test_not_supported_output_argmax(self):
-        model = argmax_output_model((16, 16, 3))
+        model = argmax_output_model((8, 8, 3))
         with self.assertRaises(Exception) as e:
             self.verify_test_for_model(model)
         self.assertTrue("All graph outputs should support Hessian computation" in str(e.exception))

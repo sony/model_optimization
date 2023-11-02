@@ -90,26 +90,13 @@ class SensitivityEvaluation:
                                                       fw_impl.count_node_for_mixed_precision_interest_points,
                                                       quant_config.num_interest_points_factor)
 
-        self.ips_distance_fns = []
-        self.ips_batch_axis = []
-        for n in self.interest_points:
-            self.ips_distance_fns.append(self.fw_impl.get_node_distance_fn(layer_class=n.layer_class,
-                                                                           framework_attrs=n.framework_attr,
-                                                                           compute_distance_fn=self.quant_config.compute_distance_fn))
-            self.ips_batch_axis.append(n.framework_attr.get(AXIS) if not isinstance(n, FunctionalNode)
-                                       else n.op_call_kwargs.get(AXIS))
+        self.ips_distance_fns, self.ips_batch_axis = self._init_metric_points_lists(self.interest_points)
 
         self.output_points = get_output_nodes_for_metric(graph)
-        self.out_ps_distance_fns = []
-        self.out_ps_batch_axis = []
-        for n in self.output_points:
-            self.out_ps_distance_fns.append(self.fw_impl.get_node_distance_fn(layer_class=n.layer_class,
-                                                                              framework_attrs=n.framework_attr,
-                                                                              compute_distance_fn=self.quant_config.compute_distance_fn))
-            self.out_ps_batch_axis.append(n.framework_attr.get(AXIS) if not isinstance(n, FunctionalNode)
-                                          else n.op_call_kwargs.get(AXIS))
+        self.out_ps_distance_fns, self.out_ps_batch_axis = self._init_metric_points_lists(self.output_points)
 
-        # Setting lists with relative position of the interest points and output points in the list of all mp model activation tensors
+        # Setting lists with relative position of the interest points
+        # and output points in the list of all mp model activation tensors
         graph_sorted_nodes = self.graph.get_topo_sorted_nodes()
         all_out_tensors_indices = [graph_sorted_nodes.index(n) for n in self.interest_points + self.output_points]
         global_ipts_indices = [graph_sorted_nodes.index(n) for n in self.interest_points]
@@ -141,6 +128,29 @@ class SensitivityEvaluation:
         if self.quant_config.use_grad_based_weights  is True:
             self.interest_points_hessians = self._compute_hessian_based_scores()
             self.quant_config.distance_weighting_method = lambda d: self.interest_points_hessians
+
+    def _init_metric_points_lists(self, points: List[BaseNode]) -> Tuple[List[Callable], List[int]]:
+        """
+        Initiates required lists for future use when computing the sensitivity metric.
+        Each point on which the metric is computed uses a dedicated distance function based on its type.
+        In addition, all distance functions preform batch computation, so the batch axis is needed for each node.
+
+        Args:
+            points: The set of nodes in the graph for which we need to initiate the lists.
+
+        Returns: A lists with distance functions and a list  batch axis for each node.
+
+        """
+        distance_fns_list = []
+        batch_axis_list = []
+        for n in points:
+            distance_fns_list.append(self.fw_impl.get_node_distance_fn(
+                layer_class=n.layer_class,
+                framework_attrs=n.framework_attr,
+                compute_distance_fn=self.quant_config.compute_distance_fn))
+            batch_axis_list.append(n.framework_attr.get(AXIS) if not isinstance(n, FunctionalNode)
+                                   else n.op_call_kwargs.get(AXIS))
+        return distance_fns_list, batch_axis_list
 
     def compute_metric(self,
                        mp_model_configuration: List[int],

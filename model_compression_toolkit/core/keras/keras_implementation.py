@@ -514,7 +514,7 @@ class KerasImplementation(FrameworkImplementation):
 
         if node.layer_class == TFOpLambda:
             node_attr = getattr(node, 'framework_attr', None)
-            if node_attr is not None and (ARGMAX in node_attr[LAYER_NAME] in node_attr[LAYER_NAME]):
+            if node_attr is not None and (ARGMAX in node_attr[LAYER_NAME]):
                 return False
         elif node.layer_class in [tf.math.argmax]:
             return False
