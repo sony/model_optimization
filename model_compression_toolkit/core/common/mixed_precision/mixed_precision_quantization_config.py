@@ -30,8 +30,8 @@ class MixedPrecisionQuantizationConfigV2:
                  num_of_images: int = 32,
                  configuration_overwrite: List[int] = None,
                  num_interest_points_factor: float = 1.0,
-                 use_grad_based_weights: bool = True,
-                 norm_weights: bool = True,
+                 use_hessian_based_scores: bool = True,
+                 norm_scores: bool = True,
                  refine_mp_solution: bool = True,
                  metric_normalization_threshold: float = 1e10):
         """
@@ -45,8 +45,8 @@ class MixedPrecisionQuantizationConfigV2:
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
             configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
             num_interest_points_factor (float): A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
-            use_grad_based_weights (bool): Whether to use Hessian-based scores for weighted average distance metric computation.
-            norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
+            use_hessian_based_scores (bool): Whether to use Hessian-based scores for weighted average distance metric computation.
+            norm_scores (bool): Whether to normalize the returned scores for the weighted distance metric (to get values between 0 and 1).
             refine_mp_solution (bool): Whether to try to improve the final mixed-precision configuration using a greedy algorithm that searches layers to increase their bit-width, or not.
             metric_normalization_threshold (float): A threshold for checking the mixed precision distance metric values, In case of values larger than this threshold, the metric will be scaled to prevent numerical issues.
 
@@ -64,8 +64,8 @@ class MixedPrecisionQuantizationConfigV2:
                                                         "thus, it should be between 0 to 1"
         self.num_interest_points_factor = num_interest_points_factor
 
-        self.use_grad_based_weights = use_grad_based_weights
-        self.norm_weights = norm_weights
+        self.use_hessian_based_scores = use_hessian_based_scores
+        self.norm_scores = norm_scores
 
         self.metric_normalization_threshold = metric_normalization_threshold
 

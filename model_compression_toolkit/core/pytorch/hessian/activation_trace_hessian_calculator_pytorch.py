@@ -18,7 +18,7 @@ from typing import List
 from torch import autograd
 from tqdm import tqdm
 
-from model_compression_toolkit.constants import MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE, HESSIAN_NUM_ITERATIONS
+from model_compression_toolkit.constants import MIN_HESSIAN_ITER, HESSIAN_COMP_TOLERANCE, HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianInfoGranularity
 from model_compression_toolkit.core.pytorch.hessian.pytorch_model_gradients import PytorchModelGradients
@@ -77,52 +77,52 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             # First, we need to unfold all outputs that are given as list, to extract the actual output tensors
             output = self.concat_tensors(output_tensors)
 
-            ipts_jac_trace_approx = []
+            ipts_hessian_trace_approx = []
             for ipt in tqdm(model_grads_net.interest_points_tensors):  # Per Interest point activation tensor
-                trace_jv = []
+                trace_hv = []
                 for j in range(self.num_iterations_for_approximation):  # Approximation iterations
                     # Getting a random vector with normal distribution
                     v = torch.randn(output.shape, device=device)
                     f_v = torch.sum(v * output)
 
                     # Computing the hessian trace approximation by getting the gradient of (output * v)
-                    jac_v = autograd.grad(outputs=f_v,
+                    hess_v = autograd.grad(outputs=f_v,
                                           inputs=ipt,
                                           retain_graph=True,
                                           allow_unused=True)[0]
-                    if jac_v is None:
+                    if hess_v is None:
                         # In case we have an output node, which is an interest point, but it is not differentiable,
                         # we still want to set some weight for it. For this, we need to add this dummy tensor to the ipt
-                        # jacobian traces list.
-                        trace_jv.append(torch.tensor([0.0],
+                        # Hessian traces list.
+                        trace_hv.append(torch.tensor([0.0],
                                                      requires_grad=True,
                                                      device=device))
                         break
-                    jac_v = torch.reshape(jac_v, [jac_v.shape[0], -1])
-                    jac_trace_approx = torch.mean(torch.sum(torch.pow(jac_v, 2.0)))
+                    hess_v = torch.reshape(hess_v, [hess_v.shape[0], -1])
+                    hessian_trace_approx = torch.mean(torch.sum(torch.pow(hess_v, 2.0)))
 
-                    # If the change to the mean Jacobian approximation is insignificant we stop the calculation
-                    if j > MIN_JACOBIANS_ITER:
-                        new_mean = torch.mean(torch.stack([jac_trace_approx, *trace_jv]))
-                        delta = new_mean - torch.mean(torch.stack(trace_jv))
-                        if torch.abs(delta) / (torch.abs(new_mean) + 1e-6) < JACOBIANS_COMP_TOLERANCE:
-                            trace_jv.append(jac_trace_approx)
+                    # If the change to the mean Hessian approximation is insignificant we stop the calculation
+                    if j > MIN_HESSIAN_ITER:
+                        new_mean = torch.mean(torch.stack([hessian_trace_approx, *trace_hv]))
+                        delta = new_mean - torch.mean(torch.stack(trace_hv))
+                        if torch.abs(delta) / (torch.abs(new_mean) + 1e-6) < HESSIAN_COMP_TOLERANCE:
+                            trace_hv.append(hessian_trace_approx)
                             break
 
-                    trace_jv.append(jac_trace_approx)
-                ipts_jac_trace_approx.append(2 * torch.mean(torch.stack(trace_jv)) / output.shape[
-                    -1])  # Get averaged jacobian trace approximation
+                    trace_hv.append(hessian_trace_approx)
+                ipts_hessian_trace_approx.append(2 * torch.mean(torch.stack(trace_hv)) / output.shape[
+                    -1])  # Get averaged Hessian trace approximation
 
             # If a node has multiple outputs, it means that multiple approximations were computed
             # (one per output since granularity is per-tensor). In this case we average the approximations.
-            if len(ipts_jac_trace_approx)>1:
+            if len(ipts_hessian_trace_approx) > 1:
                 # Stack tensors and compute the average
-                ipts_jac_trace_approx = [torch.stack(ipts_jac_trace_approx).mean()]
+                ipts_hessian_trace_approx = [torch.stack(ipts_hessian_trace_approx).mean()]
 
-            ipts_jac_trace_approx = torch_tensor_to_numpy(torch.Tensor(
-                ipts_jac_trace_approx))  # Just to get one tensor instead of list of tensors with single element
+            ipts_hessian_trace_approx = torch_tensor_to_numpy(torch.Tensor(
+                ipts_hessian_trace_approx))  # Just to get one tensor instead of list of tensors with single element
 
-            return ipts_jac_trace_approx.tolist()
+            return ipts_hessian_trace_approx.tolist()
 
         else:
             Logger.error(f"{self.hessian_request.granularity} is not supported for Pytorch activation hessian's trace approx calculator")

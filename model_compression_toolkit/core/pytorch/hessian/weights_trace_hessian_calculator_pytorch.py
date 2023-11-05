@@ -24,7 +24,7 @@ from model_compression_toolkit.core.pytorch.hessian.trace_hessian_calculator_pyt
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.back2framework.float_model_builder import FloatPyTorchModelBuilder
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE, HESSIAN_EPS
+from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_HESSIAN_ITER, HESSIAN_COMP_TOLERANCE, HESSIAN_EPS
 
 
 class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
@@ -112,10 +112,10 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             if len(shape_channel_axis) > 0:
                 approx = torch.sum(approx, dim=shape_channel_axis)
 
-            if j > MIN_JACOBIANS_ITER:
+            if j > MIN_HESSIAN_ITER:
                 new_mean = (torch.sum(torch.stack(approximation_per_iteration), dim=0) + approx)/(j+1)
                 delta = new_mean - torch.mean(torch.stack(approximation_per_iteration), dim=0)
-                converged_tensor = torch.abs(delta) / (torch.abs(new_mean) + HESSIAN_EPS) < JACOBIANS_COMP_TOLERANCE
+                converged_tensor = torch.abs(delta) / (torch.abs(new_mean) + HESSIAN_EPS) < HESSIAN_COMP_TOLERANCE
                 if torch.all(converged_tensor):
                     break
 

@@ -76,7 +76,7 @@ class SensitivityEvaluation:
         self.fw_impl = fw_impl
         self.set_layer_to_bitwidth = set_layer_to_bitwidth
         self.disable_activation_for_metric = disable_activation_for_metric
-        if self.quant_config.use_grad_based_weights:
+        if self.quant_config.use_hessian_based_scores:
             if not isinstance(hessian_info_service, HessianInfoService):
                 Logger.error(f"When using hessian based approximations for sensitivity evaluation, "
                              f" an HessianInfoService object must be provided but is {hessian_info_service}")
@@ -125,7 +125,7 @@ class SensitivityEvaluation:
         # Computing Hessian-based scores for weighted average distance metric computation (only if requested),
         # and assigning distance_weighting method accordingly.
         self.interest_points_hessians = None
-        if self.quant_config.use_grad_based_weights  is True:
+        if self.quant_config.use_hessian_based_scores is True:
             self.interest_points_hessians = self._compute_hessian_based_scores()
             self.quant_config.distance_weighting_method = lambda d: self.interest_points_hessians
 
@@ -263,9 +263,9 @@ class SensitivityEvaluation:
                 # Append the single approximation value to the list for the current image
                 approx_by_image_per_interest_point.append(compare_point_to_trace_hessian_approximations[target_node][image_idx][0])
 
-            if self.quant_config.norm_weights:
+            if self.quant_config.norm_scores:
                 approx_by_image_per_interest_point = \
-                    hessian_utils.normalize_weights(hessian_approximations=approx_by_image_per_interest_point)
+                    hessian_utils.normalize_scores(hessian_approximations=approx_by_image_per_interest_point)
 
             # Append the approximations for the current image to the main list
             approx_by_image.append(approx_by_image_per_interest_point)

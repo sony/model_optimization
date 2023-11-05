@@ -60,7 +60,7 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
                                                        fw_impl=keras_impl)
 
         se = keras_impl.get_sensitivity_evaluator(graph,
-                                                  MixedPrecisionQuantizationConfigV2(use_grad_based_weights=True),
+                                                  MixedPrecisionQuantizationConfigV2(use_hessian_based_scores=True),
                                                   representative_dataset,
                                                   DEFAULT_KERAS_INFO,
                                                   hessian_info_service=hessian_info_service)

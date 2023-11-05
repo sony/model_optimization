@@ -284,7 +284,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                              mixed_precision_config=MixedPrecisionQuantizationConfigV2(compute_mse,
                                                                                                        get_average_weights,
                                                                                                        num_of_images=1,
-                                                                                                       use_grad_based_weights=False))
+                                                                                                       use_hessian_based_scores=False))
 
         self.run_search_bitwidth_config_test(core_config_avg_weights)
 
@@ -292,7 +292,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                             mixed_precision_config=MixedPrecisionQuantizationConfigV2(compute_mse,
                                                                                                       get_last_layer_weights,
                                                                                                       num_of_images=1,
-                                                                                                      use_grad_based_weights=False))
+                                                                                                      use_hessian_based_scores=False))
 
         self.run_search_bitwidth_config_test(core_config_last_layer)
 
