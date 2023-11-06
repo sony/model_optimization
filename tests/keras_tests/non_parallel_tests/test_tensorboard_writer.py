@@ -107,7 +107,7 @@ class TestFileLogger(unittest.TestCase):
 
         # Hessian service assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP
         cfg = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
-        cfg.use_grad_based_weights=False
+        cfg.use_hessian_based_scores = False
 
         # compare max tensor size with plotted max tensor size
         tg = prepare_graph_set_bit_widths(in_model=model,
@@ -140,7 +140,7 @@ class TestFileLogger(unittest.TestCase):
             yield [np.random.randn(1, 8, 8, 3)]
 
         mp_qc = mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
-                                                            use_grad_based_weights=False)
+                                                            use_hessian_based_scores=False)
         core_config = mct.core.CoreConfig(mixed_precision_config=mp_qc)
         quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(self.model,
                                                                                rep_data,

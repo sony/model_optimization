@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     # Create a mixed-precision quantization configuration.
     mixed_precision_config = mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=args.mixed_precision_num_of_images,
-                                                                    use_grad_based_weights=args.enable_mixed_precision_gradients_weighting)
+                                                                         use_hessian_based_scores=args.enable_mixed_precision_gradients_weighting)
 
     # Create a core quantization configuration, set the mixed-precision configuration,
     # and set the number of calibration iterations.

@@ -66,7 +66,7 @@ class TestSensitivityEvalWithNonSupportedOutputBase(BasePytorchTest):
                                                    representative_dataset=self.representative_data_gen)
 
         se = pytorch_impl.get_sensitivity_evaluator(graph,
-                                                    MixedPrecisionQuantizationConfigV2(use_grad_based_weights=True),
+                                                    MixedPrecisionQuantizationConfigV2(use_hessian_based_scores=True),
                                                     self.representative_data_gen,
                                                     DEFAULT_PYTORCH_INFO,
                                                     hessian_info_service=hessian_info_service)

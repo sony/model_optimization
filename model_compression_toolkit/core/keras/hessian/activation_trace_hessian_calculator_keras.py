@@ -20,7 +20,7 @@ from tensorflow.python.keras.engine.base_layer import Layer
 from tqdm import tqdm
 import numpy as np
 
-from model_compression_toolkit.constants import MIN_JACOBIANS_ITER, JACOBIANS_COMP_TOLERANCE, EPS, \
+from model_compression_toolkit.constants import MIN_HESSIAN_ITER, HESSIAN_COMP_TOLERANCE, EPS, \
     HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common import Graph, BaseNode
@@ -79,7 +79,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                 trace_approx_by_node = []
                 # Loop through each interest point activation tensor
                 for ipt in tqdm(interest_points_tensors):  # Per Interest point activation tensor
-                    interest_point_scores = [] # List to store scores for each interest point
+                    interest_point_scores = []  # List to store scores for each interest point
                     for j in range(self.num_iterations_for_approximation):  # Approximation iterations
                         # Getting a random vector with normal distribution
                         v = tf.random.normal(shape=output.shape)
@@ -106,7 +106,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
                             # If the change to the mean approximation is insignificant (to all outputs)
                             # we stop the calculation.
-                            if j > MIN_JACOBIANS_ITER:
+                            if j > MIN_HESSIAN_ITER:
                                 new_mean_per_output = []
                                 delta_per_output = []
                                 # Compute new means and deltas for each output index
@@ -118,7 +118,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                                     delta_per_output.append(delta)
 
                                 # Check if all outputs have converged
-                                is_converged = all([np.abs(delta) / (np.abs(new_mean) + 1e-6) < JACOBIANS_COMP_TOLERANCE for delta, new_mean in zip(delta_per_output, new_mean_per_output)])
+                                is_converged = all([np.abs(delta) / (np.abs(new_mean) + 1e-6) < HESSIAN_COMP_TOLERANCE for delta, new_mean in zip(delta_per_output, new_mean_per_output)])
                                 if is_converged:
                                     interest_point_scores.append(score_approx_per_output)
                                     break

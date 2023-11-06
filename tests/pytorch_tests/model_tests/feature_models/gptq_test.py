@@ -22,7 +22,7 @@ from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEA
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 import model_compression_toolkit as mct
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GradientPTQConfigV2, RoundingType, \
-    GPTQHessianWeightsConfig
+    GPTQHessianScoresConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
@@ -121,8 +121,8 @@ class GPTQAccuracyTest(GPTQBaseTest):
                                  loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
                                  use_hessian_based_weights=self.hessian_weights,
                                  optimizer_bias=torch.optim.Adam([torch.Tensor([])], lr=0.4),
-                                 hessian_weights_config=GPTQHessianWeightsConfig(log_norm=self.log_norm_weights,
-                                                                                 scale_log_norm=self.scaled_log_norm),
+                                 hessian_weights_config=GPTQHessianScoresConfig(log_norm=self.log_norm_weights,
+                                                                                scale_log_norm=self.scaled_log_norm),
                                  gptq_quantizer_params_override=self.override_params)
 
     def get_gptq_configv2(self):
@@ -131,8 +131,8 @@ class GPTQAccuracyTest(GPTQBaseTest):
                                    loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
                                    use_hessian_based_weights=self.hessian_weights,
                                    optimizer_bias=torch.optim.Adam([torch.Tensor([])], lr=0.4),
-                                   hessian_weights_config=GPTQHessianWeightsConfig(log_norm=self.log_norm_weights,
-                                                                                   scale_log_norm=self.scaled_log_norm),
+                                   hessian_weights_config=GPTQHessianScoresConfig(log_norm=self.log_norm_weights,
+                                                                                  scale_log_norm=self.scaled_log_norm),
                                    gptq_quantizer_params_override=self.override_params)
 
     def gptq_compare(self, ptq_model, gptq_model, input_x=None):
