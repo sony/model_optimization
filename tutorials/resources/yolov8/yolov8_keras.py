@@ -41,6 +41,7 @@ from keras import layers, initializers
 from keras.layers import BatchNormalization, Concatenate, UpSampling2D, Input
 from keras.models import Model
 from typing import Dict, Optional, List, Tuple, Union
+import cv2
 
 def yaml_load(file: str = 'data.yaml', append_filename: bool = False) -> Dict[str, any]:
     """
