@@ -53,7 +53,7 @@ class TestFullyQuantizedExporter(unittest.TestCase):
     def set_seed(self, seed):
         torch.manual_seed(seed)
         np.random.seed(seed)
-        random.seed(seed)
+        random.seed(float(seed))
 
     def test_sanity(self):
         """
