@@ -25,7 +25,6 @@ detection performance. It is particularly suitable for edge devices and embedded
 The code is organized as follows:
 - Function definitions for building the Nanodet-Plus model.
 - Model definition
-- Utility functions for setting model weights
 
 For more details on the Nanodet-Plus model, refer to the original repository:
 https://github.com/RangiLyu/nanodet
@@ -364,56 +363,3 @@ def nanodet_plus_m(input_shape, scale_factor, bottleneck_ratio, feat_channels):
 
     # Define Keras model
     return Model(inputs, x, name=f'Nanodet_plus_m_{scale_factor}x_{input_shape[0]}')
-
-
-def set_model_weights(model, loaded_weights):
-    """
-    Set the weights of a Keras model using weights loaded from a PyTorch model.
-
-    Args:
-        model (tf.keras.Model): The Keras model to which the weights will be assigned.
-        loaded_weights (dict): Dictionary containing the weights loaded from a PyTorch model.
-
-    Note:
-        This function assumes that the weights in the loaded PyTorch model have a similar naming structure to the
-        layers in the Keras model.
-
-    Returns:
-        None
-    """
-    # Extract the weight names from Keras model
-    w_keras = {w.name: (w.dtype, w.shape) for w in model.weights}
-
-    for idx, k in enumerate(w_keras.keys()):
-        l_name = k.split("/")[0]
-        l_type = k.split("/")[1]
-
-        # Map Keras weight types to PyTorch weight names
-        if l_type == 'kernel:0' or l_type == 'depthwise_kernel:0':
-            torch_name = l_name + ".weight"
-        elif l_type == 'gamma:0':
-            torch_name = l_name + ".weight"
-        elif l_type == 'beta:0' or l_type == 'bias:0':
-            torch_name = l_name + ".bias"
-        elif l_type == 'moving_mean:0':
-            torch_name = l_name + ".running_mean"
-        elif l_type == 'moving_variance:0':
-            torch_name = l_name + ".running_var"
-
-        # Iterate over loaded PyTorch weights to find a matching weight
-        for key, value in loaded_weights.items():
-            if key.startswith(torch_name):
-                if len(value.shape) == 4:
-                    if l_type == 'depthwise_kernel:0':
-                        # Transpose and assign weights for depthwise convolution
-                        w = np.transpose(value.numpy(), (2, 3, 0, 1))
-                    else:
-                        # Transpose and assign weights for standard convolution
-                        w = np.transpose(value.numpy(), (2,3,1,0))
-                elif len(value.shape) == 1:
-                    # Assign bias or other 1D weights directly
-                    w = value.numpy()
-
-                # Assign the weights to the Keras model
-                model.weights[idx].assign(w)
-                break
