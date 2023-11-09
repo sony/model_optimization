@@ -18,9 +18,9 @@ import os
 import numpy as np
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
-from typing import Dict
+from typing import List, Dict, Tuple, Callable
 
-def coco80_to_coco91(x):
+def coco80_to_coco91(x: np.ndarray) -> np.ndarray:
     """
     Converts COCO 80-class indices to COCO 91-class indices.
 
@@ -37,7 +37,7 @@ def coco80_to_coco91(x):
     return coco91Indexs[x.astype(np.int32)]
 
 
-def clip_boxes(boxes, h, w):
+def clip_boxes(boxes: np.ndarray, h: int, w: int) -> np.ndarray:
     """
     Clip bounding boxes to stay within the image boundaries.
 
@@ -56,7 +56,7 @@ def clip_boxes(boxes, h, w):
     return boxes
 
 
-def scale_boxes(boxes, h_image, w_image, h_model, w_model, preserve_aspect_ratio):
+def scale_boxes(boxes: np.ndarray, h_image: int, w_image: int, h_model: int, w_model: int, preserve_aspect_ratio: bool) -> np.ndarray:
     """
     Scale and offset bounding boxes based on model output size and original image size.
 
@@ -94,14 +94,14 @@ def scale_boxes(boxes, h_image, w_image, h_model, w_model, preserve_aspect_ratio
 
 
 
-def format_results(outputs, img_ids, orig_img_dims, output_resize):
+def format_results(outputs: List, img_ids: List, orig_img_dims: List, output_resize: Dict) -> List[Dict]:
     """
     Format model outputs into a list of detection dictionaries.
 
     Args:
         outputs (list): List of model outputs, typically containing bounding boxes, scores, and labels.
         img_ids (list): List of image IDs corresponding to each output.
-        orig_img_dims (list): List of tuples representing the original image dimensions for each output.
+        orig_img_dims (list): List of tuples representing the original image dimensions (h, w) for each output.
         output_resize (Dict): Contains the resize information to map between the model's
                  output and the original image dimensions.
 
@@ -154,7 +154,7 @@ class CocoEval:
         # Resizing information to map between the model's output and the original image dimensions
         self.output_resize = output_resize if output_resize else {'shape': (1, 1), 'aspect_ratio_preservation': False}
 
-    def add_batch_detections(self, outputs, targets):
+    def add_batch_detections(self, outputs: Tuple[List, List, List, List], targets: List[Dict]):
         """
         Add batch detections to the evaluation.
 
@@ -174,7 +174,7 @@ class CocoEval:
 
         self.all_detections.extend(batch_detections)
 
-    def result(self):
+    def result(self) -> List[float]:
         """
         Calculate and print evaluation results.
 
@@ -201,7 +201,7 @@ class CocoEval:
         """
         self.all_detections = []
 
-def load_and_preprocess_image(image_path, preprocess):
+def load_and_preprocess_image(image_path: str, preprocess: Callable) -> np.ndarray:
     """
     Load and preprocess an image from a given file path.
 
@@ -216,7 +216,7 @@ def load_and_preprocess_image(image_path, preprocess):
     image = preprocess(image)
     return image
 
-def coco_dataset_generator(dataset_folder, annotation_file, preprocess, batch_size=1):
+def coco_dataset_generator(dataset_folder: str, annotation_file: str, preprocess: Callable, batch_size: int = 1) -> Tuple:
     """
     Generator function for loading and preprocessing images and their annotations from a COCO-style dataset.
 
