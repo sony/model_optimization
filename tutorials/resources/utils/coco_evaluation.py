@@ -134,7 +134,7 @@ def format_results(outputs, img_ids, orig_img_dims, output_resize):
 
 # COCO evaluation class
 class CocoEval:
-    def __init__(self, path2json: str, output_resize: Dict):
+    def __init__(self, path2json: str, output_resize: Dict = None):
         """
         Initialize the CocoEval class.
 
@@ -150,7 +150,9 @@ class CocoEval:
 
         # A list of reformatted model outputs
         self.all_detections = []
-        self.output_resize = output_resize
+
+        # Resizing information to map between the model's output and the original image dimensions
+        self.output_resize = output_resize if output_resize else {'shape': (1, 1), 'aspect_ratio_preservation': False}
 
     def add_batch_detections(self, outputs, targets):
         """
