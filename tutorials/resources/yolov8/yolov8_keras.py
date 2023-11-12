@@ -1,16 +1,9 @@
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# The following code was mostly duplicated from https://github.com/ultralytics/ultralytics
+# and changed to generate an equivalent Keras model.
+# Main changes:
+#   * Torch layers replaced with Keras layers
+#   * removed class inheritance from torch.nn.Module
+#   * changed "forward" class methods with "__call__"
 # ==============================================================================
 """
 Yolov8n Object Detection Model - Keras implementation
@@ -480,37 +473,3 @@ def yolov8_preprocess(x: np.ndarray, img_mean: float = 0.0, img_std: float = 255
     x = np.pad(x, pad, constant_values=pad_values) # Padding to the target size
     x = (x - img_mean) / img_std # Normalization
     return x
-
-
-if __name__ == '__main__':
-
-    from tensorflow_fw.internal_model_zoo.yolov8.torch2keras_weights_translation import load_state_dict
-    import torch
-    WEIGHTS_PATH = "/data/projects/swat/network_database/ModelZoo/Float-Pytorch-Models/yolov8/" + "yolov8n" + ".pt"
-    pretrained_weights = torch.load(WEIGHTS_PATH)
-
-    # Generate Nanodet base model
-    model = yolov8_keras('yolov8n', 640)
-
-    # Set the pre-trained weights
-    load_state_dict(model, pretrained_weights)
-
-    # Add Nanodet Box decoding layer (decode the model outputs to bounding box coordinates)
-    boxes, scores  = model.output
-
-    # Add Tensorflow NMS layer
-    outputs = tf.image.combined_non_max_suppression(
-        boxes,
-        scores,
-        max_output_size_per_class=300,
-        max_total_size=300,
-        iou_threshold=0.7,
-        score_threshold=0.001,
-        pad_per_class=False,
-        clip_boxes=False
-        )
-
-    model = Model(model.input, outputs, name='yolov8n')
-
-    model.save('/data/projects/swat/network_database/Tensorflow2/float/yolov8n/temp.h5')
-    model.summary()
