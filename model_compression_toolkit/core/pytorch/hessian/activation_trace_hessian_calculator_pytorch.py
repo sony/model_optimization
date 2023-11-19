@@ -21,12 +21,16 @@ from tqdm import tqdm
 from model_compression_toolkit.constants import MIN_HESSIAN_ITER, HESSIAN_COMP_TOLERANCE, HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianInfoGranularity
+from model_compression_toolkit.core.pytorch.back2framework.float_model_builder import FloatPyTorchModelBuilder
 from model_compression_toolkit.core.pytorch.hessian.pytorch_model_gradients import PytorchModelGradients
 from model_compression_toolkit.core.pytorch.hessian.trace_hessian_calculator_pytorch import \
     TraceHessianCalculatorPytorch
 from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
 from model_compression_toolkit.logger import Logger
 import torch
+
+
+
 
 class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
     """
@@ -53,6 +57,15 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                                                                       trace_hessian_request=trace_hessian_request,
                                                                       num_iterations_for_approximation=num_iterations_for_approximation)
 
+    def _model_register_hook_for_layer(self, model, layer_name, tensors_list):
+        def get_activation():
+            def hook(model, input, output):
+                tensors_list.append(output)
+
+            return hook
+
+        return model.__getattr__(layer_name).register_forward_hook(get_activation())  # returns hook
+
     def compute(self) -> List[float]:
         """
         Compute the approximation of the trace of the Hessian w.r.t a node's activations.
@@ -65,12 +78,17 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             for input_tensor in self.input_images:
                 input_tensor.requires_grad_()
 
-            model_grads_net = PytorchModelGradients(graph_float=self.graph,
-                                                    trace_hessian_request=self.hessian_request
-                                                    )
+            # model_grads_net = PytorchModelGradients(graph_float=self.graph,
+            #                                         trace_hessian_request=self.hessian_request
+            #                                         )
+
+            model, _ = FloatPyTorchModelBuilder(graph=self.graph).build_model()
+            # model.eval()
+            activation_tensors = []
+            layer_hook_handle = self._model_register_hook_for_layer(model, self.hessian_request.target_node.name, activation_tensors)
 
             # Run model inference
-            output_tensors = model_grads_net(self.input_images)
+            output_tensors = model(self.input_images)
             device = output_tensors[0].device
 
             # Concat outputs
@@ -78,7 +96,8 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             output = self.concat_tensors(output_tensors)
 
             ipts_hessian_trace_approx = []
-            for ipt in tqdm(model_grads_net.interest_points_tensors):  # Per Interest point activation tensor
+            # for ipt in tqdm(model_grads_net.interest_points_tensors):  # Per Interest point activation tensor
+            for ipt_tensor in tqdm(activation_tensors):  # Per Interest point activation tensor
                 trace_hv = []
                 for j in range(self.num_iterations_for_approximation):  # Approximation iterations
                     # Getting a random vector with normal distribution
@@ -87,7 +106,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
 
                     # Computing the hessian trace approximation by getting the gradient of (output * v)
                     hess_v = autograd.grad(outputs=f_v,
-                                          inputs=ipt,
+                                          inputs=ipt_tensor,
                                           retain_graph=True,
                                           allow_unused=True)[0]
                     if hess_v is None:
@@ -112,6 +131,8 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                     trace_hv.append(hessian_trace_approx)
                 ipts_hessian_trace_approx.append(2 * torch.mean(torch.stack(trace_hv)) / output.shape[
                     -1])  # Get averaged Hessian trace approximation
+
+            layer_hook_handle.remove()
 
             # If a node has multiple outputs, it means that multiple approximations were computed
             # (one per output since granularity is per-tensor). In this case we average the approximations.
