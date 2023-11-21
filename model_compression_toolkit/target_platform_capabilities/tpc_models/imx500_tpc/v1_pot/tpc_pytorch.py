@@ -17,7 +17,7 @@ import operator
 
 import torch
 from torch import add, sub, mul, div, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, chunk, unbind, topk, \
-    gather, equal, transpose, permute
+    gather, equal, transpose, permute, argmax
 from torch.nn import Conv2d, Linear, BatchNorm2d, ConvTranspose2d
 from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, LeakyReLU
@@ -69,6 +69,7 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     permute,
                                                     transpose,
                                                     equal,
+                                                    argmax,
                                                     gather,
                                                     topk])
 

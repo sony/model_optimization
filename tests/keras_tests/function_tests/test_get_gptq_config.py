@@ -22,7 +22,7 @@ from model_compression_toolkit.core import QuantizationConfig, QuantizationError
 import tensorflow as tf
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.gptq.common.gptq_config import GPTQHessianWeightsConfig
+from model_compression_toolkit.gptq.common.gptq_config import GPTQHessianScoresConfig
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from model_compression_toolkit.gptq.keras.gptq_loss import multiple_tensors_mse_loss
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
@@ -67,11 +67,11 @@ class TestGetGPTQConfig(unittest.TestCase):
                                      weights_bias_correction=False)  # disable bias correction when working with GPTQ
         self.cc = CoreConfig(quantization_config=self.qc)
 
-        test_hessian_weights_config = GPTQHessianWeightsConfig(hessians_num_samples=2,
-                                                               norm_weights=False,
-                                                               log_norm=True,
-                                                               scale_log_norm=True,
-                                                               hessians_n_iter=20)
+        test_hessian_weights_config = GPTQHessianScoresConfig(hessians_num_samples=2,
+                                                              norm_scores=False,
+                                                              log_norm=True,
+                                                              scale_log_norm=True,
+                                                              hessians_n_iter=20)
 
         self.gptqv2_configurations = [GradientPTQConfigV2(1, optimizer=tf.keras.optimizers.RMSprop(),
                                                           optimizer_rest=tf.keras.optimizers.RMSprop(),
@@ -106,7 +106,7 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                           train_bias=True,
                                                           loss=multiple_tensors_mse_loss,
                                                           rounding_type=RoundingType.STE,
-                                                          gptq_quantizer_params_override={MAX_LSB_STR: DefaultDict({}, lambda: 1)}),
+                                                          gptq_quantizer_params_override={MAX_LSB_STR: DefaultDict({}, 1)}),
                                       get_keras_gptq_config(n_epochs=1,
                                                             optimizer=tf.keras.optimizers.Adam())]
 

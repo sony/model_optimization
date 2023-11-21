@@ -219,8 +219,8 @@ class MixedPercisionSearchLastLayerDistance(MixedPercisionBaseTest):
 
     def get_mixed_precision_v2_config(self):
         return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
-                                                      use_grad_based_weights=False,
-                                                      distance_weighting_method=get_last_layer_weights)
+                                                           use_hessian_based_scores=False,
+                                                           distance_weighting_method=get_last_layer_weights)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.compare_results(quantization_info, quantized_models, float_model, 1)

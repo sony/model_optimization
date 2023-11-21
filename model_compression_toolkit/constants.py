@@ -118,9 +118,9 @@ WEIGHTS_CHANNELS_AXIS = 'weights_channels_axis'
 DUMMY_NODE = 'dummy_node'
 DUMMY_TENSOR = 'dummy_tensor'
 
-# Jacobian-weights constants
-MIN_JACOBIANS_ITER = 10
-JACOBIANS_COMP_TOLERANCE = 1e-3
+# Hessian scores constants
+MIN_HESSIAN_ITER = 10
+HESSIAN_COMP_TOLERANCE = 1e-3
 
 
 # Hessian configuration default constants

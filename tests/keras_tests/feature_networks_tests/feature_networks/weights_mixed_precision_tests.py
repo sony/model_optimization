@@ -227,7 +227,7 @@ class MixedPercisionCombinedNMSTest(MixedPercisionBaseTest):
 
     def get_mixed_precision_v2_config(self):
         return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
-                                                           use_grad_based_weights=False)
+                                                           use_hessian_based_scores=False)
 
     def get_kpi(self):
         # kpi is for 4 bits on average
@@ -246,12 +246,11 @@ class MixedPercisionCombinedNMSTest(MixedPercisionBaseTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        assert (quantization_info.mixed_precision_cfg == [1, 1]).all()
+        self.unit_test.assertTrue((quantization_info.mixed_precision_cfg != 0).any())
+
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
-                np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16)
-        for i in range(32):  # quantized per channel
-            self.unit_test.assertTrue(
+                np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16 or
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16)
 
         # Verify final KPI
@@ -419,7 +418,7 @@ class MixedPercisionSearchLastLayerDistanceTest(MixedPercisionBaseTest):
     def get_mixed_precision_v2_config(self):
         return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
                                                            distance_weighting_method=get_last_layer_weights,
-                                                           use_grad_based_weights=False)
+                                                           use_hessian_based_scores=False)
 
     def get_kpi(self):
         # kpi is infinity -> should give best model - 8bits

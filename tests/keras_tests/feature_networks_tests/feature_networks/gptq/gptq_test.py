@@ -20,7 +20,7 @@ import tensorflow as tf
 import model_compression_toolkit as mct
 from model_compression_toolkit.core import DefaultDict
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType, GradientPTQConfigV2, \
-    GPTQHessianWeightsConfig
+    GPTQHessianScoresConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
@@ -72,7 +72,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         if rounding_type == RoundingType.SoftQuantizer:
             self.override_params = {QUANT_PARAM_LEARNING_STR: quantization_parameter_learning}
         elif rounding_type == RoundingType.STE:
-            self.override_params = {MAX_LSB_STR: DefaultDict({}, lambda: 1)}
+            self.override_params = {MAX_LSB_STR: DefaultDict({}, 1)}
         else:
             self.override_params = None
 
@@ -81,18 +81,18 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      weights_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      relu_bound_to_power_of_2=True,
-                                      weights_bias_correction=False,
-                                      weights_per_channel_threshold=self.per_channel)
+                                           weights_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,
+                                           relu_bound_to_power_of_2=True,
+                                           weights_bias_correction=False,
+                                           weights_per_channel_threshold=self.per_channel)
 
     def get_gptq_config(self):
         return GradientPTQConfig(5, optimizer=tf.keras.optimizers.Adam(
             learning_rate=0.0001), optimizer_rest=tf.keras.optimizers.Adam(
             learning_rate=0.0001), loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
                                  use_hessian_based_weights=self.hessian_weights,
-                                 hessian_weights_config=GPTQHessianWeightsConfig(log_norm=self.log_norm_weights,
-                                                                                 scale_log_norm=self.scaled_log_norm),
+                                 hessian_weights_config=GPTQHessianScoresConfig(log_norm=self.log_norm_weights,
+                                                                                scale_log_norm=self.scaled_log_norm),
                                  gptq_quantizer_params_override=self.override_params)
 
     def create_networks(self):
@@ -208,10 +208,10 @@ class GradientPTQWeightedLossTest(GradientPTQBaseTest):
             learning_rate=0.0001), optimizer_rest=tf.keras.optimizers.Adam(
             learning_rate=0.0001), loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
                                  use_hessian_based_weights=True,
-                                 hessian_weights_config=GPTQHessianWeightsConfig(hessians_num_samples=16,
-                                                                                 norm_weights=False,
-                                                                                 log_norm=self.log_norm_weights,
-                                                                                 scale_log_norm=self.scaled_log_norm),
+                                 hessian_weights_config=GPTQHessianScoresConfig(hessians_num_samples=16,
+                                                                                norm_scores=False,
+                                                                                log_norm=self.log_norm_weights,
+                                                                                scale_log_norm=self.scaled_log_norm),
                                  gptq_quantizer_params_override=self.override_params)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):

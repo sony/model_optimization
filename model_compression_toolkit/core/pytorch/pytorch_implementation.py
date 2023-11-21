@@ -430,16 +430,16 @@ class PytorchImplementation(FrameworkImplementation):
             return compute_cs
         return compute_mse
 
-    def is_node_compatible_for_metric_outputs(self,
-                                              node: BaseNode) -> bool:
+    def is_output_node_compatible_for_hessian_score_computation(self,
+                                                                node: BaseNode) -> bool:
         """
-        Checks and returns whether the given node is compatible as output for metric computation
-        purposes and gradient-based weights calculation.
+        Checks and returns whether the given node is compatible as output for Hessian-based information computation.
+
 
         Args:
             node: A BaseNode object.
 
-        Returns: Whether the node is compatible as output for metric computation or not.
+        Returns: Whether the node is compatible as output for Hessian-based information computation.
 
         """
 
@@ -539,4 +539,3 @@ class PytorchImplementation(FrameworkImplementation):
                                                         input_images=input_images,
                                                         fw_impl=self,
                                                         num_iterations_for_approximation=num_iterations_for_approximation)
-

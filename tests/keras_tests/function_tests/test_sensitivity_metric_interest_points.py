@@ -79,7 +79,8 @@ def softmax_model(input_shape):
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Softmax(axis=2)(x)
     x = tf.keras.layers.Dense(32)(x)
-    outputs = tf.nn.softmax(x, axis=-1)
+    x = tf.nn.softmax(x, axis=-1)
+    outputs = tf.keras.layers.Reshape((-1,))(x)
     model = tf.keras.Model(inputs=inputs, outputs=outputs)
     return model
 
@@ -104,7 +105,9 @@ class TestSensitivityMetricInterestPoints(unittest.TestCase):
         ip_nodes = list(filter(lambda n: KerasImplementation().count_node_for_mixed_precision_interest_points(n),
                                sorted_nodes))
 
-        self.assertTrue(len(ips) == len(ip_nodes),
+        # Note that the model's output node is shouldn't be included in the sensitivity evaluation list of
+        # interest points (it is included in a separate list)
+        self.assertTrue(len(ips) == len(ip_nodes) - 1,
                         f"Filtered interest points list should include exactly {len(ip_nodes)}, but it"
                         f"includes {len(ips)}")
 

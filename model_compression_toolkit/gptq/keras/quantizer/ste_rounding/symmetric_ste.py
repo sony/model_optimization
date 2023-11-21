@@ -77,7 +77,7 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
 
     def __init__(self,
                  quantization_config: TrainableQuantizerWeightsConfig,
-                 max_lsbs_change_map: dict = DefaultDict({}, lambda: 1)):
+                 max_lsbs_change_map: dict = DefaultDict({}, 1)):
         """
         Initialize a STEWeightGPTQQuantizer object with parameters to use for the quantization.
 

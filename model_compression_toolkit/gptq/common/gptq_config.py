@@ -29,14 +29,14 @@ class RoundingType(Enum):
     SoftQuantizer = 1
 
 
-class GPTQHessianWeightsConfig:
+class GPTQHessianScoresConfig:
     """
-    Configuration to use for computing the Hessian-based weights for GPTQ loss metric.
+    Configuration to use for computing the Hessian-based scores for GPTQ loss metric.
     """
 
     def __init__(self,
                  hessians_num_samples: int = 16,
-                 norm_weights: bool = True,
+                 norm_scores: bool = True,
                  log_norm: bool = True,
                  scale_log_norm: bool = False,
                  hessians_n_iter: int = 50): #TODO: remove
@@ -45,15 +45,15 @@ class GPTQHessianWeightsConfig:
         Initialize a GPTQHessianWeightsConfig.
 
         Args:
-            hessians_num_samples (int): Number of samples to use for computing the Hessian-based weights.
-            norm_weights (bool): Whether to normalize the returned weights (to get values between 0 and 1).
-            log_norm (bool): Whether to use log normalization to the GPTQ Hessian-based weights.
-            scale_log_norm (bool): Whether to scale the final vector of the Hessian weights.
-            hessians_n_iter (int): Number of random iterations to run Hessian approximation for GPTQ weights.
+            hessians_num_samples (int): Number of samples to use for computing the Hessian-based scores.
+            norm_scores (bool): Whether to normalize the returned scores of the weighted loss function (to get values between 0 and 1).
+            log_norm (bool): Whether to use log normalization for the GPTQ Hessian-based scores.
+            scale_log_norm (bool): Whether to scale the final vector of the Hessian-based scores.
+            hessians_n_iter (int): Number of random iterations to run Hessian approximation for GPTQ Hessian-based scores.
         """
 
         self.hessians_num_samples = hessians_num_samples
-        self.norm_weights = norm_weights
+        self.norm_scores = norm_scores
         self.log_norm = log_norm
         self.scale_log_norm = scale_log_norm
         self.hessians_n_iter = hessians_n_iter
@@ -75,7 +75,7 @@ class GradientPTQConfig:
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
                  regularization_factor: float = REG_DEFAULT,
-                 hessian_weights_config: GPTQHessianWeightsConfig = GPTQHessianWeightsConfig(),
+                 hessian_weights_config: GPTQHessianScoresConfig = GPTQHessianScoresConfig(),
                  gptq_quantizer_params_override: Dict[str, Any] = None):
         """
         Initialize a GradientPTQConfig.
@@ -94,7 +94,7 @@ class GradientPTQConfig:
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizer for bias.
             regularization_factor (float): A floating point number that defines the regularization factor.
-            hessian_weights_config (GPTQHessianWeightsConfig): A configuration that include all necessary arguments to run a computation of Hessian weights for the GPTQ loss.
+            hessian_weights_config (GPTQHessianScoresConfig): A configuration that include all necessary arguments to run a computation of Hessian scores for the GPTQ loss.
             gptq_quantizer_params_override (dict): A dictionary of parameters to override in GPTQ quantizer instantiation. Defaults to None (no parameters).
 
         """
@@ -131,7 +131,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
                  optimizer_quantization_parameter: Any = None,
                  optimizer_bias: Any = None,
                  regularization_factor: float = REG_DEFAULT,
-                 hessian_weights_config: GPTQHessianWeightsConfig = GPTQHessianWeightsConfig(),
+                 hessian_weights_config: GPTQHessianScoresConfig = GPTQHessianScoresConfig(),
                  gptq_quantizer_params_override: Dict[str, Any] = None):
         """
         Initialize a GradientPTQConfigV2.
@@ -150,7 +150,7 @@ class GradientPTQConfigV2(GradientPTQConfig):
             optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
             optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
             regularization_factor (float): A floating point number that defines the regularization factor.
-            hessian_weights_config (GPTQHessianWeightsConfig): A configuration that include all necessary arguments to run a computation of Hessian weights for the GPTQ loss.
+            hessian_weights_config (GPTQHessianScoresConfig): A configuration that include all necessary arguments to run a computation of Hessian scores for the GPTQ loss.
             gptq_quantizer_params_override (dict): A dictionary of parameters to override in GPTQ quantizer instantiation. Defaults to None (no parameters).
 
         """
