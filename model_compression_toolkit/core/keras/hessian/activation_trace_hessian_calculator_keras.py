@@ -77,7 +77,10 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             with tf.GradientTape(persistent=True, watch_accessed_variables=False) as g:
                 g.watch(self.input_images)
 
-                outputs = model(*self.input_images)
+                if len(self.input_images) > 1:
+                    outputs = model(self.input_images)
+                else:
+                    outputs = model(*self.input_images)
 
                 if len(outputs) != len(grad_model_outputs):
                     Logger.error(
