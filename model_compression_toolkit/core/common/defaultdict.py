@@ -14,27 +14,28 @@
 # ==============================================================================
 
 
-from typing import Callable, Dict, Any
+from typing import Dict, Any
+from copy import deepcopy
 
 
-class DefaultDict(object):
+class DefaultDict:
     """
     Default dictionary. It wraps a dictionary given at initialization and return its
     values when requested. If the requested key is not presented at initial dictionary,
-    it returns the returned value a default factory (that is passed at initialization) generates.
+    it returns the returned value a default value (that is passed at initialization) generates.
     """
 
     def __init__(self,
                  known_dict: Dict[Any, Any],
-                 default_factory: Callable = None):
+                 default_value: Any = None):
         """
 
         Args:
             known_dict: Dictionary to wrap.
-            default_factory: Callable to get default values when requested key is not in known_dict.
+            default_value: default value when requested key is not in known_dict.
         """
 
-        self.default_factory = default_factory
+        self.default_value = default_value
         self.known_dict = known_dict
 
     def get(self, key: Any) -> Any:
@@ -51,11 +52,9 @@ class DefaultDict(object):
         """
 
         if key in self.known_dict:
-            return self.known_dict.get(key)
+            return self.known_dict[key]
         else:
-            if self.default_factory is not None:
-                return self.default_factory()
-            return None
+            return deepcopy(self.default_value)
 
     def keys(self):
         """

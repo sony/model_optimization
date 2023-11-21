@@ -63,7 +63,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         self.log_norm_weights = log_norm_weights
         self.scaled_log_norm = scaled_log_norm
         self.override_params = {QUANT_PARAM_LEARNING_STR: params_learning} if \
-            rounding_type == RoundingType.SoftQuantizer else {MAX_LSB_STR: DefaultDict({}, lambda: 1)} \
+            rounding_type == RoundingType.SoftQuantizer else {MAX_LSB_STR: DefaultDict({}, 1)} \
             if rounding_type == RoundingType.STE else None
 
     def get_quantization_config(self):
