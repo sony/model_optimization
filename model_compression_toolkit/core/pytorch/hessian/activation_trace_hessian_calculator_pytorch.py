@@ -28,9 +28,6 @@ from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
 from model_compression_toolkit.logger import Logger
 import torch
 
-
-
-
 class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
     """
     Pytorch implementation of the Trace Hessian approximation Calculator for activations.
@@ -102,7 +99,6 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             output = self.concat_tensors(output_tensors)
 
             ipts_hessian_trace_approx = []
-            # for ipt in tqdm(model_grads_net.interest_points_tensors):  # Per Interest point activation tensor
             for ipt_tensor in tqdm(target_activation_tensors):  # Per Interest point activation tensor
                 trace_hv = []
                 for j in range(self.num_iterations_for_approximation):  # Approximation iterations
@@ -137,8 +133,6 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                     trace_hv.append(hessian_trace_approx)
                 ipts_hessian_trace_approx.append(2 * torch.mean(torch.stack(trace_hv)) / output.shape[
                     -1])  # Get averaged Hessian trace approximation
-
-            # layer_hook_handle.remove()
 
             # If a node has multiple outputs, it means that multiple approximations were computed
             # (one per output since granularity is per-tensor). In this case we average the approximations.
