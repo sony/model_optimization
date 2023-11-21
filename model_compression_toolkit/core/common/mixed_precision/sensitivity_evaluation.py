@@ -474,10 +474,8 @@ def get_mp_interest_points(graph: Graph,
 
     interest_points_nodes = bound_num_interest_points(ip_nodes, num_ip_factor)
 
-    # We add output layers of the model to interest points
-    # in order to consider the model's output in the distance metric computation (and also to make sure
-    # all configurable layers are included in the configured mp model for metric computation purposes)
-    output_nodes = get_output_nodes_for_metric(graph)
+    # We exclude output nodes from the set of interest points since they are used separately in the sensitivity evaluation.
+    output_nodes = [n.node for n in graph.get_outputs()]
 
     interest_points = [n for n in interest_points_nodes if n not in output_nodes]
 
