@@ -32,7 +32,8 @@ from tests.pytorch_tests.function_tests.test_hessian_info_calculator import Weig
     WeightsHessianTraceAdvanceModelTest, \
     WeightsHessianTraceMultipleOutputsModelTest, WeightsHessianTraceReuseModelTest, \
     ActivationHessianTraceBasicModelTest, ActivationHessianTraceAdvanceModelTest, \
-    ActivationHessianTraceMultipleOutputsModelTest, ActivationHessianTraceReuseModelTest
+    ActivationHessianTraceMultipleOutputsModelTest, ActivationHessianTraceReuseModelTest, \
+    ActivationHessianOutputExceptionTest
 
 
 class FunctionTestRunner(unittest.TestCase):
@@ -108,6 +109,7 @@ class FunctionTestRunner(unittest.TestCase):
         ActivationHessianTraceAdvanceModelTest(self).run_test()
         ActivationHessianTraceMultipleOutputsModelTest(self).run_test()
         ActivationHessianTraceReuseModelTest(self).run_test()
+        ActivationHessianOutputExceptionTest(self).run_test()
 
     def test_weights_hessian_trace(self):
         """
