@@ -64,8 +64,8 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
 
             if self.hessian_request.target_node in model_output_nodes:
-                Logger.exception("Trying to compute activation Hessian approximation with respect to the model output."
-                                 "This operation is not supported."
+                Logger.exception("Trying to compute activation Hessian approximation with respect to the model output. "
+                                 "This operation is not supported. "
                                  "Remove the output node from the set of node targets in the Hessian request.")
 
             grad_model_outputs = [self.hessian_request.target_node] + model_output_nodes

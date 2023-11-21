@@ -59,6 +59,7 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layer(inputs)
         x = layer(x)
+        x = layers.ReLU()(x)
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
