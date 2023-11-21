@@ -516,7 +516,8 @@ class KerasImplementation(FrameworkImplementation):
 
         if node.layer_class == TFOpLambda:
             node_attr = getattr(node, 'framework_attr', None)
-            if node_attr is not None and (ARGMAX in node_attr[LAYER_NAME] or SOFTMAX in node_attr[LAYER_NAME]):
+            if node_attr is not None and (ARGMAX in node_attr[LAYER_NAME] or SOFTMAX in node_attr[LAYER_NAME]
+                                          or COMBINED_NMS in node_attr[LAYER_NAME]):
                 return False
         elif node.layer_class in [tf.nn.softmax, tf.keras.layers.Softmax, tf.math.argmax]:
             return False
