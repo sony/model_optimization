@@ -32,8 +32,7 @@ from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper i
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence, compute_cs, compute_mse
-from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID, ARGMAX, LAYER_NAME, \
-    COMBINED_NMS
+from model_compression_toolkit.core.keras.constants import ACTIVATION, SOFTMAX, SIGMOID, ARGMAX, LAYER_NAME
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.batchnorm_reconstruction import \
     keras_batchnorm_reconstruction
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.virtual_activation_weights_composition import \
@@ -515,8 +514,8 @@ class KerasImplementation(FrameworkImplementation):
 
         if node.layer_class == TFOpLambda:
             node_attr = getattr(node, 'framework_attr', None)
-            if node_attr is not None and (ARGMAX in node_attr[LAYER_NAME] or
-                                          COMBINED_NMS in node_attr[LAYER_NAME]):
+            if node_attr is not None and (ARGMAX in node_attr[LAYER_NAME]
+                                          or COMBINED_NMS in node_attr[LAYER_NAME]):
                 return False
         elif node.layer_class in [tf.math.argmax]:
             return False
