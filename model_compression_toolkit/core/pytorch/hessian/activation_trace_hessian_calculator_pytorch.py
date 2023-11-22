@@ -120,8 +120,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                                                      requires_grad=True,
                                                      device=device))
                         break
-                    hess_v = torch.reshape(hess_v, [hess_v.shape[0], -1])
-                    hessian_trace_approx = torch.mean(torch.sum(torch.pow(hess_v, 2.0)))
+                    hessian_trace_approx = torch.sum(torch.pow(hess_v, 2.0))
 
                     # If the change to the mean Hessian approximation is insignificant we stop the calculation
                     if j > MIN_HESSIAN_ITER:

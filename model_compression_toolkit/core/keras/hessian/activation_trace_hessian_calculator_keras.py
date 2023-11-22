@@ -121,8 +121,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                             # Compute the approximation per node's output
                             score_approx_per_output = []
                             for grad in gradients:
-                                grad = tf.reshape(grad, [grad.shape[0], -1])
-                                score_approx_per_output.append(tf.reduce_mean(tf.reduce_sum(tf.pow(grad, 2.0))))
+                                score_approx_per_output.append(tf.reduce_sum(tf.pow(grad, 2.0)))
 
                             # Free gradients
                             del grad
