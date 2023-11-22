@@ -48,6 +48,7 @@ def reused_model(input_shape):
     inputs = Input(shape=input_shape[1:])
     x = reused_layer(inputs)
     x = reused_layer(x)
+    x = ReLU()(x)
     return keras.Model(inputs=inputs, outputs=x)
 
 
