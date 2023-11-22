@@ -21,7 +21,7 @@ from tqdm import tqdm
 from model_compression_toolkit.constants import MIN_HESSIAN_ITER, HESSIAN_COMP_TOLERANCE, HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianInfoGranularity
-from model_compression_toolkit.core.pytorch.hessian.pytorch_model_gradients import PytorchModelGradients
+from model_compression_toolkit.core.pytorch.back2framework.float_model_builder import FloatPyTorchModelBuilder
 from model_compression_toolkit.core.pytorch.hessian.trace_hessian_calculator_pytorch import \
     TraceHessianCalculatorPytorch
 from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
@@ -61,16 +61,38 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             List[float]: Approximated trace of the Hessian for an interest point.
         """
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
-            # Set inputs to require_grad
-            for input_tensor in self.input_images:
-                input_tensor.requires_grad_()
 
-            model_grads_net = PytorchModelGradients(graph_float=self.graph,
-                                                    trace_hessian_request=self.hessian_request
-                                                    )
+            model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
+
+            if self.hessian_request.target_node in model_output_nodes:
+                Logger.exception("Trying to compute activation Hessian approximation with respect to the model output. "
+                                 "This operation is not supported. "
+                                 "Remove the output node from the set of node targets in the Hessian request.")
+
+            grad_model_outputs = [self.hessian_request.target_node] + model_output_nodes
+            model, _ = FloatPyTorchModelBuilder(graph=self.graph, append2output=grad_model_outputs).build_model()
+            model.eval()
 
             # Run model inference
-            output_tensors = model_grads_net(self.input_images)
+            # Set inputs to track gradients during inference
+            for input_tensor in self.input_images:
+                input_tensor.requires_grad_()
+                input_tensor.retain_grad()
+
+            outputs = model(*self.input_images)
+
+            if len(outputs) != len(grad_model_outputs):
+                Logger.error(f"Model for computing activation Hessian approximation expects {len(grad_model_outputs)} "
+                             f"outputs, but got {len(outputs)} output tensors.")
+
+            # Extracting the intermediate activation tensors and the model real output
+            # TODO: we are assuming that the hessian request is for a single node.
+            #  When we extend it to multiple nodes in the same request, then we should modify this part to take
+            #  the first "num_target_nodes" outputs from the output list.
+            #  We also assume that the target nodes are not part of the model output nodes, if this assumption changed,
+            #  then the code should be modified accordingly.
+            target_activation_tensors = [outputs[0]]
+            output_tensors = outputs[1:]
             device = output_tensors[0].device
 
             # Concat outputs
@@ -78,7 +100,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             output = self.concat_tensors(output_tensors)
 
             ipts_hessian_trace_approx = []
-            for ipt in tqdm(model_grads_net.interest_points_tensors):  # Per Interest point activation tensor
+            for ipt_tensor in tqdm(target_activation_tensors):  # Per Interest point activation tensor
                 trace_hv = []
                 for j in range(self.num_iterations_for_approximation):  # Approximation iterations
                     # Getting a random vector with normal distribution
@@ -87,7 +109,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
 
                     # Computing the hessian trace approximation by getting the gradient of (output * v)
                     hess_v = autograd.grad(outputs=f_v,
-                                          inputs=ipt,
+                                          inputs=ipt_tensor,
                                           retain_graph=True,
                                           allow_unused=True)[0]
                     if hess_v is None:
@@ -98,8 +120,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                                                      requires_grad=True,
                                                      device=device))
                         break
-                    hess_v = torch.reshape(hess_v, [hess_v.shape[0], -1])
-                    hessian_trace_approx = torch.mean(torch.sum(torch.pow(hess_v, 2.0)))
+                    hessian_trace_approx = torch.sum(torch.pow(hess_v, 2.0))
 
                     # If the change to the mean Hessian approximation is insignificant we stop the calculation
                     if j > MIN_HESSIAN_ITER:

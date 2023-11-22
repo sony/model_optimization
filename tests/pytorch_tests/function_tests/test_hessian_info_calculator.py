@@ -359,3 +359,25 @@ class ActivationHessianTraceReuseModelTest(BaseHessianTraceBasicModelTest):
                                            num_scores=2,
                                            granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
                                            mode=hessian_common.HessianMode.ACTIVATION)
+
+
+
+class ActivationHessianOutputExceptionTest(BaseHessianTraceBasicModelTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+        self.val_batch_size = 1
+
+    def run_test(self, seed=0):
+        graph, pytorch_impl = self._setup()
+        hessian_service = hessian_common.HessianInfoService(graph=graph,
+                                                            representative_dataset=self.representative_data_gen,
+                                                            fw_impl=pytorch_impl)
+
+        with self.unit_test.assertRaises(Exception) as e:
+            request = hessian_common.TraceHessianRequest(mode=hessian_common.HessianMode.ACTIVATION,
+                                                         granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
+                                                         target_node=graph.get_outputs()[0].node)
+            _ = hessian_service.fetch_hessian(request, required_size=1)
+
+        self.unit_test.assertTrue("Trying to compute activation Hessian approximation with respect to the model output"
+                                  in str(e.exception))
