@@ -79,10 +79,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                 input_tensor.requires_grad_()
                 input_tensor.retain_grad()
 
-            if len(self.input_images) > 1:
-                outputs = model(self.input_images)
-            else:
-                outputs = model(*self.input_images)
+            outputs = model(*self.input_images)
 
             if len(outputs) != len(grad_model_outputs):
                 Logger.error(f"Model for computing activation Hessian approximation expects {len(grad_model_outputs)} "
