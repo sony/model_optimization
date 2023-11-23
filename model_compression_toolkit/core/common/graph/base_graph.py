@@ -705,3 +705,19 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         return all([n.is_all_activation_candidates_equal() for n in self.nodes])
+
+    def replace_node(self, node_to_replace: BaseNode, new_node: BaseNode):
+        """
+        Replaces a node in the graph with a new node.
+
+        Args:
+            node_to_replace: The node to replace.
+            new_node: The new node to replace with.
+
+        """
+        self.add_node(new_node)
+        self.reconnect_out_edges(node_to_replace, new_node)
+        self.reconnect_in_edges(node_to_replace, new_node)
+        self.replace_output_node(node_to_replace, new_node)
+        self.replace_input_node(node_to_replace, new_node)
+        self.remove_node(node_to_replace)
