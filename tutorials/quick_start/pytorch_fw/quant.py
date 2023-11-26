@@ -20,13 +20,8 @@ import tempfile
 
 import model_compression_toolkit as mct
 import logging
-from common.constants import (
-    NUM_REPRESENTATIVE_IMAGES,
-    BATCH_SIZE,
-    REPRESENTATIVE_DATASET_FOLDER,
-    TARGET_PLATFORM_NAME,
-    TARGET_PLATFORM_VERSION,
-)
+from common.constants import NUM_REPRESENTATIVE_IMAGES, BATCH_SIZE, REPRESENTATIVE_DATASET_FOLDER, \
+    TARGET_PLATFORM_NAME, TARGET_PLATFORM_VERSION
 
 from model_compression_toolkit import KPI
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2, CoreConfig
@@ -47,7 +42,7 @@ def get_tpc(target_platform_name: str, target_platform_version: str) -> TargetPl
         The target platform capabilities.
 
     """
-    return mct.get_target_platform_capabilities("pytorch", target_platform_name, target_platform_version)
+    return mct.get_target_platform_capabilities('pytorch', target_platform_name, target_platform_version)
 
 
 def get_target_kpi(model, weights_compression, representative_data_gen, core_config, tpc):
@@ -65,16 +60,15 @@ def get_target_kpi(model, weights_compression, representative_data_gen, core_con
         A KPI object computed from MCT and contains info about the target model size.
 
     """
-    kpi_data = mct.core.pytorch_kpi_data_experimental(
-        model, representative_data_gen, core_config=core_config, target_platform_capabilities=tpc
-    )
-    weights_kpi = (
-        BYTES_TO_FP32 * kpi_data.weights_memory / weights_compression
-    )  # (4 bytes for fp32) * weights memory(in Bytes) / compression rate
+    kpi_data = mct.core.pytorch_kpi_data_experimental(model, representative_data_gen, core_config=core_config, target_platform_capabilities=tpc)
+    weights_kpi = BYTES_TO_FP32 * kpi_data.weights_memory / weights_compression # (4 bytes for fp32) * weights memory(in Bytes) / compression rate
     return KPI(weights_memory=weights_kpi)
 
 
-def quantize(model: nn.Module, get_representative_dataset: callable, tpc: TargetPlatformCapabilities, args: dict):
+def quantize(model: nn.Module,
+             get_representative_dataset: callable,
+             tpc: TargetPlatformCapabilities,
+             args: dict):
     """
     Returns a quantized model and a quantization info from MCT for the given PyTorch floating-point model.
 
@@ -90,15 +84,13 @@ def quantize(model: nn.Module, get_representative_dataset: callable, tpc: Target
     """
 
     # PTQ - general configurations
-    n_iter = math.ceil(int(args[NUM_REPRESENTATIVE_IMAGES]) // int(args[BATCH_SIZE]))  # Number of batches
-    logging.info(
-        f"Running MCT... number of representative images: {args[NUM_REPRESENTATIVE_IMAGES]}, number of calibration iters: {n_iter}"
-    )
+    n_iter = math.ceil(int(args[NUM_REPRESENTATIVE_IMAGES]) // int(args[BATCH_SIZE])) # Number of batches
+    logging.info(f"Running MCT... number of representative images: {args[REPRESENTATIVE_DATASET_FOLDER]}, number of calibration iters: {n_iter}")
 
     representative_data_gen = get_representative_dataset(
         representative_dataset_folder=args[REPRESENTATIVE_DATASET_FOLDER],
         n_iter=n_iter,
-        batch_size=int(args[BATCH_SIZE]),
+        batch_size=int(args[BATCH_SIZE])
     )
 
     # Mixed-precision configurations
@@ -113,49 +105,41 @@ def quantize(model: nn.Module, get_representative_dataset: callable, tpc: Target
         target_kpi = None
 
     # Quantize model
-    if args.get("gptq", False):
-        workflow = "GPTQ"
-        n_epochs = args.get("gptq_num_calibration_iter") // n_iter
-        logging.info(f"MCT Gradient-based Post Training Quantization is enabled. Number of epochs: {n_epochs}")
+    if args.get('gptq', False):
 
-        gptq_conf = mct.gptq.get_pytorch_gptq_config(
-            n_epochs=n_epochs, optimizer=Adam([Tensor([])], lr=args["gptq_lr"])
-        )
+        workflow = 'GPTQ'
+        n_epochs = args.get('gptq_num_calibration_iter') // n_iter
+        logging.info(
+            f"MCT Gradient-based Post Training Quantization is enabled. Number of epochs: {n_epochs}")
 
-        quantized_model, quantization_info = mct.gptq.pytorch_gradient_post_training_quantization_experimental(
-            model,
-            representative_data_gen=representative_data_gen,
-            target_kpi=target_kpi,
-            core_config=core_conf,
-            gptq_config=gptq_conf,
-            gptq_representative_data_gen=representative_data_gen,
-            target_platform_capabilities=tpc,
-        )
+        gptq_conf = mct.gptq.get_pytorch_gptq_config(n_epochs=n_epochs, optimizer=Adam([Tensor([])], lr=args['gptq_lr']))
+
+        quantized_model, quantization_info = \
+            mct.gptq.pytorch_gradient_post_training_quantization_experimental(model,
+                                                                              representative_data_gen=representative_data_gen,
+                                                                              target_kpi=target_kpi,
+                                                                              core_config=core_conf,
+                                                                              gptq_config=gptq_conf,
+                                                                              gptq_representative_data_gen=representative_data_gen,
+                                                                              target_platform_capabilities=tpc)
+
 
     else:
-        workflow = "PTQ"
-        quantized_model, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(
-            model,
-            representative_data_gen=representative_data_gen,
-            target_kpi=target_kpi,
-            core_config=core_conf,
-            target_platform_capabilities=tpc,
-        )
+        workflow = 'PTQ'
+        quantized_model, quantization_info = \
+            mct.ptq.pytorch_post_training_quantization_experimental(model,
+                                                                    representative_data_gen=representative_data_gen,
+                                                                    target_kpi=target_kpi,
+                                                                    core_config=core_conf,
+                                                                    target_platform_capabilities=tpc)
+
 
     # Export quantized model to ONNX
-    if args.get("export_model", False):
-        _, onnx_file_path = tempfile.mkstemp(".onnx")  # Path of exported model
-        mct.exporter.pytorch_export_model(
-            model=quantized_model,
-            save_model_path=onnx_file_path,
-            repr_dataset=representative_data_gen,
-            target_platform_capabilities=tpc,
-            serialization_format=mct.exporter.PytorchExportSerializationFormat.ONNX,
-        )
+    if args.get('export_model',False):
+        _, onnx_file_path = tempfile.mkstemp('.onnx') # Path of exported model
+        mct.exporter.pytorch_export_model(model=quantized_model, save_model_path=onnx_file_path,
+                                          repr_dataset=representative_data_gen, target_platform_capabilities=tpc,
+                                          serialization_format=mct.exporter.PytorchExportSerializationFormat.ONNX)
 
-    return quantized_model, QuantInfo(
-        user_info=quantization_info,
-        tpc_info=tpc.get_info(),
-        quantization_workflow=workflow,
-        mp_weights_compression=mp_wcr,
-    )
+
+    return quantized_model, QuantInfo(user_info=quantization_info, tpc_info=tpc.get_info(), quantization_workflow=workflow, mp_weights_compression=mp_wcr)
