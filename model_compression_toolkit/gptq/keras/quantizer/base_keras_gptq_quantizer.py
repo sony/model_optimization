@@ -26,7 +26,7 @@ if FOUND_TF:
     import tensorflow as tf
 
     from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
-    from mct_quantizers import KerasQuantizationWrapper
+    from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 
     class BaseKerasGPTQTrainableQuantizer(BaseKerasTrainableQuantizer):
         """
@@ -44,8 +44,7 @@ if FOUND_TF:
 
             super().__init__(quantization_config)
 
-
-        def update_layer_quantization_params(self, layer: KerasQuantizationWrapper
+        def update_layer_quantization_params(self, layer: KerasTrainableQuantizationWrapper
                                              ) -> (Dict[str, tf.Tensor], Dict[str, Dict], Dict):
             """
             A Function to calculate the needed change in attributes in NodeQuantizationConfig after retraining.

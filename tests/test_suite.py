@@ -18,8 +18,6 @@
 import importlib
 import unittest
 
-from packaging import version
-
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 #  ----------------  Individual test suites
@@ -30,7 +28,6 @@ from tests.common_tests.function_tests.test_threshold_selection import TestThres
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
 
-
 if FOUND_ONNX:
     from tests.pytorch_tests.function_tests.test_export_pytorch_fully_quantized_model import TestPyTorchFakeQuantExporter
 
@@ -39,14 +36,16 @@ found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util
     "torchvision") is not None
 
 if found_tf:
-    import tensorflow as tf
+    from tests.keras_tests.function_tests.test_hessian_info_calculator import TestHessianInfoCalculatorWeights, \
+        TestHessianInfoCalculatorActivation
+    from tests.keras_tests.function_tests.test_hessian_service import TestHessianService
     from tests.keras_tests.feature_networks_tests.test_features_runner import FeatureNetworkTest
     from tests.keras_tests.function_tests.test_quantization_configurations import TestQuantizationConfigurations
-    from tests.keras_tests.function_tests.test_tensorboard_writer import TestFileLogger
+    from tests.keras_tests.non_parallel_tests.test_tensorboard_writer import TestFileLogger
     from tests.keras_tests.function_tests.test_lut_quanitzer_params import TestLUTQuantizerParams
     from tests.keras_tests.function_tests.test_lut_activation_quanitzer_params import TestLUTActivationsQuantizerParams
     from tests.keras_tests.function_tests.test_lut_activation_quanitzer_fake_quant import TestLUTQuantizerFakeQuant
-    from tests.keras_tests.function_tests.test_lp_search_bitwidth import TestLpSearchBitwidth, \
+    from tests.keras_tests.non_parallel_tests.test_lp_search_bitwidth import TestLpSearchBitwidth, \
         TestSearchBitwidthConfiguration
     from tests.keras_tests.function_tests.test_bn_info_collection import TestBNInfoCollection
     from tests.keras_tests.graph_tests.test_graph_reading import TestGraphReading
@@ -56,16 +55,15 @@ if found_tf:
         TestSymmetricThresholdSelectionWeights
     from tests.keras_tests.function_tests.test_uniform_quantize_tensor import TestUniformQuantizeTensor
     from tests.keras_tests.function_tests.test_uniform_range_selection_weights import TestUniformRangeSelectionWeights
-    from tests.keras_tests.function_tests.test_keras_tp_model import TestKerasTPModel
+    from tests.keras_tests.non_parallel_tests.test_keras_tp_model import TestKerasTPModel
     from tests.keras_tests.function_tests.test_sensitivity_metric_interest_points import \
         TestSensitivityMetricInterestPoints
     from tests.keras_tests.function_tests.test_weights_activation_split_substitution import TestWeightsActivationSplit
     from tests.keras_tests.function_tests.test_activation_weights_composition_substitution import \
         TestActivationWeightsComposition
     from tests.keras_tests.function_tests.test_graph_max_cut import TestGraphMaxCut
-    from tests.keras_tests.function_tests.test_model_gradients import TestModelGradients
-    from tests.keras_tests.function_tests.test_sensitivity_eval_output_replacement import \
-        TestSensitivityEvalWithOutputReplacementNodes
+    from tests.keras_tests.function_tests.test_sensitivity_eval_non_suppoerted_output import \
+        TestSensitivityEvalWithNonSupportedOutputNodes
     from tests.keras_tests.function_tests.test_set_layer_to_bitwidth import TestKerasSetLayerToBitwidth
     from tests.keras_tests.function_tests.test_export_keras_fully_quantized_model import TestKerasFakeQuantExporter
     from tests.keras_tests.function_tests.test_kpi_data import TestKPIData
@@ -76,6 +74,8 @@ if found_tf:
         KerasTrainableInfrastructureTestRunner
     from tests.keras_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as keras_gptq_soft_quantizer_test
     from tests.keras_tests.function_tests.test_activation_quantization_holder_gptq import TestGPTQModelBuilderWithActivationHolder
+    from tests.data_generation_tests.keras.test_keras_data_generation_runner import KerasDataGenerationTestRunner
+
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -108,6 +108,9 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianInfoCalculatorWeights))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianInfoCalculatorActivation))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianService))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQModelBuilderWithActivationHolder))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ExporterTestsRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityMetricInterestPoints))
@@ -127,10 +130,9 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasTPModel))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestWeightsActivationSplit))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationWeightsComposition))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestModelGradients))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphMaxCut))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasSetLayerToBitwidth))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityEvalWithOutputReplacementNodes))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityEvalWithNonSupportedOutputNodes))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasFakeQuantExporter))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKPIData))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFileLogger))
@@ -139,6 +141,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasTrainableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(keras_gptq_soft_quantizer_test))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasDataGenerationTestRunner))
 
     if found_pytorch:
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQModelBuilderWithActivationHolderPytorch))

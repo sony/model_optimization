@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from abc import ABC, abstractmethod
-from typing import Type, Any, List, Dict, Tuple
+from abc import abstractmethod
+from typing import Any, List, Dict, Tuple
+
+from model_compression_toolkit.logger import Logger
 
 
 class OriginalBNStatsHolder:
     """
     Holds the original batch normalization (BN) statistics for a model.
     """
+
     def __init__(self,
                  model: Any,
                  bn_layer_types: List):
@@ -31,6 +34,9 @@ class OriginalBNStatsHolder:
             bn_layer_types (List): List of batch normalization layer types.
         """
         self.bn_params = self.get_bn_params(model, bn_layer_types)
+        if self.get_num_bn_layers() == 0:
+            Logger.exception(
+                f'Data generation requires a model with at least one BatchNorm layer.')
 
     def get_bn_layer_names(self) -> List[str]:
         """
@@ -102,7 +108,6 @@ class OriginalBNStatsHolder:
         raise NotImplemented
 
 
-
 class ActivationExtractor:
     """
     Extracts activations of input tensors to layers in a model.
@@ -134,6 +139,25 @@ class ActivationExtractor:
         raise NotImplemented
 
     @abstractmethod
+    def get_output_layer_input_activation(self) -> List:
+        """
+        Get the input activation tensors of all the output layers that are Linear or Conv2d.
+
+        Returns:
+            Any: Input activation tensors of all the output layers that are Linear or Conv2d.
+        """
+        raise NotImplemented
+
+    @abstractmethod
+    def get_last_linear_layers_weights(self) -> List:
+        """
+        Get the weight tensors of all the last linear layers.
+
+        Returns:
+            List: Weight tensors of all the last linear layers.
+        """
+        raise NotImplemented
+
     def get_num_extractor_layers(self) -> int:
         """
         Get the number of layers for which to extract input activations.
@@ -141,15 +165,15 @@ class ActivationExtractor:
         Returns:
             int: Number of layers for which to extract input activations.
         """
-        raise NotImplemented
+        return self.num_layers
 
     @abstractmethod
-    def get_extractor_layer_names(self) -> list:
+    def get_extractor_layer_names(self) -> List:
         """
         Get a list of the layer names for which to extract input activations.
 
         Returns:
-            list: A list of layer names for which to extract input activations.
+            List: A list of layer names for which to extract input activations.
         """
         raise NotImplemented
 
@@ -179,5 +203,3 @@ class ActivationExtractor:
             Any: Output tensor.
         """
         raise NotImplemented
-
-

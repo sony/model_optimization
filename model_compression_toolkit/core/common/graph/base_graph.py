@@ -30,7 +30,8 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 from model_compression_toolkit.core.common.collectors.statistics_collector import scale_statistics, shift_statistics
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
+    TargetPlatformCapabilities, LayerFilterParams
 
 @dataclass
 class OutTensor:
@@ -94,6 +95,20 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Args:
             tpc: TargetPlatformCapabilities object.
         """
+        # validate graph nodes are either from the framework or a custom layer defined in the TPC
+        # Validate graph nodes are either built-in layers from the framework or custom layers defined in the TPC
+        tpc_layers = tpc.op_sets_to_layers.get_layers()
+        tpc_filtered_layers = [layer for layer in tpc_layers if isinstance(layer, LayerFilterParams)]
+        for n in self.nodes:
+            is_node_in_tpc = n.type in tpc_layers or any([n.is_match_filter_params(filtered_layer)
+                                                          for filtered_layer in tpc_filtered_layers])
+            if n.is_custom:
+                if not is_node_in_tpc:
+                    Logger.error(f'MCT does not support optimizing Keras custom layers, but found layer of type {n.type}. '
+                                 f'Please add the custom layer to TPC or file a feature request or an issue if you believe this is an issue.')
+                if any([qc.enable_weights_quantization for qc in n.get_qco(tpc).quantization_config_list]):
+                    Logger.error(f'MCT does not support optimizing Keras custom layers with weights quantization. Layer: {n.type}')
+
         self.tpc = tpc
 
     def get_topo_sorted_nodes(self):

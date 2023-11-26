@@ -33,7 +33,7 @@ If a layer that is not listed here is queried, [None] is returned.
 KERNEL_ATTRIBUTES = DefaultDict({Conv2d: [KERNEL],
                                  ConvTranspose2d: [KERNEL],
                                  Linear: [KERNEL]},
-                                lambda: [None])
+                                [None])
 
 """
 Map a layer to its kernel's output and input channels indices.
@@ -43,7 +43,7 @@ Default value is returned for layers that are not included.
 DEFAULT_CHANNEL_AXIS_DICT = DefaultDict({Conv2d: (0, 1),
                                          Linear: (0, 1),
                                          ConvTranspose2d: (1, 0)},
-                                        lambda: (None, None))
+                                        (None, None))
 
 """
 Map a layer to its output channel axis.
@@ -52,7 +52,7 @@ Where axis=-1 is the last axis
 DEFAULT_OUT_CHANNEL_AXIS_DICT = DefaultDict({Conv2d: 1,
                                              Linear: -1,
                                              ConvTranspose2d: 1},
-                                            lambda: 1)
+                                            1)
 
 
 """

@@ -40,9 +40,16 @@ class DecomposeSeparableConvTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
-        dw_layer = get_layers_from_model_by_type(quantized_model, layers.DepthwiseConv2D)[0]
-        self.unit_test.assertTrue(dw_layer.weights[0].shape == (2, 2, 3, 1 * self.depth_multiplier))
+
+        # In case of DepthwiseConv2D with depth_multiplier != 1, we expected substition of Conv2D
+        if self.depth_multiplier != 1:
+            dw_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
+            conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[1]
+            self.unit_test.assertTrue(dw_layer.weights[0].shape == (2, 2, 1, 3 * self.depth_multiplier))
+        else:
+            dw_layer = get_layers_from_model_by_type(quantized_model, layers.DepthwiseConv2D)[0]
+            conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
+            self.unit_test.assertTrue(dw_layer.weights[0].shape == (2, 2, 3, 1 * self.depth_multiplier))
         self.unit_test.assertTrue(conv_layer.weights[0].shape == (1, 1, 3 * self.depth_multiplier, 1))
         self.unit_test.assertTrue(quantized_model.output_shape == float_model.output_shape)
 

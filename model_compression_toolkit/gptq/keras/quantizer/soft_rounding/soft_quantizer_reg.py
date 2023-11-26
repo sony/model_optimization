@@ -19,7 +19,7 @@ from keras import Model
 
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
-from mct_quantizers import KerasQuantizationWrapper
+from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 
 
 class LinearTempDecay:
@@ -93,7 +93,7 @@ class SoftQuantizerRegularization:
         soft_reg_aux: List[tf.Tensor] = []
         b = self.linear_decay(self.count_iter.value())
         for layer in model.layers:
-            if isinstance(layer, KerasQuantizationWrapper):
+            if isinstance(layer, KerasTrainableQuantizationWrapper):
                 kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
                                                                       fw_info=DEFAULT_KERAS_INFO)
 

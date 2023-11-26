@@ -122,8 +122,9 @@ from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_pre
     MixedPercisionSearchTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest, MixedPrecisionActivationDisabled, \
     MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationKPINonConfNodesTest, \
-    MixedPercisionSearchTotalKPINonConfNodesTest
+    MixedPercisionSearchTotalKPINonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
 from tests.keras_tests.feature_networks_tests.feature_networks.old_api_test import OldApiTest
+from model_compression_toolkit.qat.common.qat_config import TrainingMethod
 
 layers = tf.keras.layers
 
@@ -205,8 +206,14 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_mixed_precision_search_kpi_4bits_avg(self):
         MixedPercisionSearchKPI4BitsAvgTest(self).run_test()
 
+    def test_mixed_precision_search_kpi_4bits_avg_nms(self):
+        MixedPercisionCombinedNMSTest(self).run_test()
+
     def test_mixed_precision_search(self):
         MixedPercisionSearchTest(self).run_test()
+
+    def test_mixed_precision_for_part_weights_layers(self):
+        MixedPercisionSearchPartWeightsLayersTest(self).run_test()
 
     def test_mixed_precision_activation_disabled(self):
         MixedPrecisionActivationDisabled(self).run_test()
@@ -687,6 +694,18 @@ class FeatureNetworkTest(unittest.TestCase):
                         weights_quantization_method=QuantizationMethod.SYMMETRIC,
                         activation_quantization_method=QuantizationMethod.SYMMETRIC).run_test()
         QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu')).run_test()
+        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
+                        weights_quantization_method=QuantizationMethod.SYMMETRIC,
+                        activation_quantization_method=QuantizationMethod.SYMMETRIC,
+                        training_method=TrainingMethod.LSQ).run_test()
+        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
+                        weights_quantization_method=QuantizationMethod.UNIFORM,
+                        activation_quantization_method=QuantizationMethod.UNIFORM,
+                        training_method=TrainingMethod.LSQ).run_test()
+        QATWrappersTest(self, layers.Dense(3, activation='relu'),
+                        weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                        training_method=TrainingMethod.LSQ).run_test()
         # DW-Conv2D are tested under the tests below because an extra check is needed to verify the
         # quantization per channel of its kernel TODO: should be part of the quantizers tests
         QuantizationAwareTrainingQuantizersTest(self).run_test()

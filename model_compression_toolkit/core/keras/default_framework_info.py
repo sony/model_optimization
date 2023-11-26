@@ -39,7 +39,7 @@ If a layer that is not listed here is queried, [None] is returned.
 KERNEL_ATTRIBUTES = DefaultDict({Conv2D: [KERNEL],
                                  DepthwiseConv2D: [DEPTHWISE_KERNEL],
                                  Dense: [KERNEL],
-                                 Conv2DTranspose: [KERNEL]}, lambda: [None])
+                                 Conv2DTranspose: [KERNEL]}, [None])
 
 
 """
@@ -50,7 +50,7 @@ Default value is returned for layers that are not included.
 DEFAULT_CHANNEL_AXIS_DICT = DefaultDict({Conv2D: (3, 2),
                                          DepthwiseConv2D: (2, 2),
                                          Dense: (1, 0),
-                                         Conv2DTranspose: (2, 3)}, lambda: (None, None))
+                                         Conv2DTranspose: (2, 3)}, (None, None))
 
 
 """
@@ -61,7 +61,7 @@ DEFAULT_OUT_CHANNEL_AXIS_DICT = DefaultDict({Conv2D: -1,
                                              DepthwiseConv2D: -1,
                                              Dense: -1,
                                              Conv2DTranspose: -1},
-                                            lambda: -1)
+                                            -1)
 
 
 """

@@ -134,14 +134,15 @@ if FOUND_TF:
 
         fw_impl = KerasImplementation()
 
-        tg, bit_widths_config = core_runner(in_model=in_model,
-                                            representative_data_gen=representative_data_gen,
-                                            core_config=core_config,
-                                            fw_info=fw_info,
-                                            fw_impl=fw_impl,
-                                            tpc=target_platform_capabilities,
-                                            target_kpi=target_kpi,
-                                            tb_w=tb_w)
+        # Ignore returned hessian service as PTQ does not use it
+        tg, bit_widths_config, _ = core_runner(in_model=in_model,
+                                               representative_data_gen=representative_data_gen,
+                                               core_config=core_config,
+                                               fw_info=fw_info,
+                                               fw_impl=fw_impl,
+                                               tpc=target_platform_capabilities,
+                                               target_kpi=target_kpi,
+                                               tb_w=tb_w)
 
         tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
 

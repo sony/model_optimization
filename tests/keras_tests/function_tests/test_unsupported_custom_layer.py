@@ -32,7 +32,6 @@ class CustomIdentity(keras.layers.Layer):
         return inputs
 
 
-
 class TestUnsupportedCustomLayer(unittest.TestCase):
 
     def test_raised_error_with_custom_layer(self):
@@ -41,10 +40,13 @@ class TestUnsupportedCustomLayer(unittest.TestCase):
         model = keras.Model(inputs=inputs, outputs=x)
 
         expected_error = f'MCT does not support optimizing Keras custom layers, but found layer of type <class ' \
-                         f'\'test_unsupported_custom_layer.CustomIdentity\'>. Please file a feature request or an issue if ' \
-                         f'you believe this is an issue.'
+                         f'\'test_unsupported_custom_layer.CustomIdentity\'>. Please add the custom layer to TPC ' \
+                         f'or file a feature request or an issue if you believe this is an issue.'
 
         with self.assertRaises(Exception) as e:
             mct.ptq.keras_post_training_quantization_experimental(model,
                                                                   lambda _: [np.random.randn(1, 3, 3, 3)])
-        self.assertEqual(expected_error, str(e.exception))
+        # Remove class object path to compare with expected error message
+        err_msg = str(e.exception)
+        err_msg = err_msg[:err_msg.find('<class ')+8] + err_msg[err_msg.find('test_unsupported_custom_layer'):]
+        self.assertEqual(expected_error, err_msg)

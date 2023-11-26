@@ -13,12 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 from abc import abstractmethod
-from typing import Callable, Type, Any, Dict, Tuple, List
+from typing import Callable, Any, Dict, Tuple, List
+
 import numpy as np
 
 from model_compression_toolkit.data_generation.common.enums import ImageGranularity
 from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
-from model_compression_toolkit.data_generation.pytorch.model_info_exctractors import ActivationExtractor, \
+from model_compression_toolkit.data_generation.common.model_info_exctractors import ActivationExtractor, \
     OriginalBNStatsHolder
 
 
@@ -34,6 +35,7 @@ class ImagesOptimizationHandler:
     - Updates batch statistics.
 
     """
+
     def __init__(self,
                  model: Any,
                  data_gen_batch_size: int,
@@ -123,7 +125,6 @@ class ImagesOptimizationHandler:
         """
         return self.batch_opt_holders_list[batch_index].get_images()
 
-
     def get_optimizer_by_batch_index(self, batch_index: int) -> Any:
         """
         Get the optimizer for the specific batch specified by the batch index.
@@ -205,17 +206,19 @@ class ImagesOptimizationHandler:
                 imgs_layer_mean, imgs_layer_std = self.get_layer_accumulated_stats(layer_name)
             else:
                 # Otherwise, retrieve the statistics from the current batch
-                imgs_layer_mean, imgs_layer_second_moment, imgs_layer_std = self.all_imgs_stats_holder.get_stats(batch_index, layer_name)
+                imgs_layer_mean, imgs_layer_second_moment, imgs_layer_std = self.all_imgs_stats_holder.get_stats(
+                    batch_index, layer_name)
 
             # Accumulate the batchnorm alignment weighted by the layer weight
-            total_bn_loss += bn_layer_weight * bn_alignment_loss_fn(bn_layer_mean, imgs_layer_mean, bn_layer_std, imgs_layer_std)
+            total_bn_loss += bn_layer_weight * bn_alignment_loss_fn(bn_layer_mean, imgs_layer_mean, bn_layer_std,
+                                                                    imgs_layer_std)
 
         return total_bn_loss
 
     def update_statistics(self,
-                        input_imgs: Any,
-                        batch_index: int,
-                        activation_extractor: ActivationExtractor):
+                          input_imgs: Any,
+                          batch_index: int,
+                          activation_extractor: ActivationExtractor):
         """
         Update the statistics for the images at the specified batch index.
 
@@ -228,6 +231,7 @@ class ImagesOptimizationHandler:
                                                       input_imgs=input_imgs,
                                                       activation_extractor=activation_extractor,
                                                       to_differentiate=False)
+
     @abstractmethod
     def optimization_step(self,
                           batch_index: int,
@@ -272,6 +276,7 @@ class BatchOptimizationHolder:
     directly manage or handle the optimization process itself but rather holds the necessary components for
     optimization, including images, optimizer and scheduler.
     """
+
     def __init__(self,
                  images: Any,
                  optimizer: Any,
@@ -310,6 +315,7 @@ class AllImagesStatsHolder:
     It stores a list 'batches_stats_holder_list' of 'BatchStatsHolder's. Each `BatchStatsHolder` instance in
     the `batches_stats_holder_list` is responsible for storing statistics for a specific batch, specified by "batch_index".
     """
+
     def __init__(self,
                  n_batches: int,
                  batch_size: int,
@@ -386,6 +392,7 @@ class BatchStatsHolder:
     and standard deviation statistics related to the activations of each layer
     for a particular batch of images.
     """
+
     def __init__(self,
                  mean_axis: List,
                  eps: float = 1e-6):

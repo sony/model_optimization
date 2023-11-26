@@ -24,6 +24,7 @@ if FOUND_TF:
     import tensorflow as tf
     from tensorflow.python.saved_model.load_options import LoadOptions
     from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
+    from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
     keras = tf.keras
 
     def keras_load_quantized_model(filepath: str, custom_objects: Any = None, compile: bool = True,
@@ -43,6 +44,8 @@ if FOUND_TF:
 
         qi_trainable_custom_objects = {subclass.__name__: subclass for subclass in
                                        get_all_subclasses(BaseKerasTrainableQuantizer)}
+        qi_trainable_custom_objects.update({
+            KerasTrainableQuantizationWrapper.__name__: KerasTrainableQuantizationWrapper})
         all_trainable_names = list(qi_trainable_custom_objects.keys())
         if len(set(all_trainable_names)) < len(all_trainable_names):
             Logger.error(f"Found multiple quantizers with the same name that inherit from BaseKerasTrainableQuantizer"

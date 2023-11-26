@@ -19,6 +19,8 @@ from torch.nn import Module
 from tqdm import tqdm
 import copy
 import torch
+
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
@@ -47,7 +49,8 @@ class PytorchGPTQTrainer(GPTQTrainer):
                  gptq_config: GradientPTQConfigV2,
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo,
-                 representative_data_gen: Callable):
+                 representative_data_gen: Callable,
+                 hessian_info_service: HessianInfoService = None):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
         Use the dataset generator to pass images through the teacher and student networks to get intermediate
@@ -61,8 +64,15 @@ class PytorchGPTQTrainer(GPTQTrainer):
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
             fw_info: Framework information
             representative_data_gen: Dataset to use for inputs of the models.
+            hessian_info_service: HessianInfoService to fetch approximations of the hessian traces for the float model.
         """
-        super().__init__(graph_float, graph_quant, gptq_config, fw_impl, fw_info)
+        super().__init__(graph_float,
+                         graph_quant,
+                         gptq_config,
+                         fw_impl,
+                         fw_info,
+                         hessian_info_service=hessian_info_service)
+
         self.loss_list = []
         self.input_scale = 1
         if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
@@ -85,7 +95,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                                                   trainable_bias,
                                                                   trainable_threshold)
 
-        self.weights_for_average_loss = to_torch_tensor(self.compute_hessian_based_weights(representative_data_gen))
+        self.weights_for_average_loss = to_torch_tensor(self.compute_hessian_based_weights())
 
         self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
 

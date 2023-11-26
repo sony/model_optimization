@@ -18,8 +18,9 @@ import numpy as np
 
 from keras import Input
 from keras.layers import Conv2D
-from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
+from mct_quantizers import KerasActivationQuantizationHolder
 
+from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -61,7 +62,7 @@ class TestKerasSetLayerToBitwidth(unittest.TestCase):
         layer, node = test_setup()
 
         wrapper_layer = \
-            KerasQuantizationWrapper(layer,
+            KerasTrainableQuantizationWrapper(layer,
                                      weights_quantizers={KERNEL:
                                          ConfigurableWeightsQuantizer(
                                              node_q_cfg=node.candidates_quantization_cfg,
@@ -76,7 +77,7 @@ class TestKerasSetLayerToBitwidth(unittest.TestCase):
 
         set_layer_to_bitwidth(wrapper_layer, bitwidth_idx=0, weights_quantizer_type=ConfigurableWeightsQuantizer,
                               activation_quantizer_type=ConfigurableActivationQuantizer,
-                              weights_quant_layer_type=KerasQuantizationWrapper,
+                              weights_quant_layer_type=KerasTrainableQuantizationWrapper,
                               activation_quant_layer_type=KerasActivationQuantizationHolder)
 
         for attr, q in wrapper_layer.weights_quantizers.items():
@@ -99,7 +100,7 @@ class TestKerasSetLayerToBitwidth(unittest.TestCase):
 
         set_layer_to_bitwidth(holder_layer, bitwidth_idx=0, weights_quantizer_type=ConfigurableWeightsQuantizer,
                               activation_quantizer_type=ConfigurableActivationQuantizer,
-                              weights_quant_layer_type=KerasQuantizationWrapper,
+                              weights_quant_layer_type=KerasTrainableQuantizationWrapper,
                               activation_quant_layer_type=KerasActivationQuantizationHolder)
 
         self.assertEqual(q.active_quantization_config_index, 0)

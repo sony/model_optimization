@@ -123,13 +123,14 @@ if FOUND_TF:
             for _ in range(n_iter):
                 yield representative_data_gen()
 
-        tg, bit_widths_config = core_runner(in_model=in_model,
-                                            representative_data_gen=_representative_data_gen,
-                                            core_config=core_config,
-                                            fw_info=fw_info,
-                                            fw_impl=fw_impl,
-                                            tpc=target_platform_capabilities,
-                                            tb_w=tb_w)
+        # Ignore initialized hessian service as it is not used here
+        tg, bit_widths_config, _ = core_runner(in_model=in_model,
+                                               representative_data_gen=_representative_data_gen,
+                                               core_config=core_config,
+                                               fw_info=fw_info,
+                                               fw_impl=fw_impl,
+                                               tpc=target_platform_capabilities,
+                                               tb_w=tb_w)
 
         if gptq_config is None:
             tg = ptq_runner(tg, _representative_data_gen, core_config, fw_info, fw_impl, tb_w)
@@ -257,21 +258,28 @@ if FOUND_TF:
             for _ in range(n_iter):
                 yield representative_data_gen()
 
-        tg, bit_widths_config = core_runner(in_model=in_model,
-                                            representative_data_gen=_representative_data_gen,
-                                            core_config=core_config,
-                                            fw_info=fw_info,
-                                            fw_impl=fw_impl,
-                                            tpc=target_platform_capabilities,
-                                            target_kpi=target_kpi,
-                                            tb_w=tb_w)
+        # Ignore hessian info service since it is not used here
+        tg, bit_widths_config, _ = core_runner(in_model=in_model,
+                                               representative_data_gen=_representative_data_gen,
+                                               core_config=core_config,
+                                               fw_info=fw_info,
+                                               fw_impl=fw_impl,
+                                               tpc=target_platform_capabilities,
+                                               target_kpi=target_kpi,
+                                               tb_w=tb_w)
 
         if gptq_config is None:
             tg = ptq_runner(tg, _representative_data_gen, core_config, fw_info, fw_impl, tb_w)
         else:
             gptq_config_v2 = GradientPTQConfigV2.from_v1(n_iter, gptq_config)
-            tg = gptq_runner(tg, core_config, gptq_config_v2, _representative_data_gen, _representative_data_gen,
-                             fw_info, fw_impl, tb_w)
+            tg = gptq_runner(tg,
+                             core_config,
+                             gptq_config_v2,
+                             _representative_data_gen,
+                             _representative_data_gen,
+                             fw_info,
+                             fw_impl,
+                             tb_w)
 
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(_representative_data_gen, tb_w, tg, fw_impl, fw_info)

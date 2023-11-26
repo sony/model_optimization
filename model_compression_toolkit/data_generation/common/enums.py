@@ -65,9 +65,11 @@ class ImageNormalizationType(EnumBaseClass):
     """
     An enum for choosing the image normalization type.
     TORCHVISION: Normalize the images using torchvision normalization.
+    KERAS_APPLICATIONS: Normalize the images using keras_applications imagenet normalization.
     NO_NORMALIZATION: Do not apply any normalization.
     """
     TORCHVISION = 'torchvision'
+    KERAS_APPLICATIONS = 'keras_applications'
     NO_NORMALIZATION = 'no_normalization'
 
 
@@ -83,7 +85,6 @@ class BNLayerWeightingType(EnumBaseClass):
     GRAD = 'grad'
 
 
-
 class BatchNormAlignemntLossType(EnumBaseClass):
     """
     An enum for choosing the BatchNorm alignment loss type.
@@ -97,9 +98,11 @@ class OutputLossType(EnumBaseClass):
     An enum for choosing the output loss type.
     NONE: No output loss is applied.
     MIN_MAX_DIFF: Use min-max difference as the output loss.
+    REGULARIZED_MIN_MAX_DIFF: Use regularized min-max difference as the output loss.
     """
     NONE = 'none'
     MIN_MAX_DIFF = 'min_max_diff'
+    REGULARIZED_MIN_MAX_DIFF = 'regularized_min_max_diff'
 
 
 class SchedulerType(EnumBaseClass):

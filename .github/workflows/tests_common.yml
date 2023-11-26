@@ -18,7 +18,6 @@ jobs:
           python-version: 3.8
       - name: Install dependencies
         run: |
-          sed -i 's/mct-quantizers==[0-9.]*/mct-quantizers-nightly/' requirements.txt
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run unittests

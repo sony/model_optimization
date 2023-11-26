@@ -27,7 +27,8 @@ from model_compression_toolkit.data_generation.common.enums import ImageGranular
 from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
 from model_compression_toolkit.data_generation.common.optimization_utils import BatchStatsHolder, AllImagesStatsHolder, \
     BatchOptimizationHolder, ImagesOptimizationHandler
-from model_compression_toolkit.data_generation.pytorch.constants import IMAGE_INPUT, BATCH_AXIS, H_AXIS, W_AXIS
+from model_compression_toolkit.data_generation.common.constants import IMAGE_INPUT
+from model_compression_toolkit.data_generation.pytorch.constants import BATCH_AXIS, H_AXIS, W_AXIS
 from model_compression_toolkit.data_generation.pytorch.model_info_exctractors import ActivationExtractor
 
 
@@ -128,8 +129,8 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
         self.n_batches = len(self.batch_opt_holders_list)
         self.random_batch_reorder()
         self.all_imgs_stats_holder = PytorchAllImagesStatsHolder(n_batches=self.n_batches,
-                                                               batch_size=self.batch_size,
-                                                               mean_axis=self.mean_axis)
+                                                                 batch_size=self.batch_size,
+                                                                 mean_axis=self.mean_axis)
 
         # Initialize statistics if using all data stats
         if self.use_all_data_stats:

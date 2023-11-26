@@ -96,7 +96,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                 return KerasQuantizationWrapper(layer,
                                                 weights_quantizers={attr: ConfigurableWeightsQuantizer(
                                                     **self._get_weights_configurable_quantizer_kwargs(n, attr))
-                                                                    for attr in kernel_attributes})
+                                                    for attr in kernel_attributes})
             else:
                 node_weights_qc = n.get_unique_weights_candidates()
                 if not len(node_weights_qc) == 1:
@@ -257,7 +257,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
     def _find_layers_in_model_by_node(self, n: BaseNode, layers_list: List[Layer]) -> \
             List[Union[KerasQuantizationWrapper, KerasActivationQuantizationHolder]]:
         """
-        Retries layers from an MP model that are matching to the given graph node, that is, this are either
+        Retries layers from an MP model that are matching to the given graph node, that is, these are either
         KerasQuantizationWrapper layers or KerasActivationQuantizationHolder layers that are responsible for the graph
         configurable model quantization.
 

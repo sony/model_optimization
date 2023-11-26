@@ -64,15 +64,19 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         quantization_preserving=False,
         fixed_scale=None,
         fixed_zero_point=None,
-        weights_multiplier_nbits=None)
+        weights_multiplier_nbits=None,
+        simd_size=32)
 
     # To quantize a model using mixed-precision, create
     # a list with more than one OpQuantizationConfig.
     # In this example, we quantize some operations' weights
     # using 2, 4 or 8 bits, and when using 2 or 4 bits, it's possible
     # to quantize the operations' activations using LUT.
-    four_bits = eight_bits.clone_and_edit(weights_n_bits=4)
-    two_bits = eight_bits.clone_and_edit(weights_n_bits=2)
+    four_bits = eight_bits.clone_and_edit(weights_n_bits=4,
+                                          simd_size=eight_bits.simd_size*2)
+    two_bits = eight_bits.clone_and_edit(weights_n_bits=2,
+                                         simd_size=eight_bits.simd_size*4)
+
     mixed_precision_cfg_list = [eight_bits, four_bits, two_bits]
 
     return eight_bits, mixed_precision_cfg_list

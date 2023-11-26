@@ -14,7 +14,10 @@
 # ==============================================================================
 import tensorflow as tf
 from packaging import version
+from model_compression_toolkit.constants import FOUND_SONY_CUSTOM_LAYERS
 
+if FOUND_SONY_CUSTOM_LAYERS:
+    from sony_custom_layers.keras.object_detection.ssd_post_process import SSDPostProcess
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
@@ -54,28 +57,34 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
 
     keras_tpc = tp.TargetPlatformCapabilities(tp_model, name=name, version=TPC_VERSION)
 
+    no_quant_list = [Reshape,
+                     tf.reshape,
+                     Permute,
+                     tf.transpose,
+                     Flatten,
+                     Cropping2D,
+                     ZeroPadding2D,
+                     Dropout,
+                     MaxPooling2D,
+                     tf.split,
+                     tf.quantization.fake_quant_with_min_max_vars,
+                     tf.math.argmax,
+                     tf.shape,
+                     tf.math.equal,
+                     tf.gather,
+                     tf.cast,
+                     tf.unstack,
+                     tf.compat.v1.gather,
+                     tf.nn.top_k,
+                     tf.__operators__.getitem,
+                     tf.image.combined_non_max_suppression,
+                     tf.compat.v1.shape]
+
+    if FOUND_SONY_CUSTOM_LAYERS:
+        no_quant_list.append(SSDPostProcess)
+
     with keras_tpc:
-        tp.OperationsSetToLayers("NoQuantization", [Reshape,
-                                                    tf.reshape,
-                                                    Permute,
-                                                    tf.transpose,
-                                                    Flatten,
-                                                    Cropping2D,
-                                                    ZeroPadding2D,
-                                                    Dropout,
-                                                    MaxPooling2D,
-                                                    tf.split,
-                                                    tf.quantization.fake_quant_with_min_max_vars,
-                                                    tf.math.argmax,
-                                                    tf.shape,
-                                                    tf.math.equal,
-                                                    tf.gather,
-                                                    tf.cast,
-                                                    tf.unstack,
-                                                    tf.compat.v1.gather,
-                                                    tf.nn.top_k,
-                                                    tf.__operators__.getitem,
-                                                    tf.compat.v1.shape])
+        tp.OperationsSetToLayers("NoQuantization", no_quant_list)
 
         tp.OperationsSetToLayers("Conv", [Conv2D,
                                           DepthwiseConv2D,

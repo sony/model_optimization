@@ -24,7 +24,8 @@ from model_compression_toolkit.trainable_infrastructure.common.constants import 
 from model_compression_toolkit.qat import TrainingMethod
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from mct_quantizers import QuantizationTarget, mark_quantizer, KerasQuantizationWrapper
+from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
+from mct_quantizers import QuantizationTarget, mark_quantizer
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
 from model_compression_toolkit import constants as C
 
@@ -83,7 +84,7 @@ class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: KerasQuantizationWrapper):
+                                layer: KerasTrainableQuantizationWrapper):
         """
         Add quantizer parameters to the quantizer parameters dictionary
 
@@ -205,7 +206,7 @@ class STEActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: KerasQuantizationWrapper):
+                                layer: KerasTrainableQuantizationWrapper):
         """
         Add quantizer parameters to the quantizer parameters dictionary
 

@@ -16,8 +16,7 @@
 import tensorflow as tf
 from tqdm import tqdm
 
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, \
-    CoreConfig, DebugConfig
+from model_compression_toolkit.core import DebugConfig
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.model_collector import ModelCollector
@@ -34,7 +33,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
     statistics_correction_runner
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
-from model_compression_toolkit.core.runner import read_model_to_graph, get_finalized_graph
+from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 
@@ -45,22 +44,15 @@ layers = keras.layers
 
 def prepare_graph_for_first_network_editor(in_model, representative_data_gen, core_config, fw_info, fw_impl,
                                            tpc, target_kpi=None, tb_w=None):
-    graph = read_model_to_graph(in_model,
-                                representative_data_gen,
-                                tpc,
-                                fw_info,
-                                fw_impl)
 
-    if tb_w is not None:
-        tb_w.add_graph(graph, 'initial_graph')
-
-    transformed_graph = get_finalized_graph(graph,
-                                            tpc,
-                                            core_config.quantization_config,
-                                            fw_info,
-                                            tb_w,
-                                            fw_impl,
-                                            mixed_precision_enable=core_config.mixed_precision_enable)
+    transformed_graph = graph_preparation_runner(in_model,
+                                                 representative_data_gen,
+                                                 core_config.quantization_config,
+                                                 fw_info,
+                                                 fw_impl,
+                                                 tpc,
+                                                 tb_w,
+                                                 mixed_precision_enable=core_config.mixed_precision_enable)
 
     ######################################
     # Graph analyzing (attaching statistics collectors)

@@ -54,6 +54,7 @@ class PytorchDataGenerationTestRunner(unittest.TestCase):
     def test_pytorch_output_loss_types(self):
         BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.NONE).run_test()
         BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.MIN_MAX_DIFF).run_test()
+        BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.REGULARIZED_MIN_MAX_DIFF).run_test()
 
 if __name__ == '__main__':
     unittest.main()

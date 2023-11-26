@@ -112,6 +112,8 @@ class SeparableConvDecomposition(common.BaseSubstitution):
         # If the SeparableConv2D is reused, we need to keep the depthwise node as reused as well,
         # so we keep the names convention with adding the suffix of "_reuse_X".
         dw_node_name = separable_node.name + '_dw' if not separable_node.reuse else '_'.join(separable_node.name.split('_')[:-2]) + '_dw_' + '_'.join(separable_node.name.split('_')[-2:])
+        reuse_group = separable_node.reuse_group if not separable_node.reuse_group else separable_node.reuse_group + '_dw'
+
 
         # create new nodes
         dw_node = common.graph.BaseNode(dw_node_name,
@@ -121,11 +123,12 @@ class SeparableConvDecomposition(common.BaseSubstitution):
                                         dw_weights_dict,
                                         dw_layer_class,
                                         reuse=separable_node.reuse,
-                                        reuse_group=separable_node.reuse_group)
+                                        reuse_group=reuse_group)
 
         # If the SeparableConv2D is reused, we need to keep the pointwise node as reused as well,
         # so we keep the names convention with adding the suffix of "_reuse_X".
         pw_node_name = separable_node.name + '_pw' if not separable_node.reuse else '_'.join(separable_node.name.split('_')[:-2]) + '_pw_' + '_'.join(separable_node.name.split('_')[-2:])
+        reuse_group = separable_node.reuse_group if not separable_node.reuse_group else separable_node.reuse_group + '_pw'
 
         pw_node = common.graph.BaseNode(pw_node_name,
                                         pw_framework_attr,
@@ -134,8 +137,7 @@ class SeparableConvDecomposition(common.BaseSubstitution):
                                         pw_weights_dict,
                                         pw_layer_class,
                                         reuse=separable_node.reuse,
-                                        reuse_group=separable_node.reuse_group
-                                        )
+                                        reuse_group=reuse_group)
 
         graph.add_node(dw_node)
         graph.add_node(pw_node)

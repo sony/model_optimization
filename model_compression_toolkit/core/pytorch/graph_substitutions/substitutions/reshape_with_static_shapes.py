@@ -50,6 +50,10 @@ class ReshapeWithStaticShapes(common.BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
+        # skip substitution if the reshape is applied to weights (not activations). In this case, the node is the first source and doesn't have an input shape.
+        if len(node.input_shape) == 0:
+            return graph
+
         # we want the batch size value to infer from the length of the array and remaining dimensions
         if len(node.output_shape) == 1:
             node.output_shape[0][0] = BATCH_DIM_VALUE

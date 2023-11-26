@@ -1,6 +1,8 @@
 name: Coverage Test
 on:
   workflow_dispatch: # Allow manual triggers
+  schedule:
+    - cron: 0 0 * * *
   pull_request:
     branches:
       - main
@@ -8,7 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 80
     env:
       COVERAGE_THRESHOlD: 80
     steps:
@@ -19,7 +21,6 @@ jobs:
           python-version: '3.10'
       - name: Install dependencies
         run: |
-          sed -i 's/mct-quantizers==[0-9.]*/mct-quantizers-nightly/' requirements.txt
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install coverage

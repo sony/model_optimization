@@ -20,19 +20,21 @@ from packaging import version
 from tensorflow.keras.layers import Layer
 from tqdm import tqdm
 
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.keras.quantizer.quantization_builder import quantization_builder
 from model_compression_toolkit.logger import Logger
-from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
+from mct_quantizers import KerasActivationQuantizationHolder
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.engine.base_layer import TensorFlowOpLayer
 else:
     from keras.engine.base_layer import TensorFlowOpLayer
 
+from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
@@ -57,7 +59,8 @@ class KerasGPTQTrainer(GPTQTrainer):
                  gptq_config: GradientPTQConfigV2,
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo,
-                 representative_data_gen: Callable):
+                 representative_data_gen: Callable,
+                 hessian_info_service: HessianInfoService = None):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
         Use the dataset generator to pass images through the teacher and student networks to get intermediate
@@ -71,12 +74,15 @@ class KerasGPTQTrainer(GPTQTrainer):
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
             fw_info: Framework information.
             representative_data_gen: Dataset to use for inputs of the models.
+            hessian_info_service: HessianInfoService for fetching and computing Hessian's trace approximation.
+
         """
         super().__init__(graph_float,
                          graph_quant,
                          gptq_config,
                          fw_impl,
-                         fw_info)
+                         fw_info,
+                         hessian_info_service=hessian_info_service)
 
         self.loss_list = []
         self.input_scale = 1
@@ -108,7 +114,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
-        self.weights_for_average_loss = self.compute_hessian_based_weights(representative_data_gen)
+        self.weights_for_average_loss = self.compute_hessian_based_weights()
 
         self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
 
@@ -131,7 +137,7 @@ class KerasGPTQTrainer(GPTQTrainer):
 
     def gptq_wrapper(self,
                      n: common.BaseNode,
-                     layer: Layer) -> Union[KerasQuantizationWrapper, Layer]:
+                     layer: Layer) -> Union[KerasTrainableQuantizationWrapper, Layer]:
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping.
 
@@ -146,7 +152,7 @@ class KerasGPTQTrainer(GPTQTrainer):
             weights_quantizers, _ = quantization_builder(n,
                                                          self.gptq_config) # TODO: split quantizers building into two functions: for weights and activations
             if len(weights_quantizers) > 0:
-                return KerasQuantizationWrapper(layer,
+                return KerasTrainableQuantizationWrapper(layer,
                                                    weights_quantizers=weights_quantizers)
         return layer
 
@@ -318,7 +324,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         graph = copy.copy(self.graph_quant)
 
         for layer in self.fxp_model.layers:
-            if isinstance(layer, KerasQuantizationWrapper):
+            if isinstance(layer, KerasTrainableQuantizationWrapper):
                 node = graph.find_node_by_name(layer.layer.name)
                 if len(node) == 0 and isinstance(layer.layer, TensorFlowOpLayer):
                     node = graph.find_node_by_name('_'.join(layer.layer.name.split('_')[3:]))

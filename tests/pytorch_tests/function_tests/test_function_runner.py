@@ -24,14 +24,16 @@ from tests.pytorch_tests.function_tests.kpi_data_test import TestKPIDataBasicAll
     TestKPIDataBasicPartialBitwidth, TestKPIDataComplexPartialBitwidth, TestKPIDataComplesAllBitwidth
 from tests.pytorch_tests.function_tests.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, \
     LayerFusingTest4
-from tests.pytorch_tests.function_tests.model_gradients_test import ModelGradientsBasicModelTest, \
-    ModelGradientsCalculationTest, ModelGradientsAdvancedModelTest, ModelGradientsOutputReplacementTest, \
-    ModelGradientsMultipleOutputsModelTest, ModelGradientsNonDifferentiableNodeModelTest, \
-    ModelGradientsMultipleOutputsTest, ModelGradientsSinglePointTest
 from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSetLayerToBitwidthWeights, \
     TestSetLayerToBitwidthActivation
-from tests.pytorch_tests.function_tests.test_sensitivity_eval_output_replacement import \
-    TestSensitivityEvalWithArgmaxOutputReplacementNodes, TestSensitivityEvalWithSoftmaxOutputReplacementNodes
+from tests.pytorch_tests.function_tests.test_sensitivity_eval_non_supported_output import \
+    TestSensitivityEvalWithArgmaxNode
+from tests.pytorch_tests.function_tests.test_hessian_info_calculator import WeightsHessianTraceBasicModelTest, \
+    WeightsHessianTraceAdvanceModelTest, \
+    WeightsHessianTraceMultipleOutputsModelTest, WeightsHessianTraceReuseModelTest, \
+    ActivationHessianTraceBasicModelTest, ActivationHessianTraceAdvanceModelTest, \
+    ActivationHessianTraceMultipleOutputsModelTest, ActivationHessianTraceReuseModelTest, \
+    ActivationHessianOutputExceptionTest
 
 
 class FunctionTestRunner(unittest.TestCase):
@@ -99,18 +101,24 @@ class FunctionTestRunner(unittest.TestCase):
         """
         TestKPIDataComplexPartialBitwidth(self).run_test()
 
-    def test_model_gradients(self):
+    def test_activation_hessian_trace(self):
         """
-        This test checks the Model Gradients Pytorch computation.
+        This test checks the activation hessian trace approximation in Pytorch.
         """
-        ModelGradientsBasicModelTest(self).run_test()
-        ModelGradientsCalculationTest(self).run_test()
-        ModelGradientsAdvancedModelTest(self).run_test()
-        ModelGradientsMultipleOutputsTest(self).run_test()
-        ModelGradientsOutputReplacementTest(self).run_test()
-        ModelGradientsMultipleOutputsModelTest(self).run_test()
-        ModelGradientsNonDifferentiableNodeModelTest(self).run_test()
-        ModelGradientsSinglePointTest(self).run_test()
+        ActivationHessianTraceBasicModelTest(self).run_test()
+        ActivationHessianTraceAdvanceModelTest(self).run_test()
+        ActivationHessianTraceMultipleOutputsModelTest(self).run_test()
+        ActivationHessianTraceReuseModelTest(self).run_test()
+        ActivationHessianOutputExceptionTest(self).run_test()
+
+    def test_weights_hessian_trace(self):
+        """
+        This test checks the weights hessian trace approximation in Pytorch.
+        """
+        WeightsHessianTraceBasicModelTest(self).run_test()
+        WeightsHessianTraceAdvanceModelTest(self).run_test()
+        WeightsHessianTraceMultipleOutputsModelTest(self).run_test()
+        WeightsHessianTraceReuseModelTest(self).run_test()
 
     def test_layer_fusing(self):
         """
@@ -129,12 +137,11 @@ class FunctionTestRunner(unittest.TestCase):
         TestSetLayerToBitwidthWeights(self).run_test()
         TestSetLayerToBitwidthActivation(self).run_test()
 
-    def test_sensitivity_eval_outputs_replacement(self):
+    def test_sensitivity_eval_not_supported_output(self):
         """
-        This test checks the functionality output replacement nodes in sensitivity evaluation for mixed precision..
+        This test verifies failure on non-supported output nodes in mixed precision with Hessian-based scores.
         """
-        TestSensitivityEvalWithArgmaxOutputReplacementNodes(self).run_test()
-        TestSensitivityEvalWithSoftmaxOutputReplacementNodes(self).run_test()
+        TestSensitivityEvalWithArgmaxNode(self).run_test()
 
     def test_get_gptq_config(self):
         """

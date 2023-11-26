@@ -36,11 +36,13 @@ class BaseDataGenerationModel(torch.nn.Module):
         self.bn1 = nn.BatchNorm2d(16)
         self.conv2 = nn.Conv2d(16, 16, kernel_size=3, stride=1, padding=1)
         self.bn2 = nn.BatchNorm2d(16)
+        self.conv3 = nn.Conv2d(16, 10, kernel_size=1)
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
         out = F.relu(out)
+        out = self.conv3(out)
         return out
 
 class BasePytorchDataGenerationTest:

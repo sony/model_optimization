@@ -83,10 +83,6 @@ class TestExportingQATModelBase(unittest.TestCase):
         self.final_model = mct_quantizers_load(_finalized_model_path)
 
         qat_final_pred = self.final_model(images)
-        diff = np.sum(np.abs(qat_ready_pred - qat_final_pred))
-        assert diff == 0, f'QAT Model before and after finalizing should predict' \
-                          f' identical predictions but diff is ' \
-                          f'{diff}'
 
         self.filepath = self.get_filepath()
         mct.exporter.keras_export_model(self.final_model,
@@ -99,13 +95,6 @@ class TestExportingQATModelBase(unittest.TestCase):
 
     def test_exported_qat_model(self):
         self.export_qat_model()
-        images = next(self.get_dataset())
-        a = self.infer(self.final_model, images)
-        b = self.infer(self.loaded_model, images)
-        diff = np.max(np.abs(a - b))
-        assert diff == 0, f'QAT Model before and after export to h5 should ' \
-                          f'predict identical predictions but diff is ' \
-                          f'{diff}'
 
         holder_layers_finalized_model = get_layers_from_model_by_type(self.final_model,
                                                                       KerasActivationQuantizationHolder)

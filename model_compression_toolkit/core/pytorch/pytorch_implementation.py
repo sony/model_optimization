@@ -25,6 +25,7 @@ from torch.nn import Conv2d, ConvTranspose2d, Linear
 from torch.nn import Module, Sigmoid, Softmax
 
 import model_compression_toolkit.core.pytorch.constants as pytorch_constants
+from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
@@ -32,6 +33,7 @@ from model_compression_toolkit.core.common.collectors.statistics_collector impor
 from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
     create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
@@ -39,8 +41,6 @@ from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework import get_pytorch_model_builder
-from model_compression_toolkit.core.pytorch.back2framework.model_gradients import \
-    pytorch_iterative_approx_jacobian_trace
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
     pytorch_batchnorm_folding, pytorch_batchnorm_forward_folding
@@ -73,6 +73,10 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.vi
     VirtualActivationWeightsComposition
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
+from model_compression_toolkit.core.pytorch.hessian.activation_trace_hessian_calculator_pytorch import \
+    ActivationTraceHessianCalculatorPytorch
+from model_compression_toolkit.core.pytorch.hessian.weights_trace_hessian_calculator_pytorch import \
+    WeightsTraceHessianCalculatorPytorch
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_activation_quantizer import \
     ConfigurableActivationQuantizer
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_weights_quantizer import \
@@ -82,6 +86,7 @@ from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 from model_compression_toolkit.core.pytorch.statistics_correction.apply_second_moment_correction import \
     pytorch_apply_second_moment_correction
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
+from model_compression_toolkit.logger import Logger
 
 
 class PytorchImplementation(FrameworkImplementation):
@@ -335,7 +340,9 @@ class PytorchImplementation(FrameworkImplementation):
                                   quant_config: MixedPrecisionQuantizationConfigV2,
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
-                                  disable_activation_for_metric: bool = False) -> SensitivityEvaluation:
+                                  disable_activation_for_metric: bool = False,
+                                  hessian_info_service: HessianInfoService = None
+                                  ) -> SensitivityEvaluation:
         """
         Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
         configuration (comparing to the float model).
@@ -346,6 +353,7 @@ class PytorchImplementation(FrameworkImplementation):
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
+            hessian_info_service: HessianInfoService to fetch approximations of the hessian traces for the float model.
 
         Returns:
             A SensitivityEvaluation object.
@@ -361,7 +369,8 @@ class PytorchImplementation(FrameworkImplementation):
                                                                    activation_quantizer_type=ConfigurableActivationQuantizer,
                                                                    weights_quant_layer_type=PytorchQuantizationWrapper,
                                                                    activation_quant_layer_type=PytorchActivationQuantizationHolder),
-                                     disable_activation_for_metric=disable_activation_for_metric)
+                                     disable_activation_for_metric=disable_activation_for_metric,
+                                     hessian_info_service=hessian_info_service)
 
     def get_node_prior_info(self,
                             node: BaseNode,
@@ -421,49 +430,16 @@ class PytorchImplementation(FrameworkImplementation):
             return compute_cs
         return compute_mse
 
-    def model_grad(self,
-                   graph_float: common.Graph,
-                   model_input_tensors: Dict[BaseNode, torch.Tensor],
-                   interest_points: List[BaseNode],
-                   output_list: List[BaseNode],  # dummy - not used in pytorch
-                   all_outputs_indices: List[int],
-                   alpha: float = 0.3,
-                   n_iter: int = 50,
-                   norm_weights: bool = True) -> List[float]:
+    def is_output_node_compatible_for_hessian_score_computation(self,
+                                                                node: BaseNode) -> bool:
         """
-        Calls a PyTorch specific model gradient calculation function, which computes the  jacobian-based weights of the model's
-        outputs with respect to the feature maps of the set of given interest points.
+        Checks and returns whether the given node is compatible as output for Hessian-based information computation.
 
-        Args:
-            graph_float: Graph to build its corresponding Keras model.
-            model_input_tensors: A mapping between model input nodes to an input batch.
-            interest_points: List of nodes which we want to get their feature map as output, to calculate distance metric.
-            output_list: List of nodes that considered as model's output for the purpose of gradients computation.
-            all_outputs_indices: Indices of the model outputs and outputs replacements (if exists),
-                in a topological sorted interest points list.
-            alpha: A tuning parameter to allow calibration between the contribution of the output feature maps returned
-                weights and the other feature maps weights (since the gradient of the output layers does not provide a
-                compatible weight for the distance metric computation).
-            n_iter: The number of random iterations to calculate the approximated  jacobian-based weights for each interest point.
-            norm_weights: Whether to normalize the returned weights (to get values between 0 and 1).
-
-        Returns: A list of (possibly normalized) jacobian-based weights to be considered as the relevancy that each interest
-        point's output has on the model's output.
-        """
-
-        return pytorch_iterative_approx_jacobian_trace(graph_float, model_input_tensors, interest_points, output_list,
-                                                       all_outputs_indices, alpha, n_iter, norm_weights=norm_weights)
-
-    def is_node_compatible_for_metric_outputs(self,
-                                              node: BaseNode) -> bool:
-        """
-        Checks and returns whether the given node is compatible as output for metric computation
-        purposes and gradient-based weights calculation.
 
         Args:
             node: A BaseNode object.
 
-        Returns: Whether the node is compatible as output for metric computation or not.
+        Returns: Whether the node is compatible as output for Hessian-based information computation.
 
         """
 
@@ -534,3 +510,32 @@ class PytorchImplementation(FrameworkImplementation):
         """
 
         return model(*inputs)
+
+    def get_trace_hessian_calculator(self,
+                                     graph: Graph,
+                                     input_images: List[Any],
+                                     trace_hessian_request: TraceHessianRequest,
+                                     num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
+        """
+        Get Pytorch trace hessian approximations calculator based on the trace hessian request.
+        Args:
+            input_images: Images to use for computation.
+            graph: Float graph to compute the approximation of its different nodes.
+            trace_hessian_request: TraceHessianRequest to search for the desired calculator.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
+
+        Returns: TraceHessianCalculatorPytorch to use for the trace hessian approximation computation for this request.
+
+        """
+        if trace_hessian_request.mode == HessianMode.ACTIVATION:
+            return ActivationTraceHessianCalculatorPytorch(graph=graph,
+                                                           trace_hessian_request=trace_hessian_request,
+                                                           input_images=input_images,
+                                                           fw_impl=self,
+                                                           num_iterations_for_approximation=num_iterations_for_approximation)
+        elif trace_hessian_request.mode == HessianMode.WEIGHTS:
+            return WeightsTraceHessianCalculatorPytorch(graph=graph,
+                                                        trace_hessian_request=trace_hessian_request,
+                                                        input_images=input_images,
+                                                        fw_impl=self,
+                                                        num_iterations_for_approximation=num_iterations_for_approximation)

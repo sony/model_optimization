@@ -139,7 +139,8 @@ def quantize(model: nn.Module,
         _, onnx_file_path = tempfile.mkstemp('.onnx') # Path of exported model
         mct.exporter.pytorch_export_model(model=quantized_model, save_model_path=onnx_file_path,
                                           repr_dataset=representative_data_gen, target_platform_capabilities=tpc,
-                                          serialization_format=mct.exporter.PytorchExportSerializationFormat.ONNX)
+                                          serialization_format=mct.exporter.PytorchExportSerializationFormat.ONNX,
+                                          use_onnx_custom_quantizer_ops=True)
 
 
     return quantized_model, QuantInfo(user_info=quantization_info, tpc_info=tpc.get_info(), quantization_workflow=workflow, mp_weights_compression=mp_wcr)

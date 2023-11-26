@@ -19,7 +19,8 @@ import tensorflow as tf
 from tensorflow import TensorShape
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from mct_quantizers import QuantizationTarget, mark_quantizer, KerasQuantizationWrapper
+from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
+from mct_quantizers import QuantizationTarget, mark_quantizer
 from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
@@ -108,7 +109,7 @@ class BaseKerasTrainableInfrastructureTest:
         return [self.input_shape for _ in range(self.num_of_inputs)]
 
     def get_wrapper(self, layer, weight_quantizers={}, activation_quantizers=[]):
-        return KerasQuantizationWrapper(layer, weight_quantizers, activation_quantizers)
+        return KerasTrainableQuantizationWrapper(layer, weight_quantizers, activation_quantizers)
 
     def get_weights_quantization_config(self):
         return TrainableQuantizerWeightsConfig(weights_quantization_method=QuantizationMethod.POWER_OF_TWO,

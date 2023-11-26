@@ -59,7 +59,7 @@ from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LU
     LUTActivationQuantizerTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import MixedPercisionSearch8Bit, \
     MixedPercisionSearch2Bit, MixedPercisionSearch4Bit, MixedPercisionActivationDisabledTest, \
-    MixedPercisionSearchLastLayerDistance
+    MixedPercisionSearchLastLayerDistance, MixedPercisionSearchPartWeightsLayers
 from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multiple_tensors_test import \
     MultipleOutputsMultipleTensorsNetTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_outputs_node_test import MultipleOutputsNetTest
@@ -355,6 +355,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         MixedPercisionSearch8Bit(self).run_test()
 
+    def test_mixed_precision_part_weights_layers(self):
+        """
+        This test checks the Mixed Precision search.
+        """
+        MixedPercisionSearchPartWeightsLayers(self).run_test()
+
     def test_mixed_precision_2bit(self):
         """
         This test checks the Mixed Precision search.
@@ -496,6 +502,21 @@ class FeatureModelsTestRunner(unittest.TestCase):
         QuantizationAwareTrainingTest(self,
                                       weights_quantization_method=_method,
                                       activation_quantization_method=_method,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
+                                      activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
+                                      training_method=mct.qat.TrainingMethod.LSQ,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
+                                      activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
+                                      training_method=mct.qat.TrainingMethod.LSQ,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                      activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                      training_method=mct.qat.TrainingMethod.LSQ,
                                       finalize=True).run_test()
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()

@@ -17,9 +17,10 @@ import tensorflow as tf
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.constants import RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.trainable_infrastructure.common.constants import FQ_MIN, FQ_MAX
+from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.qat import TrainingMethod
 
-from mct_quantizers import mark_quantizer, QuantizationMethod, QuantizationTarget, KerasQuantizationWrapper
+from mct_quantizers import mark_quantizer, QuantizationMethod, QuantizationTarget
 from mct_quantizers.keras.quantizers import \
     BaseKerasInferableQuantizer, WeightsUniformInferableQuantizer, ActivationUniformInferableQuantizer
 
@@ -72,7 +73,7 @@ class STEUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: KerasQuantizationWrapper):
+                                layer: KerasTrainableQuantizationWrapper):
         """
         Add quantizer parameters to the quantizer parameters dictionary
 
@@ -172,7 +173,7 @@ class STEUniformActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
                                 name: str,
-                                layer: KerasQuantizationWrapper):
+                                layer: KerasTrainableQuantizationWrapper):
         """
         Add quantizer parameters to the quantizer parameters dictionary
 

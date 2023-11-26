@@ -12,5 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.data_generation.pytorch.pytorch_data_generation import pytorch_data_generation_experimental
-from model_compression_toolkit.data_generation.pytorch.pytorch_data_generation import get_pytorch_data_generation_config
+from model_compression_toolkit.constants import FOUND_TORCH, FOUND_TF
+
+if FOUND_TF:
+    from model_compression_toolkit.data_generation.keras.keras_data_generation import (
+        tensorflow_data_generation_experimental, get_tensorflow_data_generation_config)
+
+if FOUND_TORCH:
+    from model_compression_toolkit.data_generation.pytorch.pytorch_data_generation import (
+        pytorch_data_generation_experimental, get_pytorch_data_generation_config)

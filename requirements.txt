@@ -10,5 +10,5 @@ PuLP
 matplotlib
 scipy
 protobuf
-mct-quantizers==1.2
+mct-quantizers==1.3
 dataclasses

@@ -25,7 +25,7 @@ class BaseImagePipeline(ABC):
 
         Args:
             output_image_size (int): The desired output image size.
-            extra_pixels (int, optional): Extra pixels add to the input image size. Defaults to 0.
+            extra_pixels (int, optional): Extra pixels to add to the input image size. Defaults to 0.
         """
         self.output_image_size = output_image_size
         self.extra_pixels = extra_pixels

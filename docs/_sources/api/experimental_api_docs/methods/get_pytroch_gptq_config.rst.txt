@@ -7,4 +7,4 @@
 Get GradientPTQConfig for Pytorch Models
 ============================================
 
-.. autofunction:: model_compression_toolkit.get_pytorch_gptq_config
+.. autofunction:: model_compression_toolkit.gptq.get_pytorch_gptq_config
