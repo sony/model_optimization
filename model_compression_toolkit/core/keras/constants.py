@@ -109,3 +109,6 @@ RELU_POT_BOUND = 8.0
 # TFOpLambda functions:
 ADD = 'add'
 PAD = 'pad'
+
+# Special/Custom layers strings
+COMBINED_NMS = 'combined_non_max_suppression'
