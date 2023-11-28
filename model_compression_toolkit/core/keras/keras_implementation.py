@@ -29,7 +29,8 @@ from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras
 from model_compression_toolkit.core.keras.hessian.weights_trace_hessian_calculator_keras import WeightsTraceHessianCalculatorKeras
 
 from model_compression_toolkit.core.keras.pruning.prune_keras_node import prune_keras_node, \
-    is_keras_node_pruning_section_edge, is_keras_node_intermediate_pruning_section, get_keras_pruned_node_num_params
+    is_keras_node_intermediate_pruning_section, get_keras_pruned_node_num_params, is_keras_node_entry_node, \
+    is_keras_node_exit_node
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
@@ -604,8 +605,11 @@ class KerasImplementation(FrameworkImplementation):
                                 last_section_node)
 
 
-    def is_node_prunable(self, node):
-        return is_keras_node_pruning_section_edge(node)
+    def is_node_entry_node(self, node:BaseNode): #TODO:Add to base class
+        return is_keras_node_entry_node(node)
+
+    def is_node_exit_node(self, node:BaseNode):
+        return is_keras_node_exit_node(node)
 
     def is_node_intermediate_pruning_section(self, node):
         return is_keras_node_intermediate_pruning_section(node)

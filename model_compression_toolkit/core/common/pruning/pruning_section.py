@@ -19,23 +19,24 @@ class PruningSectionMask:
 class PruningSection:
 
     def __init__(self,
-                 input_node:BaseNode,
+                 entry_node:BaseNode,
                  intermediate_nodes: List[BaseNode],
-                 output_node: BaseNode):
-        self.input_node = input_node
+                 exit_nodes: BaseNode):
+        self.entry_node = entry_node
         self.intermediate_nodes = intermediate_nodes
-        self.output_node = output_node
+        self.exit_node = exit_nodes
 
     def get_all_nodes(self):
-        nodes = [self.input_node, self.output_node]
+        nodes = [self.entry_node]
         nodes.extend(self.intermediate_nodes)
+        nodes.append(self.exit_node)
         return nodes
 
     def apply_inner_section_mask(self,
                                  pruning_section_mask:PruningSectionMask,
                                  fw_impl,
                                  fw_info):
-        fw_impl.prune_node(self.input_node,
+        fw_impl.prune_node(self.entry_node,
                            pruning_section_mask.input_node_oc_mask,
                            fw_info,
                            last_section_node=False)
@@ -44,7 +45,7 @@ class PruningSection:
                                pruning_section_mask.input_node_oc_mask,
                                fw_info,
                                last_section_node=False)
-        fw_impl.prune_node(self.output_node,
+        fw_impl.prune_node(self.exit_node,
                            pruning_section_mask.input_node_oc_mask,
                            fw_info,
                            last_section_node=True)

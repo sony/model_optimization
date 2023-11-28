@@ -30,7 +30,7 @@ def build_pruned_graph(graph: Graph,
     graph_to_prune = copy.deepcopy(graph)
 
     # Get the prunable nodes and the corresponding pruning sections.
-    prunable_nodes = graph_to_prune.get_pruning_sections_input_nodes(fw_info=fw_info, fw_impl=fw_impl)
+    prunable_nodes = graph_to_prune.get_pruning_sections_entry_nodes(fw_info=fw_info, fw_impl=fw_impl)
     pruning_sections = graph_to_prune.get_pruning_sections(fw_info=fw_info, fw_impl=fw_impl)
 
     # Check that each prunable node corresponds to a pruning section.

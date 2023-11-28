@@ -4,12 +4,13 @@ import numpy as np
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode
 
-# Check if a Keras node is an edge of a pruning section.
-def is_keras_node_pruning_section_edge(node: BaseNode):
-    # Convolution nodes with group=1 or Dense layers are considered edges for pruning sections.
-    if node.type in [keras.layers.Conv2D, keras.layers.Conv2DTranspose]:
-        return node.framework_attr['groups'] == 1
-    return node.type == keras.layers.Dense
+def is_keras_node_entry_node(node:BaseNode):
+    return _is_keras_node_pruning_section_edge(node)
+
+def is_keras_node_exit_node(node:BaseNode):
+    return _is_keras_node_pruning_section_edge(node)
+
+
 
 # Check if a Keras node is an intermediate node in a pruning section.
 def is_keras_node_intermediate_pruning_section(node: BaseNode):
@@ -18,6 +19,15 @@ def is_keras_node_intermediate_pruning_section(node: BaseNode):
                              keras.layers.Conv2D,
                              keras.layers.Conv2DTranspose,
                              keras.layers.Dense]
+
+
+# Check if a Keras node is an edge of a pruning section.
+def _is_keras_node_pruning_section_edge(node: BaseNode):
+    # Convolution nodes with group=1 or Dense layers are considered edges for pruning sections.
+    if node.type in [keras.layers.Conv2D, keras.layers.Conv2DTranspose]:
+        return node.framework_attr['groups'] == 1
+    return node.type == keras.layers.Dense
+
 
 # Get the number of parameters for a pruned Keras node.
 def get_keras_pruned_node_num_params(node: BaseNode,

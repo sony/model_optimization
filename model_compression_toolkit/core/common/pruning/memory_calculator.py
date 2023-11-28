@@ -119,14 +119,14 @@ class MemoryCalculator:
 
         """
         # Determine masks for input channels of the first node and output channels of the second node.
-        first_node_input_channels_mask = self._get_node_input_mask(pruning_section.input_node,
+        first_node_input_channels_mask = self._get_node_input_mask(pruning_section.entry_node,
                                                                    pruning_sections,
                                                                    masks)
-        second_node_output_mask = masks.get(pruning_section.output_node)
+        second_node_output_mask = masks.get(pruning_section.exit_node)
         # Create the pruning section mask.
         pruning_section_mask = PruningSectionMask(
             input_node_ic_mask=first_node_input_channels_mask,
-            input_node_oc_mask=masks.get(pruning_section.input_node),
+            input_node_oc_mask=masks.get(pruning_section.entry_node),
             output_node_oc_mask=second_node_output_mask
         )
         return pruning_section_mask
@@ -163,8 +163,8 @@ class MemoryCalculator:
 
         """
         for section in pruning_sections:
-            if node == section.output_node:
-                return masks.get(section.input_node)
+            if node == section.exit_node:
+                return masks.get(section.entry_node)
         return None
 
     def _get_nodes_from_adjacent_sections(self, pruning_sections: List[PruningSection]) -> List[BaseNode]:
@@ -176,8 +176,8 @@ class MemoryCalculator:
         Returns:
 
         """
-        input_nodes = set(section.input_node for section in pruning_sections)
-        output_nodes = set(section.output_node for section in pruning_sections)
+        input_nodes = set(section.entry_node for section in pruning_sections)
+        output_nodes = set(section.exit_node for section in pruning_sections)
         return list(input_nodes.intersection(output_nodes))
 
     def _get_pruning_section_num_params(self,
@@ -194,7 +194,7 @@ class MemoryCalculator:
         """
         # Number of params for the first node in the section.
         first_node_nparams = self.fw_impl.get_pruned_node_num_params(
-            pruning_section.input_node,
+            pruning_section.entry_node,
             pruning_section_mask.input_node_ic_mask,
             pruning_section_mask.input_node_oc_mask,
             self.fw_info)
@@ -209,7 +209,7 @@ class MemoryCalculator:
 
         # Number of params for the last node in the section.
         second_node_nparams = self.fw_impl.get_pruned_node_num_params(
-            pruning_section.output_node,
+            pruning_section.exit_node,
             pruning_section_mask.input_node_oc_mask,
             pruning_section_mask.output_node_oc_mask,
             self.fw_info)

@@ -40,26 +40,18 @@ class Pruner:
             target_platform_capabilities (TargetPlatformCapabilities): Object encapsulating the capabilities of the target hardware platform.
         """
         # Initialize member variables with provided arguments.
-        self.float_graph=float_graph
-        self.fw_info=fw_info
-        self.fw_impl=fw_impl
-        self.target_kpi=target_kpi
-        self.representative_data_gen=representative_data_gen
-        self.pruning_config=pruning_config
-        self.target_platform_capabilities=target_platform_capabilities
-
-        # TODO: BN are not folded so in the meanwhile hessian info is
-        #  initialized here in addition to core.
-
-        # Initialize services and variables for pruning process.
-        self.hessian_info_service = HessianInfoService(graph=float_graph,
-                                                       representative_dataset=representative_data_gen,
-                                                       fw_impl=fw_impl)
+        self.float_graph = float_graph
+        self.fw_info = fw_info
+        self.fw_impl = fw_impl
+        self.target_kpi = target_kpi
+        self.representative_data_gen = representative_data_gen
+        self.pruning_config = pruning_config
+        self.target_platform_capabilities = target_platform_capabilities
 
         #TODO: split defenitions of input/output nodes in a section
 
         self.mask = None # Will hold the output-channel mask for each entry node.
-        self.entry_node_to_score = None  # Will hold the importance scores for each entry node.
+        self.entry_nodes = None  # Will hold the importance scores for each entry node.
 
     def get_pruned_graph(self) -> Graph:
         """
@@ -69,20 +61,20 @@ class Pruner:
             Graph: The pruned computational graph.
         """
         # Retrieve entry points from the graph.
-        entry_nodes = self.float_graph.get_pruning_sections_input_nodes(self.fw_info, self.fw_impl)
+        entry_nodes = self.float_graph.get_pruning_sections_entry_nodes(self.fw_info, self.fw_impl)
 
         # Compute the importance score for each entry node in the graph.
-        self.entry_node_to_score = self.get_score_per_entry_point(entry_nodes)
+        self.entry_nodes = self.get_score_per_entry_point(entry_nodes)
 
         # Assert that scores were successfully computed.
-        assert self.entry_node_to_score is not None
+        assert self.entry_nodes is not None
 
         # Choose the mask calculation strategy based on the pruning configuration.
         if self.pruning_config.channels_filtering_strategy == ChannelsFilteringStrategy.GREEDY:
             # Instantiate a GreedyMaskCalculator to compute the pruning masks.
             mask_calculator = GreedyMaskCalculator(entry_nodes,
                                                    self.fw_info,
-                                                   self.entry_node_to_score,
+                                                   self.entry_nodes,
                                                    self.target_kpi,
                                                    self.float_graph,
                                                    self.fw_impl)
@@ -117,12 +109,18 @@ class Pruner:
 
         # Compute scores based on the importance metric defined in the pruning configuration.
         if self.pruning_config.importance_metric == ImportanceMetric.LFH:
+            # Initialize services and variables for pruning process.
+            hessian_info_service = HessianInfoService(graph=self.float_graph,
+                                                      representative_dataset=self.representative_data_gen,
+                                                      fw_impl=self.fw_impl)
+
             # Calculate the LFH (Label-Free Hessian) score for each prunable channel.
-            scores_per_prunable_node = self.hessian_info_service.fetch_scores_for_multiple_nodes(
+            scores_per_prunable_node = hessian_info_service.fetch_scores_for_multiple_nodes(
                 mode=HessianMode.WEIGHTS,
                 granularity=HessianInfoGranularity.PER_OUTPUT_CHANNEL,
                 nodes=sections_input_nodes,
                 required_size=self.pruning_config.num_score_approximations)
+
             # Average the scores across approximations and map them to the corresponding nodes.
             entry_node_to_score = {node: np.mean(scores, axis=0) for node, scores in
                                    zip(sections_input_nodes, scores_per_prunable_node)}
@@ -149,5 +147,5 @@ class Pruner:
         """
         # Create and return a PruningInfo object with the collected pruning data.
         info = PruningInfo(pruning_masks=self.mask,
-                           importance_scores=self.entry_node_to_score)
+                           importance_scores=self.entry_nodes)
         return info
