@@ -110,8 +110,8 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                             break
 
                     trace_hv.append(hessian_trace_approx)
-                ipts_hessian_trace_approx.append(2 * torch.mean(torch.stack(trace_hv)) / output.shape[
-                    -1])  # Get averaged Hessian trace approximation
+
+                ipts_hessian_trace_approx.append(torch.mean(torch.stack(trace_hv)))  # Get averaged Hessian trace approximation
 
             # If a node has multiple outputs, it means that multiple approximations were computed
             # (one per output since granularity is per-tensor). In this case we average the approximations.
