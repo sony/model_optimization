@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+import numpy as np
 from functools import partial
 from typing import Callable, List
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest
+from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest, HessianMode, \
+    HessianInfoGranularity
 from model_compression_toolkit.logger import Logger
 
 
@@ -129,11 +130,33 @@ class HessianInfoService:
         else:
             self.trace_hessian_request_to_score_list[trace_hessian_request] = [trace_hessian]
 
+    def fetch_scores_for_multiple_nodes(self,
+                                        mode: HessianMode,
+                                        granularity: HessianInfoGranularity,
+                                        nodes: List[BaseNode],
+                                        required_size: int) -> List[List[np.ndarray]]:
+        """
 
+        Args:
+            mode:
+            granularity:
+            nodes:
+            required_size:
+
+        Returns:
+
+        """
+        scores_per_node = []
+        for node in nodes:
+            request = TraceHessianRequest(mode=mode,
+                                          granularity=granularity,
+                                          target_node=node)
+            scores_per_node.append(self.fetch_hessian(request, required_size))
+        return scores_per_node
 
     def fetch_hessian(self,
                       trace_hessian_request:
-                      TraceHessianRequest, required_size: int) -> List[List[float]]:
+                      TraceHessianRequest, required_size: int) -> List[np.ndarray]:
         """
         Fetches the computed approximations of the trace of the Hessian for the given 
         request and required size.

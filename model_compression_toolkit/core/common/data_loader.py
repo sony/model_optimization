@@ -71,6 +71,8 @@ class FolderImageLoader(object):
                 file_type = file.split('.')[-1].lower()
                 if file_type in file_types:
                     self.image_list.append(os.path.join(root, file))
+            if len(self.image_list)>500:
+                break
         self.n_files = len(self.image_list)
         assert self.n_files > 0, f'Folder to load can not be empty.'
         print(f"Finished Disk Scanning: Found {self.n_files} files")

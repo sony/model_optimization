@@ -67,6 +67,21 @@ class FrameworkImplementation(ABC):
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_trace_hessian_calculator method.')  # pragma: no cover
 
+
+    @abstractmethod
+    def is_node_intermediate_pruning_section(self, node):
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s is_node_intermediate_pruning_section method.')  # pragma: no cover
+
+    @abstractmethod
+    def get_pruned_node_num_params(self,
+                                   node: BaseNode,
+                                   input_mask: np.ndarray,
+                                   output_mask: np.ndarray,
+                                   fw_info: FrameworkInfo):
+
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_pruned_node_num_params method.')  # pragma: no cover
     @abstractmethod
     def to_numpy(self, tensor: Any) -> np.ndarray:
         """

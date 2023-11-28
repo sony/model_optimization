@@ -491,3 +491,11 @@ class BaseNode:
                 return False
 
         return True
+
+    def get_simd(self):
+        simd_list = [qc.weights_quantization_cfg.simd_size for qc in self.candidates_quantization_cfg]
+        if len(simd_list) > 1:
+            Logger.warning(f"More than one pruning SIMD option is available. Min SIMD is used: {min(simd_list)}")
+        if len(simd_list) == 0:
+            Logger.error(f"No SIMD option is available for {self}")
+        return min(simd_list)

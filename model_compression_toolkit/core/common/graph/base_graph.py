@@ -29,6 +29,7 @@ from model_compression_toolkit.core.common.graph.graph_searches import GraphSear
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.collectors.statistics_collector import scale_statistics, shift_statistics
+from model_compression_toolkit.core.common.pruning.pruning_section import PruningSection
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
@@ -494,7 +495,6 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Returns:
             List of outgoing edges of the node.
         """
-
         output_edges = [convert_to_edge(e) for e in super().edges(n, data=True)]
         if sort_by_attr is not None:
             output_edges.sort(key=lambda e: getattr(e, sort_by_attr))
@@ -705,3 +705,74 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         return all([n.is_all_activation_candidates_equal() for n in self.nodes])
+
+    def get_pruning_sections(self, fw_info, fw_impl) -> List[PruningSection]:
+        input_sections_nodes = self.get_pruning_sections_input_nodes(fw_info, fw_impl)
+        pruning_sections = []
+
+        # Iterate over each prunable node and find its corresponding section
+        for prunable_node in input_sections_nodes:
+            input_section_node, intermediate_nodes, output_section_node = self.get_section_nodes(prunable_node, fw_impl)
+            pruning_sections.append(PruningSection(input_node=input_section_node,
+                                                   intermediate_nodes=intermediate_nodes,
+                                                   output_node=output_section_node))
+
+        return pruning_sections
+
+    def get_pruning_sections_input_nodes(self, fw_info, fw_impl):
+        prunable_nodes = []
+        for n in list(topological_sort(self)):
+            if fw_impl.is_node_prunable(n) and self.is_node_topology_prunable(n, fw_info, fw_impl):
+                prunable_nodes.append(n)
+        return prunable_nodes
+
+
+    def is_node_topology_prunable(self,
+                                  node: BaseNode,
+                                  fw_info,
+                                  fw_impl):
+        if not fw_impl.is_node_prunable(node):
+            return False
+
+        next_node = node
+        while True:
+            out_edges = self.out_edges(next_node)
+            # Check if the current node has only one outgoing edge
+            if len(out_edges) != 1:
+                return False
+
+            next_node = out_edges[0].sink_node
+            # If the next node is prunable and has only one incoming edge, this topology is prunable.
+            if fw_impl.is_node_prunable(next_node) and len(self.in_edges(next_node)) == 1:
+                return True
+
+            # If the next node is not an intermediate node or has more than one incoming edge, stop the check.
+            if not fw_impl.is_node_intermediate_pruning_section(next_node) or len(self.in_edges(next_node)) != 1:
+                return False
+        return False
+
+        # if fw_impl.is_node_prunable(node) and len(self.out_edges(node)) == 1:
+        #     next_node = self.out_edges(node)[0].sink_node
+        #     while len(self.out_edges(next_node)) == 1 and len(self.in_edges(next_node)) == 1 and fw_impl.is_node_intermediate_pruning_section(next_node):
+        #         next_node = self.out_edges(next_node)[0].sink_node
+        #         if fw_impl.is_node_prunable(next_node):
+        #             return True
+        # return False
+
+    def get_section_nodes(self,
+                          start_node: BaseNode,
+                          fw_impl):
+
+        intermediate_nodes = []
+
+        # Follow the graph from the start_node to find the section's end
+        next_node = self.out_edges(start_node)[0].sink_node
+        while not fw_impl.is_node_prunable(next_node):
+            intermediate_nodes.append(next_node)
+            # Move to the next node in the section
+            next_node = self.out_edges(next_node)[0].sink_node
+
+        assert fw_impl.is_node_prunable(next_node)
+        conv_nodes = [start_node, next_node]
+
+        return conv_nodes[0], intermediate_nodes, conv_nodes[1]

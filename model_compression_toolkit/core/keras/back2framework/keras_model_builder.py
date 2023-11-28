@@ -281,7 +281,10 @@ class KerasModelBuilder(BaseModelBuilder):
                 # have a dtype field.
                 if len(input_tensors) == 1:
                     input_tensors = input_tensors[0]
+                # try:
                 out_tensors_of_n_float = op_func(input_tensors)
+                # except Exception as e:
+                #     print(e)
 
             out_tensors_of_n = self._run_operation_activation_quantization(n,
                                                                            out_tensors_of_n_float)
