@@ -123,12 +123,17 @@ class MemoryCalculator:
                                                                    pruning_sections,
                                                                    masks)
         second_node_output_mask = masks.get(pruning_section.exit_node)
+
         # Create the pruning section mask.
-        pruning_section_mask = PruningSectionMask(
-            input_node_ic_mask=first_node_input_channels_mask,
-            input_node_oc_mask=masks.get(pruning_section.entry_node),
-            output_node_oc_mask=second_node_output_mask
-        )
+        pruning_section_mask = PruningSectionMask(entry_input_mask=first_node_input_channels_mask,
+                                                  entry_output_mask=masks.get(pruning_section.entry_node),
+                                                  exit_input_mask=masks.get(pruning_section.entry_node),
+                                                  exit_output_mask=second_node_output_mask)
+        # pruning_section_mask = PruningSectionMask(
+        #     input_node_ic_mask=first_node_input_channels_mask,
+        #     input_node_oc_mask=masks.get(pruning_section.entry_node),
+        #     output_node_oc_mask=second_node_output_mask
+        # )
         return pruning_section_mask
 
     def get_nparams_of_nonpruned_nodes(self, pruning_sections):
@@ -192,26 +197,48 @@ class MemoryCalculator:
         Returns:
 
         """
+        # # Number of params for the first node in the section.
+        # first_node_nparams = self.fw_impl.get_pruned_node_num_params(
+        #     pruning_section.entry_node,
+        #     pruning_section_mask.input_node_ic_mask,
+        #     pruning_section_mask.input_node_oc_mask,
+        #     self.fw_info)
+        #
+        # # Sum number of params for all intermediate nodes in the section.
+        # total_inter_nodes_nparams = sum(
+        #     self.fw_impl.get_pruned_node_num_params(
+        #         inter_node,
+        #         pruning_section_mask.input_node_oc_mask,
+        #         pruning_section_mask.input_node_oc_mask,
+        #         self.fw_info) for inter_node in pruning_section.intermediate_nodes)
+        #
+        # # Number of params for the last node in the section.
+        # second_node_nparams = self.fw_impl.get_pruned_node_num_params(
+        #     pruning_section.exit_node,
+        #     pruning_section_mask.input_node_oc_mask,
+        #     pruning_section_mask.output_node_oc_mask,
+        #     self.fw_info)
+
         # Number of params for the first node in the section.
         first_node_nparams = self.fw_impl.get_pruned_node_num_params(
             pruning_section.entry_node,
-            pruning_section_mask.input_node_ic_mask,
-            pruning_section_mask.input_node_oc_mask,
+            pruning_section_mask.entry_input_mask,
+            pruning_section_mask.entry_output_mask,
             self.fw_info)
 
         # Sum number of params for all intermediate nodes in the section.
         total_inter_nodes_nparams = sum(
             self.fw_impl.get_pruned_node_num_params(
                 inter_node,
-                pruning_section_mask.input_node_oc_mask,
-                pruning_section_mask.input_node_oc_mask,
+                pruning_section_mask.entry_output_mask,
+                pruning_section_mask.entry_output_mask,
                 self.fw_info) for inter_node in pruning_section.intermediate_nodes)
 
         # Number of params for the last node in the section.
         second_node_nparams = self.fw_impl.get_pruned_node_num_params(
             pruning_section.exit_node,
-            pruning_section_mask.input_node_oc_mask,
-            pruning_section_mask.output_node_oc_mask,
+            pruning_section_mask.exit_input_mask,
+            pruning_section_mask.exit_output_mask,
             self.fw_info)
 
         return first_node_nparams + total_inter_nodes_nparams + second_node_nparams

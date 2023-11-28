@@ -4,12 +4,11 @@ import numpy as np
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode
 
-def is_keras_node_entry_node(node:BaseNode):
+def is_keras_entry_node(node:BaseNode):
     return _is_keras_node_pruning_section_edge(node)
 
-def is_keras_node_exit_node(node:BaseNode):
+def is_keras_exit_node(node:BaseNode):
     return _is_keras_node_pruning_section_edge(node)
-
 
 
 # Check if a Keras node is an intermediate node in a pruning section.
@@ -78,6 +77,7 @@ def prune_keras_node(node: BaseNode,
                      mask: np.ndarray,
                      fw_info: FrameworkInfo,
                      last_section_node: bool = False):
+
     # If the node is a kernel operation, prune it as an edge node.
     if fw_info.is_kernel_op(node.type):
         _prune_edge_node(fw_info, last_section_node, mask, node)

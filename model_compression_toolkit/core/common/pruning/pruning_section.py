@@ -5,16 +5,26 @@ import numpy as np
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 
 
+# class PruningSectionMask:
+#     def __init__(self,
+#                  input_node_ic_mask: np.ndarray,
+#                  input_node_oc_mask: np.ndarray,
+#                  output_node_oc_mask: np.ndarray
+#                  ):
+#         self.input_node_ic_mask = input_node_ic_mask
+#         self.input_node_oc_mask = input_node_oc_mask
+#         self.output_node_oc_mask = output_node_oc_mask
 class PruningSectionMask:
     def __init__(self,
-                 input_node_ic_mask: np.ndarray,
-                 input_node_oc_mask: np.ndarray,
-                 output_node_oc_mask: np.ndarray
-                 ):
-        self.input_node_ic_mask = input_node_ic_mask
-        self.input_node_oc_mask = input_node_oc_mask
-        self.output_node_oc_mask = output_node_oc_mask
+                 entry_input_mask: np.ndarray,
+                 entry_output_mask: np.ndarray,
+                 exit_input_mask: np.ndarray,
+                 exit_output_mask: np.ndarray):
 
+        self.entry_input_mask = entry_input_mask
+        self.entry_output_mask = entry_output_mask
+        self.exit_input_mask = exit_input_mask
+        self.exit_output_mask = exit_output_mask
 
 class PruningSection:
 
@@ -37,16 +47,16 @@ class PruningSection:
                                  fw_impl,
                                  fw_info):
         fw_impl.prune_node(self.entry_node,
-                           pruning_section_mask.input_node_oc_mask,
+                           pruning_section_mask.entry_output_mask,
                            fw_info,
                            last_section_node=False)
         for n in self.intermediate_nodes:
             fw_impl.prune_node(n,
-                               pruning_section_mask.input_node_oc_mask,
+                               pruning_section_mask.entry_output_mask,
                                fw_info,
                                last_section_node=False)
         fw_impl.prune_node(self.exit_node,
-                           pruning_section_mask.input_node_oc_mask,
+                           pruning_section_mask.entry_output_mask,
                            fw_info,
                            last_section_node=True)
 

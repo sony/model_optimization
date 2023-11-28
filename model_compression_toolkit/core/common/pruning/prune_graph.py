@@ -46,9 +46,13 @@ def build_pruned_graph(graph: Graph,
 
         # If the mask indicates that some channels are to be pruned, apply it.
         if np.any(mask == 0):
-            section_mask = PruningSectionMask(input_node_ic_mask=None,
-                                              input_node_oc_mask=mask,
-                                              output_node_oc_mask=None)
+            # section_mask = PruningSectionMask(input_node_ic_mask=None,
+            #                                   input_node_oc_mask=mask,
+            #                                   output_node_oc_mask=None)
+            section_mask = PruningSectionMask(entry_input_mask=None,
+                                              entry_output_mask=mask,
+                                              exit_input_mask=mask,
+                                              exit_output_mask=None)
             pruning_section.apply_inner_section_mask(section_mask, fw_impl, fw_info)
 
     # Return the pruned graph.
