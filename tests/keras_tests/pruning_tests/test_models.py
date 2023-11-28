@@ -65,7 +65,17 @@ class ModelsPruningTest(unittest.TestCase):
             self.run_test(cr, dense_model)
 
 
-    def run_test(self, cr, dense_model):
+    def _dummy_retrain(self, model, ds):
+        # Compile the model with a loss function, optimizer, and metric to monitor
+        model.compile(optimizer='adam',
+                      loss='sparse_categorical_crossentropy',
+                      metrics=['accuracy'])
+
+        # Train the model for one epoch using the dummy dataset
+        model.fit(ds, epochs=1)
+        return model
+
+    def run_test(self, cr, dense_model, test_retraining=True):
         dense_nparams = sum([l.count_params() for l in dense_model.layers])
         pruned_model, pruning_info = mct.pruning.keras_pruning_experimental(model=dense_model,
                                                                             target_kpi=mct.KPI(
@@ -76,10 +86,15 @@ class ModelsPruningTest(unittest.TestCase):
                                                                             importance_metric=mct.pruning.ImportanceMetric.RANDOM))
         pruned_nparams = sum([l.count_params() for l in pruned_model.layers])
         actual_cr = pruned_nparams / dense_nparams
-        print(f"Target cr: {cr}, Actual cr: {actual_cr}")
+        print(f"Target remaining cr: {cr*100}, Actual remaining cr: {actual_cr*100} ")
         input_tensor = next(self.representative_dataset())[0]
         pruned_outputs = pruned_model(input_tensor)
-        # TODO: test dummy retraining
+        if test_retraining:
+            ds = create_dummy_dataset()
+            retrained_model = self._dummy_retrain(pruned_model, ds)
+            retrained_outputs = retrained_model(input_tensor)
+            assert np.sum(np.abs(pruned_outputs - retrained_outputs)) != 0
+
 
         for layer_name, layer_mask in pruning_info.pruning_masks.items():
             if 0 in layer_mask:
@@ -89,7 +104,23 @@ class ModelsPruningTest(unittest.TestCase):
                 assert max_score_removed <= min_score_remained
 
         assert actual_cr <= cr
-        # print(f"Target cr: {cr}, Actual cr: {actual_cr}")
         if cr>=1.:
             assert np.sum(np.abs(pruned_outputs-dense_model(input_tensor)))==0
 
+
+# Function to generate an infinite stream of dummy images and labels
+def dummy_data_generator():
+    image = np.random.random((224, 224, 3)).astype(np.float32)
+    label = np.random.randint(0, 2)
+    yield image, label
+
+# Create a Dataset object that returns the dummy data
+def create_dummy_dataset():
+    dummy_dataset = tf.data.Dataset.from_generator(
+        dummy_data_generator,
+        output_signature=(
+            tf.TensorSpec(shape=(224, 224, 3), dtype=tf.float32),
+            tf.TensorSpec(shape=(), dtype=tf.int32)
+        )
+    )
+    return dummy_dataset.batch(1)

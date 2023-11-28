@@ -94,6 +94,7 @@ if FOUND_TF:
 
         # Rebuild the pruned graph back into a trainable Keras model.
         pruned_model, _ = FloatKerasModelBuilder(graph=pruned_graph).build_model()
+        pruned_model.trainable = True
 
         # Return the pruned model along with its pruning information.
         return pruned_model, pruning_info

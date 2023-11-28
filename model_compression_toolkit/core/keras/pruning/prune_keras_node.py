@@ -85,16 +85,50 @@ def prune_keras_node(node: BaseNode,
         # If it's an intermediate node, prune accordingly.
         _prune_intermediate_node(mask, node)
 
-# Prune an intermediate node.
-def _prune_intermediate_node(mask, node):
-    # Adjust the input shape of the node according to the mask.
-    _edit_node_input_shape(mask, node)
+
+def prune_keras_entry_node(node: BaseNode,
+                           input_mask: np.ndarray,
+                           output_mask: np.ndarray,
+                           fw_info: FrameworkInfo):
+    return _prune_edge_node(fw_info=fw_info,
+                            last_section_node=False,
+                            mask=output_mask,
+                            node=node)
+
+def prune_keras_intermediate_node(node: BaseNode,
+                                  input_mask: np.ndarray,
+                                  output_mask: np.ndarray,
+                                  fw_info: FrameworkInfo):
+    _edit_node_input_shape(input_mask, node)
     pruned_parameters = {}
-    mask_bool = mask.astype(bool)
+    mask_bool = output_mask.astype(bool)
     for k, v in node.weights.items():
         # Apply the mask to the weights.
         pruned_parameters[k] = v.compress(mask_bool, axis=-1)
     node.weights = pruned_parameters
+
+def prune_keras_exit_node(node: BaseNode,
+                          input_mask: np.ndarray,
+                          output_mask: np.ndarray,
+                          fw_info: FrameworkInfo):
+    return _prune_edge_node(fw_info=fw_info,
+                            last_section_node=True,
+                            mask=input_mask,
+                            node=node)
+
+
+
+
+# Prune an intermediate node.
+# def _prune_intermediate_node(mask, node):
+#     # Adjust the input shape of the node according to the mask.
+#     _edit_node_input_shape(mask, node)
+#     pruned_parameters = {}
+#     mask_bool = mask.astype(bool)
+#     for k, v in node.weights.items():
+#         # Apply the mask to the weights.
+#         pruned_parameters[k] = v.compress(mask_bool, axis=-1)
+#     node.weights = pruned_parameters
 
 # Edit the input shape of a node based on the pruning mask.
 def _edit_node_input_shape(mask, node):
