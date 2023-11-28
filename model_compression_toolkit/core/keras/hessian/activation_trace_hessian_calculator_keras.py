@@ -152,7 +152,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                     # Compute the final approximation for each output index
                     num_node_outputs = len(interest_point_scores[0])
                     for output_idx in range(num_node_outputs):
-                        final_approx_per_output.append(2 * tf.reduce_mean([x[output_idx] for x in interest_point_scores]) / output.shape[-1])
+                        final_approx_per_output.append(tf.reduce_mean([x[output_idx] for x in interest_point_scores]))
 
                     # final_approx_per_output is a list of all approximations (one per output), thus we average them to
                     # get the final score of a node.
