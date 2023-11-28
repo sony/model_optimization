@@ -67,6 +67,7 @@ class FrameworkImplementation(ABC):
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_trace_hessian_calculator method.')  # pragma: no cover
 
+
     @abstractmethod
     def is_node_intermediate_pruning_section(self, node):
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '

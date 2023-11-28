@@ -27,10 +27,11 @@ from model_compression_toolkit.core.keras.hessian.activation_trace_hessian_calcu
     ActivationTraceHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.weights_trace_hessian_calculator_keras import WeightsTraceHessianCalculatorKeras
+from model_compression_toolkit.core.keras.pruning.check_node_role import is_keras_node_intermediate_pruning_section, \
+    is_keras_entry_node, is_keras_exit_node
+from model_compression_toolkit.core.keras.pruning.count_node_params import get_keras_pruned_node_num_params
+from model_compression_toolkit.core.keras.pruning.prune_keras_node import prune_keras_exit_node, prune_keras_entry_node, prune_keras_intermediate_node
 
-from model_compression_toolkit.core.keras.pruning.prune_keras_node import prune_keras_node, \
-    is_keras_node_intermediate_pruning_section, get_keras_pruned_node_num_params, is_keras_entry_node, \
-    is_keras_exit_node, prune_keras_exit_node, prune_keras_entry_node, prune_keras_intermediate_node
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
@@ -598,16 +599,10 @@ class KerasImplementation(FrameworkImplementation):
 
         return model(inputs)
 
-    # def prune_node(self,node,mask,fw_info, last_section_node):
-    #     return prune_keras_node(node,
-    #                             mask,
-    #                             fw_info,
-    #                             last_section_node)
 
-    def prune_entry_node(self, node: BaseNode, input_mask: np.ndarray, output_mask: np.ndarray,
+    def prune_entry_node(self, node: BaseNode, output_mask: np.ndarray,
                          fw_info: FrameworkInfo):
         return prune_keras_entry_node(node,
-                                      input_mask,
                                       output_mask,
                                       fw_info)
 
@@ -618,11 +613,12 @@ class KerasImplementation(FrameworkImplementation):
                                              output_mask,
                                              fw_info)
 
-    def prune_exit_node(self, node: BaseNode, input_mask: np.ndarray, output_mask: np.ndarray,
+    def prune_exit_node(self,
+                        node: BaseNode,
+                        input_mask: np.ndarray,
                         fw_info: FrameworkInfo):
         return prune_keras_exit_node(node,
                                      input_mask,
-                                     output_mask,
                                      fw_info)
 
 
@@ -644,5 +640,4 @@ class KerasImplementation(FrameworkImplementation):
         return get_keras_pruned_node_num_params(node,
                                                 input_mask,
                                                 output_mask,
-                                                fw_info
-                                                )
+                                                fw_info)

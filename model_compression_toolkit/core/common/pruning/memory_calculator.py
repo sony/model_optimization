@@ -197,28 +197,6 @@ class MemoryCalculator:
         Returns:
 
         """
-        # # Number of params for the first node in the section.
-        # first_node_nparams = self.fw_impl.get_pruned_node_num_params(
-        #     pruning_section.entry_node,
-        #     pruning_section_mask.input_node_ic_mask,
-        #     pruning_section_mask.input_node_oc_mask,
-        #     self.fw_info)
-        #
-        # # Sum number of params for all intermediate nodes in the section.
-        # total_inter_nodes_nparams = sum(
-        #     self.fw_impl.get_pruned_node_num_params(
-        #         inter_node,
-        #         pruning_section_mask.input_node_oc_mask,
-        #         pruning_section_mask.input_node_oc_mask,
-        #         self.fw_info) for inter_node in pruning_section.intermediate_nodes)
-        #
-        # # Number of params for the last node in the section.
-        # second_node_nparams = self.fw_impl.get_pruned_node_num_params(
-        #     pruning_section.exit_node,
-        #     pruning_section_mask.input_node_oc_mask,
-        #     pruning_section_mask.output_node_oc_mask,
-        #     self.fw_info)
-
         # Number of params for the first node in the section.
         first_node_nparams = self.fw_impl.get_pruned_node_num_params(
             pruning_section.entry_node,

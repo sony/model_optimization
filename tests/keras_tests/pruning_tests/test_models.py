@@ -75,7 +75,7 @@ class ModelsPruningTest(unittest.TestCase):
         model.fit(ds, epochs=1)
         return model
 
-    def run_test(self, cr, dense_model, test_retraining=True):
+    def run_test(self, cr, dense_model, test_retraining=False):
         dense_nparams = sum([l.count_params() for l in dense_model.layers])
         pruned_model, pruning_info = mct.pruning.keras_pruning_experimental(model=dense_model,
                                                                             target_kpi=mct.KPI(

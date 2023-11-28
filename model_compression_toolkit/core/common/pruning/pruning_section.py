@@ -47,31 +47,17 @@ class PruningSection:
                                  fw_impl,
                                  fw_info):
         fw_impl.prune_entry_node(node=self.entry_node,
-                                 input_mask=None,
                                  output_mask=pruning_section_mask.entry_output_mask,
                                  fw_info=fw_info)
 
-        # fw_impl.prune_node(self.entry_node,
-        #                    pruning_section_mask.entry_output_mask,
-        #                    fw_info,
-        #                    last_section_node=False)
         for inter_node in self.intermediate_nodes:
             fw_impl.prune_intermediate_node(node=inter_node,
                                             input_mask=pruning_section_mask.entry_output_mask,
                                             output_mask=pruning_section_mask.entry_output_mask,
                                             fw_info=fw_info)
-            # fw_impl.prune_node(n,
-            #                    pruning_section_mask.entry_output_mask,
-            #                    fw_info,
-            #                    last_section_node=False)
 
         fw_impl.prune_exit_node(self.exit_node,
                                 input_mask=pruning_section_mask.exit_input_mask,
-                                output_mask=None,
                                 fw_info=fw_info)
-        # fw_impl.prune_node(self.exit_node,
-        #                    pruning_section_mask.entry_output_mask,
-        #                    fw_info,
-        #                    last_section_node=True)
 
 
