@@ -22,8 +22,8 @@ from model_compression_toolkit.core.common.quantization.quantization_analyzer im
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
-from model_compression_toolkit.core.runner import _init_tensorboard_writer, \
-    _prepare_model_for_quantization
+from model_compression_toolkit.core.quantization_prep_runner import quantization_preparation_runner
+from model_compression_toolkit.core.runner import _init_tensorboard_writer
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_tp_model, \
     get_op_quantization_configs
@@ -129,12 +129,12 @@ def prepare_graph_set_bit_widths(in_model,
                                      tpc=tpc,
                                      mixed_precision_enable=core_config.mixed_precision_enable)
 
-    tg = _prepare_model_for_quantization(graph,
+    tg = quantization_preparation_runner(graph,
                                          _representative_data_gen,
                                          core_config,
                                          fw_info,
-                                         tb_w,
-                                         fw_impl)
+                                         fw_impl,
+                                         tb_w)
 
     ######################################
     # Finalize bit widths
