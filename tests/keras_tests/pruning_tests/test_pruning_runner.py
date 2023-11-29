@@ -18,9 +18,13 @@ import unittest
 
 import tensorflow as tf
 
+from tests.keras_tests.pruning_tests.networks_tests.conv2d_conv2dtranspose_pruning_test import \
+    Conv2DtoConv2DTransposePruningTest
 from tests.keras_tests.pruning_tests.networks_tests.conv2d_pruning_test import Conv2DPruningTest
 import numpy as np
 
+from tests.keras_tests.pruning_tests.networks_tests.conv2dtranspose_conv2d_pruning_test import \
+    Conv2DTransposetoConv2DPruningTest
 from tests.keras_tests.pruning_tests.networks_tests.conv2dtranspose_pruning_test import Conv2DTransposePruningTest
 from tests.keras_tests.pruning_tests.networks_tests.dense_pruning_test import DensePruningTest
 import keras
@@ -57,6 +61,26 @@ class PruningNetworksTest(unittest.TestCase):
             Conv2DTransposePruningTest(self, target_cr=cr, use_bn=True, activation_layer=layers.ReLU()).run_test()
             Conv2DTransposePruningTest(self, target_cr=cr, use_bn=True, activation_layer=layers.Softmax()).run_test()
             Conv2DTransposePruningTest(self, target_cr=cr, use_bn=True, activation_layer=layers.PReLU()).run_test()
+
+
+    def test_conv2d_conv2dtranspose_pruning(self):
+        target_crs = np.linspace(0.7, 1, 5)
+        for cr in target_crs:
+            Conv2DtoConv2DTransposePruningTest(self, target_cr=cr).run_test()
+            Conv2DtoConv2DTransposePruningTest(self, target_cr=cr, use_bn=True).run_test()
+            Conv2DtoConv2DTransposePruningTest(self, target_cr=cr, use_bn=True, activation_layer=layers.ReLU()).run_test()
+            Conv2DtoConv2DTransposePruningTest(self, target_cr=cr, use_bn=True, activation_layer=layers.Softmax()).run_test()
+            Conv2DtoConv2DTransposePruningTest(self, target_cr=cr, use_bn=True, activation_layer=layers.PReLU()).run_test()
+
+    def test_conv2dtranspose_conv2d_pruning(self):
+        target_crs = np.linspace(0.7, 1, 5)
+        for cr in target_crs:
+            Conv2DTransposetoConv2DPruningTest(self, target_cr=cr).run_test()
+            Conv2DTransposetoConv2DPruningTest(self, target_cr=cr, use_bn=True).run_test()
+            Conv2DTransposetoConv2DPruningTest(self, target_cr=cr, use_bn=True, activation_layer=layers.ReLU()).run_test()
+            Conv2DTransposetoConv2DPruningTest(self, target_cr=cr, use_bn=True, activation_layer=layers.Softmax()).run_test()
+            Conv2DTransposetoConv2DPruningTest(self, target_cr=cr, use_bn=True, activation_layer=layers.PReLU()).run_test()
+
 
 
 if __name__ == '__main__':
