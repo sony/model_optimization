@@ -70,6 +70,7 @@ class GreedyMaskCalculator:
 
         # Group scores by SIMD size and set the first group to be unpruned.
         self.group_scores_by_simd_groups()
+        # TODO: recalculate new score to each group instead of summing it _get_best_simd_group_candidate
 
         # Set the first group of channels to be unpruned.
         self.update_mandatory_mask()
@@ -93,8 +94,7 @@ class GreedyMaskCalculator:
     def group_scores_by_simd_groups(self):
         for prunable_node, node_scores in self.score_by_node.items():
             # Group scores and indices by SIMD size.
-            self.simd_groups_scores[prunable_node], self.simd_groups_indices[
-                prunable_node] = self._group_scores_by_simd_size(node_scores, prunable_node.get_simd())
+            self.simd_groups_scores[prunable_node], self.simd_groups_indices[prunable_node] = self._group_scores_by_simd_size(node_scores, prunable_node.get_simd())
 
     def update_mandatory_mask(self):
         for prunable_node, node_scores in self.score_by_node.items():
