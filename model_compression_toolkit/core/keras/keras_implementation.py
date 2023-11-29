@@ -27,11 +27,6 @@ from model_compression_toolkit.core.keras.hessian.activation_trace_hessian_calcu
     ActivationTraceHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.weights_trace_hessian_calculator_keras import WeightsTraceHessianCalculatorKeras
-from model_compression_toolkit.core.keras.pruning.check_node_role import is_keras_node_intermediate_pruning_section, \
-    is_keras_entry_node, is_keras_exit_node
-from model_compression_toolkit.core.keras.pruning.count_node_params import get_keras_pruned_node_num_params
-from model_compression_toolkit.core.keras.pruning.prune_keras_node import prune_keras_exit_node, prune_keras_entry_node, prune_keras_intermediate_node
-
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
@@ -599,47 +594,3 @@ class KerasImplementation(FrameworkImplementation):
 
         return model(inputs)
 
-
-    def prune_entry_node(self, node: BaseNode, output_mask: np.ndarray,
-                         fw_info: FrameworkInfo):
-        return prune_keras_entry_node(node,
-                                      output_mask,
-                                      fw_info)
-
-    def prune_intermediate_node(self, node: BaseNode, input_mask: np.ndarray, output_mask: np.ndarray,
-                                fw_info: FrameworkInfo):
-        return prune_keras_intermediate_node(node,
-                                             input_mask,
-                                             output_mask,
-                                             fw_info)
-
-    def prune_exit_node(self,
-                        node: BaseNode,
-                        input_mask: np.ndarray,
-                        fw_info: FrameworkInfo):
-        return prune_keras_exit_node(node,
-                                     input_mask,
-                                     fw_info)
-
-
-    def is_node_entry_node(self, node:BaseNode): #TODO:Add to base class
-        return is_keras_entry_node(node)
-
-    def is_node_exit_node(self, node:BaseNode, dual_entry_node: BaseNode):
-        return is_keras_exit_node(node, dual_entry_node)
-
-    def is_node_intermediate_pruning_section(self, node):
-        return is_keras_node_intermediate_pruning_section(node)
-
-    def get_pruned_node_num_params(self,
-                                   node: BaseNode,
-                                   input_mask: np.ndarray,
-                                   output_mask: np.ndarray,
-                                   fw_info: FrameworkInfo,
-                                   include_null_channels: bool):
-
-        return get_keras_pruned_node_num_params(node,
-                                                input_mask,
-                                                output_mask,
-                                                fw_info,
-                                                include_null_channels)

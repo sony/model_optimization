@@ -25,6 +25,7 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
     set_quantization_configuration_to_graph
 from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
+from model_compression_toolkit.core.keras.pruning.pruning_keras_implementation import PruningKerasImplementation
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
     TargetPlatformCapabilities
@@ -62,7 +63,7 @@ if FOUND_TF:
         """
 
         # Instantiate the Keras framework implementation.
-        fw_impl = KerasImplementation()
+        fw_impl = PruningKerasImplementation()
 
         # Convert the original Keras model to an internal graph representation.
         float_graph = read_model_to_graph(model,
