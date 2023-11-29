@@ -39,7 +39,7 @@ def quantization_preparation_runner(graph: Graph,
                                     core_config: CoreConfig,
                                     fw_info: FrameworkInfo,
                                     fw_impl: FrameworkImplementation,
-                                    tb_w: TensorboardWriter = None):
+                                    tb_w: TensorboardWriter = None) -> Graph:
     """
     Prepares a trained model for post-training quantization.
     First, the model graph is optimized using several transformations (e.g. folding BatchNormalization to preceding layers).
