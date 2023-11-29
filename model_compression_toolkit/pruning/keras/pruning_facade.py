@@ -24,15 +24,14 @@ from model_compression_toolkit.core.common.pruning.pruning_info import PruningIn
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
-from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
-from model_compression_toolkit.core.keras.pruning.pruning_keras_implementation import PruningKerasImplementation
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
     TargetPlatformCapabilities
 
 if FOUND_TF:
+    from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
+    from model_compression_toolkit.core.keras.pruning.pruning_keras_implementation import PruningKerasImplementation
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-    from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
     from tensorflow.keras.models import Model
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 
@@ -73,7 +72,7 @@ if FOUND_TF:
                                           fw_impl)
 
         # Apply quantization configuration to the graph. This step is necessary even when not quantizing,
-        # as it prepares the graph for compression.
+        # as it prepares the graph for the pruning process.
         float_graph_with_compression_config = set_quantization_configuration_to_graph(float_graph,
                                                                                       quant_config=DEFAULTCONFIG,
                                                                                       mixed_precision_enable=False)
@@ -88,7 +87,7 @@ if FOUND_TF:
                         target_platform_capabilities)
 
         # Apply the pruning process.
-        pruned_graph = pruner.get_pruned_graph() #TODO:rename
+        pruned_graph = pruner.get_pruned_graph()  # TODO:rename
 
         # Retrieve pruning information which includes the pruning masks and scores.
         pruning_info = pruner.get_pruning_info()
