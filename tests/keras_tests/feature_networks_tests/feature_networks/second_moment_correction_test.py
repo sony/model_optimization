@@ -27,13 +27,14 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.network_editors import EditRule
 from model_compression_toolkit.core.common.statistics_correction.apply_second_moment_correction_to_graph import \
     quantized_model_builder_for_second_moment_correction
+from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.core.keras.constants import EPSILON_VAL, GAMMA, BETA, MOVING_MEAN, MOVING_VARIANCE
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
 from model_compression_toolkit.core.keras.statistics_correction.apply_second_moment_correction import \
     keras_apply_second_moment_correction
-from model_compression_toolkit.core.runner import _init_tensorboard_writer, core_runner
+from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
@@ -277,7 +278,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
                                                           network_editor=network_editor)
                                  )
 
-        tb_w = _init_tensorboard_writer(fw_info)
+        tb_w = init_tensorboard_writer(fw_info)
 
         fw_impl = KerasImplementation()
 
