@@ -112,11 +112,11 @@ def _prune_keras_edge_node(node: BaseNode,
     # Convert mask to boolean.
     mask_bool = mask.astype(bool)
 
-    # Special handling for Dense layers at the exit of a pruning section.
-    if is_exit_node and node.type == keras.layers.Dense:
-        num_ic_per_prev_oc_channel = kernel.shape[axis_to_prune] / len(mask_bool)
-        assert int(num_ic_per_prev_oc_channel) == num_ic_per_prev_oc_channel
-        mask_bool = np.repeat(mask_bool, int(num_ic_per_prev_oc_channel))
+    # # Special handling for Dense layers at the exit of a pruning section.
+    # if is_exit_node and node.type == keras.layers.Dense:
+    #     num_ic_per_prev_oc_channel = kernel.shape[axis_to_prune] / len(mask_bool)
+    #     assert int(num_ic_per_prev_oc_channel) == num_ic_per_prev_oc_channel
+    #     mask_bool = np.repeat(mask_bool, int(num_ic_per_prev_oc_channel))
 
     pruned_kernel = kernel.compress(mask_bool, axis=axis_to_prune)
     node.set_weights_by_keys(name=kernel_attr, tensor=pruned_kernel)

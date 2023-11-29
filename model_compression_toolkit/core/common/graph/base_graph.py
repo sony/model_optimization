@@ -743,7 +743,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
             next_node = out_edges[0].sink_node
             # If the next node is prunable and has only one incoming edge, this topology is prunable.
-            if fw_impl.is_node_exit_node(next_node) and len(self.in_edges(next_node)) == 1:
+            if fw_impl.is_node_exit_node(next_node, node) and len(self.in_edges(next_node)) == 1:
                 return True
 
             # If the next node is not an intermediate node or has more than one incoming edge, stop the check.
@@ -768,12 +768,12 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         # Follow the graph from the start_node to find the section's end
         next_node = self.out_edges(start_node)[0].sink_node
-        while not fw_impl.is_node_exit_node(next_node):
+        while not fw_impl.is_node_exit_node(next_node, start_node):
             intermediate_nodes.append(next_node)
             # Move to the next node in the section
             next_node = self.out_edges(next_node)[0].sink_node
 
-        assert fw_impl.is_node_exit_node(next_node)
+        assert fw_impl.is_node_exit_node(next_node, start_node)
         conv_nodes = [start_node, next_node]
 
         return conv_nodes[0], intermediate_nodes, conv_nodes[1]

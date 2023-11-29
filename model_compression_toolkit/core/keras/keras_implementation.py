@@ -625,8 +625,8 @@ class KerasImplementation(FrameworkImplementation):
     def is_node_entry_node(self, node:BaseNode): #TODO:Add to base class
         return is_keras_entry_node(node)
 
-    def is_node_exit_node(self, node:BaseNode):
-        return is_keras_exit_node(node)
+    def is_node_exit_node(self, node:BaseNode, dual_entry_node: BaseNode):
+        return is_keras_exit_node(node, dual_entry_node)
 
     def is_node_intermediate_pruning_section(self, node):
         return is_keras_node_intermediate_pruning_section(node)
