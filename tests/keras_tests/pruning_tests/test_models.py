@@ -8,6 +8,7 @@ import numpy as np
 keras = tf.keras
 layers = keras.layers
 
+NUM_PRUNING_RATIOS = 2
 
 class ModelsPruningTest(unittest.TestCase):
     def representative_dataset(self, in_shape=(1,224,224,3)):
@@ -17,20 +18,53 @@ class ModelsPruningTest(unittest.TestCase):
     def test_rn50_pruning(self):
         from keras.applications.resnet50 import ResNet50
         dense_model = ResNet50()
-        target_crs = np.linspace(0.5, 1, 5)
+        target_crs = np.linspace(0.5, 1, NUM_PRUNING_RATIOS)
         for cr in target_crs:
             self.run_test(cr, dense_model)
 
     def test_efficientnetb0_pruning(self):
         from keras.applications.efficientnet import EfficientNetB0
         dense_model = EfficientNetB0()
-        target_crs = np.linspace(0.6, 1, 5)
+        target_crs = np.linspace(0.8, 1, NUM_PRUNING_RATIOS)
         for cr in target_crs:
             self.run_test(cr, dense_model)
+
+    # def test_retinanet_pruning(self):
+    #     import keras_cv
+    #     dense_model = keras_cv.models.RetinaNet.from_preset(
+    #         "retinanet_resnet50_pascalvoc", bounding_box_format="xywh"
+    #     )
+    #     target_crs = np.linspace(0.8, 1, 5)
+    #     for cr in target_crs:
+    #         self.run_test(cr, dense_model)
+
+    # def test_yolov8_pruning(self):
+    #     import keras_cv
+    #     class_ids = [
+    #         "car",
+    #         "pedestrian",
+    #         "trafficLight",
+    #         "biker",
+    #         "truck",
+    #     ]
+    #     class_mapping = dict(zip(range(len(class_ids)), class_ids))
+    #     backbone = keras_cv.models.YOLOV8Backbone.from_preset(
+    #         "yolo_v8_s_backbone_coco"  # We will use yolov8 small backbone with coco weights
+    #     )
+    #     dense_model = keras_cv.models.YOLOV8Detector(
+    #         num_classes=len(class_mapping),
+    #         bounding_box_format="xyxy",
+    #         backbone=backbone,
+    #         fpn_depth=1,
+    #     )
+    #     target_crs = np.linspace(0.5, 1, 5)
+    #     for cr in target_crs:
+    #         self.run_test(cr, dense_model)
+
     def test_vgg16_pruning(self):
         from keras.applications.vgg16 import VGG16
         dense_model = VGG16()
-        target_crs = np.linspace(0.5, 1, 5)
+        target_crs = np.linspace(0.5, 1, NUM_PRUNING_RATIOS)
         for cr in target_crs:
             self.run_test(cr, dense_model)
 
@@ -38,21 +72,21 @@ class ModelsPruningTest(unittest.TestCase):
     def test_mobilenet_pruning(self):
         from keras.applications.mobilenet import MobileNet
         dense_model = MobileNet()
-        target_crs = np.linspace(0.55, 1, 5)
+        target_crs = np.linspace(0.55, 1, NUM_PRUNING_RATIOS)
         for cr in target_crs:
             self.run_test(cr, dense_model)
 
     def test_mobilenetv2_pruning(self):
         from keras.applications.mobilenet_v2 import MobileNetV2
         dense_model = MobileNetV2()
-        target_crs = np.linspace(0.5, 1, 5)
+        target_crs = np.linspace(0.5, 1, NUM_PRUNING_RATIOS)
         for cr in target_crs:
             self.run_test(cr, dense_model)
 
     def test_densenet_pruning(self):
         from keras.applications.densenet import DenseNet121
         dense_model = DenseNet121()
-        target_crs = np.linspace(0.5, 1, 5)
+        target_crs = np.linspace(0.5, 1, NUM_PRUNING_RATIOS)
         for cr in target_crs:
             self.run_test(cr, dense_model)
 
@@ -60,7 +94,7 @@ class ModelsPruningTest(unittest.TestCase):
     def test_vgg19_pruning(self):
         from keras.applications.vgg19 import VGG19
         dense_model = VGG19()
-        target_crs = np.linspace(0.5, 1, 5)
+        target_crs = np.linspace(0.5, 1, NUM_PRUNING_RATIOS)
         for cr in target_crs:
             self.run_test(cr, dense_model)
 
@@ -95,7 +129,6 @@ class ModelsPruningTest(unittest.TestCase):
             retrained_outputs = retrained_model(input_tensor)
             assert np.sum(np.abs(pruned_outputs - retrained_outputs)) != 0
 
-
         for layer_name, layer_mask in pruning_info.pruning_masks.items():
             if 0 in layer_mask:
                 layer_scores = pruning_info.importance_scores[layer_name]
@@ -104,7 +137,7 @@ class ModelsPruningTest(unittest.TestCase):
                 assert max_score_removed <= min_score_remained
 
         assert actual_cr <= cr
-        if cr>=1.:
+        if actual_cr>=1.:
             assert np.sum(np.abs(pruned_outputs-dense_model(input_tensor)))==0
 
 

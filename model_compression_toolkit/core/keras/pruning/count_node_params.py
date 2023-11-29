@@ -6,29 +6,13 @@ import numpy as np
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode
 
-def ddd(node: BaseNode,
-         input_mask: np.ndarray,
-         output_mask: np.ndarray,
-         fw_info: FrameworkInfo):
-    _node = copy.deepcopy(node)
-
 
 # Get the number of parameters for a pruned Keras node.
 def get_keras_pruned_node_num_params(node: BaseNode,
                                      input_mask: np.ndarray,
                                      output_mask: np.ndarray,
-                                     fw_info: FrameworkInfo):
-    """
-
-    Args:
-        node:
-        input_mask:
-        output_mask:
-        fw_info:
-
-    Returns:
-
-    """
+                                     fw_info: FrameworkInfo,
+                                     include_null_channels: bool):
 
     total_params = 0
     if fw_info.is_kernel_op(node.type):
@@ -67,8 +51,15 @@ def get_keras_pruned_node_num_params(node: BaseNode,
 
     else:
         # For non-kernel operations, apply the output mask to the last axis.
+        # This part assumes that for non-kernel ops, all weights output channel axis is -1.
         for w_attr, w in node.weights.items():
             pruned_w = np.take(w, np.where(output_mask)[0], axis=-1)
             total_params += pruned_w.size
+
+    if include_null_channels:
+        node_simd = node.get_simd()
+        nparams_per_oc = total_params / np.sum(output_mask)
+        num_oc_with_null_channels = np.ceil(np.sum(output_mask) / node_simd) * node_simd
+        total_params = num_oc_with_null_channels * nparams_per_oc
 
     return total_params

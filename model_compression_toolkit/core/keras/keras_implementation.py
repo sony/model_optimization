@@ -635,9 +635,11 @@ class KerasImplementation(FrameworkImplementation):
                                    node: BaseNode,
                                    input_mask: np.ndarray,
                                    output_mask: np.ndarray,
-                                   fw_info: FrameworkInfo):
+                                   fw_info: FrameworkInfo,
+                                   include_null_channels: bool):
 
         return get_keras_pruned_node_num_params(node,
                                                 input_mask,
                                                 output_mask,
-                                                fw_info)
+                                                fw_info,
+                                                include_null_channels)

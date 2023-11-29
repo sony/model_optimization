@@ -76,7 +76,8 @@ class GreedyMaskCalculator:
         self.update_mandatory_mask()
 
         # Iteratively prune the graph while monitoring the memory footprint.
-        current_memory = self.memory_calculator.get_pruned_graph_memory(masks=self.mask, fw_impl=self.fw_impl)
+        current_memory = self.memory_calculator.get_pruned_graph_memory(masks=self.mask,
+                                                                        fw_impl=self.fw_impl)
         if current_memory > self.target_kpi.weights_memory:
             Logger.error(f"Minimal required memory is {current_memory}, but target KPI is {self.target_kpi.weights_memory}")
 

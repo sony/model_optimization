@@ -78,7 +78,8 @@ class FrameworkImplementation(ABC):
                                    node: BaseNode,
                                    input_mask: np.ndarray,
                                    output_mask: np.ndarray,
-                                   fw_info: FrameworkInfo):
+                                   fw_info: FrameworkInfo,
+                                   include_null_channels: bool):
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_pruned_node_num_params method.')  # pragma: no cover
