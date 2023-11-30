@@ -18,7 +18,6 @@ import os
 from typing import Callable, Tuple, Any, List, Dict
 
 import numpy as np
-from tqdm import tqdm
 
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.hessian.hessian_info_service import HessianInfoService
@@ -33,21 +32,13 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_aggrega
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_functions_mapping import kpi_functions_mapping
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_methods import MpKpiMetric
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
-from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
-    calculate_quantization_params
-from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
-    statistics_correction_runner
-from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
     WeightsFinalBitwidthConfigVisualizer, \
     ActivationFinalBitwidthConfigVisualizer
-from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter, \
-    finalize_bitwidth_in_tb
+from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 
 
 def core_runner(in_model: Any,
@@ -151,9 +142,35 @@ def core_runner(in_model: Any,
             f'Final activation bit-width configuration: {[node_b[1] for node_b in activation_conf_nodes_bitwidth]}')
 
         if tb_w is not None:
-            finalize_bitwidth_in_tb(tb_w, weights_conf_nodes_bitwidth, activation_conf_nodes_bitwidth)
+            if len(weights_conf_nodes_bitwidth) > 0:
+                visual = WeightsFinalBitwidthConfigVisualizer(weights_conf_nodes_bitwidth)
+                figure = visual.plot_config_bitwidth()
+                tb_w.add_figure(figure, f'Weights final bit-width config')
+            if len(activation_conf_nodes_bitwidth) > 0:
+                visual = ActivationFinalBitwidthConfigVisualizer(activation_conf_nodes_bitwidth)
+                figure = visual.plot_config_bitwidth()
+                tb_w.add_figure(figure, f'Activation final bit-width config')
 
     return tg, bit_widths_config, hessian_info_service
+
+
+def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
+    """
+    Create a TensorBoardWriter object initialized with the logger dir path if it was set,
+    or None otherwise.
+
+    Args:
+        fw_info: FrameworkInfo object.
+
+    Returns:
+        A TensorBoardWriter object.
+    """
+    tb_w = None
+    if Logger.LOG_PATH is not None:
+        tb_log_dir = os.path.join(os.getcwd(), Logger.LOG_PATH, 'tensorboard_logs')
+        Logger.info(f'To use Tensorboard, please run: tensorboard --logdir {tb_log_dir}')
+        tb_w = TensorboardWriter(tb_log_dir, fw_info)
+    return tb_w
 
 
 def _set_final_kpi(graph: Graph,
