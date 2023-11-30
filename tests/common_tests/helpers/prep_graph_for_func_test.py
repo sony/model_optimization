@@ -23,7 +23,6 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     calculate_quantization_params
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
-from model_compression_toolkit.core.runner import _init_tensorboard_writer
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_tp_model, \
     get_op_quantization_configs
