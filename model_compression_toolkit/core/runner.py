@@ -154,25 +154,6 @@ def core_runner(in_model: Any,
     return tg, bit_widths_config, hessian_info_service
 
 
-def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
-    """
-    Create a TensorBoardWriter object initialized with the logger dir path if it was set,
-    or None otherwise.
-
-    Args:
-        fw_info: FrameworkInfo object.
-
-    Returns:
-        A TensorBoardWriter object.
-    """
-    tb_w = None
-    if Logger.LOG_PATH is not None:
-        tb_log_dir = os.path.join(os.getcwd(), Logger.LOG_PATH, 'tensorboard_logs')
-        Logger.info(f'To use Tensorboard, please run: tensorboard --logdir {tb_log_dir}')
-        tb_w = TensorboardWriter(tb_log_dir, fw_info)
-    return tb_w
-
-
 def _set_final_kpi(graph: Graph,
                    final_bit_widths_config: List[int],
                    kpi_functions_dict: Dict[KPITarget, Tuple[MpKpiMetric, MpKpiAggregation]],
