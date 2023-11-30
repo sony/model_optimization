@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,24 +14,12 @@
 # ==============================================================================
 from torch import nn
 import torch.nn.functional as F
-import copy
 
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common import BaseNode, Graph, FrameworkInfo
+from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.pytorch.constants import *
-
-
-def functional_batch_norm_matcher() -> NodeOperationMatcher:
-    """
-    Function generates matchers for matching:
-    functional.batch_norm.
-
-    Returns:
-        Matcher for batch_norm node.
-    """
-    bn_node = NodeOperationMatcher(F.batch_norm)
-    return bn_node
+from model_compression_toolkit.logger import Logger
 
 
 class FunctionalBatchNorm(common.BaseSubstitution):
@@ -39,7 +27,7 @@ class FunctionalBatchNorm(common.BaseSubstitution):
     Replace functional batch_norm with BatchNorm2d.
     """
 
-    def __init__(self, ):
+    def __init__(self):
         """
         Matches: functional batch_norm
         """
@@ -59,7 +47,7 @@ class FunctionalBatchNorm(common.BaseSubstitution):
             gamma = None
             beta = None
         else:
-            raise ValueError(f'functional batch_norm is expected to have 3 or 5 inputs, got {len(input_nodes)}')
+            Logger.error(f'functional batch_norm is expected to have 3 or 5 inputs, got {len(input_nodes)}')
 
         return {GAMMA: gamma,
                 BETA: beta,
@@ -73,7 +61,7 @@ class FunctionalBatchNorm(common.BaseSubstitution):
         Substitute functional.batch_norm and its inputs with BatchNorm2d.
         Args:
             graph: Graph we apply the substitution on.
-            node: nodes that match the pattern in the substitution init.
+            node: node that match the pattern in the substitution init.
 
         Returns:
             Graph after applying the substitution.
@@ -92,9 +80,6 @@ class FunctionalBatchNorm(common.BaseSubstitution):
 
         num_nodes_before_substitution = len(graph.nodes)
         num_edges_before_substitution = len(graph.edges)
-
-        # new_batchnorm2d.prior_info = copy.deepcopy(node.prior_info)
-        # new_batchnorm2d.candidates_quantization_cfg = copy.deepcopy(node.candidates_quantization_cfg)
 
         batch_norm_consts = graph.get_prev_nodes(node)[1:]
         for const in batch_norm_consts:

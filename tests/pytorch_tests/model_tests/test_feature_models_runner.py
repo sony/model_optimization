@@ -137,14 +137,19 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the BatchNorm folding feature.
         """
-        assert False
 
         def batch_norm_wrapper(channels):
             return partial(nn.functional.batch_norm,
-                           running_mean=torch.zeros(channels, device='cuda'),
-                           running_var=torch.ones(channels, device='cuda'))
+                           running_mean=torch.randn(channels, device='cuda'),
+                           running_var=1+torch.randn(channels, device='cuda'))
 
-        for bn_layer in [nn.BatchNorm2d, batch_norm_wrapper]:
+        def batch_norm_wrapper_with_bias(channels):
+            return partial(nn.functional.batch_norm,
+                           running_mean=torch.randn(channels, device='cuda'),
+                           running_var=1+torch.randn(channels, device='cuda'),
+                           bias=torch.randn(channels, device='cuda'))
+
+        for bn_layer in [nn.BatchNorm2d, batch_norm_wrapper, batch_norm_wrapper_with_bias]:
             BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=1), bn_layer).run_test()
             BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=3, groups=3)).run_test()  # DW-Conv test
             BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(2, 1))).run_test()
