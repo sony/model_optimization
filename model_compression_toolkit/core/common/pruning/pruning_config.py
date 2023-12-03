@@ -8,7 +8,6 @@ class ImportanceMetric(Enum):
     Enum for specifying the metric used to determine the importance of channels when pruning.
     """
     LFH = 0  # Hessian approximation based on weights, to determine channel importance without explicit labels.
-    RANDOM = 2  # Random importance metric, possibly used as a baseline comparison.
 
 
 class ChannelsFilteringStrategy(Enum):

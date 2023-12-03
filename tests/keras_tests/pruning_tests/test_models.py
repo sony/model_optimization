@@ -1,3 +1,5 @@
+from enum import Enum
+
 import unittest
 
 import tensorflow as tf
@@ -5,10 +7,18 @@ import tensorflow as tf
 import model_compression_toolkit as mct
 import numpy as np
 
+from model_compression_toolkit.core.common.pruning.importance_metrics.importance_metric_factory import im_dict
+from tests.keras_tests.pruning_tests.random_importance_metric import RandomImportanceMetric
+
 keras = tf.keras
 layers = keras.layers
 
 NUM_PRUNING_RATIOS = 5
+
+class TestImportanceMetric(Enum):
+    RANDOM = 'random'
+
+im_dict.update({TestImportanceMetric.RANDOM: RandomImportanceMetric})
 
 class ModelsPruningTest(unittest.TestCase):
     def representative_dataset(self, in_shape=(1,224,224,3)):
@@ -117,7 +127,8 @@ class ModelsPruningTest(unittest.TestCase):
                                                                             representative_data_gen=self.representative_dataset,
                                                                             pruning_config=mct.pruning.PruningConfig(
                                                                                 num_score_approximations=1,
-                                                                            importance_metric=mct.pruning.ImportanceMetric.RANDOM))
+                                                                            importance_metric=TestImportanceMetric.RANDOM))
+
         pruned_nparams = sum([l.count_params() for l in pruned_model.layers])
         actual_cr = pruned_nparams / dense_nparams
         print(f"Target remaining cr: {cr*100}, Actual remaining cr: {actual_cr*100} ")
