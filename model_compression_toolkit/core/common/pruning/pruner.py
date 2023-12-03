@@ -75,7 +75,8 @@ class Pruner:
                                                    self.scores,
                                                    self.target_kpi,
                                                    self.float_graph,
-                                                   self.fw_impl)
+                                                   self.fw_impl,
+                                                   self.target_platform_capabilities)
 
             # Calculate the mask that will be used to prune the graph.
             self.mask = mask_calculator.get_mask()

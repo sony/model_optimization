@@ -14,7 +14,7 @@ def build_pruned_graph(graph: Graph,
                        fw_info: FrameworkInfo,
                        fw_impl: FrameworkImplementation) -> Graph:
     """
-    Prunes the provided graph according to the given pruning masks.
+    Prunes the provided graph according to the given pruning output-channels masks.
 
     Args:
         graph: The original computational graph to be pruned.
@@ -29,19 +29,18 @@ def build_pruned_graph(graph: Graph,
     # Create a deep copy of the graph to avoid modifying the original graph.
     graph_to_prune = copy.deepcopy(graph)
 
-    # Get the prunable nodes and the corresponding pruning sections.
-    prunable_nodes = graph_to_prune.get_pruning_sections_entry_nodes(fw_info=fw_info, fw_impl=fw_impl)
+    # Get the pruning sections.
     pruning_sections = graph_to_prune.get_pruning_sections(fw_info=fw_info, fw_impl=fw_impl)
 
-    # Check that each prunable node corresponds to a pruning section.
-    assert len(pruning_sections) == len(prunable_nodes)
+    # Check that each entry node corresponds to a pruning section has an output-channel mask.
+    assert len(pruning_sections) == len(masks)
 
     # Apply the pruning masks to each pruning section.
-    for input_node, pruning_section in zip(prunable_nodes, pruning_sections):
+    for pruning_section in pruning_sections:
 
         # Retrieve the corresponding mask using the node's name (since we use a graph's copy).
-        mask = [v for k, v in masks.items() if k.name == input_node.name]
-        assert len(mask) == 1, f"Expected to find a single node with name {input_node.name} in masks dictionary but found {len(mask)}"
+        mask = [v for k, v in masks.items() if k.name == pruning_section.entry_node.name]
+        assert len(mask) == 1, f"Expected to find a single node with name {pruning_section.entry_node.name} in masks dictionary but found {len(mask)}"
         mask = mask[0]
 
         # If the mask indicates that some channels are to be pruned, apply it.
@@ -50,7 +49,9 @@ def build_pruned_graph(graph: Graph,
                                               entry_output_mask=mask,
                                               exit_input_mask=mask,
                                               exit_output_mask=None)
-            pruning_section.apply_inner_section_mask(section_mask, fw_impl, fw_info)
+            pruning_section.apply_inner_section_mask(section_mask,
+                                                     fw_impl,
+                                                     fw_info)
 
     # Return the pruned graph.
     return graph_to_prune

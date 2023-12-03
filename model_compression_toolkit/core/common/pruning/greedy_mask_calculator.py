@@ -18,7 +18,8 @@ class GreedyMaskCalculator:
                  score_by_node: Dict[BaseNode, np.ndarray],
                  target_kpi: KPI,
                  graph,
-                 fw_impl):
+                 fw_impl,
+                 tpc):
         """
         Initializes the GreedyMaskCalculator with the required information.
 
@@ -36,6 +37,7 @@ class GreedyMaskCalculator:
         self.target_kpi = target_kpi
         self.graph = graph
         self.fw_impl = fw_impl
+        self.tpc = tpc
 
         # Initialize the SIMD group indices and scores dictionaries.
         self.simd_groups_indices = {}
@@ -77,7 +79,8 @@ class GreedyMaskCalculator:
 
         # Iteratively prune the graph while monitoring the memory footprint.
         current_memory = self.memory_calculator.get_pruned_graph_memory(masks=self.mask,
-                                                                        fw_impl=self.fw_impl)
+                                                                        fw_impl=self.fw_impl,
+                                                                        include_null_channels=self.tpc)
         if current_memory > self.target_kpi.weights_memory:
             Logger.error(f"Minimal required memory is {current_memory}, but target KPI is {self.target_kpi.weights_memory}")
 
@@ -86,7 +89,9 @@ class GreedyMaskCalculator:
             # Select the best SIMD group to add based on the scores.
             node_to_remain, group_to_remain_idx = self._get_best_simd_group_candidate()
             self._update_simd_mask(node=node_to_remain, group_index=group_to_remain_idx, value=1)
-            current_memory = self.memory_calculator.get_pruned_graph_memory(masks=self.mask, fw_impl=self.fw_impl)
+            current_memory = self.memory_calculator.get_pruned_graph_memory(masks=self.mask,
+                                                                            fw_impl=self.fw_impl,
+                                                                            include_null_channels=self.tpc.is_simd_padding())
 
         # If the target memory is exceeded, revert the last addition.
         if current_memory > self.target_kpi.weights_memory:

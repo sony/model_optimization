@@ -1,9 +1,10 @@
 import numpy as np
 from typing import List, Dict
 
-from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode, Graph
+from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import \
+    PruningFrameworkImplementation
 from model_compression_toolkit.core.common.pruning.pruning_section import PruningSection, PruningSectionMask
 
 
@@ -17,7 +18,7 @@ class MemoryCalculator:
     def __init__(self,
                  graph: Graph,
                  fw_info: FrameworkInfo,
-                 fw_impl: FrameworkImplementation):
+                 fw_impl: PruningFrameworkImplementation):
         """
         Initialize the MemoryCalculator.
 
@@ -33,7 +34,7 @@ class MemoryCalculator:
     def get_pruned_graph_memory(self,
                                 masks: Dict[BaseNode, np.ndarray],
                                 fw_impl,
-                                include_null_channels: bool = True) -> float:
+                                include_null_channels: bool) -> int:
 
         # Total number of parameters after pruning
         total_nparams = 0.0
@@ -131,7 +132,7 @@ class MemoryCalculator:
         for n in self.graph.nodes:
             if n not in nodes_to_prune:
                 node_nparams = sum(n.get_num_parameters(self.fw_info))
-                if include_null_channels:
+                if include_null_channels: # TODO: rename to simd channels padding
                     num_oc = n.output_shape[-1]
                     nparams_per_oc = node_nparams/num_oc
                     num_oc_include_null_channels = np.ceil(num_oc/n.get_simd())*n.get_simd()

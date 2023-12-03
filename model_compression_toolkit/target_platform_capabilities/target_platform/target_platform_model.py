@@ -76,6 +76,7 @@ class TargetPlatformModel(ImmutableClass):
             f'Default QuantizationConfigOptions must contain only one option'
         self.default_qco = default_qco
         self.fusing_patterns = []
+        self.is_simd_padding=None
 
     def get_config_options_by_operators_set(self,
                                             operators_set_name: str) -> QuantizationConfigOptions:
@@ -232,3 +233,14 @@ class TargetPlatformModel(ImmutableClass):
             quantization_format: A quantization format (fake-quant, int8 etc.) from enum QuantizationFormat.
         """
         self.quantization_format = quantization_format
+
+    def set_simd_padding(self, is_simd_padding: bool):
+        """
+
+        Args:
+            is_simd_padding:
+
+        Returns:
+
+        """
+        self.is_simd_padding = is_simd_padding

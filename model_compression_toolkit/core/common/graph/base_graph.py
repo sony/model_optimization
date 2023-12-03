@@ -715,7 +715,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             input_section_node, intermediate_nodes, output_section_node = self.get_section_nodes(prunable_node, fw_impl)
             pruning_sections.append(PruningSection(entry_node=input_section_node,
                                                    intermediate_nodes=intermediate_nodes,
-                                                   exit_nodes=output_section_node))
+                                                   exit_node=output_section_node))
 
         return pruning_sections
 

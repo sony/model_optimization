@@ -66,6 +66,8 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         fixed_zero_point=None,
         weights_multiplier_nbits=None,
         simd_size=32)
+    # TODO: split op pruning config from op q config
+    # TODO: create pruning candidate config (or at least remove/disable all quantization configration from nodes)
 
     # To quantize a model using mixed-precision, create
     # a list with more than one OpQuantizationConfig.
@@ -122,6 +124,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
 
         # Set quantization format to fakely quant
         generated_tpc.set_quantization_format(QuantizationFormat.FAKELY_QUANT)
+
+        generated_tpc.set_simd_padding(is_simd_padding=True)
 
         # May suit for operations like: Dropout, Reshape, etc.
         tp.OperatorsSet("NoQuantization",

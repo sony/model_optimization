@@ -3,6 +3,7 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 
 
+# TODO: Rethink if it's should be common or fw-specific
 def is_keras_entry_node(node: BaseNode):
     """
 
@@ -15,7 +16,7 @@ def is_keras_entry_node(node: BaseNode):
     return _is_keras_node_pruning_section_edge(node)
 
 
-def is_keras_exit_node(node: BaseNode, dual_entry_node: BaseNode):
+def is_keras_exit_node(node: BaseNode, match_entry_node: BaseNode):
     """
 
     Args:
@@ -24,7 +25,7 @@ def is_keras_exit_node(node: BaseNode, dual_entry_node: BaseNode):
     Returns:
 
     """
-    return _is_keras_node_pruning_section_edge(node) and _is_same_channels(node, dual_entry_node)
+    return _is_keras_node_pruning_section_edge(node) and _is_same_channels(node, match_entry_node)
 
 
 def _is_same_channels(exit_node: BaseNode,

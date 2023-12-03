@@ -53,7 +53,7 @@ def get_keras_pruned_node_num_params(node: BaseNode,
         # For non-kernel operations, apply the output mask to the last axis.
         # This part assumes that for non-kernel ops, all weights output channel axis is -1.
         for w_attr, w in node.weights.items():
-            pruned_w = np.take(w, np.where(output_mask)[0], axis=-1)
+            pruned_w = np.take(w, np.where(output_mask)[0], axis=-1) # TODO: get axis from fw-specific function
             total_params += pruned_w.size
 
     if include_null_channels:
