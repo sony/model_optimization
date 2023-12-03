@@ -21,9 +21,9 @@ from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
+from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.quantization_prep_runner import quantization_preparation_runner
-from model_compression_toolkit.core.runner import _init_tensorboard_writer
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_tp_model, \
     get_op_quantization_configs
@@ -114,7 +114,7 @@ def prepare_graph_set_bit_widths(in_model,
                              debug_config=DebugConfig(analyze_similarity=analyze_similarity,
                                                       network_editor=network_editor))
 
-    tb_w = _init_tensorboard_writer(fw_info)
+    tb_w = init_tensorboard_writer(fw_info)
 
     # convert old representative dataset generation to a generator
     def _representative_data_gen():

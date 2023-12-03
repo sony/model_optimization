@@ -16,6 +16,7 @@
 from copy import deepcopy
 
 import io
+import os
 import numpy as np
 from PIL import Image
 from matplotlib.figure import Figure
@@ -34,6 +35,9 @@ from networkx import topological_sort
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
+from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
+    WeightsFinalBitwidthConfigVisualizer, ActivationFinalBitwidthConfigVisualizer
 
 DEVICE_STEP_STATS = "/device:CPU:0"
 
@@ -486,3 +490,45 @@ class TensorboardWriter(object):
         er = self.__get_event_writer_by_tag_name(main_tag_name)
         er.add_event(event)
         er.flush()
+
+
+def init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
+    """
+    Create a TensorBoardWriter object initialized with the logger dir path if it was set,
+    or None otherwise.
+
+    Args:
+        fw_info: FrameworkInfo object.
+
+    Returns:
+        A TensorBoardWriter object.
+    """
+    tb_w = None
+    if Logger.LOG_PATH is not None:
+        tb_log_dir = os.path.join(os.getcwd(), Logger.LOG_PATH, 'tensorboard_logs')
+        Logger.info(f'To use Tensorboard, please run: tensorboard --logdir {tb_log_dir}')
+        tb_w = TensorboardWriter(tb_log_dir, fw_info)
+    return tb_w
+
+
+def finalize_bitwidth_in_tb(tb_w: TensorboardWriter,
+                            weights_conf_nodes_bitwidth: List,
+                            activation_conf_nodes_bitwidth: List):
+    """
+    Set the final bit-width configuration of the quantized model in the provided TensorBoard object.
+
+    Args:
+        tb_w: A TensorBoard object.
+        weights_conf_nodes_bitwidth: Final weights bit-width configuration.
+        activation_conf_nodes_bitwidth: Final activation bit-width configuration.
+
+    """
+
+    if len(weights_conf_nodes_bitwidth) > 0:
+        visual = WeightsFinalBitwidthConfigVisualizer(weights_conf_nodes_bitwidth)
+        figure = visual.plot_config_bitwidth()
+        tb_w.add_figure(figure, f'Weights final bit-width config')
+    if len(activation_conf_nodes_bitwidth) > 0:
+        visual = ActivationFinalBitwidthConfigVisualizer(activation_conf_nodes_bitwidth)
+        figure = visual.plot_config_bitwidth()
+        tb_w.add_figure(figure, f'Activation final bit-width config')
