@@ -37,7 +37,8 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
     WeightsFinalBitwidthConfigVisualizer, \
     ActivationFinalBitwidthConfigVisualizer
-from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
+from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter, \
+    finalize_bitwidth_in_tb
 
 
 def core_runner(in_model: Any,
@@ -141,14 +142,7 @@ def core_runner(in_model: Any,
             f'Final activation bit-width configuration: {[node_b[1] for node_b in activation_conf_nodes_bitwidth]}')
 
         if tb_w is not None:
-            if len(weights_conf_nodes_bitwidth) > 0:
-                visual = WeightsFinalBitwidthConfigVisualizer(weights_conf_nodes_bitwidth)
-                figure = visual.plot_config_bitwidth()
-                tb_w.add_figure(figure, f'Weights final bit-width config')
-            if len(activation_conf_nodes_bitwidth) > 0:
-                visual = ActivationFinalBitwidthConfigVisualizer(activation_conf_nodes_bitwidth)
-                figure = visual.plot_config_bitwidth()
-                tb_w.add_figure(figure, f'Activation final bit-width config')
+            finalize_bitwidth_in_tb(tb_w, weights_conf_nodes_bitwidth, activation_conf_nodes_bitwidth)
 
     return tg, bit_widths_config, hessian_info_service
 
