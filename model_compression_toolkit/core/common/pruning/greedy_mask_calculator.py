@@ -79,8 +79,7 @@ class GreedyMaskCalculator:
 
         # Iteratively prune the graph while monitoring the memory footprint.
         current_memory = self.memory_calculator.get_pruned_graph_memory(masks=self.mask,
-                                                                        fw_impl=self.fw_impl,
-                                                                        include_null_channels=self.tpc)
+                                                                            include_padded_channels=self.tpc.is_simd_padding())
         if current_memory > self.target_kpi.weights_memory:
             Logger.error(f"Minimal required memory is {current_memory}, but target KPI is {self.target_kpi.weights_memory}")
 
@@ -90,8 +89,7 @@ class GreedyMaskCalculator:
             node_to_remain, group_to_remain_idx = self._get_best_simd_group_candidate()
             self._update_simd_mask(node=node_to_remain, group_index=group_to_remain_idx, value=1)
             current_memory = self.memory_calculator.get_pruned_graph_memory(masks=self.mask,
-                                                                            fw_impl=self.fw_impl,
-                                                                            include_null_channels=self.tpc.is_simd_padding())
+                                                                                include_padded_channels=self.tpc.is_simd_padding())
 
         # If the target memory is exceeded, revert the last addition.
         if current_memory > self.target_kpi.weights_memory:

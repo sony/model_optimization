@@ -129,7 +129,7 @@ class PruningFrameworkImplementation(FrameworkImplementation):
                                    input_mask: np.ndarray,
                                    output_mask: np.ndarray,
                                    fw_info: FrameworkInfo,
-                                   include_null_channels: bool):
+                                   include_padded_channels: bool):
         """
         Abstract method to get the number of parameters of a pruned node.
 
@@ -138,7 +138,7 @@ class PruningFrameworkImplementation(FrameworkImplementation):
             input_mask: Mask to be applied to the input channels.
             output_mask: Mask to be applied to the output channels.
             fw_info: Framework-specific information.
-            include_null_channels: Boolean flag to include or exclude null channels in the count.
+            include_padded_channels: Boolean flag to include or exclude padded channels in the count.
 
         Returns:
             int: Number of parameters after pruning.

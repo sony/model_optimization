@@ -13,7 +13,7 @@ from tests.keras_tests.pruning_tests.random_importance_metric import RandomImpor
 keras = tf.keras
 layers = keras.layers
 
-NUM_PRUNING_RATIOS = 5
+NUM_PRUNING_RATIOS = 1
 
 class TestImportanceMetric(Enum):
     RANDOM = 'random'

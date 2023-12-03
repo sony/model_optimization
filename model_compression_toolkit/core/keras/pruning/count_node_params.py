@@ -12,7 +12,7 @@ def get_keras_pruned_node_num_params(node: BaseNode,
                                      input_mask: np.ndarray,
                                      output_mask: np.ndarray,
                                      fw_info: FrameworkInfo,
-                                     include_null_channels: bool):
+                                     include_padded_channels: bool):
 
     total_params = 0
     if fw_info.is_kernel_op(node.type):
@@ -56,7 +56,7 @@ def get_keras_pruned_node_num_params(node: BaseNode,
             pruned_w = np.take(w, np.where(output_mask)[0], axis=-1) # TODO: get axis from fw-specific function
             total_params += pruned_w.size
 
-    if include_null_channels:
+    if include_padded_channels:
         node_simd = node.get_simd()
         nparams_per_oc = total_params / np.sum(output_mask)
         num_oc_with_null_channels = np.ceil(np.sum(output_mask) / node_simd) * node_simd

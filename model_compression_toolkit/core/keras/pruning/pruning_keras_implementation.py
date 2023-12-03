@@ -98,7 +98,12 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
         """
         return is_keras_node_intermediate_pruning_section(node)
 
-    def get_pruned_node_num_params(self, node: BaseNode, input_mask: np.ndarray, output_mask: np.ndarray, fw_info: FrameworkInfo, include_null_channels: bool):
+    def get_pruned_node_num_params(self,
+                                   node: BaseNode,
+                                   input_mask: np.ndarray,
+                                   output_mask: np.ndarray,
+                                   fw_info: FrameworkInfo,
+                                   include_padded_channels: bool):
         """
         Calculates the number of parameters in a pruned node of a Keras model.
 
@@ -107,10 +112,10 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
             input_mask: Mask to be applied to the input channels.
             output_mask: Mask to be applied to the output channels.
             fw_info: Framework-specific information object.
-            include_null_channels: Boolean flag to include or exclude null channels in the count.
+            include_padded_channels: Boolean flag to include or exclude null channels in the count.
 
         Returns:
             Integer representing the number of parameters in the pruned node.
         """
-        return get_keras_pruned_node_num_params(node, input_mask, output_mask, fw_info, include_null_channels)
+        return get_keras_pruned_node_num_params(node, input_mask, output_mask, fw_info, include_padded_channels)
 

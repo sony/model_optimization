@@ -33,31 +33,36 @@ class MemoryCalculator:
 
     def get_pruned_graph_memory(self,
                                 masks: Dict[BaseNode, np.ndarray],
-                                fw_impl,
-                                include_null_channels: bool) -> int:
+                                include_padded_channels: bool) -> float:
+        nparams = self.get_pruned_graph_num_params(masks=masks,
+                                                   include_padded_channels=include_padded_channels)
+        return nparams * 4.
+
+    def get_pruned_graph_num_params(self,
+                                    masks: Dict[BaseNode, np.ndarray],
+                                    include_padded_channels: bool) -> int:
 
         # Total number of parameters after pruning
-        total_nparams = 0.0
+        total_nparams = 0
 
         # Retrieve all the pruning sections in the graph
-        pruning_sections = self.graph.get_pruning_sections(self.fw_info, fw_impl)
+        pruning_sections = self.graph.get_pruning_sections(self.fw_info, self.fw_impl)
 
         # Calculate the number of parameters for nodes that are not pruned
-        total_nparams += self.get_nparams_of_nonpruned_nodes(pruning_sections, include_null_channels)
+        total_nparams += self.get_nparams_of_nonpruned_nodes(pruning_sections, include_padded_channels)
 
         # Calculate the number of parameters for nodes within pruning sections
-        total_nparams += self.get_nparams_of_pruning_sections(masks, pruning_sections, include_null_channels)
+        total_nparams += self.get_nparams_of_pruning_sections(masks, pruning_sections, include_padded_channels)
 
         # Subtract the number of parameters for nodes that are shared between pruning sections
-        total_nparams -= self.get_nparams_of_shared_nodes(masks, pruning_sections, include_null_channels)
+        total_nparams -= self.get_nparams_of_shared_nodes(masks, pruning_sections, include_padded_channels)
 
-        # Multiply by the size of the data type to get the memory in bytes
-        return total_nparams * 4.
+        return total_nparams
 
     def get_nparams_of_shared_nodes(self,
                                     masks: Dict[BaseNode, np.ndarray],
                                     pruning_sections: List[PruningSection],
-                                    include_null_channels) -> int:
+                                    include_padded_channels) -> int:
 
         nparams = 0
         # Identify nodes that are at the end of one section and the start of another
@@ -72,10 +77,10 @@ class MemoryCalculator:
                                                                node_input_mask,
                                                                node_output_mask,
                                                                self.fw_info,
-                                                               include_null_channels)
+                                                               include_padded_channels)
         return nparams
 
-    def get_nparams_of_pruning_sections(self, masks, pruning_sections, include_null_channels:bool):
+    def get_nparams_of_pruning_sections(self, masks, pruning_sections, include_padded_channels:bool):
         """
 
         Args:
@@ -87,8 +92,12 @@ class MemoryCalculator:
         """
         nparams = 0
         for pruning_section in pruning_sections:
-            pruning_section_mask = self.get_section_mask_from_node_mask(masks, pruning_section, pruning_sections)
-            nparams += self._get_pruning_section_num_params(pruning_section, pruning_section_mask, include_null_channels)
+            pruning_section_mask = self.get_section_mask_from_node_mask(masks,
+                                                                        pruning_section,
+                                                                        pruning_sections)
+            nparams += self._get_pruning_section_num_params(pruning_section,
+                                                            pruning_section_mask,
+                                                            include_padded_channels)
         return nparams
 
     def get_section_mask_from_node_mask(self, masks, pruning_section, pruning_sections):
@@ -116,15 +125,8 @@ class MemoryCalculator:
 
         return pruning_section_mask
 
-    def get_nparams_of_nonpruned_nodes(self, pruning_sections, include_null_channels):
-        """
+    def get_nparams_of_nonpruned_nodes(self, pruning_sections, include_padded_channels:bool):
 
-        Args:
-            pruning_sections:
-
-        Returns:
-
-        """
         total_nparams = 0
         # Collect all nodes to prune from the pruning sections.
         nodes_to_prune = set([node for section in pruning_sections for node in section.get_all_nodes()])
@@ -132,7 +134,7 @@ class MemoryCalculator:
         for n in self.graph.nodes:
             if n not in nodes_to_prune:
                 node_nparams = sum(n.get_num_parameters(self.fw_info))
-                if include_null_channels: # TODO: rename to simd channels padding
+                if include_padded_channels: # TODO: rename to simd channels padding
                     num_oc = n.output_shape[-1]
                     nparams_per_oc = node_nparams/num_oc
                     num_oc_include_null_channels = np.ceil(num_oc/n.get_simd())*n.get_simd()
@@ -174,7 +176,7 @@ class MemoryCalculator:
     def _get_pruning_section_num_params(self,
                                         pruning_section: PruningSection,
                                         pruning_section_mask: PruningSectionMask,
-                                        include_null_channels: bool) -> int:
+                                        include_padded_channels: bool) -> int:
         """
 
         Args:
@@ -190,7 +192,7 @@ class MemoryCalculator:
             pruning_section_mask.entry_input_mask,
             pruning_section_mask.entry_output_mask,
             self.fw_info,
-            include_null_channels)
+            include_padded_channels)
 
         # Sum number of params for all intermediate nodes in the section.
         total_inter_nodes_nparams = sum(
@@ -199,7 +201,7 @@ class MemoryCalculator:
                 pruning_section_mask.entry_output_mask,
                 pruning_section_mask.entry_output_mask,
                 self.fw_info,
-                include_null_channels) for inter_node in pruning_section.intermediate_nodes)
+                include_padded_channels) for inter_node in pruning_section.intermediate_nodes)
 
         # Number of params for the last node in the section.
         second_node_nparams = self.fw_impl.get_pruned_node_num_params(
@@ -207,6 +209,6 @@ class MemoryCalculator:
             pruning_section_mask.exit_input_mask,
             pruning_section_mask.exit_output_mask,
             self.fw_info,
-            include_null_channels)
+            include_padded_channels)
 
         return first_node_nparams + total_inter_nodes_nparams + second_node_nparams

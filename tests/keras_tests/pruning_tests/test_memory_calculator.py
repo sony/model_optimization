@@ -54,18 +54,16 @@ class TestParameterCounter(unittest.TestCase):
                                                   fw_impl=fw_impl)
 
         # masks = {list(float_graph_with_compression_config.nodes)[0]}
-        counted_params = self.memory_calculator.get_pruned_graph_memory(masks=None,
-                                                                        fw_impl=fw_impl,
-                                                                        include_null_channels=tpc.is_simd_padding) / 4
+        counted_params = self.memory_calculator.get_pruned_graph_num_params(masks=None,
+                                                                            include_padded_channels=tpc.is_simd_padding)
 
         # Calculate expected number of parameters
         simd_groups = np.ceil(out_channels/32.)
         expected_params = 32 * simd_groups * (in_channels * kernel_size * kernel_size + int(use_bias))
         self.assertEqual(counted_params, expected_params)
 
-        counted_params = self.memory_calculator.get_pruned_graph_memory(masks=None,
-                                                                        fw_impl=fw_impl,
-                                                                        include_null_channels=False) / 4
+        counted_params = self.memory_calculator.get_pruned_graph_num_params(masks=None,
+                                                                            include_padded_channels=False)
 
         # Calculate expected number of parameters
         expected_params = out_channels * (in_channels * kernel_size * kernel_size + int(use_bias))
