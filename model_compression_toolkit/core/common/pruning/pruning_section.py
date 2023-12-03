@@ -5,6 +5,7 @@ import numpy as np
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 
+
 class PruningSectionMask:
     """
     Represents the masks to be applied to a pruning section of a neural network.
@@ -22,7 +23,6 @@ class PruningSectionMask:
                  entry_node_oc_mask: np.ndarray = None,
                  exit_node_ic_mask: np.ndarray = None,
                  exit_node_oc_mask: np.ndarray = None):
-
         self.entry_node_ic_mask = entry_node_ic_mask
         self.entry_node_oc_mask = entry_node_oc_mask
         self.exit_node_ic_mask = exit_node_ic_mask
@@ -110,4 +110,3 @@ class PruningSection:
         entry_output_channels = corresponding_entry_node.get_weights_by_keys(entry_node_attr).shape[entry_output_channel_axis]
 
         return exit_input_channels == entry_output_channels
-

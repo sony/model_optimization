@@ -50,16 +50,18 @@ class Pruner:
         self.pruning_config = pruning_config
         self.target_platform_capabilities = target_platform_capabilities
 
+        self._pruned_graph = None
+
         self.mask = None # Will hold the output-channel mask for each entry node.
         self.scores = None  # Will hold the importance scores for each entry node.
 
     def get_pruned_graph(self) -> Graph:
-        """
-        Prunes the graph according to the specified KPI and pruning configuration.
+        if not self._pruned_graph:
+            self._create_pruned_graph()
 
-        Returns:
-            Graph: The pruned computational graph.
-        """
+        return self._pruned_graph
+
+    def _create_pruned_graph(self):
         # Retrieve entry points from the graph.
         entry_nodes = self.float_graph.get_pruning_sections_entry_nodes(self.fw_info, self.fw_impl)
 
@@ -87,13 +89,11 @@ class Pruner:
             Logger.error("Currently, only the GREEDY ChannelsFilteringStrategy is supported.")
 
         # Construct the pruned graph using the computed masks.
-        pruned_graph = build_pruned_graph(self.float_graph,
-                                          self.mask,
-                                          self.fw_info,
-                                          self.fw_impl)
+        self._pruned_graph = build_pruned_graph(self.float_graph,
+                                                self.mask,
+                                                self.fw_info,
+                                                self.fw_impl)
 
-        # Return the pruned computational graph.
-        return pruned_graph
 
     def get_score_per_entry_point(self, sections_input_nodes):
         """
