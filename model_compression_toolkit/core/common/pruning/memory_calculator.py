@@ -10,121 +10,104 @@ from model_compression_toolkit.logger import Logger
 
 
 class MemoryCalculator:
+    """
+    MemoryCalculator is used for estimating the memory usage of a graph under pruning mask.
+    It takes into account the specific pruning masks applied to each node in the network,
+    including handling of shared nodes between pruning sections and consideration of SIMD-padded channels.
+    The calculator aids in understanding the impact of pruning on the overall memory footprint of the model,
+    which is crucial for deploying models on memory-constrained devices or optimizing for computational efficiency.
+    """
 
-
-    def __init__(self,
-                 graph: Graph,
-                 fw_info: FrameworkInfo,
-                 fw_impl: PruningFrameworkImplementation):
+    def __init__(self, graph: Graph, fw_info: FrameworkInfo, fw_impl: PruningFrameworkImplementation):
         """
-        Initialize the MemoryCalculator.
+        Initializes the MemoryCalculator with necessary information about the model's graph,
+        framework-specific details, and pruning implementation.
 
         Args:
-            graph: The computational graph of the model.
-            fw_info: Framework-specific information and utilities.
-            fw_impl: Framework-specific implementation details.
+            graph (Graph): Computational graph of the model.
+            fw_info (FrameworkInfo): Contains framework-specific information.
+            fw_impl (PruningFrameworkImplementation): Implementation details for pruning.
         """
         self.graph = graph
         self.fw_info = fw_info
         self.fw_impl = fw_impl
 
-    def get_pruned_graph_memory(self,
-                                masks: Dict[BaseNode, np.ndarray],
-                                include_padded_channels: bool) -> float:
+    def get_pruned_graph_memory(self, masks: Dict[BaseNode, np.ndarray], include_padded_channels: bool) -> float:
         """
+        Calculates the memory usage of the pruned graph.
 
         Args:
-            masks:
-            include_padded_channels:
+            masks (Dict[BaseNode, np.ndarray]): Dictionary mapping nodes to their pruning masks.
+            include_padded_channels (bool): Whether to include padded channels in the memory calculation.
 
         Returns:
-
+            float: Estimated memory usage of the pruned graph in bytes.
         """
-        nparams = self.get_pruned_graph_num_params(masks=masks,
-                                                   include_padded_channels=include_padded_channels)
-        return nparams * 4.
+        nparams = self.get_pruned_graph_num_params(masks, include_padded_channels)
+        return nparams * 4  # Assuming each parameter is 4 bytes (float32)
 
-    def get_pruned_graph_num_params(self,
-                                    masks: Dict[BaseNode, np.ndarray],
-                                    include_padded_channels: bool) -> int:
+    def get_pruned_graph_num_params(self, masks: Dict[BaseNode, np.ndarray], include_padded_channels: bool) -> int:
         """
+        Calculates the total number of parameters in the pruned graph.
 
         Args:
-            masks:
-            include_padded_channels:
+            masks (Dict[BaseNode, np.ndarray]): Pruning masks for each node.
+            include_padded_channels (bool): Flag to include SIMD-padded channels in the count.
 
         Returns:
-
+            int: Total number of parameters in the pruned graph.
         """
-
-        # Total number of parameters after pruning
         total_nparams = 0
 
-        # Retrieve all the pruning sections in the graph
         pruning_sections = self.graph.get_pruning_sections(self.fw_info, self.fw_impl)
-
-        # Calculate the number of parameters for nodes that are not pruned
         total_nparams += self.get_nparams_of_nonpruned_nodes(pruning_sections, include_padded_channels)
-
-        # Calculate the number of parameters for nodes within pruning sections
         total_nparams += self.get_nparams_of_pruning_sections(masks, pruning_sections, include_padded_channels)
-
-        # Subtract the number of parameters for nodes that are shared between pruning sections
         total_nparams -= self.get_nparams_of_shared_nodes(masks, pruning_sections, include_padded_channels)
 
         return total_nparams
 
     def get_nparams_of_shared_nodes(self,
-                                    masks: Dict[BaseNode, np.ndarray],
-                                    pruning_sections: List[PruningSection],
+                                    masks,
+                                    pruning_sections,
                                     include_padded_channels) -> int:
         """
+        Calculate the number of parameters for nodes shared between adjacent pruning sections.
 
         Args:
-            masks:
-            pruning_sections:
-            include_padded_channels:
+            masks (Dict[BaseNode, np.ndarray]): Pruning masks for each node.
+            pruning_sections (List[PruningSection]): A list of pruning sections.
+            include_padded_channels (bool): Flag to include padded channels in the count.
 
         Returns:
-
+            int: Total number of parameters for shared nodes.
         """
-
         nparams = 0
-        # Identify nodes that are at the end of one section and the start of another
         shared_nodes = self._get_nodes_from_adjacent_sections(pruning_sections)
         for node in shared_nodes:
-            # Get the input mask for the node if it exists
             node_input_mask = self._get_node_input_mask(node, pruning_sections, masks)
-            # Get the output mask for the node if it exists
             node_output_mask = masks.get(node)
-            # Calculate the number of remaining parameters for the shared node after pruning
-            nparams += self.get_pruned_node_num_params(node,
-                                                       node_input_mask,
-                                                       node_output_mask,
-                                                       include_padded_channels)
+            nparams += self.get_pruned_node_num_params(node, node_input_mask, node_output_mask, include_padded_channels)
         return nparams
 
     def get_nparams_of_pruning_sections(self,
                                         masks,
                                         pruning_sections,
-                                        include_padded_channels: bool):
+                                        include_padded_channels: bool) -> int:
         """
+        Calculate the number of parameters for all pruning sections.
 
         Args:
-            masks:
-            pruning_sections:
-            include_padded_channels:
+            masks (dict): Pruning masks for each node.
+            pruning_sections (list): A list of pruning sections.
+            include_padded_channels (bool): Flag to include padded channels in the count.
 
         Returns:
-
+            int: Total number of parameters for all pruning sections.
         """
         nparams = 0
         for pruning_section in pruning_sections:
-            pruning_section_mask = self.get_section_mask_from_node_mask(masks,
-                                                                        pruning_section,
-                                                                        pruning_sections)
-            nparams += self._get_pruning_section_num_params(pruning_section,
-                                                            pruning_section_mask,
+            pruning_section_mask = self.get_section_mask_from_node_mask(masks, pruning_section, pruning_sections)
+            nparams += self._get_pruning_section_num_params(pruning_section, pruning_section_mask,
                                                             include_padded_channels)
         return nparams
 
@@ -132,172 +115,303 @@ class MemoryCalculator:
                                         masks,
                                         pruning_section,
                                         pruning_sections):
+        """
+        Create a pruning section mask from individual node masks.
 
-        # Determine masks for input channels of the first node and output channels of the second node.
-        first_node_input_channels_mask = self._get_node_input_mask(pruning_section.entry_node,
-                                                                   pruning_sections,
-                                                                   masks)
+        Args:
+            masks (dict): Pruning masks for each node.
+            pruning_section (PruningSection): The current pruning section.
+            pruning_sections (list): A list of pruning sections.
+
+        Returns:
+            PruningSectionMask: The combined pruning mask for the section.
+        """
+        first_node_input_channels_mask = self._get_node_input_mask(pruning_section.entry_node, pruning_sections, masks)
         second_node_output_mask = masks.get(pruning_section.exit_node)
 
-        # Create the pruning section mask.
-        pruning_section_mask = PruningSectionMask(entry_node_ic_mask=first_node_input_channels_mask,
-                                                  entry_node_oc_mask=masks.get(pruning_section.entry_node),
-                                                  exit_node_ic_mask=masks.get(pruning_section.entry_node),
-                                                  exit_node_oc_mask=second_node_output_mask)
-
-        return pruning_section_mask
+        return PruningSectionMask(
+            entry_node_ic_mask=first_node_input_channels_mask,
+            entry_node_oc_mask=masks.get(pruning_section.entry_node),
+            exit_node_ic_mask=masks.get(pruning_section.entry_node),
+            exit_node_oc_mask=second_node_output_mask
+        )
 
     def get_nparams_of_nonpruned_nodes(self,
                                        pruning_sections,
-                                       include_padded_channels: bool):
+                                       include_padded_channels: bool) -> int:
         """
+        Calculate the number of parameters for non-pruned nodes.
 
         Args:
-            pruning_sections:
-            include_padded_channels:
+            pruning_sections (list): A list of pruning sections.
+            include_padded_channels (bool): Flag to include padded channels in the count.
 
         Returns:
-
+            int: Total number of parameters for non-pruned nodes.
         """
-
         total_nparams = 0
-        # Collect all nodes to prune from the pruning sections.
-        nodes_to_prune = set([node for section in pruning_sections for node in section.get_all_nodes()])
-        # Calculate the num of params for non-prunable nodes.
+        nodes_to_prune = set(node for section in pruning_sections for node in section.get_all_nodes())
         for n in self.graph.nodes:
             if n not in nodes_to_prune:
-                # node_nparams = sum(n.get_num_parameters(self.fw_info))
-                node_nparams = self.get_pruned_node_num_params(node=n,
-                                                               input_mask=None,
-                                                               output_mask=None,
-                                                               include_padded_channels=include_padded_channels)
-                # if include_padded_channels:
-                #     node_nparams = self.get_node_nparams_with_padded_channels(node_nparams=node_nparams,
-                #                                                               num_oc=n.output_shape[-1],
-                #                                                               node_simd=n.get_simd())
+                node_nparams = self.get_pruned_node_num_params(n, None, None, include_padded_channels)
                 total_nparams += node_nparams
         return total_nparams
 
-    def _get_node_input_mask(self,
-                             node: BaseNode, pruning_sections: List[PruningSection],
-                             masks: Dict[BaseNode, np.ndarray]) -> np.ndarray:
+    #
+    # def get_nparams_of_shared_nodes(self,
+    #                                 masks: Dict[BaseNode, np.ndarray],
+    #                                 pruning_sections: List[PruningSection],
+    #                                 include_padded_channels) -> int:
+    #     """
+    #
+    #     Args:
+    #         masks:
+    #         pruning_sections:
+    #         include_padded_channels:
+    #
+    #     Returns:
+    #
+    #     """
+    #
+    #     nparams = 0
+    #     # Identify nodes that are at the end of one section and the start of another
+    #     shared_nodes = self._get_nodes_from_adjacent_sections(pruning_sections)
+    #     for node in shared_nodes:
+    #         # Get the input mask for the node if it exists
+    #         node_input_mask = self._get_node_input_mask(node, pruning_sections, masks)
+    #         # Get the output mask for the node if it exists
+    #         node_output_mask = masks.get(node)
+    #         # Calculate the number of remaining parameters for the shared node after pruning
+    #         nparams += self.get_pruned_node_num_params(node,
+    #                                                    node_input_mask,
+    #                                                    node_output_mask,
+    #                                                    include_padded_channels)
+    #     return nparams
+    #
+    # def get_nparams_of_pruning_sections(self,
+    #                                     masks,
+    #                                     pruning_sections,
+    #                                     include_padded_channels: bool):
+    #     """
+    #
+    #     Args:
+    #         masks:
+    #         pruning_sections:
+    #         include_padded_channels:
+    #
+    #     Returns:
+    #
+    #     """
+    #     nparams = 0
+    #     for pruning_section in pruning_sections:
+    #         pruning_section_mask = self.get_section_mask_from_node_mask(masks,
+    #                                                                     pruning_section,
+    #                                                                     pruning_sections)
+    #         nparams += self._get_pruning_section_num_params(pruning_section,
+    #                                                         pruning_section_mask,
+    #                                                         include_padded_channels)
+    #     return nparams
+    #
+    # def get_section_mask_from_node_mask(self,
+    #                                     masks,
+    #                                     pruning_section,
+    #                                     pruning_sections):
+    #     """
+    #
+    #     Args:
+    #         masks:
+    #         pruning_section:
+    #         pruning_sections:
+    #
+    #     Returns:
+    #
+    #     """
+    #
+    #     # Determine masks for input channels of the first node and output channels of the second node.
+    #     first_node_input_channels_mask = self._get_node_input_mask(pruning_section.entry_node,
+    #                                                                pruning_sections,
+    #                                                                masks)
+    #     second_node_output_mask = masks.get(pruning_section.exit_node)
+    #
+    #     # Create the pruning section mask.
+    #     pruning_section_mask = PruningSectionMask(entry_node_ic_mask=first_node_input_channels_mask,
+    #                                               entry_node_oc_mask=masks.get(pruning_section.entry_node),
+    #                                               exit_node_ic_mask=masks.get(pruning_section.entry_node),
+    #                                               exit_node_oc_mask=second_node_output_mask)
+    #
+    #     return pruning_section_mask
+    #
+    # def get_nparams_of_nonpruned_nodes(self,
+    #                                    pruning_sections,
+    #                                    include_padded_channels: bool):
+    #     """
+    #
+    #     Args:
+    #         pruning_sections:
+    #         include_padded_channels:
+    #
+    #     Returns:
+    #
+    #     """
+    #
+    #     total_nparams = 0
+    #     # Collect all nodes to prune from the pruning sections.
+    #     nodes_to_prune = set([node for section in pruning_sections for node in section.get_all_nodes()])
+    #     # Calculate the num of params for non-prunable nodes.
+    #     for n in self.graph.nodes:
+    #         if n not in nodes_to_prune:
+    #             # node_nparams = sum(n.get_num_parameters(self.fw_info))
+    #             node_nparams = self.get_pruned_node_num_params(node=n,
+    #                                                            input_mask=None,
+    #                                                            output_mask=None,
+    #                                                            include_padded_channels=include_padded_channels)
+    #             total_nparams += node_nparams
+    #     return total_nparams
 
+    def _get_node_input_mask(self, node: BaseNode, pruning_sections: List[PruningSection],
+                             masks: Dict[BaseNode, np.ndarray]) -> np.ndarray:
+        """
+        Retrieves the input mask for a given node based on the pruning sections.
+
+        Args:
+            node (BaseNode): The node for which the input mask is required.
+            pruning_sections (List[PruningSection]): A list of pruning sections in the graph.
+            masks (Dict[BaseNode, np.ndarray]): A dictionary mapping nodes to their respective pruning masks.
+
+        Returns:
+            np.ndarray: The input mask for the specified node, or None if not found.
+        """
         for section in pruning_sections:
+            # If the node is the exit node of a pruning section, return the entry node's mask.
             if node == section.exit_node:
                 return masks.get(section.entry_node)
         return None
 
-    def _get_nodes_from_adjacent_sections(self,
-                                          pruning_sections: List[PruningSection]) -> List[BaseNode]:
+    def _get_nodes_from_adjacent_sections(self, pruning_sections: List[PruningSection]) -> List[BaseNode]:
+        """
+        Identifies nodes that are shared between adjacent pruning sections.
 
+        Args:
+            pruning_sections (List[PruningSection]): A list of pruning sections in the graph.
+
+        Returns:
+            List[BaseNode]: A list of nodes that are present at the boundaries of adjacent sections.
+        """
         input_nodes = set(section.entry_node for section in pruning_sections)
         output_nodes = set(section.exit_node for section in pruning_sections)
+        # Return the intersection of entry and exit nodes, which represents shared nodes.
         return list(input_nodes.intersection(output_nodes))
 
     def _get_pruning_section_num_params(self,
                                         pruning_section: PruningSection,
                                         pruning_section_mask: PruningSectionMask,
                                         include_padded_channels: bool) -> int:
+        """
+        Calculates the total number of parameters in a pruning section after applying the pruning mask.
 
-        # Number of params for the first node in the section.
-        first_node_nparams = self.get_pruned_node_num_params(
-            pruning_section.entry_node,
-            pruning_section_mask.entry_node_ic_mask,
-            pruning_section_mask.entry_node_oc_mask,
-            include_padded_channels)
+        Args:
+            pruning_section (PruningSection): The pruning section to be considered.
+            pruning_section_mask (PruningSectionMask): The pruning mask applied to the section.
+            include_padded_channels (bool): Flag to include padded channels in the count.
 
-        # Sum number of params for all intermediate nodes in the section.
+        Returns:
+            int: The total number of parameters in the pruning section after pruning.
+        """
+        # Calculate the number of parameters for the entry node.
+        first_node_nparams = self.get_pruned_node_num_params(pruning_section.entry_node,
+                                                             pruning_section_mask.entry_node_ic_mask,
+                                                             pruning_section_mask.entry_node_oc_mask,
+                                                             include_padded_channels)
+
+        # Sum the number of parameters for all intermediate nodes.
         total_inter_nodes_nparams = sum(
-            self.get_pruned_node_num_params(
-                inter_node,
-                pruning_section_mask.entry_node_oc_mask,
-                pruning_section_mask.entry_node_oc_mask,
-                include_padded_channels) for inter_node in pruning_section.intermediate_nodes)
+            self.get_pruned_node_num_params(inter_node, pruning_section_mask.entry_node_oc_mask,
+                                            pruning_section_mask.entry_node_oc_mask, include_padded_channels) for
+            inter_node in pruning_section.intermediate_nodes)
 
-        # Number of params for the last node in the section.
-        second_node_nparams = self.get_pruned_node_num_params(
-            pruning_section.exit_node,
-            pruning_section_mask.exit_node_ic_mask,
-            pruning_section_mask.exit_node_oc_mask,
-            include_padded_channels)
+        # Calculate the number of parameters for the exit node.
+        second_node_nparams = self.get_pruned_node_num_params(pruning_section.exit_node,
+                                                              pruning_section_mask.exit_node_ic_mask,
+                                                              pruning_section_mask.exit_node_oc_mask,
+                                                              include_padded_channels)
 
         return first_node_nparams + total_inter_nodes_nparams + second_node_nparams
 
-    def get_pruned_node_num_params(self,
-                                   node: BaseNode,
-                                   input_mask: np.ndarray,
-                                   output_mask: np.ndarray,
+    def get_pruned_node_num_params(self, node: BaseNode, input_mask: np.ndarray, output_mask: np.ndarray,
                                    include_padded_channels: bool):
         """
-        Calculates the number of parameters in a pruned node of a model.
+        Calculates the number of parameters in a node after applying input and output pruning masks.
 
         Args:
-            node: The node whose parameters are to be counted.
-            input_mask: Mask to be applied to the input channels.
-            output_mask: Mask to be applied to the output channels.
-            include_padded_channels: Boolean flag to include or exclude padded channels (due to SIMD) in the count.
+            node (BaseNode): The node whose parameters are to be calculated.
+            input_mask (np.ndarray): The mask applied to the input channels of the node.
+            output_mask (np.ndarray): The mask applied to the output channels of the node.
+            include_padded_channels (bool): Flag to include padded channels in the count due to SIMD.
 
         Returns:
-            Integer representing the number of parameters in the pruned node.
+            int: The total number of parameters in the node after pruning.
         """
-
-        def _prune(w, mask, axis):
-            mask = np.ones(w.shape[axis], dtype=bool) if mask is None else mask.astype(bool)
-            assert w.shape[axis] == len(mask), (
-                f"Kernel num of input channels: {w.shape[axis]}, but mask len is {len(mask)} for node {node}")
-            pruned_w = np.take(w, np.where(mask)[0], axis=axis)
-            return pruned_w
-
         total_params = 0
         attributes_and_oc_axis = self.fw_impl.get_node_attributes_with_io_axis(node, self.fw_info)
+
+        # Iterate over the node's weights and apply pruning based on the masks.
         for w_attr, w in node.weights.items():
             io_axis = [io_axis for attr, io_axis in attributes_and_oc_axis.items() if attr in w_attr]
-            assert len(io_axis) == 1
+            assert len(io_axis) == 1, "Each weight should have exactly one corresponding IO axis."
             out_axis, in_axis = io_axis[0]
+
+            # Apply input and output masks to the weight tensor.
             if in_axis is not None and input_mask is not None:
-                w = _prune(w, input_mask, in_axis)
+                w = self._prune_tensor(w, input_mask, in_axis)
             if out_axis is not None and output_mask is not None:
-                w = _prune(w, output_mask, out_axis)
+                w = self._prune_tensor(w, output_mask, out_axis)
+
             total_params += w.size
 
+        # Adjust the total parameter count if padded channels are to be included.
         num_oc = np.sum(output_mask) if output_mask is not None else node.output_shape[-1]
         if include_padded_channels:
-            total_params = self.get_node_nparams_with_padded_channels(node=node,
-                                                                      node_nparams=total_params,
-                                                                      num_oc=num_oc,
-                                                                      node_simd=node.get_simd())
+            total_params = self.get_node_nparams_with_padded_channels(node, total_params, num_oc, node.get_simd())
 
         return total_params
 
-    def get_node_nparams_with_padded_channels(self,
-                                              node: BaseNode,
-                                              node_nparams: int,
-                                              num_oc: int,
-                                              node_simd: int):
+    def _prune_tensor(self, w: np.ndarray, mask: np.ndarray, axis: int):
         """
+        Prunes a tensor along a specified axis using a provided mask.
 
         Args:
-            node_nparams:
-            num_oc:
-            node_simd:
+            w (np.ndarray): The weight tensor to be pruned.
+            mask (np.ndarray): The pruning mask to apply.
+            axis (int): The axis along which to apply the pruning mask.
 
         Returns:
+            np.ndarray: The pruned tensor.
+        """
+        mask = np.ones(w.shape[axis], dtype=bool) if mask is None else mask.astype(bool)
+        assert w.shape[axis] == len(mask), f"Expected mask length {len(mask)}, found {w.shape[axis]}."
+        pruned_w = np.take(w, np.where(mask)[0], axis=axis)
+        return pruned_w
 
+    def get_node_nparams_with_padded_channels(self, node: BaseNode, node_nparams: int, num_oc: int, node_simd: int):
+        """
+        Adjusts the number of parameters of a node by considering padded channels due to SIMD.
+
+        Args:
+            node (BaseNode): The node whose parameters are being adjusted.
+            node_nparams (int): The original number of parameters in the node.
+            num_oc (int): The number of output channels in the node.
+            node_simd (int): The SIMD width used in the node.
+
+        Returns:
+            The adjusted number of parameters considering padded channels.
         """
         nparams_per_oc = node_nparams / num_oc
-
-        """
-        Usually every layer has some number of params in each weight tensor dedicated for a single output-channel. 
-        Sometimes not. For example: Keras Normalize layer with 3 output channels has 3 weights where 2 of them are 
-        tensors of length 3 and a single scalar that is used for all 3 output channels.
-        """
-        if int(nparams_per_oc)!=nparams_per_oc:
+        if int(nparams_per_oc) != nparams_per_oc:
             Logger.warning(
-                f" Found a node {node.name} with weights that are not uniformly distributed "
-                f"across output channels, thus memory calculation may be inaccurate due to "
+                f"Found a layer {node.name} with weights not uniformly distributed "
+                f"across output channels; memory calculation may be inaccurate due to "
                 f"SIMD assumptions.")
             nparams_per_oc = np.ceil(nparams_per_oc)
-            # assert int(nparams_per_oc)==nparams_per_oc, f"Expected number of params per channel to be integer but is {nparams_per_oc}"
 
         num_oc_with_null_channels = np.ceil(num_oc / node_simd) * node_simd
         return num_oc_with_null_channels * nparams_per_oc
