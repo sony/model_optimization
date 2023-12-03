@@ -73,18 +73,18 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
         """
         return is_keras_entry_node(node)
 
-    def is_node_exit_node(self, node: BaseNode, dual_entry_node: BaseNode):
+    def is_node_exit_node(self, node: BaseNode, corresponding_entry_node: BaseNode, fw_info: FrameworkInfo):
         """
         Determines whether a node is an exit node in a Keras model.
 
         Args:
             node: The node to be checked.
-            dual_entry_node: A related entry node to assist in the determination.
+            corresponding_entry_node: A related entry node to assist in the determination.
 
         Returns:
             Boolean indicating if the node is an exit node.
         """
-        return is_keras_exit_node(node, dual_entry_node)
+        return is_keras_exit_node(node, corresponding_entry_node, fw_info)
 
     def is_node_intermediate_pruning_section(self, node):
         """
