@@ -1,8 +1,11 @@
+from typing import List, Tuple
+
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import \
     PruningFrameworkImplementation
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.core.keras.pruning.attributes_info import get_keras_node_attributes_with_io_axis
 from model_compression_toolkit.core.keras.pruning.check_node_role import is_keras_node_intermediate_pruning_section, \
     is_keras_entry_node, is_keras_exit_node
 from model_compression_toolkit.core.keras.pruning.prune_keras_node import (prune_keras_exit_node,
@@ -97,3 +100,18 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
         """
         return is_keras_node_intermediate_pruning_section(node)
 
+    def get_node_attributes_with_io_axis(self,
+                                             node: BaseNode,
+                                             fw_info: FrameworkInfo) -> List[Tuple[str, int]]:
+        """
+        Gets the attributes of a node and the axis for each attribute's output channels dimension.
+
+        Args:
+            node (BaseNode): The node for which attributes and their output channel axis are required.
+            fw_info (FrameworkInfo): Framework-specific information containing details about layers and attributes.
+
+        Returns:
+            List[Tuple[str, int]]: A list of tuples where each tuple contains an attribute name and the axis
+                                   of the output channels for that attribute.
+        """
+        return get_keras_node_attributes_with_io_axis(node, fw_info)

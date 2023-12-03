@@ -39,37 +39,6 @@ class ModelsPruningTest(unittest.TestCase):
         for cr in target_crs:
             self.run_test(cr, dense_model)
 
-    # def test_retinanet_pruning(self):
-    #     import keras_cv
-    #     dense_model = keras_cv.models.RetinaNet.from_preset(
-    #         "retinanet_resnet50_pascalvoc", bounding_box_format="xywh"
-    #     )
-    #     target_crs = np.linspace(0.8, 1, 5)
-    #     for cr in target_crs:
-    #         self.run_test(cr, dense_model)
-
-    # def test_yolov8_pruning(self):
-    #     import keras_cv
-    #     class_ids = [
-    #         "car",
-    #         "pedestrian",
-    #         "trafficLight",
-    #         "biker",
-    #         "truck",
-    #     ]
-    #     class_mapping = dict(zip(range(len(class_ids)), class_ids))
-    #     backbone = keras_cv.models.YOLOV8Backbone.from_preset(
-    #         "yolo_v8_s_backbone_coco"  # We will use yolov8 small backbone with coco weights
-    #     )
-    #     dense_model = keras_cv.models.YOLOV8Detector(
-    #         num_classes=len(class_mapping),
-    #         bounding_box_format="xyxy",
-    #         backbone=backbone,
-    #         fpn_depth=1,
-    #     )
-    #     target_crs = np.linspace(0.5, 1, 5)
-    #     for cr in target_crs:
-    #         self.run_test(cr, dense_model)
 
     def test_vgg16_pruning(self):
         from keras.applications.vgg16 import VGG16

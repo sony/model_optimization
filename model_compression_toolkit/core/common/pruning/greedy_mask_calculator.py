@@ -40,7 +40,7 @@ class GreedyMaskCalculator:
         self.tpc = tpc
 
         # Initialize the SIMD group indices and scores dictionaries.
-        self.simd_groups_indices = {}
+        self.simd_groups_indices = {} # TODO: Take SIMD grouping out of mask calculator
         self.simd_groups_scores = {}
         self.mask_simd = None  # Will hold SIMD group mask per node.
         self.mask = None  # Will hold the final mask to be applied to the nodes.

@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 from abc import abstractmethod
 
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -123,3 +125,17 @@ class PruningFrameworkImplementation(FrameworkImplementation):
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s is_node_intermediate_pruning_section method.')  # pragma: no cover
 
+    def get_node_attributes_with_io_axis(self, node: BaseNode, fw_info: FrameworkInfo):
+        """
+        Gets the attributes of a node and the axis for each attribute's output channels dimension.
+
+        Args:
+            node (BaseNode): The node for which attributes and their output channel axis are required.
+            fw_info (FrameworkInfo): Framework-specific information containing details about layers and attributes.
+
+        Returns:
+            List[Tuple[str, int]]: A list of tuples where each tuple contains an attribute name and the axis
+                                   of the output channels for that attribute.
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_node_attributes_with_output_axis method.')  # pragma: no cover
