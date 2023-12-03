@@ -118,10 +118,10 @@ class MemoryCalculator:
         second_node_output_mask = masks.get(pruning_section.exit_node)
 
         # Create the pruning section mask.
-        pruning_section_mask = PruningSectionMask(entry_input_mask=first_node_input_channels_mask,
-                                                  entry_output_mask=masks.get(pruning_section.entry_node),
-                                                  exit_input_mask=masks.get(pruning_section.entry_node),
-                                                  exit_output_mask=second_node_output_mask)
+        pruning_section_mask = PruningSectionMask(entry_node_ic_mask=first_node_input_channels_mask,
+                                                  entry_node_oc_mask=masks.get(pruning_section.entry_node),
+                                                  exit_node_ic_mask=masks.get(pruning_section.entry_node),
+                                                  exit_node_oc_mask=second_node_output_mask)
 
         return pruning_section_mask
 
@@ -134,7 +134,7 @@ class MemoryCalculator:
         for n in self.graph.nodes:
             if n not in nodes_to_prune:
                 node_nparams = sum(n.get_num_parameters(self.fw_info))
-                if include_padded_channels: # TODO: rename to simd channels padding
+                if include_padded_channels:
                     num_oc = n.output_shape[-1]
                     nparams_per_oc = node_nparams/num_oc
                     num_oc_include_null_channels = np.ceil(num_oc/n.get_simd())*n.get_simd()
@@ -177,20 +177,12 @@ class MemoryCalculator:
                                         pruning_section: PruningSection,
                                         pruning_section_mask: PruningSectionMask,
                                         include_padded_channels: bool) -> int:
-        """
 
-        Args:
-            pruning_section:
-            pruning_section_mask:
-
-        Returns:
-
-        """
         # Number of params for the first node in the section.
         first_node_nparams = self.fw_impl.get_pruned_node_num_params(
             pruning_section.entry_node,
-            pruning_section_mask.entry_input_mask,
-            pruning_section_mask.entry_output_mask,
+            pruning_section_mask.entry_node_ic_mask,
+            pruning_section_mask.entry_node_oc_mask,
             self.fw_info,
             include_padded_channels)
 
@@ -198,16 +190,16 @@ class MemoryCalculator:
         total_inter_nodes_nparams = sum(
             self.fw_impl.get_pruned_node_num_params(
                 inter_node,
-                pruning_section_mask.entry_output_mask,
-                pruning_section_mask.entry_output_mask,
+                pruning_section_mask.entry_node_oc_mask,
+                pruning_section_mask.entry_node_oc_mask,
                 self.fw_info,
                 include_padded_channels) for inter_node in pruning_section.intermediate_nodes)
 
         # Number of params for the last node in the section.
         second_node_nparams = self.fw_impl.get_pruned_node_num_params(
             pruning_section.exit_node,
-            pruning_section_mask.exit_input_mask,
-            pruning_section_mask.exit_output_mask,
+            pruning_section_mask.exit_node_ic_mask,
+            pruning_section_mask.exit_node_oc_mask,
             self.fw_info,
             include_padded_channels)
 

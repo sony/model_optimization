@@ -10,21 +10,22 @@ class PruningSectionMask:
     This includes masks for both input and output channels at the entry and exit nodes of the section.
 
     Attributes:
-        entry_input_mask (np.ndarray): Mask for input channels of the entry node.
-        entry_output_mask (np.ndarray): Mask for output channels of the entry node.
-        exit_input_mask (np.ndarray): Mask for input channels of the exit node.
-        exit_output_mask (np.ndarray): Mask for output channels of the exit node.
+        entry_node_ic_mask (np.ndarray): Mask for input channels of the entry node.
+        entry_node_oc_mask (np.ndarray): Mask for output channels of the entry node.
+        exit_node_ic_mask (np.ndarray): Mask for input channels of the exit node.
+        exit_node_oc_mask (np.ndarray): Mask for output channels of the exit node.
     """
 
     def __init__(self,
-                 entry_input_mask: np.ndarray, # TODO:entry_node_ic_mask
-                 entry_output_mask: np.ndarray,
-                 exit_input_mask: np.ndarray,
-                 exit_output_mask: np.ndarray):
-        self.entry_input_mask = entry_input_mask
-        self.entry_output_mask = entry_output_mask
-        self.exit_input_mask = exit_input_mask
-        self.exit_output_mask = exit_output_mask
+                 entry_node_ic_mask: np.ndarray = None,
+                 entry_node_oc_mask: np.ndarray = None,
+                 exit_node_ic_mask: np.ndarray = None,
+                 exit_node_oc_mask: np.ndarray = None):
+
+        self.entry_node_ic_mask = entry_node_ic_mask
+        self.entry_node_oc_mask = entry_node_oc_mask
+        self.exit_node_ic_mask = exit_node_ic_mask
+        self.exit_node_oc_mask = exit_node_oc_mask
 
 
 class PruningSection:
@@ -70,16 +71,16 @@ class PruningSection:
             fw_info: Framework-specific information needed to apply the mask.
         """
         fw_impl.prune_entry_node(node=self.entry_node,
-                                 output_mask=pruning_section_mask.entry_output_mask,
+                                 output_mask=pruning_section_mask.entry_node_oc_mask,
                                  fw_info=fw_info)
 
         for inter_node in self.intermediate_nodes:
             fw_impl.prune_intermediate_node(node=inter_node,
-                                            input_mask=pruning_section_mask.entry_output_mask,
-                                            output_mask=pruning_section_mask.entry_output_mask,
+                                            input_mask=pruning_section_mask.entry_node_oc_mask,
+                                            output_mask=pruning_section_mask.entry_node_oc_mask,
                                             fw_info=fw_info)
 
         fw_impl.prune_exit_node(self.exit_node,
-                                input_mask=pruning_section_mask.exit_input_mask,
+                                input_mask=pruning_section_mask.exit_node_ic_mask,
                                 fw_info=fw_info)
 
