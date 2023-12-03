@@ -73,11 +73,11 @@ class MemoryCalculator:
             # Get the output mask for the node if it exists
             node_output_mask = masks.get(node)
             # Calculate the number of remaining parameters for the shared node after pruning
-            nparams += self.fw_impl.get_pruned_node_num_params(node,
-                                                               node_input_mask,
-                                                               node_output_mask,
-                                                               self.fw_info,
-                                                               include_padded_channels)
+            nparams += self.get_pruned_node_num_params(node,
+                                                       node_input_mask,
+                                                       node_output_mask,
+                                                       self.fw_info,
+                                                       include_padded_channels)
         return nparams
 
     def get_nparams_of_pruning_sections(self, masks, pruning_sections, include_padded_channels:bool):
@@ -179,7 +179,7 @@ class MemoryCalculator:
                                         include_padded_channels: bool) -> int:
 
         # Number of params for the first node in the section.
-        first_node_nparams = self.fw_impl.get_pruned_node_num_params(
+        first_node_nparams = self.get_pruned_node_num_params(
             pruning_section.entry_node,
             pruning_section_mask.entry_node_ic_mask,
             pruning_section_mask.entry_node_oc_mask,
@@ -188,7 +188,7 @@ class MemoryCalculator:
 
         # Sum number of params for all intermediate nodes in the section.
         total_inter_nodes_nparams = sum(
-            self.fw_impl.get_pruned_node_num_params(
+            self.get_pruned_node_num_params(
                 inter_node,
                 pruning_section_mask.entry_node_oc_mask,
                 pruning_section_mask.entry_node_oc_mask,
@@ -196,7 +196,7 @@ class MemoryCalculator:
                 include_padded_channels) for inter_node in pruning_section.intermediate_nodes)
 
         # Number of params for the last node in the section.
-        second_node_nparams = self.fw_impl.get_pruned_node_num_params(
+        second_node_nparams = self.get_pruned_node_num_params(
             pruning_section.exit_node,
             pruning_section_mask.exit_node_ic_mask,
             pruning_section_mask.exit_node_oc_mask,
@@ -204,3 +204,63 @@ class MemoryCalculator:
             include_padded_channels)
 
         return first_node_nparams + total_inter_nodes_nparams + second_node_nparams
+
+
+    def get_pruned_node_num_params(self,
+                                         node: BaseNode,
+                                         input_mask: np.ndarray,
+                                         output_mask: np.ndarray,
+                                         fw_info: FrameworkInfo,
+                                         include_padded_channels: bool):
+        """
+        Calculates the number of parameters in a pruned node of a Keras model.
+
+        Args:
+            node: The node whose parameters are to be counted.
+            input_mask: Mask to be applied to the input channels.
+            output_mask: Mask to be applied to the output channels.
+            fw_info: Framework-specific information object.
+            include_padded_channels: Boolean flag to include or exclude null channels in the count.
+
+        Returns:
+            Integer representing the number of parameters in the pruned node.
+        """
+
+        total_params = 0
+        if fw_info.is_kernel_op(node.type):
+            # Obtain axes info for kernel operations.
+            oc_axis, ic_axis = fw_info.kernel_channels_mapping.get(node.type)
+            kernel_attr = fw_info.get_kernel_op_attributes(node.type)[0]
+            for w_attr, w in node.weights.items():
+                # Check if the weight attribute is the kernel.
+                if kernel_attr in w_attr:
+                    # Handle input and output masks, ensuring they are boolean arrays.
+                    input_mask = np.ones(w.shape[ic_axis], dtype=bool) if input_mask is None else input_mask.astype(bool)
+                    output_mask = np.ones(w.shape[oc_axis], dtype=bool) if output_mask is None else output_mask.astype(bool)
+
+                    # Assert the input and output masks match the kernel dimensions.
+                    assert w.shape[ic_axis] == len(input_mask), (f"Kernel num of input channels: {w.shape[ic_axis]}, but mask len is {len(input_mask)} for node {node}")
+                    assert w.shape[oc_axis] == len(output_mask), (f"Kernel num of output channels: {w.shape[oc_axis]}, but mask len is {len(output_mask)} for node {node}")
+
+                    # Apply masks to the kernel and calculate the remaining parameters.
+                    pruned_w = np.take(w, np.where(input_mask)[0], axis=ic_axis)
+                    pruned_w = np.take(pruned_w, np.where(output_mask)[0], axis=oc_axis)
+                    total_params += len(pruned_w.flatten())
+                else:
+                    # For non-kernel weights, apply the output mask only.
+                    total_params += len(np.take(w, np.where(output_mask)[0]))
+
+        else:
+            # For non-kernel operations, apply the output mask to the last axis.
+            # This part assumes that for non-kernel ops, all weights output channel axis is -1.
+            for w_attr, w in node.weights.items():
+                pruned_w = np.take(w, np.where(output_mask)[0], axis=-1) # TODO: get axis from fw-specific function
+                total_params += pruned_w.size
+
+        if include_padded_channels: # TODO: remove duplicate
+            node_simd = node.get_simd()
+            nparams_per_oc = total_params / np.sum(output_mask)
+            num_oc_with_null_channels = np.ceil(np.sum(output_mask) / node_simd) * node_simd
+            total_params = num_oc_with_null_channels * nparams_per_oc
+
+        return total_params

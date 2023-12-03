@@ -5,7 +5,6 @@ from model_compression_toolkit.core.common.pruning.pruning_framework_implementat
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.keras.pruning.check_node_role import is_keras_node_intermediate_pruning_section, \
     is_keras_entry_node, is_keras_exit_node
-from model_compression_toolkit.core.keras.pruning.count_node_params import get_keras_pruned_node_num_params
 from model_compression_toolkit.core.keras.pruning.prune_keras_node import (prune_keras_exit_node,
                                                                            prune_keras_entry_node, \
                                                                            prune_keras_intermediate_node)
@@ -97,25 +96,4 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
             Boolean indicating if the node is part of the intermediate pruning section.
         """
         return is_keras_node_intermediate_pruning_section(node)
-
-    def get_pruned_node_num_params(self,
-                                   node: BaseNode,
-                                   input_mask: np.ndarray,
-                                   output_mask: np.ndarray,
-                                   fw_info: FrameworkInfo,
-                                   include_padded_channels: bool):
-        """
-        Calculates the number of parameters in a pruned node of a Keras model.
-
-        Args:
-            node: The node whose parameters are to be counted.
-            input_mask: Mask to be applied to the input channels.
-            output_mask: Mask to be applied to the output channels.
-            fw_info: Framework-specific information object.
-            include_padded_channels: Boolean flag to include or exclude null channels in the count.
-
-        Returns:
-            Integer representing the number of parameters in the pruned node.
-        """
-        return get_keras_pruned_node_num_params(node, input_mask, output_mask, fw_info, include_padded_channels)
 
