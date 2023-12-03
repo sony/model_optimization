@@ -8,7 +8,7 @@ import numpy as np
 keras = tf.keras
 layers = keras.layers
 
-NUM_PRUNING_RATIOS = 2
+NUM_PRUNING_RATIOS = 5
 
 class ModelsPruningTest(unittest.TestCase):
     def representative_dataset(self, in_shape=(1,224,224,3)):
