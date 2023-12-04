@@ -93,7 +93,7 @@ class BatchNormalizationFolding(common.BaseSubstitution):
 
         # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
         # we should skip the substitution.
-        if conv_node.reuse or conv_node.reuse_group is not None:
+        if conv_node.is_reused():
             return graph
 
         bn_node = edge_nodes[1]
@@ -230,7 +230,7 @@ class BatchNormalizationForwardFolding(common.BaseSubstitution):
 
         # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
         # we should skip the substitution.
-        if conv_node.reuse or conv_node.reuse_group is not None or bn_node.reuse or bn_node.reuse_group is not None:
+        if conv_node.is_reused() or bn_node.is_reused():
             return graph
 
         if len(graph.get_next_nodes(bn_node)) > 1 or len(graph.get_prev_nodes(conv_node)) > 1:

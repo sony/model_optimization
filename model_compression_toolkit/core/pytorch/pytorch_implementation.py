@@ -289,6 +289,12 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return pytorch_linear_collapsing()
 
+    def get_op2d_add_const_collapsing_substitution(self) -> common.BaseSubstitution:
+        """
+        Returns: None, as Op2d add-const substitution is not supported in torch yet
+        """
+        return None
+
     def get_substitutions_post_statistics_collection(self,
                                                      quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
         """

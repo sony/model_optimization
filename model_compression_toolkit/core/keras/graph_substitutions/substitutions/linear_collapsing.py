@@ -15,10 +15,14 @@
 from typing import Tuple
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2D
+if tf.__version__ < "2.6":
+    from tensorflow.keras.layers import Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense
+else:
+    from keras.layers import Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense
+
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher, NodeFrameworkAttrMatcher
-from model_compression_toolkit.core.common.substitutions.linear_collapsing import Conv2DCollapsing
+from model_compression_toolkit.core.common.substitutions.linear_collapsing import Conv2DCollapsing, Op2DAddConstCollapsing
 from model_compression_toolkit.core.keras.constants import KERNEL, KERNEL_SIZE, STRIDES, DILATIONS, LINEAR, \
     ACTIVATION, BIAS, USE_BIAS, LAYER_NAME, FILTERS, PADDING, GROUPS, DATA_FORMAT
 from model_compression_toolkit.logger import Logger
@@ -123,3 +127,69 @@ def keras_linear_collapsing() -> Conv2DCollapsing:
                             FILTERS,
                             data_format_str=DATA_FORMAT,
                             layer_name_str=LAYER_NAME)
+
+
+def op2d_add_const_collapsing_node_matchers() -> Tuple[NodeOperationMatcher, NodeOperationMatcher]:
+    """
+    Function generates matchers for matching:
+    (Op2D, Add(const)) -> Op2D.  (Op2D is one of [DepthwiseConv2D, Conv2D, Conv2DTranspose, Dense)
+    Returns:
+        Matcher for Op2D followed by Add const
+    """
+    first_node = NodeOperationMatcher(DepthwiseConv2D) | \
+                 NodeOperationMatcher(Conv2D) | \
+                 NodeOperationMatcher(Conv2DTranspose) | \
+                 NodeOperationMatcher(Dense)
+    second_node = NodeOperationMatcher(tf.math.add)
+    return first_node, second_node
+
+
+def op2d_add_const_collapsing_fn(op2d_node: BaseNode,
+                                 add_node: BaseNode,
+                                 bias_str: str) -> np.ndarray:
+    """
+    Collapsing Add-Const to previous node's bias
+    Args:
+        op2d_node: Op2d layer node
+        add_node: Add layer to collapse
+        bias_str: The framework specific attribute name of the convolution layer's bias.
+    Returns:
+        The modified conv layer node's bias
+    """
+    bias = op2d_node.get_weights_by_keys(bias_str)
+
+    # read constant from add node
+    if len(add_node.op_call_args) > 0:
+        const = add_node.op_call_args[0]
+    elif 'y' in add_node.op_call_kwargs:
+        const = add_node.op_call_kwargs['y']
+    else:
+        Logger.error(f'Unable to read constant from add node: {add_node.name}')
+
+    # convert constant to numpy array
+    if isinstance(const, tf.Tensor):
+        const = const.numpy()
+    elif isinstance(const, list):
+        const = np.array(const)
+    else:
+        Logger.error(f'Unable to convert constant to numpy array: {add_node.name}')
+
+    # return new bias
+    if bias is None:
+        return const
+    else:
+        return const + bias
+
+
+def keras_op2d_add_const_collapsing() -> Op2DAddConstCollapsing:
+    """
+    Returns:
+        An Op2DCollapsing initialized for Keras models.
+    """
+    first_node, second_node = op2d_add_const_collapsing_node_matchers()
+    return Op2DAddConstCollapsing(first_node,
+                                  second_node,
+                                  op2d_add_const_collapsing_fn,
+                                  BIAS,
+                                  USE_BIAS,
+                                  layer_name_str=LAYER_NAME)
