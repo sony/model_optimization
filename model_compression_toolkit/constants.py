@@ -125,7 +125,7 @@ HESSIAN_COMP_TOLERANCE = 1e-3
 
 # Hessian configuration default constants
 HESSIAN_OUTPUT_ALPHA = 0.3
-HESSIAN_NUM_ITERATIONS = 1
+HESSIAN_NUM_ITERATIONS = 50
 HESSIAN_EPS = 1e-6
 
 # Pruning constants
