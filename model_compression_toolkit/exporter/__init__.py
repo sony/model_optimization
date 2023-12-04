@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+from model_compression_toolkit.exporter.model_exporter.fw_agonstic.quantization_format import QuantizationFormat
 from model_compression_toolkit.exporter.model_exporter.keras.export_serialization_format import \
     KerasExportSerializationFormat
 from model_compression_toolkit.exporter.model_exporter.pytorch.export_serialization_format import \

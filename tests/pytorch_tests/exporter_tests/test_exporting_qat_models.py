@@ -44,6 +44,9 @@ class TestExportingQATModelTorchscript(unittest.TestCase):
     def get_serialization_format(self):
         return mct.exporter.PytorchExportSerializationFormat.TORCHSCRIPT
 
+    def get_quantization_format(self):
+        return mct.exporter.QuantizationFormat.FAKELY_QUANT
+
     def get_tmp_filepath(self):
         return tempfile.mkstemp('.pt')[1]
 
@@ -87,8 +90,9 @@ class TestExportingQATModelTorchscript(unittest.TestCase):
         mct.exporter.pytorch_export_model(self.final_model,
                                           self.filepath,
                                           self.get_dataset,
-                                          self.get_tpc(),
-                                          serialization_format=self.get_serialization_format())
+                                          serialization_format=self.get_serialization_format(),
+                                          quantization_format=self.get_quantization_format()
+                                          )
 
         self.loaded_model = self.load_exported_model(self.filepath)
         self.infer(self.loaded_model, images[0])

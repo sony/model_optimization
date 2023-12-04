@@ -57,7 +57,7 @@ class KerasFakeQuantExporterBaseTest(ABC):
         _, self.fq_model_file_path = tempfile.mkstemp(TMP_KERAS_EXPORT_FORMAT)
         mct.exporter.keras_export_model(model=self.exportable_model,
                                         save_model_path=self.fq_model_file_path,
-                                        target_platform_capabilities=self.get_tpc())
+                                        quantization_format=mct.exporter.QuantizationFormat.FAKELY_QUANT)
 
         # Load model
         self.loaded_model = keras.models.load_model(self.fq_model_file_path)

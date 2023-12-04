@@ -49,7 +49,6 @@ if found_tf:
         TestSearchBitwidthConfiguration
     from tests.keras_tests.function_tests.test_bn_info_collection import TestBNInfoCollection
     from tests.keras_tests.graph_tests.test_graph_reading import TestGraphReading
-    from tests.keras_tests.graph_tests.test_graph_quantization_and_export import TestTFLiteExport
     from tests.keras_tests.layer_tests.test_layers_runner import LayerTest as TFLayerTest
     from tests.keras_tests.function_tests.test_symmetric_threshold_selection_weights import \
         TestSymmetricThresholdSelectionWeights
@@ -123,7 +122,6 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLUTActivationsQuantizerParams))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLUTQuantizerFakeQuant))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphReading))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestTFLiteExport))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSymmetricThresholdSelectionWeights))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformQuantizeTensor))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))

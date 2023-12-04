@@ -91,16 +91,16 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         mct.exporter.keras_export_model(model=self.exportable_model,
                                         is_layer_exportable_fn=is_keras_layer_exportable,
                                         save_model_path=SAVED_MODEL_PATH_TF,
-                                        target_platform_capabilities=self.tpc,
-                                        serialization_format=mct.exporter.KerasExportSerializationFormat.KERAS_H5)
+                                        serialization_format=mct.exporter.KerasExportSerializationFormat.KERAS_H5,
+                                        quantization_format=mct.exporter.QuantizationFormat.FAKELY_QUANT)
         keras_load_quantized_model(SAVED_MODEL_PATH_TF)
 
     def save_and_load_exported_tflite_fakequant_model(self):
         mct.exporter.keras_export_model(model=self.exportable_model,
                                         is_layer_exportable_fn=is_keras_layer_exportable,
                                         save_model_path=SAVED_MODEL_PATH_TFLITE,
-                                        target_platform_capabilities=self.tpc,
-                                        serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE)
+                                        serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE,
+                                        quantization_format=mct.exporter.QuantizationFormat.FAKELY_QUANT)
         interpreter = tf.lite.Interpreter(model_path=SAVED_MODEL_PATH_TFLITE)
         interpreter.allocate_tensors()
 
