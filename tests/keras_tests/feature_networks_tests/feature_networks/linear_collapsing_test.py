@@ -134,8 +134,6 @@ class Op2DAddConstCollapsingTest(BaseConv2DCollapsingTest):
         super().__init__(unit_test)
 
     def create_networks(self):
-        # TODO: check add with two inputs, not const
-        # TODO: add dense+add_const
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         # ########
         # Cond2D #
@@ -153,9 +151,10 @@ class Op2DAddConstCollapsingTest(BaseConv2DCollapsingTest):
         x = layers.ReLU()(x)
 
         # Collapse + operator to Conv2D without bias
+        # TODO: replace add with + (currently using tf.math.add because below TF 2.14 creates TFOpLambda which fails ths node matcher)
         x = layers.Conv2D(filters=9, kernel_size=(5, 5), strides=(1, 1), padding='same',
                           use_bias=False)(x)
-        x = x + tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype)
+        x = tf.math.add(x, tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype))
 
         # #################
         # DepthwiseConv2D #
@@ -173,9 +172,10 @@ class Op2DAddConstCollapsingTest(BaseConv2DCollapsingTest):
         x = layers.ReLU()(x)
 
         # Collapse + operator to DepthwiseConv2D without bias
+        # TODO: replace add with + (currently using tf.math.add because below TF 2.14 creates TFOpLambda which fails ths node matcher)
         x = layers.DepthwiseConv2D(kernel_size=(5, 5), strides=(1, 1), padding='same',
                                    use_bias=False)(x)
-        x = x + tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype)
+        x = tf.math.add(x, tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype))
 
         # #################
         # Conv2DTranspose #
@@ -193,9 +193,10 @@ class Op2DAddConstCollapsingTest(BaseConv2DCollapsingTest):
         x = layers.ReLU()(x)
 
         # Collapse + operator to Conv2DTranspose without bias
+        # TODO: replace add with + (currently using tf.math.add because below TF 2.14 creates TFOpLambda which fails ths node matcher)
         x = layers.Conv2DTranspose(filters=9, kernel_size=(5, 5), strides=(1, 1), padding='same',
                                    use_bias=False)(x)
-        x = x + tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype)
+        x = tf.math.add(x, tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype))
 
         # #######
         # Dense #
@@ -212,8 +213,9 @@ class Op2DAddConstCollapsingTest(BaseConv2DCollapsingTest):
         x = layers.ReLU()(x)
 
         # Collapse + operator to Conv2DTranspose without bias
+        # TODO: replace add with + (currently using tf.math.add because below TF 2.14 creates TFOpLambda which fails ths node matcher)
         x = layers.Dense(9, use_bias=False)(x)
-        x = x + tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype)
+        x = tf.math.add(x, tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype))
 
         # Don't collapse
         x2 = layers.Dense(9, use_bias=True, bias_initializer='glorot_uniform')(x)
