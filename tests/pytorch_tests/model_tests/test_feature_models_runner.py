@@ -39,6 +39,7 @@ from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_t
     MixedPercisionActivationSearch4BitFunctional, MixedPercisionActivationMultipleInputs
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
+from tests.pytorch_tests.model_tests.feature_models.scalar_tensor_test import ScalarTensorTest
 from tests.pytorch_tests.model_tests.feature_models.second_moment_correction_test import ConvSecondMomentNetTest, \
     ConvTSecondMomentNetTest, MultipleInputsConvSecondMomentNetTest, ValueSecondMomentTest
 from tests.pytorch_tests.model_tests.feature_models.symmetric_activation_test import SymmetricActivationTest
@@ -252,6 +253,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
         # This test checks the Channel Scale Equalization feature in Conv2D - Relu - ConvTranspose2D with Relu as a function
         # and with zero padding.
         ScaleEqualizationReluFuncConvTransposeWithZeroPadNetTest(self).run_test()
+
+    def test_scalar_tensor(self):
+        """
+        This test checks that we support scalar tensors initialized as torch.tensor(x) where x is int
+        """
+        ScalarTensorTest(self).run_test()
 
     def test_layer_name(self):
         """
