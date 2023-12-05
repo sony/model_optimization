@@ -16,6 +16,7 @@
 from typing import Callable, Tuple
 from packaging import version
 
+from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
@@ -24,7 +25,7 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import 
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core import CoreConfig
-from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
+from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
@@ -202,7 +203,7 @@ if FOUND_TF:
             Logger.info("Using experimental mixed-precision quantization. "
                                "If you encounter an issue please file a bug.")
 
-        tb_w = _init_tensorboard_writer(fw_info)
+        tb_w = init_tensorboard_writer(fw_info)
 
         fw_impl = GPTQKerasImplemantation()
 

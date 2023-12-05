@@ -241,4 +241,7 @@ def compute_kl_divergence(float_tensor: np.ndarray, fxp_tensor: np.ndarray, batc
     non_zero_fxp_tensor = fxp_flat.copy()
     non_zero_fxp_tensor[non_zero_fxp_tensor == 0] = EPS
 
-    return np.mean(np.sum(np.where(float_flat != 0, float_flat * np.log(float_flat / non_zero_fxp_tensor), 0), axis=-1))
+    prob_distance = np.where(float_flat != 0, float_flat * np.log(float_flat / non_zero_fxp_tensor), 0)
+    # The sum is part of the KL-Divergance function.
+    # The mean is to aggregate the distance between each output probability vectors.
+    return np.mean(np.sum(prob_distance, axis=-1), axis=-1)

@@ -34,6 +34,7 @@ class ReshapeNet(torch.nn.Module):
     def __init__(self):
         super(ReshapeNet, self).__init__()
         self.conv1 = torch.nn.Conv2d(3, 4, kernel_size=1, stride=1)
+        self.scale_weight = torch.nn.Parameter(torch.ones(32))
 
     def forward(self, x):
         x = self.conv1(x)
@@ -47,6 +48,7 @@ class ReshapeNet(torch.nn.Module):
         height = height + batch
         height = height - batch
         x = torch.transpose(x, 1, 2)
+        x = torch.reshape(self.scale_weight, (1, -1, 1, 1)) * x
         return x.reshape(-1, channels, height, width)
 
 
@@ -78,7 +80,8 @@ class ReshapeNetTest(BasePytorchTest):
             reshape_nodes = [n for n in v.graph.nodes if (n.type == torch.reshape or n.type == torch.Tensor.view)]
             for r in reshape_nodes:
                 for o in r.op_call_args:
-                    assert isinstance(o, list)
+                    if len(r.input_shape) > 0:
+                        assert isinstance(o, list)
 
         ######################################################
         # check the all other comparisons:

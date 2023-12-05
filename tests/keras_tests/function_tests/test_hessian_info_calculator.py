@@ -48,6 +48,7 @@ def reused_model(input_shape):
     inputs = Input(shape=input_shape[1:])
     x = reused_layer(inputs)
     x = reused_layer(x)
+    x = ReLU()(x)
     return keras.Model(inputs=inputs, outputs=x)
 
 
@@ -508,3 +509,19 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
         _repr_dataset = functools.partial(representative_dataset,
                                           input_shape=input_shape)
         self._test_advanced_graph(in_model, _repr_dataset)
+
+    def test_activation_hessian_output_exception(self):
+        graph, _repr_dataset, keras_impl = self._setup(layer=Conv2D(filters=2, kernel_size=3))
+        hessian_service = hessian_common.HessianInfoService(graph=graph,
+                                                            representative_dataset=_repr_dataset,
+                                                            fw_impl=keras_impl)
+        with self.assertRaises(Exception) as e:
+            request = hessian_common.TraceHessianRequest(granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
+                                                         mode=hessian_common.HessianMode.ACTIVATION,
+                                                         target_node=graph.get_outputs()[0].node)
+            _ = hessian_service.fetch_hessian(request, required_size=1)
+
+        self.assertTrue("Trying to compute activation Hessian approximation with respect to the model output"
+                        in str(e.exception))
+
+        del hessian_service

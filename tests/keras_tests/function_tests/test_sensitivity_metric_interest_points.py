@@ -85,6 +85,7 @@ def softmax_model(input_shape):
     return model
 
 
+
 class TestSensitivityMetricInterestPoints(unittest.TestCase):
 
     def test_filtered_interest_points_set(self):
@@ -148,7 +149,7 @@ class TestSensitivityMetricInterestPoints(unittest.TestCase):
             distance_per_softmax_axis = distance_fn(t1, t2, batch=True, axis=axis)
             distance_global = distance_fn(t1, t2, batch=True, axis=None)
 
-            self.assertFalse(np.isclose(distance_per_softmax_axis, distance_global),
+            self.assertFalse(np.isclose(np.mean(distance_per_softmax_axis), distance_global),
                              f"Computing distance for softmax node on softmax activation axis should be different than "
                              f"on than computing on the entire tensor.")
 

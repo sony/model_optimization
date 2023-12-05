@@ -14,15 +14,14 @@
 # ==============================================================================
 
 
-import os
 from typing import Callable, Tuple, Any, List, Dict
 
 import numpy as np
-from tqdm import tqdm
 
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.hessian.hessian_info_service import HessianInfoService
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
+from model_compression_toolkit.core.quantization_prep_runner import quantization_preparation_runner
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.base_graph import Graph
@@ -32,20 +31,15 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_aggrega
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_functions_mapping import kpi_functions_mapping
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_methods import MpKpiMetric
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
-from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
-    calculate_quantization_params
-from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
-    statistics_correction_runner
-from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
     WeightsFinalBitwidthConfigVisualizer, \
     ActivationFinalBitwidthConfigVisualizer
-from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
+from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter, \
+    finalize_bitwidth_in_tb
+
 
 def core_runner(in_model: Any,
                 representative_data_gen: Callable,
@@ -94,12 +88,12 @@ def core_runner(in_model: Any,
                                               representative_dataset=representative_data_gen,
                                               fw_impl=fw_impl)
 
-    tg = _prepare_model_for_quantization(graph,
-                                         representative_data_gen,
-                                         core_config,
-                                         fw_info,
-                                         tb_w,
-                                         fw_impl)
+    tg = quantization_preparation_runner(graph=graph,
+                                         representative_data_gen=representative_data_gen,
+                                         core_config=core_config,
+                                         fw_info=fw_info,
+                                         fw_impl=fw_impl,
+                                         tb_w=tb_w)
 
     ######################################
     # Finalize bit widths
@@ -148,160 +142,9 @@ def core_runner(in_model: Any,
             f'Final activation bit-width configuration: {[node_b[1] for node_b in activation_conf_nodes_bitwidth]}')
 
         if tb_w is not None:
-            if len(weights_conf_nodes_bitwidth) > 0:
-                visual = WeightsFinalBitwidthConfigVisualizer(weights_conf_nodes_bitwidth)
-                figure = visual.plot_config_bitwidth()
-                tb_w.add_figure(figure, f'Weights final bit-width config')
-            if len(activation_conf_nodes_bitwidth) > 0:
-                visual = ActivationFinalBitwidthConfigVisualizer(activation_conf_nodes_bitwidth)
-                figure = visual.plot_config_bitwidth()
-                tb_w.add_figure(figure, f'Activation final bit-width config')
+            finalize_bitwidth_in_tb(tb_w, weights_conf_nodes_bitwidth, activation_conf_nodes_bitwidth)
 
     return tg, bit_widths_config, hessian_info_service
-
-
-def _init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
-    """
-    Create a TensorBoardWriter object initialized with the logger dir path if it was set,
-    or None otherwise.
-
-    Args:
-        fw_info: FrameworkInfo object.
-
-    Returns:
-        A TensorBoardWriter object.
-    """
-    tb_w = None
-    if Logger.LOG_PATH is not None:
-        tb_log_dir = os.path.join(os.getcwd(), Logger.LOG_PATH, 'tensorboard_logs')
-        Logger.info(f'To use Tensorboard, please run: tensorboard --logdir {tb_log_dir}')
-        tb_w = TensorboardWriter(tb_log_dir, fw_info)
-    return tb_w
-
-
-def read_model_to_graph(in_model: Any,
-                        representative_data_gen: Callable,
-                        tpc: TargetPlatformCapabilities,
-                        fw_info: FrameworkInfo = None,
-                        fw_impl: FrameworkImplementation = None) -> Graph:
-
-    """
-    Read a model into a graph object.
-    Args:
-        in_model: Model to optimize and prepare for quantization.
-        representative_data_gen: Dataset used for calibration.
-        tpc: TargetPlatformCapabilities object that models the inference target platform and
-                      the attached framework operator's information.
-        fw_info: Information needed for quantization about the specific framework (e.g.,
-                kernel channels indices, groups of layers by how they should be quantized, etc.)
-        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-    Returns:
-        Graph object that represents the model.
-    """
-    graph = fw_impl.model_reader(in_model,
-                                 representative_data_gen)
-    graph.set_fw_info(fw_info)
-    graph.set_tpc(tpc)
-    return graph
-
-
-def _prepare_model_for_quantization(transformed_graph: Graph,
-                                    representative_data_gen: Callable,
-                                    core_config: CoreConfig = CoreConfig(),
-                                    fw_info: FrameworkInfo = None,
-                                    tb_w: TensorboardWriter = None,
-                                    fw_impl: FrameworkImplementation = None) -> Graph:
-    """
-    Prepare a trained model for post-training quantization.
-    First, the model graph is optimized using several transformations (e.g. folding BatchNormalization to preceding layers).
-    Second, statistics (e.g. min/max, histogram, etc.) are collected for each layer's output
-    (and input, depends on the quantization configuration) using a given representative dataset.
-    Next, quantization parameters are calculated using the collected statistics.
-    Finally, more transformations (based on the statistics) are applied to increase the model's performance.
-
-    Args:
-        representative_data_gen (Callable): Dataset used for calibration.
-        core_config (CoreConfig): CoreConfig containing parameters of how the model should be quantized.
-        fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
-        kernel channels indices, groups of layers by how they should be quantized, etc.)
-        tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
-        fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
-
-    Returns:
-        Graph object that represents the model, contains thresholds, and ready for quantization.
-    """
-
-    ######################################
-    # Graph analyzing (attaching statistics collectors)
-    ######################################
-    analyzer_graph(fw_impl.attach_sc_to_node,
-                   transformed_graph,
-                   fw_info,
-                   core_config.quantization_config)  # Mark points for statistics collection
-
-    if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'after_analyzer_graph')
-
-    ######################################
-    # Statistic collection
-    ######################################
-    mi = ModelCollector(transformed_graph,
-                        fw_impl,
-                        fw_info)
-
-    for _data in tqdm(representative_data_gen()):
-        mi.infer(_data)
-
-    ######################################
-    # Edit network according to user
-    # specific settings
-    ######################################
-    # Notice that not all actions affect at this stage (for example, actions that edit the final configuration as
-    # there are no final configurations at this stage of the optimization). For this reason we edit the graph
-    # again at the end of the optimization process.
-    edit_network_graph(transformed_graph, fw_info, core_config.debug_config.network_editor)
-
-    ######################################
-    # Calculate quantization params
-    ######################################
-    calculate_quantization_params(transformed_graph,
-                                  fw_info,
-                                  fw_impl=fw_impl)
-
-    if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'thresholds_selection')
-        tb_w.add_all_statistics(transformed_graph, 'thresholds_selection')
-
-    ######################################
-    # Graph substitution (post statistics collection)
-    ######################################
-    transformed_graph = substitute(transformed_graph,
-                                   fw_impl.get_substitutions_post_statistics_collection(core_config.quantization_config))
-
-    ######################################
-    # Shift Negative Activations
-    ######################################
-    if core_config.quantization_config.shift_negative_activation_correction:
-        transformed_graph = fw_impl.shift_negative_correction(transformed_graph,
-                                                              core_config,
-                                                              fw_info)
-        if tb_w is not None:
-            tb_w.add_graph(transformed_graph, 'after_shift_negative_correction')
-            tb_w.add_all_statistics(transformed_graph, 'after_shift_negative_correction')
-
-    if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'post_statistics_collection_substitutions')
-        tb_w.add_all_statistics(transformed_graph, 'post_statistics_collection_substitutions')
-
-    ######################################
-    # Statistics Correction
-    ######################################
-    tg_with_bias = statistics_correction_runner(transformed_graph, core_config, fw_info, fw_impl, tb_w)
-
-    for n in tg_with_bias.nodes:
-        assert n.final_weights_quantization_cfg is None
-
-    return tg_with_bias
 
 
 def _set_final_kpi(graph: Graph,

@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 
 # If the quantization config does not contain kernel channel mapping or the weights
 # quantization is not per-channel, we use a dummy channel mapping.
-dummy_channel_mapping = DefaultDict({}, lambda: (None, None))
+dummy_channel_mapping = DefaultDict({}, (None, None))
 
 
 def get_weights_qparams(kernel: np.ndarray,
