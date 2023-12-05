@@ -147,7 +147,7 @@ class Conv2DBNFoldingTest(BaseBatchNormalizationFolding):
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
 
-class Conv2DBNConcatnFoldingTest(BaseBatchNormalizationFolding):
+class Conv2DBNConcatFoldingTest(BaseBatchNormalizationFolding):
     def __init__(self, unit_test):
         super().__init__(unit_test,
                          linear_layer=layers.Conv2D)

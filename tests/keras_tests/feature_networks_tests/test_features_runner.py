@@ -31,7 +31,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_d
     BiasCorrectionDepthwiseTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bn_folding_test import Conv2DBNFoldingTest, \
     DepthwiseConv2DBNFoldingTest, DepthwiseConv2DBNFoldingHighMultiplierTest, Conv2DTransposeBNFoldingTest, \
-    Conv2DBNConcatnFoldingTest, SeparableConv2DBNFoldingTest, BNForwardFoldingTest
+    Conv2DBNConcatFoldingTest, SeparableConv2DBNFoldingTest, BNForwardFoldingTest
 from tests.keras_tests.feature_networks_tests.feature_networks.conv_bn_relu_residual_test import ConvBnReluResidualTest
 from tests.keras_tests.feature_networks_tests.feature_networks.decompose_separable_conv_test import \
     DecomposeSeparableConvTest
@@ -124,6 +124,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_pre
     MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationKPINonConfNodesTest, \
     MixedPercisionSearchTotalKPINonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
 from tests.keras_tests.feature_networks_tests.feature_networks.old_api_test import OldApiTest
+from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substitution_test import MatmulToDenseSubstitutionTest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
 
 layers = tf.keras.layers
@@ -467,8 +468,11 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_experimental_exporter(self):
         ExportableModelTest(self).run_test()
 
-    def test_conv2d_bn_concant(self):
-        Conv2DBNConcatnFoldingTest(self).run_test()
+    def test_matmul_dense_substitution(self):
+        MatmulToDenseSubstitutionTest(self).run_test()
+
+    def test_conv2d_bn_concat(self):
+        Conv2DBNConcatFoldingTest(self).run_test()
 
     def test_activation_scaling_relu6(self):
         ReLUBoundToPOTNetTest(self).run_test()
