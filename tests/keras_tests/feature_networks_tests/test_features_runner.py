@@ -45,7 +45,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.gptq.gptq_test im
 from tests.keras_tests.feature_networks_tests.feature_networks.input_scaling_test import InputScalingDenseTest, \
     InputScalingConvTest, InputScalingDWTest, InputScalingZeroPadTest
 from tests.keras_tests.feature_networks_tests.feature_networks.linear_collapsing_test import TwoConv2DCollapsingTest, \
-    ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest
+    ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest, Op2DAddConstCollapsingTest
 from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTWeightsQuantizerTest, \
     LUTActivationQuantizerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_bops_test import \
@@ -531,6 +531,7 @@ class FeatureNetworkTest(unittest.TestCase):
         ThreeConv2DCollapsingTest(self).run_test()
         FourConv2DCollapsingTest(self).run_test()
         SixConv2DCollapsingTest(self).run_test()
+        Op2DAddConstCollapsingTest(self).run_test()
 
     def test_second_moment(self):
         DepthwiseConv2DSecondMomentTest(self).run_test()

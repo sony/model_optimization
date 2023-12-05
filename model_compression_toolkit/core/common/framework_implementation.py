@@ -236,6 +236,14 @@ class FrameworkImplementation(ABC):
                              f'framework\'s get_linear_collapsing_substitution method.')  # pragma: no cover
 
     @abstractmethod
+    def get_op2d_add_const_collapsing_substitution(self) -> common.BaseSubstitution:
+        """
+        Returns: conv2d add const collapsing substitution
+        """
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_op2d_add_const_collapsing_substitution method.')  # pragma: no cover
+
+    @abstractmethod
     def get_substitutions_statistics_correction(self, quant_config: QuantizationConfig) -> \
             List[common.BaseSubstitution]:
         """

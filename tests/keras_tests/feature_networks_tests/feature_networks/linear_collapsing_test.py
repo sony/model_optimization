@@ -14,9 +14,13 @@
 # ==============================================================================
 
 from abc import ABC
+from packaging import version
 import model_compression_toolkit as mct
 import tensorflow as tf
-from tensorflow.keras.layers import Conv2D
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers.core import TFOpLambda
+else:
+    from keras.layers.core import TFOpLambda
 
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
@@ -51,7 +55,7 @@ class BaseConv2DCollapsingTest(BaseKerasFeatureNetworkTest, ABC):
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
-        self.unit_test.assertTrue(len([l for l in quantized_model.layers if isinstance(l, KerasTrainableQuantizationWrapper) and isinstance(l.layer, Conv2D)]) < len([l for l in float_model.layers if isinstance(l, Conv2D)]), msg=f'fail number of layers should decrease!')
+        self.unit_test.assertTrue(len([l for l in quantized_model.layers if isinstance(l, KerasTrainableQuantizationWrapper) and isinstance(l.layer, layers.Conv2D)]) < len([l for l in float_model.layers if isinstance(l, layers.Conv2D)]), msg=f'fail number of layers should decrease!')
         cs = cosine_similarity(y, y_hat)
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
 
@@ -69,7 +73,7 @@ class TwoConv2DCollapsingTest(BaseConv2DCollapsingTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         super().compare(quantized_model, float_model, input_x, quantization_info)
         for layer in quantized_model.layers:
-            if type(layer) == Conv2D:
+            if type(layer) == layers.Conv2D:
                 self.unit_test.assertTrue(len(layer.weights) == 2, msg=f'fail Bias should appear in weights!!')
 
 class ThreeConv2DCollapsingTest(BaseConv2DCollapsingTest):
@@ -86,7 +90,7 @@ class ThreeConv2DCollapsingTest(BaseConv2DCollapsingTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         super().compare(quantized_model, float_model, input_x, quantization_info)
         for layer in quantized_model.layers:
-            if type(layer) == Conv2D:
+            if type(layer) == layers.Conv2D:
                 self.unit_test.assertTrue(len(layer.weights) == 1,msg=f'fail Bias should not appear in weights!!')
 
 
@@ -105,8 +109,9 @@ class FourConv2DCollapsingTest(BaseConv2DCollapsingTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         super().compare(quantized_model, float_model, input_x, quantization_info)
         for layer in quantized_model.layers:
-            if type(layer) == Conv2D:
+            if type(layer) == layers.Conv2D:
                 self.unit_test.assertTrue(len(layer.weights) == 2,msg=f'fail Bias should appear in weights!!')
+
 
 class SixConv2DCollapsingTest(BaseConv2DCollapsingTest):
     def __init__(self, unit_test):
@@ -125,5 +130,113 @@ class SixConv2DCollapsingTest(BaseConv2DCollapsingTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         super().compare(quantized_model, float_model, input_x, quantization_info)
         for layer in quantized_model.layers:
-            if type(layer) == Conv2D:
+            if type(layer) == layers.Conv2D:
                 self.unit_test.assertTrue(len(layer.weights) == 2,msg=f'fail Bias should appear in weights!!')
+
+
+class Op2DAddConstCollapsingTest(BaseConv2DCollapsingTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        # ########
+        # Cond2D #
+        # ########
+        # Collapse Conv2D with bias
+        x = layers.Conv2D(filters=7, kernel_size=(5, 5), strides=(1, 1), padding='same',
+                          use_bias=True, bias_initializer='glorot_uniform')(inputs)
+        x = tf.math.add(x, tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype))
+        x = layers.ReLU()(x)
+
+        # Collapse Conv2D without bias, const first argument of tf.math.add
+        x = layers.Conv2D(filters=5, kernel_size=(5, 5), strides=(1, 1), padding='same',
+                          use_bias=False)(x)
+        x = tf.math.add(tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype), x)
+        x = layers.ReLU()(x)
+
+        # Collapse + operator to Conv2D without bias
+        # TODO: replace add with + (currently using tf.math.add because below TF 2.14 creates TFOpLambda which fails ths node matcher)
+        x = layers.Conv2D(filters=9, kernel_size=(5, 5), strides=(1, 1), padding='same',
+                          use_bias=False)(x)
+        x = tf.math.add(x, tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype))
+
+        # #################
+        # DepthwiseConv2D #
+        # #################
+        # Collapse DepthwiseConv2D with bias
+        x = layers.DepthwiseConv2D(kernel_size=(5, 5), strides=(1, 1), padding='same',
+                                   use_bias=True, bias_initializer='glorot_uniform')(x)
+        x = tf.math.add(x, tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype))
+        x = layers.ReLU()(x)
+
+        # Collapse DepthwiseConv2D without bias, const first argument of tf.math.add
+        x = layers.DepthwiseConv2D(kernel_size=(5, 5), strides=(1, 1), padding='same',
+                                   use_bias=False)(x)
+        x = tf.math.add(tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype), x)
+        x = layers.ReLU()(x)
+
+        # Collapse + operator to DepthwiseConv2D without bias
+        # TODO: replace add with + (currently using tf.math.add because below TF 2.14 creates TFOpLambda which fails ths node matcher)
+        x = layers.DepthwiseConv2D(kernel_size=(5, 5), strides=(1, 1), padding='same',
+                                   use_bias=False)(x)
+        x = tf.math.add(x, tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype))
+
+        # #################
+        # Conv2DTranspose #
+        # #################
+        # Collapse Conv2DTranspose with bias
+        x = layers.Conv2DTranspose(filters=9, kernel_size=(5, 5), strides=(1, 1), padding='same',
+                                   use_bias=True, bias_initializer='glorot_uniform')(x)
+        x = tf.math.add(x, tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype))
+        x = layers.ReLU()(x)
+
+        # Collapse Conv2DTranspose without bias, const first argument of tf.math.add
+        x = layers.Conv2DTranspose(filters=9, kernel_size=(5, 5), strides=(1, 1), padding='same',
+                                   use_bias=False)(x)
+        x = tf.math.add(tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype), x)
+        x = layers.ReLU()(x)
+
+        # Collapse + operator to Conv2DTranspose without bias
+        # TODO: replace add with + (currently using tf.math.add because below TF 2.14 creates TFOpLambda which fails ths node matcher)
+        x = layers.Conv2DTranspose(filters=9, kernel_size=(5, 5), strides=(1, 1), padding='same',
+                                   use_bias=False)(x)
+        x = tf.math.add(x, tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype))
+
+        # #######
+        # Dense #
+        # #######
+        x = layers.Reshape((-1,))(x)
+        # Collapse Dense with bias
+        x = layers.Dense(9, use_bias=True, bias_initializer='glorot_uniform')(x)
+        x = tf.math.add(x, tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype))
+        x = layers.ReLU()(x)
+
+        # Collapse Dense without bias, const first argument of tf.math.add
+        x = layers.Dense(9, use_bias=False)(x)
+        x = tf.math.add(tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype), x)
+        x = layers.ReLU()(x)
+
+        # Collapse + operator to Conv2DTranspose without bias
+        # TODO: replace add with + (currently using tf.math.add because below TF 2.14 creates TFOpLambda which fails ths node matcher)
+        x = layers.Dense(9, use_bias=False)(x)
+        x = tf.math.add(x, tf.constant(np.random.normal(size=x.shape[-1]), dtype=x.dtype))
+
+        # Don't collapse
+        x2 = layers.Dense(9, use_bias=True, bias_initializer='glorot_uniform')(x)
+        x = tf.math.add(x2, x)
+        y = layers.ReLU()(x)
+
+        return tf.keras.models.Model(inputs=inputs, outputs=y)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        super().compare(quantized_model, float_model, input_x, quantization_info)
+        num_adds = 0
+        for layer in quantized_model.layers:
+            if type(layer) in [layers.Conv2D, layers.DepthwiseConv2D, layers.Conv2DTranspose, layers.Dense]:
+                self.unit_test.assertTrue(len(layer.weights) == 2, msg=f'fail Bias should appear in weights!!')
+            elif isinstance(layer, TFOpLambda) and layer.function is tf.add:
+                num_adds += 1
+
+        # check all "add"s were folded except the one with 2 tensor inputs
+        self.unit_test.assertTrue(num_adds == 1, msg=f'Only one add should remain in the quantized model')

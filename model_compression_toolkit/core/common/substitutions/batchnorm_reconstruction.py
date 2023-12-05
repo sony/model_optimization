@@ -79,7 +79,7 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
 
         # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
         # we should skip the substitution.
-        if source_node.reuse or source_node.reuse_group is not None:
+        if source_node.is_reused():
             for qc in source_node.candidates_quantization_cfg:
                 qc.weights_quantization_cfg.weights_second_moment_correction = False
             return graph

@@ -129,6 +129,7 @@ def get_finalized_graph(initial_graph: Graph,
     transformed_graph = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection(quant_config))
     if quant_config.linear_collapsing:
         transformed_graph = linear_collapsing_substitute(transformed_graph, fw_impl.get_linear_collapsing_substitution())
+        transformed_graph = linear_collapsing_substitute(transformed_graph, fw_impl.get_op2d_add_const_collapsing_substitution())
     if quant_config.residual_collapsing:
         transformed_graph = substitute(transformed_graph, fw_impl.get_residual_collapsing_substitution())
 

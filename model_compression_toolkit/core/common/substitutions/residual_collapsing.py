@@ -63,9 +63,7 @@ class ResidualCollapsing(common.BaseSubstitution):
 
         # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
         # we should skip the substitution.
-        if first_node.reuse or first_node.reuse_group is not None:
-            return graph
-        if second_node.reuse or second_node.reuse_group is not None:
+        if first_node.is_reused() or second_node.is_reused():
             return graph
 
         # Check if convolution and residual satisfy the collapsing conditions, otherwise skip substitution

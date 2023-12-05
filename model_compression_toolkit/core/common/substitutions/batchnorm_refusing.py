@@ -102,7 +102,7 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
 
         # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
         # we should skip the substitution.
-        if source_node.reuse or source_node.reuse_group is not None:
+        if source_node.is_reused():
             Logger.exception("If the linear operator is part of a reused group we should skip the the BN folding "
                              "substitution and SMC feature")  # pragma: no cover
 
