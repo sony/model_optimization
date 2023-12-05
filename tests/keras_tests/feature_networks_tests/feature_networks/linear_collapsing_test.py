@@ -14,8 +14,13 @@
 # ==============================================================================
 
 from abc import ABC
+from packaging import version
 import model_compression_toolkit as mct
 import tensorflow as tf
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.layers.core import TFOpLambda
+else:
+    from keras.layers.core import TFOpLambda
 
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
@@ -226,6 +231,12 @@ class Op2DAddConstCollapsingTest(BaseConv2DCollapsingTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         super().compare(quantized_model, float_model, input_x, quantization_info)
+        num_adds = 0
         for layer in quantized_model.layers:
             if type(layer) in [layers.Conv2D, layers.DepthwiseConv2D, layers.Conv2DTranspose, layers.Dense]:
                 self.unit_test.assertTrue(len(layer.weights) == 2, msg=f'fail Bias should appear in weights!!')
+            elif isinstance(layer, TFOpLambda) and layer.function is tf.add:
+                num_adds += 1
+
+        # check all "add"s were folded except the one with 2 tensor inputs
+        self.unit_test.assertTrue(num_adds == 1, msg=f'Only one add should remain in the quantized model')
