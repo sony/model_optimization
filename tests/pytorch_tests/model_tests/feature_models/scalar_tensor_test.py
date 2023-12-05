@@ -22,7 +22,7 @@ class ScalarTensorNet(torch.nn.Module):
         self.conv1 = torch.nn.Conv2d(3, 3, kernel_size=1, stride=1)
         self.scalars = [torch.tensor(i) for i in range(-5, 6)]
 
-    def forward(self, x, y):
+    def forward(self, x):
         x = self.conv1(x)
         for scalar in self.scalars:
             x = x + scalar
@@ -38,7 +38,7 @@ class ScalarTensorTest(BasePytorchTest):
         super().__init__(unit_test)
 
     def create_inputs_shape(self):
-        return [[self.val_batch_size, 3, 32, 32], [self.val_batch_size, 3, 32, 32]]
+        return [[self.val_batch_size, 3, 32, 32]]
 
     def create_feature_network(self, input_shape):
         return ScalarTensorNet()
