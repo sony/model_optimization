@@ -28,8 +28,6 @@ from tests.common_tests.function_tests.test_threshold_selection import TestThres
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
 
-if FOUND_ONNX:
-    from tests.pytorch_tests.function_tests.test_export_pytorch_fully_quantized_model import TestPyTorchFakeQuantExporter
 
 found_tf = importlib.util.find_spec("tensorflow") is not None
 found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util.find_spec(
@@ -147,8 +145,6 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureModelsTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FunctionTestRunner))
         # Exporter test of pytorch must have ONNX installed
-        if FOUND_ONNX:
-            suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPyTorchFakeQuantExporter))
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_mobilenet_v2', ModelTest))
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_mobilenet_v3', ModelTest))
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_efficientnet_b0', ModelTest))
