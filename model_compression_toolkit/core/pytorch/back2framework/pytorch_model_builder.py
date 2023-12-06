@@ -233,7 +233,7 @@ class PytorchModel(torch.nn.Module):
                 if node.type == BufferHolder:
                     self.get_submodule(node.name). \
                         register_buffer(node.name,
-                                        torch.Tensor(node.get_weights_by_keys(BUFFER)).to(get_working_device()))
+                                        torch.tensor(node.get_weights_by_keys(BUFFER)).to(get_working_device()))
 
             # Add activation quantization modules if an activation holder is configured for this node
             if node.is_activation_quantization_enabled() and self.get_activation_quantizer_holder is not None:
