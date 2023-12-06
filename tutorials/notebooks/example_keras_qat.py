@@ -61,7 +61,6 @@ def get_tpc():
     default_configuration_options = tp.QuantizationConfigOptions([default_config])
     tp_model = tp.TargetPlatformModel(default_configuration_options)
     with tp_model:
-        tp_model.set_quantization_format(quantization_format=tp.quantization_format.QuantizationFormat.FAKELY_QUANT)
         tp.OperatorsSet("NoQuantization",
                         tp.get_default_quantization_config_options().clone_and_edit(
                             enable_weights_quantization=False,
@@ -220,14 +219,14 @@ if __name__ == "__main__":
     # Export quantized model to TFLite and Keras.
     # For more details please see: https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/exporter/README.md
     _, tflite_file_path = tempfile.mkstemp('.tflite') # Path of exported model
-    mct.exporter.keras_export_model(model=quantized_model, save_model_path=tflite_file_path,
-                                    target_platform_capabilities=get_tpc(),
-                                    serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE)
+    mct.exporter.keras_export_model(model=quantized_model,
+                                    save_model_path=tflite_file_path,
+                                    serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE,
+                                    quantization_format=mct.exporter.QuantizationFormat.FAKELY_QUANT)
     print(f"Quantized model was exporting to TFLite here: {tflite_file_path}")
 
     # Export quantized model to Keras
     _, keras_file_path = tempfile.mkstemp('.h5') # Path of exported model
-    mct.exporter.keras_export_model(model=quantized_model, save_model_path=keras_file_path,
-                                    target_platform_capabilities=get_tpc(),
-                                    serialization_format=mct.exporter.KerasExportSerializationFormat.KERAS_H5)
+    mct.exporter.keras_export_model(model=quantized_model,
+                                    save_model_path=keras_file_path)
     print(f"Quantized model was exporting to Keras here: {keras_file_path}")

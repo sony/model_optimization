@@ -28,8 +28,6 @@ from tests.common_tests.function_tests.test_threshold_selection import TestThres
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
 
-if FOUND_ONNX:
-    from tests.pytorch_tests.function_tests.test_export_pytorch_fully_quantized_model import TestPyTorchFakeQuantExporter
 
 found_tf = importlib.util.find_spec("tensorflow") is not None
 found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util.find_spec(
@@ -49,7 +47,6 @@ if found_tf:
         TestSearchBitwidthConfiguration
     from tests.keras_tests.function_tests.test_bn_info_collection import TestBNInfoCollection
     from tests.keras_tests.graph_tests.test_graph_reading import TestGraphReading
-    from tests.keras_tests.graph_tests.test_graph_quantization_and_export import TestTFLiteExport
     from tests.keras_tests.layer_tests.test_layers_runner import LayerTest as TFLayerTest
     from tests.keras_tests.function_tests.test_symmetric_threshold_selection_weights import \
         TestSymmetricThresholdSelectionWeights
@@ -123,7 +120,6 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLUTActivationsQuantizerParams))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLUTQuantizerFakeQuant))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphReading))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestTFLiteExport))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSymmetricThresholdSelectionWeights))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformQuantizeTensor))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestUniformRangeSelectionWeights))
@@ -149,8 +145,6 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureModelsTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FunctionTestRunner))
         # Exporter test of pytorch must have ONNX installed
-        if FOUND_ONNX:
-            suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPyTorchFakeQuantExporter))
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_mobilenet_v2', ModelTest))
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_mobilenet_v3', ModelTest))
         # suiteList.append(unittest.TestLoader().loadTestsFromName('test_efficientnet_b0', ModelTest))

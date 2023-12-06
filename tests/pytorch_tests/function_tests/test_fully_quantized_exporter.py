@@ -55,48 +55,6 @@ class TestFullyQuantizedExporter(unittest.TestCase):
         np.random.seed(seed)
         random.seed(float(seed))
 
-    def test_sanity(self):
-        """
-        Test that new fully quantized exporter model predicts the same as
-        old exported model.
-        """
-        model = mobilenet_v2(pretrained=True)
-        def repr_dataset(n_iters=1):
-            for _ in range(n_iters):
-                yield to_torch_tensor([torch.ones(1, 3, 224, 224)])
-
-        seed = np.random.randint(0, 100, size=1)[0]
-
-        self.set_seed(seed)
-        core_config = mct.core.CoreConfig()
-        old_export_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(
-            in_module=model,
-            representative_data_gen=repr_dataset,
-            core_config=core_config,
-            new_experimental_exporter=False)
-
-        self.set_seed(seed)
-        core_config = mct.core.CoreConfig()
-        new_export_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(
-            in_module=model,
-            core_config=core_config,
-            representative_data_gen=repr_dataset,
-            new_experimental_exporter=True)
-
-        def _to_numpy(t):
-            return t.cpu().detach().numpy()
-
-        images = next(repr_dataset())
-        diff = new_export_model(images) - old_export_model(images)
-        # TODO:
-        # Increase atol due to a minor difference in Symmetric quantizer
-        # w_delta = np.mean(np.abs(_to_numpy(old_export_model.features_0_0_bn.weight) - _to_numpy(new_export_model.features_0_0_bn.layer.weight)))
-        # self.assertTrue(w_delta == 0, f'Diff between weights: {w_delta}')
-        self.assertTrue(np.isclose(_to_numpy(old_export_model.features_0_0_bn.weight),
-                                   _to_numpy(new_export_model.features_0_0_bn.layer.weight)).all())
-        self.assertTrue(np.sum(np.abs(diff.cpu().detach().numpy())) == 0, f'Sum absolute error: {np.sum(np.abs(diff.cpu().detach().numpy()))}')
-
-
     def _to_numpy(self, t):
         return t.cpu().detach().numpy()
 

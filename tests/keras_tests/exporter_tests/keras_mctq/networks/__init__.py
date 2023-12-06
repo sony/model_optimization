@@ -12,18 +12,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from enum import Enum
-
-
-class PytorchExportSerializationFormat(Enum):
-    """
-    Specify which serialization format to use for exporting a quantized Pytorch model.
-
-    TORCHSCRIPT - torchscript format
-
-    ONNX - onnx format
-
-    """
-
-    TORCHSCRIPT = 0
-    ONNX = 1

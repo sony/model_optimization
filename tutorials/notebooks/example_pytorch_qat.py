@@ -179,7 +179,6 @@ if __name__ == '__main__':
         default_configuration_options = tp.QuantizationConfigOptions([default_config])
         tp_model = tp.TargetPlatformModel(default_configuration_options)
         with tp_model:
-            tp_model.set_quantization_format(quantization_format=tp.quantization_format.QuantizationFormat.FAKELY_QUANT)
             tp.OperatorsSet("NoQuantization",
                             tp.get_default_quantization_config_options().clone_and_edit(
                                 enable_weights_quantization=False,
@@ -230,6 +229,6 @@ if __name__ == '__main__':
 
     # Export quantized model to ONNX
     _, onnx_file_path = tempfile.mkstemp('.onnx') # Path of exported model
-    mct.exporter.pytorch_export_model(model=quantized_model, save_model_path=onnx_file_path,
-                                      repr_dataset=representative_data_gen, target_platform_capabilities=get_tpc(),
-                                      serialization_format=mct.exporter.PytorchExportSerializationFormat.ONNX)
+    mct.exporter.pytorch_export_model(model=quantized_model,
+                                      save_model_path=onnx_file_path,
+                                      repr_dataset=representative_data_gen)

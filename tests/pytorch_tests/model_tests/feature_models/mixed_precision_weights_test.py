@@ -19,8 +19,6 @@ from torch.nn import Conv2d
 from model_compression_toolkit.core import KPI
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
-    QuantizationFormat
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model, get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
@@ -116,8 +114,6 @@ class MixedPercisionSearchPartWeightsLayers(MixedPercisionBaseTest):
 
         tp_model = tp.TargetPlatformModel(weight_fixed_cfg, name="mp_part_weights_layers_test")
         with tp_model:
-            tp_model.set_quantization_format(QuantizationFormat.FAKELY_QUANT)
-
             tp.OperatorsSet("Weights_mp", weight_mixed_cfg)
             tp.OperatorsSet("Weights_fixed", weight_fixed_cfg)
 

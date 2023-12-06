@@ -224,11 +224,3 @@ class TargetPlatformModel(ImmutableClass):
         """
         pprint.pprint(self.get_info(), sort_dicts=False)
 
-    def set_quantization_format(self,
-                                quantization_format: Any):
-        """
-        Set quantization format.
-        Args:
-            quantization_format: A quantization format (fake-quant, int8 etc.) from enum QuantizationFormat.
-        """
-        self.quantization_format = quantization_format

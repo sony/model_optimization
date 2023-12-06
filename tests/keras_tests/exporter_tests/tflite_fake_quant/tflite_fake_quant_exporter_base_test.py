@@ -47,8 +47,8 @@ class TFLiteFakeQuantExporterBaseTest(ABC):
         _, self.fq_model_file_path = tempfile.mkstemp('.tflite')
         mct.exporter.keras_export_model(model=self.exportable_model,
                                         save_model_path=self.fq_model_file_path,
-                                        target_platform_capabilities=self.get_tpc(),
-                                        serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE)
+                                        serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE,
+                                        quantization_format=mct.exporter.QuantizationFormat.FAKELY_QUANT)
 
         # Load model
         self.interpreter = tf.lite.Interpreter(model_path=self.fq_model_file_path)

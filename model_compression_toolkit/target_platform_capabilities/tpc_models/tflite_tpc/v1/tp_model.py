@@ -19,8 +19,6 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
     TargetPlatformModel
 from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import \
     QuantizationMethod
-from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
-    QuantizationFormat
 
 tp = mct.target_platform
 
@@ -157,8 +155,5 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         tp.Fusing([conv2d, squeeze, activations_to_fuse])
         tp.Fusing([batch_norm, activations_to_fuse])
         tp.Fusing([batch_norm, add, activations_to_fuse])
-
-        # Set quantization format to int8
-        generated_tpc.set_quantization_format(QuantizationFormat.INT8)
 
     return generated_tpc
