@@ -40,8 +40,8 @@ class MCTQKerasExporter(BaseKerasExporter):
 
     def export(self):
         """
-        Convert an exportable (fully-quantized) Keras model to a fakely-quant model
-        (namely, weights that are in fake-quant format) and fake-quant layers for the activations.
+        Export an exportable (fully-quantized) Keras model to a Keras model with
+        MCTQ quantizers. This is done by using keras saving model function.
         """
         if self.model is None:
             Logger.critical(f'Exporter can not save None model')  # pragma: no cover

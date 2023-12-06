@@ -55,6 +55,7 @@ if FOUND_TORCH:
             is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
             serialization_format: Format to export the model according to (by default
             PytorchExportSerializationFormat.ONNX).
+            quantization_format: Format of how quantizers are exported (fakely-quant, int8, MCTQ quantizers).
 
         """
 
