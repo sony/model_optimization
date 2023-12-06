@@ -140,44 +140,51 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
         def batch_norm_wrapper(channels):
             return partial(nn.functional.batch_norm,
-                           running_mean=torch.randn(channels, device='cuda'),
-                           running_var=1+torch.randn(channels, device='cuda'))
-
-        def batch_norm_wrapper_with_bias(channels):
-            return partial(nn.functional.batch_norm,
-                           running_mean=torch.randn(channels, device='cuda'),
+                           running_mean=0+torch.randn(channels, device='cuda'),
                            running_var=1+torch.randn(channels, device='cuda'),
-                           bias=torch.randn(channels, device='cuda'))
+                           weight=2+torch.randn(channels, device='cuda'),
+                           bias=3+torch.randn(channels, device='cuda'),
+                           )
 
-        for bn_layer in [nn.BatchNorm2d, batch_norm_wrapper, batch_norm_wrapper_with_bias]:
+        for bn_layer in [batch_norm_wrapper, nn.BatchNorm2d]:
             BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=1), bn_layer).run_test()
-            BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=3, groups=3)).run_test()  # DW-Conv test
-            BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(2, 1))).run_test()
-            BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=2), fold_applied=False).run_test()
+            BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=3, groups=3), bn_layer).run_test()  # DW-Conv test
+            BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(2, 1)), bn_layer).run_test()
+            BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=2), bn_layer, fold_applied=False).run_test()
             BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=(3, 1), groups=3),
-                             fold_applied=False).run_test()  # DW-Conv test
-            BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(1, 3)), fold_applied=False).run_test()
+                             bn_layer, fold_applied=False).run_test()  # DW-Conv test
+            BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(1, 3)), bn_layer, fold_applied=False).run_test()
 
     def test_bn_forward_folding(self):
         """
         This test checks the BatchNorm forward folding feature.
         """
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), is_dw=True).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3), is_dw=True).run_test()  # DW-Conv test
-        BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1), is_dw=True).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), fold_applied=False, is_dw=True).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), fold_applied=False,
-                                is_dw=True).run_test()  # DW-Conv test
-        BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, (1, 3)), fold_applied=False, is_dw=True).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), add_bn=True, is_dw=True).run_test()
 
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1)).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3)).run_test()  # DW-Conv test
-        BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1)).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), fold_applied=False).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), fold_applied=False).run_test()  # DW-Conv test
-        BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, (1, 3)), fold_applied=False).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), add_bn=True).run_test()
+        def batch_norm_wrapper(channels):
+            return partial(nn.functional.batch_norm,
+                           running_mean=0+torch.randn(channels, device='cuda'),
+                           running_var=1+torch.randn(channels, device='cuda'),
+                           weight=2+torch.randn(channels, device='cuda'),
+                           bias=3+torch.randn(channels, device='cuda'),
+                           )
+
+        for bn_layer in [batch_norm_wrapper, nn.BatchNorm2d]:
+            BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), bn_layer, is_dw=True).run_test()
+            BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3), bn_layer, is_dw=True).run_test()  # DW-Conv test
+            BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1), bn_layer, is_dw=True).run_test()
+            BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), bn_layer, bn_layer, fold_applied=False, is_dw=True).run_test()
+            BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), bn_layer, fold_applied=False,
+                                    is_dw=True).run_test()  # DW-Conv test
+            BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, (1, 3)), bn_layer, fold_applied=False, is_dw=True).run_test()
+            BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), bn_layer, add_bn=True, is_dw=True).run_test()
+
+            BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), bn_layer).run_test()
+            BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3), bn_layer).run_test()  # DW-Conv test
+            BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1), bn_layer).run_test()
+            BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), bn_layer, fold_applied=False).run_test()
+            BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), bn_layer, fold_applied=False).run_test()  # DW-Conv test
+            BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, (1, 3)), bn_layer, fold_applied=False).run_test()
+            BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), bn_layer, add_bn=True).run_test()
 
     def test_second_moment_correction(self):
         """

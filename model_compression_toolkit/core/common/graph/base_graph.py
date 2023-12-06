@@ -299,19 +299,24 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return [edges_list.sink_node for edges_list in self.out_edges(node_obj)]
 
     def get_prev_nodes(self,
-                       node_obj: BaseNode) -> List[BaseNode]:
+                       node_obj: BaseNode,
+                       sink_index_sorted: bool = False) -> List[BaseNode]:
         """
         Get previous nodes (in a topological order) of a node.
 
         Args:
             node_obj: Node to get its previous nodes.
+            sink_index_sorted: Whether to sort the returned list by the sink_index of the edges.
 
         Returns:
             List of input nodes objects.
 
         """
-
-        return [edges_list.source_node for edges_list in self.incoming_edges(node_obj)]
+        if sink_index_sorted:
+            sort_attr = 'sink_index'
+        else:
+            sort_attr = None
+        return [edges_list.source_node for edges_list in self.incoming_edges(node_obj, sort_by_attr=sort_attr)]
 
     def reconnect_out_edges(self,
                             current_node: BaseNode,

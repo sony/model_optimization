@@ -35,19 +35,16 @@ class FunctionalBatchNorm(common.BaseSubstitution):
         super().__init__(matcher_instance=bn_node)
 
     def get_attributes_from_inputs(self, graph: Graph, node: BaseNode) -> dict:
-        input_nodes = graph.get_prev_nodes(node)
+        input_nodes = graph.get_prev_nodes(node, sink_index_sorted=True)
+
         if len(input_nodes) == 5:
-            gamma = list(input_nodes[1].weights.values())[0]
-            beta = list(input_nodes[2].weights.values())[0]
-            mean = list(input_nodes[3].weights.values())[0]
-            var = list(input_nodes[4].weights.values())[0]
-        elif len(input_nodes) == 3:
             mean = list(input_nodes[1].weights.values())[0]
             var = list(input_nodes[2].weights.values())[0]
-            gamma = None
-            beta = None
+            gamma = list(input_nodes[3].weights.values())[0]
+            beta = list(input_nodes[4].weights.values())[0]
         else:
-            Logger.error(f'functional batch_norm is expected to have 3 or 5 inputs, got {len(input_nodes)}')
+            Logger.error(f'functional batch_norm is only supported for 5 inputs case (input, mean, var, gamma, beta), '
+                         f'got {len(input_nodes)}')
 
         return {GAMMA: gamma,
                 BETA: beta,
@@ -66,6 +63,9 @@ class FunctionalBatchNorm(common.BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
+        # if the input is not a 4D tensor, we can't substitute it with BatchNorm2d
+        if len(node.input_shape[0]) != 4:
+            return graph
         out_channels = node.output_shape[0][1]
 
         bn_node_weights = self.get_attributes_from_inputs(graph, node)

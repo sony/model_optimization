@@ -65,7 +65,7 @@ class BNFoldingNetTest(BasePytorchTest):
         out_float = torch_tensor_to_numpy(float_model(*input_x))
         out_quant = torch_tensor_to_numpy(quant_model(*input_x))
 
-        is_bn_in_model = self.bn_layer in [type(module) for name, module in quant_model.named_modules()]
+        is_bn_in_model = nn.BatchNorm2d in [type(module) for name, module in quant_model.named_modules()]
         self.unit_test.assertTrue(self.fold_applied is not is_bn_in_model)
         self.unit_test.assertTrue(np.isclose(out_quant, out_float, atol=1e-6, rtol=1e-4).all())
 
@@ -77,17 +77,19 @@ class BNForwardFoldingNet(nn.Module):
             self.bn = nn.Conv2d(3, 3, 1, groups=3)
         else:
             self.bn = bn_layer(3)
-            nn.init.uniform_(self.bn.weight, 0.02, 1.05)
-            nn.init.uniform_(self.bn.bias, -1.2, 1.05)
-            nn.init.uniform_(self.bn.running_var, 0.02, 1.05)
-            nn.init.uniform_(self.bn.running_mean, -1.2, 1.05)
+            if isinstance(self.bn, nn.BatchNorm2d):
+                nn.init.uniform_(self.bn.weight, 0.02, 1.05)
+                nn.init.uniform_(self.bn.bias, -1.2, 1.05)
+                nn.init.uniform_(self.bn.running_var, 0.02, 1.05)
+                nn.init.uniform_(self.bn.running_mean, -1.2, 1.05)
         self.conv = test_layer
         if add_bn:
             self.bn2 = bn_layer(test_layer.out_channels)
-            nn.init.uniform_(self.bn2.weight, 0.02, 1.05)
-            nn.init.uniform_(self.bn2.bias, -1.2, 1.05)
-            nn.init.uniform_(self.bn2.running_var, 0.02, 1.05)
-            nn.init.uniform_(self.bn2.running_mean, -1.2, 1.05)
+            if isinstance(self.bn, nn.BatchNorm2d):
+                nn.init.uniform_(self.bn2.weight, 0.02, 1.05)
+                nn.init.uniform_(self.bn2.bias, -1.2, 1.05)
+                nn.init.uniform_(self.bn2.running_var, 0.02, 1.05)
+                nn.init.uniform_(self.bn2.running_mean, -1.2, 1.05)
         else:
             self.bn2 = None
 
@@ -131,7 +133,7 @@ class BNForwardFoldingNetTest(BasePytorchTest):
             is_bn_in_model = (sum([type(module) is nn.Conv2d for name, module in float_model.named_modules()]) ==
                               sum([type(module) is nn.Conv2d for name, module in quant_model.named_modules()]))
         else:
-            is_bn_in_model = self.bn_layer in [type(module) for name, module in quant_model.named_modules()]
+            is_bn_in_model = nn.BatchNorm2d in [type(module) for name, module in quant_model.named_modules()]
 
         self.unit_test.assertTrue(self.fold_applied is not is_bn_in_model)
 
