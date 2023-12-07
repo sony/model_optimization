@@ -8,7 +8,7 @@ Export your quantized model in the following serialization formats:
 You can export your quantized model in the following quantization formats:
 * FAKELY_QUANT: Weights and activations values are quantized but represented in float32 dtype. In this format we use the framework's quantizers. This is called fake since the values are still in floating point.
 * INT8: Where weights and activations are represented using 8bits integers.
-* MCTQ: Weights and activations values are quantized but represented in float32 dtype. In this format we use custom quantizer layers - mct_quantizers. #TODO: link
+* MCTQ: Weights and activations values are quantized but represented in float32 dtype. In this format we use custom quantizer layers - [mct_quantizers](https://github.com/sony/mct_quantizers#readme).
 
 
 ### Note
