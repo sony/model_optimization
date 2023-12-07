@@ -6,9 +6,9 @@ Export your quantized model in the following serialization formats:
 * PyTorch models can be exported as torch script models and ONNX models (`.onnx` extension).
 
 You can export your quantized model in the following quantization formats:
-* Fake Quant (where weights and activations are float fakely-quantized values)
-* INT8 (where weights and activations are represented using 8bits integers)
-* MCTQ (where weights and activations are quantized using mct-quantizers custom quantizers).
+* FAKELY_QUANT: Weights and activations values are quantized but represented in float32 dtype. In this format we use the framework's quantizers. This is called fake since the values are still in floating point.
+* INT8: Where weights and activations are represented using 8bits integers.
+* MCTQ: Weights and activations values are quantized but represented in float32 dtype. In this format we use custom quantizer layers - mct_quantizers. #TODO: link
 
 
 ### Note
@@ -18,7 +18,8 @@ please [open an issue](https://github.com/sony/model_optimization/issues/new/cho
 
 ## Export TensorFlow Models
 
-To export a TensorFlow model - a quantized model from MCT should be quantized first:
+To export a TensorFlow model as a quantized model, it is necessary to first apply quantization 
+to the model using MCT:
 
 ```python
 import numpy as np
@@ -43,13 +44,15 @@ quantized_exportable_model, _ = mct.ptq.keras_post_training_quantization_experim
 ### keras/h5
 
 The model will be exported as a tensorflow `.keras` or `.h5` model (depends the utilized Tensorflow version)
-where weights and activations are quantized but represented using a float32 dtype (fakely-quant).
+where weights and activations are quantized but represented using a float32 dtype.
+Two optional quantization formats are available: MCTQ and FAKELY_QUANT.
 
 #### Usage Example
 
 #### MCTQ
 
-By default, `mct.exporter.keras_export_model` will export the quantized Keras model to a .keras/.h5 model with custom quantizers from mct_quantizers module.
+By default, `mct.exporter.keras_export_model` will export the quantized Keras model to 
+a .keras/.h5 model with custom quantizers from mct_quantizers module.
 
 ```python
 import tempfile
@@ -62,7 +65,7 @@ mct.exporter.keras_export_model(model=quantized_exportable_model,
                                 save_model_path=keras_file_path)
 ```
 
-Notice that the fakely-quantized model has the same size as the quantized exportable model as weights data types are
+Notice that the model has the same size as the quantized exportable model as weights data types are
 float.
 
 #### Fakely-Quantized
@@ -84,7 +87,7 @@ float.
 
 
 ### TFLite
-The tflite serialization format export in two qauntization formats 
+The tflite serialization format export in two qauntization formats: INT8 and FAKELY_QUANT.
 
 #### INT8 TFLite
 
@@ -146,7 +149,8 @@ float.
 
 ## Export PyTorch models
 
-To export a PyTorch model - a quantized model from MCT should be quantized first:
+To export a Pytorch model as a quantized model, it is necessary to first apply quantization 
+to the model using MCT:
 
 ```python
 import model_compression_toolkit as mct
@@ -172,16 +176,16 @@ quantized_exportable_model, _ = mct.ptq.pytorch_post_training_quantization_exper
 
 ### ONNX
 
-The model will be exported in ONNX format where weights and activations are quantized 
-using mct_quantizers custom quantization ops, or represented as float 
-(fakely quant).
+The model will be exported in ONNX format where weights and activations are represented as float.
+There are two optional formats to choose: MCTQ or FAKELY_QUANT.
 
 #### Usage Example
 
 
 #### MCTQ
 
-By default, `mct.exporter.pytorch_export_model` will export the quantized pytorch model to an onnx model with custom quantizers from mct_quantizers module.  
+By default, `mct.exporter.pytorch_export_model` will export the quantized pytorch model to
+an onnx model with custom quantizers from mct_quantizers module.  
 
 ```python
 import tempfile
@@ -198,7 +202,8 @@ mct.exporter.pytorch_export_model(model=quantized_exportable_model,
 
 #### Fakely-Quant
 
-For exporting a fakely-quantized model, use QuantizationFormat.FAKELY_QUANT:
+To export a fakely-quantized model, use QuantizationFormat.FAKELY_QUANT:
+
 ```python
 import tempfile
 
@@ -217,8 +222,8 @@ exportable model as weights data types are float.
 
 ### TorchScript
 
-The model will be exported in TorchScript format where weights and activations are quantized but represented as float 
-(fakely quant).
+The model will be exported in TorchScript format where weights and activations are 
+quantized but represented as float (fakely quant).
 
 #### Usage Example
 
