@@ -83,7 +83,10 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
         else:
             self._substitute_fully_quantized_model()
 
-        Logger.info(f"Exporting PyTorch fake quant onnx model: {self.save_model_path}")
+        if self._use_onnx_custom_quantizer_ops:
+            Logger.info(f"Exporting onnx model with MCTQ quantizers: {self.save_model_path}")
+        else:
+            Logger.info(f"Exporting fake-quant onnx model: {self.save_model_path}")
 
         model_input = to_torch_tensor(next(self.repr_dataset())[0])
 
