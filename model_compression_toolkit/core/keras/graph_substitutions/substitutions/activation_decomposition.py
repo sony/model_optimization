@@ -65,7 +65,7 @@ class ActivationDecomposition(common.BaseSubstitution):
 
         if ACTIVATION not in op2d_node.framework_attr:
             Logger.warning(f'Op2d node {op2d_node.name} of type {op2d_node.type} is missing an "{ACTIVATION}"'
-                           f' attribute -> Skipping substitution ActivationDecomposition')
+                           f' attribute -> Skipping substitution ActivationDecomposition')  # pragma: no cover
             return graph
 
         activation_node_name = op2d_node.name + '_post_activation'
