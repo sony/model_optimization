@@ -22,7 +22,7 @@ from model_compression_toolkit.core.common.graph.graph_matchers import NodeOpera
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.keras.constants import TRANSPOSE_A, TRANSPOSE_B, \
-    ADJOINT_A, ADJOINT_B, UNITS, USE_BIAS, KERNEL
+    ADJOINT_A, ADJOINT_B, UNITS, USE_BIAS, KERNEL, ACTIVATION, LINEAR
 
 
 class MatmulToDenseSubstitution(common.BaseSubstitution):
@@ -89,7 +89,7 @@ class MatmulToDenseSubstitution(common.BaseSubstitution):
             w = w.transpose()
 
         dense_node = BaseNode(matmul_node.name,
-                              {UNITS: w.shape[1], USE_BIAS: False},
+                              {UNITS: w.shape[1], USE_BIAS: False, ACTIVATION: LINEAR},
                               matmul_node.input_shape, matmul_node.output_shape,
                               {KERNEL: w}, tf.keras.layers.Dense,
                               reuse=matmul_node.reuse, reuse_group=matmul_node.reuse_group)
