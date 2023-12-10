@@ -38,18 +38,16 @@ class FunctionalBatchNorm(common.BaseSubstitution):
         input_nodes = graph.get_prev_nodes(node, sink_index_sorted=True)
 
         if len(input_nodes) == 5:
-            mean = list(input_nodes[1].weights.values())[0]
-            var = list(input_nodes[2].weights.values())[0]
-            gamma = list(input_nodes[3].weights.values())[0]
-            beta = list(input_nodes[4].weights.values())[0]
+            return {
+                MOVING_MEAN: list(input_nodes[1].weights.values())[0],
+                MOVING_VARIANCE: list(input_nodes[2].weights.values())[0],
+                GAMMA: list(input_nodes[3].weights.values())[0],
+                BETA: list(input_nodes[4].weights.values())[0]
+            }
         else:
-            Logger.error(f'functional batch_norm is only supported for 5 inputs case (input, mean, var, gamma, beta), '
-                         f'got {len(input_nodes)}')
-
-        return {GAMMA: gamma,
-                BETA: beta,
-                MOVING_MEAN: mean,
-                MOVING_VARIANCE: var}
+            Logger.warning(f'functional batch_norm is only folded in the 5 inputs case (input, mean, var, gamma, beta),'
+                           f'got {len(input_nodes)}')
+            return {}
 
     def substitute(self,
                    graph: Graph,
@@ -69,6 +67,8 @@ class FunctionalBatchNorm(common.BaseSubstitution):
         out_channels = node.output_shape[0][1]
 
         bn_node_weights = self.get_attributes_from_inputs(graph, node)
+        if not bn_node_weights:
+            return graph
         new_batchnorm2d = BaseNode(name=node.name + '_into_BatchNorm2d',
                                    framework_attr={NUM_FEATURES: out_channels,
                                                    EPSILON: EPSILON_VAL,
