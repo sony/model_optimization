@@ -172,7 +172,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
             BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), bn_layer, is_dw=True).run_test()
             BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3), bn_layer, is_dw=True).run_test()  # DW-Conv test
             BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1), bn_layer, is_dw=True).run_test()
-            BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), bn_layer, bn_layer, fold_applied=False, is_dw=True).run_test()
+            BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), bn_layer, fold_applied=False, is_dw=True).run_test()
             BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), bn_layer, fold_applied=False,
                                     is_dw=True).run_test()  # DW-Conv test
             BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, (1, 3)), bn_layer, fold_applied=False, is_dw=True).run_test()
