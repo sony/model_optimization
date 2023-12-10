@@ -17,6 +17,7 @@ from typing import Callable
 from functools import partial
 
 from model_compression_toolkit.core import CoreConfig
+from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
@@ -25,7 +26,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
-from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
+from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 
 if FOUND_TF:
@@ -177,7 +178,7 @@ if FOUND_TF:
             Logger.info("Using experimental mixed-precision quantization. "
                                "If you encounter an issue please file a bug.")
 
-        tb_w = _init_tensorboard_writer(fw_info)
+        tb_w = init_tensorboard_writer(fw_info)
 
         fw_impl = KerasImplementation()
 

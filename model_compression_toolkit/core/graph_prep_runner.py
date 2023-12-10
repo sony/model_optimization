@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,23 +41,24 @@ def graph_preparation_runner(in_model: Any,
                              tb_w: TensorboardWriter = None,
                              mixed_precision_enable: bool = False) -> Graph:
     """
-    Quantize a trained model using post-training quantization.
-    First, the model graph is optimized using several transformations (e.g. folding BatchNormalization to preceding
-    layers).
-    Second, statistics (e.g. min/max, histogram, etc.) are collected for each layer's output
-    (and input, depends on the quantization configuration) using a given representative dataset.
-    Next, quantization parameters are calculated using the collected statistics
-    (both coefficients and activations by default).
+    Runs all required preparations in order to build a quantization graph from the given model,
+    quantization configuration and target platform specifications.
+    This runner include the following steps:
+        - Reading and building a graph from the given model.
+        - Setting quantization config to each relevant node in the graph.
+        - Apply all necessary substitutions to finalize the graph for quantization.
+
     Args:
         in_model: Model to quantize.
         representative_data_gen: Dataset used for calibration.
-        core_config: CoreConfig containing parameters of how the model should be quantized
+        quantization_config: QuantizationConfig containing parameters of how the model should be quantized.
         fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
-        groups of layers by how they should be quantized, etc.).
+            groups of layers by how they should be quantized, etc.).
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tpc: TargetPlatformCapabilities object that models the inference target platform and
-                                              the attached framework operator's information.
+            the attached framework operator's information.
         tb_w: TensorboardWriter object for logging
+
     Returns:
         An internal graph representation of the input model.
     """
@@ -92,16 +93,18 @@ def get_finalized_graph(initial_graph: Graph,
     """
     Applies all edit operation (edit, substitutions, etc.) on the model's graph, to prepare it for the quantization
     process. All future graph substitutions and operations that change the graph should be added to this method.
+
     Args:
         initial_graph (Graph): Graph to apply the changes to.
         tpc (TargetPlatformCapabilities): TargetPlatformCapabilities object that describes the desired inference target platform (includes fusing patterns MCT should handle).
         quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be
-        quantized.
+            quantized.
         fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
-        kernel channels indices, groups of layers by how they should be quantized, etc.)
+            kernel channels indices, groups of layers by how they should be quantized, etc.)
         tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
         fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
-        mixed_precision_enable: is mixed precision enabled.
+            mixed_precision_enable: is mixed precision enabled.
+
     Returns: Graph object that represents the model, after applying all required modifications to it.
     """
 
@@ -126,6 +129,7 @@ def get_finalized_graph(initial_graph: Graph,
     transformed_graph = substitute(graph, fw_impl.get_substitutions_pre_statistics_collection(quant_config))
     if quant_config.linear_collapsing:
         transformed_graph = linear_collapsing_substitute(transformed_graph, fw_impl.get_linear_collapsing_substitution())
+        transformed_graph = linear_collapsing_substitute(transformed_graph, fw_impl.get_op2d_add_const_collapsing_substitution())
     if quant_config.residual_collapsing:
         transformed_graph = substitute(transformed_graph, fw_impl.get_residual_collapsing_substitution())
 
@@ -173,6 +177,7 @@ def read_model_to_graph(in_model: Any,
 
     """
     Read a model into a graph object.
+
     Args:
         in_model: Model to optimize and prepare for quantization.
         representative_data_gen: Dataset used for calibration.
@@ -181,6 +186,7 @@ def read_model_to_graph(in_model: Any,
         fw_info: Information needed for quantization about the specific framework (e.g.,
                 kernel channels indices, groups of layers by how they should be quantized, etc.)
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+
     Returns:
         Graph object that represents the model.
     """

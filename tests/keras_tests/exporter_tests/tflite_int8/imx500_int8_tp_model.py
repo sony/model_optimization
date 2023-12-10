@@ -29,8 +29,6 @@ else:
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
     TargetPlatformModel
-from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
-    QuantizationFormat
 
 tp = mct.target_platform
 
@@ -77,7 +75,6 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     default_configuration_options = tp.QuantizationConfigOptions([default_config])
     generated_tpc = tp.TargetPlatformModel(default_configuration_options, name=name)
     with generated_tpc:
-        generated_tpc.set_quantization_format(QuantizationFormat.INT8)
         tp.OperatorsSet("NoQuantization",
                         tp.get_default_quantization_config_options().clone_and_edit(
                             enable_weights_quantization=False,

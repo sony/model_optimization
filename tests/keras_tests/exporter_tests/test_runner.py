@@ -15,6 +15,16 @@
 
 import unittest
 
+from tests.keras_tests.exporter_tests.keras_mctq.networks.conv2d_test import TestConv2DKerasMCTQExporter, \
+    TestConv2DReusedKerasMCTQExporter, TestCon2DWeightsLUTKerasMCTQExporter
+from tests.keras_tests.exporter_tests.keras_mctq.networks.conv2dtranspose_test import \
+    TestConv2DTransposeKerasMCTQExporter
+from tests.keras_tests.exporter_tests.keras_mctq.networks.dense_test import TestDenseKerasMCTQExporter
+from tests.keras_tests.exporter_tests.keras_mctq.networks.dwconv2d_test import TestDWConv2DKerasMCTQExporter
+from tests.keras_tests.exporter_tests.keras_mctq.networks.multiple_inputs_test import \
+    TestMultipleInputsMultipleOutputsKerasMCTQExporter
+from tests.keras_tests.exporter_tests.keras_mctq.networks.no_quant_test import TestNoQuantKerasMCTQExporter
+from tests.keras_tests.exporter_tests.keras_mctq.networks.tfoplambda_test import TestTFOpLambdaKerasMCTQExporter
 from tests.keras_tests.exporter_tests.tflite_fake_quant.networks.conv2d_test import TestConv2DTFLiteFQExporter, \
     TestConv2DReusedTFLiteFQExporter
 from tests.keras_tests.exporter_tests.tflite_fake_quant.networks.dense_test import TestDenseReusedTFLiteFQExporter
@@ -107,4 +117,32 @@ class ExporterTestsRunner(unittest.TestCase):
     def test_export_qat(self):
         TestExportingQATModelBase().test_exported_qat_model()
         TestExportingQATModelTFLite().test_exported_qat_model()
+
+    #####################
+    # Keras MCTQ
+    #####################
+    def test_keras_mctq_conv2d(self):
+        TestConv2DKerasMCTQExporter().run_test()
+        TestConv2DReusedKerasMCTQExporter().run_test()
+
+    def test_keras_mctq_lut(self):
+        TestCon2DWeightsLUTKerasMCTQExporter().run_test()
+
+    def test_keras_mctq_dwconv2d(self):
+        TestDWConv2DKerasMCTQExporter().run_test()
+
+    def test_keras_mctq_dense(self):
+        TestDenseKerasMCTQExporter().run_test()
+
+    def test_keras_mctq_conv2dtranspose(self):
+        TestConv2DTransposeKerasMCTQExporter().run_test()
+
+    def test_keras_mctq_tfoplambda(self):
+        TestTFOpLambdaKerasMCTQExporter().run_test()
+
+    def test_keras_mctq_multiplpe_inputs_multiple_outputs(self):
+        TestMultipleInputsMultipleOutputsKerasMCTQExporter().run_test()
+
+    def test_keras_mctq_no_quant(self):
+        TestNoQuantKerasMCTQExporter().run_test()
 

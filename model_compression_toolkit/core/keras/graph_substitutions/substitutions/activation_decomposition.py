@@ -16,6 +16,7 @@
 
 from tensorflow.keras.layers import Dense, DepthwiseConv2D, Conv2D, Conv2DTranspose, Activation, SeparableConv2D
 
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core import common
 from model_compression_toolkit.constants import FLOAT_32, DATA_TYPE
 from model_compression_toolkit.core.common.graph.base_graph import Graph
@@ -61,6 +62,11 @@ class ActivationDecomposition(common.BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
+
+        if ACTIVATION not in op2d_node.framework_attr:
+            Logger.warning(f'Op2d node {op2d_node.name} of type {op2d_node.type} is missing an "{ACTIVATION}"'
+                           f' attribute -> Skipping substitution ActivationDecomposition')  # pragma: no cover
+            return graph
 
         activation_node_name = op2d_node.name + '_post_activation'
 

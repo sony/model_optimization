@@ -87,8 +87,8 @@ class TestExportingQATModelBase(unittest.TestCase):
         self.filepath = self.get_filepath()
         mct.exporter.keras_export_model(self.final_model,
                                         self.filepath,
-                                        self.get_tpc(),
-                                        serialization_format=self.get_serialization_format())
+                                        serialization_format=self.get_serialization_format(),
+                                        quantization_format=mct.exporter.QuantizationFormat.FAKELY_QUANT)
 
         self.loaded_model = self.load_exported_model(self.filepath)
         self.infer(self.loaded_model, images)

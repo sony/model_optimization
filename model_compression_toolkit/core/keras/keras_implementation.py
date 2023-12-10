@@ -68,6 +68,8 @@ from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.activation_decomposition import \
     ActivationDecomposition
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.matmul_substitution import \
+    MatmulToDenseSubstitution
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.softmax_shift import \
     keras_softmax_shift
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.batchnorm_folding import \
@@ -75,7 +77,7 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.batc
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.batchnorm_refusing import \
     keras_batchnorm_refusing
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.linear_collapsing import \
-    keras_linear_collapsing
+    keras_linear_collapsing, keras_op2d_add_const_collapsing
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.residual_collapsing import \
     keras_residual_collapsing
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.input_scaling import InputScaling, \
@@ -260,6 +262,7 @@ class KerasImplementation(FrameworkImplementation):
 
         """
         return [SeparableConvDecomposition(),
+                MatmulToDenseSubstitution(),
                 MultiHeadAttentionDecomposition(),
                 ActivationDecomposition(),
                 DwconvToConv()]
@@ -310,6 +313,12 @@ class KerasImplementation(FrameworkImplementation):
         Returns: linear collapsing substitution
         """
         return keras_linear_collapsing()
+
+    def get_op2d_add_const_collapsing_substitution(self) -> common.BaseSubstitution:
+        """
+        Returns: Op2d add-const collapsing substitution
+        """
+        return keras_op2d_add_const_collapsing()
 
     def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig) \
             -> List[common.BaseSubstitution]:

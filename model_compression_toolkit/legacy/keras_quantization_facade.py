@@ -15,6 +15,7 @@
 
 from typing import Callable, List, Tuple
 
+from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.user_info import UserInformation
@@ -28,7 +29,7 @@ from model_compression_toolkit.core.common.quantization.quantization_config impo
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
 from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
-from model_compression_toolkit.core.runner import core_runner, _init_tensorboard_writer
+from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 from model_compression_toolkit.core.exporter import export_model
@@ -114,7 +115,7 @@ if FOUND_TF:
                                                           network_editor=network_editor)
                                  )
 
-        tb_w = _init_tensorboard_writer(fw_info)
+        tb_w = init_tensorboard_writer(fw_info)
 
         fw_impl = KerasImplementation()
 
@@ -249,7 +250,7 @@ if FOUND_TF:
                                                           network_editor=network_editor)
                                  )
 
-        tb_w = _init_tensorboard_writer(fw_info)
+        tb_w = init_tensorboard_writer(fw_info)
 
         fw_impl = KerasImplementation()
 

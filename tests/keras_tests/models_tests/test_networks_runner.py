@@ -90,8 +90,8 @@ class NetworkTest:
                 _, tflite_file_path = tempfile.mkstemp('.tflite')
                 mct.exporter.keras_export_model(model=quantized_model,
                                                 save_model_path=tflite_file_path,
-                                                target_platform_capabilities=tpc,
-                                                serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE)
+                                                serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE,
+                                                quantization_format=mct.exporter.QuantizationFormat.FAKELY_QUANT)
                 os.remove(tflite_file_path)
             except Exception as e:
                 error_msg = e.message if hasattr(e, 'message') else str(e)

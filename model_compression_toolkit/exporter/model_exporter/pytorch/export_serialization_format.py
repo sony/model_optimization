@@ -21,7 +21,7 @@ class PytorchExportSerializationFormat(Enum):
 
     TORCHSCRIPT - torchscript format
 
-    ONNX - onnx fromat
+    ONNX - onnx format
 
     """
 

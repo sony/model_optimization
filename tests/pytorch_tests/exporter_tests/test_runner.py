@@ -25,9 +25,6 @@ from tests.pytorch_tests.exporter_tests.custom_ops_tests.test_export_symmetric_o
 from tests.pytorch_tests.exporter_tests.custom_ops_tests.test_export_uniform_onnx_quantizers import \
     TestExportONNXWeightUniform2BitsQuantizers
 
-from tests.pytorch_tests.exporter_tests.test_exporting_qat_models import TestExportingQATModelTorchscript
-
-
 
 class PytorchExporterTestsRunner(unittest.TestCase):
 

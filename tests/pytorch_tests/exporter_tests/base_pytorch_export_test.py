@@ -64,6 +64,10 @@ class BasePytorchExportTest(unittest.TestCase):
     def infer(self, model, images):
         raise NotImplemented
 
+
+    def get_quantization_format(self):
+        return mct.exporter.QuantizationFormat.MCTQ
+
     def run_mct(self):
         model = self.get_model()
         return mct.ptq.pytorch_post_training_quantization_experimental(model,
@@ -71,11 +75,10 @@ class BasePytorchExportTest(unittest.TestCase):
                                                                        core_config=self.get_core_config(),
                                                                        target_platform_capabilities=self.get_tpc())
 
-    def run_export(self, quantized_model, use_onnx_custom_quantizer_ops=False):
+    def run_export(self, quantized_model):
         self.filepath = self.get_tmp_filepath()
         mct.exporter.pytorch_export_model(quantized_model,
                                           self.filepath,
                                           self.get_dataset,
-                                          self.get_tpc(),
                                           serialization_format=self.get_serialization_format(),
-                                          use_onnx_custom_quantizer_ops=use_onnx_custom_quantizer_ops)
+                                          quantization_format=self.get_quantization_format())

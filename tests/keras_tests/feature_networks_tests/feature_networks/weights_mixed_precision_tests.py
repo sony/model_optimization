@@ -18,8 +18,6 @@ import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights
-from model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format import \
-    QuantizationFormat
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
@@ -150,8 +148,6 @@ class MixedPercisionSearchPartWeightsLayersTest(MixedPercisionBaseTest):
 
         tp_model = tp.TargetPlatformModel(weight_fixed_cfg, name="mp_part_weights_layers_test")
         with tp_model:
-            tp_model.set_quantization_format(QuantizationFormat.FAKELY_QUANT)
-
             tp.OperatorsSet("Weights_mp", weight_mixed_cfg)
             tp.OperatorsSet("Weights_fixed", weight_fixed_cfg)
 

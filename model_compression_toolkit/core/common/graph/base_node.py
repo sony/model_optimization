@@ -79,7 +79,8 @@ class BaseNode:
     def type(self):
         """
         A function to get the node's layer_class op for convenient comparison
-        :return: the node's layer_class
+        Returns:
+            the node's layer_class
         """
         return self.layer_class
 
@@ -129,6 +130,14 @@ class BaseNode:
 
         """
         return f'{self.type.__name__}:{self.name}'
+
+    def is_reused(self) -> bool:
+        """
+        Check whether the node is reused or not
+        Returns:
+            True if node is reused, else False
+        """
+        return self.reuse or self.reuse_group is not None
 
     def get_weights_by_keys(self, name: str) -> np.ndarray:
         """

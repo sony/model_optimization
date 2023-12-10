@@ -55,8 +55,8 @@ class TFLiteINT8ExporterBaseTest:
         _, self.int8_model_file_path = tempfile.mkstemp('.tflite')
         mct.exporter.keras_export_model(model=self.exportable_model,
                                         save_model_path=self.int8_model_file_path,
-                                        target_platform_capabilities=self.get_tpc(),
-                                        serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE)
+                                        serialization_format=mct.exporter.KerasExportSerializationFormat.TFLITE,
+                                        quantization_format=mct.exporter.QuantizationFormat.INT8)
 
         # Load model
         self.interpreter = tf.lite.Interpreter(model_path=self.int8_model_file_path)

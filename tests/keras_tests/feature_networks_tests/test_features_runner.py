@@ -31,7 +31,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_d
     BiasCorrectionDepthwiseTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bn_folding_test import Conv2DBNFoldingTest, \
     DepthwiseConv2DBNFoldingTest, DepthwiseConv2DBNFoldingHighMultiplierTest, Conv2DTransposeBNFoldingTest, \
-    Conv2DBNConcatnFoldingTest, SeparableConv2DBNFoldingTest, BNForwardFoldingTest
+    Conv2DBNConcatFoldingTest, SeparableConv2DBNFoldingTest, BNForwardFoldingTest
 from tests.keras_tests.feature_networks_tests.feature_networks.conv_bn_relu_residual_test import ConvBnReluResidualTest
 from tests.keras_tests.feature_networks_tests.feature_networks.decompose_separable_conv_test import \
     DecomposeSeparableConvTest
@@ -45,7 +45,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.gptq.gptq_test im
 from tests.keras_tests.feature_networks_tests.feature_networks.input_scaling_test import InputScalingDenseTest, \
     InputScalingConvTest, InputScalingDWTest, InputScalingZeroPadTest
 from tests.keras_tests.feature_networks_tests.feature_networks.linear_collapsing_test import TwoConv2DCollapsingTest, \
-    ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest
+    ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest, Op2DAddConstCollapsingTest
 from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTWeightsQuantizerTest, \
     LUTActivationQuantizerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_bops_test import \
@@ -124,6 +124,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_pre
     MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationKPINonConfNodesTest, \
     MixedPercisionSearchTotalKPINonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
 from tests.keras_tests.feature_networks_tests.feature_networks.old_api_test import OldApiTest
+from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substitution_test import MatmulToDenseSubstitutionTest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
 
 layers = tf.keras.layers
@@ -467,8 +468,11 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_experimental_exporter(self):
         ExportableModelTest(self).run_test()
 
-    def test_conv2d_bn_concant(self):
-        Conv2DBNConcatnFoldingTest(self).run_test()
+    def test_matmul_dense_substitution(self):
+        MatmulToDenseSubstitutionTest(self).run_test()
+
+    def test_conv2d_bn_concat(self):
+        Conv2DBNConcatFoldingTest(self).run_test()
 
     def test_activation_scaling_relu6(self):
         ReLUBoundToPOTNetTest(self).run_test()
@@ -531,6 +535,7 @@ class FeatureNetworkTest(unittest.TestCase):
         ThreeConv2DCollapsingTest(self).run_test()
         FourConv2DCollapsingTest(self).run_test()
         SixConv2DCollapsingTest(self).run_test()
+        Op2DAddConstCollapsingTest(self).run_test()
 
     def test_second_moment(self):
         DepthwiseConv2DSecondMomentTest(self).run_test()

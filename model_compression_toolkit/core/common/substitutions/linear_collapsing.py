@@ -91,14 +91,11 @@ class Conv2DCollapsing(common.BaseSubstitution):
             Graph after applying the substitution.
         """
 
-        first_node = edge_nodes[0]
-        second_node = edge_nodes[1]
+        first_node, second_node, _ = edge_nodes
 
         # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
         # we should skip the substitution.
-        if first_node.reuse or first_node.reuse_group is not None:
-            return graph
-        if second_node.reuse or second_node.reuse_group is not None:
+        if first_node.is_reused() or second_node.is_reused():
             return graph
 
         # If there is an extra connection between these two nodes skip the substitution
@@ -180,5 +177,85 @@ class Conv2DCollapsing(common.BaseSubstitution):
         # Sanity check
         assert num_nodes_before_substition - len(graph.nodes) == 1
         assert num_edges_before_substition - len(graph.edges) == 1
+
+        return graph
+
+
+class Op2DAddConstCollapsing(common.BaseSubstitution):
+    """
+    Collapse Add-const into preceding Op2D (Not non-linear activation between them)
+    """
+    def __init__(self,
+                 first_node: NodeOperationMatcher,
+                 second_node: NodeOperationMatcher,
+                 op2d_collapsing_fn: Callable,
+                 bias_str: str,
+                 use_bias_str: str,
+                 layer_name_str: str = None):
+        """
+        Collapsing Add-const node (2nd node) to Op2D node (first node).
+        Args:
+            first_node: Node matcher for Op2d type nodes.
+            second_node: Node matcher for add type nodes.
+            op2d_collapsing_fn: Function for updating the convolution kernel and bias
+            bias_str: The framework specific attribute name of the convolution layer's bias.
+            use_bias_str: The framework specific attribute name of the convolution layer's bias flag.
+            layer_name_str: The framework specific attribute name of layer's name.
+        """
+        super().__init__(matcher_instance=EdgeMatcher(first_node, second_node))
+        self.op2d_collapsing_fn = op2d_collapsing_fn
+        self.bias_str = bias_str
+        self.use_bias_str = use_bias_str
+        self.layer_name_str = layer_name_str
+
+    def substitute(self,
+                   graph: Graph,
+                   edge_nodes: Tuple[BaseNode, BaseNode]) -> Graph:
+        """
+        Collapse linear layer into preceding linear layers.
+        Convolution condition:
+        |-------------------------|      |------|
+        | Op2D | ---> | Add-const |  ->  | Op2D |
+        |-------------------------|      |------|
+        Args:
+            graph: Graph we apply the substitution on.
+            edge_nodes: Tuple of linear node and add nodes
+        Returns:
+            Graph after applying the substitution.
+        """
+
+        first_node, second_node, _ = edge_nodes
+
+        # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
+        # we should skip the substitution.
+        if first_node.is_reused() or second_node.is_reused():
+            return graph
+
+        # If there is an extra connection between these two nodes skip the substitution
+        if len(graph.get_next_nodes(first_node)) > 1 or len(graph.get_prev_nodes(second_node)) > 1:
+            return graph
+
+        # New collapsed bias
+        bias = self.op2d_collapsing_fn(first_node, second_node, self.bias_str)
+
+        # New collapsed node
+        op2d_collapsed = copy.deepcopy(first_node)
+        op2d_collapsed_name = first_node.name + '_collapsed'
+        op2d_collapsed.name = op2d_collapsed_name
+        op2d_collapsed.framework_attr[self.use_bias_str] = True
+        op2d_collapsed.set_weights_by_keys(self.bias_str, bias)
+
+        if self.layer_name_str is not None:
+            op2d_collapsed.framework_attr[self.layer_name_str] = op2d_collapsed_name
+
+        # Update graph
+        graph.add_node(op2d_collapsed)
+        graph.reconnect_out_edges(current_node=second_node, new_node=op2d_collapsed)
+        graph.reconnect_in_edges(current_node=first_node, new_node=op2d_collapsed)
+        graph.replace_output_node(current_node=second_node, new_node=op2d_collapsed)
+
+        graph.remove_edge(first_node, second_node)
+        graph.remove_node(first_node)
+        graph.remove_node(second_node)
 
         return graph

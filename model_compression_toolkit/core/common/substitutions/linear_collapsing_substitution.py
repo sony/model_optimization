@@ -30,6 +30,9 @@ def linear_collapsing_substitute(graph: common.Graph,
     Returns:
         Transformed graph after applying all linear collapsing substitutions.
     """
+    # TODO: remove this if after adding Op2d-add_const collapse substitution in PyTorch
+    if linear_collapsing_substitution is None:
+        return graph
     matched_nodes = graph.filter(linear_collapsing_substitution.matcher_instance)
     matched_nodes_list = []
     match_indicator = True
