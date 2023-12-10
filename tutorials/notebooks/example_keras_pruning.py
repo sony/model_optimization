@@ -24,28 +24,7 @@ import cv2
 import numpy as np
 
 
-MEAN = np.asarray([103.939, 116.779, 123.68])
-STD = np.asarray([1.0, 1.0, 1.0])
-RESIZE_SCALE = 256 / 224
-SIZE = 224
 
-
-def resize(x):
-    resize_side = max(RESIZE_SCALE * SIZE / x.shape[0], RESIZE_SCALE * SIZE / x.shape[1])
-    height_tag = int(np.round(resize_side * x.shape[0]))
-    width_tag = int(np.round(resize_side * x.shape[1]))
-    resized_img = cv2.resize(x, (width_tag, height_tag))
-    offset_height = int((height_tag - SIZE) / 2)
-    offset_width = int((width_tag - SIZE) / 2)
-    cropped_img = resized_img[offset_height:offset_height + SIZE, offset_width:offset_width + SIZE]
-    return cropped_img
-
-
-def normalization(x):
-    return (x - MEAN) / STD
-
-def rgb_to_bgr(x):
-    return np.flip(x, 2)
 
 def count_model_params(model):
     return sum([l.count_params() for l in model.layers])
@@ -76,7 +55,7 @@ if __name__ == '__main__':
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
     image_data_loader = mct.core.FolderImageLoader(folder,
-                                                   preprocessing=[resize, rgb_to_bgr, normalization],
+                                                   preprocessing=[],
                                                    batch_size=batch_size)
 
     # Create a Callable representative dataset for calibration purposes.
@@ -94,19 +73,20 @@ if __name__ == '__main__':
     # The model determines the quantization methods to use during the MCT optimization process.
     # Here, for example, we use the default target platform model that is attached to a Tensorflow
     # layers representation.
-    target_platform_cap = mct.get_target_platform_capabilities('tensorflow', 'default')
+    target_platform_cap = mct.get_target_platform_capabilities('tensorflow',
+                                                               'default')
 
     # Create a model and quantize it using the representative_data_gen as the calibration images.
     # Set the number of calibration iterations.
     dense_model = ResNet50()
     dense_nparams = count_model_params(dense_model)
 
-    kpi = mct.KPI(weights_memory=dense_nparams*2) # 50% of dense model
+    kpi = mct.KPI(weights_memory=dense_nparams*4*0.5) # 50% of dense model
     pruned_model, _ = mct.pruning.keras_pruning_experimental(model=dense_model,
                                                              target_kpi=kpi,
                                                              representative_data_gen=representative_data_gen,
                                                              target_platform_capabilities=target_platform_cap,
-                                                             pruning_config=mct.pruning.PruningConfig())
+                                                             pruning_config=mct.pruning.PruningConfig(num_score_approximations=1))
 
     pruned_nparams = count_model_params(pruned_model)
     cr = pruned_nparams/dense_nparams

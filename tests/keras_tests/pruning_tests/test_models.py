@@ -1,3 +1,4 @@
+import tempfile
 from enum import Enum
 
 import unittest
@@ -6,6 +7,7 @@ import tensorflow as tf
 
 import model_compression_toolkit as mct
 import numpy as np
+from packaging import version
 
 from model_compression_toolkit.core.common.pruning.importance_metrics.importance_metric_factory import im_dict
 from tests.keras_tests.pruning_tests.random_importance_metric import RandomImportanceMetric
@@ -26,11 +28,13 @@ class ModelsPruningTest(unittest.TestCase):
             yield [np.random.randn(*in_shape)]
 
     def test_rn50_pruning(self):
-        from keras.applications.resnet50 import ResNet50
-        dense_model = ResNet50()
-        target_crs = np.linspace(0.5, 1, NUM_PRUNING_RATIOS)
-        for cr in target_crs:
-            self.run_test(cr, dense_model)
+        # Can not be found in tf2.12
+        if version.parse(tf.__version__) >= version.parse("2.13"):
+            from keras.applications.resnet50 import ResNet50
+            dense_model = ResNet50()
+            target_crs = np.linspace(0.5, 1, NUM_PRUNING_RATIOS)
+            for cr in target_crs:
+                self.run_test(cr, dense_model)
 
     def test_efficientnetb0_pruning(self):
         from keras.applications.efficientnet import EfficientNetB0
@@ -101,6 +105,13 @@ class ModelsPruningTest(unittest.TestCase):
         pruned_nparams = sum([l.count_params() for l in pruned_model.layers])
         actual_cr = pruned_nparams / dense_nparams
         print(f"Target remaining cr: {cr*100}, Actual remaining cr: {actual_cr*100} ")
+
+        _, keras_file_path = tempfile.mkstemp('.keras')  # Path of exported model
+        print(f"Saving pruned model: {keras_file_path}")
+        keras.models.save_model(pruned_model, keras_file_path)
+
+
+
         input_tensor = next(self.representative_dataset())[0]
         pruned_outputs = pruned_model(input_tensor)
         if test_retraining:

@@ -28,7 +28,7 @@ class Conv2DtoConv2DTransposePruningTest(PruningKerasFeatureTest):
         self.activation_layer = activation_layer
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'simd_size': 2})
+        tp = generate_test_tp_model({'simd_size': 1})
         return generate_keras_tpc(name="simd2_test", tp_model=tp)
 
     def create_networks(self):
@@ -51,3 +51,5 @@ class Conv2DtoConv2DTransposePruningTest(PruningKerasFeatureTest):
         remaining_cr = pruned_nparams / self.dense_model_num_params
         self.unit_test.assertTrue(remaining_cr <= self.target_cr)
         print(f"Target CR: {self.target_cr*100}, Remaining CR: {remaining_cr*100}")
+        if self.target_cr>=1:
+            self.unit_test.assertTrue(remaining_cr==1)

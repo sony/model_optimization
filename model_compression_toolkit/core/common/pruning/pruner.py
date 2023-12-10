@@ -4,14 +4,12 @@ from typing import Callable, List, Dict
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianMode, HessianInfoGranularity
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.pruning.greedy_mask_calculator import GreedyMaskCalculator
 from model_compression_toolkit.core.common.pruning.importance_metrics.importance_metric_factory import \
     get_importance_metric
 from model_compression_toolkit.core.common.pruning.prune_graph import build_pruned_graph
-from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig, ChannelsFilteringStrategy, \
-    ImportanceMetric
+from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig, ChannelsFilteringStrategy
 from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
@@ -53,7 +51,10 @@ class Pruner:
         self._pruned_graph = None
 
         self.mask = None # Will hold the output-channel mask for each entry node.
-        self.scores = None  # Will hold the importance scores for each entry node.
+
+        self.simd_scores = None  # Will hold the importance scores for each entry node.
+        self.simd_groups_indices = None
+
 
     def get_pruned_graph(self) -> Graph:
         if not self._pruned_graph:
@@ -66,27 +67,29 @@ class Pruner:
         entry_nodes = self.float_graph.get_pruning_sections_entry_nodes(self.fw_info, self.fw_impl)
 
         # Compute the importance score for each entry node in the graph.
-        self.scores = self.get_score_per_entry_point(entry_nodes)
+        self.simd_scores, self.simd_groups_indices = self.get_score_per_entry_point(entry_nodes)
 
-        # Assert that scores were successfully computed.
-        assert self.scores is not None
+        Logger.info(f"Computing pruning mask... This may take a while if the model is big and SIMD size is small")
 
         # Choose the mask calculation strategy based on the pruning configuration.
         if self.pruning_config.channels_filtering_strategy == ChannelsFilteringStrategy.GREEDY:
             # Instantiate a GreedyMaskCalculator to compute the pruning masks.
             mask_calculator = GreedyMaskCalculator(entry_nodes,
                                                    self.fw_info,
-                                                   self.scores,
+                                                   self.simd_scores,
                                                    self.target_kpi,
                                                    self.float_graph,
                                                    self.fw_impl,
-                                                   self.target_platform_capabilities)
+                                                   self.target_platform_capabilities,
+                                                   self.simd_groups_indices)
 
             # Calculate the mask that will be used to prune the graph.
             self.mask = mask_calculator.get_mask()
         else:
             # Log an error if an unsupported channel filtering strategy is specified.
             Logger.error("Currently, only the GREEDY ChannelsFilteringStrategy is supported.")
+
+        Logger.info(f"Start pruning graph...")
 
         # Construct the pruned graph using the computed masks.
         self._pruned_graph = build_pruned_graph(self.float_graph,
@@ -95,12 +98,12 @@ class Pruner:
                                                 self.fw_impl)
 
 
-    def get_score_per_entry_point(self, sections_input_nodes):
+    def get_score_per_entry_point(self, entry_nodes: List[BaseNode]):
         """
         Computes the importance scores for each entry node that is eligible for pruning.
 
         Args:
-            sections_input_nodes (List[BaseNode]): List of nodes that are the input points for pruning sections.
+            entry_nodes (List[BaseNode]): List of nodes that are the input points for pruning sections.
 
         Returns:
             Dict[BaseNode, np.ndarray]: A dictionary mapping each entry node to its corresponding importance score.
@@ -113,10 +116,10 @@ class Pruner:
                                    pruning_config=self.pruning_config,
                                    fw_info=self.fw_info)
 
-        entry_node_to_score = im.get_entry_node_to_score(sections_input_nodes)
+        entry_node_to_simd_score, simd_groups_indices = im.get_entry_node_to_simd_score(entry_nodes)
 
         # Return the dictionary of nodes mapped to their importance scores.
-        return entry_node_to_score
+        return entry_node_to_simd_score, simd_groups_indices
 
 
     def get_pruning_info(self) -> PruningInfo:
@@ -126,7 +129,30 @@ class Pruner:
         Returns:
             PruningInfo: An object containing the masks used for pruning and the importance scores of channels.
         """
+        # Assert that scores were successfully computed.
+        assert self.simd_scores is not None
+
+        _scores = {}
+
+        for node, groups_indices in self.simd_groups_indices.items():
+            # Retrieve the original scores for the node
+            node_scores = self.simd_scores[node]
+
+            # Determine the total number of indices (and thus the length of the new score list)
+            total_indices = sum(len(group) for group in groups_indices)
+
+            # Create an array to store the new scores, initially filled with zeros
+            new_node_scores = np.zeros(total_indices)
+
+            # Assign the duplicated scores to the appropriate positions
+            for group_score, group_indices in zip(node_scores, groups_indices):
+                for index in group_indices:
+                    new_node_scores[index] = group_score
+
+            # Store the new scores in the dictionary
+            _scores[node] = new_node_scores
+
         # Create and return a PruningInfo object with the collected pruning data.
         info = PruningInfo(pruning_masks=self.mask,
-                           importance_scores=self.scores)
+                           importance_scores=_scores)
         return info

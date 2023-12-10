@@ -22,7 +22,8 @@ class GreedyMaskCalculator:
                  target_kpi: KPI,
                  graph: Graph,
                  fw_impl: PruningFrameworkImplementation,
-                 tpc: TargetPlatformCapabilities):
+                 tpc: TargetPlatformCapabilities,
+                 simd_groups_indices: Dict[BaseNode, List[int]]):
         """
         Initializes the GreedyMaskCalculator with the required information.
 
@@ -36,15 +37,15 @@ class GreedyMaskCalculator:
         """
         self.prunable_nodes = prunable_nodes
         self.fw_info = fw_info
-        self.score_by_node = score_by_node
         self.target_kpi = target_kpi
         self.graph = graph
         self.fw_impl = fw_impl
         self.tpc = tpc
 
         # Initialize the SIMD group indices and scores dictionaries.
-        self.simd_groups_indices = {} # TODO: Take SIMD grouping out of mask calculator
-        self.simd_groups_scores = {}
+        self.simd_groups_indices = simd_groups_indices
+        self.simd_groups_scores = score_by_node
+
         self.mask_simd = None  # Will hold SIMD group mask per node.
         self.mask = None  # Will hold the final mask to be applied to the nodes.
 
@@ -52,6 +53,7 @@ class GreedyMaskCalculator:
         self.memory_calculator = MemoryCalculator(graph=graph,
                                                   fw_info=fw_info,
                                                   fw_impl=fw_impl)
+
 
     def get_mask(self) -> Dict[BaseNode, np.ndarray]:
         """
@@ -72,10 +74,6 @@ class GreedyMaskCalculator:
         """
         # Initialize masks for each node based on the number of output channels and SIMD groups.
         self._init_masks()
-
-        # Group scores by SIMD size and set the first group to be unpruned.
-        self.group_scores_by_simd_groups()
-        # TODO: recalculate new score to each group instead of summing it _get_best_simd_group_candidate
 
         # Set the first group of channels to be unpruned.
         self.update_mandatory_mask()
@@ -101,18 +99,6 @@ class GreedyMaskCalculator:
         if current_memory > self.target_kpi.weights_memory:
             self._update_simd_mask(node=node_to_remain, group_index=group_to_remain_idx, value=0)
 
-    def group_scores_by_simd_groups(self):
-        """
-        Groups the importance scores of each prunable node by their respective SIMD group sizes.
-
-        This method processes the importance scores of each prunable node and divides them into groups
-        based on the SIMD width of the node. It helps in identifying
-        which groups of channels can be pruned together based on their collective importance.
-        """
-        for prunable_node, node_scores in self.score_by_node.items():
-            # Group the importance scores and corresponding indices based on the SIMD size of the node.
-            # This results in the scores being organized into SIMD groups, facilitating SIMD-aware pruning.
-            self.simd_groups_scores[prunable_node], self.simd_groups_indices[prunable_node] = self._group_scores_by_simd_size(node_scores, prunable_node.get_simd())
 
     def update_mandatory_mask(self):
         """
@@ -123,7 +109,7 @@ class GreedyMaskCalculator:
         will not be pruned. This is a safeguard to ensure that each layer retains at least a minimal
         set of channels to function correctly.
         """
-        for prunable_node, _ in self.score_by_node.items():
+        for prunable_node, _ in self.simd_groups_scores.items():
             # Mark the first SIMD group of channels as mandatory (unpruned) for each prunable node.
             # This is done by setting the first group's value in the SIMD mask to 1 (unpruned).
             self._update_simd_mask(node=prunable_node, group_index=0, value=1)
@@ -174,36 +160,6 @@ class GreedyMaskCalculator:
             self.mask_simd[prunable_node] = layer_mask_per_simd_group
             self.mask[prunable_node] = layer_mask
 
-    def _group_scores_by_simd_size(self, scores: np.ndarray, simd: int) -> Tuple[List[np.ndarray], List[np.ndarray]]:
-        """
-        Groups the scores and their corresponding indices based on SIMD size.
-
-        Args:
-            scores: An array of scores to be grouped.
-            simd: Size of the SIMD group.
-
-        Returns:
-            A tuple of two lists:
-            - The first list contains arrays of scores grouped by SIMD size.
-            - The second list contains arrays of corresponding indices for the score groups.
-        """
-        # Sort scores in descending order and get the corresponding indices.
-        sorted_indices = np.argsort(-scores)
-
-        # Calculate the number of complete groups.
-        num_complete_groups = len(scores) // simd
-
-        # Group scores and indices based on SIMD size.
-        scores_groups = [scores[sorted_indices[i * simd:(i + 1) * simd]] for i in range(num_complete_groups)]
-        indices_groups = [sorted_indices[i * simd:(i + 1) * simd] for i in range(num_complete_groups)]
-
-        # Handle the remaining scores if they don't perfectly divide by simd size.
-        remainder = len(scores) % simd
-        if remainder:
-            scores_groups.append(scores[sorted_indices[-remainder:]])
-            indices_groups.append(sorted_indices[-remainder:])
-
-        return scores_groups, indices_groups
 
     def _get_best_simd_group_candidate(self) -> Tuple[BaseNode, int]:
         """

@@ -1,16 +1,20 @@
-from typing import Callable, List
-
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianMode, HessianInfoGranularity
-from model_compression_toolkit.core.common.pruning.importance_metrics.base_importance_metric import BaseImportanceMetric
 import numpy as np
+from typing import Callable, List, Dict
 
+from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianMode, HessianInfoGranularity
+from model_compression_toolkit.core.common.pruning.channels_grouping import ChannelGrouping
+from model_compression_toolkit.core.common.pruning.importance_metrics.base_importance_metric import BaseImportanceMetric
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import PruningFrameworkImplementation
 
 
 class LFHImportanceMetric(BaseImportanceMetric):
+    """
+    LFHImportanceMetric class implements an importance metric based on the Hessian approach.
+    """
+
     def __init__(self,
                  graph: Graph,
                  representative_data_gen: Callable,
@@ -18,15 +22,14 @@ class LFHImportanceMetric(BaseImportanceMetric):
                  pruning_config: PruningConfig,
                  fw_info: FrameworkInfo):
         """
-        Initializes the LFHImportanceMetric class for calculating Label-Free-Hessian
-        based importance scores of nodes in a graph.
+        Initialize the LFHImportanceMetric instance.
 
         Args:
-            graph (Graph): The computational graph of the neural network.
-            representative_data_gen (Callable): A generator function to produce representative data for the network.
-            fw_impl (PruningFrameworkImplementation): The specific framework implementation.
-            pruning_config (PruningConfig): Configuration settings for the pruning process.
-            fw_info (FrameworkInfo): Framework-specific information and utilities.
+            graph (Graph): Computational graph of the model.
+            representative_data_gen (Callable): Function to generate representative data.
+            fw_impl (PruningFrameworkImplementation): Implementation of pruning for the framework.
+            pruning_config (PruningConfig): Configuration for pruning.
+            fw_info (FrameworkInfo): Framework-specific information.
         """
         self.float_graph = graph
         self.representative_data_gen = representative_data_gen
@@ -34,56 +37,109 @@ class LFHImportanceMetric(BaseImportanceMetric):
         self.pruning_config = pruning_config
         self.fw_info = fw_info
 
-    def get_entry_node_to_score(self, sections_input_nodes: List[BaseNode]):
+        # Initialize internal dictionaries for storing intermediate computations.
+        self._entry_node_to_hessian_trace = None
+        self._entry_node_count_oc_nparams = None
+        self._entry_node_to_simd_score = None
+
+    def get_entry_node_to_simd_score(self, entry_nodes: List[BaseNode]):
         """
-        Calculates importance scores for each entry node in the provided list using the LFH method.
+        Compute SIMD scores for each entry node.
 
         Args:
-            sections_input_nodes (List[BaseNode]): List of entry nodes for which to calculate importance scores.
+            entry_nodes (List[BaseNode]): Entry nodes in the graph.
 
         Returns:
-            Dict[BaseNode, np.ndarray]: A dictionary mapping each entry node to its importance scores.
+            Tuple[Dict, Dict]: Tuple of dictionaries containing SIMD scores and grouped indices.
         """
-        # Initialize Hessian information service to calculate LFH scores
+        # Compute initial scores for entry nodes.
+        entry_node_to_score = self._get_entry_node_to_score(entry_nodes)
+
+        # Group indices based on SIMD configurations.
+        grouped_indices = self._compute_simd_groups_indices(entry_node_to_score, entry_nodes)
+
+        # Compute squared L2 norms for the groups.
+        _squared_l2_norm_by_groups = self._get_squaredl2norm(entry_nodes, grouped_indices)
+
+        # Initialize dictionary for storing SIMD scores.
+        entry_node_to_simd_score = {}
+
+        # Compute SIMD scores for each group.
+        for node, trace in self._entry_node_to_hessian_trace.items():
+            trace_by_group = [np.sum(trace[g]) for g in grouped_indices[node]]
+            nparams_by_group = [np.sum(self._entry_node_count_oc_nparams[node][g]) for g in grouped_indices[node]]
+            entry_node_to_simd_score[node] = np.asarray(trace_by_group) * _squared_l2_norm_by_groups[
+                node] / nparams_by_group
+
+        return entry_node_to_simd_score, grouped_indices
+
+    def _get_entry_node_to_score(self, entry_nodes: List[BaseNode]):
+        """
+        Compute initial scores for each entry node using Hessian information.
+
+        Args:
+            entry_nodes (List[BaseNode]): List of entry nodes in the graph.
+
+        Returns:
+            Dict[BaseNode, np.ndarray]: Dictionary of entry nodes mapped to their scores.
+        """
+        # Initialize HessianInfoService for score computation.
         hessian_info_service = HessianInfoService(graph=self.float_graph,
                                                   representative_dataset=self.representative_data_gen,
                                                   fw_impl=self.fw_impl)
 
-        # Fetch scores for multiple nodes in the graph
-        scores_per_prunable_node = hessian_info_service.fetch_scores_for_multiple_nodes(mode=HessianMode.WEIGHTS,
-                                                                                        granularity=HessianInfoGranularity.PER_OUTPUT_CHANNEL,
-                                                                                        nodes=sections_input_nodes,
-                                                                                        required_size=self.pruning_config.num_score_approximations)
+        # Fetch and process Hessian scores for multiple nodes.
+        scores_per_prunable_node = hessian_info_service.fetch_scores_for_multiple_nodes(
+            mode=HessianMode.WEIGHTS,
+            granularity=HessianInfoGranularity.PER_OUTPUT_CHANNEL,
+            nodes=entry_nodes,
+            required_size=self.pruning_config.num_score_approximations)
 
-        # Average scores across approximations and map them to nodes
-        entry_node_to_score = {node: np.mean(scores, axis=0) for node, scores in
-                               zip(sections_input_nodes, scores_per_prunable_node)}
+        # Average and map scores to nodes.
+        self._entry_node_to_hessian_trace = {node: np.mean(scores, axis=0) for node, scores in
+                                             zip(entry_nodes, scores_per_prunable_node)}
+        self._entry_node_count_oc_nparams = self._count_oc_nparams(entry_nodes=entry_nodes)
 
-        # Normalize scores using L2 norms and number of parameters
-        l2_oc_norm = self.get_l2_out_channel_norm(entry_nodes=sections_input_nodes)
-        count_oc_nparams = self.count_oc_nparams(entry_nodes=sections_input_nodes)
-        entry_node_to_score = self.normalize_lfh_scores(entry_node_to_score, l2_oc_norm, count_oc_nparams)
-        return entry_node_to_score
+        # Normalize scores using squared L2 norms and number of parameters.
+        _entry_node_l2_oc_norm = self._get_squaredl2norm(entry_nodes=entry_nodes)
+        _entry_node_to_score = self._normalize_lfh_scores(_entry_node_l2_oc_norm)
+        return _entry_node_to_score
 
-    def normalize_lfh_scores(self, entry_node_to_score, entry_node_to_l2norm, entry_node_to_nparmas):
+    def _compute_simd_groups_indices(self, entry_node_to_score, entry_nodes):
         """
-        Normalizes the LFH scores for each node.
+        Compute SIMD group indices for each entry node.
 
         Args:
-            entry_node_to_score (Dict[BaseNode, np.ndarray]): Dictionary of nodes and their LFH scores.
-            entry_node_to_l2norm (Dict[BaseNode, np.ndarray]): Dictionary of nodes and their L2 norms.
-            entry_node_to_nparmas (Dict[BaseNode, np.ndarray]): Dictionary of nodes and their parameter counts.
+            entry_node_to_score (Dict[BaseNode, np.ndarray]): Scores for entry nodes.
+            entry_nodes (List[BaseNode]): Entry nodes in the graph.
 
         Returns:
-            Dict[BaseNode, np.ndarray]: Normalized scores for each node.
+            Dict[BaseNode, List[List[int]]]: Dictionary of entry nodes mapped to their SIMD group indices.
+        """
+        # Initialize channel grouping utility.
+        channel_grouping = ChannelGrouping(prunable_nodes=entry_nodes, fw_info=self.fw_info)
+        channel_grouping.group_scores_by_simd_groups(entry_node_to_score)
+        grouped_indices = channel_grouping.get_group_indices()
+        return grouped_indices
+
+    def _normalize_lfh_scores(self, entry_node_to_squaredl2norm):
+        """
+        Normalizes the LFH (Label-Free Hessian) scores using the squared L2 norms.
+
+        Args:
+            entry_node_to_squaredl2norm (Dict[BaseNode, np.ndarray]): Squared L2 norms for each entry node.
+
+        Returns:
+            Dict[BaseNode, np.ndarray]: Normalized LFH scores for each entry node.
         """
         new_scores = {}
-        # Normalize scores by multiplying with L2 norm and dividing by number of parameters
-        for node, trace_vector in entry_node_to_score.items():
-            new_scores[node] = trace_vector * entry_node_to_l2norm[node] / entry_node_to_nparmas[node]
+        for node, trace_vector in self._entry_node_to_hessian_trace.items():
+            # Normalize the trace vector using squared L2 norm and the count of output channel parameters.
+            new_scores[node] = trace_vector * entry_node_to_squaredl2norm[node] / self._entry_node_count_oc_nparams[
+                node]
         return new_scores
 
-    def count_oc_nparams(self, entry_nodes: List[BaseNode]):
+    def _count_oc_nparams(self, entry_nodes: List[BaseNode]):
         """
         Counts the number of parameters per output channel for each entry node.
 
@@ -95,34 +151,66 @@ class LFHImportanceMetric(BaseImportanceMetric):
         """
         node_channel_params = {}
         for entry_node in entry_nodes:
+            # Retrieve the kernel tensor of the node.
             kernel = entry_node.get_weights_by_keys('kernel')
+            # Get the axis index of output channels.
             oc_axis = self.fw_info.kernel_channels_mapping.get(entry_node.type)[0]
 
             # Calculate parameters per channel
             params_per_channel = np.prod(kernel.shape) / kernel.shape[oc_axis]
+            # Create an array filled with the count of parameters per output channel.
             num_params_array = np.full(kernel.shape[oc_axis], params_per_channel)
 
+            # Map each node to its array of parameters count per output channel.
             node_channel_params[entry_node] = num_params_array
         return node_channel_params
 
-    def get_l2_out_channel_norm(self, entry_nodes: List[BaseNode]):
+    def _get_squaredl2norm(self, entry_nodes: List[BaseNode], grouped_indices: Dict[BaseNode, List[List[int]]] = None):
         """
-        Computes the L2 norm for each output channel of the entry nodes.
+        Computes the squared L2 norm for each output channel (or group of channels) of the entry nodes.
 
         Args:
             entry_nodes (List[BaseNode]): List of entry nodes for L2 norm computation.
+            grouped_indices (Dict[BaseNode, List[List[int]]], optional): Indices of channel groups. Defaults to None.
 
         Returns:
-            Dict[BaseNode, np.ndarray]: Dictionary of nodes and their L2 norms for each output channel.
+            Dict[BaseNode, np.ndarray]: Dictionary of nodes and their squared L2 norms for each output channel (or group).
         """
         node_l2_channel_norm = {}
         for entry_node in entry_nodes:
+            # Retrieve the kernel tensor of the node.
             kernel = entry_node.get_weights_by_keys('kernel')
+            # Get the axis index of output channels.
             ox_axis = self.fw_info.kernel_channels_mapping.get(entry_node.type)[0]
-
-            # Compute L2 norm for each channel
+            # Split the kernel tensor into individual channels (or groups if provided).
             channels = np.split(kernel, indices_or_sections=kernel.shape[ox_axis], axis=ox_axis)
-            l2_norms = [np.linalg.norm(c.flatten(), ord=2) ** 2 for c in channels]
 
+            # If grouped_indices are provided, concatenate tensors based on grouped indices.
+            if grouped_indices:
+                concatenated_tensors = self._concatenate_tensors_by_indices(channels, grouped_indices[entry_node])
+                channels = concatenated_tensors
+
+            # Compute the squared L2 norm for each channel (or group).
+            l2_norms = [np.linalg.norm(c.flatten(), ord=2) ** 2 for c in channels]
             node_l2_channel_norm[entry_node] = l2_norms
         return node_l2_channel_norm
+
+    def _concatenate_tensors_by_indices(self, channels, index_list):
+        """
+        Concatenates tensors based on provided indices.
+
+        Args:
+            channels (List[np.ndarray]): List of channel tensors.
+            index_list (List[List[int]]): Indices of channels to be concatenated.
+
+        Returns:
+            List[np.ndarray]: List of concatenated tensors.
+        """
+        concatenated_tensors = []
+        for index_array in index_list:
+            # Gather tensors based on indices.
+            tensors_to_concatenate = [channels[i] for i in index_array]
+            # Concatenate the gathered tensors.
+            concatenated_tensor = np.concatenate(tensors_to_concatenate)
+            concatenated_tensors.append(concatenated_tensor)
+        return concatenated_tensors

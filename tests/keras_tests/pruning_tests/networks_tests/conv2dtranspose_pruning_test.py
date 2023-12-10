@@ -29,7 +29,7 @@ class Conv2DTransposePruningTest(PruningKerasFeatureTest):
 
     def get_tpc(self):
         tp = generate_test_tp_model({'simd_size': 1})
-        return generate_keras_tpc(name="simd2_test", tp_model=tp)
+        return generate_keras_tpc(name="simd1_test", tp_model=tp)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
