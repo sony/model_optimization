@@ -72,6 +72,9 @@ if found_tf:
     from tests.keras_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as keras_gptq_soft_quantizer_test
     from tests.keras_tests.function_tests.test_activation_quantization_holder_gptq import TestGPTQModelBuilderWithActivationHolder
     from tests.data_generation_tests.keras.test_keras_data_generation_runner import KerasDataGenerationTestRunner
+    from tests.keras_tests.pruning_tests.test_memory_calculator import TestParameterCounter
+    from tests.keras_tests.pruning_tests.test_models import ModelsPruningTest
+    from tests.keras_tests.pruning_tests.test_pruning_runner import PruningNetworksTest
 
 
 if found_pytorch:
@@ -105,6 +108,9 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestParameterCounter))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ModelsPruningTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PruningNetworksTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianInfoCalculatorWeights))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianInfoCalculatorActivation))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianService))
