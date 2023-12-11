@@ -602,4 +602,3 @@ class KerasImplementation(FrameworkImplementation):
         """
 
         return model(inputs)
-

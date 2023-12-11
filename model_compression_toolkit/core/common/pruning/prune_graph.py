@@ -66,6 +66,5 @@ def build_pruned_graph(graph: Graph,
                                                      fw_impl,
                                                      fw_info)
 
-    # Return the pruned graph.
     return graph_to_prune
 
