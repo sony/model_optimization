@@ -48,6 +48,8 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.ba
     pytorch_batchnorm_reconstruction
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_refusing import \
     pytorch_batchnorm_refusing
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.functional_batch_norm import \
+    FunctionalBatchNorm
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.linear_collapsing import \
     pytorch_linear_collapsing
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
@@ -243,7 +245,8 @@ class PytorchImplementation(FrameworkImplementation):
         return [ReshapeWithStaticShapes(),
                 MultiHeadAttentionDecomposition(),
                 PermuteCallMethod(),
-                ConstantHolderConv(fw_info)]
+                ConstantHolderConv(fw_info),
+                FunctionalBatchNorm()]
 
     def get_substitutions_pre_statistics_collection(self,
                                                     quant_config: QuantizationConfig
