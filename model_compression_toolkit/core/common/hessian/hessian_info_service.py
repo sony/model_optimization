@@ -156,7 +156,7 @@ class HessianInfoService:
 
     def fetch_hessian(self,
                       trace_hessian_request:
-                      TraceHessianRequest, required_size: int) -> List[np.ndarray]:
+                      TraceHessianRequest, required_size: int) -> List[List[float]]:
         """
         Fetches the computed approximations of the trace of the Hessian for the given 
         request and required size.
