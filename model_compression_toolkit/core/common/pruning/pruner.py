@@ -99,9 +99,9 @@ class Pruner:
                                                    self.simd_groups_indices)
 
             # Calculate the mask that will be used to prune the graph.
+            mask_calculator.compute_mask()
             self.mask = mask_calculator.get_mask()
         else:
-            # Log an error if an unsupported channel filtering strategy is specified.
             Logger.error("Currently, only the GREEDY ChannelsFilteringStrategy is supported.")
 
         Logger.info(f"Start pruning graph...")
