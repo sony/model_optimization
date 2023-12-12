@@ -45,7 +45,7 @@ def build_pruned_graph(graph: Graph,
     graph_to_prune = copy.deepcopy(graph)
 
     # Get the pruning sections.
-    pruning_sections = graph_to_prune.get_pruning_sections(fw_info=fw_info, fw_impl=fw_impl)
+    pruning_sections = graph_to_prune.get_pruning_sections(fw_impl=fw_impl)
 
     # Check that each entry node corresponds to a pruning section has an output-channel mask.
     assert len(pruning_sections) == len(masks)

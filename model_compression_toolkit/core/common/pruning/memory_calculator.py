@@ -74,7 +74,7 @@ class MemoryCalculator:
         """
         total_nparams = 0
 
-        pruning_sections = self.graph.get_pruning_sections(self.fw_info, self.fw_impl)
+        pruning_sections = self.graph.get_pruning_sections(self.fw_impl)
         total_nparams += self.get_nparams_of_nonpruned_nodes(pruning_sections, include_padded_channels)
         total_nparams += self.get_nparams_of_pruning_sections(masks, pruning_sections, include_padded_channels)
         total_nparams -= self.get_nparams_of_shared_nodes(masks, pruning_sections, include_padded_channels)

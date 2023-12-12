@@ -79,7 +79,7 @@ class Pruner:
 
     def _create_pruned_graph(self):
         # Retrieve entry points from the graph.
-        entry_nodes = self.float_graph.get_pruning_sections_entry_nodes(self.fw_info, self.fw_impl)
+        entry_nodes = self.float_graph.get_pruning_sections_entry_nodes(self.fw_impl)
 
         # Compute the importance score for each entry node in the graph.
         self.simd_scores, self.simd_groups_indices = self.get_score_per_entry_point(entry_nodes)
