@@ -121,12 +121,6 @@ class ModelsPruningTest(unittest.TestCase):
         actual_cr = pruned_nparams / dense_nparams
         print(f"Target remaining cr: {cr*100}, Actual remaining cr: {actual_cr*100} ")
 
-        # _, keras_file_path = tempfile.mkstemp('.keras')  # Path of exported model
-        # print(f"Saving pruned model: {keras_file_path}")
-        # keras.models.save_model(pruned_model, keras_file_path)
-        #
-
-
         input_tensor = next(self.representative_dataset())[0]
         pruned_outputs = pruned_model(input_tensor)
         if test_retraining:
