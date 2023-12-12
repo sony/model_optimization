@@ -97,12 +97,7 @@ class GreedyMaskCalculator:
 
 
     def _get_best_simd_group_candidate(self) -> Tuple[BaseNode, int]:
-        """
-        Finds the best SIMD group candidate for pruning.
 
-        Returns:
-            A tuple containing the node with the best SIMD group and the group index.
-        """
         # Initialize variables to track the best score and corresponding node and group index.
         best_score = -np.inf
         best_node = None
@@ -114,7 +109,7 @@ class GreedyMaskCalculator:
 
             # If group_idx is 0, it means there are no zeros in the mask, so this group is not prunable.
             if group_idx != 0:
-                score = np.sum(self.simd_groups_scores[node][group_idx])
+                score = self.simd_groups_scores[node][group_idx]
                 # If the score for this group is better than the best score found so far, update the best score.
                 if score > best_score:
                     best_score = score
