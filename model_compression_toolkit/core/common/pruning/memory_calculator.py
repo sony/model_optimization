@@ -16,6 +16,7 @@
 import numpy as np
 from typing import List, Dict
 
+from model_compression_toolkit.constants import FP32_BYTES_PER_PARAMETER
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import \
@@ -59,7 +60,7 @@ class MemoryCalculator:
             float: Estimated memory usage of the pruned graph in bytes.
         """
         nparams = self.get_pruned_graph_num_params(masks, include_padded_channels)
-        return nparams * 4  # Assuming each parameter is 4 bytes (float32)
+        return nparams * FP32_BYTES_PER_PARAMETER  # Assuming each parameter is 4 bytes (float32)
 
     def get_pruned_graph_num_params(self, masks: Dict[BaseNode, np.ndarray], include_padded_channels: bool) -> int:
         """

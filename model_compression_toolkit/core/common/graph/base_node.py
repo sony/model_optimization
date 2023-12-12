@@ -19,7 +19,7 @@ from typing import Dict, Any, Tuple, List
 import numpy as np
 
 from model_compression_toolkit.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
-    ACTIVATION_NBITS_ATTRIBUTE
+    ACTIVATION_NBITS_ATTRIBUTE, FP32_BYTES_PER_PARAMETER
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationConfigOptions, \
     TargetPlatformCapabilities, LayerFilterParams
@@ -222,9 +222,9 @@ class BaseNode:
         """
         q_params, f_params = self.get_num_parameters(fw_info)
         if self.final_weights_quantization_cfg is None:  # float coefficients
-            memory = (f_params+q_params) * 4
+            memory = (f_params+q_params) * FP32_BYTES_PER_PARAMETER
         else:
-            memory = (f_params*4)+ (q_params * self.final_weights_quantization_cfg.weights_n_bits / 8)  # in bytes
+            memory = (f_params * FP32_BYTES_PER_PARAMETER) + (q_params * self.final_weights_quantization_cfg.weights_n_bits / 8)  # in bytes
 
         return memory
 
@@ -239,7 +239,7 @@ class BaseNode:
 
         """
         q_params, f_params = self.get_num_parameters(fw_info)
-        return (f_params + q_params) * 32 / 8 # in bytes
+        return (f_params + q_params) * FP32_BYTES_PER_PARAMETER
 
     def get_unified_weights_candidates_dict(self):
         """

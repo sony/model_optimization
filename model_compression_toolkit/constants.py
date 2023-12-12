@@ -29,6 +29,7 @@ WEIGHTS_SIGNED = True
 MIN_THRESHOLD = (2 ** -16)
 EPS = 1e-8
 LUT_VALUES_BITWIDTH = 8
+FP32_BYTES_PER_PARAMETER = 4.
 
 # Quantization attributes:
 OUTPUT_SCALE = 'output_scale'
