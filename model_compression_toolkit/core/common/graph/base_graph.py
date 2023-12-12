@@ -707,108 +707,114 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         return all([n.is_all_activation_candidates_equal() for n in self.nodes])
 
+
     def get_pruning_sections(self,
                              fw_impl) -> List[PruningSection]:
         """
+        Constructs pruning sections for a given computational graph.
+        Each section is created starting from an entry node and includes intermediate and exit nodes.
 
         Args:
-            fw_impl:
+            fw_impl: Implementation of specific framework methods required for pruning.
 
-        Returns:
-
+        Returns: List of PruningSection in the graph.
         """
-        input_sections_nodes = self.get_pruning_sections_entry_nodes(fw_impl)
-        pruning_sections = []
+        entry_nodes = self.get_pruning_sections_entry_nodes(fw_impl)
+        return [self._create_pruning_section(entry_node,  fw_impl) for entry_node in entry_nodes]
 
-        # Iterate over each prunable node and find its corresponding section
-        for prunable_node in input_sections_nodes:
-            input_section_node, intermediate_nodes, output_section_node = self.get_section_nodes(prunable_node,
-                                                                                                 fw_impl)
-            pruning_sections.append(PruningSection(entry_node=input_section_node,
-                                                   intermediate_nodes=intermediate_nodes,
-                                                   exit_node=output_section_node))
-
-        return pruning_sections
-
-    def get_pruning_sections_entry_nodes(self, fw_impl):
+    def get_pruning_sections_entry_nodes(self, fw_impl) -> List[BaseNode]:
         """
+        Identifies entry nodes for pruning sections within the graph.
+        Traverses the graph in a topological order, checking each node for prunability criteria.
+        Returns a list of nodes that mark the beginning of a prunable section in the graph.
 
         Args:
-            fw_impl:
+            fw_impl: Implementation of specific framework methods required for pruning.
 
-        Returns:
+        Returns: List of nodes that are entry nodes in the pruning sections of the graph.
 
         """
         prunable_nodes = []
         for n in list(topological_sort(self)):
-            if fw_impl.is_node_entry_node(n) and self.is_node_topology_prunable(n, fw_impl):
+            if fw_impl.is_node_entry_node(n) and self._is_node_topology_prunable(n, fw_impl):
                 prunable_nodes.append(n)
         return prunable_nodes
 
-
-    def is_node_topology_prunable(self,
-                                  node: BaseNode,
-                                  fw_impl):
+    def _is_node_topology_prunable(self, entry_node: BaseNode, fw_impl) -> bool:
         """
+        Determines if the topology starting from a given entry node is suitable for pruning.
+        Iteratively examines the graph structure, focusing on node connectivity and pruning criteria.
+        Returns True if the topology is prunable, False otherwise.
 
         Args:
-            node:
-            fw_impl:
+            entry_node: The node to start the topology check from.
+            fw_impl: Implementation of specific framework methods required for pruning.
 
-        Returns:
+        Returns: Whether this node is a start of a pruning section according to the graph topology or not.
 
         """
-        if not fw_impl.is_node_entry_node(node):
-            return False
+        next_node = entry_node
 
-        next_node = node
-        while True:
-            out_edges = self.out_edges(next_node)
-            # Check if the current node has only one outgoing edge
-            if len(out_edges) != 1:
-                return False
+        # Continue iterating until the conditions for prunability are no longer met
+        while len(self.out_edges(next_node)) == 1:
+            next_node = self.out_edges(next_node)[0].sink_node
 
-            next_node = out_edges[0].sink_node
-            # If the next node is prunable and has only one incoming edge, this topology is prunable.
-            if fw_impl.is_node_exit_node(next_node, node, self.fw_info) and len(self.in_edges(next_node)) == 1:
+            # If next_node is an exit node and has only one incoming edge, the topology is prunable.
+            if fw_impl.is_node_exit_node(next_node, entry_node, self.fw_info) and len(self.in_edges(next_node)) == 1:
                 return True
 
-            # If the next node is not an intermediate node or has more than one incoming edge, stop the check.
-            if not fw_impl.is_node_intermediate_pruning_section(next_node) or len(self.in_edges(next_node)) != 1:
+            # If the next node is not an intermediate node or has more than one incoming/outgoing edge,
+            # stop the check.
+            if not fw_impl.is_node_intermediate_pruning_section(next_node) or len(self.in_edges(next_node)) != 1 or len(self.out_edges(next_node)) != 1:
                 return False
+
+        # If the loop exits normally, it implies that the topology is not prunable
         return False
 
 
-
-    def get_section_nodes(self,
-                          start_node: BaseNode,
-                          fw_impl):
+    def _create_pruning_section(self, entry_node: BaseNode, fw_impl) -> PruningSection:
         """
+        Creates a PruningSection object starting from a given entry node.
+        Includes logic to find intermediate and exit nodes to complete the section.
+        Ensures the provided entry node is a valid starting point for pruning.
 
         Args:
-            start_node:
-            fw_impl:
+            entry_node: The entry node to create the section it starts.
+            fw_impl: Implementation of specific framework methods required for pruning.
 
-        Returns:
+        Returns: The pruning section that starts with node entry_node.
 
         """
-        assert fw_impl.is_node_entry_node(start_node)
+        if not fw_impl.is_node_entry_node(entry_node):
+            Logger.error(f"Expected to find an entry node to create its pruning section,"
+                         f"but node {entry_node} is not an entry node.")
 
+        intermediate_nodes, exit_node = self._find_intermediate_and_exit_nodes(entry_node, fw_impl)
+
+        if not fw_impl.is_node_exit_node(exit_node, entry_node, self.fw_info):
+            Logger.error(f"Expected to find exit node when creating a pruning section,"
+                         f"but node {exit_node} is not an exit node.")
+
+        return PruningSection(entry_node=entry_node,
+                              intermediate_nodes=intermediate_nodes,
+                              exit_node=exit_node)
+
+    def _find_intermediate_and_exit_nodes(self, entry_node: BaseNode, fw_impl) -> Tuple[List[BaseNode], BaseNode]:
+        """
+        Identifies intermediate and exit nodes for a pruning section starting from an entry node.
+        Iterates through connected nodes to build the complete structure of the pruning section.
+
+        Args:
+            entry_node: An entry node to find the intermediate and exit nodes of its section.
+            fw_impl: Implementation of specific framework methods required for pruning.
+
+        Returns: A tuple containing a list of intermediate nodes and the exit node.
+
+        """
         intermediate_nodes = []
-
-        # Follow the graph from the start_node to find the section's end
-        next_node = self.out_edges(start_node)[0].sink_node
-        while not fw_impl.is_node_exit_node(next_node,
-                                            start_node,
-                                            self.fw_info):
-
+        next_node = self.out_edges(entry_node)[0].sink_node
+        while not fw_impl.is_node_exit_node(next_node, entry_node, self.fw_info):
             intermediate_nodes.append(next_node)
-            # Move to the next node in the section
             next_node = self.out_edges(next_node)[0].sink_node
 
-        assert fw_impl.is_node_exit_node(next_node,
-                                         start_node,
-                                         self.fw_info)
-        conv_nodes = [start_node, next_node]
-
-        return conv_nodes[0], intermediate_nodes, conv_nodes[1]
+        return intermediate_nodes, next_node

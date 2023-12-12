@@ -17,7 +17,6 @@ import numpy as np
 from typing import Callable, List, Dict
 
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.pruning.greedy_mask_calculator import GreedyMaskCalculator
@@ -25,6 +24,8 @@ from model_compression_toolkit.core.common.pruning.importance_metrics.importance
     get_importance_metric
 from model_compression_toolkit.core.common.pruning.prune_graph import build_pruned_graph
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig, ChannelsFilteringStrategy
+from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import \
+    PruningFrameworkImplementation
 from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
@@ -37,7 +38,7 @@ class Pruner:
     def __init__(self,
                  float_graph: Graph,
                  fw_info: FrameworkInfo,
-                 fw_impl: FrameworkImplementation,
+                 fw_impl: PruningFrameworkImplementation,
                  target_kpi: KPI,
                  representative_data_gen: Callable,
                  pruning_config: PruningConfig,
@@ -48,7 +49,7 @@ class Pruner:
         Args:
             float_graph (Graph): The floating-point representation of the model's computation graph.
             fw_info (FrameworkInfo): Contains metadata and helper functions for the framework.
-            fw_impl (FrameworkImplementation): Implementation of specific framework methods required for pruning.
+            fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
             target_kpi (KPI): The target KPIs to be achieved after pruning.
             representative_data_gen (Callable): Generator function for representative dataset used in pruning analysis.
             pruning_config (PruningConfig): Configuration object specifying how pruning should be performed.
@@ -84,7 +85,8 @@ class Pruner:
         # Compute the importance score for each entry node in the graph.
         self.simd_scores, self.simd_groups_indices = self.get_score_per_entry_point(entry_nodes)
 
-        Logger.info(f"Computing pruning mask... This may take a while if the model is big and SIMD size is small")
+        Logger.info(f"Calculating the pruning mask. Please note that this process might take some time,"
+                    f" especially for large models or when using a small SIMD size.")
 
         # Choose the mask calculation strategy based on the pruning configuration.
         if self.pruning_config.channels_filtering_strategy == ChannelsFilteringStrategy.GREEDY:
