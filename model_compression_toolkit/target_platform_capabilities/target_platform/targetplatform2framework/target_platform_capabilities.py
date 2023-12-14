@@ -37,6 +37,7 @@ class TargetPlatformCapabilities(ImmutableClass):
     """
     def __init__(self,
                  tp_model: TargetPlatformModel,
+                 weights_attributes_mapping: Dict[Any, Dict[str, str]] = None,
                  name: str = "base",
                  version: str = None):
         """
@@ -57,6 +58,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         self.__tp_model_opsets_not_used = [s.name for s in tp_model.operator_set]
         self.remove_fusing_names_from_not_used_list()
         self.version = version
+        self.weights_attributes_mapping = weights_attributes_mapping
 
     def get_layers_by_opset_name(self, opset_name: str) -> List[Any]:
         """
@@ -188,6 +190,10 @@ class TargetPlatformCapabilities(ImmutableClass):
                 qco = self.tp_model.get_config_options_by_operators_set(op2layers.name)
                 if qco is None:
                     qco = self.tp_model.default_qco
+
+                layer_attrs_mapping = next((v for k, v in self.weights_attributes_mapping.items() if l in k), None)
+                qco = qco.clone_and_map_weights_attr_keys(layer_attrs_mapping)
+
                 if isinstance(l, LayerFilterParams):
                     filterlayer2qco.update({l: qco})
                 else:

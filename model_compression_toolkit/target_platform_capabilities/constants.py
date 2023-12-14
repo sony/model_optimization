@@ -25,3 +25,14 @@ DEFAULT_TP_MODEL = 'default'
 IMX500_TP_MODEL = 'imx500'
 TFLITE_TP_MODEL = 'tflite'
 QNNPACK_TP_MODEL = 'qnnpack'
+
+# TP Attributes
+KERNEL_ATTR = "kernel_attr"
+BIAS_ATTR = "bias_attr"
+
+# TODO: this is duplicated from the core frameworks constants files, because the original consts can't be used here
+#  duo to circular dependency. It might be best to extract the constants from the core file and put them here (in a
+#  separate changeset, because it affects the entire code)
+KERAS_KERNEL = "kernel"
+KERAS_DEPTHWISE_KERNEL = "depthwise_kernel"
+BIAS = "bias"
