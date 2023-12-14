@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from enum import Enum
 
 import numpy as np
 from typing import List, Dict, Tuple
@@ -23,6 +24,17 @@ from model_compression_toolkit.core.common.pruning.memory_calculator import Memo
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import PruningFrameworkImplementation
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+
+class MaskIndicator(Enum):
+    """
+    Enum class for indicating the status of channels in a pruning mask.
+
+    PRUNED: Represents channels that are removed or pruned from the model.
+    REMAINED: Represents channels that are kept or remain unpruned in the model.
+    """
+    PRUNED = 0
+    REMAINED = 1
+
 
 
 class PerChannelMask:
@@ -44,14 +56,14 @@ class PerChannelMask:
     def get_mask(self) -> Dict[BaseNode, np.ndarray]:
         return self._mask
 
-
     def set_mask_value_for_simd_group(self,
                                       node: BaseNode,
                                       channel_idx: int,
-                                      value: int):
-
-        assert value in [0, 1], "Mask value must be either 0 or 1."
-        self._mask[node][channel_idx] = value
+                                      mask_indicator: MaskIndicator):
+        assert mask_indicator in [MaskIndicator.PRUNED,
+                                  MaskIndicator.REMAINED], ("Mask value must be either MaskIndicator.PRUNED "
+                                                            "or MaskIndicator.REMAINED.")
+        self._mask[node][channel_idx] = mask_indicator.value
 
 
     def has_pruned_channel(self) -> bool:

@@ -19,6 +19,7 @@ from typing import List, Dict, Tuple
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.pruning.mask.per_channel_mask import MaskIndicator
 from model_compression_toolkit.core.common.pruning.memory_calculator import MemoryCalculator
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import PruningFrameworkImplementation
 from model_compression_toolkit.core.common.pruning.mask.per_simd_group_mask import PerSIMDGroupMask
@@ -102,7 +103,7 @@ class GreedyMaskCalculator:
             node_to_remain, group_to_remain_idx = self._get_most_sensitive_simd_group_candidate()
             self.oc_pruning_mask.set_mask_value_for_simd_group(node=node_to_remain,
                                                                group_index=group_to_remain_idx,
-                                                               value=1)
+                                                               mask_indicator=MaskIndicator.REMAINED)
             current_memory = self.memory_calculator.get_pruned_graph_memory(masks=self.oc_pruning_mask.get_mask(),
                                                                             include_padded_channels=self.tpc.is_simd_padding())
 
@@ -110,7 +111,7 @@ class GreedyMaskCalculator:
         if current_memory > self.target_kpi.weights_memory:
             self.oc_pruning_mask.set_mask_value_for_simd_group(node=node_to_remain,
                                                                group_index=group_to_remain_idx,
-                                                               value=0)
+                                                               mask_indicator=MaskIndicator.PRUNED)
 
 
 
