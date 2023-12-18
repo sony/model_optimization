@@ -19,8 +19,12 @@ import tensorflow as tf
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.keras_tests.pruning_tests.feature_networks.constant_importance_metric import add_const_importance_metric, \
+    ConstImportanceMetric
 
-from tests.keras_tests.pruning_tests.pruning_keras_feature_test import PruningKerasFeatureTest
+from tests.keras_tests.pruning_tests.feature_networks.pruning_keras_feature_test import PruningKerasFeatureTest
+from tests.keras_tests.utils import get_layers_from_model_by_type
+import numpy as np
 
 keras = tf.keras
 layers = keras.layers
@@ -33,18 +37,20 @@ class DensePruningTest(PruningKerasFeatureTest):
 
     def __init__(self,
                  unit_test,
-                 target_cr=0.5,
                  use_bn=False,
                  activation_layer=None):
         super().__init__(unit_test,
                          input_shape=(8, 8, 3))
-        self.target_cr = target_cr
         self.use_bn = use_bn
         self.activation_layer = activation_layer
 
     def get_tpc(self):
         tp = generate_test_tp_model({'simd_size': 1})
-        return generate_keras_tpc(name="simd2_test", tp_model=tp)
+        return generate_keras_tpc(name="simd1_test", tp_model=tp)
+
+    def get_pruning_config(self):
+        add_const_importance_metric(first_num_oc=10, second_num_oc=6)
+        return mct.pruning.PruningConfig(importance_metric=ConstImportanceMetric.CONST)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -59,12 +65,21 @@ class DensePruningTest(PruningKerasFeatureTest):
         return model
 
     def get_kpi(self):
-        return mct.KPI(weights_memory=self.dense_model_num_params * 4 * self.target_cr)
+        # Remove only one group of channels only one parameter should be pruned
+        return mct.KPI(weights_memory=(self.dense_model_num_params - 1) * 4)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        pruned_nparams = sum([l.count_params() for l in quantized_model.layers])
-        remaining_cr = pruned_nparams / self.dense_model_num_params
-        self.unit_test.assertTrue(remaining_cr <= self.target_cr)
-        print(f"Remaining CR: {remaining_cr}")
-        if self.target_cr>=1:
-            self.unit_test.assertTrue(remaining_cr==1)
+        dense_layers = get_layers_from_model_by_type(float_model, layers.Dense)
+        prunable_layers = get_layers_from_model_by_type(quantized_model, layers.Dense)
+
+        # Make sure the only out channel removed is the last channel of the first dense layer
+        self.unit_test.assertTrue(prunable_layers[0].units == 9)
+        self.unit_test.assertTrue(np.all(prunable_layers[0].kernel.numpy() == dense_layers[0].kernel.numpy()[:, :-1]))
+        self.unit_test.assertTrue(np.all(prunable_layers[0].bias.numpy() == dense_layers[0].bias.numpy()[:-1]))
+
+        # Make sure the only in channel removed is the last channel of the second dense layer
+        self.unit_test.assertTrue(np.all(prunable_layers[1].kernel.numpy() == dense_layers[1].kernel.numpy()[:-1, :]))
+        self.unit_test.assertTrue(np.all(prunable_layers[1].bias.numpy() == dense_layers[1].bias.numpy()))
+
+        self.unit_test.assertTrue(np.all(prunable_layers[2].kernel.numpy() == dense_layers[2].kernel.numpy()))
+        self.unit_test.assertTrue(np.all(prunable_layers[2].bias.numpy() == dense_layers[2].bias.numpy()))

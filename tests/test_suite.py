@@ -21,7 +21,6 @@ import unittest
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 #  ----------------  Individual test suites
-from model_compression_toolkit.constants import FOUND_ONNX
 from tests.common_tests.function_tests.test_histogram_collector import TestHistogramCollector
 from tests.common_tests.function_tests.test_kpi_object import TestKPIObject
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
@@ -73,8 +72,8 @@ if found_tf:
     from tests.keras_tests.function_tests.test_activation_quantization_holder_gptq import TestGPTQModelBuilderWithActivationHolder
     from tests.data_generation_tests.keras.test_keras_data_generation_runner import KerasDataGenerationTestRunner
     from tests.keras_tests.pruning_tests.test_memory_calculator import TestParameterCounter
-    from tests.keras_tests.pruning_tests.test_models import ModelsPruningTest
-    from tests.keras_tests.pruning_tests.test_pruning_runner import PruningNetworksTest
+    from tests.keras_tests.pruning_tests.test_pretrained_models import PruningPretrainedModelsTest
+    from tests.keras_tests.pruning_tests.feature_networks.test_pruning_feature_networks import PruningFeatureNetworksTest
 
 
 if found_pytorch:
@@ -109,8 +108,8 @@ if __name__ == '__main__':
     # Add TF tests only if tensorflow is installed
     if found_tf:
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestParameterCounter))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ModelsPruningTest))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PruningNetworksTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PruningPretrainedModelsTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PruningFeatureNetworksTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianInfoCalculatorWeights))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianInfoCalculatorActivation))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHessianService))
