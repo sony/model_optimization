@@ -501,10 +501,24 @@ class BaseNode:
 
         return True
 
-    def get_simd(self):
+    def get_simd(self) -> int:
+        """
+        Retrieves the SIMD size used for this node. It collects the SIMD sizes from all candidate
+        configurations and returns the minimum SIMD size.
+
+        Returns:
+            int: The node's SIMD size.
+
+        """
         simd_list = [qc.weights_quantization_cfg.simd_size for qc in self.candidates_quantization_cfg]
         if len(simd_list) > 1:
-            Logger.warning(f"More than one pruning SIMD option is available. Min SIMD is used: {min(simd_list)}")
+            Logger.warning(f"More than one pruning SIMD option is available."
+                           f" Min SIMD is used: {min(simd_list)}")
         if len(simd_list) == 0:
             Logger.error(f"No SIMD option is available for {self}")
-        return min(simd_list)
+        _simd = min(simd_list)
+        if _simd <= 0:
+            Logger.error(f"Found non-positive illegal simd: {_simd}")
+        if int(_simd) != _simd:
+            Logger.error(f"Found non-integer illegal simd: {_simd}")
+        return _simd
