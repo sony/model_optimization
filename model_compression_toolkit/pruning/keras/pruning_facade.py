@@ -47,7 +47,16 @@ if FOUND_TF:
                                    target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> \
             Tuple[Model, PruningInfo]:
         """
-        Perform experimental pruning on a Keras model to meet a specified target KPI.
+        Perform structured pruning on a Keras model to meet a specified target KPI.
+        This function prunes the provided model according to the target KPI by grouping and pruning
+        channels based on each layer's SIMD configuration in the Target Platform Capabilities (TPC).
+        By default, the importance of each channel group is determined using the Label-Free Hessian
+        (LFH) method, assessing each channel's sensitivity to the Hessian of the loss function.
+        This pruning strategy considers groups of channels together for a more hardware-friendly
+        architecture. The process involves analyzing the model with a representative dataset to
+        identify groups of channels that can be removed with minimal impact on performance.
+
+        Notice that the pruned model must be retrained to recover the compressed model's performance.
 
         Args:
             model (Model): The original Keras model to be pruned.
@@ -59,6 +68,41 @@ if FOUND_TF:
 
         Returns:
             Tuple[Model, PruningInfo]: A tuple containing the pruned Keras model and associated pruning information.
+
+        Examples:
+
+            Import MCT:
+
+            >>> import model_compression_toolkit as mct
+
+            Import a Keras model:
+
+            >>> from tensorflow.keras.applications.resnet50 import ResNet50
+            >>> model = ResNet50()
+
+            Create a random dataset generator:
+
+            >>> import numpy as np
+            >>> def repr_datagen(): yield [np.random.random((1, 224, 224, 3))]
+
+            Define a target KPI for pruning.
+            Here, we aim to reduce the memory footprint of weights by 50%, assuming the model weights
+            are represented in float32 data type (thus, each parameter is represented using 4 bytes):
+
+            >>> dense_nparams = sum([l.count_params() for l in model.layers])
+            >>> target_kpi = mct.KPI(weights_memory=dense_nparams * 4 * 0.5)
+
+            Optionally, define a pruning configuration. num_score_approximations can be passed
+            to configure the number of importance scores that will be calculated for each channel.
+            A higher value for this parameter yields more precise score approximations but also
+            extends the duration of the pruning process:
+
+            >>> pruning_config = mct.pruning.PruningConfig(num_score_approximations=1)
+
+            Perform pruning:
+
+            >>> pruned_model, pruning_info = mct.pruning.keras_pruning_experimental(model=model, target_kpi=target_kpi, representative_data_gen=repr_datagen, pruning_config=pruning_config)
+
         """
 
         # Instantiate the Keras framework implementation.
@@ -98,8 +142,6 @@ if FOUND_TF:
 
         # Return the pruned model along with its pruning information.
         return pruned_model, pruning_info
-
-
 
 else:
     # If tensorflow is not installed,
