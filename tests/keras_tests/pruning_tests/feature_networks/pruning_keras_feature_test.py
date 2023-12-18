@@ -34,7 +34,7 @@ class PruningKerasFeatureTest(BaseKerasFeatureNetworkTest):
         self.dense_model_num_params = None
 
     def get_pruning_config(self):
-        return PruningConfig(num_score_approximations=1)
+        return PruningConfig(num_score_approximations=2)
 
     def run_test(self):
         feature_networks = self.create_networks()
