@@ -68,7 +68,7 @@ class ChannelGrouping:
         scores_groups = [scores[sorted_indices[i * simd:(i + 1) * simd]] for i in range(num_complete_groups)]
         indices_groups = [sorted_indices[i * simd:(i + 1) * simd] for i in range(num_complete_groups)]
         remainder = len(scores) % simd
-        if remainder:
+        if remainder != 0:
             scores_groups.append(scores[sorted_indices[-remainder:]])
             indices_groups.append(sorted_indices[-remainder:])
         return scores_groups, indices_groups
