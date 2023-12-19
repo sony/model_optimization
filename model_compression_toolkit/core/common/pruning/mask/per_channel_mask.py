@@ -37,7 +37,7 @@ class MaskIndicator(Enum):
 
 
 
-class PerChannelMask:
+class PerChannelMask: #TODO: add doc
     def __init__(self,
                  prunable_nodes: List[BaseNode],
                  fw_info: FrameworkInfo):
@@ -88,8 +88,28 @@ class PerChannelMask:
         # Iterate over all prunable nodes to initialize their masks.
         for prunable_node in self.prunable_nodes:
             # Determine the number of output channels for the node.
-            num_oc = prunable_node.get_weights_by_keys(self.fw_info.get_kernel_op_attributes(prunable_node.type)[0]).shape[self.fw_info.kernel_channels_mapping.get(prunable_node.type)[0]]
+            num_oc = self._compute_num_of_out_channels(prunable_node)
             # Initialize a mask with zeros for each output channel.
             layer_mask = np.zeros(num_oc)
             self._mask[prunable_node] = layer_mask
 
+    def _compute_num_of_out_channels(self, node: BaseNode) -> int:
+        """
+        Calculates the number of output channels for a given node in the graph.
+
+        Args:
+            node (BaseNode): The node for which the number of output channels is calculated.
+
+        Returns:
+            int: The number of output channels for the node.
+        """
+        kernel_attr = self.fw_info.get_kernel_op_attributes(node.type)
+        if len(kernel_attr) != 1:
+            Logger.error(f"Expected to found a single attribute but found {len(kernel_attr)} for node {node}")
+        oc_axis, _ = self.fw_info.kernel_channels_mapping.get(node.type)
+        if oc_axis is None:
+            Logger.error(f"Expected to found output channel axis for node {node} but it's None")
+        if int(oc_axis) != oc_axis:
+            Logger.error(f"Expected output channel axis to be an integer but is {oc_axis}")
+        num_oc = node.get_weights_by_keys(kernel_attr[0]).shape[oc_axis]
+        return num_oc
