@@ -19,7 +19,8 @@ from typing import Callable, List, Dict
 
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianMode, HessianInfoGranularity
+from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianMode, HessianInfoGranularity, \
+    TraceHessianRequest
 from model_compression_toolkit.core.common.pruning.channels_grouping import ChannelGrouping
 from model_compression_toolkit.core.common.pruning.importance_metrics.base_importance_metric import BaseImportanceMetric
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig
@@ -104,16 +105,18 @@ class LFHImportanceMetric(BaseImportanceMetric):
                                                   representative_dataset=self.representative_data_gen,
                                                   fw_impl=self.fw_impl)
 
-        # Fetch and process Hessian scores for multiple nodes.
-        scores_per_prunable_node = hessian_info_service.fetch_scores_for_multiple_nodes(
-            mode=HessianMode.WEIGHTS,
-            granularity=HessianInfoGranularity.PER_OUTPUT_CHANNEL,
-            nodes=entry_nodes,
-            required_size=self.pruning_config.num_score_approximations)
+        # Fetch and process Hessian scores for output channels of entry nodes.
+        nodes_scores = []
+        for node in entry_nodes:
+            _request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
+                                           granularity=HessianInfoGranularity.PER_OUTPUT_CHANNEL,
+                                           target_node=node)
+            _scores_for_node = hessian_info_service.fetch_hessian(_request,
+                                                                  required_size=self.pruning_config.num_score_approximations)
+            nodes_scores.append(_scores_for_node)
 
         # Average and map scores to nodes.
-        self._entry_node_to_hessian_trace = {node: np.mean(scores, axis=0) for node, scores in
-                                             zip(entry_nodes, scores_per_prunable_node)}
+        self._entry_node_to_hessian_trace = {node: np.mean(scores, axis=0) for node, scores in zip(entry_nodes, nodes_scores)}
         self._entry_node_count_oc_nparams = self._count_oc_nparams(entry_nodes=entry_nodes)
 
         # Normalize scores using squared L2 norms and number of parameters.
