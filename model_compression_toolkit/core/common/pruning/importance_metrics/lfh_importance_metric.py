@@ -25,6 +25,7 @@ from model_compression_toolkit.core.common.pruning.channels_grouping import Chan
 from model_compression_toolkit.core.common.pruning.importance_metrics.base_importance_metric import BaseImportanceMetric
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import PruningFrameworkImplementation
+from model_compression_toolkit.logger import Logger
 
 
 class LFHImportanceMetric(BaseImportanceMetric):
@@ -192,10 +193,8 @@ class LFHImportanceMetric(BaseImportanceMetric):
         """
         node_channel_params = {}
         for entry_node in entry_nodes:
-            # Retrieve the kernel tensor of the node.
-            kernel = entry_node.get_weights_by_keys('kernel')
-            # Get the axis index of output channels.
-            oc_axis = self.fw_info.kernel_channels_mapping.get(entry_node.type)[0]
+            kernel_attr, num_oc, oc_axis = self._get_kernel_node_oc_info(entry_node)
+            kernel = entry_node.get_weights_by_keys(kernel_attr)
 
             # Calculate parameters per channel
             params_per_channel = np.prod(kernel.shape) / kernel.shape[oc_axis]
@@ -221,12 +220,11 @@ class LFHImportanceMetric(BaseImportanceMetric):
         """
         node_l2_channel_norm = {}
         for entry_node in entry_nodes:
+            kernel_attr, num_oc, oc_axis = self._get_kernel_node_oc_info(entry_node)
             # Retrieve the kernel tensor of the node.
-            kernel = entry_node.get_weights_by_keys('kernel')
-            # Get the axis index of output channels.
-            ox_axis = self.fw_info.kernel_channels_mapping.get(entry_node.type)[0]
+            kernel = entry_node.get_weights_by_keys(kernel_attr)
             # Split the kernel tensor into individual channels (or groups if provided).
-            channels = np.split(kernel, indices_or_sections=kernel.shape[ox_axis], axis=ox_axis)
+            channels = np.split(kernel, indices_or_sections=num_oc, axis=oc_axis)
 
             # If grouped_indices are provided, concatenate tensors based on grouped indices.
             if grouped_indices:
@@ -236,7 +234,33 @@ class LFHImportanceMetric(BaseImportanceMetric):
             # Compute the squared L2 norm for each channel (or group).
             l2_norms = np.asarray([np.linalg.norm(c.flatten(), ord=2) ** 2 for c in channels])
             node_l2_channel_norm[entry_node] = l2_norms
+
         return node_l2_channel_norm
+
+    def _get_kernel_node_oc_info(self, entry_node: BaseNode) -> Tuple[str, int, int]:
+        """
+        Retrieves information about the output channels (oc) for a given kernel node.
+
+        Args:
+            entry_node (BaseNode): The node whose output channel information is needed.
+
+        Returns:
+            tuple: A tuple containing the kernel attribute, the number of output channels, and the axis of the output channels.
+        """
+        kernel_attr = self.fw_info.get_kernel_op_attributes(entry_node.type)
+        # Ensure only one kernel attribute exists for the given node.
+        if len(kernel_attr) != 1:
+            Logger.error(f"Expected to found a single attribute but found {len(kernel_attr)} for node {entry_node}")
+        kernel_attr = kernel_attr[0]
+
+        # Retrieve and validate the axis index for the output channels.
+        oc_axis, _ = self.fw_info.kernel_channels_mapping.get(entry_node.type)
+        if oc_axis is None or int(oc_axis) != oc_axis:
+            Logger.error(f"Expected output channel axis to be an integer but is {oc_axis} for node {entry_node}")
+
+        # Get the number of output channels based on the kernel attribute and axis.
+        num_oc = entry_node.get_weights_by_keys(kernel_attr[0]).shape[oc_axis]
+        return kernel_attr, num_oc, oc_axis
 
     def _concatenate_tensors_by_indices(self,
                                         channels: List[np.ndarray],
