@@ -27,14 +27,14 @@ from model_compression_toolkit.core.common.pruning.importance_metrics.importance
 class ConstantImportanceMetric(BaseImportanceMetric):
     """
     ConstantImportanceMetric is used for testing architectures with three linear layers in a row.
-    It assigns scores in reverse order of the channel index. This metric is designed to work only
-    with SIMD size of 1. It generates constant scores and grouped indices for the first two layers
-    based on predefined numbers of output channels.
+    It assigns scores in reverse order of the channel index. It generates constant scores and
+    grouped indices for the first two layers based on predefined numbers of output channels.
     """
 
     # Static attributes to hold the predefined number of output channels for the first two layers.
     first_num_oc = None
     second_num_oc = None
+    simd = 1
 
     def __init__(self, **kwargs):
         pass
@@ -49,16 +49,14 @@ class ConstantImportanceMetric(BaseImportanceMetric):
         Returns:
             A tuple containing the generated scores and group indices.
         """
-        # Generating group indices for each entry node. Each index is in its own group.
         grouped_indices = {
-            entry_nodes[0]: [np.asarray([i]) for i in range(ConstantImportanceMetric.first_num_oc)],
-            entry_nodes[1]: [np.asarray([i]) for i in range(ConstantImportanceMetric.second_num_oc)]
+            entry_nodes[0]: [np.arange(i, min(i + ConstantImportanceMetric.simd, ConstantImportanceMetric.first_num_oc)) for i in range(0, ConstantImportanceMetric.first_num_oc, ConstantImportanceMetric.simd)],
+            entry_nodes[1]: [np.arange(i, min(i + ConstantImportanceMetric.simd, ConstantImportanceMetric.second_num_oc)) for i in range(0, ConstantImportanceMetric.second_num_oc, ConstantImportanceMetric.simd)]
         }
 
-        # Generating scores in reverse order of the channel index.
         entry_node_to_simd_score = {
-            entry_nodes[0]: [np.asarray([-i]) for i in range(ConstantImportanceMetric.first_num_oc)],
-            entry_nodes[1]: [np.asarray([-i]) for i in range(ConstantImportanceMetric.second_num_oc)]
+            entry_nodes[0]: [-np.min(np.arange(i, min(i + ConstantImportanceMetric.simd, ConstantImportanceMetric.first_num_oc))) for i in range(0, ConstantImportanceMetric.first_num_oc, ConstantImportanceMetric.simd)],
+            entry_nodes[1]: [-np.min(np.arange(i, min(i + ConstantImportanceMetric.simd, ConstantImportanceMetric.second_num_oc))) for i in range(0, ConstantImportanceMetric.second_num_oc, ConstantImportanceMetric.simd)]
         }
 
         return entry_node_to_simd_score, grouped_indices
@@ -68,7 +66,7 @@ class ConstImportanceMetric(Enum):
     CONST = 'const'
 
 
-def add_const_importance_metric(first_num_oc, second_num_oc):
+def add_const_importance_metric(first_num_oc, second_num_oc, simd=1):
     """
     Adds the constant importance metric to the global importance metrics dictionary.
 
@@ -79,6 +77,7 @@ def add_const_importance_metric(first_num_oc, second_num_oc):
     # Set the static attributes for the number of output channels.
     ConstantImportanceMetric.first_num_oc = first_num_oc
     ConstantImportanceMetric.second_num_oc = second_num_oc
+    ConstantImportanceMetric.simd = simd
 
     # Update the global dictionary mapping importance metrics to their corresponding classes.
     im_dict.update({ConstImportanceMetric.CONST: ConstantImportanceMetric})

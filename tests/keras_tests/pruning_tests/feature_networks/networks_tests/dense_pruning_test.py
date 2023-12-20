@@ -38,18 +38,20 @@ class DensePruningTest(PruningKerasFeatureTest):
     def __init__(self,
                  unit_test,
                  use_bn=False,
-                 activation_layer=None):
+                 activation_layer=None,
+                 simd=1):
         super().__init__(unit_test,
                          input_shape=(8, 8, 3))
         self.use_bn = use_bn
         self.activation_layer = activation_layer
+        self.simd = simd
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'simd_size': 1})
-        return generate_keras_tpc(name="simd1_test", tp_model=tp)
+        tp = generate_test_tp_model({'simd_size': self.simd})
+        return generate_keras_tpc(name="simd_test", tp_model=tp)
 
     def get_pruning_config(self):
-        add_const_importance_metric(first_num_oc=10, second_num_oc=6)
+        add_const_importance_metric(first_num_oc=10, second_num_oc=6, simd=self.simd)
         return mct.pruning.PruningConfig(importance_metric=ConstImportanceMetric.CONST)
 
     def create_networks(self):
@@ -73,12 +75,12 @@ class DensePruningTest(PruningKerasFeatureTest):
         prunable_layers = get_layers_from_model_by_type(quantized_model, layers.Dense)
 
         # Make sure the only out channel removed is the last channel of the first dense layer
-        self.unit_test.assertTrue(prunable_layers[0].units == 9)
-        self.unit_test.assertTrue(np.all(prunable_layers[0].kernel.numpy() == dense_layers[0].kernel.numpy()[:, :-1]))
-        self.unit_test.assertTrue(np.all(prunable_layers[0].bias.numpy() == dense_layers[0].bias.numpy()[:-1]))
+        self.unit_test.assertTrue(prunable_layers[0].units == 10 - self.simd)
+        self.unit_test.assertTrue(np.all(prunable_layers[0].kernel.numpy() == dense_layers[0].kernel.numpy()[:, :-self.simd]))
+        self.unit_test.assertTrue(np.all(prunable_layers[0].bias.numpy() == dense_layers[0].bias.numpy()[:-self.simd]))
 
         # Make sure the only in channel removed is the last channel of the second dense layer
-        self.unit_test.assertTrue(np.all(prunable_layers[1].kernel.numpy() == dense_layers[1].kernel.numpy()[:-1, :]))
+        self.unit_test.assertTrue(np.all(prunable_layers[1].kernel.numpy() == dense_layers[1].kernel.numpy()[:-self.simd, :]))
         self.unit_test.assertTrue(np.all(prunable_layers[1].bias.numpy() == dense_layers[1].bias.numpy()))
 
         self.unit_test.assertTrue(np.all(prunable_layers[2].kernel.numpy() == dense_layers[2].kernel.numpy()))

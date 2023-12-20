@@ -38,6 +38,11 @@ class PruningFeatureNetworksTest(unittest.TestCase):
         Conv2DPruningTest(self, use_bn=True, activation_layer=layers.ReLU()).run_test()
         Conv2DPruningTest(self, use_bn=True, activation_layer=layers.Softmax()).run_test()
         Conv2DPruningTest(self, use_bn=True, activation_layer=layers.PReLU()).run_test()
+        Conv2DPruningTest(self, simd=2).run_test()
+        Conv2DPruningTest(self, use_bn=True, simd=2).run_test()
+        Conv2DPruningTest(self, use_bn=True, activation_layer=layers.ReLU(), simd=2).run_test()
+        Conv2DPruningTest(self, use_bn=True, activation_layer=layers.Softmax(), simd=2).run_test()
+        Conv2DPruningTest(self, use_bn=True, activation_layer=layers.PReLU(), simd=2).run_test()
 
     def test_dense_pruning(self):
         DensePruningTest(self).run_test()
@@ -45,6 +50,11 @@ class PruningFeatureNetworksTest(unittest.TestCase):
         DensePruningTest(self, use_bn=True, activation_layer=layers.ReLU()).run_test()
         DensePruningTest(self, use_bn=True, activation_layer=layers.Softmax()).run_test()
         DensePruningTest(self, use_bn=True, activation_layer=layers.PReLU()).run_test()
+        DensePruningTest(self, simd=2).run_test()
+        DensePruningTest(self, use_bn=True, simd=2).run_test()
+        DensePruningTest(self, use_bn=True, activation_layer=layers.ReLU(), simd=2).run_test()
+        DensePruningTest(self, use_bn=True, activation_layer=layers.Softmax(), simd=2).run_test()
+        DensePruningTest(self, use_bn=True, activation_layer=layers.PReLU(), simd=2).run_test()
 
     def test_conv2dtranspose_pruning(self):
         Conv2DTransposePruningTest(self, ).run_test()
@@ -52,6 +62,11 @@ class PruningFeatureNetworksTest(unittest.TestCase):
         Conv2DTransposePruningTest(self, use_bn=True, activation_layer=layers.ReLU()).run_test()
         Conv2DTransposePruningTest(self, use_bn=True, activation_layer=layers.Softmax()).run_test()
         Conv2DTransposePruningTest(self, use_bn=True, activation_layer=layers.PReLU()).run_test()
+        Conv2DTransposePruningTest(self, simd=2).run_test()
+        Conv2DTransposePruningTest(self, use_bn=True, simd=2).run_test()
+        Conv2DTransposePruningTest(self, use_bn=True, activation_layer=layers.ReLU(), simd=2).run_test()
+        Conv2DTransposePruningTest(self, use_bn=True, activation_layer=layers.Softmax(), simd=2).run_test()
+        Conv2DTransposePruningTest(self, use_bn=True, activation_layer=layers.PReLU(), simd=2).run_test()
 
     def test_conv2d_conv2dtranspose_pruning(self):
         Conv2DtoConv2DTransposePruningTest(self).run_test()
@@ -59,6 +74,11 @@ class PruningFeatureNetworksTest(unittest.TestCase):
         Conv2DtoConv2DTransposePruningTest(self, use_bn=True, activation_layer=layers.ReLU()).run_test()
         Conv2DtoConv2DTransposePruningTest(self, use_bn=True, activation_layer=layers.Softmax()).run_test()
         Conv2DtoConv2DTransposePruningTest(self, use_bn=True, activation_layer=layers.PReLU()).run_test()
+        Conv2DtoConv2DTransposePruningTest(self, simd=2).run_test()
+        Conv2DtoConv2DTransposePruningTest(self, use_bn=True, simd=2).run_test()
+        Conv2DtoConv2DTransposePruningTest(self, use_bn=True, activation_layer=layers.ReLU(), simd=2).run_test()
+        Conv2DtoConv2DTransposePruningTest(self, use_bn=True, activation_layer=layers.Softmax(), simd=2).run_test()
+        Conv2DtoConv2DTransposePruningTest(self, use_bn=True, activation_layer=layers.PReLU(), simd=2).run_test()
 
     def test_conv2dtranspose_conv2d_pruning(self):
         Conv2DTransposetoConv2DPruningTest(self).run_test()
@@ -66,6 +86,11 @@ class PruningFeatureNetworksTest(unittest.TestCase):
         Conv2DTransposetoConv2DPruningTest(self, use_bn=True, activation_layer=layers.ReLU()).run_test()
         Conv2DTransposetoConv2DPruningTest(self, use_bn=True, activation_layer=layers.Softmax()).run_test()
         Conv2DTransposetoConv2DPruningTest(self, use_bn=True, activation_layer=layers.PReLU()).run_test()
+        Conv2DTransposetoConv2DPruningTest(self, simd=2).run_test()
+        Conv2DTransposetoConv2DPruningTest(self, use_bn=True, simd=2).run_test()
+        Conv2DTransposetoConv2DPruningTest(self, use_bn=True, activation_layer=layers.ReLU(), simd=2).run_test()
+        Conv2DTransposetoConv2DPruningTest(self, use_bn=True, activation_layer=layers.Softmax(), simd=2).run_test()
+        Conv2DTransposetoConv2DPruningTest(self, use_bn=True, activation_layer=layers.PReLU(), simd=2).run_test()
 
 
 if __name__ == '__main__':

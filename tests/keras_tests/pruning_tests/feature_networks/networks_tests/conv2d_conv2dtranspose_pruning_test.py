@@ -34,15 +34,17 @@ class Conv2DtoConv2DTransposePruningTest(PruningKerasFeatureTest):
     def __init__(self,
                  unit_test,
                  use_bn=False,
-                 activation_layer=None):
+                 activation_layer=None,
+                 simd=1):
         super().__init__(unit_test,
                          input_shape=(8, 8, 3))
         self.use_bn = use_bn
         self.activation_layer = activation_layer
+        self.simd = simd
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Conv2D(filters=4, kernel_size=1)(inputs)
+        x = layers.Conv2D(filters=6, kernel_size=1)(inputs)
         if self.use_bn:
             x = layers.BatchNormalization()(x)
         if self.activation_layer:
@@ -54,11 +56,11 @@ class Conv2DtoConv2DTransposePruningTest(PruningKerasFeatureTest):
 
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'simd_size': 1})
-        return generate_keras_tpc(name="simd1_test", tp_model=tp)
+        tp = generate_test_tp_model({'simd_size': self.simd})
+        return generate_keras_tpc(name="simd_test", tp_model=tp)
 
     def get_pruning_config(self):
-        add_const_importance_metric(first_num_oc=4, second_num_oc=3)
+        add_const_importance_metric(first_num_oc=6, second_num_oc=3, simd=self.simd)
         return mct.pruning.PruningConfig(importance_metric=ConstImportanceMetric.CONST)
 
     def get_kpi(self):
@@ -73,12 +75,12 @@ class Conv2DtoConv2DTransposePruningTest(PruningKerasFeatureTest):
         prunable_conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
 
         # Make sure the only out channel removed is the last channel of the first conv layer
-        self.unit_test.assertTrue(prunable_conv_layers[0].filters == 3)
-        self.unit_test.assertTrue(np.all(prunable_conv_layers[0].kernel.numpy() == dense_conv_layers[0].kernel.numpy()[:, :, :, :-1]))
-        self.unit_test.assertTrue(np.all(prunable_conv_layers[0].bias.numpy() == dense_conv_layers[0].bias.numpy()[:-1]))
+        self.unit_test.assertTrue(prunable_conv_layers[0].filters == 6 - self.simd)
+        self.unit_test.assertTrue(np.all(prunable_conv_layers[0].kernel.numpy() == dense_conv_layers[0].kernel.numpy()[:, :, :, :-self.simd]))
+        self.unit_test.assertTrue(np.all(prunable_conv_layers[0].bias.numpy() == dense_conv_layers[0].bias.numpy()[:-self.simd]))
 
         # Make sure the only in channel removed is the last channel of the second conv layer
-        self.unit_test.assertTrue(np.all(prunable_convtrans_layers[0].kernel.numpy() == dense_convtrans_layers[0].kernel.numpy()[:, :, :, :-1]))
+        self.unit_test.assertTrue(np.all(prunable_convtrans_layers[0].kernel.numpy() == dense_convtrans_layers[0].kernel.numpy()[:, :, :, :-self.simd]))
         self.unit_test.assertTrue(np.all(prunable_convtrans_layers[0].bias.numpy() == dense_convtrans_layers[0].bias.numpy()))
 
         self.unit_test.assertTrue(np.all(prunable_conv_layers[1].kernel.numpy() == dense_conv_layers[1].kernel.numpy()))
