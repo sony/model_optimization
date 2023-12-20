@@ -15,6 +15,144 @@ in the future.
 - ultralytics: [https://ultralytics.com](https://ultralytics.com)
 - keras-applications: [https://keras.io/api/applications](https://keras.io/api/applications/)
 
+<table>
+    <tr>
+        <th rowspan="2">Task</th>
+        <th rowspan="2">Model Source</th>
+        <th rowspan="2">Model Name</th>
+        <th rowspan="2">Dataset Name</th>
+        <th colspan="2">Float</th>
+        <th colspan="2">Quantized</th>
+    </tr>
+    <tr>
+        <th>Accuracy</th>
+        <th>Size [MB]</th>
+        <th>Accuracy</th>
+        <th>Size [MB]</th>
+    </tr>
+    <!-- Classification Models (ImageNet) -->
+    <tr>
+        <td rowspan="12">Classification</td>
+        <td rowspan="4"><a href="https://github.com/pytorch/vision">torchvision</a></td>
+        <td>mobilenet_v2</td>
+        <td>ImageNet</td>
+        <td>72.15%</td>
+        <td></td>
+        <td>71.88%</td>
+        <td>3.47</td>
+    </tr>
+    <tr>
+        <td>regnet_y_400mf</td>
+        <td>ImageNet</td>
+        <td>75.78%</td>
+        <td></td>
+        <td>75.42%</td>
+        <td>4.31</td>
+    </tr>
+    <tr>
+        <td>shufflenet_v2_x0_5</td>
+        <td>ImageNet</td>
+        <td>60.55%</td>
+        <td></td>
+        <td>59.7%</td>
+        <td>1.36</td>
+    </tr>
+    <tr>
+        <td>squeezenet1_0</td>
+        <td>ImageNet</td>
+        <td>58.1%</td>
+        <td></td>
+        <td>57.67%</td>
+        <td>1.24</td>
+    </tr>
+    <tr>
+        <td rowspan="5"><a href="https://github.com/rwightman/pytorch-image-models">timm</a></td>
+        <td>regnetx_002</td>
+        <td>ImageNet</td>
+        <td>68.76%</td>
+        <td></td>
+        <td>68.27%</td>
+        <td>2.67</td>
+    </tr>
+    <tr>
+        <td>regnety_008</td>
+        <td>ImageNet</td>
+        <td>76.32%</td>
+        <td></td>
+        <td>75.98%</td>
+        <td>6.23</td>
+    </tr>
+    <tr>
+        <td>resnet10t</td>
+        <td>ImageNet</td>
+        <td>66.56%</td>
+        <td></td>
+        <td>66.43%</td>
+        <td>5.43</td>
+    </tr>
+    <tr>
+        <td>resnet18</td>
+        <td>ImageNet</td>
+        <td>69.76%</td>
+        <td></td>
+        <td>69.61%</td>
+        <td>11.68</td>
+    </tr>
+    <tr>
+        <td>efficientnet_es</td>
+        <td>ImageNet</td>
+        <td>78.08%</td>
+        <td></td>
+        <td>77.74%</td>
+        <td>5.39</td>
+    </tr> 
+    <tr>
+        <td rowspan="3"><a href="https://github.com/keras-team/keras-applications">keras_applications</a></td>
+        <td>mobilenet_v2.MobileNetV2</td>
+        <td>ImageNet</td>
+        <td>71.85%</td>
+        <td></td>
+        <td>71.57%</td>
+        <td>3.47</td>
+    </tr>
+    <tr>
+        <td>efficientnet_v2.EfficientNetV2B0</td>
+        <td>ImageNet</td>
+        <td>78.41%</td>
+        <td></td>
+        <td>77.44%</td>
+        <td>7.06</td>
+    </tr>
+    <tr>
+        <td>resnet50.ResNet50</td>
+        <td>ImageNet</td>
+        <td>74.22%</td>
+        <td></td>
+        <td>74.08%</td>
+        <td>25.5</td>
+    </tr>
+    <!-- Object Detection Models (COCO) -->
+    <tr>
+        <td rowspan="2">Object Detection</td>
+        <td rowspan="2"><a href="https://github.com/ultralytics">ultralytics</a></td>
+        <td>yolov8n</td>
+        <td>COCO</td>
+        <td>37.04%</td>
+        <td></td>
+        <td>36.17%</td>
+        <td>3.15</td>
+    </tr>
+    <tr>
+        <td>yolov8m</td>
+        <td>COCO</td>
+        <td>49.99%</td>
+        <td></td>
+        <td>49.4%</td>
+        <td>25.9</td>
+    </tr>
+</table>
+
+
 ## Getting Started
 ### Installation 
 Install one of the supported libraries above.
