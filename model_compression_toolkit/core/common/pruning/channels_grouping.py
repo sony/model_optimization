@@ -19,11 +19,13 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode
 import numpy as np
 
+
 class ChannelGrouping:
     """
     ChannelGrouping handles the sorting and grouping of channel indices for prunable nodes in a graph,
     based on their importance scores and SIMD group sizes.
     """
+
     def __init__(self,
                  prunable_nodes: List[BaseNode],
                  fw_info: FrameworkInfo):
@@ -36,23 +38,18 @@ class ChannelGrouping:
         """
         self.prunable_nodes = prunable_nodes
         self.fw_info = fw_info
-        self.simd_groups_indices = {}  # Stores SIMD group indices for each node.
-        self.simd_groups_scores = {}   # Stores grouped scores for each node.
+        # Store for each node a list of numpy arrays. Each numpy array represents the
+        # indices of the channels in an SIMD group.
+        self.simd_groups_indices = {}
 
     def group_scores_by_simd_groups(self, score_by_node: Dict[BaseNode, np.ndarray]):
-        """
-        Groups the importance scores of each prunable node by their respective SIMD group sizes.
-
-        Args:
-            score_by_node: A dictionary mapping nodes to their importance scores.
-        """
         for prunable_node, node_scores in score_by_node.items():
-            self.simd_groups_scores[prunable_node], self.simd_groups_indices[prunable_node] = \
-                self._group_scores_by_simd_size(node_scores, prunable_node.get_simd())
+            self.simd_groups_indices[prunable_node] = self._group_scores_by_simd_size(node_scores,
+                                                                                      prunable_node.get_simd())
 
     def _group_scores_by_simd_size(self,
                                    scores: np.ndarray,
-                                   simd: int) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+                                   simd: int) -> List[np.ndarray]:
         """
         Groups the scores and their corresponding indices based on SIMD size.
 
@@ -71,16 +68,7 @@ class ChannelGrouping:
         if remainder != 0:
             scores_groups.append(scores[sorted_indices[-remainder:]])
             indices_groups.append(sorted_indices[-remainder:])
-        return scores_groups, indices_groups
-
-    def get_grouped_scores(self) -> Dict[BaseNode, List[np.ndarray]]:
-        """
-        Returns the grouped scores for each prunable node.
-
-        Returns:
-            Dict[BaseNode, List[np.ndarray]]: Grouped scores for each node.
-        """
-        return self.simd_groups_scores
+        return indices_groups
 
     def get_group_indices(self) -> Dict[BaseNode, List[np.ndarray]]:
         """
