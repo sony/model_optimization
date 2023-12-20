@@ -39,12 +39,14 @@ class Conv2DTransposePruningTest(PruningKerasFeatureTest):
                  unit_test,
                  use_bn=False,
                  activation_layer=None,
-                 simd=1):
+                 simd=1,
+                 use_constant_importance_metric=True):
         super().__init__(unit_test,
                          input_shape=(8, 8, 3))
         self.use_bn = use_bn
         self.activation_layer = activation_layer
         self.simd = simd
+        self.use_constant_importance_metric = use_constant_importance_metric
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -53,7 +55,7 @@ class Conv2DTransposePruningTest(PruningKerasFeatureTest):
             x = layers.BatchNormalization()(x)
         if self.activation_layer:
             x = self.activation_layer(x)
-        x = layers.Conv2DTranspose(filters=3, kernel_size=1)(x)
+        x = layers.Conv2DTranspose(filters=4, kernel_size=1)(x)
         x = layers.Conv2DTranspose(filters=4, kernel_size=1)(x)
         model = keras.Model(inputs=inputs, outputs=x)
         return model
@@ -63,8 +65,10 @@ class Conv2DTransposePruningTest(PruningKerasFeatureTest):
         return generate_keras_tpc(name="simd_test", tp_model=tp)
 
     def get_pruning_config(self):
-        add_const_importance_metric(first_num_oc=6, second_num_oc=3, simd=self.simd)
-        return mct.pruning.PruningConfig(importance_metric=ConstImportanceMetric.CONST)
+        if self.use_constant_importance_metric:
+            add_const_importance_metric(first_num_oc=6, second_num_oc=4, simd=self.simd)
+            return mct.pruning.PruningConfig(importance_metric=ConstImportanceMetric.CONST)
+        return super().get_pruning_config()
 
     def get_kpi(self):
         # Remove only one group of channels only one parameter should be pruned
@@ -74,17 +78,25 @@ class Conv2DTransposePruningTest(PruningKerasFeatureTest):
         dense_layers = get_layers_from_model_by_type(float_model, layers.Conv2DTranspose)
         prunable_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2DTranspose)
 
-        # Make sure the only out channel removed is the last channel of the first conv layer
-        self.unit_test.assertTrue(prunable_layers[0].filters == 6 - self.simd)
-        self.unit_test.assertTrue(np.all(prunable_layers[0].kernel.numpy()==dense_layers[0].kernel.numpy()[:,:,:-self.simd,:]))
-        self.unit_test.assertTrue(np.all(prunable_layers[0].bias.numpy()==dense_layers[0].bias.numpy()[:-self.simd]))
+        is_first_layer_pruned = prunable_layers[0].filters == 6 - self.simd
+        is_second_layer_pruned = prunable_layers[1].filters == 4 - self.simd
 
-        # Make sure the only in channel removed is the last channel of the second conv layer
-        self.unit_test.assertTrue(np.all(prunable_layers[1].kernel.numpy() == dense_layers[1].kernel.numpy()[:, :, :, :-self.simd]))
-        self.unit_test.assertTrue(np.all(prunable_layers[1].bias.numpy()==dense_layers[1].bias.numpy()))
+        # Make sure only one of layers has been pruned
+        self.unit_test.assertTrue(is_first_layer_pruned != is_second_layer_pruned)
 
-        self.unit_test.assertTrue(np.all(prunable_layers[2].kernel.numpy() == dense_layers[2].kernel.numpy()))
-        self.unit_test.assertTrue(np.all(prunable_layers[2].bias.numpy() == dense_layers[2].bias.numpy()))
+        # In constant case, the last SIMD channels of the first layer should be pruned:
+        if self.use_constant_importance_metric:
+            self.unit_test.assertTrue(is_first_layer_pruned)
+            self.unit_test.assertTrue(np.all(prunable_layers[0].kernel.numpy()==dense_layers[0].kernel.numpy()[:,:,:-self.simd,:]))
+            self.unit_test.assertTrue(np.all(prunable_layers[0].bias.numpy()==dense_layers[0].bias.numpy()[:-self.simd]))
+
+            # Make sure the only in channel removed is the last channel of the second conv layer
+            self.unit_test.assertTrue(np.all(prunable_layers[1].kernel.numpy() == dense_layers[1].kernel.numpy()[:, :, :, :-self.simd]))
+            self.unit_test.assertTrue(np.all(prunable_layers[1].bias.numpy()==dense_layers[1].bias.numpy()))
+
+        if is_first_layer_pruned:
+            self.unit_test.assertTrue(np.all(prunable_layers[2].kernel.numpy() == dense_layers[2].kernel.numpy()))
+            self.unit_test.assertTrue(np.all(prunable_layers[2].bias.numpy() == dense_layers[2].bias.numpy()))
 
 
 
