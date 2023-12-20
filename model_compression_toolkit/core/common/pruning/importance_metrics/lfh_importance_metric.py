@@ -56,7 +56,7 @@ class LFHImportanceMetric(BaseImportanceMetric):
         self.fw_info = fw_info
 
         # Initialize internal dictionaries for storing intermediate computations.
-        self._entry_node_to_hessian_trace = None
+        self._entry_node_to_hessian_score = None
         self._entry_node_count_oc_nparams = None
         self._entry_node_to_simd_score = None
 
@@ -93,10 +93,10 @@ class LFHImportanceMetric(BaseImportanceMetric):
         entry_node_to_simd_score = {}
 
         # Compute SIMD scores for each group.
-        for node, trace in self._entry_node_to_hessian_trace.items():
-            trace_by_group = [np.sum(trace[g]) for g in grouped_indices[node]]
+        for node, hessian_score in self._entry_node_to_hessian_score.items():
+            group_hessian_score = [np.sum(hessian_score[g]) for g in grouped_indices[node]]
             nparams_by_group = [np.sum(self._entry_node_count_oc_nparams[node][g]) for g in grouped_indices[node]]
-            entry_node_to_simd_score[node] = np.asarray(trace_by_group) * _squared_l2_norm_by_groups[node] / nparams_by_group
+            entry_node_to_simd_score[node] = np.asarray(group_hessian_score) * _squared_l2_norm_by_groups[node] / nparams_by_group
 
         return entry_node_to_simd_score, grouped_indices
 
@@ -134,7 +134,7 @@ class LFHImportanceMetric(BaseImportanceMetric):
             nodes_scores.append(_scores_for_node)
 
         # Average and map scores to nodes.
-        self._entry_node_to_hessian_trace = {node: np.mean(scores, axis=0) for node, scores in zip(entry_nodes, nodes_scores)}
+        self._entry_node_to_hessian_score = {node: np.mean(scores, axis=0) for node, scores in zip(entry_nodes, nodes_scores)}
 
         self._entry_node_count_oc_nparams = self._count_oc_nparams(entry_nodes=entry_nodes)
         _entry_node_l2_oc_norm = self._get_squaredl2norm(entry_nodes=entry_nodes)
@@ -175,9 +175,9 @@ class LFHImportanceMetric(BaseImportanceMetric):
             Dict[BaseNode, np.ndarray]: Normalized LFH scores for each entry node.
         """
         new_scores = {}
-        for node, trace_vector in self._entry_node_to_hessian_trace.items():
-            # Normalize the trace vector using squared L2 norm and the count of output channel parameters.
-            new_scores[node] = trace_vector * entry_node_to_squaredl2norm[node] / self._entry_node_count_oc_nparams[node]
+        for node, hessian_score_vector in self._entry_node_to_hessian_score.items():
+            # Normalize the hessian score vector using squared L2 norm and the count of output channel parameters.
+            new_scores[node] = hessian_score_vector * entry_node_to_squaredl2norm[node] / self._entry_node_count_oc_nparams[node]
         return new_scores
 
     def _count_oc_nparams(self, entry_nodes: List[BaseNode]) -> Dict[BaseNode, np.ndarray]:
