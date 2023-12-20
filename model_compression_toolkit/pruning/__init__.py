@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-
+from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo
 from model_compression_toolkit.core.common.pruning.pruning_config import ImportanceMetric, PruningConfig, ChannelsFilteringStrategy
 from model_compression_toolkit.pruning.keras.pruning_facade import keras_pruning_experimental
 

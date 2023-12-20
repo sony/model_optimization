@@ -18,38 +18,72 @@ import numpy as np
 
 from model_compression_toolkit.core.common import BaseNode
 
-
 class PruningInfo:
     """
-    Class to store metadata about a pruned model, including pruning statistics,
-    masks, importance scores.
+    PruningInfo stores information about a pruned model, including the pruning masks
+    and importance scores for each layer. This class acts as a container for accessing
+    pruning-related metadata.
+
+    Attributes:
+        pruning_masks (Dict[BaseNode, np.ndarray]): Stores the pruning masks for each layer.
+            A pruning mask is an array where each element indicates whether the corresponding
+            channel or neuron has been pruned (0) or kept (1).
+        importance_scores (Dict[BaseNode, np.ndarray]): Stores the importance scores for each layer.
+            Importance scores quantify the significance of each channel or neuron in the layer.
     """
-    def __init__(self,
-                 pruning_masks: Dict[BaseNode, np.ndarray],
-                 importance_scores: Dict[BaseNode, np.ndarray]):
+
+    def __init__(self, pruning_masks: Dict[BaseNode, np.ndarray], importance_scores: Dict[BaseNode, np.ndarray]):
         """
+        Initializes the PruningInfo with pruning masks and importance scores.
 
         Args:
-            pruning_masks:
-            importance_scores:
+            pruning_masks (Dict[BaseNode, np.ndarray]): Pruning masks for each layer.
+            importance_scores (Dict[BaseNode, np.ndarray]): Importance scores for each layer.
         """
-        self.pruning_masks = pruning_masks  # Dictionary to store pruning masks for each layer
-        self.importance_scores = importance_scores  # Dictionary to store importance scores for each layer
+        self.pruning_masks = pruning_masks
+        self.importance_scores = importance_scores
 
-    def get_pruning_mask(self):
+    def get_pruning_mask(self) -> Dict[BaseNode, np.ndarray]:
         """
+        Returns the pruning masks for each layer.
 
         Returns:
-
+            Dict[BaseNode, np.ndarray]: The pruning masks.
         """
         return self.pruning_masks
 
-    def get_importance_score(self):
+    def get_importance_score(self) -> Dict[BaseNode, np.ndarray]:
         """
+        Returns the importance scores for each layer.
 
         Returns:
-
+            Dict[BaseNode, np.ndarray]: The importance scores.
         """
         return self.importance_scores
 
+def unroll_simd_scores_to_per_channel_scores(simd_scores: Dict[BaseNode, np.ndarray], simd_groups_indices: Dict[BaseNode, List[np.ndarray]]) -> Dict[BaseNode, np.ndarray]:
+    """
+    Expands SIMD group scores into per-channel scores. This is necessary when channels
+    are grouped in SIMD groups, and a single score is assigned to each group. The function
+    duplicates the group score to each channel in that group.
 
+    Args:
+        simd_scores (Dict[BaseNode, np.ndarray]): The scores assigned to each SIMD group.
+        simd_groups_indices (Dict[BaseNode, List[np.ndarray]]): The indices of channels in each SIMD group.
+
+    Returns:
+        Dict[BaseNode, np.ndarray]: Expanded scores for each individual channel.
+    """
+    assert simd_scores is not None
+    assert simd_groups_indices is not None
+    _scores = {}
+    for node, groups_indices in simd_groups_indices.items():
+        node_scores = simd_scores[node]
+        total_indices = sum(len(group) for group in groups_indices)
+        new_node_scores = np.zeros(total_indices)
+
+        for group_score, group_indices in zip(node_scores, groups_indices):
+            new_node_scores[group_indices] = group_score
+
+        _scores[node] = new_node_scores
+    return _scores

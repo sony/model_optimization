@@ -26,7 +26,8 @@ from model_compression_toolkit.core.common.pruning.prune_graph import build_prun
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig, ChannelsFilteringStrategy
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import \
     PruningFrameworkImplementation
-from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo
+from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo, \
+    unroll_simd_scores_to_per_channel_scores
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 import time
@@ -66,10 +67,11 @@ class Pruner:
 
         self._pruned_graph = None
 
-        self.mask = None # Will hold the output-channel mask for each entry node.
+        self.per_oc_mask = None  # Will hold the output-channel mask for each entry node.
 
-        self.simd_scores = None  # Will hold the importance scores for each entry node.
+        self.simd_scores = None  # Will hold the importance scores for each SIMD group for each entry node.
         self.simd_groups_indices = None
+
 
 
     def get_pruned_graph(self) -> Graph:
@@ -102,7 +104,7 @@ class Pruner:
 
             # Calculate the mask that will be used to prune the graph.
             mask_calculator.compute_mask()
-            self.mask = mask_calculator.get_mask()
+            self.per_oc_mask = mask_calculator.get_mask()
         else:
             Logger.error("Currently, only the GREEDY ChannelsFilteringStrategy is supported.")
 
@@ -110,7 +112,7 @@ class Pruner:
 
         # Construct the pruned graph using the computed masks.
         self._pruned_graph = build_pruned_graph(self.float_graph,
-                                                self.mask,
+                                                self.per_oc_mask,
                                                 self.fw_info,
                                                 self.fw_impl)
 
@@ -146,30 +148,9 @@ class Pruner:
         Returns:
             PruningInfo: An object containing the masks used for pruning and the importance scores of channels.
         """
-        # Assert that scores were successfully computed.
-        assert self.simd_scores is not None
-
-        _scores = {}
-
-        for node, groups_indices in self.simd_groups_indices.items():
-            # Retrieve the original scores for the node
-            node_scores = self.simd_scores[node]
-
-            # Determine the total number of indices (and thus the length of the new score list)
-            total_indices = sum(len(group) for group in groups_indices)
-
-            # Create an array to store the new scores, initially filled with zeros
-            new_node_scores = np.zeros(total_indices)
-
-            # Assign the duplicated scores to the appropriate positions
-            for group_score, group_indices in zip(node_scores, groups_indices):
-                for index in group_indices:
-                    new_node_scores[index] = group_score
-
-            # Store the new scores in the dictionary
-            _scores[node] = new_node_scores
-
         # Create and return a PruningInfo object with the collected pruning data.
-        info = PruningInfo(pruning_masks=self.mask,
-                           importance_scores=_scores)
+        _per_oc_scores = unroll_simd_scores_to_per_channel_scores(self.simd_scores,
+                                                                  self.simd_groups_indices)
+        info = PruningInfo(pruning_masks=self.per_oc_mask,
+                           importance_scores=_per_oc_scores)
         return info
