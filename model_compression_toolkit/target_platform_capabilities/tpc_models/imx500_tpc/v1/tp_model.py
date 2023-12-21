@@ -56,9 +56,15 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     # TODO: add comments
 
     # TODO: currently, we don't want to quantize any attribute but the kernel by default,
-    #  to preserve the current behavior of MCT.
-    #  This change just laying the ground for quantizing different attributes with different configs.
-    #  None of the other configs but the default would be used for now.
+    #  to preserve the current behavior of MCT, so it is disabled.
+    #  Other parameters are set to what we eventually want to quantize by default
+    #  when we enable multi-attributes quantization - THIS NEED TO BE MODIFIED IN ALL TP MODELS!
+    default_weight_attr_config = AttributeQuantizationConfig(
+        weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
+        weights_n_bits=8,
+        weights_per_channel_threshold=False,
+        enable_weights_quantization=False,
+        lut_values_bitwidth=None)
 
     kernel_base_config = AttributeQuantizationConfig(
         weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
@@ -78,7 +84,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     # A quantization configuration defines how an operator
     # should be quantized on the modeled hardware:
     eight_bits = tp.OpQuantizationConfig(
-        default_weight_attr_config=kernel_base_config,
+        default_weight_attr_config=default_weight_attr_config,
         attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config, BIAS_ATTR: bias_config},
         activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
         activation_n_bits=8,

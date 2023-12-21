@@ -77,10 +77,12 @@ def set_quantization_configs_to_node(node: BaseNode,
 
     # Create QC candidates for weights and activation combined
     weight_channel_axis = fw_info.kernel_channels_mapping.get(node.type)[0]
+
     node.candidates_quantization_cfg = _create_node_candidates_qc(quant_config,
                                                                   fw_info,
                                                                   weight_channel_axis,
                                                                   node_qc_options,
+                                                                  node.type,
                                                                   mixed_precision_enable=mixed_precision_enable)
 
     for candidate_qc in node.candidates_quantization_cfg:
@@ -121,7 +123,8 @@ def create_node_activation_qc(qc: QuantizationConfig,
 def create_node_qc_candidate(qc: QuantizationConfig,
                              fw_info: FrameworkInfo,
                              weight_channel_axis: int,
-                             op_cfg: OpQuantizationConfig) -> CandidateNodeQuantizationConfig:
+                             op_cfg: OpQuantizationConfig,
+                             kernel_attr: str) -> CandidateNodeQuantizationConfig:
     """
     Create quantization configuration candidate from a QuantizationConfig object.
     Creates both weights and activation quantization configurations
@@ -133,19 +136,22 @@ def create_node_qc_candidate(qc: QuantizationConfig,
             weights/activations should be quantized)
         weight_channel_axis: Output channel index of the node's kernel.
         op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
+        kernel_attr: The name of the kernel attribute of the node,
+        TODO: kernel_attr should be removed once enabling attributes quantization (because this function would create
+            candidate for all attributes not specifically for the kernel
 
     Returns: a CandidateNodeQuantizationConfig object with both weights and activation quantization config objects.
 
     """
 
     # get attributes for weights quantization
-    # TODO: Currently, we assume that only the kernel is quantized when quantizing weights.
-    #  In a future change, after creating an AttributeConfig class, the code below would need to change to init
-    #  a config for each attribute.
-    #  This is a patch, in the future it wouldn't be necessary to use the default config because we will create
-    #  a config for all attributes.
+    kernel_cfg = op_cfg.attr_weights_configs_mapping.get(kernel_attr)
+    if kernel_cfg is None:
+        # the node doesn't have a specified kernel config. Using the default attribute config for quantization.
+        # TODO: This should be the behavior for all attributes that are not specified in the attribute config mapping,
+        #  which currently disables the quantization of the weights attribute.
+        kernel_cfg = op_cfg.default_weight_attr_config
 
-    kernel_cfg = op_cfg.default_weight_attr_config
     weights_quantization_fn = get_weights_quantization_fn(kernel_cfg.weights_quantization_method)
 
     if weights_quantization_fn is None:
@@ -166,13 +172,15 @@ def create_node_qc_candidate(qc: QuantizationConfig,
                                            activation_quantization_params_fn=activation_quantization_params_fn,
                                            weights_quantization_fn=weights_quantization_fn,
                                            weights_quantization_params_fn=weights_quantization_params_fn,
-                                           weight_channel_axis=weight_channel_axis)
+                                           weight_channel_axis=weight_channel_axis,
+                                           kernel_cfg=kernel_cfg)
 
 
 def _create_node_candidates_qc(qc: QuantizationConfig,
                                fw_info: FrameworkInfo,
                                weight_channel_axis: int,
                                node_qc_options: QuantizationConfigOptions,
+                               node_type: type,
                                mixed_precision_enable: bool = False) -> List[CandidateNodeQuantizationConfig]:
     """
     Create a list of candidates of weights and activation quantization configurations for a node.
@@ -192,10 +200,20 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
     if mixed_precision_enable:
         for op_cfg in node_qc_options.quantization_config_list:
             candidate_nbits_qc = copy.deepcopy(qc)
+
+            # TODO: Currently, we are using fw_info to get the kernel attribute, but this would changed once we enabe multi
+            #  attribute quantization via AttributeQuantizationComfng class (needs to be implemented)
+
+            kernel_attr = fw_info.get_kernel_op_attributes(node_type)
+            assert len(kernel_attr) == 1
+            kernel_attr = kernel_attr[0]
+            # kernel_qc = op_cfg.attr_weights_configs_mapping.get(kernel_attr)
+
             candidates.append(create_node_qc_candidate(candidate_nbits_qc,
                                                        fw_info,
                                                        weight_channel_axis,
-                                                       op_cfg))
+                                                       op_cfg,
+                                                       kernel_attr))
         # sorting the candidates by weights number of bits first and then by activation number of bits
         # (in reversed order)
         candidates.sort(key=lambda c: (c.weights_quantization_cfg.weights_n_bits,
