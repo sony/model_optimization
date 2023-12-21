@@ -172,7 +172,7 @@ class MemoryCalculator:
             int: Total number of parameters for non-pruned nodes.
         """
         total_nparams = 0
-        nodes_to_prune = set(node for section in pruning_sections for node in section.get_all_nodes())
+        nodes_to_prune = set(node for section in pruning_sections for node in section.get_all_section_nodes())
         for n in self.graph.nodes:
             if n not in nodes_to_prune:
                 node_nparams = self.get_pruned_node_num_params(n,

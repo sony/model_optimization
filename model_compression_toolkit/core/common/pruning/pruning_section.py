@@ -63,7 +63,7 @@ class PruningSection:
         self.intermediate_nodes = intermediate_nodes
         self.exit_node = exit_node
 
-    def get_all_nodes(self) -> List[BaseNode]:
+    def get_all_section_nodes(self) -> List[BaseNode]:
         """
         Returns a list of all nodes in the pruning section, including the entry,
          intermediate, and exit nodes.
@@ -77,7 +77,7 @@ class PruningSection:
     def apply_inner_section_mask(self,
                                  pruning_section_mask: PruningSectionMask,
                                  fw_impl,
-                                 fw_info):
+                                 fw_info: FrameworkInfo):
         """
         Apply the provided pruning section mask to all nodes within the pruning section.
 
