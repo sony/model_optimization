@@ -63,20 +63,11 @@ class Pruner:
         self.target_platform_capabilities = target_platform_capabilities
 
         # Internal variables for storing the pruned graph and intermediate data.
-        self._pruned_graph = None
         self.per_oc_mask = None  # Output-channel mask for each entry node.
         self.simd_scores = None  # Importance scores considering SIMD groups.
         self.simd_groups_indices = None  # Indices of SIMD groups in each node.
 
-    def get_pruned_graph(self) -> Graph:
-        """
-        Returns the pruned graph. If the graph hasn't been pruned yet, it triggers the pruning process.
-        """
-        if not self._pruned_graph:
-            self._prune_graph()
-        return self._pruned_graph
-
-    def _prune_graph(self):
+    def prune_graph(self):
         """
         Main method for pruning the graph. Computes importance scores, calculates pruning masks,
         and constructs the pruned graph based on these masks.
@@ -104,10 +95,11 @@ class Pruner:
             Logger.error("Only GREEDY ChannelsFilteringStrategy is currently supported.")
 
         Logger.info("Start pruning graph...")
-        self._pruned_graph = build_pruned_graph(self.float_graph,
-                                                self.per_oc_mask,
-                                                self.fw_info,
-                                                self.fw_impl)
+        _pruned_graph = build_pruned_graph(self.float_graph,
+                                           self.per_oc_mask,
+                                           self.fw_info,
+                                           self.fw_impl)
+        return _pruned_graph
 
     def get_score_per_entry_point(self, entry_nodes: List[BaseNode]) -> Tuple[Dict[BaseNode, np.ndarray], Dict[BaseNode, List[np.ndarray]]]:
         """
@@ -176,7 +168,7 @@ class Pruner:
 #
 #
 #
-#     def get_pruned_graph(self) -> Graph:
+#     def apply_pruning(self) -> Graph:
 #         """
 #
 #         Returns:

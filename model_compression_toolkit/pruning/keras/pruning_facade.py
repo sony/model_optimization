@@ -131,7 +131,7 @@ if FOUND_TF:
                         target_platform_capabilities)
 
         # Apply the pruning process.
-        pruned_graph = pruner.get_pruned_graph()
+        pruned_graph = pruner.prune_graph()
 
         # Retrieve pruning information which includes the pruning masks and scores.
         pruning_info = pruner.get_pruning_info()
