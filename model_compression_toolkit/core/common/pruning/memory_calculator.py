@@ -188,6 +188,8 @@ class MemoryCalculator:
                              masks: Dict[BaseNode, np.ndarray]) -> np.ndarray:
         """
         Retrieves the input mask for a given node based on the pruning sections.
+        The function search the input channels mask of a node based on the output-channels mask
+        of the previous node in the graph. If such oc mask is not found, a mask of 1s is returned.
 
         Args:
             node (BaseNode): The node for which the input mask is required.
@@ -195,13 +197,28 @@ class MemoryCalculator:
             masks (Dict[BaseNode, np.ndarray]): A dictionary mapping nodes to their respective pruning masks.
 
         Returns:
-            np.ndarray: The input mask for the specified node, or None if not found.
+            np.ndarray: The input mask for the specified node, or 1s mask if not found.
         """
         for section in pruning_sections:
             # If the node is the exit node of a pruning section, return the entry node's mask.
             if node == section.exit_node:
                 return masks.get(section.entry_node)
-        return None
+
+        kernel_attr = self.fw_info.get_kernel_op_attributes(node.type)
+        # Ensure only one kernel attribute exists for the given node.
+        if len(kernel_attr) != 1:
+            Logger.error(f"Expected to found a single attribute but found {len(kernel_attr)} for node {node}")
+        kernel_attr = kernel_attr[0]
+
+        # Retrieve and validate the axis index for the output channels.
+        _, ic_axis = self.fw_info.kernel_channels_mapping.get(node.type)
+        if ic_axis is None or int(ic_axis) != ic_axis:
+            Logger.error(f"Expected input channel axis to be an integer but is {ic_axis} for node {node}")
+
+        # Get the number of output channels based on the kernel attribute and axis.
+        num_ic = node.get_weights_by_keys(kernel_attr).shape[ic_axis]
+        mask = np.ones(num_ic, dtype=bool)
+        return mask
 
     def _get_nodes_from_adjacent_sections(self,
                                           pruning_sections: List[PruningSection]) -> List[BaseNode]:
