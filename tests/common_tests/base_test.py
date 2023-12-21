@@ -71,6 +71,7 @@ class BaseTest:
                 model_float: Any,
                 input_x: List[np.ndarray],
                 quantization_info: UserInformation):
+        # TODO: refactor names from quantization to compression/optimization
         raise Exception('compare is not implemented')
 
     def run_test(self):
