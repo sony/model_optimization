@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import numpy as np
-from typing import Callable, List, Dict
+from typing import Callable, List, Dict, Tuple
 
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -30,11 +30,11 @@ from model_compression_toolkit.core.common.pruning.pruning_info import PruningIn
     unroll_simd_scores_to_per_channel_scores
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-import time
 
 class Pruner:
     """
     Pruner class responsible for applying pruning to a computational graph to meet a target KPI.
+    It identifies and prunes less significant channels based on importance scores, considering SIMD constraints.
     """
     def __init__(self,
                  float_graph: Graph,
@@ -45,8 +45,6 @@ class Pruner:
                  pruning_config: PruningConfig,
                  target_platform_capabilities: TargetPlatformCapabilities):
         """
-        Initializes the Pruner instance with the necessary information and configurations.
-
         Args:
             float_graph (Graph): The floating-point representation of the model's computation graph.
             fw_info (FrameworkInfo): Contains metadata and helper functions for the framework.
@@ -56,7 +54,6 @@ class Pruner:
             pruning_config (PruningConfig): Configuration object specifying how pruning should be performed.
             target_platform_capabilities (TargetPlatformCapabilities): Object encapsulating the capabilities of the target hardware platform.
         """
-        # Initialize member variables with provided arguments.
         self.float_graph = float_graph
         self.fw_info = fw_info
         self.fw_impl = fw_impl
@@ -65,34 +62,34 @@ class Pruner:
         self.pruning_config = pruning_config
         self.target_platform_capabilities = target_platform_capabilities
 
+        # Internal variables for storing the pruned graph and intermediate data.
         self._pruned_graph = None
-
-        self.per_oc_mask = None  # Will hold the output-channel mask for each entry node.
-
-        self.simd_scores = None  # Will hold the importance scores for each SIMD group for each entry node.
-        self.simd_groups_indices = None
-
-
+        self.per_oc_mask = None  # Output-channel mask for each entry node.
+        self.simd_scores = None  # Importance scores considering SIMD groups.
+        self.simd_groups_indices = None  # Indices of SIMD groups in each node.
 
     def get_pruned_graph(self) -> Graph:
+        """
+        Returns the pruned graph. If the graph hasn't been pruned yet, it triggers the pruning process.
+        """
         if not self._pruned_graph:
-            self._create_pruned_graph()
-
+            self._prune_graph()
         return self._pruned_graph
 
-    def _create_pruned_graph(self):
-        # Retrieve entry points from the graph.
+    def _prune_graph(self):
+        """
+        Main method for pruning the graph. Computes importance scores, calculates pruning masks,
+        and constructs the pruned graph based on these masks.
+        """
+        # Fetch entry nodes and compute importance scores for SIMD groups.
         entry_nodes = self.float_graph.get_pruning_sections_entry_nodes(self.fw_impl)
-
-        # Compute the importance score for each entry node in the graph.
         self.simd_scores, self.simd_groups_indices = self.get_score_per_entry_point(entry_nodes)
 
         Logger.info(f"Calculating the pruning mask. Please note that this process might take some time,"
                     f" especially for large models or when using a small SIMD size.")
 
-        # Choose the mask calculation strategy based on the pruning configuration.
+        # Apply Greedy strategy to compute masks based on importance scores.
         if self.pruning_config.channels_filtering_strategy == ChannelsFilteringStrategy.GREEDY:
-            # Instantiate a GreedyMaskCalculator to compute the pruning masks.
             mask_calculator = GreedyMaskCalculator(entry_nodes,
                                                    self.fw_info,
                                                    self.simd_scores,
@@ -101,56 +98,154 @@ class Pruner:
                                                    self.fw_impl,
                                                    self.target_platform_capabilities,
                                                    self.simd_groups_indices)
-
-            # Calculate the mask that will be used to prune the graph.
             mask_calculator.compute_mask()
             self.per_oc_mask = mask_calculator.get_mask()
         else:
-            Logger.error("Currently, only the GREEDY ChannelsFilteringStrategy is supported.")
+            Logger.error("Only GREEDY ChannelsFilteringStrategy is currently supported.")
 
-        Logger.info(f"Start pruning graph...")
-
-        # Construct the pruned graph using the computed masks.
+        Logger.info("Start pruning graph...")
         self._pruned_graph = build_pruned_graph(self.float_graph,
                                                 self.per_oc_mask,
                                                 self.fw_info,
                                                 self.fw_impl)
 
-
-    def get_score_per_entry_point(self, entry_nodes: List[BaseNode]):
+    def get_score_per_entry_point(self, entry_nodes: List[BaseNode]) -> Tuple[Dict[BaseNode, np.ndarray], Dict[BaseNode, List[np.ndarray]]]:
         """
-        Computes the importance scores for each entry node that is eligible for pruning.
+        Calculates the importance score for each entry node in the graph.
 
         Args:
-            entry_nodes (List[BaseNode]): List of nodes that are the input points for pruning sections.
+            entry_nodes (List[BaseNode]): List of entry nodes in the graph.
 
         Returns:
-            Dict[BaseNode, np.ndarray]: A dictionary mapping each entry node to its corresponding importance score.
+            Tuple: Tuple containing importance scores and group indices.
         """
-        # Initialize a dictionary to hold scores for each node.
-        im = get_importance_metric(self.pruning_config.importance_metric,
-                                   graph=self.float_graph,
-                                   representative_data_gen=self.representative_data_gen,
-                                   fw_impl=self.fw_impl,
-                                   pruning_config=self.pruning_config,
-                                   fw_info=self.fw_info)
-
+        # Retrieve and initialize the importance metric.
+        im = get_importance_metric(self.pruning_config.importance_metric, graph=self.float_graph,
+                                   representative_data_gen=self.representative_data_gen, fw_impl=self.fw_impl,
+                                   pruning_config=self.pruning_config, fw_info=self.fw_info)
         entry_node_to_simd_score, simd_groups_indices = im.get_entry_node_to_simd_score(entry_nodes)
-
-        # Return the dictionary of nodes mapped to their importance scores.
         return entry_node_to_simd_score, simd_groups_indices
-
 
     def get_pruning_info(self) -> PruningInfo:
         """
-        Gathers and returns pruning information including masks and scores.
+        Compiles and returns detailed pruning information, including masks and channel scores.
 
         Returns:
-            PruningInfo: An object containing the masks used for pruning and the importance scores of channels.
+            PruningInfo: Object containing detailed pruning data.
         """
-        # Create and return a PruningInfo object with the collected pruning data.
-        _per_oc_scores = unroll_simd_scores_to_per_channel_scores(self.simd_scores,
-                                                                  self.simd_groups_indices)
-        info = PruningInfo(pruning_masks=self.per_oc_mask,
-                           importance_scores=_per_oc_scores)
+        # Convert SIMD group scores to per-channel scores and create PruningInfo.
+        _per_oc_scores = unroll_simd_scores_to_per_channel_scores(self.simd_scores, self.simd_groups_indices)
+        info = PruningInfo(pruning_masks=self.per_oc_mask, importance_scores=_per_oc_scores)
         return info
+
+
+# class Pruner:
+#
+#     def __init__(self,
+#                  float_graph: Graph,
+#                  fw_info: FrameworkInfo,
+#                  fw_impl: PruningFrameworkImplementation,
+#                  target_kpi: KPI,
+#                  representative_data_gen: Callable,
+#                  pruning_config: PruningConfig,
+#                  target_platform_capabilities: TargetPlatformCapabilities):
+#         """
+#         Initializes the Pruner instance with the necessary information and configurations.
+#
+#         Args:
+#             float_graph (Graph): The floating-point representation of the model's computation graph.
+#             fw_info (FrameworkInfo): Contains metadata and helper functions for the framework.
+#             fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
+#             target_kpi (KPI): The target KPIs to be achieved after pruning.
+#             representative_data_gen (Callable): Generator function for representative dataset used in pruning analysis.
+#             pruning_config (PruningConfig): Configuration object specifying how pruning should be performed.
+#             target_platform_capabilities (TargetPlatformCapabilities): Object encapsulating the capabilities of the target hardware platform.
+#         """
+#         self.float_graph = float_graph
+#         self.fw_info = fw_info
+#         self.fw_impl = fw_impl
+#         self.target_kpi = target_kpi
+#         self.representative_data_gen = representative_data_gen
+#         self.pruning_config = pruning_config
+#         self.target_platform_capabilities = target_platform_capabilities
+#
+#         self._pruned_graph = None
+#         self.per_oc_mask = None  # Will hold the output-channel mask for each entry node.
+#         self.simd_scores = None
+#         self.simd_groups_indices = None
+#
+#
+#
+#     def get_pruned_graph(self) -> Graph:
+#         """
+#
+#         Returns:
+#
+#         """
+#         if not self._pruned_graph:
+#             self._prune_graph()
+#
+#         return self._pruned_graph
+#
+#     def _prune_graph(self):
+#         # Retrieve entry points from the graph.
+#         entry_nodes = self.float_graph.get_pruning_sections_entry_nodes(self.fw_impl)
+#
+#         # Compute the importance score for each entry node in the graph.
+#         self.simd_scores, self.simd_groups_indices = self.get_score_per_entry_point(entry_nodes)
+#
+#         Logger.info(f"Calculating the pruning mask. Please note that this process might take some time,"
+#                     f" especially for large models or when using a small SIMD size.")
+#
+#         if self.pruning_config.channels_filtering_strategy == ChannelsFilteringStrategy.GREEDY:
+#             mask_calculator = GreedyMaskCalculator(entry_nodes,
+#                                                    self.fw_info,
+#                                                    self.simd_scores,
+#                                                    self.target_kpi,
+#                                                    self.float_graph,
+#                                                    self.fw_impl,
+#                                                    self.target_platform_capabilities,
+#                                                    self.simd_groups_indices)
+#
+#             # Calculate the mask that will be used to prune the graph.
+#             mask_calculator.compute_mask()
+#             self.per_oc_mask = mask_calculator.get_mask()
+#         else:
+#             Logger.error("Currently, only the GREEDY ChannelsFilteringStrategy is supported.")
+#
+#         Logger.info(f"Start pruning graph...")
+#
+#         # Construct the pruned graph using the computed masks.
+#         self._pruned_graph = build_pruned_graph(self.float_graph,
+#                                                 self.per_oc_mask,
+#                                                 self.fw_info,
+#                                                 self.fw_impl)
+#
+#
+#     def get_score_per_entry_point(self, entry_nodes: List[BaseNode]) -> Tuple[Dict[BaseNode, np.ndarray], Dict[BaseNode, List[np.ndarray]]]:
+#         im = get_importance_metric(self.pruning_config.importance_metric,
+#                                    graph=self.float_graph,
+#                                    representative_data_gen=self.representative_data_gen,
+#                                    fw_impl=self.fw_impl,
+#                                    pruning_config=self.pruning_config,
+#                                    fw_info=self.fw_info)
+#         entry_node_to_simd_score, simd_groups_indices = im.get_entry_node_to_simd_score(entry_nodes)
+#         return entry_node_to_simd_score, simd_groups_indices
+#
+#
+#     def get_pruning_info(self) -> PruningInfo:
+#         """
+#         Gathers and returns pruning information including masks and scores.
+#
+#         Returns:
+#             PruningInfo: An object containing the masks used for pruning and the importance
+#              scores of channels.
+#         """
+#         # Since the pruner computes a mask for SIMD groups, we create a mask per-channel
+#         # based of the SIMD group scores and the indices of each group.
+#         _per_oc_scores = unroll_simd_scores_to_per_channel_scores(self.simd_scores,
+#                                                                   self.simd_groups_indices)
+#         info = PruningInfo(pruning_masks=self.per_oc_mask,
+#                            importance_scores=_per_oc_scores)
+#         return info
+
