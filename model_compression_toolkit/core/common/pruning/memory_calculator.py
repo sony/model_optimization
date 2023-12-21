@@ -349,6 +349,9 @@ class MemoryCalculator:
         Returns:
             The adjusted number of parameters considering padded channels.
         """
+        if not (num_oc >= 1 and int(num_oc) == num_oc):
+            Logger.error(f"Expected number of output channels to be a non-negative integer but is {num_oc}")
+
         nparams_per_oc = node_nparams / num_oc
         if int(nparams_per_oc) != nparams_per_oc:
             Logger.warning(
