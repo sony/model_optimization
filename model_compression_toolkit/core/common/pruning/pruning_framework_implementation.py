@@ -86,7 +86,7 @@ class PruningFrameworkImplementation(FrameworkImplementation):
 
     @abstractmethod
     def is_node_entry_node(self,
-                           node: BaseNode):
+                           node: BaseNode) -> bool:
         """
         Abstract method to determine if a given node is an entry node.
 
@@ -106,14 +106,14 @@ class PruningFrameworkImplementation(FrameworkImplementation):
     def is_node_exit_node(self,
                           node: BaseNode,
                           corresponding_entry_node: BaseNode,
-                          fw_info: FrameworkInfo):
+                          fw_info: FrameworkInfo) -> bool:
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s is_node_exit_node method.')  # pragma: no cover
 
     @abstractmethod
     def is_node_intermediate_pruning_section(self,
-                                             node):
+                                             node: BaseNode) -> bool:
         """
         Abstract method to determine if a given node is in the intermediate section of pruning.
 
