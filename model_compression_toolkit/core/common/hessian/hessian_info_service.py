@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import numpy as np
+
 from functools import partial
 from typing import Callable, List
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest, HessianMode, \
-    HessianInfoGranularity
+from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest
 from model_compression_toolkit.logger import Logger
 
 
@@ -129,6 +128,8 @@ class HessianInfoService:
             self.trace_hessian_request_to_score_list[trace_hessian_request].append(trace_hessian)
         else:
             self.trace_hessian_request_to_score_list[trace_hessian_request] = [trace_hessian]
+
+
 
     def fetch_hessian(self,
                       trace_hessian_request:
