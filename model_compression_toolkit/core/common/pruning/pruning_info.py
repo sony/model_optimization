@@ -29,10 +29,12 @@ class PruningInfo:
             A pruning mask is an array where each element indicates whether the corresponding
             channel or neuron has been pruned (0) or kept (1).
         importance_scores (Dict[BaseNode, np.ndarray]): Stores the importance scores for each layer.
-            Importance scores quantify the significance of each channel or neuron in the layer.
+            Importance scores quantify the significance of each channel in the layer.
     """
 
-    def __init__(self, pruning_masks: Dict[BaseNode, np.ndarray], importance_scores: Dict[BaseNode, np.ndarray]):
+    def __init__(self,
+                 pruning_masks: Dict[BaseNode, np.ndarray],
+                 importance_scores: Dict[BaseNode, np.ndarray]):
         """
         Initializes the PruningInfo with pruning masks and importance scores.
 
@@ -40,28 +42,31 @@ class PruningInfo:
             pruning_masks (Dict[BaseNode, np.ndarray]): Pruning masks for each layer.
             importance_scores (Dict[BaseNode, np.ndarray]): Importance scores for each layer.
         """
-        self.pruning_masks = pruning_masks
-        self.importance_scores = importance_scores
+        self._pruning_masks = pruning_masks
+        self._importance_scores = importance_scores
 
-    def get_pruning_mask(self) -> Dict[BaseNode, np.ndarray]:
+    @property
+    def pruning_masks(self) -> Dict[BaseNode, np.ndarray]:
         """
-        Returns the pruning masks for each layer.
+        The pruning masks for each layer.
 
         Returns:
             Dict[BaseNode, np.ndarray]: The pruning masks.
         """
-        return self.pruning_masks
+        return self._pruning_masks
 
-    def get_importance_score(self) -> Dict[BaseNode, np.ndarray]:
+    @property
+    def importance_scores(self) -> Dict[BaseNode, np.ndarray]:
         """
-        Returns the importance scores for each layer.
+        The importance scores for each layer.
 
         Returns:
             Dict[BaseNode, np.ndarray]: The importance scores.
         """
-        return self.importance_scores
+        return self._importance_scores
 
-def unroll_simd_scores_to_per_channel_scores(simd_scores: Dict[BaseNode, np.ndarray], simd_groups_indices: Dict[BaseNode, List[np.ndarray]]) -> Dict[BaseNode, np.ndarray]:
+def unroll_simd_scores_to_per_channel_scores(simd_scores: Dict[BaseNode, np.ndarray],
+                                             simd_groups_indices: Dict[BaseNode, List[np.ndarray]]) -> Dict[BaseNode, np.ndarray]:
     """
     Expands SIMD group scores into per-channel scores. This is necessary when channels
     are grouped in SIMD groups, and a single score is assigned to each group. The function

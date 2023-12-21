@@ -32,11 +32,11 @@ class TestPruningInfo(unittest.TestCase):
 
     def test_get_pruning_mask(self):
         # Test to check if the correct pruning masks are returned
-        self.assertEqual(self.pruning_info.get_pruning_mask(), self.mock_pruning_masks)
+        self.assertEqual(self.pruning_info.pruning_masks, self.mock_pruning_masks)
 
     def test_get_importance_score(self):
         # Test to check if the correct importance scores are returned
-        self.assertEqual(self.pruning_info.get_importance_score(), self.mock_importance_scores)
+        self.assertEqual(self.pruning_info.importance_scores, self.mock_importance_scores)
 
 
 class TestUnrollSIMDScores(unittest.TestCase):
