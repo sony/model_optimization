@@ -21,24 +21,20 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import 
 from model_compression_toolkit.core.common.pruning.pruner import Pruner
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig
 from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
+from model_compression_toolkit.core.common.quantization.set_node_quantization_config import set_quantization_configuration_to_graph
 from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
-    TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 
 if FOUND_TF:
     from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
     from model_compression_toolkit.core.keras.pruning.pruning_keras_implementation import PruningKerasImplementation
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from tensorflow.keras.models import Model
-    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
-
-    from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
-
 
     def keras_pruning_experimental(model: Model,
                                    target_kpi: KPI,
