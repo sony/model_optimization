@@ -12,5 +12,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-# TODO: this module kpi_tools should move out of mixed precision module as it uses other parts like pruning.
