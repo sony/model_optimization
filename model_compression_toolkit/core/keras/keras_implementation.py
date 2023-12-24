@@ -447,7 +447,8 @@ class KerasImplementation(FrameworkImplementation):
 
     def get_node_distance_fn(self, layer_class: type,
                              framework_attrs: Dict[str, Any],
-                             compute_distance_fn: Callable = None) -> Callable:
+                             compute_distance_fn: Callable = None,
+                             axis: int = None) -> Callable:
         """
         A mapping between layers' types and a distance function for computing the distance between
         two tensors (for loss computation purposes). Returns a specific function if node of specific types is
@@ -457,6 +458,7 @@ class KerasImplementation(FrameworkImplementation):
             layer_class: Class path of a model's layer.
             framework_attrs: Framework attributes the layer had which the graph node holds.
             compute_distance_fn: An optional distance function to use globally for all nodes.
+            axis: The axis on which the operation is preformed (if specified).
 
         Returns: A distance function between two tensors.
         """
@@ -466,12 +468,13 @@ class KerasImplementation(FrameworkImplementation):
 
         if layer_class == Activation:
             node_type_name = framework_attrs[ACTIVATION]
-            if node_type_name == SOFTMAX:
+            if node_type_name == SOFTMAX and axis is not None:
                 return compute_kl_divergence
             elif node_type_name == SIGMOID:
                 return compute_cs
-        elif layer_class == tf.nn.softmax or layer_class == tf.keras.layers.Softmax \
-                or (layer_class == TFOpLambda and SOFTMAX in framework_attrs[keras_constants.FUNCTION]):
+        elif axis is not None and (layer_class == tf.nn.softmax or layer_class == tf.keras.layers.Softmax
+                                   or (layer_class == TFOpLambda and
+                                       SOFTMAX in framework_attrs[keras_constants.FUNCTION])):
             return compute_kl_divergence
         elif layer_class == tf.nn.sigmoid:
             return compute_cs

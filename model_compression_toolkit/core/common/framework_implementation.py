@@ -375,7 +375,8 @@ class FrameworkImplementation(ABC):
 
     def get_node_distance_fn(self, layer_class: type,
                              framework_attrs: Dict[str, Any],
-                             compute_distance_fn: Callable = None) -> Callable:
+                             compute_distance_fn: Callable = None,
+                             axis: int = None) -> Callable:
         """
         A mapping between layers' types and a distance function for computing the distance between
         two tensors (for loss computation purposes). Returns a specific function if node of specific types is
@@ -385,6 +386,7 @@ class FrameworkImplementation(ABC):
             layer_class: Class path of a model's layer.
             framework_attrs: Framework attributes the layer had which the graph node holds.
             compute_distance_fn: An optional distance function to use globally for all nodes.
+            axis: The axis on which the operation is preformed (if specified).
 
         Returns: A distance function between two tensors.
         """
