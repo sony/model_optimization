@@ -17,6 +17,8 @@ from typing import Dict, List
 import numpy as np
 
 from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.logger import Logger
+
 
 class PruningInfo:
     """
@@ -79,8 +81,9 @@ def unroll_simd_scores_to_per_channel_scores(simd_scores: Dict[BaseNode, np.ndar
     Returns:
         Dict[BaseNode, np.ndarray]: Expanded scores for each individual channel.
     """
-    assert simd_scores is not None
-    assert simd_groups_indices is not None
+    if simd_scores is None or simd_groups_indices is None:
+        Logger.error(f"Found to find scores and indices to create an unrolled scores for pruning info,"
+                     f"but scores is {simd_scores} and groups indices are {simd_groups_indices}")
     _scores = {}
     for node, groups_indices in simd_groups_indices.items():
         node_scores = simd_scores[node]

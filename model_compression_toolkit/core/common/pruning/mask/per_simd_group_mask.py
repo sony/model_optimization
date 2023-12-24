@@ -69,9 +69,9 @@ class PerSIMDGroupMask:
             group_index: Index of the SIMD group within the node.
             mask_indicator: The new value (0 or 1) to set for the group mask.
         """
-        assert mask_indicator in [MaskIndicator.PRUNED,
-                                  MaskIndicator.REMAINED], ("Mask value must be either MaskIndicator.PRUNED "
-                                                            "or MaskIndicator.REMAINED.")
+        if mask_indicator not in [MaskIndicator.PRUNED, MaskIndicator.REMAINED]:
+            Logger.error("Mask value must be either MaskIndicator.PRUNED or MaskIndicator.REMAINED")
+
         self._mask_simd[node][group_index] = mask_indicator.value
         node_mask_indices = self.simd_groups_indices[node][group_index]
         for idx in node_mask_indices:

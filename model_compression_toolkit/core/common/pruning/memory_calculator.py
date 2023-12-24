@@ -294,7 +294,8 @@ class MemoryCalculator:
         # Iterate over the node's weights and apply pruning based on the masks.
         for w_attr, w in node.weights.items():
             io_axis = [io_axis for attr, io_axis in attributes_and_oc_axis.items() if attr in w_attr]
-            assert len(io_axis) == 1, "Each weight should have exactly one corresponding IO axis."
+            if len(io_axis) != 1:
+                Logger.error(f"Each weight should have exactly one corresponding IO axis, but is {io_axis} ")
             out_axis, in_axis = io_axis[0]
 
             # Apply input and output masks to the weight tensor.
@@ -328,7 +329,8 @@ class MemoryCalculator:
             np.ndarray: The pruned tensor.
         """
         mask = np.ones(w.shape[axis], dtype=bool) if mask is None else mask.astype(bool)
-        assert w.shape[axis] == len(mask), f"Expected mask length {len(mask)}, found {w.shape[axis]}."
+        if w.shape[axis] != len(mask):
+            Logger.error(f"Expected mask length {len(mask)}, found {w.shape[axis]}.")
         pruned_w = np.take(w, np.where(mask)[0], axis=axis)
         return pruned_w
 

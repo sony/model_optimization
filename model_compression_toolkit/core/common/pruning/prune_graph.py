@@ -22,6 +22,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.pruning.pruning_section import PruningSectionMask
+from model_compression_toolkit.logger import Logger
 
 
 def build_pruned_graph(graph: Graph,
@@ -48,14 +49,17 @@ def build_pruned_graph(graph: Graph,
     pruning_sections = graph_to_prune.get_pruning_sections(fw_impl=fw_impl)
 
     # Check that each entry node corresponds to a pruning section has an output-channel mask.
-    assert len(pruning_sections) == len(masks)
+    if len(pruning_sections) != len(masks):
+        Logger.error(f"Expected to find same number of masks as number of pruning sections,"
+                     f"but {len(masks)} masks were given and found {len(pruning_sections)} pruning sections.")
 
     # Apply the pruning masks to each pruning section.
     for pruning_section in pruning_sections:
 
         # Retrieve the corresponding mask using the node's name (since we use a graph's copy).
         mask = [v for k, v in masks.items() if k.name == pruning_section.entry_node.name]
-        assert len(mask) == 1, f"Expected to find a single node with name {pruning_section.entry_node.name} in masks dictionary but found {len(mask)}"
+        if len(mask) != 1:
+            Logger.error(f"Expected to find a single node with name {pruning_section.entry_node.name} in masks dictionary but found {len(mask)}")
         mask = mask[0]
 
         # If the mask indicates that some channels are to be pruned, apply it.

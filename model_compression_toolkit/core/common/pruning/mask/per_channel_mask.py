@@ -60,9 +60,8 @@ class PerChannelMask: #TODO: add doc
                                       node: BaseNode,
                                       channel_idx: int,
                                       mask_indicator: MaskIndicator):
-        assert mask_indicator in [MaskIndicator.PRUNED,
-                                  MaskIndicator.REMAINED], ("Mask value must be either MaskIndicator.PRUNED "
-                                                            "or MaskIndicator.REMAINED.")
+        if mask_indicator not in [MaskIndicator.PRUNED, MaskIndicator.REMAINED]:
+            Logger.error("Mask value must be either MaskIndicator.PRUNED or MaskIndicator.REMAINED")
         self._mask[node][channel_idx] = mask_indicator.value
 
 
