@@ -17,86 +17,79 @@ import argparse
 import keras.models
 
 from keras.applications.resnet50 import ResNet50
+import tensorflow as tf
 
 import model_compression_toolkit as mct
 import tempfile
-import cv2
 import numpy as np
+import cv2
 
 
+RESIZE_SCALE = 256 / 224
+SIZE = 224
+
+def resize(x):
+    resize_side = max(RESIZE_SCALE * SIZE / x.shape[0], RESIZE_SCALE * SIZE / x.shape[1])
+    height_tag = int(np.round(resize_side * x.shape[0]))
+    width_tag = int(np.round(resize_side * x.shape[1]))
+    resized_img = cv2.resize(x, (width_tag, height_tag))
+    offset_height = int((height_tag - SIZE) / 2)
+    offset_width = int((width_tag - SIZE) / 2)
+    cropped_img = resized_img[offset_height:offset_height + SIZE, offset_width:offset_width + SIZE]
+    return cropped_img
 
 
-def count_model_params(model):
+def count_model_params(model: keras.models.Model) -> int:
+    # Function to count the total number of parameters in a given Keras model.
     return sum([l.count_params() for l in model.layers])
 
 def argument_handler():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--representative_dataset_dir', type=str, default="/data/projects/swat/datasets_src/ImageNet/ILSVRC2012_img_train",
-                        help='folder path for the representative dataset.')
-    parser.add_argument('--batch_size', type=int, default=50,
-                        help='batch size for the representative data.')
-    parser.add_argument('--num_calibration_iterations', type=int, default=1,
-                        help='number of iterations for calibration.')
+    parser.add_argument('--representative_dataset_dir', type=str, help='Folder path for the representative dataset.')
+    parser.add_argument('--batch_size', type=int, default=50, help='Batch size for the representative data.')
+    parser.add_argument('--num_score_approximations', type=int, default=32,
+                        help='Number of scores to estimate the importance of each channel.')
+    parser.add_argument('--compression_rate', type=float, help='Compression rate to remove from the dense model.')
+
     return parser.parse_args()
 
 
 if __name__ == '__main__':
-
-    # Parse arguments
     args = argument_handler()
 
-    # Set the batch size of the images at each calibration iteration.
-    batch_size = args.batch_size
+    # Create a function to generate representative data used for channels importance approximation.
+    image_data_loader = mct.core.FolderImageLoader(args.representative_dataset_dir,
+                                                   preprocessing=[resize,
+                                                                  tf.keras.applications.resnet50.preprocess_input],
+                                                   batch_size=args.batch_size)
 
-    # Set the path to the folder of images to load and use for the representative dataset.
-    # Notice that the folder have to contain at least one image.
-    folder = args.representative_dataset_dir
-
-    # Create a representative data generator, which returns a list of images.
-    # The images can be preprocessed using a list of preprocessing functions.
-    image_data_loader = mct.core.FolderImageLoader(folder,
-                                                   preprocessing=[],
-                                                   batch_size=batch_size)
-
-    # Create a Callable representative dataset for calibration purposes.
-    # The function should be called without any arguments, and should return a list numpy arrays (array for each
-    # model's input).
-    # For example: A model has two input tensors - one with input shape of [32 X 32 X 3] and the second with
-    # an input shape of [224 X 224 X 3]. We calibrate the model using batches of 20 images.
-    # Calling representative_data_gen() should return a list
-    # of two numpy.ndarray objects where the arrays' shapes are [(20, 3, 32, 32), (20, 3, 224, 224)].
     def representative_data_gen() -> list:
-        for _ in range(args.num_calibration_iterations):
-            yield [image_data_loader.sample()]
+        yield [image_data_loader.sample()]
 
-    # Get a TargetPlatformModel object that models the hardware for the quantized model inference.
-    # The model determines the quantization methods to use during the MCT optimization process.
-    # Here, for example, we use the default target platform model that is attached to a Tensorflow
-    # layers representation.
+
+    # Retrieve the target platform capabilities which include the SIMD size configuration for each layer.
     target_platform_cap = mct.get_target_platform_capabilities('tensorflow',
                                                                'default')
 
-    # Create a model and quantize it using the representative_data_gen as the calibration images.
-    # Set the number of calibration iterations.
+    # Load a dense ResNet50 model for pruning. Compute the number of params to
+    # initialize the KPI to constraint the memory footprint of the pruned model's weights.
     dense_model = ResNet50()
     dense_nparams = count_model_params(dense_model)
+    print(f"Model has {dense_nparams} parameters.")
+    kpi = mct.KPI(weights_memory=dense_nparams * 4 * args.compression_rate)
 
-    kpi = mct.KPI(weights_memory=dense_nparams*4*0.5) # 50% of dense model
-    pruned_model, _ = mct.pruning.keras_pruning_experimental(model=dense_model,
-                                                             target_kpi=kpi,
-                                                             representative_data_gen=representative_data_gen,
-                                                             target_platform_capabilities=target_platform_cap,
-                                                             pruning_config=mct.pruning.PruningConfig(num_score_approximations=1))
+    # Prune the model.
+    pruned_model, pruning_info = mct.pruning.keras_pruning_experimental(model=dense_model,
+                                                                        target_kpi=kpi,
+                                                                        representative_data_gen=representative_data_gen,
+                                                                        target_platform_capabilities=target_platform_cap,
+                                                                        pruning_config=mct.pruning.PruningConfig(
+                                                                            num_score_approximations=args.num_score_approximations))
 
+    # Count number of params in the pruned model and save it.
     pruned_nparams = count_model_params(pruned_model)
-    cr = pruned_nparams/dense_nparams
-    print(f"cr: {cr}")
-
-    _, keras_file_path = tempfile.mkstemp('.keras') # Path of exported model
-    print(f"Saving pruned model: {keras_file_path}")
-    keras.models.save_model(pruned_model, keras_file_path)
-
-    _, keras_file_path = tempfile.mkstemp('.h5') # Path of exported model
+    print(f"Pruned model has {pruned_nparams} parameters.")
+    _, keras_file_path = tempfile.mkstemp('.keras')
     print(f"Saving pruned model: {keras_file_path}")
     keras.models.save_model(pruned_model, keras_file_path)
 
