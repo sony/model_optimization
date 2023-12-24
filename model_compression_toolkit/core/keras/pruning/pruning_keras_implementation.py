@@ -26,6 +26,8 @@ import keras
 
 import numpy as np
 
+from model_compression_toolkit.logger import Logger
+
 
 class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementation):
     """
@@ -164,11 +166,14 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
         attributes_with_axis = {}
         if fw_info.is_kernel_op(node.type):
             kernel_attributes = fw_info.get_kernel_op_attributes(node.type)
+            if kernel_attributes is None or len(kernel_attributes)==0:
+                Logger.error(f"Expected to find attributes but found {kernel_attributes}")
+
             for attr in kernel_attributes:
                 attributes_with_axis[attr] = fw_info.kernel_channels_mapping.get(node.type)
 
             # Bias is usually associated with output channels, so the input axis is None.
-            attributes_with_axis['bias'] = (0, None)
+            attributes_with_axis[BIAS] = (0, None)
         else:
             # For non-kernel operations, iterate over the node's weights.
             for attr in list(node.weights.keys()):
