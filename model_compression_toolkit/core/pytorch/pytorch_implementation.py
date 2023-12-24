@@ -411,7 +411,8 @@ class PytorchImplementation(FrameworkImplementation):
 
     def get_node_distance_fn(self, layer_class: type,
                              framework_attrs: Dict[str, Any],
-                             compute_distance_fn: Callable = None) -> Callable:
+                             compute_distance_fn: Callable = None,
+                             axis: int = None) -> Callable:
         """
         A mapping between layers' types and a distance function for computing the distance between
         two tensors (for loss computation purposes). Returns a specific function if node of specific types is
@@ -421,6 +422,7 @@ class PytorchImplementation(FrameworkImplementation):
             layer_class: Class path of a model's layer.
             framework_attrs: Framework attributes the layer had which the graph node holds.
             compute_distance_fn: An optional distance function to use globally for all nodes.
+            axis: The axis on which the operation is preformed (if specified).
 
         Returns: A distance function between two tensors.
         """
@@ -428,7 +430,7 @@ class PytorchImplementation(FrameworkImplementation):
         if compute_distance_fn is not None:
             return compute_distance_fn
 
-        elif layer_class in [Softmax, softmax]:
+        elif layer_class in [Softmax, softmax] and axis is not None:
             return compute_kl_divergence
         elif layer_class in [Sigmoid, sigmoid]:
             return compute_cs

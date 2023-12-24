@@ -144,12 +144,14 @@ class SensitivityEvaluation:
         distance_fns_list = []
         batch_axis_list = []
         for n in points:
+
+            axis = n.framework_attr.get(AXIS) if not isinstance(n, FunctionalNode) else n.op_call_kwargs.get(AXIS)
             distance_fns_list.append(self.fw_impl.get_node_distance_fn(
                 layer_class=n.layer_class,
                 framework_attrs=n.framework_attr,
-                compute_distance_fn=self.quant_config.compute_distance_fn))
-            batch_axis_list.append(n.framework_attr.get(AXIS) if not isinstance(n, FunctionalNode)
-                                   else n.op_call_kwargs.get(AXIS))
+                compute_distance_fn=self.quant_config.compute_distance_fn,
+                axis=axis))
+            batch_axis_list.append(axis)
         return distance_fns_list, batch_axis_list
 
     def compute_metric(self,
