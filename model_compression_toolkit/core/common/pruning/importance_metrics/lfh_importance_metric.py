@@ -160,7 +160,7 @@ class LFHImportanceMetric(BaseImportanceMetric):
                                            fw_info=self.fw_info)
 
         channel_grouping.group_scores_by_simd_groups(entry_node_to_score)
-        grouped_indices = channel_grouping.get_group_indices()
+        grouped_indices = channel_grouping.simd_groups_indices
 
         return grouped_indices
 

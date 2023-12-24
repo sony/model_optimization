@@ -47,7 +47,7 @@ class RandomImportanceMetric(BaseImportanceMetric):
         self.channel_grouping = ChannelGrouping(prunable_nodes=entry_nodes,
                                                 fw_info=self.fw_info)
         self.channel_grouping.group_scores_by_simd_groups(entry_node_to_score)
-        grouped_indices = self.channel_grouping.get_group_indices()
+        grouped_indices = self.channel_grouping.simd_groups_indices
         entry_node_to_simd_score = {}
         for node, trace in entry_node_to_score.items():
             trace_by_group = [np.sum(trace[g]) for g in grouped_indices[node]]
