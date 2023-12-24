@@ -24,6 +24,7 @@ import model_compression_toolkit as mct
 import numpy as np
 from packaging import version
 
+from model_compression_toolkit.constants import FP32_BYTES_PER_PARAMETER
 from model_compression_toolkit.core.common.pruning.importance_metrics.importance_metric_factory import im_dict
 from tests.keras_tests.pruning_tests.random_importance_metric import RandomImportanceMetric
 
@@ -128,7 +129,7 @@ class PruningPretrainedModelsTest(unittest.TestCase):
         # Perform pruning on the dense model.
         pruned_model, pruning_info = mct.pruning.keras_pruning_experimental(
             model=dense_model,
-            target_kpi=mct.KPI(weights_memory=dense_nparams * 4. * cr),
+            target_kpi=mct.KPI(weights_memory=dense_nparams * FP32_BYTES_PER_PARAMETER * cr),
             representative_data_gen=self.representative_dataset,
             pruning_config=mct.pruning.PruningConfig(
                 num_score_approximations=1,
@@ -143,23 +144,31 @@ class PruningPretrainedModelsTest(unittest.TestCase):
         input_tensor = next(self.representative_dataset())[0]
         pruned_outputs = pruned_model(input_tensor)
 
-        # Optionally, retrain the pruned model and check its performance.
+        # Optionally, retrain the pruned model (using dummy data for 1 epoch) and check it
+        # predicts differently than before retraining.
         if test_retraining:
             ds = create_dummy_dataset()
             retrained_model = self._dummy_retrain(pruned_model, ds)
             retrained_outputs = retrained_model(input_tensor)
-            assert np.sum(np.abs(pruned_outputs - retrained_outputs)) != 0
+            self.assertTrue(np.sum(np.abs(pruned_outputs - retrained_outputs)) != 0, f"Expected after retraining to have different predictions but are the same")
 
-        # Ensure pruned layers respect the importance scores.
+        # Ensure pruned layers had lower importance scores than the channels
+        # that remained.
         for layer_name, layer_mask in pruning_info.pruning_masks.items():
             if 0 in layer_mask:
                 layer_scores = pruning_info.importance_scores[layer_name]
                 min_score_remained = min(layer_scores[layer_mask.astype("bool")])
                 max_score_removed = max(layer_scores[(1 - layer_mask).astype("bool")])
-                assert max_score_removed <= min_score_remained
+                self.assertTrue(max_score_removed <= min_score_remained,
+                                f"Expected remaining channels to have higher scores"
+                                f"than pruned channels but found remained channel with score"
+                                f"{min_score_remained} and found pruned channel with"
+                                f"score {max_score_removed}")
 
         # Validate that the actual compression rate does not exceed the target compression rate.
-        assert actual_cr <= cr
+        self.assertTrue(actual_cr <= cr,
+                        f"Expected the actual compression rate: {actual_cr} to not exceed the target compression "
+                        f"rate: {cr}")
 
 
 # Function to generate an infinite stream of dummy images and labels

@@ -54,11 +54,17 @@ class PruningKerasFeatureTest(BaseKerasFeatureNetworkTest):
             pruned_outputs = pruned_model(input_tensor)
             if self.pruned_model_num_params == self.dense_model_num_params:
                 dense_outputs = model_float(input_tensor)
-                assert np.sum(np.abs(dense_outputs-pruned_outputs))==0
+                self.unit_test.assertTrue(np.sum(np.abs(dense_outputs-pruned_outputs)) == 0, f"If model is not pruned, "
+                                                                                           f"predictions should be identical, but found difference between predictions")
 
-            assert pruned_model.output_shape==model_float.output_shape
+            self.unit_test.assertTrue(pruned_model.output_shape == model_float.output_shape,
+                                      f"Pruned model should have the same output shape as dense model,"
+                                      f"but dense model output shape is {model_float.output_shape},"
+                                      f"and pruned model output shape is {pruned_model.output_shape}")
+
             for dense_layer, pruned_layer in zip(model_float.layers, pruned_model.layers):
-                assert type(pruned_layer)==type(dense_layer)
+                self.unit_test.assertTrue(type(pruned_layer)==type(dense_layer), f"type of layers and their orders should be the same,"
+                                                                                 f"but {type(dense_layer)} is not {type(pruned_layer)}")
 
             self.compare(pruned_model,
                          model_float,
