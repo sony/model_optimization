@@ -517,8 +517,6 @@ class BaseNode:
         if len(simd_list) == 0:
             Logger.error(f"No SIMD option is available for {self}")
         _simd = min(simd_list)
-        if _simd <= 0:
-            Logger.error(f"Found non-positive illegal simd: {_simd}")
-        if int(_simd) != _simd:
-            Logger.error(f"Found non-integer illegal simd: {_simd}")
+        if _simd <= 0 or int(_simd) != _simd:
+            Logger.error(f"SIMD is expected to be a non-positive integer but found: {_simd}")
         return _simd
