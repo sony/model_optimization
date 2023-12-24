@@ -71,4 +71,3 @@ class PruningConfig:
         # The strategy to use when deciding which channels to prune based on their importance scores.
         self.channels_filtering_strategy = channels_filtering_strategy
 
-        # TODO: Consider limiting ratio per layer
