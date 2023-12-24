@@ -37,78 +37,78 @@ class MaskIndicator(Enum):
 
 
 
-class PerChannelMask: #TODO: add doc
-    def __init__(self,
-                 prunable_nodes: List[BaseNode],
-                 fw_info: FrameworkInfo):
+class PerChannelMask:
+    def __init__(self, prunable_nodes: List[BaseNode], fw_info: FrameworkInfo):
         """
+        Initializes the PerChannelMask with prunable nodes and framework information.
+        This class is responsible for maintaining and updating the pruning masks for each
+        prunable node in the model. The mask is an array indicating whether each output channel
+        of a node is pruned (0) or remained (1).
 
         Args:
-            prunable_nodes:
-            fw_info:
+            prunable_nodes: List of nodes in the model that are subject to pruning.
+            fw_info: Framework-specific information required for pruning operations.
         """
         self.prunable_nodes = prunable_nodes
         self.fw_info = fw_info
-        self._mask = None  # Dictionary from a node to a mask at length of number of output channels it has (1-channel remains, 0-channel pruned)
-        self._init_masks()
-
+        self._mask = None  # Initialize the mask dictionary
+        self._init_masks()  # Call to initialize masks for each prunable node
 
     def get_mask(self) -> Dict[BaseNode, np.ndarray]:
+        """
+        Retrieves the current pruning masks for all prunable nodes in the model.
+
+        Returns:
+            A dictionary mapping each prunable node to its corresponding pruning mask.
+        """
         return self._mask
 
-    def set_mask_value_for_simd_group(self,
-                                      node: BaseNode,
-                                      channel_idx: int,
-                                      mask_indicator: MaskIndicator):
+    def set_mask_value_for_simd_group(self, node: BaseNode, channel_idx: int, mask_indicator: MaskIndicator):
+        """
+        Sets the mask value for a specific channel of a prunable node.
+
+        Args:
+            node: The prunable node to update the mask for.
+            channel_idx: The index of the channel to update in the mask.
+            mask_indicator: The new value to set in the mask (either PRUNED or REMAINED).
+        """
         if mask_indicator not in [MaskIndicator.PRUNED, MaskIndicator.REMAINED]:
             Logger.error("Mask value must be either MaskIndicator.PRUNED or MaskIndicator.REMAINED")
         self._mask[node][channel_idx] = mask_indicator.value
 
-
     def has_pruned_channel(self) -> bool:
         """
-        Checks if there is at least one channel marked for pruning in any node mask.
+        Determines if there is at least one pruned channel across all nodes in the model.
 
         Returns:
-            True if there is at least one channel to be pruned, False otherwise.
+            True if there is at least one pruned channel, False otherwise.
         """
-        return any(0 in mask for mask in self._mask.values())
-
+        return any(MaskIndicator.PRUNED.value in mask for mask in self._mask.values())
 
     def _init_masks(self):
         """
-        Initializes the pruning masks for each prunable node in the graph.
-
-        This method creates two types of masks:
-        1. `self.mask`: A detailed mask for each output channel of the prunable nodes.
+        Initializes the pruning masks for each prunable node in the model.
+        Sets the initial mask for each node as an array of zeros (indicating all channels are
+        initially pruned).
         """
-        self._mask = {}  # Dictionary to store the fine-grained mask for each prunable node.
-
-        # Iterate over all prunable nodes to initialize their masks.
+        self._mask = {}  # Initialize the dictionary for pruning masks.
         for prunable_node in self.prunable_nodes:
-            # Determine the number of output channels for the node.
-            num_oc = self._compute_num_of_out_channels(prunable_node)
-            # Initialize a mask with zeros for each output channel.
-            layer_mask = np.zeros(num_oc)
+            num_oc = self._compute_num_of_out_channels(prunable_node)  # Number of output channels for the node.
+            layer_mask = np.zeros(num_oc)  # Initialize the mask with zeros.
             self._mask[prunable_node] = layer_mask
 
     def _compute_num_of_out_channels(self, node: BaseNode) -> int:
         """
-        Calculates the number of output channels for a given node in the graph.
+        Computes the number of output channels for a given node.
 
         Args:
-            node (BaseNode): The node for which the number of output channels is calculated.
+            node (BaseNode): The node whose output channels are to be counted.
 
         Returns:
-            int: The number of output channels for the node.
+            int: Number of output channels for the node.
         """
-        kernel_attr = self.fw_info.get_kernel_op_attributes(node.type)
-        if len(kernel_attr) != 1:
-            Logger.error(f"Expected to found a single attribute but found {len(kernel_attr)} for node {node}")
-        oc_axis, _ = self.fw_info.kernel_channels_mapping.get(node.type)
-        if oc_axis is None:
-            Logger.error(f"Expected to found output channel axis for node {node} but it's None")
-        if int(oc_axis) != oc_axis:
-            Logger.error(f"Expected output channel axis to be an integer but is {oc_axis}")
-        num_oc = node.get_weights_by_keys(kernel_attr[0]).shape[oc_axis]
+        kernel_attr = self.fw_info.get_kernel_op_attributes(node.type)[0]
+        oc_axis = self.fw_info.kernel_channels_mapping.get(node.type)[0]
+        num_oc = node.get_weights_by_keys(kernel_attr).shape[oc_axis]
         return num_oc
+

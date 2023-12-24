@@ -25,61 +25,69 @@ from model_compression_toolkit.core.common.pruning.pruning_framework_implementat
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 
-
 class PerSIMDGroupMask:
     def __init__(self,
                  prunable_nodes: List[BaseNode],
                  fw_info: FrameworkInfo,
                  simd_groups_indices: Dict[BaseNode, List[List[int]]]):
         """
+        Initializes a mask calculator for SIMD groups in prunable nodes.
+        Manages both per-channel and per-SIMD-group masks.
 
         Args:
-            prunable_nodes:
-            fw_info:
-            simd_groups_indices:
+            prunable_nodes: List of nodes that can be pruned.
+            fw_info: Framework-specific information.
+            simd_groups_indices: A dictionary mapping each node to its SIMD groups' indices.
         """
-        self.per_channel_mask = PerChannelMask(prunable_nodes=prunable_nodes,
-                                               fw_info=fw_info)
+        # Initialize the per-channel mask
+        self.per_channel_mask = PerChannelMask(prunable_nodes=prunable_nodes, fw_info=fw_info)
         self.prunable_nodes = prunable_nodes
         self.fw_info = fw_info
         self.simd_groups_indices = simd_groups_indices
-
-        self._mask_simd = None # Dictionary from a node to a mask at length of number of SIMD groups it has (1-group remains, 0-group pruned)
-
-        # Create the masks and set the first SIMD group of channels to be unpruned.
-        self._init_masks()
-        self._update_mandatory_mask()
+        self._mask_simd = None  # Initialize the SIMD group mask dictionary
+        self._init_masks()  # Initialize masks for each prunable node
+        self._update_mandatory_mask()  # Ensure at least one SIMD group remains unpruned
 
     def get_mask_simd(self) -> Dict[BaseNode, np.ndarray]:
+        """
+        Retrieves the current SIMD group masks for all prunable nodes.
+
+        Returns:
+            A dictionary mapping each prunable node to its corresponding SIMD group mask.
+        """
         return self._mask_simd
 
     def get_mask(self) -> Dict[BaseNode, np.ndarray]:
-        return self.per_channel_mask.get_mask()
+        """
+        Retrieves the current per-channel masks for all prunable nodes.
 
+        Returns:
+            A dictionary mapping each prunable node to its corresponding per-channel mask.
+        """
+        return self.per_channel_mask.get_mask()
 
     def set_mask_value_for_simd_group(self,
                                       node: BaseNode,
                                       group_index: int,
                                       mask_indicator: MaskIndicator):
         """
-        Updates the mask for a specific SIMD group of a node.
+        Sets the mask value for a specific SIMD group of a prunable node.
 
         Args:
-            node: The prunable node for which the mask is to be updated.
-            group_index: Index of the SIMD group within the node.
-            mask_indicator: The new value (0 or 1) to set for the group mask.
+            node: The prunable node to update the mask for.
+            group_index: The index of the SIMD group to update in the mask.
+            mask_indicator: The new value to set in the mask (either PRUNED or REMAINED).
         """
         if mask_indicator not in [MaskIndicator.PRUNED, MaskIndicator.REMAINED]:
             Logger.error("Mask value must be either MaskIndicator.PRUNED or MaskIndicator.REMAINED")
 
+        # Update the SIMD group mask and corresponding per-channel mask
         self._mask_simd[node][group_index] = mask_indicator.value
         node_mask_indices = self.simd_groups_indices[node][group_index]
         for idx in node_mask_indices:
             self.per_channel_mask.set_mask_value_for_simd_group(node=node,
                                                                 channel_idx=idx,
                                                                 mask_indicator=mask_indicator)
-
-
     def has_pruned_channel(self) -> bool:
         """
         Checks if there is at least one channel marked for pruning in any node mask.
@@ -89,30 +97,26 @@ class PerSIMDGroupMask:
         """
         return self.per_channel_mask.has_pruned_channel()
 
-
     def _init_masks(self):
         """
-        Initializes the pruning masks for each prunable node in the graph.
-        `self._mask_simd`: A mask at the level of SIMD groups for each prunable node.
+        Initializes the SIMD group masks for each prunable node.
+        Sets the initial mask for each node as an array of zeros (indicating
+        all groups are initially pruned).
         """
-        self._mask_simd = {}  # Dictionary to store the SIMD group level mask for each prunable node.
-
-        # Iterate over all prunable nodes to initialize their masks.
+        self._mask_simd = {}  # Initialize the dictionary for SIMD group masks.
         for prunable_node in self.prunable_nodes:
-            num_oc = len(self.per_channel_mask.get_mask()[prunable_node])
-            # Calculate the number of SIMD groups in the layer.
-            layer_num_simd_groups = int(max(np.ceil(num_oc / prunable_node.get_simd()), 1))
-            # Initialize a SIMD group level mask with zeros.
-            layer_mask_per_simd_group = np.zeros(layer_num_simd_groups)
-            # Store the initialized masks in their respective dictionaries.
+            num_groups = len(self.simd_groups_indices[prunable_node])  # Number of SIMD groups for the node.
+            layer_mask_per_simd_group = np.zeros(num_groups)  # Initialize the mask with zeros.
             self._mask_simd[prunable_node] = layer_mask_per_simd_group
 
     def _update_mandatory_mask(self):
+        """
+        Updates the mandatory masks for each prunable node to ensure at least one SIMD
+        group remains unpruned.
+        """
         for prunable_node in self.prunable_nodes:
-            # Mark the first SIMD group of channels as mandatory (unpruned) for each prunable node.
-            # This is done by setting the first group's value in the SIMD mask to 1 (unpruned).
+            # Mark the first SIMD group as mandatory (unpruned).
             self.set_mask_value_for_simd_group(node=prunable_node,
                                                group_index=0,
                                                mask_indicator=MaskIndicator.REMAINED)
-
 
