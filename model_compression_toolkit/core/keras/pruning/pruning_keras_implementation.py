@@ -142,12 +142,17 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
                                  keras.layers.Conv2DTranspose,
                                  keras.layers.Dense]
 
-    def get_node_attributes_with_oi_axis(self,
-                                         node: BaseNode,
-                                         fw_info: FrameworkInfo) -> Dict[str, Tuple[int, int]]:
+    def attrs_oi_channels_info_for_pruning(self,
+                                           node: BaseNode,
+                                           fw_info: FrameworkInfo) -> Dict[str, Tuple[int, int]]:
         """
         Retrieves the attributes of a given node along with the output/input (OI) channel axis
-        for each attribute.
+        for each attribute used to prune these attributes.
+
+        Not all attributes of a node are directly associated with both input and output channels.
+        For example, bias vectors in convolutional layers are solely related to the number of output
+        channels and do not have a corresponding input channel dimension.
+        In cases like that, None is returned in the tuple of axis for such attributes.
 
         For kernel operations (like convolutions), the function identifies the output and input
         channel axis based on framework-specific information.
@@ -172,12 +177,16 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
             for attr in kernel_attributes:
                 attributes_with_axis[attr] = fw_info.kernel_channels_mapping.get(node.type)
 
-            # Bias is usually associated with output channels, so the input axis is None.
+            # Bias is a vector at the length of the number of output channels.
+            # For this reason, input channel axis is irrelevant to the bias attribute.
             attributes_with_axis[BIAS] = (0, None)
         else:
-            # For non-kernel operations, iterate over the node's weights.
+            # We have several assumptions here:
+            # 1. For intermediate nodes, we prune all nodes' weights.
+            # 2. The output channel axis is the last axis of this attribute.
+            # 3. The input channel axis is irrelevant since these attributes are pruned only by
+            #    their output channels.
             for attr in list(node.weights.keys()):
-                # The output channel axis is assumed to be the last axis, with no specific input axis.
                 attributes_with_axis[attr] = (-1, None)
 
         return attributes_with_axis

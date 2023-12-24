@@ -129,19 +129,28 @@ class PruningFrameworkImplementation(FrameworkImplementation):
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s is_node_intermediate_pruning_section method.')  # pragma: no cover
 
-    def get_node_attributes_with_oi_axis(self, node: BaseNode, fw_info: FrameworkInfo) -> Dict[str, Tuple[int, int]]:
+    def attrs_oi_channels_info_for_pruning(self, node: BaseNode, fw_info: FrameworkInfo) -> Dict[str, Tuple[int, int]]:
         """
-        Gets the attributes of a node and the axis for each attribute's output/input
-        channels dimension.
+        Retrieves the attributes of a given node along with the output/input (OI) channel axis
+        for each attribute used to prune these attributes.
+
+        Not all attributes of a node are directly associated with both input and output channels.
+        For example, bias vectors in convolutional layers are solely related to the number of output
+        channels and do not have a corresponding input channel dimension.
+        In cases like that, None is returned in the tuple of axis for such attributes.
+
+        For kernel operations (like convolutions), the function identifies the output and input
+        channel axis based on framework-specific information.
+        For non-kernel operations, it defaults to setting the last axis as the output
+        channel axis, assuming no specific input channel axis.
 
         Args:
-            node (BaseNode): The node for which attributes and their oi channel axis are required.
-            fw_info (FrameworkInfo): Framework-specific information containing details about
-            layers and attributes.
+            node (BaseNode): The node from the computational graph.
+            fw_info (FrameworkInfo): Contains framework-specific information and utilities.
 
         Returns:
-            Dict[str, Tuple[int, int]]: A dict of the node's attributes their oi axis.
-
+            Dict[str, Tuple[int, int]]: A dictionary where each key is an attribute name (like 'kernel' or 'bias')
+            and each value is a tuple representing the output and input channel axis indices respectively.
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s get_node_attributes_with_output_axis method.')  # pragma: no cover
+                             f'framework\'s attrs_oi_channels_info_for_pruning method.')  # pragma: no cover

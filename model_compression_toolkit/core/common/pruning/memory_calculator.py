@@ -289,7 +289,7 @@ class MemoryCalculator:
             int: The total number of parameters in the node after pruning.
         """
         total_params = 0
-        attributes_and_oc_axis = self.fw_impl.get_node_attributes_with_oi_axis(node, self.fw_info)
+        attributes_and_oc_axis = self.fw_impl.attrs_oi_channels_info_for_pruning(node, self.fw_info)
 
         # Iterate over the node's weights and apply pruning based on the masks.
         for w_attr, w in node.weights.items():
