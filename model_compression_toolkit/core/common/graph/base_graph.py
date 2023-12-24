@@ -300,19 +300,24 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return [edges_list.sink_node for edges_list in self.out_edges(node_obj)]
 
     def get_prev_nodes(self,
-                       node_obj: BaseNode) -> List[BaseNode]:
+                       node_obj: BaseNode,
+                       sink_index_sorted: bool = False) -> List[BaseNode]:
         """
         Get previous nodes (in a topological order) of a node.
 
         Args:
             node_obj: Node to get its previous nodes.
+            sink_index_sorted: Whether to sort the returned list by the sink_index of the edges.
 
         Returns:
             List of input nodes objects.
 
         """
-
-        return [edges_list.source_node for edges_list in self.incoming_edges(node_obj)]
+        if sink_index_sorted:
+            sort_attr = 'sink_index'
+        else:
+            sort_attr = None
+        return [edges_list.source_node for edges_list in self.incoming_edges(node_obj, sort_by_attr=sort_attr)]
 
     def reconnect_out_edges(self,
                             current_node: BaseNode,
@@ -707,6 +712,21 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         return all([n.is_all_activation_candidates_equal() for n in self.nodes])
 
+    def replace_node(self, node_to_replace: BaseNode, new_node: BaseNode):
+        """
+        Replaces a node in the graph with a new node.
+
+        Args:
+            node_to_replace: The node to replace.
+            new_node: The new node to replace with.
+
+        """
+        self.add_node(new_node)
+        self.reconnect_out_edges(node_to_replace, new_node)
+        self.reconnect_in_edges(node_to_replace, new_node)
+        self.replace_output_node(node_to_replace, new_node)
+        self.replace_input_node(node_to_replace, new_node)
+        self.remove_node(node_to_replace)
 
     def get_pruning_sections(self,
                              fw_impl) -> List[PruningSection]:
@@ -818,3 +838,5 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             next_node = self.out_edges(next_node)[0].sink_node
 
         return intermediate_nodes, next_node
+
+

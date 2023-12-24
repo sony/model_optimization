@@ -137,14 +137,15 @@ class TestSensitivityMetricInterestPoints(unittest.TestCase):
             t1 = softmax_node2layer[sn](np.random.rand(*[8, *softmax_node2layer[sn].input_shape[1:]])).numpy()
             t2 = softmax_node2layer[sn](np.random.rand(*[8, *softmax_node2layer[sn].input_shape[1:]])).numpy()
 
-            distance_fn = KerasImplementation().get_node_distance_fn(layer_class=sn.layer_class,
-                                                                     framework_attrs=sn.framework_attr)
-            self.assertEqual(distance_fn, compute_kl_divergence,
-                             f"Softmax node should use KL Divergence for distance computation.")
-
             axis = sn.framework_attr.get(AXIS)
             if axis is None:
                 axis = sn.op_call_kwargs.get(AXIS)
+
+            distance_fn = KerasImplementation().get_node_distance_fn(layer_class=sn.layer_class,
+                                                                     framework_attrs=sn.framework_attr,
+                                                                     axis=axis)
+            self.assertEqual(distance_fn, compute_kl_divergence,
+                             f"Softmax node should use KL Divergence for distance computation.")
 
             distance_per_softmax_axis = distance_fn(t1, t2, batch=True, axis=axis)
             distance_global = distance_fn(t1, t2, batch=True, axis=None)
