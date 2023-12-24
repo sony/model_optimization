@@ -24,6 +24,7 @@ from model_compression_toolkit.core.common.pruning.importance_metrics.base_impor
 import numpy as np
 
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig
+from model_compression_toolkit.core.keras.constants import KERNEL
 
 
 class RandomImportanceMetric(BaseImportanceMetric):
@@ -56,7 +57,7 @@ class RandomImportanceMetric(BaseImportanceMetric):
 
     def _get_entry_node_to_score(self, sections_input_nodes: List[BaseNode]):
         random_scores = [np.random.random(
-            node.get_weights_by_keys('kernel').shape[self.fw_info.kernel_channels_mapping.get(node.type)[0]])
+            node.get_weights_by_keys(KERNEL).shape[self.fw_info.kernel_channels_mapping.get(node.type)[0]])
             for node in sections_input_nodes]
         entry_node_to_score = {node: scores for node, scores in zip(sections_input_nodes, random_scores)}
         return entry_node_to_score
