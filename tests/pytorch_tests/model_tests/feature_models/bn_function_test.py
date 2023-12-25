@@ -15,7 +15,7 @@
 import torch
 import torch.nn.functional as F
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
-from model_compression_toolkit.core.pytorch.utils import get_working_device
+from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 
 """
 This tests check the batch_norm function and demonstrates the usage of BufferHolder node.

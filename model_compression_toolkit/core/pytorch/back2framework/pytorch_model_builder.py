@@ -28,8 +28,8 @@ from model_compression_toolkit.core.common.graph.functional_node import Function
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder, identity_wrapper
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, BufferHolder
-from model_compression_toolkit.core.pytorch.utils import get_working_device
 from model_compression_toolkit.core.pytorch.constants import BUFFER
 from mct_quantizers.common.constants import ACTIVATION_HOLDER_QUANTIZER
 

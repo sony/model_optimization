@@ -22,7 +22,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
 from torchvision.transforms import Normalize
 
-from model_compression_toolkit.core.pytorch.utils import get_working_device
+from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.data_generation.common.enums import ImageGranularity
 from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
 from model_compression_toolkit.data_generation.common.optimization_utils import BatchStatsHolder, AllImagesStatsHolder, \
