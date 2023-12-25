@@ -38,6 +38,7 @@ Functions
 - :ref:`get_tensorflow_data_generation_config<ug-get_tensorflow_data_generation_config>`: A function to generate a DataGenerationConfig for Tensorflow data generation(experimental).
 - :ref:`pytorch_data_generation_experimental<ug-pytorch_data_generation_experimental>`: A function to generate data for a Pytorch model (experimental).
 - :ref:`get_pytorch_data_generation_config<ug-get_pytorch_data_generation_config>`: A function to load a DataGenerationConfig for Pytorch data generation (experimental).
+- :ref:`keras_pruning_experimental<ug-keras_pruning_experimental>`: A function to apply structured pruning for Keras models (experimental).
 
 
 Modules

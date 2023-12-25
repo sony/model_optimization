@@ -57,6 +57,7 @@ Keras:
 * :ref:`Mixed-precision post training quantization<ug-keras_post_training_quantization_mixed_precision>`
 * :ref:`Init model for Quantization Aware Training<ug-keras_quantization_aware_training_init>` (Experimental)
 * :ref:`Finalize model after Quantization Aware Training<ug-keras_quantization_aware_training_finalize>` (Experimental)
+* :ref:`Structured Pruning<ug-keras_pruning_experimental>` (Experimental)
 
 Pytorch:
 
