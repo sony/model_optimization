@@ -71,8 +71,7 @@ class ActivationDecomposition(common.BaseSubstitution):
         activation_node_name = op2d_node.name + '_post_activation'
 
         # Softmax is a special case where we need to know the default axis parameter used
-        # (for the distance metric in MP for KL-Divergence), and for this reason we create
-        # a Softmax layer and not Activation layer.
+        # and for this reason we create a Softmax layer and not Activation layer.
         if op2d_node.framework_attr.get(ACTIVATION) == SOFTMAX:
             activation_fw_attr = {AXIS: SOFTMAX_AXIS_DEFAULT}
             activation_node = common.graph.BaseNode(activation_node_name,
