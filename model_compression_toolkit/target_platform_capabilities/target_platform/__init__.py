@@ -21,7 +21,7 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
     get_default_quantization_config_options, TargetPlatformModel
 
 from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import OpQuantizationConfig, \
-    QuantizationConfigOptions
+    QuantizationConfigOptions, AttributeQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorsSet, OperatorSetConcat
 
 from mct_quantizers import QuantizationMethod

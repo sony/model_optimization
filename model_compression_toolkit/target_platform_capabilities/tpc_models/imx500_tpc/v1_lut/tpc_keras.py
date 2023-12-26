@@ -15,6 +15,9 @@
 import tensorflow as tf
 from packaging import version
 from model_compression_toolkit.constants import FOUND_SONY_CUSTOM_LAYERS
+from model_compression_toolkit.core.keras.constants import BIAS
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, \
+    KERAS_DEPTHWISE_KERNEL
 
 if FOUND_SONY_CUSTOM_LAYERS:
     from sony_custom_layers.keras.object_detection.ssd_post_process import SSDPostProcess
@@ -55,7 +58,17 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
-    keras_tpc = tp.TargetPlatformCapabilities(tp_model, name=name, version=TPC_VERSION)
+    conv_list = [Conv2D, Conv2DTranspose, tf.nn.conv2d, tf.nn.conv2d_transpose]
+    depthwise_conv_list = [DepthwiseConv2D, tf.nn.depthwise_conv2d]
+
+    keras_tpc = tp.TargetPlatformCapabilities(tp_model,
+                                              name=name,
+                                              weights_attributes_mapping={
+                                                  tuple(conv_list + [Dense]):
+                                                      {KERNEL_ATTR: KERAS_KERNEL, BIAS_ATTR: BIAS},
+                                                  tuple(depthwise_conv_list):
+                                                      {KERNEL_ATTR: KERAS_DEPTHWISE_KERNEL, BIAS_ATTR: BIAS}},
+                                              version=TPC_VERSION)
 
     no_quant_list = [Reshape,
                      tf.reshape,
@@ -86,12 +99,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", no_quant_list)
 
-        tp.OperationsSetToLayers("Conv", [Conv2D,
-                                          DepthwiseConv2D,
-                                          Conv2DTranspose,
-                                          tf.nn.conv2d,
-                                          tf.nn.depthwise_conv2d,
-                                          tf.nn.conv2d_transpose])
+        tp.OperationsSetToLayers("Conv", conv_list + depthwise_conv_list)
         tp.OperationsSetToLayers("FullyConnected", [Dense])
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                              tf.nn.relu6,

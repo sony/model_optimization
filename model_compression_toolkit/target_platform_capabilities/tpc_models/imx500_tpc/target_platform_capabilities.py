@@ -28,7 +28,7 @@ if FOUND_TF:
 
     # Keras: TPC versioning
     keras_tpc_models_dict = {'v1': get_keras_tpc_v1(),
-                             # 'v1_lut': get_keras_tpc_v1_lut(),
+                             'v1_lut': get_keras_tpc_v1_lut(),
                              'v1_pot': get_keras_tpc_v1_pot(),
                              LATEST: get_keras_tpc_latest()}
 

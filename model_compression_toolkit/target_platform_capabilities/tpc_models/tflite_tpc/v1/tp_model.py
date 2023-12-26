@@ -15,10 +15,12 @@
 from typing import List, Tuple
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.constants import FLOAT_BITWIDTH
+from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
     TargetPlatformModel
 from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import \
-    QuantizationMethod
+    QuantizationMethod, AttributeQuantizationConfig
 
 tp = mct.target_platform
 
@@ -50,21 +52,39 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     Returns: An OpQuantizationConfig config object and a list of OpQuantizationConfig objects.
 
     """
+    default_weight_attr_config = AttributeQuantizationConfig(
+        weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
+        weights_n_bits=8,
+        weights_per_channel_threshold=False,
+        enable_weights_quantization=False,
+        lut_values_bitwidth=None)
+
+    kernel_base_config = AttributeQuantizationConfig(
+        weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
+        weights_n_bits=8,
+        weights_per_channel_threshold=True,
+        enable_weights_quantization=True,
+        lut_values_bitwidth=None)
+
+    bias_config = AttributeQuantizationConfig(
+        weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
+        weights_n_bits=FLOAT_BITWIDTH,
+        weights_per_channel_threshold=False,
+        enable_weights_quantization=False,
+        lut_values_bitwidth=None)
+
     # Create a quantization config.
     # A quantization configuration defines how an operator
     # should be quantized on the modeled hardware:
     eight_bits = tp.OpQuantizationConfig(
         activation_quantization_method=QuantizationMethod.UNIFORM,
-        weights_quantization_method=QuantizationMethod.SYMMETRIC,
+        default_weight_attr_config=default_weight_attr_config,
+        attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config, BIAS_ATTR: bias_config},
         activation_n_bits=8,
-        weights_n_bits=8,
-        weights_per_channel_threshold=True,
-        enable_weights_quantization=True,
         enable_activation_quantization=True,
         quantization_preserving=False,
         fixed_scale=None,
         fixed_zero_point=None,
-        weights_multiplier_nbits=None,
         simd_size=None
     )
 
@@ -112,9 +132,9 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                         tp.get_default_quantization_config_options().clone_and_edit(
                             quantization_preserving=True))
 
+        fc_qco = tp.get_default_quantization_config_options()
         fc = tp.OperatorsSet("FullyConnected",
-                             tp.get_default_quantization_config_options().clone_and_edit(
-                                 weights_per_channel_threshold=False))
+                             fc_qco.clone_and_edit_weight_attribute(weights_per_channel_threshold=False))
 
         tp.OperatorsSet("L2Normalization",
                         tp.get_default_quantization_config_options().clone_and_edit(

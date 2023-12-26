@@ -97,7 +97,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
 
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", no_quant_list)
-        tp.OperationsSetToLayers("Conv", conv_list + depthwise_conv_list)
+        tp.OperationsSetToLayers("Conv", conv_list + depthwise_conv_list) # TODO: check if we can do the mapping here
         tp.OperationsSetToLayers("FullyConnected", [Dense])
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                              tf.nn.relu6,

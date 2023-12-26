@@ -77,7 +77,6 @@ def set_quantization_configs_to_node(node: BaseNode,
 
     # Create QC candidates for weights and activation combined
     weight_channel_axis = fw_info.kernel_channels_mapping.get(node.type)[0]
-
     node.candidates_quantization_cfg = _create_node_candidates_qc(quant_config,
                                                                   fw_info,
                                                                   weight_channel_axis,
@@ -197,18 +196,17 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
     """
 
     candidates = []
+
+    # TODO: Currently, we are using fw_info to get the kernel attribute, but this would changed once we enabe multi
+    #  attribute quantization via AttributeQuantizationComfng class (needs to be implemented)
+
+    kernel_attr = fw_info.get_kernel_op_attributes(node_type)
+    assert len(kernel_attr) == 1
+    kernel_attr = kernel_attr[0]
+
     if mixed_precision_enable:
         for op_cfg in node_qc_options.quantization_config_list:
             candidate_nbits_qc = copy.deepcopy(qc)
-
-            # TODO: Currently, we are using fw_info to get the kernel attribute, but this would changed once we enabe multi
-            #  attribute quantization via AttributeQuantizationComfng class (needs to be implemented)
-
-            kernel_attr = fw_info.get_kernel_op_attributes(node_type)
-            assert len(kernel_attr) == 1
-            kernel_attr = kernel_attr[0]
-            # kernel_qc = op_cfg.attr_weights_configs_mapping.get(kernel_attr)
-
             candidates.append(create_node_qc_candidate(candidate_nbits_qc,
                                                        fw_info,
                                                        weight_channel_axis,
@@ -222,6 +220,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
         candidates.append(create_node_qc_candidate(qc,
                                                    fw_info,
                                                    weight_channel_axis,
-                                                   node_qc_options.base_config))
+                                                   node_qc_options.base_config,
+                                                   kernel_attr))
 
     return candidates

@@ -16,23 +16,44 @@
 import unittest
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
 from model_compression_toolkit.target_platform_capabilities.target_platform import get_default_quantization_config_options
 
 tp = mct.target_platform
 
+_default_weight_attr_config = tp.AttributeQuantizationConfig(
+    weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+    weights_n_bits=8,
+    weights_per_channel_threshold=False,
+    enable_weights_quantization=False,
+    lut_values_bitwidth=None)
+
+_kernel_base_config = tp.AttributeQuantizationConfig(
+    weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+    weights_n_bits=8,
+    weights_per_channel_threshold=True,
+    enable_weights_quantization=True,
+    lut_values_bitwidth=None)
+
+_bias_config = tp.AttributeQuantizationConfig(
+    weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+    weights_n_bits=FLOAT_BITWIDTH,
+    weights_per_channel_threshold=False,
+    enable_weights_quantization=False,
+    lut_values_bitwidth=None)
+
 TEST_QC = tp.OpQuantizationConfig(enable_activation_quantization=True,
-                                   enable_weights_quantization=True,
-                                   activation_n_bits=8,
-                                   weights_n_bits=8,
-                                   weights_per_channel_threshold=True,
-                                   activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-                                   weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-                                   quantization_preserving=False,
-                                   fixed_scale=None,
-                                   fixed_zero_point=None,
-                                   weights_multiplier_nbits=None,
-                                   simd_size=None)
+                                  default_weight_attr_config=_default_weight_attr_config,
+                                  attr_weights_configs_mapping={KERNEL_ATTR: _kernel_base_config,
+                                                                BIAS_ATTR: _bias_config},
+                                  activation_n_bits=8,
+                                  activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+                                  quantization_preserving=False,
+                                  fixed_scale=None,
+                                  fixed_zero_point=None,
+                                  simd_size=None)
 
 TEST_QCO = tp.QuantizationConfigOptions([TEST_QC])
 

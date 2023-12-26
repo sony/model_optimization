@@ -16,6 +16,8 @@ import torch
 from torch.nn import Conv2d, Linear, BatchNorm2d, ConvTranspose2d, Hardtanh, ReLU, ReLU6
 from torch.nn.functional import relu, relu6, hardtanh
 
+from model_compression_toolkit.core.pytorch.constants import BIAS
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR
 from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_tpc.v1.tp_model import get_tp_model
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_tpc.v1 import __version__ as TPC_VERSION
@@ -41,15 +43,20 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
+    conv_layers = [Conv2d,
+                   torch.nn.functional.conv2d,
+                   ConvTranspose2d,
+                   torch.nn.functional.conv_transpose2d]
+
     pytorch_tpc = tp.TargetPlatformCapabilities(tp_model,
+                                                weights_attributes_mapping={
+                                                    tuple(conv_layers + [Linear]):
+                                                        {KERNEL_ATTR: PYTORCH_KERNEL, BIAS_ATTR: BIAS}},
                                                 name=name,
                                                 version=TPC_VERSION)
 
     with pytorch_tpc:
-        tp.OperationsSetToLayers("Conv", [Conv2d,
-                                          torch.nn.functional.conv2d,
-                                          ConvTranspose2d,
-                                          torch.nn.functional.conv_transpose2d])
+        tp.OperationsSetToLayers("Conv", conv_layers)
 
         tp.OperationsSetToLayers("Linear", [Linear])
 

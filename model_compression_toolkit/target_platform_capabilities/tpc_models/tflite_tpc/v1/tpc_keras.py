@@ -15,6 +15,10 @@
 import tensorflow as tf
 from packaging import version
 
+from model_compression_toolkit.core.keras.constants import BIAS
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, \
+    KERAS_DEPTHWISE_KERNEL
+
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, Dense, Reshape, ZeroPadding2D, AveragePooling2D, Activation, DepthwiseConv2D, \
         MaxPooling2D, ReLU, Add, Softmax, Concatenate, Multiply, Maximum, Minimum, BatchNormalization
@@ -55,6 +59,11 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     """
 
     keras_tpc = tp.TargetPlatformCapabilities(tp_model,
+                                              weights_attributes_mapping={
+                                                  tuple([Conv2D, Dense]):
+                                                      {KERNEL_ATTR: KERAS_KERNEL, BIAS_ATTR: BIAS},
+                                                  tuple([DepthwiseConv2D]):
+                                                      {KERNEL_ATTR: KERAS_DEPTHWISE_KERNEL, BIAS_ATTR: BIAS}},
                                               name=name,
                                               version=TPC_VERSION)
 

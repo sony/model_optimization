@@ -60,7 +60,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     #  Other parameters are set to what we eventually want to quantize by default
     #  when we enable multi-attributes quantization - THIS NEED TO BE MODIFIED IN ALL TP MODELS!
     default_weight_attr_config = AttributeQuantizationConfig(
-        weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
+        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
         weights_n_bits=8,
         weights_per_channel_threshold=False,
         enable_weights_quantization=False,
@@ -74,7 +74,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         lut_values_bitwidth=None)
 
     bias_config = AttributeQuantizationConfig(
-        weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
+        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
         weights_n_bits=FLOAT_BITWIDTH,
         weights_per_channel_threshold=False,
         enable_weights_quantization=False,
@@ -83,6 +83,17 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     # Create a quantization config.
     # A quantization configuration defines how an operator
     # should be quantized on the modeled hardware:
+    eight_bits_default = tp.OpQuantizationConfig(
+        default_weight_attr_config=default_weight_attr_config,
+        attr_weights_configs_mapping={},
+        activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=8,
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        fixed_scale=None,
+        fixed_zero_point=None,
+        simd_size=32)
+
     eight_bits = tp.OpQuantizationConfig(
         default_weight_attr_config=default_weight_attr_config,
         attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config, BIAS_ATTR: bias_config},
@@ -102,7 +113,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     four_bits = eight_bits.clone_and_edit(attr_weights_configs_mapping=
                                           {KERNEL_ATTR: kernel_base_config.clone_and_edit(weights_n_bits=4),
                                            BIAS_ATTR: bias_config},
-                                          simd_size=eight_bits.simd_size*2)
+                                          simd_size=eight_bits.simd_size*2) # TODO: clone and edit the opconfig with specific attr config per attr name
     two_bits = eight_bits.clone_and_edit(attr_weights_configs_mapping=
                                          {KERNEL_ATTR: kernel_base_config.clone_and_edit(weights_n_bits=2),
                                           BIAS_ATTR: bias_config},
@@ -110,7 +121,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
 
     mixed_precision_cfg_list = [eight_bits, four_bits, two_bits]
 
-    return eight_bits, mixed_precision_cfg_list
+    return eight_bits, mixed_precision_cfg_list # TODO: eight_bits needs to be eight_bit_default (without kernel and bias attrs). also need the eight_bit as "base".
 
 
 def generate_tp_model(default_config: OpQuantizationConfig,

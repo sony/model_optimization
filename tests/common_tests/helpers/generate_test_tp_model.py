@@ -15,7 +15,7 @@
 import copy
 from typing import Dict, List, Any
 
-from model_compression_toolkit.target_platform_capabilities.constants import OPS_SET_LIST
+from model_compression_toolkit.target_platform_capabilities.constants import OPS_SET_LIST, KERNEL_ATTR, BIAS_ATTR
 from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_tp_model
 import model_compression_toolkit as mct
@@ -25,7 +25,20 @@ tp = mct.target_platform
 
 def generate_test_tp_model(edit_params_dict, name=""):
     base_config, op_cfg_list = get_op_quantization_configs()
-    updated_config = base_config.clone_and_edit(**edit_params_dict)
+
+    # separate weights attribute parameters from the requested param to edit
+    weights_params_names = [name for name in tp.AttributeQuantizationConfig.__init__.__code__.co_varnames if name != 'self']
+    weights_params = {k: v for k, v in edit_params_dict.items() if k in weights_params_names}
+    rest_params = {k: v for k, v in edit_params_dict.items() if k not in list(weights_params.keys())}
+
+    # this util function enables to edit only the kernel quantization params in the TPC,
+    # because it's the most general use for it that we have in our tests.
+    # editing other attribute's config require specific solution per test.
+    attr_weights_configs_mapping = base_config.attr_weights_configs_mapping
+    attr_weights_configs_mapping[KERNEL_ATTR] = \
+        attr_weights_configs_mapping[KERNEL_ATTR].clone_and_edit(**weights_params)
+    updated_config = base_config.clone_and_edit(attr_weights_configs_mapping=attr_weights_configs_mapping,
+                                                **rest_params)
 
     # the target platform model's options config list must contain the given base config
     # this method only used for non-mixed-precision tests
@@ -40,8 +53,15 @@ def generate_test_tp_model(edit_params_dict, name=""):
 def generate_mixed_precision_test_tp_model(base_cfg, mp_bitwidth_candidates_list, name=""):
     mp_op_cfg_list = []
     for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
-        candidate_cfg = base_cfg.clone_and_edit(weights_n_bits=weights_n_bits,
-                                                activation_n_bits=activation_n_bits)
+        # attr_weights_configs_mapping = base_cfg.attr_weights_configs_mapping
+        # attr_weights_configs_mapping[KERNEL_ATTR] = \
+        #     attr_weights_configs_mapping[KERNEL_ATTR].clone_and_edit(weights_n_bits=weights_n_bits)
+        # candidate_cfg = base_cfg.clone_and_edit(attr_weights_configs_mapping={KERNEL_ATTR: base_cfg.attr_weights_configs_mapping[KERNEL_ATTR].clone_and_edit(weights_n_bits=weights_n_bits)}.update({k: v for k, v in base_cfg.attr_weights_configs_mapping.items() if k != KERNEL_ATTR}), activation_n_bits=activation_n_bits)
+        candidate_cfg = base_cfg.clone_and_edit(attr_weights_configs_mapping=
+                                              {KERNEL_ATTR:
+                                                   base_cfg.attr_weights_configs_mapping[KERNEL_ATTR].clone_and_edit(weights_n_bits=weights_n_bits),
+                                               **{k: v for k, v in base_cfg.attr_weights_configs_mapping.items() if k != KERNEL_ATTR}},
+                                              activation_n_bits=activation_n_bits)
         mp_op_cfg_list.append(candidate_cfg)
 
     return generate_tp_model(default_config=base_cfg,
@@ -53,7 +73,10 @@ def generate_mixed_precision_test_tp_model(base_cfg, mp_bitwidth_candidates_list
 def generate_tp_model_with_activation_mp(base_cfg, mp_bitwidth_candidates_list, name="activation_mp_model"):
     mp_op_cfg_list = []
     for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
-        candidate_cfg = base_cfg.clone_and_edit(weights_n_bits=weights_n_bits,
+        attr_weights_configs_mapping = base_cfg.attr_weights_configs_mapping
+        attr_weights_configs_mapping[KERNEL_ATTR] = \
+            attr_weights_configs_mapping[KERNEL_ATTR].clone_and_edit(weights_n_bits=weights_n_bits)
+        candidate_cfg = base_cfg.clone_and_edit(attr_weights_configs_mapping=attr_weights_configs_mapping,
                                                 activation_n_bits=activation_n_bits)
         mp_op_cfg_list.append(candidate_cfg)
 
