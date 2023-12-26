@@ -16,7 +16,7 @@
 
 import tensorflow as tf
 
-from model_compression_toolkit.core.keras.constants import ACTIVATION, LINEAR
+from model_compression_toolkit.core.keras.constants import ACTIVATION, LINEAR, AXIS, SOFTMAX, SOFTMAX_AXIS_DEFAULT
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.utils import get_layers_from_model_by_type
@@ -40,7 +40,14 @@ class ActivationDecompositionTest(BaseKerasFeatureNetworkTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layer = get_layers_from_model_by_type(quantized_model, layers.Conv2D)[0]
-        activation_layer = get_layers_from_model_by_type(quantized_model, layers.Activation)[0]
         self.unit_test.assertTrue(conv_layer.get_config().get(ACTIVATION) == LINEAR)
-        self.unit_test.assertTrue(activation_layer.get_config().get(ACTIVATION) == self.activation_function)
+
+        if self.activation_function==SOFTMAX:
+            activation_layer = get_layers_from_model_by_type(quantized_model, keras.layers.Softmax)[0]
+            self.unit_test.assertTrue(activation_layer.get_config().get(AXIS) == SOFTMAX_AXIS_DEFAULT)
+
+        else:
+            activation_layer = get_layers_from_model_by_type(quantized_model, layers.Activation)[0]
+            self.unit_test.assertTrue(activation_layer.get_config().get(ACTIVATION) == self.activation_function)
+
 

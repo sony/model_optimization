@@ -460,10 +460,11 @@ class FeatureNetworkTest(unittest.TestCase):
                                       post_add_nbits=7).run_test()
 
     def test_activation_decomposition(self):
+        ActivationDecompositionTest(self, activation_function='softmax').run_test()
         ActivationDecompositionTest(self, activation_function='swish').run_test()
         ActivationDecompositionTest(self, activation_function='relu').run_test()
         ActivationDecompositionTest(self, activation_function='tanh').run_test()
-        ActivationDecompositionTest(self, activation_function='softmax').run_test()
+
 
     def test_experimental_exporter(self):
         ExportableModelTest(self).run_test()
