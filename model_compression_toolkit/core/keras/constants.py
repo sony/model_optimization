@@ -114,3 +114,6 @@ PAD = 'pad'
 
 # Special/Custom layers strings
 COMBINED_NMS = 'combined_non_max_suppression'
+
+# Keras activation layers defaults:
+SOFTMAX_AXIS_DEFAULT = -1
