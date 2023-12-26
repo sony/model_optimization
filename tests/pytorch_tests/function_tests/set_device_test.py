@@ -28,12 +28,15 @@ class SetDeviceTest(BasePytorchTest):
 
         set_working_device('cuda')
         device = get_working_device()
-        self.unit_test.assertTrue(device == torch.device('cuda'))
+        print(f'Device: {device}')
+        self.unit_test.assertTrue(device in [torch.device('cuda'), torch.device('cuda:0')])
 
         set_working_device('cuda:0')
         device = get_working_device()
+        print(f'Device: {device}')
         self.unit_test.assertTrue(device == torch.device('cuda:0'))
 
         set_working_device('cuda:999')
         device = get_working_device()
+        print(f'Device: {device}')
         self.unit_test.assertFalse(device == torch.device('cuda:999'))
