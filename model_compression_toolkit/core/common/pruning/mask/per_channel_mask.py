@@ -94,7 +94,7 @@ class PerChannelMask:
         self._mask = {}  # Initialize the dictionary for pruning masks.
         for prunable_node in self.prunable_nodes:
             num_oc = self._compute_num_of_out_channels(prunable_node)  # Number of output channels for the node.
-            layer_mask = np.zeros(num_oc)  # Initialize the mask with zeros.
+            layer_mask = np.full(num_oc, MaskIndicator.PRUNED.value) # Initialize the mask with zeros.
             self._mask[prunable_node] = layer_mask
 
     def _compute_num_of_out_channels(self, node: BaseNode) -> int:

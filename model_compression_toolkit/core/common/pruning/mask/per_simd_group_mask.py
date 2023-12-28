@@ -106,7 +106,7 @@ class PerSIMDGroupMask:
         self._mask_simd = {}  # Initialize the dictionary for SIMD group masks.
         for prunable_node in self.prunable_nodes:
             num_groups = len(self.simd_groups_indices[prunable_node])  # Number of SIMD groups for the node.
-            layer_mask_per_simd_group = np.zeros(num_groups)  # Initialize the mask with zeros.
+            layer_mask_per_simd_group = np.full(num_groups, MaskIndicator.PRUNED.value)  # Initialize the mask with zeros.
             self._mask_simd[prunable_node] = layer_mask_per_simd_group
 
     def _update_mandatory_mask(self):
