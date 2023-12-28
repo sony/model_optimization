@@ -25,16 +25,19 @@ in the future.
         <th colspan="2">Quantized</th>
     </tr>
     <tr>
-        <th>Accuracy</th>
+        <th>Performance</th>
         <th>Size [MB]</th>
-        <th>Accuracy</th>
+        <th>Performance</th>
         <th>Size [MB]</th>
     </tr>
     <!-- Classification Models (ImageNet) -->
     <tr>
+        <th colspan="8">Top-1 Accuracy</th>
+    </tr>
+    <tr>
         <td rowspan="12">Classification</td>
         <td rowspan="4"><a href="https://github.com/pytorch/vision">torchvision</a></td>
-        <td>mobilenet_v2</td>
+        <td> <a href="https://colab.research.google.com/github/sony/model_optimization/blob/quickstart-table/tutorials/quick_start/quick_start.ipynb">mobilenet_v2</a></td>
         <td>ImageNet</td>
         <td>72.15%</td>
         <td>13.88</td>
@@ -133,22 +136,34 @@ in the future.
     </tr>
     <!-- Object Detection Models (COCO) -->
     <tr>
+        <th colspan="8">mAP</th>
+    </tr>
+    <tr>
         <td rowspan="2">Object Detection</td>
-        <td rowspan="2"><a href="https://github.com/ultralytics">ultralytics</a></td>
+        <td rowspan="3"><a href="https://github.com/ultralytics">ultralytics</a></td>
         <td>yolov8n</td>
         <td>COCO</td>
-        <td>37.04%</td>
+        <td>37.04</td>
         <td>12.6</td>
-        <td>36.17%</td>
+        <td>36.17</td>
         <td>3.15</td>
     </tr>
     <tr>
         <td>yolov8m</td>
         <td>COCO</td>
-        <td>49.99%</td>
+        <td>49.99</td>
         <td>103.6</td>
-        <td>49.4%</td>
+        <td>49.4</td>
         <td>25.9</td>
+    </tr>
+    <tr>
+        <td >Object Detection</td>
+        <td>yolov8n-seg</td>
+        <td>COCO</td>
+        <td>30.51</td>
+        <td>13.6</td>
+        <td>30.18</td>
+        <td>3.4</td>
     </tr>
 </table>
 
