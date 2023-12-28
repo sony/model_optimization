@@ -140,6 +140,29 @@ In the following table we present the ImageNet validation results for these mode
 
 For more results, please refer to [quick start](https://github.com/sony/model_optimization/tree/main/tutorials/quick_start).
 
+### Structured Pruning
+MCT introduces a structured and hardware-aware model pruning.
+This pruning technique is designed to compress models for specific hardware architectures, 
+taking into account the target platform's Single Instruction, Multiple Data (SIMD) capabilities. 
+By pruning groups of channels (SIMD groups), our approach not only reduces model size 
+and complexity, but ensures that better utilization of channels is in line with the SIMD architecture 
+for a target KPI of weights memory footprint.
+
+
+<u>_Note: Currently, only Keras models pruning is supported._</u>
+
+#### Results
+
+Results for applying pruning to reduce the parameters of the following models by 50%:
+
+| Model           | Dense Model Accuracy | Pruned Model Accuracy |
+|-----------------|----------------------|-----------------------|
+| ResNet50 [2]    | 75.1                 | 72.4                  |
+| DenseNet121 [2] | 75.0                 | 71.15                 |
+
+
+
+
 ## Contributions
 MCT aims at keeping a more up-to-date fork and welcomes contributions from anyone.
 
@@ -153,7 +176,7 @@ MCT aims at keeping a more up-to-date fork and welcomes contributions from anyon
 
 [1] Habi, H.V., Peretz, R., Cohen, E., Dikstein, L., Dror, O., Diamant, I., Jennings, R.H. and Netzer, A., 2021. [HPTQ: Hardware-Friendly Post Training Quantization. arXiv preprint](https://arxiv.org/abs/2109.09113).
 
-[2] [MobilNet](https://keras.io/api/applications/mobilenet/#mobilenet-function) from Keras applications.
+[2] [Keras Applications](https://keras.io/api/applications/)
 
 [3] [TORCHVISION.MODELS](https://pytorch.org/vision/stable/models.html) 
 
