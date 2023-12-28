@@ -118,6 +118,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # be used for operations that will be attached to this set's label.
         # Otherwise, it will be a configure-less set (used in fusing):
 
+        generated_tpc.set_simd_padding(is_simd_padding=True)
+
         # May suit for operations like: Dropout, Reshape, etc.
         tp.OperatorsSet("NoQuantization",
                         tp.get_default_quantization_config_options().clone_and_edit(
