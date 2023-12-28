@@ -57,9 +57,9 @@ class LFHImportanceMetric(BaseImportanceMetric):
         self.fw_info = fw_info
 
         # Initialize internal dictionaries for storing intermediate computations.
-        self._entry_node_to_hessian_score = None
-        self._entry_node_count_oc_nparams = None
-        self._entry_node_to_simd_score = None
+        self._entry_node_to_hessian_score = {}
+        self._entry_node_count_oc_nparams = {}
+        self._entry_node_to_simd_score = {}
 
     def get_entry_node_to_simd_score(self, entry_nodes: List[BaseNode]) -> Tuple[Dict[BaseNode, np.ndarray], Dict[BaseNode, List[np.ndarray]]]:
         """
@@ -96,7 +96,7 @@ class LFHImportanceMetric(BaseImportanceMetric):
         # Compute SIMD scores for each group.
         for node, hessian_score in self._entry_node_to_hessian_score.items():
             group_hessian_score = [np.sum(hessian_score[g]) for g in grouped_indices[node]]
-            nparams_by_group = [np.sum(self._entry_node_count_oc_nparams[node][g]) for g in grouped_indices[node]]
+            nparams_by_group = np.asarray([np.sum(self._entry_node_count_oc_nparams[node][g]) for g in grouped_indices[node]])
             entry_node_to_simd_score[node] = np.asarray(group_hessian_score) * _squared_l2_norm_by_groups[node] / nparams_by_group
 
         return entry_node_to_simd_score, grouped_indices
