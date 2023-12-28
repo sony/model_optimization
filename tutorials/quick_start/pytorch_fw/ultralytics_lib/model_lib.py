@@ -25,7 +25,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.replacers import C2fModuleReplacer, \
-    DetectModuleReplacer, YOLOReplacer, DetectionModelModuleReplacer
+    DetectModuleReplacer, YOLOReplacer, DetectionModelModuleReplacer, SegmentModuleReplacer, ForwardReplacer
 from torchvision.transforms import transforms
 
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.replacers import prepare_model_for_ultralytics_val
@@ -60,7 +60,7 @@ class ModelLib(BaseModelLib):
         self.model = self.ultralytics_model.model
         self.model = DetectionModelModuleReplacer().replace(self.model)
         self.model = C2fModuleReplacer().replace(self.model)
-        self.model = DetectModuleReplacer().replace(self.model)
+        self.model = ForwardReplacer[self.ultralytics_model.task].replace(self.model)
 
         # load pre-trained weights
         initialize_weights(self.model)
