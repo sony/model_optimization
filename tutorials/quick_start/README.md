@@ -157,7 +157,7 @@ in the future.
         <td>25.9</td>
     </tr>
     <tr>
-        <td >Object Detection</td>
+        <td >Instance Segmentation</td>
         <td>yolov8n-seg</td>
         <td>COCO</td>
         <td>30.51</td>
