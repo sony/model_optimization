@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import List
+from typing import List, Any
 
 import numpy as np
 
@@ -76,15 +76,15 @@ class PruningSection:
 
     def apply_inner_section_mask(self,
                                  pruning_section_mask: PruningSectionMask,
-                                 fw_impl,
+                                 fw_impl: Any,
                                  fw_info: FrameworkInfo):
         """
         Apply the provided pruning section mask to all nodes within the pruning section.
 
         Args:
             pruning_section_mask (PruningSectionMask): The mask to be applied to the pruning section.
-            fw_impl: Framework-specific implementation for applying the mask.
-            fw_info: Framework-specific information needed to apply the mask.
+            fw_impl (PruningFrameworkImplementation): Framework-specific implementation for applying the mask.
+            fw_info (FrameworkInfo): Framework-specific information needed to apply the mask.
         """
         fw_impl.prune_entry_node(node=self.entry_node,
                                  output_mask=pruning_section_mask.entry_node_oc_mask,

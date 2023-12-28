@@ -729,27 +729,27 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         self.remove_node(node_to_replace)
 
     def get_pruning_sections(self,
-                             fw_impl) -> List[PruningSection]:
+                             fw_impl: Any) -> List[PruningSection]:
         """
         Constructs pruning sections for a given computational graph.
         Each section is created starting from an entry node and includes intermediate and exit nodes.
 
         Args:
-            fw_impl: Implementation of specific framework methods required for pruning.
+            fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
 
         Returns: List of PruningSection in the graph.
         """
         entry_nodes = self.get_pruning_sections_entry_nodes(fw_impl)
         return [self._create_pruning_section(entry_node,  fw_impl) for entry_node in entry_nodes]
 
-    def get_pruning_sections_entry_nodes(self, fw_impl) -> List[BaseNode]:
+    def get_pruning_sections_entry_nodes(self, fw_impl: Any) -> List[BaseNode]:
         """
         Identifies entry nodes for pruning sections within the graph.
         Traverses the graph in a topological order, checking each node for prunability criteria.
         Returns a list of nodes that mark the beginning of a prunable section in the graph.
 
         Args:
-            fw_impl: Implementation of specific framework methods required for pruning.
+            fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
 
         Returns: List of nodes that are entry nodes in the pruning sections of the graph.
 
@@ -760,15 +760,15 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                 prunable_nodes.append(n)
         return prunable_nodes
 
-    def _is_node_topology_prunable(self, entry_node: BaseNode, fw_impl) -> bool:
+    def _is_node_topology_prunable(self, entry_node: BaseNode, fw_impl: Any) -> bool:
         """
         Determines if the topology starting from a given entry node is suitable for pruning.
         Iteratively examines the graph structure, focusing on node connectivity and pruning criteria.
         Returns True if the topology is prunable, False otherwise.
 
         Args:
-            entry_node: The node to start the topology check from.
-            fw_impl: Implementation of specific framework methods required for pruning.
+            entry_node (BaseNode): The node to start the topology check from.
+            fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
 
         Returns: Whether this node is a start of a pruning section according to the graph topology or not.
 
@@ -792,15 +792,15 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return False
 
 
-    def _create_pruning_section(self, entry_node: BaseNode, fw_impl) -> PruningSection:
+    def _create_pruning_section(self, entry_node: BaseNode, fw_impl: Any) -> PruningSection:
         """
         Creates a PruningSection object starting from a given entry node.
         Includes logic to find intermediate and exit nodes to complete the section.
         Ensures the provided entry node is a valid starting point for pruning.
 
         Args:
-            entry_node: The entry node to create the section it starts.
-            fw_impl: Implementation of specific framework methods required for pruning.
+            entry_node (BaseNode): The entry node to create the section it starts.
+            fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
 
         Returns: The pruning section that starts with node entry_node.
 
@@ -819,14 +819,14 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                               intermediate_nodes=intermediate_nodes,
                               exit_node=exit_node)
 
-    def _find_intermediate_and_exit_nodes(self, entry_node: BaseNode, fw_impl) -> Tuple[List[BaseNode], BaseNode]:
+    def _find_intermediate_and_exit_nodes(self, entry_node: BaseNode, fw_impl: Any) -> Tuple[List[BaseNode], BaseNode]:
         """
         Identifies intermediate and exit nodes for a pruning section starting from an entry node.
         Iterates through connected nodes to build the complete structure of the pruning section.
 
         Args:
-            entry_node: An entry node to find the intermediate and exit nodes of its section.
-            fw_impl: Implementation of specific framework methods required for pruning.
+            entry_node (BaseNode): An entry node to find the intermediate and exit nodes of its section.
+            fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
 
         Returns: A tuple containing a list of intermediate nodes and the exit node.
 
