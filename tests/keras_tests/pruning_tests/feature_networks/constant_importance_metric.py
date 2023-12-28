@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.pruning.importance_metrics.base_importance_metric import BaseImportanceMetric
 import numpy as np
 
-from model_compression_toolkit.core.common.pruning.importance_metrics.importance_metric_factory import im_dict
+from model_compression_toolkit.core.common.pruning.importance_metrics.importance_metric_factory import IMPORTANCE_METRIC_DICT
 
 
 class ConstantImportanceMetric(BaseImportanceMetric):
@@ -80,4 +80,4 @@ def add_const_importance_metric(first_num_oc, second_num_oc, simd=1):
     ConstantImportanceMetric.simd = simd
 
     # Update the global dictionary mapping importance metrics to their corresponding classes.
-    im_dict.update({ConstImportanceMetric.CONST: ConstantImportanceMetric})
+    IMPORTANCE_METRIC_DICT.update({ConstImportanceMetric.CONST: ConstantImportanceMetric})

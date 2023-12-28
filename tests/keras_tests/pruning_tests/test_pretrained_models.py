@@ -25,7 +25,7 @@ import numpy as np
 from packaging import version
 
 from model_compression_toolkit.constants import FP32_BYTES_PER_PARAMETER
-from model_compression_toolkit.core.common.pruning.importance_metrics.importance_metric_factory import im_dict
+from model_compression_toolkit.core.common.pruning.importance_metrics.importance_metric_factory import IMPORTANCE_METRIC_DICT
 from tests.keras_tests.pruning_tests.random_importance_metric import RandomImportanceMetric
 
 keras = tf.keras
@@ -36,7 +36,7 @@ NUM_PRUNING_RATIOS = 1
 class TestImportanceMetric(Enum):
     RANDOM = 'random'
 
-im_dict.update({TestImportanceMetric.RANDOM: RandomImportanceMetric})
+IMPORTANCE_METRIC_DICT.update({TestImportanceMetric.RANDOM: RandomImportanceMetric})
 
 class PruningPretrainedModelsTest(unittest.TestCase):
     def representative_dataset(self, in_shape=(1,224,224,3)):

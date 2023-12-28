@@ -18,7 +18,7 @@ from model_compression_toolkit.core.common.pruning.importance_metrics.base_impor
 from model_compression_toolkit.core.common.pruning.importance_metrics.lfh_importance_metric import LFHImportanceMetric
 
 # A dictionary mapping each importance metric enum to its corresponding class.
-im_dict = {ImportanceMetric.LFH: LFHImportanceMetric}
+IMPORTANCE_METRIC_DICT = {ImportanceMetric.LFH: LFHImportanceMetric}
 
 def get_importance_metric(im: ImportanceMetric, **kwargs) -> BaseImportanceMetric:
     """
@@ -32,7 +32,7 @@ def get_importance_metric(im: ImportanceMetric, **kwargs) -> BaseImportanceMetri
         BaseImportanceMetric: An instance of a class derived from BaseImportanceMetric corresponding to the provided enum.
     """
     # Retrieve the corresponding class for the provided importance metric enum from the dictionary.
-    im = im_dict.get(im)
+    im = IMPORTANCE_METRIC_DICT.get(im)
 
     # Create and return an instance of the importance metric class with the provided keyword arguments.
     return im(**kwargs)
