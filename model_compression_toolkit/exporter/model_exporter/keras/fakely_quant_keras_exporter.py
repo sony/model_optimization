@@ -46,18 +46,21 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
     def __init__(self,
                  model: keras.models.Model,
                  is_layer_exportable_fn: Callable,
-                 save_model_path: str):
+                 save_model_path: str,
+                 verbose: bool = True):
         """
 
         Args:
             model: Model to export.
             is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
             save_model_path: Path to save the exported model.
+            verbose: Whether to log information about the export process or not.
         """
 
         super().__init__(model,
                          is_layer_exportable_fn,
                          save_model_path)
+        self._verbose = verbose
 
     def export(self) -> Dict[str, type]:
         """
@@ -138,7 +141,8 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
         if self.exported_model is None:
             Logger.critical(f'Exporter can not save model as it is not exported')  # pragma: no cover
 
-        Logger.info(f'Exporting FQ Keras model to: {self.save_model_path}')
+        if self._verbose:
+            Logger.info(f'Exporting FQ Keras model to: {self.save_model_path}')
 
         keras.models.save_model(self.exported_model, self.save_model_path)
 
