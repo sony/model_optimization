@@ -72,7 +72,8 @@ class TestGetGPTQConfig(BasePytorchTest):
         cc = CoreConfig(quantization_config=qc)
 
         gptqv2_config = get_pytorch_gptq_config(n_epochs=1,
-                                                optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4))
+                                                optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
+                                                regularization_factor=0.001)
         gptqv2_config.rounding_type = self.rounding_type
         gptqv2_config.train_bias = self.train_bias
 
