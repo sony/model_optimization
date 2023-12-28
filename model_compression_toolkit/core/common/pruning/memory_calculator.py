@@ -104,7 +104,7 @@ class MemoryCalculator:
         nparams = 0
         shared_nodes = self._get_nodes_from_adjacent_sections(pruning_sections)
         for node in shared_nodes:
-            node_input_mask = self._get_node_input_mask(node, pruning_sections, masks)
+            node_input_mask = self._get_exit_node_input_mask(node, pruning_sections, masks)
             node_output_mask = masks.get(node)
             nparams += self.get_pruned_node_num_params(node, node_input_mask, node_output_mask, include_padded_channels)
         return nparams
@@ -146,9 +146,9 @@ class MemoryCalculator:
         Returns:
             PruningSectionMask: The combined pruning mask for the section.
         """
-        first_node_input_channels_mask = self._get_node_input_mask(pruning_section.entry_node,
-                                                                   pruning_sections,
-                                                                   masks)
+        first_node_input_channels_mask = self._get_exit_node_input_mask(pruning_section.entry_node,
+                                                                        pruning_sections,
+                                                                        masks)
         second_node_output_mask = masks.get(pruning_section.exit_node)
 
         return PruningSectionMask(
@@ -182,22 +182,22 @@ class MemoryCalculator:
                 total_nparams += node_nparams
         return total_nparams
 
-    def _get_node_input_mask(self,
-                             node: BaseNode,
-                             pruning_sections: List[PruningSection],
-                             masks: Dict[BaseNode, np.ndarray]) -> np.ndarray:
+    def _get_exit_node_input_mask(self,
+                                  node: BaseNode,
+                                  pruning_sections: List[PruningSection],
+                                  masks: Dict[BaseNode, np.ndarray]) -> np.ndarray:
         """
-        Retrieves the input mask for a given node based on the pruning sections.
-        The function search the input channels mask of a node based on the output-channels mask
-        of the previous node in the graph. If such oc mask is not found, a mask of 1s is returned.
+        Retrieves the input mask for an exit node based on the pruning sections.
+        The function searches for the input channels mask of an exit node based on the output-channels mask
+        of the corresponding entry node in the graph. If such mask is not found, a mask of 1s is returned.
 
         Args:
-            node (BaseNode): The node for which the input mask is required.
+            node (BaseNode): The exit node for which the input mask is required.
             pruning_sections (List[PruningSection]): A list of pruning sections in the graph.
             masks (Dict[BaseNode, np.ndarray]): A dictionary mapping nodes to their respective pruning masks.
 
         Returns:
-            np.ndarray: The input mask for the specified node, or 1s mask if not found.
+            np.ndarray: The input mask for the specified exit node, or 1s mask if not found.
         """
         for section in pruning_sections:
             # If the node is the exit node of a pruning section, return the entry node's mask.
