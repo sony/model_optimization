@@ -87,12 +87,23 @@ class LSQWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         self.threshold_shape = self.threshold_values.shape
         self.per_channel = self.quantization_config.weights_per_channel_threshold
         self.channel_axis = self.quantization_config.weights_channels_axis
+
+        if self.per_channel and self.channel_axis not in [-1, len(self.threshold_shape) - 1]:
+            # Tensorflow's fake_quant_with_min_max_vars_per_channel only works on last axis, so
+            # need to move the quantization axis to the last axis
+            self.perm_vec = list(np.arange(len(self.threshold_shape)))
+            self.perm_vec[self.channel_axis] = len(self.threshold_shape) - 1
+            self.perm_vec[len(self.threshold_shape) - 1] = self.channel_axis
+        else:
+            self.perm_vec = None
+
+
         self.threshold_values = np.reshape(np.asarray(self.threshold_values), [-1]) if self.per_channel else float(self.threshold_values)
         self.num_bits = self.quantization_config.weights_n_bits
         n_pos_bits = self.num_bits - int(C.WEIGHTS_SIGNED)
         self.min_int = -int(C.WEIGHTS_SIGNED) * (2 ** n_pos_bits)
         self.max_int = 2 **n_pos_bits - 1
-        self.scale_factor = 1.0 / np.sqrt(self.max_int * self.threshold_values.size)
+        self.scale_factor = 1.0 / np.sqrt(self.max_int * self.threshold_values.size) if self.per_channel else 1.0 / np.sqrt(self.max_int)
         if self.power_of_two:
             self.threshold_values = np.power(2.0, np.ceil(np.log2(np.maximum(self.threshold_values, C.MIN_THRESHOLD))))
 
@@ -126,15 +137,22 @@ class LSQWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         Args:
             inputs: Input tensor to quantize.
             training: Whether the graph is in training mode.
-            weights: Dictionary of weights the quantizer can use to quantize the tensor.
-            **kwargs: Additional variables the quantizer may receive.
 
         Returns:
             The quantized tensor.
         """
 
         thresholds = self.get_quantizer_variable(THRESHOLD_TENSOR)
-        q_tensor = symmetric_lsq_quantizer(inputs, thresholds, self.num_bits, C.WEIGHTS_SIGNED, self.min_int, self.max_int, self.scale_factor)
+        if self.per_channel:
+            if self.perm_vec:
+                inputs = tf.transpose(inputs, perm=self.perm_vec)
+            q_tensor = symmetric_lsq_quantizer(inputs, thresholds, self.num_bits, C.WEIGHTS_SIGNED, self.min_int,
+                                               self.max_int, self.scale_factor)
+            if self.perm_vec:
+                q_tensor = tf.transpose(q_tensor, perm=self.perm_vec)
+        else:
+            q_tensor = symmetric_lsq_quantizer(inputs, thresholds, self.num_bits, C.WEIGHTS_SIGNED, self.min_int,
+                                               self.max_int, self.scale_factor)
         return q_tensor
 
     def convert2inferable(self) -> Union[WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer]:
