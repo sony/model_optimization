@@ -92,7 +92,7 @@ class LSQWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         n_pos_bits = self.num_bits - int(C.WEIGHTS_SIGNED)
         self.min_int = -int(C.WEIGHTS_SIGNED) * (2 ** n_pos_bits)
         self.max_int = 2 **n_pos_bits - 1
-        self.scale_factor = 1.0 / np.sqrt(self.max_int * self.threshold_values.size)
+        self.scale_factor = 1.0 / np.sqrt(self.max_int * self.threshold_values.size) if self.per_channel else 1.0 / np.sqrt(self.max_int)
         if self.power_of_two:
             self.threshold_values = np.power(2.0, np.ceil(np.log2(np.maximum(self.threshold_values, C.MIN_THRESHOLD))))
 
@@ -126,15 +126,14 @@ class LSQWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         Args:
             inputs: Input tensor to quantize.
             training: Whether the graph is in training mode.
-            weights: Dictionary of weights the quantizer can use to quantize the tensor.
-            **kwargs: Additional variables the quantizer may receive.
 
         Returns:
             The quantized tensor.
         """
 
-        thresholds = self.get_quantizer_variable(THRESHOLD_TENSOR)
-        q_tensor = symmetric_lsq_quantizer(inputs, thresholds, self.num_bits, C.WEIGHTS_SIGNED, self.min_int, self.max_int, self.scale_factor)
+        thresholds = tf.reshape(self.get_quantizer_variable(THRESHOLD_TENSOR), self.threshold_shape)
+        q_tensor = symmetric_lsq_quantizer(inputs, thresholds, self.num_bits, C.WEIGHTS_SIGNED, self.min_int,
+                                           self.max_int, self.scale_factor)
         return q_tensor
 
     def convert2inferable(self) -> Union[WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer]:

@@ -136,8 +136,8 @@ class LSQUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
             The quantized tensor.
         """
 
-        min_range = self.get_quantizer_variable(FQ_MIN)
-        max_range = self.get_quantizer_variable(FQ_MAX)
+        min_range = tf.reshape(self.get_quantizer_variable(FQ_MIN), self.min_max_shape)
+        max_range = tf.reshape(self.get_quantizer_variable(FQ_MAX), self.min_max_shape)
         q_tensor = uniform_lsq_quantizer(inputs, min_range, max_range, self.num_bits, self.min_int, self.max_int, self.scale_factor)
         return q_tensor
 
