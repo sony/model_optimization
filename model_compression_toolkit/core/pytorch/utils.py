@@ -15,18 +15,7 @@
 import torch
 import numpy as np
 from typing import Union
-from model_compression_toolkit.core.pytorch.constants import CUDA, CPU
-
-
-def get_working_device() -> str:
-    """
-    Get the working device of the environment
-
-    Returns:
-        Device "cuda" if GPU is available, else "cpu"
-
-    """
-    return torch.device(CUDA if torch.cuda.is_available() else CPU)
+from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 
 
 def set_model(model: torch.nn.Module, train_mode: bool = False):
@@ -44,10 +33,8 @@ def set_model(model: torch.nn.Module, train_mode: bool = False):
     else:
         model.eval()
 
-    if torch.cuda.is_available():
-        model.cuda()
-    else:
-        model.cpu()
+    device = get_working_device()
+    model.to(device)
 
 
 def to_torch_tensor(tensor):

@@ -52,7 +52,7 @@ if FOUND_TORCH:
     from torch.optim import RAdam, Optimizer
     from torch.fx import symbolic_trace
 
-    from model_compression_toolkit.core.pytorch.utils import get_working_device
+    from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 
     # Function to create a DataGenerationConfig object with the specified configuration parameters for Pytorch
     def get_pytorch_data_generation_config(
