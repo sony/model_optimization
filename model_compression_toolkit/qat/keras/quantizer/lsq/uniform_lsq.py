@@ -93,14 +93,6 @@ class LSQUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
         self.max_int = 2**self.num_bits - 1
         self.scale_factor = 1.0 / np.sqrt(self.max_int * self.max_values.size)
 
-        if self.per_channel and self.channel_axis not in [-1, len(self.min_max_shape) - 1]:
-            # Tensorflow's fake_quant_with_min_max_vars_per_channel only works on last axis, so
-            # need to move the quantization axis to the last axis
-            self.perm_vec = list(np.arange(len(self.min_max_shape)))
-            self.perm_vec[self.channel_axis] = len(self.min_max_shape) - 1
-            self.perm_vec[len(self.min_max_shape) - 1] = self.channel_axis
-        else:
-            self.perm_vec = None
 
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
@@ -144,17 +136,9 @@ class LSQUniformWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
             The quantized tensor.
         """
 
-        min_range = self.get_quantizer_variable(FQ_MIN)
-        max_range = self.get_quantizer_variable(FQ_MAX)
-        if self.per_channel:
-            if self.perm_vec:
-                inputs = tf.transpose(inputs, perm=self.perm_vec)
-            q_tensor = uniform_lsq_quantizer(inputs, min_range, max_range, self.num_bits, self.min_int, self.max_int, self.scale_factor)
-            if self.perm_vec:
-                q_tensor = tf.transpose(q_tensor, perm=self.perm_vec)
-        else:
-            q_tensor = uniform_lsq_quantizer(inputs, min_range, max_range, self.num_bits, self.min_int, self.max_int, self.scale_factor)
-
+        min_range = tf.reshape(self.get_quantizer_variable(FQ_MIN), self.min_max_shape)
+        max_range = tf.reshape(self.get_quantizer_variable(FQ_MAX), self.min_max_shape)
+        q_tensor = uniform_lsq_quantizer(inputs, min_range, max_range, self.num_bits, self.min_int, self.max_int, self.scale_factor)
         return q_tensor
 
     def convert2inferable(self) -> BaseKerasInferableQuantizer:

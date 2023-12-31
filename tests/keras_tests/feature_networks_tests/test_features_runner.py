@@ -707,6 +707,10 @@ class FeatureNetworkTest(unittest.TestCase):
                         weights_quantization_method=QuantizationMethod.UNIFORM,
                         activation_quantization_method=QuantizationMethod.UNIFORM,
                         training_method=TrainingMethod.LSQ).run_test()
+        QATWrappersTest(self, layers.DepthwiseConv2D(3, 4, activation='relu'),
+                        weights_quantization_method=QuantizationMethod.UNIFORM,
+                        activation_quantization_method=QuantizationMethod.UNIFORM,
+                        training_method=TrainingMethod.LSQ).run_test()
         QATWrappersTest(self, layers.Dense(3, activation='relu'),
                         weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
                         activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
