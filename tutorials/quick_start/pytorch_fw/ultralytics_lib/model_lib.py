@@ -35,10 +35,12 @@ from tutorials.quick_start.common.constants import MODEL_NAME, BATCH_SIZE, VALID
     COCO_DATASET, VALIDATION_DATASET_FOLDER
 
 from tutorials.quick_start.common.results import DatasetInfo
+from tutorials.resources.utils.coco_evaluation import coco_dataset_generator
+from tutorials.resources.yolov8.yolov8_preprocess import yolov8_preprocess_chw_transpose
 
 from ultralytics.yolo.data.dataset import YOLODataset
 from ultralytics.yolo.utils.torch_utils import initialize_weights
-
+import model_compression_toolkit as mct
 
 class ModelLib(BaseModelLib):
     """
@@ -54,6 +56,7 @@ class ModelLib(BaseModelLib):
         # Load model from ultralytics
         self.ultralytics_model = YOLOReplacer(args[MODEL_NAME])
         self.dataset_name = COCO_DATASET
+        self.preprocess = yolov8_preprocess_chw_transpose
         model_weights = self.ultralytics_model.model.state_dict()
 
         # Replace few modules with quantization-friendly modules
@@ -85,34 +88,13 @@ class ModelLib(BaseModelLib):
             A generator for the representative dataset, as the MCT expects
 
         """
-        stride = 32
-        names = self.ultralytics_model.model.names
-
-        class hyp(Enum):
-            mask_ratio = 4
-            overlap_mask = True
-
-        dataset = YOLODataset(
-            img_path=representative_dataset_folder,
-            imgsz=640,
-            batch_size=batch_size,
-            augment=False,  # augmentation
-            hyp=hyp,
-            rect=False,  # rectangular batches
-            cache=None,
-            single_cls=False,
-            stride=int(stride),
-            pad=0.5,
-            prefix='',
-            use_segments=False,
-            use_keypoints=False,
-            names=names)
-
-        dl = DataLoader(dataset=dataset,
-                      batch_size=batch_size,
-                      shuffle=False)
-
-        return get_representative_dataset(dl, n_iter, 'img', transforms.Normalize(0,255))
+        image_data_loader = mct.FolderImageLoader(representative_dataset_folder,
+                                                  preprocessing=[self.preprocess],
+                                                  batch_size=batch_size)
+        def representative_data_gen() -> list:
+            for _ in range(n_iter):
+                yield [image_data_loader.sample()]
+        return representative_data_gen
 
     def evaluate(self, model):
         """
