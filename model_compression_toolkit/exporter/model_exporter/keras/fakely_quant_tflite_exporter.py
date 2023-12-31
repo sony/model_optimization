@@ -59,9 +59,10 @@ class FakelyQuantTFLiteExporter(FakelyQuantKerasExporter):
         # Use Keras exporter to quantize model's weights before converting it to TFLite.
         # Since exporter saves the model, we use a tmp path for saving, and then we delete it automatically.
         with tempfile.NamedTemporaryFile(suffix=TMP_KERAS_EXPORT_FORMAT) as tmp_file:
-            custom_objects = FakelyQuantKerasExporter(self.model,
-                                                      self.is_layer_exportable_fn,
-                                                      tmp_file.name).export()
+            FakelyQuantKerasExporter(self.model,
+                                     self.is_layer_exportable_fn,
+                                     tmp_file.name,
+                                     verbose=False).export()
 
             model = keras_load_quantized_model(tmp_file.name)
 
