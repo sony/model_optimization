@@ -70,7 +70,7 @@ def update_kernel_for_bn_folding_fn(conv_node: BaseNode,
         # PyTorch ConvTranspose2d kernel with groups stacks groups on in_channels axis, so need to reshape the kernel
         # so the groups are stacked on the out_channels axis to match the scale vector (then reshape back to original
         # shape)
-        _in_channels = int(conv_node.framework_attr[IN_CHANNELS]/conv_node.framework_attr['groups'])
+        _in_channels = int(conv_node.framework_attr[IN_CHANNELS]/conv_node.framework_attr[GROUPS])
         _out_channels = conv_node.framework_attr[OUT_CHANNELS]
         return (kernel.reshape((_in_channels, _out_channels, -1, 1)) * _scale).reshape(kernel.shape), KERNEL
     else:
