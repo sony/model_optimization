@@ -40,7 +40,7 @@ from tutorials.resources.yolov8.yolov8_preprocess import yolov8_preprocess_chw_t
 
 from ultralytics.yolo.data.dataset import YOLODataset
 from ultralytics.yolo.utils.torch_utils import initialize_weights
-import model_compression_toolkit as mct
+from model_compression_toolkit.core import FolderImageLoader
 
 class ModelLib(BaseModelLib):
     """
@@ -88,12 +88,13 @@ class ModelLib(BaseModelLib):
             A generator for the representative dataset, as the MCT expects
 
         """
-        image_data_loader = mct.FolderImageLoader(representative_dataset_folder,
-                                                  preprocessing=[self.preprocess],
-                                                  batch_size=batch_size)
+        image_data_loader = FolderImageLoader(representative_dataset_folder,
+                                              preprocessing=[self.preprocess],
+                                              batch_size=batch_size)
         def representative_data_gen() -> list:
             for _ in range(n_iter):
                 yield [image_data_loader.sample()]
+
         return representative_data_gen
 
     def evaluate(self, model):
