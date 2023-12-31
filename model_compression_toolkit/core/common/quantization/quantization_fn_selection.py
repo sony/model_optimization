@@ -26,6 +26,11 @@ from model_compression_toolkit.core.common.quantization.quantizers.uniform_quant
 
 
 def raise_exception(quantization_method: Any):
+    """
+    Function that is used when quantization method is not supported. Using this function,
+    an error is raised when actually trying to use and call this function (and not when a
+    quantization function is retrieved).
+    """
     Logger.error(f'No quantizer function for the configuration of quantization method {quantization_method}')
 
 def get_weights_quantization_fn(weights_quantization_method: QuantizationMethod) -> Callable:
