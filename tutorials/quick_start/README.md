@@ -39,7 +39,7 @@ in the future.
     <tr>
         <td rowspan="12">Classification</td>
         <td rowspan="4"><a href="https://github.com/pytorch/vision">torchvision</a></td>
-        <td> <a href="https://colab.research.google.com/github/sony/model_optimization/blob/quickstart-table/tutorials/quick_start/quick_start.ipynb">mobilenet_v2</a></td>
+        <td> <a href="https://colab.research.google.com/github/sony/model_optimization/tutorials/notebooks/example_quick_start_imagenet.ipynb">mobilenet_v2</a></td>
         <td>ImageNet</td>
         <td>72.15%</td>
         <td>13.88</td>
