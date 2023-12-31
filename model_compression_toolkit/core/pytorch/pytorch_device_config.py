@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Tuple
+
 import torch
 
 from model_compression_toolkit import logger
@@ -44,7 +46,7 @@ class DeviceManager:
         Args:
             device_name (str): The name of the device, e.g., 'cuda:0' or 'cpu'.
 
-        If the specified device is not valid or available, it prints an error message without changing the current device.
+        If the specified device is not valid or available, it prints a warning message without changing the current device.
         """
         is_valid, message = self.is_valid_device(device_name)
         if is_valid:
@@ -52,7 +54,7 @@ class DeviceManager:
         else:
             logger.Logger.warning(message)
 
-    def get_device(self):
+    def get_device(self) -> torch.device:
         """
         Get the current PyTorch device.
 
@@ -62,7 +64,7 @@ class DeviceManager:
         return self.DEVICE
 
     @staticmethod
-    def is_valid_device(device_name: str):
+    def is_valid_device(device_name: str) -> Tuple[bool, str]:
         """
         Check if the specified device name is valid and available.
 
@@ -107,7 +109,7 @@ def set_working_device(device_name: str):
     device_manager = DeviceManager()
     device_manager.set_device(device_name)
 
-def get_working_device():
+def get_working_device() -> torch.device:
     """
     Get the current PyTorch device.
 
