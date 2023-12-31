@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Any
 
 from collections.abc import Callable
 from functools import partial
@@ -28,6 +29,9 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import \
     power_of_two_selection_tensor, power_of_two_selection_histogram
 
+def raise_exception(quantization_method: Any):
+    Logger.error(
+        f'No params function for the configuration of quantization method {quantization_method}')  # pragma: no cover
 
 def get_activation_quantization_params_fn(activation_quantization_method: QuantizationMethod) -> Callable:
     """
@@ -48,9 +52,7 @@ def get_activation_quantization_params_fn(activation_quantization_method: Quanti
     elif activation_quantization_method == QuantizationMethod.LUT_POT_QUANTIZER:
         params_fn = lut_kmeans_histogram
     else:
-        Logger.error(
-            f'No params function for the configuration of '
-            f'quantization method {activation_quantization_method}')  # pragma: no cover
+        params_fn = lambda *args, **kwargs: raise_exception(activation_quantization_method)
     return params_fn
 
 
@@ -77,7 +79,6 @@ def get_weights_quantization_params_fn(weights_quantization_method: Quantization
     elif weights_quantization_method == QuantizationMethod.LUT_SYM_QUANTIZER:
         params_fn = partial(lut_kmeans_tensor, is_symmetric=True)
     else:
-        Logger.error(
-            f'No params function for the configuration of '
-            f'quantization method {weights_quantization_method}')  # pragma: no cover
+        params_fn = lambda *args, **kwargs: raise_exception(weights_quantization_method)
+
     return params_fn

@@ -25,10 +25,8 @@ from model_compression_toolkit.core.common.quantization.candidate_node_quantizat
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeActivationQuantizationConfig
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
-from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
-    get_activation_quantization_params_fn, get_weights_quantization_params_fn
-from model_compression_toolkit.core.common.quantization.quantization_fn_selection import \
-    get_weights_quantization_fn
+from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import get_activation_quantization_params_fn, get_weights_quantization_params_fn
+from model_compression_toolkit.core.common.quantization.quantization_fn_selection import get_weights_quantization_fn, get_activations_quantization_fn
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import OpQuantizationConfig, \
     QuantizationConfigOptions
@@ -147,9 +145,8 @@ def create_node_qc_candidate(qc: QuantizationConfig,
     weights_quantization_params_fn = get_weights_quantization_params_fn(op_cfg.weights_quantization_method)
 
     # get attributes for activation quantization
-    activation_quantization_fn = fw_info.activation_quantizer_mapping.get(op_cfg.activation_quantization_method)
-    if activation_quantization_fn is None:
-        Logger.critical('Unknown quantization method for activations')  # pragma: no cover
+    activation_quantization_fn = get_activations_quantization_fn(op_cfg.activation_quantization_method,
+                                                                 fw_info)
 
     activation_quantization_params_fn = get_activation_quantization_params_fn(op_cfg.activation_quantization_method)
 

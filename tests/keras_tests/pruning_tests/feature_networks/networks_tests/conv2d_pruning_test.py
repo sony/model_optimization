@@ -48,7 +48,9 @@ class Conv2DPruningTest(PruningKerasFeatureTest):
         self.use_constant_importance_metric = use_constant_importance_metric
 
     def get_tpc(self):
-        tp = generate_test_tp_model({'simd_size': self.simd})
+        tp = generate_test_tp_model({'simd_size': self.simd,
+                                     'weights_quantization_method': None,
+                                     'activation_quantization_method': None})
         return generate_keras_tpc(name="simd_test", tp_model=tp)
 
     def get_pruning_config(self):
