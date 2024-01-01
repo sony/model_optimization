@@ -32,6 +32,7 @@ from ultralytics.yolo.v8.detect import DetectionValidator
 from pathlib import Path
 from ultralytics.yolo.utils.tal import dist2bbox, make_anchors
 from ultralytics.yolo.v8.segment import SegmentationValidator
+from ultralytics.yolo.engine.model import TASK_MAP
 
 
 def replace_2d_deg_module(model, old_module, new_module, get_config):
@@ -63,6 +64,7 @@ class C2fReplacer(C2f):
     """
     A new C2f module definition supported by torch.fx
     """
+
     def forward(self, x):
         y1 = self.cv1(x).chunk(2, 1)
         y = [y1[0], y1[1]]
@@ -74,6 +76,7 @@ class C2fModuleReplacer(ModuleReplacer):
     """
     A module replacer for C2f modules.
     """
+
     def get_new_module(self, config):
         return C2fReplacer(*config)
 
@@ -98,6 +101,7 @@ class DetectReplacer(Detect):
     """
     Replaces the Detect module with modifications to support torch.fx and removes the last part of the detection head.
     """
+
     def forward(self, x):
         shape = x[0].shape  # BCHW
         for i in range(self.nl):
@@ -122,6 +126,7 @@ class DetectModuleReplacer(ModuleReplacer):
     """
     A module replacer for Detect modules.
     """
+
     def get_new_module(self, config):
         return DetectReplacer(*config)
 
@@ -137,7 +142,10 @@ class DetectModuleReplacer(ModuleReplacer):
 class SegmentReplacer(Segment):
     """
     Replaces the Segment module to use the replaced Detect forward function.
+    To improve quantization (due to different data types), we removes the output concatenation.
+    This will be added back in post_process.
     """
+
     def __init__(self, nc=80, nm=32, npr=256, ch=()):
         super().__init__(nc, nm, npr, ch)
         self.detect = DetectReplacer.forward
@@ -158,6 +166,7 @@ class SegmentModuleReplacer(ModuleReplacer):
     """
     A module replacer for Segment modules.
     """
+
     def get_new_module(self, config):
         return SegmentReplacer(*config)
 
@@ -172,16 +181,12 @@ class SegmentModuleReplacer(ModuleReplacer):
         return replace_2d_deg_module(model, Segment, self.get_new_module, self.get_config)
 
 
-ForwardReplacer = {
-    'detect': DetectModuleReplacer(),
-    'segment': SegmentModuleReplacer()
-}
-
 # In this section we modify the DetectionModel to exclude dynamic condition which is not supported by torch.fx
 class DetectionModelReplacer(DetectionModel):
     """
     Replaces the DetectionModel to exclude dynamic condition not supported by torch.fx.
     """
+
     def forward(self, x, augment=False, profile=False, visualize=False):
         return self._forward_once(x, profile, visualize)  # single-scale inference, train
 
@@ -201,6 +206,7 @@ class DetectionModelModuleReplacer(ModuleReplacer):
     """
     A module replacer for DetectionModel modules.
     """
+
     def get_config(self, c):
         return [c.yaml]
 
@@ -217,13 +223,14 @@ class DetectionValidatorReplacer(DetectionValidator):
     """
     Replaces the DetectionValidator to include missing functionality from the Detect module.
     """
-    def postprocess(self, preds):
 
+    def postprocess(self, preds):
         # Post-processing additional part - exported from Detect module
-        stride = self.model.model.stride # [8,16,32]
+        stride = self.model.model.stride  # [8,16,32]
         grid = (self.args.imgsz / stride).numpy().astype(int)
         in_ch = 64 + self.nc  # 144
-        x_dummy = [torch.ones(1, in_ch, grid[0], grid[0]), torch.ones(1, in_ch, grid[1], grid[1]), torch.ones(1, in_ch, grid[2], grid[2])]
+        x_dummy = [torch.ones(1, in_ch, grid[0], grid[0]), torch.ones(1, in_ch, grid[1], grid[1]),
+                   torch.ones(1, in_ch, grid[2], grid[2])]
         anchors, strides = (x.transpose(0, 1) for x in make_anchors(x_dummy, stride, 0.5))
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         a = anchors.to(device)
@@ -236,17 +243,19 @@ class DetectionValidatorReplacer(DetectionValidator):
 
         return preds
 
+
 class SegmentationValidatorReplacer(SegmentationValidator):
     """
     Replaces the DetectionValidator to include missing functionality from the Detect module.
     """
-    def postprocess(self, preds):
 
+    def postprocess(self, preds):
         # Post-processing additional part - exported from Detect module
-        stride = self.model.model.stride # [8,16,32]
+        stride = self.model.model.stride  # [8,16,32]
         grid = (self.args.imgsz / stride).numpy().astype(int)
         in_ch = 64 + self.nc  # 144
-        x_dummy = [torch.ones(1, in_ch, grid[0], grid[0]), torch.ones(1, in_ch, grid[1], grid[1]), torch.ones(1, in_ch, grid[2], grid[2])]
+        x_dummy = [torch.ones(1, in_ch, grid[0], grid[0]), torch.ones(1, in_ch, grid[1], grid[1]),
+                   torch.ones(1, in_ch, grid[2], grid[2])]
         anchors, strides = (x.transpose(0, 1) for x in make_anchors(x_dummy, stride, 0.5))
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         a = anchors.to(device)
@@ -262,21 +271,17 @@ class SegmentationValidatorReplacer(SegmentationValidator):
 
         return preds
 
-TASK_MAP = {
-    'classify': [
-        ClassificationModel, yolo.v8.classify.ClassificationTrainer, yolo.v8.classify.ClassificationValidator,
-        yolo.v8.classify.ClassificationPredictor],
-    'detect': [
-        DetectionModel, yolo.v8.detect.DetectionTrainer, DetectionValidatorReplacer,
-        yolo.v8.detect.DetectionPredictor],
-    'segment': [
-        SegmentationModel, yolo.v8.segment.SegmentationTrainer, SegmentationValidatorReplacer,
-        yolo.v8.segment.SegmentationPredictor]}
+
+# Replace the TASK_MAP validators with the new ValidatorReplacers
+TASK_MAP['detect'][2] = DetectionValidatorReplacer
+TASK_MAP['segment'][2] = SegmentationValidatorReplacer
+
 
 class YOLOReplacer(YOLO):
     """
     Replaces the YOLO class to include the modified DetectionValidator
     """
+
     def val(self, data=None, **kwargs):
         """
         Validate a model on a given dataset .
