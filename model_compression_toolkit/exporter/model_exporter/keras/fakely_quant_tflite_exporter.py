@@ -20,10 +20,9 @@ import tensorflow as tf
 import keras.models
 
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import TMP_KERAS_EXPORT_FORMAT
 from model_compression_toolkit.exporter.model_exporter.keras.fakely_quant_keras_exporter import FakelyQuantKerasExporter
 from model_compression_toolkit.trainable_infrastructure.keras.load_model import keras_load_quantized_model
-
+from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import DEFAULT_KERAS_EXPORT_EXTENTION
 
 class FakelyQuantTFLiteExporter(FakelyQuantKerasExporter):
     """
@@ -58,7 +57,7 @@ class FakelyQuantTFLiteExporter(FakelyQuantKerasExporter):
         """
         # Use Keras exporter to quantize model's weights before converting it to TFLite.
         # Since exporter saves the model, we use a tmp path for saving, and then we delete it automatically.
-        with tempfile.NamedTemporaryFile(suffix=TMP_KERAS_EXPORT_FORMAT) as tmp_file:
+        with tempfile.NamedTemporaryFile(suffix=DEFAULT_KERAS_EXPORT_EXTENTION) as tmp_file:
             FakelyQuantKerasExporter(self.model,
                                      self.is_layer_exportable_fn,
                                      tmp_file.name,
