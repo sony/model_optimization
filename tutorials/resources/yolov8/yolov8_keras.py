@@ -441,35 +441,3 @@ def yolov8_keras(model_yaml: str, img_size: int) -> Model:
     model_func = DetectionModelKeras(cfg_dict, verbose=True)  # model functionality
     inputs = Input(shape=(img_size, img_size, 3))
     return Model(inputs, model_func(inputs))
-
-def yolov8_preprocess(x: np.ndarray, img_mean: float = 0.0, img_std: float = 255.0, pad_values: int = 114,
-                      size: Tuple[int, int] = (640, 640)) -> np.ndarray:
-    """
-    Preprocess an input image for YOLOv8 model.
-
-    Args:
-        x (np.ndarray): Input image as a NumPy array.
-        img_mean (float): Mean value used for normalization. Default is 0.0.
-        img_std (float): Standard deviation used for normalization. Default is 255.0.
-        pad_values (int): Value used for padding. Default is 114.
-        size (Tuple[int, int]): Desired output size (height, width). Default is (640, 640).
-
-    Returns:
-        np.ndarray: Preprocessed image as a NumPy array.
-    """
-    h, w = x.shape[:2]  # Image size
-    hn, wn = size  # Image new size
-    r = max(h / hn, w / wn)
-    hr, wr = int(np.round(h / r)), int(np.round(w / r))
-    # pad = ((int((hn - hr) / 2), int((hn - hr) / 2 + 0.5)), (int((wn - wr) / 2), int((wn - wr) / 2 + 0.5)), (0, 0))
-    pad = (
-        (int((hn - hr) / 2), int((hn - hr) / 2 + 0.5)),
-        (int((wn - wr) / 2), int((wn - wr) / 2 + 0.5)),
-        (0, 0)
-    )
-
-    x = np.flip(x, -1) # Flip image channels
-    x = cv2.resize(x, (wr, hr), interpolation=cv2.INTER_AREA) # Aspect ratio preserving resize
-    x = np.pad(x, pad, constant_values=pad_values) # Padding to the target size
-    x = (x - img_mean) / img_std # Normalization
-    return x

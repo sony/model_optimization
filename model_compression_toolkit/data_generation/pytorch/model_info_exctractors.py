@@ -18,7 +18,7 @@ from torch import Tensor
 from torch.fx import GraphModule
 from torch.nn import Module, Conv2d, Linear
 
-from model_compression_toolkit.core.pytorch.utils import get_working_device
+from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.data_generation.common.model_info_exctractors import OriginalBNStatsHolder, \
     ActivationExtractor
 from model_compression_toolkit.data_generation.pytorch.constants import OUTPUT

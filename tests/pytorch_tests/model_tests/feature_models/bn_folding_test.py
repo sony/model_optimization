@@ -50,9 +50,13 @@ class BNFoldingNetTest(BasePytorchTest):
     """
     def __init__(self, unit_test, test_layer, functional, fold_applied=True, float_reconstruction_error=1e-6):
         super().__init__(unit_test, float_reconstruction_error)
+        self.input_channels = test_layer.in_channels
         self.test_layer = test_layer
         self.fold_applied = fold_applied
         self.functional = functional
+
+    def create_inputs_shape(self):
+        return [[self.val_batch_size, self.input_channels, 32, 32]]
 
     def create_feature_network(self, input_shape):
         return BNFoldingNet(self.test_layer, self.functional, self.fold_applied)

@@ -54,7 +54,7 @@ class TestExportingQATModelBase(unittest.TestCase):
         return mct.get_target_platform_capabilities('tensorflow', 'default')
 
     def get_serialization_format(self):
-        return mct.exporter.KerasExportSerializationFormat.KERAS_H5
+        return mct.exporter.KerasExportSerializationFormat.KERAS
 
     def get_filepath(self):
         return tempfile.mkstemp('.h5')[1]

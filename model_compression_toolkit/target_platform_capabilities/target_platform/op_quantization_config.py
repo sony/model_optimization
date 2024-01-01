@@ -36,8 +36,7 @@ class OpQuantizationConfig:
                  fixed_scale: float,
                  fixed_zero_point: int,
                  weights_multiplier_nbits: int,  # If None - set 8 in hptq, o.w use it
-                 simd_size: int
-                 ):
+                 simd_size: int):
         """
 
         Args:

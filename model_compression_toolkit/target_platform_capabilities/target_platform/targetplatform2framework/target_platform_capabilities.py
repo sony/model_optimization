@@ -223,3 +223,12 @@ class TargetPlatformCapabilities(ImmutableClass):
         """
         for op in self.__tp_model_opsets_not_used:
             Logger.warning(f'{op} is defined in TargetPlatformModel, but is not used in TargetPlatformCapabilities.')
+
+    @property
+    def is_simd_padding(self) -> bool:
+        """
+
+        Returns: Check if the TP model defines that padding due to SIMD constrains occurs.
+
+        """
+        return self.tp_model.is_simd_padding

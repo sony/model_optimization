@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-
+import keras.layers
 from tensorflow.keras.layers import Dense, DepthwiseConv2D, Conv2D, Conv2DTranspose, Activation, SeparableConv2D
 
 from model_compression_toolkit.logger import Logger
@@ -23,7 +22,8 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher, \
     NodeFrameworkAttrMatcher
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
-from model_compression_toolkit.core.keras.constants import LINEAR, ACTIVATION, TRAINABLE, LAYER_NAME
+from model_compression_toolkit.core.keras.constants import LINEAR, ACTIVATION, TRAINABLE, LAYER_NAME, SOFTMAX, AXIS, \
+    SOFTMAX_AXIS_DEFAULT
 
 
 class ActivationDecomposition(common.BaseSubstitution):
@@ -70,18 +70,29 @@ class ActivationDecomposition(common.BaseSubstitution):
 
         activation_node_name = op2d_node.name + '_post_activation'
 
-        activation_fw_attr = {
-            LAYER_NAME: activation_node_name,
-            TRAINABLE: False,
-            DATA_TYPE: FLOAT_32,
-            ACTIVATION: op2d_node.framework_attr.get(ACTIVATION)}
+        # Softmax is a special case where we need to know the default axis parameter used
+        # and for this reason we create a Softmax layer and not Activation layer.
+        if op2d_node.framework_attr.get(ACTIVATION) == SOFTMAX:
+            activation_fw_attr = {AXIS: SOFTMAX_AXIS_DEFAULT}
+            activation_node = common.graph.BaseNode(activation_node_name,
+                                                    activation_fw_attr,
+                                                    op2d_node.output_shape,
+                                                    op2d_node.output_shape,
+                                                    {},
+                                                    keras.layers.Softmax)
+        else:
+            activation_fw_attr = {
+                LAYER_NAME: activation_node_name,
+                TRAINABLE: False,
+                DATA_TYPE: FLOAT_32,
+                ACTIVATION: op2d_node.framework_attr.get(ACTIVATION)}
 
-        activation_node = common.graph.BaseNode(activation_node_name,
-                                                activation_fw_attr,
-                                                op2d_node.output_shape,
-                                                op2d_node.output_shape,
-                                                {},
-                                                Activation)
+            activation_node = common.graph.BaseNode(activation_node_name,
+                                                    activation_fw_attr,
+                                                    op2d_node.output_shape,
+                                                    op2d_node.output_shape,
+                                                    {},
+                                                    Activation)
 
         graph.add_node(activation_node)
         graph.reconnect_out_edges(current_node=op2d_node,

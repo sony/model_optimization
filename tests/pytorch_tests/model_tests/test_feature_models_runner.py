@@ -146,6 +146,8 @@ class FeatureModelsTestRunner(unittest.TestCase):
             BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=(3, 1), groups=3),
                              functional, fold_applied=False).run_test()  # DW-Conv test
             BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(1, 3)), functional, fold_applied=False).run_test()
+        BNFoldingNetTest(self, nn.ConvTranspose2d(6, 9, kernel_size=(5, 4), groups=3), False).run_test()
+        BNFoldingNetTest(self, nn.ConvTranspose2d(3, 3, kernel_size=(4, 2), groups=3), False).run_test()
 
     def test_bn_forward_folding(self):
         """
