@@ -11,8 +11,8 @@ in the future.
 ## Supported Features
  - Quantize pretrained models from various model [libraries](#supported-libraries)
  - Evaluate the performance of the floating point model and the quantized model.
- - Use MCT's Post-Training Quantization (PTQ) scheme [link to example](#basic-model-quantization-example---post-training-quantization-ptq)
- - Use MCT's advanced quantization techniques (such as GPTQ and Mixed Precision) [link to the example](#advanced-model-quantization-example)
+ - Use MCT's Post-Training Quantization (PTQ) scheme [example](#basic-model-quantization-example---post-training-quantization-ptq)
+ - Use MCT's advanced quantization techniques (such as GPTQ and Mixed Precision) [example](#advanced-model-quantization-example)
 
 
 ## Results
@@ -24,7 +24,7 @@ in the future.
         <th rowspan="2">Model Name</th>
         <th rowspan="2">Dataset Name</th>
         <th colspan="2">Float</th>
-        <th colspan="2">Quantized</th>
+        <th colspan="2">Quantized - W8A8</th>
     </tr>
     <tr>
         <th>Performance</th>
