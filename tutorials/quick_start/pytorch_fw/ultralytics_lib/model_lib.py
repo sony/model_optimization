@@ -23,24 +23,26 @@ from enum import Enum
 
 import torch
 from torch.utils.data import DataLoader
+from torchvision.transforms import transforms
+from ultralytics.yolo.data.dataset import YOLODataset
+from ultralytics.yolo.utils.torch_utils import initialize_weights
 
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.replacers import C2fModuleReplacer, \
-    DetectModuleReplacer, YOLOReplacer, DetectionModelModuleReplacer
-from torchvision.transforms import transforms
-
+    YOLOReplacer, DetectionModelModuleReplacer, DetectModuleReplacer, SegmentModuleReplacer
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.replacers import prepare_model_for_ultralytics_val
 from tutorials.quick_start.pytorch_fw.utils import get_representative_dataset
 from tutorials.quick_start.common.model_lib import BaseModelLib
-from tutorials.quick_start.common.constants import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, \
-    COCO_DATASET, VALIDATION_DATASET_FOLDER
-
+from tutorials.quick_start.common.constants import MODEL_NAME, BATCH_SIZE, COCO_DATASET, VALIDATION_DATASET_FOLDER
 from tutorials.quick_start.common.results import DatasetInfo
 from tutorials.resources.utils.coco_evaluation import coco_dataset_generator
 from tutorials.resources.yolov8.yolov8_preprocess import yolov8_preprocess_chw_transpose
-
-from ultralytics.yolo.data.dataset import YOLODataset
-from ultralytics.yolo.utils.torch_utils import initialize_weights
 from model_compression_toolkit.core import FolderImageLoader
+
+TaskModuleReplacer = {
+    'detect': DetectModuleReplacer(),
+    'segment': SegmentModuleReplacer()
+}
+
 
 class ModelLib(BaseModelLib):
     """
@@ -63,7 +65,7 @@ class ModelLib(BaseModelLib):
         self.model = self.ultralytics_model.model
         self.model = DetectionModelModuleReplacer().replace(self.model)
         self.model = C2fModuleReplacer().replace(self.model)
-        self.model = DetectModuleReplacer().replace(self.model)
+        self.model = TaskModuleReplacer[self.ultralytics_model.task].replace(self.model)
 
         # load pre-trained weights
         initialize_weights(self.model)
