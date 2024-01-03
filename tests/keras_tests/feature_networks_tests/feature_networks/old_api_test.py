@@ -32,11 +32,12 @@ class OldApiTest(BaseKerasFeatureNetworkTest):
         self.gptq_enable = gptq_enable
 
     def get_tpc(self):
-        base_config, _ = get_op_quantization_configs()
+        base_config, _, default_config = get_op_quantization_configs()
         base_config = base_config.clone_and_edit(weights_n_bits=16,
                                                  activation_n_bits=16)
 
         return get_weights_only_mp_tpc_keras(base_config=base_config,
+                                             default_config=default_config,
                                              mp_bitwidth_candidates_list=[(8, 16), (2, 16), (4, 16), (16, 16)],
                                              name="old_api_test")
 

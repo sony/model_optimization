@@ -57,17 +57,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
-    conv_list = [Conv2D, Conv2DTranspose, tf.nn.conv2d, tf.nn.conv2d_transpose]
-    depthwise_conv_list = [DepthwiseConv2D, tf.nn.depthwise_conv2d]
-
-    keras_tpc = tp.TargetPlatformCapabilities(tp_model,
-                                              weights_attributes_mapping={
-                                                  tuple(conv_list + [Dense]):
-                                                      {KERNEL_ATTR: KERAS_KERNEL, BIAS_ATTR: BIAS},
-                                                  tuple(depthwise_conv_list):
-                                                      {KERNEL_ATTR: KERAS_DEPTHWISE_KERNEL, BIAS_ATTR: BIAS}},
-                                              name=name,
-                                              version=TPC_VERSION)
+    keras_tpc = tp.TargetPlatformCapabilities(tp_model, name=name, version=TPC_VERSION)
 
     no_quant_list = [Reshape,
                      tf.reshape,
@@ -98,8 +88,18 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", no_quant_list)
 
-        tp.OperationsSetToLayers("Conv", conv_list + depthwise_conv_list)
-        tp.OperationsSetToLayers("FullyConnected", [Dense])
+        tp.OperationsSetToLayers("Conv",
+                                 [Conv2D,
+                                  DepthwiseConv2D,
+                                  Conv2DTranspose,
+                                  tf.nn.conv2d,
+                                  tf.nn.depthwise_conv2d,
+                                  tf.nn.conv2d_transpose],
+                                 attr_mapping={KERNEL_ATTR: {
+                                     tuple([DepthwiseConv2D, tf.nn.depthwise_conv2d]): KERAS_DEPTHWISE_KERNEL,
+                                     tuple(): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}})
+        tp.OperationsSetToLayers("FullyConnected", [Dense],
+                                 attr_mapping={KERNEL_ATTR: {tuple(): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}})
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                              tf.nn.relu6,
                                              tf.nn.leaky_relu,

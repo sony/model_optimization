@@ -34,7 +34,7 @@ tp = mct.target_platform
 
 
 def get_tp_model(edit_params_dict) -> TargetPlatformModel:
-    base_config, mixed_precision_cfg_list = get_op_quantization_configs()
+    base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
 
     updated_config = base_config.clone_and_edit(**edit_params_dict)
     op_cfg_list = [updated_config]

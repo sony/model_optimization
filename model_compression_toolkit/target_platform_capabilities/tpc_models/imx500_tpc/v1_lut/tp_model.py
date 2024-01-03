@@ -36,14 +36,14 @@ def get_tp_model() -> TargetPlatformModel:
     Returns: A TargetPlatformModel object.
 
     """
-    base_config, mixed_precision_cfg_list = get_op_quantization_configs()
-    return generate_tp_model(default_config=base_config,
+    base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
+    return generate_tp_model(default_config=default_config,
                              base_config=base_config,
                              mixed_precision_cfg_list=mixed_precision_cfg_list,
                              name='imx500_lut_tp_model')
 
 
-def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig]]:
+def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig], OpQuantizationConfig]:
     """
     Creates a default configuration object for 8-bit quantization, to be used to set a default TargetPlatformModel.
     In addition, creates a default configuration objects list (with 8, 4 and 2 bit quantization) to be used as
@@ -76,7 +76,22 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     # Create a quantization config.
     # A quantization configuration defines how an operator
     # should be quantized on the modeled hardware:
-    eight_bits = tp.OpQuantizationConfig(
+
+    # We define a default config for operation without kernel attribute.
+    # This is the default config that should be used for non-linear operations.
+    eight_bits_default = tp.OpQuantizationConfig(
+        default_weight_attr_config=default_weight_attr_config,
+        attr_weights_configs_mapping={},
+        activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=8,
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        fixed_scale=None,
+        fixed_zero_point=None,
+        simd_size=32)
+
+    # We define an 8-bit config for linear operations quantization, that include a kernel and bias attributes.
+    linear_eight_bits = tp.OpQuantizationConfig(
         default_weight_attr_config=default_weight_attr_config,
         attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config, BIAS_ATTR: bias_config},
         activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
@@ -92,23 +107,23 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     # In this example, we quantize some operations' weights
     # using 2, 4 or 8 bits, and when using 2 or 4 bits, it's possible
     # to quantize the operations' activations using LUT.
-    four_bits_lut = eight_bits.clone_and_edit(attr_weights_configs_mapping={KERNEL_ATTR:
+    four_bits_lut = linear_eight_bits.clone_and_edit(attr_weights_configs_mapping={KERNEL_ATTR:
         kernel_base_config.clone_and_edit(
             weights_n_bits=4,
             weights_quantization_method=
             tp.QuantizationMethod.LUT_SYM_QUANTIZER),
         BIAS_ATTR: bias_config},
-        simd_size=eight_bits.simd_size * 2)
-    two_bits_lut = eight_bits.clone_and_edit(attr_weights_configs_mapping={KERNEL_ATTR:
+        simd_size=linear_eight_bits.simd_size * 2)
+    two_bits_lut = linear_eight_bits.clone_and_edit(attr_weights_configs_mapping={KERNEL_ATTR:
         kernel_base_config.clone_and_edit(
             weights_n_bits=2,
             weights_quantization_method=
             tp.QuantizationMethod.LUT_SYM_QUANTIZER),
         BIAS_ATTR: bias_config},
-        simd_size=eight_bits.simd_size * 4)
-    mixed_precision_cfg_list = [eight_bits, four_bits_lut, two_bits_lut]
+        simd_size=linear_eight_bits.simd_size * 4)
+    mixed_precision_cfg_list = [linear_eight_bits, four_bits_lut, two_bits_lut]
 
-    return eight_bits, mixed_precision_cfg_list
+    return linear_eight_bits, mixed_precision_cfg_list, eight_bits_default
 
 
 def generate_tp_model(default_config: OpQuantizationConfig,

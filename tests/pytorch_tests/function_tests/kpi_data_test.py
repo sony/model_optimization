@@ -95,13 +95,14 @@ class ComplexModel(torch.nn.Module):
 
 
 def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
-    base_config, _ = get_op_quantization_configs()
+    base_config, _, default_config = get_op_quantization_configs()
     base_config = base_config.clone_and_edit(weights_n_bits=mp_bitwidth_candidates_list[0][0],
                                              activation_n_bits=mp_bitwidth_candidates_list[0][1])
 
     tpc_dict = get_mp_activation_pytorch_tpc_dict(
         tpc_model=generate_tp_model_with_activation_mp(
             base_cfg=base_config,
+            default_config=default_config,
             mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
                                          (4, 8), (4, 4), (4, 2),
                                          (2, 8), (2, 4), (2, 2)]),

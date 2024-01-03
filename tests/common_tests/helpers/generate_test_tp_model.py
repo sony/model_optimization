@@ -24,7 +24,7 @@ tp = mct.target_platform
 
 
 def generate_test_tp_model(edit_params_dict, name=""):
-    base_config, op_cfg_list = get_op_quantization_configs()
+    base_config, op_cfg_list, default_config = get_op_quantization_configs()
 
     # separate weights attribute parameters from the requested param to edit
     weights_params_names = [name for name in tp.AttributeQuantizationConfig.__init__.__code__.co_varnames if name != 'self']
@@ -44,13 +44,13 @@ def generate_test_tp_model(edit_params_dict, name=""):
     # this method only used for non-mixed-precision tests
     op_cfg_list = [updated_config]
 
-    return generate_tp_model(default_config=updated_config,
+    return generate_tp_model(default_config=default_config,
                              base_config=updated_config,
                              mixed_precision_cfg_list=op_cfg_list,
                              name=name)
 
 
-def generate_mixed_precision_test_tp_model(base_cfg, mp_bitwidth_candidates_list, name=""):
+def generate_mixed_precision_test_tp_model(base_cfg, default_config, mp_bitwidth_candidates_list, name=""):
     mp_op_cfg_list = []
     for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
         # attr_weights_configs_mapping = base_cfg.attr_weights_configs_mapping
@@ -64,13 +64,13 @@ def generate_mixed_precision_test_tp_model(base_cfg, mp_bitwidth_candidates_list
                                               activation_n_bits=activation_n_bits)
         mp_op_cfg_list.append(candidate_cfg)
 
-    return generate_tp_model(default_config=base_cfg,
+    return generate_tp_model(default_config=default_config,
                              base_config=base_cfg,
                              mixed_precision_cfg_list=mp_op_cfg_list,
                              name=name)
 
 
-def generate_tp_model_with_activation_mp(base_cfg, mp_bitwidth_candidates_list, name="activation_mp_model"):
+def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_candidates_list, name="activation_mp_model"):
     mp_op_cfg_list = []
     for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
         attr_weights_configs_mapping = base_cfg.attr_weights_configs_mapping
@@ -80,7 +80,7 @@ def generate_tp_model_with_activation_mp(base_cfg, mp_bitwidth_candidates_list, 
                                                 activation_n_bits=activation_n_bits)
         mp_op_cfg_list.append(candidate_cfg)
 
-    base_tp_model = generate_tp_model(default_config=base_cfg,
+    base_tp_model = generate_tp_model(default_config=default_config,
                                       base_config=base_cfg,
                                       mixed_precision_cfg_list=mp_op_cfg_list,
                                       name=name)
@@ -159,3 +159,5 @@ def generate_test_tpc(name: str,
             tp.OperationsSetToLayers(op_set_name, layers)
 
     return tpc
+
+

@@ -15,9 +15,7 @@
 import tensorflow as tf
 from packaging import version
 
-from model_compression_toolkit.core.keras.constants import BIAS
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, \
-    KERAS_DEPTHWISE_KERNEL
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, Dense, Reshape, ZeroPadding2D, AveragePooling2D, Activation, DepthwiseConv2D, \
@@ -59,11 +57,6 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     """
 
     keras_tpc = tp.TargetPlatformCapabilities(tp_model,
-                                              weights_attributes_mapping={
-                                                  tuple([Conv2D, Dense]):
-                                                      {KERNEL_ATTR: KERAS_KERNEL, BIAS_ATTR: BIAS},
-                                                  tuple([DepthwiseConv2D]):
-                                                      {KERNEL_ATTR: KERAS_DEPTHWISE_KERNEL, BIAS_ATTR: BIAS}},
                                               name=name,
                                               version=TPC_VERSION)
 
@@ -94,7 +87,8 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     tf.slice,
                                                     SlicingOpLambda])
 
-        tp.OperationsSetToLayers("FullyConnected", [Dense])
+        tp.OperationsSetToLayers("FullyConnected", [Dense],
+                                 attr_mapping={KERNEL_ATTR: {tuple(): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}})
         tp.OperationsSetToLayers("L2Normalization", [tf.math.l2_normalize])
         tp.OperationsSetToLayers("LogSoftmax", [tf.nn.log_softmax])
         tp.OperationsSetToLayers("Tanh", [tf.nn.tanh, tp.LayerFilterParams(Activation, activation="tanh")])

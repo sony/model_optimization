@@ -46,10 +46,6 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
     """
 
     pytorch_tpc = tp.TargetPlatformCapabilities(tp_model,
-                                                weights_attributes_mapping={
-                                                    tuple([torch.nn.Conv2d, torch.nn.functional.conv2d,
-                                                           torch.nn.Linear, torch.nn.functional.linear]):
-                                                        {KERNEL_ATTR: PYTORCH_KERNEL, BIAS_ATTR: BIAS}},
                                                 name=name,
                                                 version=TPC_VERSION)
 
@@ -75,7 +71,8 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     torch.select,
                                                     torch.unbind])
 
-        tp.OperationsSetToLayers("FullyConnected", [torch.nn.Linear, torch.nn.functional.linear])
+        tp.OperationsSetToLayers("FullyConnected", [torch.nn.Linear, torch.nn.functional.linear],
+                                 attr_mapping={KERNEL_ATTR: {tuple(): PYTORCH_KERNEL}, BIAS_ATTR: {tuple(): BIAS}})
         tp.OperationsSetToLayers("L2Normalization",
                                  [tp.LayerFilterParams(torch.nn.functional.normalize, Eq('p', 2) | Eq('p', None))])
         tp.OperationsSetToLayers("LogSoftmax", [torch.nn.LogSoftmax])

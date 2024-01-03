@@ -191,10 +191,11 @@ class MixedPercisionActivationDisabledTest(MixedPercisionBaseTest):
         super().__init__(unit_test)
 
     def get_fw_hw_model(self):
-        base_config, _ = get_op_quantization_configs()
+        base_config, _, default_config = get_op_quantization_configs()
         return get_pytorch_test_tpc_dict(
             tp_model=generate_mixed_precision_test_tp_model(
                 base_cfg=base_config.clone_and_edit(enable_activation_quantization=False),
+                default_config=default_config,
                 mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)]),
             test_name='mixed_precision_model',
             ftp_name='mixed_precision_pytorch_test')

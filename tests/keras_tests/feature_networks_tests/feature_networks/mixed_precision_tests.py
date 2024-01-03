@@ -18,7 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 from mct_quantizers import KerasActivationQuantizationHolder
-from model_compression_toolkit.core import CoreConfig
+from tests.common_tests.test_tp_model import TEST_QC
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from keras import backend as K
 
@@ -34,20 +34,7 @@ tp = mct.target_platform
 
 
 def get_base_eight_bits_config_op():
-    return tp.OpQuantizationConfig(
-            activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-            weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-            activation_n_bits=8,
-            weights_n_bits=8,
-            weights_per_channel_threshold=True,
-            enable_weights_quantization=True,
-            enable_activation_quantization=True,
-            quantization_preserving=False,
-            fixed_scale=None,
-            fixed_zero_point=None,
-            weights_multiplier_nbits=None,
-            simd_size=None
-        )
+    return TEST_QC
 
 
 def get_base_mp_nbits_candidates():
@@ -69,17 +56,18 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
         mixed_precision_candidates_list = get_base_mp_nbits_candidates()
 
         return get_tpc_with_activation_mp_keras(base_config=eight_bits,
+                                                default_config=eight_bits.clone_and_edit(attr_weights_configs_mapping={}),
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
                                                 name="mixed_precision_activation_test")
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
-                                      mct.core.QuantizationErrorMethod.MSE,
-                                      relu_bound_to_power_of_2=False,
-                                      weights_bias_correction=True,
-                                      weights_per_channel_threshold=True,
-                                      input_scaling=False,
-                                      activation_channel_equalization=False)
+                                           mct.core.QuantizationErrorMethod.MSE,
+                                           relu_bound_to_power_of_2=False,
+                                           weights_bias_correction=True,
+                                           weights_per_channel_threshold=True,
+                                           input_scaling=False,
+                                           activation_channel_equalization=False)
 
     def get_mixed_precision_v2_config(self):
         return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1)

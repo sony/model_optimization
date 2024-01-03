@@ -43,22 +43,21 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
-    conv_layers = [Conv2d,
-                   torch.nn.functional.conv2d,
-                   ConvTranspose2d,
-                   torch.nn.functional.conv_transpose2d]
-
     pytorch_tpc = tp.TargetPlatformCapabilities(tp_model,
-                                                weights_attributes_mapping={
-                                                    tuple(conv_layers + [Linear]):
-                                                        {KERNEL_ATTR: PYTORCH_KERNEL, BIAS_ATTR: BIAS}},
                                                 name=name,
                                                 version=TPC_VERSION)
 
-    with pytorch_tpc:
-        tp.OperationsSetToLayers("Conv", conv_layers)
+    pytorch_linear_attr_mapping = {KERNEL_ATTR: {tuple(): PYTORCH_KERNEL}, BIAS_ATTR: {tuple(): BIAS}}
 
-        tp.OperationsSetToLayers("Linear", [Linear])
+    with pytorch_tpc:
+        tp.OperationsSetToLayers("Conv", [Conv2d,
+                                          torch.nn.functional.conv2d,
+                                          ConvTranspose2d,
+                                          torch.nn.functional.conv_transpose2d],
+                                 attr_mapping=pytorch_linear_attr_mapping)
+
+        tp.OperationsSetToLayers("Linear", [Linear],
+                                 attr_mapping=pytorch_linear_attr_mapping)
 
         tp.OperationsSetToLayers("BatchNorm", [BatchNorm2d])
 

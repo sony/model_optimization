@@ -144,19 +144,19 @@ def create_node_qc_candidate(qc: QuantizationConfig,
     """
 
     # get attributes for weights quantization
-    kernel_cfg = op_cfg.attr_weights_configs_mapping.get(kernel_attr)
-    if kernel_cfg is None:
+    weights_cfg = op_cfg.attr_weights_configs_mapping.get(kernel_attr)
+    if weights_cfg is None:
         # the node doesn't have a specified kernel config. Using the default attribute config for quantization.
         # TODO: This should be the behavior for all attributes that are not specified in the attribute config mapping,
         #  which currently disables the quantization of the weights attribute.
-        kernel_cfg = op_cfg.default_weight_attr_config
+        weights_cfg = op_cfg.default_weight_attr_config
 
-    weights_quantization_fn = get_weights_quantization_fn(kernel_cfg.weights_quantization_method)
+    weights_quantization_fn = get_weights_quantization_fn(weights_cfg.weights_quantization_method)
 
     if weights_quantization_fn is None:
         Logger.critical('Unknown quantization method for weights')  # pragma: no cover
 
-    weights_quantization_params_fn = get_weights_quantization_params_fn(kernel_cfg.weights_quantization_method)
+    weights_quantization_params_fn = get_weights_quantization_params_fn(weights_cfg.weights_quantization_method)
 
     # get attributes for activation quantization
     activation_quantization_fn = fw_info.activation_quantizer_mapping.get(op_cfg.activation_quantization_method)
@@ -172,7 +172,7 @@ def create_node_qc_candidate(qc: QuantizationConfig,
                                            weights_quantization_fn=weights_quantization_fn,
                                            weights_quantization_params_fn=weights_quantization_params_fn,
                                            weight_channel_axis=weight_channel_axis,
-                                           kernel_cfg=kernel_cfg)
+                                           weights_cfg=weights_cfg)
 
 
 def _create_node_candidates_qc(qc: QuantizationConfig,

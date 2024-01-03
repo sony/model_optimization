@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import List, Any
+from typing import List, Any, Dict, Tuple
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import  _current_tpc
@@ -29,7 +29,8 @@ class OperationsSetToLayers(TargetPlatformCapabilitiesComponent):
     """
     def __init__(self,
                  op_set_name: str,
-                 layers: List[Any]):
+                 layers: List[Any],
+                 attr_mapping: Dict[str, Dict[Tuple[type], str]] = None):
         """
 
         Args:
@@ -37,6 +38,7 @@ class OperationsSetToLayers(TargetPlatformCapabilitiesComponent):
             layers (List[Any]): List of layers/FilterLayerParams to associate with OperatorsSet.
         """
         self.layers = layers
+        self.attr_mapping = attr_mapping
         super(OperationsSetToLayers, self).__init__(name=op_set_name)
         _current_tpc.get().remove_opset_from_not_used_list(op_set_name)
 

@@ -51,11 +51,10 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
     """
 
     pytorch_tpc = tp.TargetPlatformCapabilities(tp_model,
-                                                weights_attributes_mapping={
-                                                    tuple([Conv2d, ConvTranspose2d, Linear]):
-                                                        {KERNEL_ATTR: PYTORCH_KERNEL, BIAS_ATTR: BIAS}},
                                                 name=name,
                                                 version=TPC_VERSION)
+
+    pytorch_linear_attr_mapping = {KERNEL_ATTR: {tuple(): PYTORCH_KERNEL}, BIAS_ATTR: {tuple(): BIAS}}
 
     with pytorch_tpc:
         tp.OperationsSetToLayers("NoQuantization", [Dropout,
@@ -77,8 +76,10 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     gather,
                                                     topk])
 
-        tp.OperationsSetToLayers("Conv", [Conv2d, ConvTranspose2d])
-        tp.OperationsSetToLayers("FullyConnected", [Linear])
+        tp.OperationsSetToLayers("Conv", [Conv2d, ConvTranspose2d],
+                                 attr_mapping=pytorch_linear_attr_mapping)
+        tp.OperationsSetToLayers("FullyConnected", [Linear],
+                                 attr_mapping=pytorch_linear_attr_mapping)
         tp.OperationsSetToLayers("AnyReLU", [torch.relu,
                                              ReLU,
                                              ReLU6,

@@ -37,7 +37,6 @@ class TargetPlatformCapabilities(ImmutableClass):
     """
     def __init__(self,
                  tp_model: TargetPlatformModel,
-                 weights_attributes_mapping: Dict[Any, Dict[str, str]] = None,
                  name: str = "base",
                  version: str = None):
         """
@@ -58,7 +57,6 @@ class TargetPlatformCapabilities(ImmutableClass):
         self.__tp_model_opsets_not_used = [s.name for s in tp_model.operator_set]
         self.remove_fusing_names_from_not_used_list()
         self.version = version
-        self.weights_attributes_mapping = weights_attributes_mapping
 
     def get_layers_by_opset_name(self, opset_name: str) -> List[Any]:
         """
@@ -191,7 +189,8 @@ class TargetPlatformCapabilities(ImmutableClass):
                 if qco is None:
                     qco = self.tp_model.default_qco
 
-                layer_attrs_mapping = next((v for k, v in self.weights_attributes_mapping.items() if l in k), None)
+                layer_attrs_mapping = None if op2layers.attr_mapping is None else \
+                    {k: self._get_layer_attr_mapping(l, v) for k, v in op2layers.attr_mapping.items()}
                 qco = qco.clone_and_map_weights_attr_keys(layer_attrs_mapping)
 
                 if isinstance(l, LayerFilterParams):
@@ -229,3 +228,17 @@ class TargetPlatformCapabilities(ImmutableClass):
         """
         for op in self.__tp_model_opsets_not_used:
             Logger.warning(f'{op} is defined in TargetPlatformModel, but is not used in TargetPlatformCapabilities.')
+
+    def _get_layer_attr_mapping(self, layer: Any, layers_mapping: Dict[Tuple[type], str]):
+        new_attr_key = [v for k, v in layers_mapping.items() if layer in k]
+        if len(new_attr_key) == 0:
+            # this means there is no specified attribute name for this layer, so we take the default provided
+            # in the mapping
+            new_attr_key = layers_mapping.get(tuple())
+
+            if new_attr_key is None:
+                Logger.critical(f"The defined TPC missing an attribute name mapping for layer {layer}.")
+        else:
+            new_attr_key = new_attr_key[0]
+
+        return new_attr_key

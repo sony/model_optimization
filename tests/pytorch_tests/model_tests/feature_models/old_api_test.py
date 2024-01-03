@@ -45,7 +45,7 @@ class OldApiTest(BasePytorchTest):
         self.input_shape = [(1, 3, 8, 8)]
 
     def get_mp_tpc(self):
-        base_config, _ = get_op_quantization_configs()
+        base_config, _, default_config = get_op_quantization_configs()
         base_config = base_config.clone_and_edit(weights_n_bits=16,
                                                  activation_n_bits=16)
         mp_bitwidth_candidates_list = [(8, 16), (2, 16), (4, 16), (16, 16)]
@@ -55,7 +55,7 @@ class OldApiTest(BasePytorchTest):
                                                        activation_n_bits=activation_n_bits)
             mp_op_cfg_list.append(candidate_cfg)
 
-        tp_model = generate_tp_model(default_config=base_config,
+        tp_model = generate_tp_model(default_config=default_config,
                                      base_config=base_config,
                                      mixed_precision_cfg_list=mp_op_cfg_list,
                                      name='default_tp_model')
@@ -65,12 +65,12 @@ class OldApiTest(BasePytorchTest):
 
     def get_mp_quant_config(self):
         qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
-                                    mct.core.QuantizationErrorMethod.MSE,
-                                    weights_bias_correction=True,
-                                    weights_per_channel_threshold=True,
-                                    activation_channel_equalization=False,
-                                    relu_bound_to_power_of_2=False,
-                                    input_scaling=False)
+                                         mct.core.QuantizationErrorMethod.MSE,
+                                         weights_bias_correction=True,
+                                         weights_per_channel_threshold=True,
+                                         activation_channel_equalization=False,
+                                         relu_bound_to_power_of_2=False,
+                                         input_scaling=False)
         return mct.core.MixedPrecisionQuantizationConfig(qc, num_of_images=1)
 
     def get_kpi(self):

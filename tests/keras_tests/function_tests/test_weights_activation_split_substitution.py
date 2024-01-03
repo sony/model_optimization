@@ -67,9 +67,10 @@ def representative_dataset():
 
 
 def get_tpc(mixed_precision_candidates_list):
-    base_config, _ = get_op_quantization_configs()
+    base_config, _, default_config = get_op_quantization_configs()
 
     return get_tpc_with_activation_mp_keras(base_config=base_config,
+                                            default_config=default_config,
                                             mp_bitwidth_candidates_list=mixed_precision_candidates_list,
                                             name="weights_activation_split_test")
 

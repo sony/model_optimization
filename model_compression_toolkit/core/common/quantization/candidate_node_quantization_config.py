@@ -14,7 +14,7 @@
 # ==============================================================================
 from model_compression_toolkit.constants import ACTIVATION_QUANTIZATION_CFG, WEIGHTS_QUANTIZATION_CFG, QC, \
     OP_CFG, ACTIVATION_QUANTIZATION_FN, WEIGHTS_QUANTIZATION_FN, ACTIVATION_QUANT_PARAMS_FN, WEIGHTS_QUANT_PARAMS_FN, \
-    WEIGHTS_CHANNELS_AXIS, KERNEL_CFG
+    WEIGHTS_CHANNELS_AXIS, WEIGHTS_CFG
 from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig, \
     NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
@@ -49,4 +49,4 @@ class CandidateNodeQuantizationConfig(BaseNodeQuantizationConfig):
                                                                           kwargs.get(WEIGHTS_QUANTIZATION_FN),
                                                                           kwargs.get(WEIGHTS_QUANT_PARAMS_FN),
                                                                           kwargs.get(WEIGHTS_CHANNELS_AXIS),
-                                                                          kwargs.get(KERNEL_CFG))
+                                                                          kwargs.get(WEIGHTS_CFG))

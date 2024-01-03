@@ -80,11 +80,12 @@ def complex_model():
 
 
 def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
-    base_config, mixed_precision_cfg_list = get_op_quantization_configs()
+    base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
     base_config = base_config.clone_and_edit(weights_n_bits=mp_bitwidth_candidates_list[0][0],
                                              activation_n_bits=mp_bitwidth_candidates_list[0][1])
 
     tpc = get_tpc_with_activation_mp_keras(base_config=base_config,
+                                           default_config=default_config,
                                            mp_bitwidth_candidates_list=mp_bitwidth_candidates_list,
                                            name="kpi_data_test")
 

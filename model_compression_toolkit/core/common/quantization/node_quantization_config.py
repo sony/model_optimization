@@ -237,7 +237,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                  weights_quantization_fn: Callable,
                  weights_quantization_params_fn: Callable,
                  weights_channels_axis: int,
-                 kernel_cfg: Any):
+                 weights_cfg: Any):
         """
 
         Args:
@@ -249,18 +249,18 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         """
 
         # TODO: after refactoring to enable attributes quantization, all weights quantization arguments
-        #  should be taken per attribute, and not from the kernel config
+        #  should be taken per attribute, and not from the weights config
         self.weights_quantization_fn = weights_quantization_fn
         self.weights_quantization_params_fn = weights_quantization_params_fn
         self.weights_channels_axis = weights_channels_axis
         self.weights_quantization_params = {}
-        self.weights_quantization_method = kernel_cfg.weights_quantization_method
+        self.weights_quantization_method = weights_cfg.weights_quantization_method
         self.weights_error_method = qc.weights_error_method
-        self.weights_n_bits = kernel_cfg.weights_n_bits
+        self.weights_n_bits = weights_cfg.weights_n_bits
         self.weights_bias_correction = qc.weights_bias_correction
         self.weights_second_moment_correction = qc.weights_second_moment_correction
-        self.weights_per_channel_threshold = kernel_cfg.weights_per_channel_threshold
-        self.enable_weights_quantization = kernel_cfg.enable_weights_quantization
+        self.weights_per_channel_threshold = weights_cfg.weights_per_channel_threshold
+        self.enable_weights_quantization = weights_cfg.enable_weights_quantization
         self.min_threshold = qc.min_threshold
         self.l_p_value = qc.l_p_value
         self.simd_size = op_cfg.simd_size
