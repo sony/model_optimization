@@ -18,7 +18,9 @@ import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_keras_tpc
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import model_compression_toolkit as mct
@@ -158,11 +160,13 @@ class MixedPercisionSearchPartWeightsLayersTest(MixedPercisionBaseTest):
             tp.OperationsSetToLayers(
                 "Weights_fixed",
                 [layers.Dense],
+                attr_mapping={KERNEL_ATTR: {tuple([layers.Dense]): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}}
             )
 
             tp.OperationsSetToLayers(
                 "Weights_mp",
                 [layers.Conv2D],
+                attr_mapping={KERNEL_ATTR: {tuple([layers.Conv2D]): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}}
             )
 
         return keras_tpc
@@ -347,9 +351,11 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
 
 
     def get_tpc(self):
-        base_config, _, default_config = get_op_quantization_configs()
-        base_config = base_config.clone_and_edit(weights_n_bits=16,
-                                                 activation_n_bits=16)
+        base_config = generate_test_op_qc(activation_n_bits=16,
+                                         **generate_test_attr_configs(default_cfg_nbits=16,
+                                                                      kernel_cfg_nbits=16))
+
+        default_config = base_config.clone_and_edit(attr_weights_configs_mapping={})
 
         return get_weights_only_mp_tpc_keras(base_config=base_config,
                                              default_config=default_config,

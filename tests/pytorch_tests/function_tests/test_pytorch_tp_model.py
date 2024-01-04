@@ -31,10 +31,14 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-from tests.common_tests.test_tp_model import TEST_QC, TEST_QCO
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import LayerTestModel
 
 tp = mct.target_platform
+
+
+TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
+TEST_QCO = tp.QuantizationConfigOptions([TEST_QC])
 
 
 class TestPytorchTPModel(unittest.TestCase):

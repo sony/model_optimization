@@ -14,10 +14,17 @@
 # ==============================================================================
 from packaging import version
 import tensorflow as tf
+
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS, \
+    KERAS_DEPTHWISE_KERNEL
+
 if version.parse(tf.__version__) >= version.parse("2.13"):
-    from keras.src.engine.input_layer import InputLayer
+    from keras.src.layers import InputLayer, DepthwiseConv2D, Dense
 else:
+    from keras.layers import DepthwiseConv2D, Dense
+
     from keras.engine.input_layer import InputLayer
+
 import model_compression_toolkit as mct
 
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
@@ -84,7 +91,17 @@ def get_tpc_with_activation_mp_keras(base_config, default_config, mp_bitwidth_ca
         "Input": [InputLayer],
     }
 
+    # we assume a standard tp model with standard operator sets names,
+    # otherwise - need to generate the tpc per test and not with this generic function
+    attr_mapping = {'Conv': {
+        KERNEL_ATTR: {
+            tuple([DepthwiseConv2D, tf.nn.depthwise_conv2d]): KERAS_DEPTHWISE_KERNEL,
+            tuple(): KERAS_KERNEL},
+        BIAS_ATTR: {tuple(): BIAS}},
+        'FullyConnected': {KERNEL_ATTR: {tuple(): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}}}
+
     return generate_test_tpc(name=name,
                              tp_model=mp_tp_model,
                              base_tpc=generate_keras_tpc(name=f"base_{name}", tp_model=mp_tp_model),
-                             op_sets_to_layer_add=op_sets_to_layer_add)
+                             op_sets_to_layer_add=op_sets_to_layer_add,
+                             attr_mapping=attr_mapping)

@@ -18,7 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 from mct_quantizers import KerasActivationQuantizationHolder
-from tests.common_tests.test_tp_model import TEST_QC
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from keras import backend as K
 
@@ -31,10 +31,6 @@ from tests.keras_tests.utils import get_layers_from_model_by_type
 keras = tf.keras
 layers = keras.layers
 tp = mct.target_platform
-
-
-def get_base_eight_bits_config_op():
-    return TEST_QC
 
 
 def get_base_mp_nbits_candidates():
@@ -50,7 +46,7 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
         self.activation_layers_idx = activation_layers_idx
 
     def get_tpc(self):
-        eight_bits = get_base_eight_bits_config_op()
+        eight_bits = generate_test_op_qc(**generate_test_attr_configs())
 
         # sets all combinations of 2, 4, 8 bits for weights and activations
         mixed_precision_candidates_list = get_base_mp_nbits_candidates()
@@ -142,11 +138,13 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
         return KPI(weights_memory=17920 * 4 / 8, activation_memory=5408 * 4 / 8)
 
     def get_tpc(self):
-        eight_bits = get_base_eight_bits_config_op()
+        eight_bits = generate_test_op_qc(**generate_test_attr_configs())
+        default_config = eight_bits.clone_and_edit(attr_weights_configs_mapping={})
         # set only 8 and 4 bit candidates for test, to verify that all layers get exactly 4 bits
         mixed_precision_candidates_list = [(8, 8), (8, 4), (4, 8), (4, 4)]
 
         return get_tpc_with_activation_mp_keras(base_config=eight_bits,
+                                                default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
                                                 name="mixed_precision_4bit_test")
 
@@ -233,11 +231,13 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
         return KPI(48.0 * 4 / 8, 768.0 * 4 / 8)
 
     def get_tpc(self):
-        eight_bits = get_base_eight_bits_config_op()
+        eight_bits = generate_test_op_qc(**generate_test_attr_configs())
+        default_config = eight_bits.clone_and_edit(attr_weights_configs_mapping={})
         # set only 8 and 4 bit candidates for test, to verify that all layers get exactly 4 bits
         mixed_precision_candidates_list = [(8, 8), (8, 4), (4, 8), (4, 4)]
 
         return get_tpc_with_activation_mp_keras(base_config=eight_bits,
+                                                default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
                                                 name="mixed_precision_depthwise_4bit_test")
 
@@ -303,10 +303,12 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
         return model
 
     def get_tpc(self):
-        eight_bits = get_base_eight_bits_config_op()
+        eight_bits = generate_test_op_qc(**generate_test_attr_configs())
+        default_config = eight_bits.clone_and_edit(attr_weights_configs_mapping={})
         mixed_precision_candidates_list = [(8, 8), (8, 4), (8, 2)]
 
         return get_tpc_with_activation_mp_keras(base_config=eight_bits,
+                                                default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
                                                 name="mixed_precision_activation_weights_disabled_test")
 
@@ -348,12 +350,13 @@ class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBa
         return model
 
     def get_tpc(self):
-        eight_bits = get_base_eight_bits_config_op()
-        weights_disabled_config = eight_bits.clone_and_edit(enable_weights_quantization=False)
+        eight_bits = generate_test_op_qc(**generate_test_attr_configs(enable_kernel_weights_quantization=False))
+        default_config = eight_bits.clone_and_edit(attr_weights_configs_mapping={})
 
         mixed_precision_candidates_list = [(8, 8), (8, 4), (8, 2)]
 
-        return get_tpc_with_activation_mp_keras(base_config=weights_disabled_config,
+        return get_tpc_with_activation_mp_keras(base_config=eight_bits,
+                                                default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
                                                 name="mixed_precision_activation_weights_disabled_test")
 

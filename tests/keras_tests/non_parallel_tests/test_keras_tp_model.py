@@ -23,6 +23,7 @@ from packaging import version
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
 from model_compression_toolkit.core.common import BaseNode
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, Conv2DTranspose, ReLU, Activation, BatchNormalization
@@ -42,9 +43,12 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
     QNNPACK_TP_MODEL, TFLITE_TP_MODEL
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-from tests.common_tests.test_tp_model import TEST_QCO, TEST_QC
 
 tp = mct.target_platform
+
+
+TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
+TEST_QCO = tp.QuantizationConfigOptions([TEST_QC])
 
 
 def get_node(layer) -> BaseNode:

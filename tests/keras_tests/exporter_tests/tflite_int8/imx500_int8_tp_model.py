@@ -17,6 +17,10 @@ from typing import List, Tuple
 import tensorflow as tf
 from packaging import version
 
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS, \
+    KERAS_DEPTHWISE_KERNEL
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
+
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
@@ -46,20 +50,7 @@ def get_tp_model(edit_params_dict) -> TargetPlatformModel:
 
 
 def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig]]:
-    eight_bits = tp.OpQuantizationConfig(
-        activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-        activation_n_bits=8,
-        weights_n_bits=8,
-        weights_per_channel_threshold=True,
-        enable_weights_quantization=True,
-        enable_activation_quantization=True,
-        quantization_preserving=False,
-        fixed_scale=None,
-        fixed_zero_point=None,
-        weights_multiplier_nbits=None,
-        simd_size=32
-    )
+    eight_bits = generate_test_op_qc(**generate_test_attr_configs())
     four_bits = eight_bits.clone_and_edit(weights_n_bits=4,
                                           simd_size=eight_bits.simd_size*2)
     two_bits = eight_bits.clone_and_edit(weights_n_bits=2,
@@ -133,14 +124,18 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     tf.nn.top_k,
                                                     tf.__operators__.getitem,
                                                     tf.compat.v1.shape])
-
-        tp.OperationsSetToLayers("Conv", [Conv2D,
-                                          DepthwiseConv2D,
-                                          Conv2DTranspose,
-                                          tf.nn.conv2d,
-                                          tf.nn.depthwise_conv2d,
-                                          tf.nn.conv2d_transpose])
-        tp.OperationsSetToLayers("FullyConnected", [Dense])
+        tp.OperationsSetToLayers("Conv",
+                                 [Conv2D,
+                                  DepthwiseConv2D,
+                                  Conv2DTranspose,
+                                  tf.nn.conv2d,
+                                  tf.nn.depthwise_conv2d,
+                                  tf.nn.conv2d_transpose],
+                                 attr_mapping={KERNEL_ATTR: {
+                                     tuple([DepthwiseConv2D, tf.nn.depthwise_conv2d]): KERAS_DEPTHWISE_KERNEL,
+                                     tuple(): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}})
+        tp.OperationsSetToLayers("FullyConnected", [Dense],
+                                 attr_mapping={KERNEL_ATTR: {tuple(): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}})
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                              tf.nn.relu6,
                                              tf.nn.leaky_relu,
