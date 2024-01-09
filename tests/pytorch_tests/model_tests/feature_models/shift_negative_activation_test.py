@@ -66,8 +66,8 @@ class ShiftNegaviteActivationNetTest(BasePytorchTest):
                 quantization_config=mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
                                                                 mct.core.QuantizationErrorMethod.NOCLIPPING,
                                                                 shift_negative_activation_correction=True,
-                                                                shift_negative_params_search=True,
-                                                                shift_negative_ratio=np.inf)),
+                                                                shift_negative_ratio=np.inf,
+                                                                shift_negative_params_search=True)),
         }
 
     def create_inputs_shape(self):

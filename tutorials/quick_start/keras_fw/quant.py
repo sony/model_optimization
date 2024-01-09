@@ -95,11 +95,13 @@ def quantize(model: tf.keras.Model,
     mp_wcr = args.get(MP_WEIGHTS_COMPRESSION, None)
     if mp_wcr:
         mp_conf = MixedPrecisionQuantizationConfigV2()
-        core_conf = CoreConfig(quantization_config=mct.core.QuantizationConfig(shift_negative_activation_correction=True),
+        core_conf = CoreConfig(quantization_config=mct.core.QuantizationConfig(
+            shift_negative_activation_correction=True),
                                mixed_precision_config=mp_conf)
         target_kpi = get_target_kpi(model, mp_wcr, representative_data_gen, core_conf, tpc)
     else:
-        core_conf = CoreConfig(quantization_config=mct.core.QuantizationConfig(shift_negative_activation_correction=True))
+        core_conf = CoreConfig(quantization_config=mct.core.QuantizationConfig(
+            shift_negative_activation_correction=True))
         target_kpi = None
 
     # Quantize model

@@ -34,9 +34,8 @@ layers = keras.layers
 tp = mct.target_platform
 
 QUANTIZATION_CONFIG = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.MSE,
-                                             weights_error_method=mct.core.QuantizationErrorMethod.MSE,
-                                             relu_bound_to_power_of_2=False, weights_bias_correction=False,
-                                             weights_per_channel_threshold=True)
+                                                  weights_error_method=mct.core.QuantizationErrorMethod.MSE,
+                                                  relu_bound_to_power_of_2=False, weights_bias_correction=False)
 
 TWO_BIT_QUANTIZATION = generate_keras_tpc(name="two_bit_network_test",
                                           tp_model=generate_test_tp_model({'weights_n_bits': 2,

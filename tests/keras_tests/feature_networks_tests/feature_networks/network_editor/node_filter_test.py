@@ -63,9 +63,8 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="scope_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
-        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
-                                      mct.core.QuantizationErrorMethod.MSE,
-                                      False, False, True)
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
+                                           False, False)
 
     def get_debug_config(self):
         # first rule is to check that the scope filter catches the 2 convs with
@@ -143,9 +142,8 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="name_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
-        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
-                                      mct.core.QuantizationErrorMethod.MSE,
-                                      False, False, True)
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
+                                           False, False)
 
     def get_debug_config(self):
         network_editor = [EditRule(filter=NodeNameFilter(self.node_to_change_name),
@@ -215,9 +213,8 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="type_filter_test", tp_model=tp_model)
 
     def get_quantization_config(self):
-        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
-                                      mct.core.QuantizationErrorMethod.MSE,
-                                      False, False, False)
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
+                                           False, False)
 
     def get_debug_config(self):
         network_editor = [EditRule(filter=NodeTypeFilter(self.type_to_change),

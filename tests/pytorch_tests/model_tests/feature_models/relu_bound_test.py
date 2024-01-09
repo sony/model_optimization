@@ -107,8 +107,7 @@ class ReLUBoundToPOTNetTest(BasePytorchTest):
                                          ftp_name='relu_bound_pytorch_test')
 
     def get_core_configs(self):
-        quant_config = QuantizationConfig(QuantizationErrorMethod.MSE,
-                                          QuantizationErrorMethod.MSE,
+        quant_config = QuantizationConfig(QuantizationErrorMethod.MSE, QuantizationErrorMethod.MSE,
                                           relu_bound_to_power_of_2=True)
         return {"8bit_relu_bound": mct.core.CoreConfig(quantization_config=quant_config)}
 
@@ -155,8 +154,7 @@ class HardtanhBoundToPOTNetTest(BasePytorchTest):
                                          ftp_name='relu_bound_pytorch_test')
 
     def get_core_configs(self):
-        quant_config = QuantizationConfig(QuantizationErrorMethod.MSE,
-                                          QuantizationErrorMethod.MSE,
+        quant_config = QuantizationConfig(QuantizationErrorMethod.MSE, QuantizationErrorMethod.MSE,
                                           relu_bound_to_power_of_2=True)
         return {"8bit_relu_bound": mct.core.CoreConfig(quantization_config=quant_config)}
 

@@ -82,9 +82,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,
                                            weights_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                           relu_bound_to_power_of_2=True,
-                                           weights_bias_correction=False,
-                                           weights_per_channel_threshold=self.per_channel)
+                                           relu_bound_to_power_of_2=True, weights_bias_correction=False)
 
     def get_gptq_config(self):
         return GradientPTQConfig(5, optimizer=tf.keras.optimizers.Adam(

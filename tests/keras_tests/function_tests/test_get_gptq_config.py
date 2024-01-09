@@ -62,8 +62,7 @@ def random_datagen_experimental():
 
 class TestGetGPTQConfig(unittest.TestCase):
     def setUp(self):
-        self.qc = QuantizationConfig(QuantizationErrorMethod.MSE,
-                                     QuantizationErrorMethod.MSE,
+        self.qc = QuantizationConfig(QuantizationErrorMethod.MSE, QuantizationErrorMethod.MSE,
                                      weights_bias_correction=False)  # disable bias correction when working with GPTQ
         self.cc = CoreConfig(quantization_config=self.qc)
 

@@ -41,9 +41,8 @@ class NestedModelMultipleOutputsTest(BaseKerasFeatureNetworkTest):
         return get_16bit_tpc("nested_multi_outputs_test")
 
     def get_quantization_config(self):
-        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
-                                      mct.core.QuantizationErrorMethod.MSE,
-                                      True, True, True)
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
+                                           True, True)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 236, 236, 3]]

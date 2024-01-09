@@ -43,8 +43,7 @@ class MatmulToDenseSubstitutionTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                           mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                           False, False, True)
+                                           mct.core.QuantizationErrorMethod.NOCLIPPING, False, False)
 
     def create_networks(self):
         inputs = tf.keras.layers.Input(shape=self.get_input_shapes()[0][1:])
