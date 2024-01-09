@@ -105,7 +105,6 @@ class QuantizationConfig:
         self.relu_bound_to_power_of_2 = relu_bound_to_power_of_2
         self.weights_bias_correction = weights_bias_correction
         self.weights_second_moment_correction = weights_second_moment_correction
-        self.weights_per_channel_threshold = weights_per_channel_threshold
         self.activation_channel_equalization = activation_channel_equalization
         self.input_scaling = input_scaling
         self.softmax_shift = softmax_shift
