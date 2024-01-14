@@ -87,8 +87,17 @@ def _run_operation(n: BaseNode,
 
     op_call_args = n.op_call_args if isinstance(n, FunctionalNode) else []
     functional_kwargs = n.op_call_kwargs if isinstance(n, FunctionalNode) else {}
+
+    # If function inputs and arguments have the following pattern: op_func([inputs list], arg1, arg2,...)
     if isinstance(n, FunctionalNode) and n.inputs_as_list:
         out_tensors_of_n_float = op_func(input_tensors, *op_call_args, **functional_kwargs)
+
+    # If function inputs and arguments requires specific order, sort it before the call
+    elif isinstance(n, FunctionalNode) and n.op_call_args_order and not (len(n.op_call_args_order) > len(input_tensors + op_call_args)):
+        args = [(input_tensors + op_call_args)[ind] for ind in n.op_call_args_order]
+        out_tensors_of_n_float = op_func(*args, **functional_kwargs)
+
+    # Assume the rest of the cases correspond the following pattern: op_func(input1, input2, arg1, arg2,...)
     else:
         out_tensors_of_n_float = op_func(*input_tensors + op_call_args, **functional_kwargs)
 
