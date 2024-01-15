@@ -26,6 +26,7 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 from model_compression_toolkit.core.keras.constants import DEPTHWISE_KERNEL, KERNEL
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
     POINTWISE_KERNEL
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
 
@@ -80,9 +81,12 @@ def complex_model():
 
 
 def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
-    base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-    base_config = base_config.clone_and_edit(weights_n_bits=mp_bitwidth_candidates_list[0][0],
-                                             activation_n_bits=mp_bitwidth_candidates_list[0][1])
+
+    base_config = generate_test_op_qc(activation_n_bits=mp_bitwidth_candidates_list[0][1],
+                                      **generate_test_attr_configs(default_cfg_nbits=mp_bitwidth_candidates_list[0][0],
+                                                                   kernel_cfg_nbits=mp_bitwidth_candidates_list[0][0]))
+
+    default_config = base_config.clone_and_edit(attr_weights_configs_mapping={})
 
     tpc = get_tpc_with_activation_mp_keras(base_config=base_config,
                                            default_config=default_config,
@@ -90,8 +94,8 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
                                            name="kpi_data_test")
 
     kpi_data = mct.core.keras_kpi_data(in_model=model,
-                                  representative_data_gen=random_datagen,
-                                  target_platform_capabilities=tpc)
+                                       representative_data_gen=random_datagen,
+                                       target_platform_capabilities=tpc)
 
     return kpi_data
 

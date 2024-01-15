@@ -18,6 +18,9 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
+    KERNEL_BASE_CONFIG, BIAS_CONFIG
 
 keras = tf.keras
 layers = keras.layers
@@ -58,27 +61,24 @@ def get_tpc():
          TargetPlatformCapabilities object
     """
     tp = mct.target_platform
-    default_config = tp.OpQuantizationConfig(
-        activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-        activation_n_bits=32,
-        weights_n_bits=8,
-        weights_per_channel_threshold=True,
-        enable_weights_quantization=True,
-        enable_activation_quantization=True,
-        quantization_preserving=False,
-        fixed_scale=1.0,
-        fixed_zero_point=0,
-        weights_multiplier_nbits=0,
-        simd_size=32)
+    attr_cfg = generate_test_attr_configs(kernel_lut_values_bitwidth=0)
+    base_cfg = tp.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+                                       enable_activation_quantization=True,
+                                       activation_n_bits=32,
+                                       default_weight_attr_config=attr_cfg[DEFAULT_WEIGHT_ATTR_CONFIG],
+                                       attr_weights_configs_mapping={},
+                                       quantization_preserving=False,
+                                       fixed_scale=1.0,
+                                       fixed_zero_point=0,
+                                       simd_size=32)
 
-    default_configuration_options = tp.QuantizationConfigOptions([default_config])
+    default_configuration_options = tp.QuantizationConfigOptions([base_cfg])
     tp_model = tp.TargetPlatformModel(default_configuration_options)
     with tp_model:
+        default_qco = tp.get_default_quantization_config_options()
         tp.OperatorsSet("NoQuantization",
-                        tp.get_default_quantization_config_options().clone_and_edit(
-                            enable_weights_quantization=False,
-                            enable_activation_quantization=False))
+                        default_qco.clone_and_edit(enable_activation_quantization=False)
+                        .clone_and_edit_weight_attribute(enable_weights_quantization=False))
 
     tpc = tp.TargetPlatformCapabilities(tp_model)
     with tpc:

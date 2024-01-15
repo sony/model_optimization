@@ -176,12 +176,12 @@ def generate_test_tpc(name: str,
     return tpc
 
 
-
 def generate_test_attr_configs(default_cfg_nbits: int = 8,
                                default_cfg_quantizatiom_method: tp.QuantizationMethod = tp.QuantizationMethod.POWER_OF_TWO,
                                kernel_cfg_nbits: int = 8,
                                kernel_cfg_quantizatiom_method: tp.QuantizationMethod = tp.QuantizationMethod.POWER_OF_TWO,
-                               enable_kernel_weights_quantization: bool = True):
+                               enable_kernel_weights_quantization: bool = True,
+                               kernel_lut_values_bitwidth: int = None):
 
     default_weight_attr_config = tp.AttributeQuantizationConfig(
         weights_quantization_method=default_cfg_quantizatiom_method,
@@ -195,7 +195,7 @@ def generate_test_attr_configs(default_cfg_nbits: int = 8,
         weights_n_bits=kernel_cfg_nbits,
         weights_per_channel_threshold=True,
         enable_weights_quantization=enable_kernel_weights_quantization,
-        lut_values_bitwidth=None)
+        lut_values_bitwidth=kernel_lut_values_bitwidth)
 
     bias_config = tp.AttributeQuantizationConfig(
         weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,

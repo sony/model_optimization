@@ -19,6 +19,9 @@ import unittest
 
 from packaging import version
 import tensorflow as tf
+
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
+
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add
 else:
@@ -206,8 +209,9 @@ class TestActivationWeightsComposition(unittest.TestCase):
         in_model = two_conv_model()
         keras_impl = KerasImplementation()
 
-        base_config, _, default_config = get_op_quantization_configs()
-        base_config = base_config.clone_and_edit(enable_weights_quantization=False)
+        base_config = generate_test_op_qc(**generate_test_attr_configs(enable_kernel_weights_quantization=False))
+        default_config = base_config.clone_and_edit(attr_weights_configs_mapping={})
+
         graph = prepare_graph(in_model, keras_impl,
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
                               default_config=default_config)
