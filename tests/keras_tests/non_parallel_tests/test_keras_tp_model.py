@@ -41,7 +41,7 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
     Greater, \
     Smaller, GreaterEq, Eq, SmallerEq, Contains
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
-    QNNPACK_TP_MODEL, TFLITE_TP_MODEL
+    QNNPACK_TP_MODEL, TFLITE_TP_MODEL, KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL, BIAS
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 
 tp = mct.target_platform
@@ -158,23 +158,40 @@ class TestKerasTPModel(unittest.TestCase):
 
     def test_qco_by_keras_layer(self):
         default_qco = tp.QuantizationConfigOptions([TEST_QC])
+        default_qco = default_qco.clone_and_edit(attr_weights_configs_mapping={})
         hm = tp.TargetPlatformModel(default_qco, name='test')
         with hm:
             mixed_precision_configuration_options = tp.QuantizationConfigOptions([TEST_QC,
                                                                                   TEST_QC.clone_and_edit(
-                                                                                      weights_n_bits=4),
+                                                                                      attr_weights_configs_mapping=
+                                                                                      {KERNEL_ATTR:
+                                                                                           TEST_QC.attr_weights_configs_mapping[
+                                                                                               KERNEL_ATTR].clone_and_edit(
+                                                                                               weights_n_bits=4),
+                                                                                       BIAS_ATTR:
+                                                                                           TEST_QC.attr_weights_configs_mapping[
+                                                                                               BIAS_ATTR]}),
                                                                                   TEST_QC.clone_and_edit(
-                                                                                      weights_n_bits=2)],
+                                                                                      attr_weights_configs_mapping=
+                                                                                      {KERNEL_ATTR:
+                                                                                          TEST_QC.attr_weights_configs_mapping[
+                                                                                              KERNEL_ATTR].clone_and_edit(
+                                                                                              weights_n_bits=2),
+                                                                                          BIAS_ATTR:
+                                                                                              TEST_QC.attr_weights_configs_mapping[
+                                                                                                  BIAS_ATTR]})],
                                                                                  base_config=TEST_QC)
 
             tp.OperatorsSet("conv", mixed_precision_configuration_options)
-            sevenbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=7)
+            sevenbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=7,
+                                                   attr_weights_configs_mapping={})
             tp.OperatorsSet("tanh", sevenbit_qco)
             tp.OperatorsSet("relu")
 
         hm_keras = tp.TargetPlatformCapabilities(hm, name='fw_test')
         with hm_keras:
-            tp.OperationsSetToLayers("conv", [Conv2D])
+            tp.OperationsSetToLayers("conv", [Conv2D], attr_mapping={KERNEL_ATTR: {
+                                     tuple([Conv2D]): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}})
             tp.OperationsSetToLayers("tanh", [tf.nn.tanh])
             tp.OperationsSetToLayers("relu", [LayerFilterParams(Activation, activation="relu")])
 
@@ -186,7 +203,11 @@ class TestKerasTPModel(unittest.TestCase):
         tanh_qco = tanh_node.get_qco(hm_keras)
         relu_qco = relu_node.get_qco(hm_keras)
 
-        self.assertEqual(conv_qco, mixed_precision_configuration_options)
+        self.assertEqual(len(conv_qco.quantization_config_list),
+                         len(mixed_precision_configuration_options.quantization_config_list))
+        for i in range(len(conv_qco.quantization_config_list)):
+            self.assertEqual(conv_qco.quantization_config_list[i].attr_weights_configs_mapping[KERAS_KERNEL],
+                             mixed_precision_configuration_options.quantization_config_list[i].attr_weights_configs_mapping[KERNEL_ATTR])
         self.assertEqual(tanh_qco, sevenbit_qco)
         self.assertEqual(relu_qco, default_qco)
 
