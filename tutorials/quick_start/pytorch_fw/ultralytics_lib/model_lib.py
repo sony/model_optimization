@@ -22,21 +22,21 @@ import logging
 from enum import Enum
 
 import torch
-from torch.utils.data import DataLoader
-from torchvision.transforms import transforms
-from ultralytics.yolo.data.dataset import YOLODataset
-from ultralytics.yolo.utils.torch_utils import initialize_weights
+from ultralytics.utils.torch_utils import initialize_weights
+from ultralytics import YOLO
 
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.replacers import C2fModuleReplacer, \
-    YOLOReplacer, DetectionModelModuleReplacer, DetectModuleReplacer, SegmentModuleReplacer
+    YOLOReplacer
+from tutorials.quick_start.pytorch_fw.ultralytics_lib.detect_replacers import DetectModuleReplacer, \
+    DetectionModelModuleReplacer
+from tutorials.quick_start.pytorch_fw.ultralytics_lib.segment_replacers import SegmentModuleReplacer
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.replacers import prepare_model_for_ultralytics_val
-from tutorials.quick_start.pytorch_fw.utils import get_representative_dataset
 from tutorials.quick_start.common.model_lib import BaseModelLib
 from tutorials.quick_start.common.constants import MODEL_NAME, BATCH_SIZE, COCO_DATASET, VALIDATION_DATASET_FOLDER
 from tutorials.quick_start.common.results import DatasetInfo
-from tutorials.resources.utils.coco_evaluation import coco_dataset_generator
 from tutorials.resources.yolov8.yolov8_preprocess import yolov8_preprocess_chw_transpose
 from model_compression_toolkit.core import FolderImageLoader
+from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PytorchModel
 
 TaskModuleReplacer = {
     'detect': DetectModuleReplacer(),
@@ -70,6 +70,7 @@ class ModelLib(BaseModelLib):
         # load pre-trained weights
         initialize_weights(self.model)
         self.model.load_state_dict(model_weights)  # load weights
+        # self.ultralytics_model.model = self.model
         super().__init__(args)
 
     def get_model(self):
@@ -115,7 +116,7 @@ class ModelLib(BaseModelLib):
         model.to(device)
 
         # Some attributes are required for the evaluation of the quantized model
-        self.ultralytics_model = prepare_model_for_ultralytics_val(self.ultralytics_model, model)
+        self.ultralytics_model = prepare_model_for_ultralytics_val(self.ultralytics_model, model, quantized=isinstance(model, PytorchModel))
 
         # Evaluation using ultralytics interface
         if self.args[VALIDATION_DATASET_FOLDER] is not None:
