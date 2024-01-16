@@ -23,7 +23,6 @@ class FunctionalNode(BaseNode):
                  quantization_attr: Dict[str, Any] = None,
                  functional_op: Any = None,
                  inputs_as_list: bool = False,
-                 op_call_args_order: List[Any] = None,
                  has_activation: bool = True):
         """
         Init a FunctionalNode object.
@@ -43,7 +42,7 @@ class FunctionalNode(BaseNode):
             functional_op: The op the node implements.
             inputs_as_list: Whether to pass the node its input tensors as a list or not when calling the layer.
             has_activation: Whether the node has activations that we might want to quantize.
-            op_call_args_order: List of indexes to sort the inputs + arguments when using the functional operation.
+
         """
 
         super().__init__(name,
@@ -61,7 +60,6 @@ class FunctionalNode(BaseNode):
         self.op_call_args = op_call_args
         self.functional_op = functional_op
         self.inputs_as_list = inputs_as_list
-        self.op_call_args_order = op_call_args_order
 
     @property
     def type(self):

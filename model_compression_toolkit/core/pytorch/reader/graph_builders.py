@@ -23,8 +23,7 @@ from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.constants import OUTPUT, PLACEHOLDER, TENSOR_META, CALL_FUNCTION, TYPE, \
-    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, GET_ATTR, CONSTANT, BUFFER, \
-    OP_CALL_ARGS_ORDER
+    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, GET_ATTR, CONSTANT, BUFFER
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, ConstantHolder, BufferHolder
 from model_compression_toolkit.logger import Logger
 
@@ -177,43 +176,20 @@ def nodes_builder(model: GraphModule,
         # initiate graph nodes
         if node.op in [CALL_METHOD, CALL_FUNCTION]:
             graph_node_type = FunctionalNode
-
-            # Check if function inputs and arguments have the following pattern: op_func([inputs list], arg1, arg2,...)
             inputs_as_list1 = len(node.args) > 0 and isinstance(node.args[0], (list, tuple)) and all(
                 [isinstance(n, torch.fx.node.Node) for n in node.args[0]])
             inputs_as_list = inputs_as_list1 or \
-                             (len(node.args) > 0 and hasattr(node.args[0], 'op') and node.args[0].op == PLACEHOLDER and node.args[0].meta[TYPE] in (list, tuple))
-
-            # If the pattern as above, list the arguments in op_call_args = [arg1, arg2, ...]
-            op_call_args_order = []
+                             (len(node.args) > 0 and node.args[0].op == PLACEHOLDER and node.args[0].meta[TYPE] in (list, tuple))
             if inputs_as_list:
                 num_inputs = 1
-                op_call_args = list(node.args[num_inputs:])
             else:
-                # Otherwise, we need to check which of the "node.args" are inputs and which are arguments.
                 input_counter = 0
                 for in_node in node.all_input_nodes:
                     for arg in node.args:
                         if arg == in_node:
                             input_counter += 1
                 num_inputs = max(len(node.all_input_nodes), input_counter)
-
-                # If there are arguments in addition to the inputs, set op_call_args = [arg1, arg2, ...]
-                if num_inputs != len(node.args):
-                    op_call_args = [arg for arg in node.args if arg not in node.all_input_nodes]
-                else:
-                    op_call_args = []
-
-                # Next, we keep the correct order of the inputs and arguments in op_call_args_order to be used later in "model_builder"
-                # We keep op_call_args_order empty in case it's standard pattern op_func(input1, input2, arg1, arg2,...)
-                sorted_args = list(node.args) + node.all_input_nodes[input_counter:]
-                # for arg in node.args:
-                #     if isinstance(arg, (List, Tuple)):
-                #         sorted_args = list(node.args)
-                all_args = node.all_input_nodes + op_call_args
-                if op_call_args and not sorted_args==all_args:
-                    for a in sorted_args:
-                        op_call_args_order.append(all_args.index(a))
+            op_call_args = list(node.args[num_inputs:])
 
             # remove torch.fx.node.Node from inputs to graph_node_type
             for arg in op_call_args:
@@ -223,8 +199,7 @@ def nodes_builder(model: GraphModule,
             kwargs = {FUNCTIONAL_OP: node_type,
                       OP_CALL_ARGS: op_call_args,
                       OP_CALL_KWARGS: node_kwargs,
-                      INPUTS_AS_LIST: inputs_as_list,
-                      OP_CALL_ARGS_ORDER: op_call_args_order}
+                      INPUTS_AS_LIST: inputs_as_list}
         else:
             graph_node_type = BaseNode
             kwargs = {}
