@@ -23,8 +23,8 @@ from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, LeakyReLU
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, leaky_relu
 
-from model_compression_toolkit.core.pytorch.constants import BIAS
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL, \
+    BIAS
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import get_tp_model
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1 import __version__ as TPC_VERSION

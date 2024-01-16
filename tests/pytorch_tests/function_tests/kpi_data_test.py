@@ -21,7 +21,8 @@ from torch.nn import Conv2d, BatchNorm2d, ReLU
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from model_compression_toolkit.core.pytorch.constants import KERNEL
-from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
+from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp, generate_test_op_qc, \
+    generate_test_attr_configs
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
 
@@ -95,9 +96,11 @@ class ComplexModel(torch.nn.Module):
 
 
 def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
-    base_config, _, default_config = get_op_quantization_configs()
-    base_config = base_config.clone_and_edit(weights_n_bits=mp_bitwidth_candidates_list[0][0],
-                                             activation_n_bits=mp_bitwidth_candidates_list[0][1])
+    base_config = generate_test_op_qc(activation_n_bits=mp_bitwidth_candidates_list[0][1],
+                                      **generate_test_attr_configs(default_cfg_nbits=mp_bitwidth_candidates_list[0][0],
+                                                                   kernel_cfg_nbits=mp_bitwidth_candidates_list[0][0]))
+
+    default_config = base_config.clone_and_edit(attr_weights_configs_mapping={})
 
     tpc_dict = get_mp_activation_pytorch_tpc_dict(
         tpc_model=generate_tp_model_with_activation_mp(
