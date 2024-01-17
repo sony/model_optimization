@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,18 +20,31 @@ This tests check the addition and subtraction operations.
 Both with different layers and with constants.
 """
 class LayerNormNet(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, has_weight=None, has_bias=None):
         super(LayerNormNet, self).__init__()
-        self.bias = torch.nn.Parameter(torch.tensor([0., 0., 0.]))
-        self.weight = torch.nn.Parameter(torch.tensor([1., 1., 1.]))
+
+        self.has_weight = has_weight
+        self.has_bias = has_bias
+        self.bias0 = torch.nn.Parameter(torch.rand(3))
+        self.weight0 = torch.nn.Parameter(torch.rand(3))
+        self.bias1 = torch.nn.Parameter(torch.rand(3))
+        self.weight1 = torch.nn.Parameter(torch.rand(3))
 
     def forward(self, x):
         # Transpose the tensor such that last dim is the channels.
         x = torch.transpose(x, 1, 3)
         x = torch.transpose(x, 1, 2)
 
-        # Apply layer_norm
-        x = torch.nn.functional.layer_norm(x, normalized_shape=(3,), weight=self.weight, bias=self.bias) # Layer normalization along the last dimension
+        # Apply layer_norm with all the combinations of arguments.
+        if self.has_weight and self.has_bias:
+            x = torch.nn.functional.layer_norm(x, normalized_shape=(3,), weight=self.weight0, bias=self.bias0)
+        elif self.has_weight and not self.has_bias:
+            x = torch.nn.functional.layer_norm(x, normalized_shape=(3,), weight=self.weight1) # Layer normalization along the last dimension
+        elif not self.has_weight and self.has_bias:
+            x = torch.nn.functional.layer_norm(x, normalized_shape=(3,), bias=self.bias1)  # Layer normalization along the last dimension
+        else:
+            x = torch.nn.functional.layer_norm(x, normalized_shape=(3,))  # Layer normalization along the last dimension
+
         return x
 
 
@@ -41,11 +54,13 @@ class LayerNormNetTest(BasePytorchTest):
     This tests check the addition and subtraction operations.
     Both with different layers and with constants.
     """
-    def __init__(self, unit_test):
+    def __init__(self, unit_test, has_weight=None, has_bias=None):
         super().__init__(unit_test)
+        self.has_weight = has_weight
+        self.has_bias = has_bias
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 32, 32]]
 
     def create_feature_network(self, input_shape):
-        return LayerNormNet()
+        return LayerNormNet(self.has_weight, self.has_bias)

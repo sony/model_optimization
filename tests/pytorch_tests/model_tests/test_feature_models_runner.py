@@ -124,9 +124,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_layer_norm_net(self):
         """
-        This tests check the nn.functional.layer_norm operations.
+        These tests check the nn.functional.layer_norm operations.
         """
-        LayerNormNetTest(self).run_test()
+        LayerNormNetTest(self, has_weight=True, has_bias=True).run_test()
+        LayerNormNetTest(self, has_weight=True, has_bias=False).run_test()
+        LayerNormNetTest(self, has_weight=False, has_bias=True).run_test()
+        LayerNormNetTest(self, has_weight=False, has_bias=False).run_test()
 
     def test_assert_net(self):
         """

@@ -1,4 +1,4 @@
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
+import numpy as np
+from typing import Tuple, List
 
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core import common
@@ -25,37 +27,52 @@ from model_compression_toolkit.logger import Logger
 
 class FunctionalLayerNorm(common.BaseSubstitution):
     """
-    Replace functional batch_norm with BatchNorm2d.
+    Replace functional layer_norm with LayerNorm.
     """
 
     def __init__(self):
         """
-        Matches: functional batch_norm
+        Matches: functional layer_norm
         """
-        bn_node = NodeOperationMatcher(F.layer_norm)
-        super().__init__(matcher_instance=bn_node)
+        ln_node = NodeOperationMatcher(F.layer_norm)
+        super().__init__(matcher_instance=ln_node)
 
-    def get_attributes_from_inputs(self, graph: Graph, node: BaseNode, normalized_shape) -> dict:
+    def get_attributes_from_inputs(self, graph: Graph, node: BaseNode, normalized_shape: [Tuple, List, int]) -> dict:
+        """
+        Parse layer_norm(input, normalized_shape, weight=None, bias=None)
+        Args:
+            graph: Graph we apply the substitution on.
+            node: Node that match the pattern in the substitution init.
+            normalized_shape: nn.LayerNorm "normalized_shape" argument
+
+        Returns:
+            Graph after applying the substitution.
+        """
+
+        # Get input nodes (sorted)
         input_nodes = graph.get_prev_nodes(node, sink_index_sorted=True)
 
-        if len(input_nodes) == 3:
-            return {
-                GAMMA: list(input_nodes[1].weights.values())[0],
-                BETA: list(input_nodes[2].weights.values())[0]
-            }
-        else:
-            Logger.warning(f'functional batch_norm is only folded in the 5 inputs case (input, mean, var, gamma, beta),'
-                           f'got {len(input_nodes)}')
-            return {
-                GAMMA: nn.Parameter(torch.ones(normalized_shape)),
-                BETA: nn.Parameter(torch.ones(normalized_shape))
-            }
+        # Define default weight and bias
+        w0 = np.ones(normalized_shape) # Default value in case weight is not given
+        b0 = np.zeros(normalized_shape) # Default value in case bias is not given
+
+        # Check if weight and/or bias were not given.
+        has_weight = WEIGHT not in node.framework_attr
+        has_bias = BIAS not in node.framework_attr
+
+        weight_input_ind = 1 if has_weight else 0
+        bias_input_ind = weight_input_ind + 1
+
+        return {
+            GAMMA: list(input_nodes[weight_input_ind].weights.values())[0] if has_weight else w0,
+            BETA: list(input_nodes[bias_input_ind].weights.values())[0] if has_bias else b0
+        }
 
     def substitute(self,
                    graph: Graph,
                    node: BaseNode) -> Graph:
         """
-        Substitute functional.batch_norm and its inputs with BatchNorm2d.
+        Substitute functional.layer_norm and its inputs with LayerNorm.
         Args:
             graph: Graph we apply the substitution on.
             node: node that match the pattern in the substitution init.
@@ -63,35 +80,31 @@ class FunctionalLayerNorm(common.BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
-        # if the input is not a 4D tensor, we can't substitute it with BatchNorm2d
-        # if len(node.input_shape[0]) != 4:
-        #     return graph
         normalized_shape = node.input_shape[0][-1]
 
-        bn_node_weights = self.get_attributes_from_inputs(graph, node, normalized_shape)
-        if not bn_node_weights:
+        ln_node_weights = self.get_attributes_from_inputs(graph, node, normalized_shape)
+        if not ln_node_weights:
             return graph
-        new_layernorm = BaseNode(name=node.name + '_into_LayerNorm2d',
-                                   framework_attr={'normalized_shape': normalized_shape,
+        new_layernorm = BaseNode(name=node.name + '_into_LayerNorm',
+                                   framework_attr={NORMALIZED_SHAPE: normalized_shape,
                                                    EPSILON: EPSILON_VAL,
-                                                   'elementwise_affine': True,
                                                    },
                                    input_shape=node.output_shape,
                                    output_shape=node.output_shape,
-                                   weights=bn_node_weights,
+                                   weights=ln_node_weights,
                                    layer_class=nn.LayerNorm)
 
         num_nodes_before_substitution = len(graph.nodes)
         num_edges_before_substitution = len(graph.edges)
 
-        batch_norm_consts = graph.get_prev_nodes(node)[1:]
-        for const in batch_norm_consts:
+        layer_norm_consts = graph.get_prev_nodes(node)[1:]
+        for const in layer_norm_consts:
             graph.remove_edge(const, node)
             graph.remove_node(const)
 
         graph.replace_node(node, new_layernorm)
 
-        assert num_nodes_before_substitution - len(graph.nodes) == len(batch_norm_consts)
-        assert num_edges_before_substitution - len(graph.edges) == len(batch_norm_consts)
+        assert num_nodes_before_substitution - len(graph.nodes) == len(layer_norm_consts)
+        assert num_edges_before_substitution - len(graph.edges) == len(layer_norm_consts)
 
         return graph
