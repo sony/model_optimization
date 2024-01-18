@@ -83,16 +83,15 @@ class FunctionalLayerNorm(common.BaseSubstitution):
         normalized_shape = node.input_shape[0][-1]
 
         ln_node_weights = self.get_attributes_from_inputs(graph, node, normalized_shape)
-        if not ln_node_weights:
-            return graph
+
         new_layernorm = BaseNode(name=node.name + '_into_LayerNorm',
-                                   framework_attr={NORMALIZED_SHAPE: normalized_shape,
-                                                   EPSILON: EPSILON_VAL,
-                                                   },
-                                   input_shape=node.output_shape,
-                                   output_shape=node.output_shape,
-                                   weights=ln_node_weights,
-                                   layer_class=nn.LayerNorm)
+                                 framework_attr={NORMALIZED_SHAPE: normalized_shape,
+                                                 EPSILON: node.framework_attr.get('eps'),
+                                                 },
+                                 input_shape=node.output_shape,
+                                 output_shape=node.output_shape,
+                                 weights=ln_node_weights,
+                                 layer_class=nn.LayerNorm)
 
         num_nodes_before_substitution = len(graph.nodes)
         num_edges_before_substitution = len(graph.edges)
