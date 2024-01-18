@@ -37,3 +37,8 @@ KERAS_KERNEL = "kernel"
 KERAS_DEPTHWISE_KERNEL = "depthwise_kernel"
 BIAS = "bias"
 PYTORCH_KERNEL = "weight"
+
+# Configuration attributes names
+
+WEIGHTS_N_BITS = 'weights_n_bits'
+WEIGHTS_QUANTIZATION_METHOD = 'weights_quantization_method'

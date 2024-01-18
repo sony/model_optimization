@@ -189,8 +189,11 @@ class TargetPlatformCapabilities(ImmutableClass):
                 if qco is None:
                     qco = self.tp_model.default_qco
 
+                # here, we need to take care of mapping a general attribute name into a framework and
+                # layer type specific attribute name
                 layer_attrs_mapping = None if op2layers.attr_mapping is None else \
-                    {k: self._get_layer_attr_mapping(l, v) for k, v in op2layers.attr_mapping.items()}
+                    {k: self._get_layer_attr_mapping(layer=l, layers_attr_mapping=v)
+                     for k, v in op2layers.attr_mapping.items()}
                 qco = qco.clone_and_map_weights_attr_keys(layer_attrs_mapping)
 
                 if isinstance(l, LayerFilterParams):
@@ -229,15 +232,24 @@ class TargetPlatformCapabilities(ImmutableClass):
         for op in self.__tp_model_opsets_not_used:
             Logger.warning(f'{op} is defined in TargetPlatformModel, but is not used in TargetPlatformCapabilities.')
 
-    def _get_layer_attr_mapping(self, layer: Any, layers_mapping: Dict[Tuple[type], str]):
-        new_attr_key = [v for k, v in layers_mapping.items() if layer in k]
+    def _get_layer_attr_mapping(self, layer: Any, layers_attr_mapping: Dict[Tuple[type], str]) -> str:
+        """
+        Extracts the framework attribute name of the given layer from the layers-attributes mapping.
+        Args:
+            layer: The op type to extract the attribute name for.
+            layers_attr_mapping: A mapping between framework op types and their corresponding attributes names.
+
+        Returns: The name of the attribute for the given layer.
+
+        """
+        new_attr_key = [v for k, v in layers_attr_mapping.items() if layer in k]
         if len(new_attr_key) == 0:
             # this means there is no specified attribute name for this layer, so we take the default provided
             # in the mapping
-            new_attr_key = layers_mapping.get(tuple())
+            new_attr_key = layers_attr_mapping.get(tuple())
 
             if new_attr_key is None:
-                Logger.critical(f"The defined TPC missing an attribute name mapping for layer {layer}.")
+                Logger.critical(f"The defined TPC is missing an attribute name mapping for layer {layer}.")
         else:
             new_attr_key = new_attr_key[0]
 

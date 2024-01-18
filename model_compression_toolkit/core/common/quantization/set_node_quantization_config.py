@@ -119,11 +119,11 @@ def create_node_activation_qc(qc: QuantizationConfig,
                                             activation_quantization_params_fn)
 
 
-def create_node_qc_candidate(qc: QuantizationConfig,
-                             fw_info: FrameworkInfo,
-                             weight_channel_axis: int,
-                             op_cfg: OpQuantizationConfig,
-                             kernel_attr: str) -> CandidateNodeQuantizationConfig:
+def _create_node_single_candidate_qc(qc: QuantizationConfig,
+                                     fw_info: FrameworkInfo,
+                                     weight_channel_axis: int,
+                                     op_cfg: OpQuantizationConfig,
+                                     kernel_attr: str) -> CandidateNodeQuantizationConfig:
     """
     Create quantization configuration candidate from a QuantizationConfig object.
     Creates both weights and activation quantization configurations
@@ -189,6 +189,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
         fw_info: Framework information (e.g., which layers should have their kernels' quantized).
         weight_channel_axis: Output channel index of the node's kernel.
         node_qc_options: QuantizationConfigOptions for the node with quantization candidates information.
+        node_type: The type of the layer that the node represents.
         mixed_precision_enable: is mixed precision enabled
 
     Returns:
@@ -198,7 +199,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
     candidates = []
 
     # TODO: Currently, we are using fw_info to get the kernel attribute, but this would changed once we enabe multi
-    #  attribute quantization via AttributeQuantizationComfng class (needs to be implemented)
+    #  attribute quantization via AttributeQuantizationConfig class (needs to be implemented)
 
     kernel_attr = fw_info.get_kernel_op_attributes(node_type)
     assert len(kernel_attr) == 1
@@ -207,20 +208,20 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
     if mixed_precision_enable:
         for op_cfg in node_qc_options.quantization_config_list:
             candidate_nbits_qc = copy.deepcopy(qc)
-            candidates.append(create_node_qc_candidate(candidate_nbits_qc,
-                                                       fw_info,
-                                                       weight_channel_axis,
-                                                       op_cfg,
-                                                       kernel_attr))
+            candidates.append(_create_node_single_candidate_qc(candidate_nbits_qc,
+                                                               fw_info,
+                                                               weight_channel_axis,
+                                                               op_cfg,
+                                                               kernel_attr))
         # sorting the candidates by weights number of bits first and then by activation number of bits
         # (in reversed order)
         candidates.sort(key=lambda c: (c.weights_quantization_cfg.weights_n_bits,
                                        c.activation_quantization_cfg.activation_n_bits), reverse=True)
     else:
-        candidates.append(create_node_qc_candidate(qc,
-                                                   fw_info,
-                                                   weight_channel_axis,
-                                                   node_qc_options.base_config,
-                                                   kernel_attr))
+        candidates.append(_create_node_single_candidate_qc(qc,
+                                                           fw_info,
+                                                           weight_channel_axis,
+                                                           node_qc_options.base_config,
+                                                           kernel_attr))
 
     return candidates

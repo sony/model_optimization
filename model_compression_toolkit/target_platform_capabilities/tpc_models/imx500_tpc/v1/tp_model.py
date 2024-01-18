@@ -16,7 +16,7 @@ from typing import List, Tuple
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS
 from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
     TargetPlatformModel
 from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import \
@@ -53,19 +53,20 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
 
     """
 
-    # TODO: add comments
-
     # TODO: currently, we don't want to quantize any attribute but the kernel by default,
-    #  to preserve the current behavior of MCT, so it is disabled.
-    #  Other parameters are set to what we eventually want to quantize by default
+    #  to preserve the current behavior of MCT, so quantization is disabled for all other attributes.
+    #  Other quantization parameters are set to what we eventually want to quantize by default
     #  when we enable multi-attributes quantization - THIS NEED TO BE MODIFIED IN ALL TP MODELS!
+
+    # define a default quantization config for all non-specified weights attributes.
     default_weight_attr_config = AttributeQuantizationConfig(
         weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
         weights_n_bits=8,
         weights_per_channel_threshold=False,
-        enable_weights_quantization=False,
+        enable_weights_quantization=False,  # TODO: this will changed to True once implementing multi-attributes quantization
         lut_values_bitwidth=None)
 
+    # define a quantization config to quantize the kernel (for layers where there is a kernel attribute).
     kernel_base_config = AttributeQuantizationConfig(
         weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
         weights_n_bits=8,
@@ -73,6 +74,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         enable_weights_quantization=True,
         lut_values_bitwidth=None)
 
+    # define a quantization config to quantize the bias (for layers where there is a bias attribute).
     bias_config = AttributeQuantizationConfig(
         weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
         weights_n_bits=FLOAT_BITWIDTH,
@@ -114,14 +116,10 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     # In this example, we quantize some operations' weights
     # using 2, 4 or 8 bits, and when using 2 or 4 bits, it's possible
     # to quantize the operations' activations using LUT.
-    four_bits = linear_eight_bits.clone_and_edit(attr_weights_configs_mapping=
-                                                 {KERNEL_ATTR: kernel_base_config.clone_and_edit(weights_n_bits=4),
-                                                  BIAS_ATTR: bias_config},
-                                                 simd_size=linear_eight_bits.simd_size * 2)  # TODO: clone and edit the opconfig with specific attr config per attr name
-    two_bits = linear_eight_bits.clone_and_edit(attr_weights_configs_mapping=
-                                                {KERNEL_ATTR: kernel_base_config.clone_and_edit(weights_n_bits=2),
-                                                 BIAS_ATTR: bias_config},
-                                                simd_size=linear_eight_bits.simd_size*4)
+    four_bits = linear_eight_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}},
+                                                 simd_size=linear_eight_bits.simd_size * 2)
+    two_bits = linear_eight_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 2}},
+                                                simd_size=linear_eight_bits.simd_size * 4)
 
     mixed_precision_cfg_list = [linear_eight_bits, four_bits, two_bits]
 

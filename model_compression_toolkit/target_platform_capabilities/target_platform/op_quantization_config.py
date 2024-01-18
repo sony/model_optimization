@@ -14,12 +14,15 @@
 # ==============================================================================
 
 import copy
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Any
 
 from mct_quantizers import QuantizationMethod
 
 
 class AttributeQuantizationConfig:
+    """
+    Hold the quantization configuration of a weight attribute of a layer.
+    """
     def __init__(self,
                  weights_quantization_method: QuantizationMethod,
                  weights_n_bits: int,
@@ -28,6 +31,7 @@ class AttributeQuantizationConfig:
                  lut_values_bitwidth: Union[int, None],  # If None - set 8 in hptq, o.w use it
                  ):
         """
+        Initializes an attribute quantization config.
 
         Args:
             weights_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for weights quantization.
@@ -102,6 +106,8 @@ class OpQuantizationConfig:
         """
 
         Args:
+            default_weight_attr_config (AttributeQuantizationConfig): A default attribute quantization configuration for the operation.
+            attr_weights_configs_mapping (dict): A mapping between an op attribute name and its quantization configuration.
             activation_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for activation quantization.
             activation_n_bits (int): Number of bits to quantize the activations.
             enable_activation_quantization (bool): Whether to quantize the model activations or not.
@@ -131,10 +137,12 @@ class OpQuantizationConfig:
         """
         return self.__dict__
 
-    def clone_and_edit(self, **kwargs):
+    def clone_and_edit(self, attr_to_edit: Dict[str, Dict[str, Any]] = {}, **kwargs):
         """
         Clone the quantization config and edit some of its attributes.
         Args:
+            attr_to_edit: A mapping between attributes names to edit and their parameters that
+            should be edited to a new value.
             **kwargs: Keyword arguments to edit the configuration to clone.
 
         Returns:
@@ -147,6 +155,15 @@ class OpQuantizationConfig:
                            k), f'Edit attributes is possible only for existing attributes in configuration, ' \
                                f'but {k} is not an attribute of {qc}'
             setattr(qc, k, v)
+
+        # optionally: editing specific parameters in the config of specified attributes
+        edited_attrs = copy.deepcopy(qc.attr_weights_configs_mapping)
+        for attr_name, attr_cfg in qc.attr_weights_configs_mapping.items():
+            if attr_name in attr_to_edit:
+                edited_attrs[attr_name] = attr_cfg.clone_and_edit(**attr_to_edit[attr_name])
+
+        qc.attr_weights_configs_mapping = edited_attrs
+
         return qc
 
     def __eq__(self, other):
@@ -231,6 +248,18 @@ class QuantizationConfigOptions(object):
         return qc_options
 
     def clone_and_edit_weight_attribute(self, attrs: List[str] = None, **kwargs):
+        """
+        Clones the quantization configurations and edits some of their attributes' parameters.
+
+        Args:
+            attrs: attributes names to clone their configurations.
+            **kwargs: Keyword arguments to edit in the attributes configuration.
+
+        Returns:
+            QuantizationConfigOptions with edited attributes configurations.
+
+        """
+
         qc_options = copy.deepcopy(self)
 
         for qc in qc_options.quantization_config_list:
@@ -248,6 +277,17 @@ class QuantizationConfigOptions(object):
         return qc_options
 
     def clone_and_map_weights_attr_keys(self, layer_attrs_mapping: Union[Dict[str, str], None]):
+        """
+       Clones the quantization configuration options and edits the keys in the each configuration attributes config mapping,
+       based on the given attributes names mapping.
+
+        Args:
+            layer_attrs_mapping: A mapping between attributes names.
+
+        Returns:
+            QuantizationConfigOptions with edited attributes names.
+
+        """
         qc_options = copy.deepcopy(self)
 
         for qc in qc_options.quantization_config_list:

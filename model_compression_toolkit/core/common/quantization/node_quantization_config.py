@@ -246,6 +246,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
             weights_quantization_fn: Function to use when quantizing the node's weights.
             weights_quantization_params_fn:  Function to use when computing the threshold for quantizing a node's weights.
             weights_channels_axis: Axis to quantize a node's kernel when quantizing per-channel.
+            weights_cfg: Weights attribute quantization config.
         """
 
         # TODO: after refactoring to enable attributes quantization, all weights quantization arguments

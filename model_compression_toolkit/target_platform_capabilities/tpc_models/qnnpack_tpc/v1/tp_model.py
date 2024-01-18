@@ -52,6 +52,8 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     Returns: An OpQuantizationConfig config object and a list of OpQuantizationConfig objects.
 
     """
+
+    # We define a default quantization config for all non-specified weights attributes.
     default_weight_attr_config = AttributeQuantizationConfig(
         weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
         weights_n_bits=8,
@@ -59,6 +61,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         enable_weights_quantization=False,
         lut_values_bitwidth=None)
 
+    # We define a quantization config to quantize the kernel (for layers where there is a kernel attribute).
     kernel_base_config = AttributeQuantizationConfig(
         weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
         weights_n_bits=8,
@@ -66,6 +69,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         enable_weights_quantization=True,
         lut_values_bitwidth=None)
 
+    # We define a quantization config to quantize the bias (for layers where there is a bias attribute).
     bias_config = AttributeQuantizationConfig(
         weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
         weights_n_bits=FLOAT_BITWIDTH,
@@ -105,7 +109,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         simd_size=None
     )
 
-    mixed_precision_cfg_list = [] # No mixed precision
+    mixed_precision_cfg_list = []  # No mixed precision
 
     return linear_eight_bits, mixed_precision_cfg_list, eight_bits_default
 
