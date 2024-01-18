@@ -20,6 +20,7 @@ from torch import nn
 import model_compression_toolkit as mct
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
+from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import LayerNormNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
     MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
@@ -120,6 +121,15 @@ class FeatureModelsTestRunner(unittest.TestCase):
         Both with different layers and with constants.
         """
         AddNetTest(self).run_test()
+
+    def test_layer_norm_net(self):
+        """
+        These tests check the nn.functional.layer_norm operations.
+        """
+        LayerNormNetTest(self, has_weight=True, has_bias=True).run_test()
+        LayerNormNetTest(self, has_weight=True, has_bias=False).run_test()
+        LayerNormNetTest(self, has_weight=False, has_bias=True).run_test()
+        LayerNormNetTest(self, has_weight=False, has_bias=False).run_test()
 
     def test_assert_net(self):
         """
