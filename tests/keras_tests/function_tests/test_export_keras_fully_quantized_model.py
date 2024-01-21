@@ -91,7 +91,7 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         mct.exporter.keras_export_model(model=self.exportable_model,
                                         is_layer_exportable_fn=is_keras_layer_exportable,
                                         save_model_path=SAVED_MODEL_PATH_TF,
-                                        serialization_format=mct.exporter.KerasExportSerializationFormat.KERAS_H5,
+                                        serialization_format=mct.exporter.KerasExportSerializationFormat.KERAS,
                                         quantization_format=mct.exporter.QuantizationFormat.FAKELY_QUANT)
         keras_load_quantized_model(SAVED_MODEL_PATH_TF)
 

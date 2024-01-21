@@ -24,8 +24,6 @@ from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEA
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
-from model_compression_toolkit.core.pytorch.utils import get_working_device, set_model, to_torch_tensor, \
-    torch_tensor_to_numpy
 
 tp = mct.target_platform
 
@@ -72,7 +70,8 @@ class TestGetGPTQConfig(BasePytorchTest):
         cc = CoreConfig(quantization_config=qc)
 
         gptqv2_config = get_pytorch_gptq_config(n_epochs=1,
-                                                optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4))
+                                                optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
+                                                regularization_factor=0.001)
         gptqv2_config.rounding_type = self.rounding_type
         gptqv2_config.train_bias = self.train_bias
 

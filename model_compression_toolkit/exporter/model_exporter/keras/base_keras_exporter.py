@@ -19,10 +19,8 @@ import keras
 
 import tensorflow as tf
 from packaging import version
-if version.parse(tf.__version__) >= version.parse("2.13"):
-    TMP_KERAS_EXPORT_FORMAT = ".keras"
-else:
-    TMP_KERAS_EXPORT_FORMAT = ".h5"
+
+DEFAULT_KERAS_EXPORT_EXTENTION = '.keras'
 
 
 class BaseKerasExporter(Exporter):

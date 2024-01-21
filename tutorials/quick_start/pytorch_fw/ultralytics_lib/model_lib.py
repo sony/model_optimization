@@ -23,21 +23,25 @@ from enum import Enum
 
 import torch
 from torch.utils.data import DataLoader
+from torchvision.transforms import transforms
+from ultralytics.yolo.data.dataset import YOLODataset
+from ultralytics.yolo.utils.torch_utils import initialize_weights
 
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.replacers import C2fModuleReplacer, \
-    DetectModuleReplacer, YOLOReplacer, DetectionModelModuleReplacer
-from torchvision.transforms import transforms
-
+    YOLOReplacer, DetectionModelModuleReplacer, DetectModuleReplacer, SegmentModuleReplacer
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.replacers import prepare_model_for_ultralytics_val
 from tutorials.quick_start.pytorch_fw.utils import get_representative_dataset
 from tutorials.quick_start.common.model_lib import BaseModelLib
-from tutorials.quick_start.common.constants import MODEL_NAME, BATCH_SIZE, VALIDATION_SET_LIMIT, \
-    COCO_DATASET, VALIDATION_DATASET_FOLDER
-
+from tutorials.quick_start.common.constants import MODEL_NAME, BATCH_SIZE, COCO_DATASET, VALIDATION_DATASET_FOLDER
 from tutorials.quick_start.common.results import DatasetInfo
+from tutorials.resources.utils.coco_evaluation import coco_dataset_generator
+from tutorials.resources.yolov8.yolov8_preprocess import yolov8_preprocess_chw_transpose
+from model_compression_toolkit.core import FolderImageLoader
 
-from ultralytics.yolo.data.dataset import YOLODataset
-from ultralytics.yolo.utils.torch_utils import initialize_weights
+TaskModuleReplacer = {
+    'detect': DetectModuleReplacer(),
+    'segment': SegmentModuleReplacer()
+}
 
 
 class ModelLib(BaseModelLib):
@@ -54,13 +58,14 @@ class ModelLib(BaseModelLib):
         # Load model from ultralytics
         self.ultralytics_model = YOLOReplacer(args[MODEL_NAME])
         self.dataset_name = COCO_DATASET
+        self.preprocess = yolov8_preprocess_chw_transpose
         model_weights = self.ultralytics_model.model.state_dict()
 
         # Replace few modules with quantization-friendly modules
         self.model = self.ultralytics_model.model
         self.model = DetectionModelModuleReplacer().replace(self.model)
         self.model = C2fModuleReplacer().replace(self.model)
-        self.model = DetectModuleReplacer().replace(self.model)
+        self.model = TaskModuleReplacer[self.ultralytics_model.task].replace(self.model)
 
         # load pre-trained weights
         initialize_weights(self.model)
@@ -85,34 +90,14 @@ class ModelLib(BaseModelLib):
             A generator for the representative dataset, as the MCT expects
 
         """
-        stride = 32
-        names = self.ultralytics_model.model.names
+        image_data_loader = FolderImageLoader(representative_dataset_folder,
+                                              preprocessing=[self.preprocess],
+                                              batch_size=batch_size)
+        def representative_data_gen() -> list:
+            for _ in range(n_iter):
+                yield [image_data_loader.sample()]
 
-        class hyp(Enum):
-            mask_ratio = 4
-            overlap_mask = True
-
-        dataset = YOLODataset(
-            img_path=representative_dataset_folder,
-            imgsz=640,
-            batch_size=batch_size,
-            augment=False,  # augmentation
-            hyp=hyp,
-            rect=False,  # rectangular batches
-            cache=None,
-            single_cls=False,
-            stride=int(stride),
-            pad=0.5,
-            prefix='',
-            use_segments=False,
-            use_keypoints=False,
-            names=names)
-
-        dl = DataLoader(dataset=dataset,
-                      batch_size=batch_size,
-                      shuffle=False)
-
-        return get_representative_dataset(dl, n_iter, 'img', transforms.Normalize(0,255))
+        return representative_data_gen
 
     def evaluate(self, model):
         """

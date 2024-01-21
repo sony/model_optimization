@@ -699,7 +699,7 @@ class FeatureNetworkTest(unittest.TestCase):
                         weights_quantization_method=QuantizationMethod.SYMMETRIC,
                         activation_quantization_method=QuantizationMethod.SYMMETRIC).run_test()
         QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu')).run_test()
-        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
+        QATWrappersTest(self, layers.DepthwiseConv2D(3, 4, activation='relu'),
                         weights_quantization_method=QuantizationMethod.SYMMETRIC,
                         activation_quantization_method=QuantizationMethod.SYMMETRIC,
                         training_method=TrainingMethod.LSQ).run_test()
@@ -707,12 +707,14 @@ class FeatureNetworkTest(unittest.TestCase):
                         weights_quantization_method=QuantizationMethod.UNIFORM,
                         activation_quantization_method=QuantizationMethod.UNIFORM,
                         training_method=TrainingMethod.LSQ).run_test()
+        QATWrappersTest(self, layers.DepthwiseConv2D(3, 4, activation='relu'),
+                        weights_quantization_method=QuantizationMethod.UNIFORM,
+                        activation_quantization_method=QuantizationMethod.UNIFORM,
+                        training_method=TrainingMethod.LSQ).run_test()
         QATWrappersTest(self, layers.Dense(3, activation='relu'),
                         weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
                         activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
                         training_method=TrainingMethod.LSQ).run_test()
-        # DW-Conv2D are tested under the tests below because an extra check is needed to verify the
-        # quantization per channel of its kernel TODO: should be part of the quantizers tests
         QuantizationAwareTrainingQuantizersTest(self).run_test()
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QATWrappersMixedPrecisionCfgTest(self).run_test()

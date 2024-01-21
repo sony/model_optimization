@@ -18,10 +18,10 @@ import tempfile
 from tests.keras_tests.exporter_tests.keras_fake_quant.keras_fake_quant_exporter_base_test import \
     KerasFakeQuantExporterBaseTest
 import model_compression_toolkit as mct
-from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import TMP_KERAS_EXPORT_FORMAT
 import keras
 import numpy as np
 import os
+from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import DEFAULT_KERAS_EXPORT_EXTENTION
 
 class TestKerasMCTQExport(KerasFakeQuantExporterBaseTest):
 
@@ -40,10 +40,10 @@ class TestKerasMCTQExport(KerasFakeQuantExporterBaseTest):
             new_experimental_exporter=True)
 
         # Export model in keras (or h5) format
-        with tempfile.NamedTemporaryFile(suffix=TMP_KERAS_EXPORT_FORMAT) as tmp_file:
+        with tempfile.NamedTemporaryFile(suffix=DEFAULT_KERAS_EXPORT_EXTENTION) as tmp_file:
             mct.exporter.keras_export_model(model=self.exportable_model,
                                             save_model_path=tmp_file.name,
-                                            serialization_format=mct.exporter.KerasExportSerializationFormat.KERAS_H5,
+                                            serialization_format=mct.exporter.KerasExportSerializationFormat.KERAS,
                                             quantization_format=mct.exporter.QuantizationFormat.MCTQ)
 
             # Load model

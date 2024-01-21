@@ -32,14 +32,14 @@ if FOUND_TF:
     from model_compression_toolkit.exporter.model_exporter.keras.mctq_keras_exporter import MCTQKerasExporter
 
     supported_serialization_quantization_export_dict = {
-        KerasExportSerializationFormat.KERAS_H5: [QuantizationFormat.FAKELY_QUANT, QuantizationFormat.MCTQ],
+        KerasExportSerializationFormat.KERAS: [QuantizationFormat.FAKELY_QUANT, QuantizationFormat.MCTQ],
         KerasExportSerializationFormat.TFLITE: [QuantizationFormat.FAKELY_QUANT, QuantizationFormat.INT8]
     }
 
     def keras_export_model(model: keras.models.Model,
                            save_model_path: str,
                            is_layer_exportable_fn: Callable = is_keras_layer_exportable,
-                           serialization_format: KerasExportSerializationFormat = KerasExportSerializationFormat.KERAS_H5,
+                           serialization_format: KerasExportSerializationFormat = KerasExportSerializationFormat.KERAS,
                            quantization_format : QuantizationFormat = QuantizationFormat.MCTQ) -> Dict[str, type]:
         """
         Export a Keras quantized model to a h5 or tflite model.
@@ -63,7 +63,7 @@ if FOUND_TF:
 
         """
 
-        if serialization_format == KerasExportSerializationFormat.KERAS_H5:
+        if serialization_format == KerasExportSerializationFormat.KERAS:
             if quantization_format == QuantizationFormat.FAKELY_QUANT:
                 exporter = FakelyQuantKerasExporter(model,
                                                     is_layer_exportable_fn,

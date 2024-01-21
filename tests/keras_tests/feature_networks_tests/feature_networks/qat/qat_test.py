@@ -275,7 +275,7 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                                  and self.weights_quantization_method in _q.quantization_method
                                  and _q.identifier == QuantizerID.INFERABLE]
                             self.unit_test.assertTrue(len(q) == 1)
-                            self.unit_test.assertTrue(isinstance(layer.weights_quantizers[KERNEL], q[0]))
+                            self.unit_test.assertTrue(isinstance(layer.weights_quantizers[name], q[0]))
                         else:
                             self.unit_test.assertTrue(isinstance(quantizer, BaseKerasTrainableQuantizer))
                             q = [_q for _q in all_trainable_quantizers if _q.identifier == self.training_method
@@ -283,7 +283,7 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
                                  and self.weights_quantization_method in _q.quantization_method
                                  and type(_q.identifier) == TrainingMethod]
                             self.unit_test.assertTrue(len(q) == 1)
-                            self.unit_test.assertTrue(isinstance(layer.weights_quantizers[KERNEL], q[0]))
+                            self.unit_test.assertTrue(isinstance(layer.weights_quantizers[name], q[0]))
 
 
 class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):

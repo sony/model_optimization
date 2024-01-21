@@ -19,7 +19,7 @@ from model_compression_toolkit.core.common.graph.graph_matchers import NodeOpera
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.substitutions.batchnorm_folding import BatchNormalizationFolding, BatchNormalizationForwardFolding
 from model_compression_toolkit.core.pytorch.constants import KERNEL, BIAS, GAMMA, BETA, MOVING_MEAN, MOVING_VARIANCE, \
-    EPSILON, USE_BIAS, GROUPS, IN_CHANNELS
+    EPSILON, USE_BIAS, GROUPS, IN_CHANNELS, OUT_CHANNELS
 
 
 def batchnorm_folding_node_matchers() -> [BaseNode, BaseNode]:
@@ -66,7 +66,15 @@ def update_kernel_for_bn_folding_fn(conv_node: BaseNode,
         _scale = weights_scale[None, :, None, None]
     else:
         _scale = weights_scale[:, None, None, None]
-    return kernel * _scale, KERNEL
+    if conv_node.type == ConvTranspose2d and conv_node.framework_attr[GROUPS] > 1:
+        # PyTorch ConvTranspose2d kernel with groups stacks groups on in_channels axis, so need to reshape the kernel
+        # so the groups are stacked on the out_channels axis to match the scale vector (then reshape back to original
+        # shape)
+        _in_channels = int(conv_node.framework_attr[IN_CHANNELS]/conv_node.framework_attr[GROUPS])
+        _out_channels = conv_node.framework_attr[OUT_CHANNELS]
+        return (kernel.reshape((_in_channels, _out_channels, -1, 1)) * _scale).reshape(kernel.shape), KERNEL
+    else:
+        return kernel * _scale, KERNEL
 
 
 def update_weights_for_bn_forward_folding_fn(conv_node: BaseNode,
@@ -85,7 +93,7 @@ def update_weights_for_bn_forward_folding_fn(conv_node: BaseNode,
     Returns:
         The modified convolution node's weight/kernel/
     """
-    if conv_node.type == Conv2d and conv_node.framework_attr['groups'] > 1:
+    if conv_node.type == Conv2d and conv_node.framework_attr[GROUPS] > 1:
         bias_update = (kernel * bias_factor[:, None, None, None]).flatten()
         _scale = weights_scale[:, None, None, None]
     elif conv_node.type == ConvTranspose2d:

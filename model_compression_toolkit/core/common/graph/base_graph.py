@@ -29,6 +29,7 @@ from model_compression_toolkit.core.common.graph.graph_searches import GraphSear
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.collectors.statistics_collector import scale_statistics, shift_statistics
+from model_compression_toolkit.core.common.pruning.pruning_section import PruningSection
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
@@ -299,19 +300,24 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return [edges_list.sink_node for edges_list in self.out_edges(node_obj)]
 
     def get_prev_nodes(self,
-                       node_obj: BaseNode) -> List[BaseNode]:
+                       node_obj: BaseNode,
+                       sink_index_sorted: bool = False) -> List[BaseNode]:
         """
         Get previous nodes (in a topological order) of a node.
 
         Args:
             node_obj: Node to get its previous nodes.
+            sink_index_sorted: Whether to sort the returned list by the sink_index of the edges.
 
         Returns:
             List of input nodes objects.
 
         """
-
-        return [edges_list.source_node for edges_list in self.incoming_edges(node_obj)]
+        if sink_index_sorted:
+            sort_attr = 'sink_index'
+        else:
+            sort_attr = None
+        return [edges_list.source_node for edges_list in self.incoming_edges(node_obj, sort_by_attr=sort_attr)]
 
     def reconnect_out_edges(self,
                             current_node: BaseNode,
@@ -705,3 +711,132 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         return all([n.is_all_activation_candidates_equal() for n in self.nodes])
+
+    def replace_node(self, node_to_replace: BaseNode, new_node: BaseNode):
+        """
+        Replaces a node in the graph with a new node.
+
+        Args:
+            node_to_replace: The node to replace.
+            new_node: The new node to replace with.
+
+        """
+        self.add_node(new_node)
+        self.reconnect_out_edges(node_to_replace, new_node)
+        self.reconnect_in_edges(node_to_replace, new_node)
+        self.replace_output_node(node_to_replace, new_node)
+        self.replace_input_node(node_to_replace, new_node)
+        self.remove_node(node_to_replace)
+
+    def get_pruning_sections(self,
+                             fw_impl: Any) -> List[PruningSection]:
+        """
+        Constructs pruning sections for a given computational graph.
+        Each section is created starting from an entry node and includes intermediate and exit nodes.
+
+        Args:
+            fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
+
+        Returns: List of PruningSection in the graph.
+        """
+        entry_nodes = self.get_pruning_sections_entry_nodes(fw_impl)
+        return [self._create_pruning_section(entry_node,  fw_impl) for entry_node in entry_nodes]
+
+    def get_pruning_sections_entry_nodes(self, fw_impl: Any) -> List[BaseNode]:
+        """
+        Identifies entry nodes for pruning sections within the graph.
+        Traverses the graph in a topological order, checking each node for prunability criteria.
+        Returns a list of nodes that mark the beginning of a prunable section in the graph.
+
+        Args:
+            fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
+
+        Returns: List of nodes that are entry nodes in the pruning sections of the graph.
+
+        """
+        prunable_nodes = []
+        for n in list(topological_sort(self)):
+            if fw_impl.is_node_entry_node(n) and self._is_node_topology_prunable(n, fw_impl):
+                prunable_nodes.append(n)
+        return prunable_nodes
+
+    def _is_node_topology_prunable(self, entry_node: BaseNode, fw_impl: Any) -> bool:
+        """
+        Determines if the topology starting from a given entry node is suitable for pruning.
+        Iteratively examines the graph structure, focusing on node connectivity and pruning criteria.
+        Returns True if the topology is prunable, False otherwise.
+
+        Args:
+            entry_node (BaseNode): The node to start the topology check from.
+            fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
+
+        Returns: Whether this node is a start of a pruning section according to the graph topology or not.
+
+        """
+        next_node = entry_node
+
+        # Continue iterating until the conditions for prunability are no longer met
+        while len(self.out_edges(next_node)) == 1:
+            next_node = self.out_edges(next_node)[0].sink_node
+
+            # If next_node is an exit node and has only one incoming edge, the topology is prunable.
+            if fw_impl.is_node_exit_node(next_node, entry_node, self.fw_info) and len(self.in_edges(next_node)) == 1:
+                return True
+
+            # If the next node is not an intermediate node or has more than one incoming/outgoing edge,
+            # stop the check.
+            if not fw_impl.is_node_intermediate_pruning_section(next_node) or len(self.in_edges(next_node)) != 1 or len(self.out_edges(next_node)) != 1:
+                return False
+
+        # If the loop exits normally, it implies that the topology is not prunable
+        return False
+
+
+    def _create_pruning_section(self, entry_node: BaseNode, fw_impl: Any) -> PruningSection:
+        """
+        Creates a PruningSection object starting from a given entry node.
+        Includes logic to find intermediate and exit nodes to complete the section.
+        Ensures the provided entry node is a valid starting point for pruning.
+
+        Args:
+            entry_node (BaseNode): The entry node to create the section it starts.
+            fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
+
+        Returns: The pruning section that starts with node entry_node.
+
+        """
+        if not fw_impl.is_node_entry_node(entry_node):
+            Logger.error(f"Expected to find an entry node to create its pruning section,"
+                         f"but node {entry_node} is not an entry node.")
+
+        intermediate_nodes, exit_node = self._find_intermediate_and_exit_nodes(entry_node, fw_impl)
+
+        if not fw_impl.is_node_exit_node(exit_node, entry_node, self.fw_info):
+            Logger.error(f"Expected to find exit node when creating a pruning section,"
+                         f"but node {exit_node} is not an exit node.")
+
+        return PruningSection(entry_node=entry_node,
+                              intermediate_nodes=intermediate_nodes,
+                              exit_node=exit_node)
+
+    def _find_intermediate_and_exit_nodes(self, entry_node: BaseNode, fw_impl: Any) -> Tuple[List[BaseNode], BaseNode]:
+        """
+        Identifies intermediate and exit nodes for a pruning section starting from an entry node.
+        Iterates through connected nodes to build the complete structure of the pruning section.
+
+        Args:
+            entry_node (BaseNode): An entry node to find the intermediate and exit nodes of its section.
+            fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
+
+        Returns: A tuple containing a list of intermediate nodes and the exit node.
+
+        """
+        intermediate_nodes = []
+        next_node = self.out_edges(entry_node)[0].sink_node
+        while not fw_impl.is_node_exit_node(next_node, entry_node, self.fw_info):
+            intermediate_nodes.append(next_node)
+            next_node = self.out_edges(next_node)[0].sink_node
+
+        return intermediate_nodes, next_node
+
+

@@ -24,6 +24,7 @@ from tests.pytorch_tests.function_tests.kpi_data_test import TestKPIDataBasicAll
     TestKPIDataBasicPartialBitwidth, TestKPIDataComplexPartialBitwidth, TestKPIDataComplesAllBitwidth
 from tests.pytorch_tests.function_tests.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, \
     LayerFusingTest4
+from tests.pytorch_tests.function_tests.set_device_test import SetDeviceTest
 from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSetLayerToBitwidthWeights, \
     TestSetLayerToBitwidthActivation
 from tests.pytorch_tests.function_tests.test_sensitivity_eval_non_supported_output import \
@@ -157,6 +158,9 @@ class FunctionTestRunner(unittest.TestCase):
                           rounding_type=RoundingType.SoftQuantizer, train_bias=True).run_test()
         TestGetGPTQConfig(self, quantization_method=QuantizationMethod.POWER_OF_TWO,
                           rounding_type=RoundingType.SoftQuantizer, quantization_parameters_learning=True).run_test()
+
+    def test_set_working_device(self):
+        SetDeviceTest(self).run_test()
 
 
 if __name__ == '__main__':

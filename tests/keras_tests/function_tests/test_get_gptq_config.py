@@ -108,7 +108,11 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                           rounding_type=RoundingType.STE,
                                                           gptq_quantizer_params_override={MAX_LSB_STR: DefaultDict({}, 1)}),
                                       get_keras_gptq_config(n_epochs=1,
-                                                            optimizer=tf.keras.optimizers.Adam())]
+                                                            optimizer=tf.keras.optimizers.Adam()),
+                                      get_keras_gptq_config(n_epochs=1,
+                                                            optimizer=tf.keras.optimizers.Adam(),
+                                                            regularization_factor=0.001)]
+
 
         pot_tp = generate_test_tp_model({'weights_quantization_method': QuantizationMethod.POWER_OF_TWO})
         self.pot_weights_tpc = generate_keras_tpc(name="gptq_pot_config_test", tp_model=pot_tp)

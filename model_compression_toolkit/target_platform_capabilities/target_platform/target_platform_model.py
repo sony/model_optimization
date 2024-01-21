@@ -76,6 +76,7 @@ class TargetPlatformModel(ImmutableClass):
             f'Default QuantizationConfigOptions must contain only one option'
         self.default_qco = default_qco
         self.fusing_patterns = []
+        self.is_simd_padding = False
 
     def get_config_options_by_operators_set(self,
                                             operators_set_name: str) -> QuantizationConfigOptions:
@@ -223,4 +224,16 @@ class TargetPlatformModel(ImmutableClass):
 
         """
         pprint.pprint(self.get_info(), sort_dicts=False)
+
+    def set_simd_padding(self,
+                         is_simd_padding: bool):
+        """
+        Set flag is_simd_padding to indicate whether this TP model defines
+        that padding due to SIMD constrains occurs.
+
+        Args:
+            is_simd_padding: Whether this TP model defines that padding due to SIMD constrains occurs.
+
+        """
+        self.is_simd_padding = is_simd_padding
 

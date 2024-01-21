@@ -23,15 +23,14 @@ from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 import tests.keras_tests.exporter_tests.constants as constants
-from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import TMP_KERAS_EXPORT_FORMAT
-
+from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import DEFAULT_KERAS_EXPORT_EXTENTION
 
 class TFLiteFakeQuantExporterBaseTest(ABC):
 
     def run_test(self):
         # Get float model and save it
         self.model = self.get_model()
-        _, self.float_model_file_path = tempfile.mkstemp(TMP_KERAS_EXPORT_FORMAT)
+        _, self.float_model_file_path = tempfile.mkstemp(DEFAULT_KERAS_EXPORT_EXTENTION)
         self.model.save(self.float_model_file_path)
         print(f'Float model was saved to: {self.float_model_file_path}')
 
