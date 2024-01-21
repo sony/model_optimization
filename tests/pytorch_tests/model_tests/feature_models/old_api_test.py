@@ -17,6 +17,7 @@ import numpy as np
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, WEIGHTS_N_BITS
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import generate_tp_model
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -46,12 +47,12 @@ class OldApiTest(BasePytorchTest):
 
     def get_mp_tpc(self):
         base_config, _, default_config = get_op_quantization_configs()
-        base_config = base_config.clone_and_edit(weights_n_bits=16,
+        base_config = base_config.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 16}},
                                                  activation_n_bits=16)
         mp_bitwidth_candidates_list = [(8, 16), (2, 16), (4, 16), (16, 16)]
         mp_op_cfg_list = []
         for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
-            candidate_cfg = base_config.clone_and_edit(weights_n_bits=weights_n_bits,
+            candidate_cfg = base_config.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: weights_n_bits}},
                                                        activation_n_bits=activation_n_bits)
             mp_op_cfg_list.append(candidate_cfg)
 

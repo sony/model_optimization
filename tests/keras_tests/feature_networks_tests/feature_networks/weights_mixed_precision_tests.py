@@ -381,12 +381,12 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
-                                      mct.core.QuantizationErrorMethod.MSE,
-                                      relu_bound_to_power_of_2=True,
-                                      weights_bias_correction=True,
-                                      weights_per_channel_threshold=True,
-                                      input_scaling=False,
-                                      activation_channel_equalization=False)
+                                           mct.core.QuantizationErrorMethod.MSE,
+                                           relu_bound_to_power_of_2=True,
+                                           weights_bias_correction=True,
+                                           weights_per_channel_threshold=True,
+                                           input_scaling=False,
+                                           activation_channel_equalization=False)
 
     def get_mixed_precision_v2_config(self):
         return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1)

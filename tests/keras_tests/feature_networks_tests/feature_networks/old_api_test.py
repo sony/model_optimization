@@ -16,6 +16,7 @@ import tensorflow as tf
 import numpy as np
 
 import model_compression_toolkit as mct
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
@@ -32,9 +33,11 @@ class OldApiTest(BaseKerasFeatureNetworkTest):
         self.gptq_enable = gptq_enable
 
     def get_tpc(self):
-        base_config, _, default_config = get_op_quantization_configs()
-        base_config = base_config.clone_and_edit(weights_n_bits=16,
-                                                 activation_n_bits=16)
+        base_config = generate_test_op_qc(activation_n_bits=16,
+                                          **generate_test_attr_configs(default_cfg_nbits=16,
+                                                                       kernel_cfg_nbits=16))
+
+        default_config = base_config.clone_and_edit(attr_weights_configs_mapping={})
 
         return get_weights_only_mp_tpc_keras(base_config=base_config,
                                              default_config=default_config,

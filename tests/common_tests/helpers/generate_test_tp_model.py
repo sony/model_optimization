@@ -16,7 +16,8 @@ import copy
 from typing import Dict, List, Any
 
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
-from model_compression_toolkit.target_platform_capabilities.constants import OPS_SET_LIST, KERNEL_ATTR, BIAS_ATTR
+from model_compression_toolkit.target_platform_capabilities.constants import OPS_SET_LIST, KERNEL_ATTR, BIAS_ATTR, \
+    WEIGHTS_N_BITS
 from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_tp_model
 import model_compression_toolkit as mct
@@ -62,11 +63,9 @@ def generate_test_tp_model(edit_params_dict, name=""):
 def generate_mixed_precision_test_tp_model(base_cfg, default_config, mp_bitwidth_candidates_list, name=""):
     mp_op_cfg_list = []
     for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
-        candidate_cfg = base_cfg.clone_and_edit(attr_weights_configs_mapping=
-                                                {KERNEL_ATTR: base_cfg.attr_weights_configs_mapping[KERNEL_ATTR]
-                                                .clone_and_edit(weights_n_bits=weights_n_bits),
-                                                 **{k: v for k, v in base_cfg.attr_weights_configs_mapping.items() if k != KERNEL_ATTR}},
+        candidate_cfg = base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: weights_n_bits}},
                                                 activation_n_bits=activation_n_bits)
+
         mp_op_cfg_list.append(candidate_cfg)
 
     return generate_tp_model(default_config=default_config,

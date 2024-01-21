@@ -170,8 +170,8 @@ class FeatureNetworkTest(unittest.TestCase):
         BiasCorrectionDepthwiseTest(self).run_test()
 
     def test_lut_quantizer(self):
-        # LUTWeightsQuantizerTest(self).run_test()
-        # LUTWeightsQuantizerTest(self, is_symmetric=True).run_test()
+        LUTWeightsQuantizerTest(self).run_test()
+        LUTWeightsQuantizerTest(self, is_symmetric=True).run_test()
         LUTActivationQuantizerTest(self).run_test()
 
     def test_kmeans_quantizer(self):
@@ -562,55 +562,55 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_multi_input_to_node(self):
         MultiInputsToNodeTest(self).run_test()
-    #
-    # def test_gptq(self):
-    #     # This call removes the effect of @tf.function decoration and executes the decorated function eagerly, which
-    #     # enabled tracing for code coverage.
-    #     tf.config.run_functions_eagerly(True)
-    #     GradientPTQTest(self).run_test()
-    #     GradientPTQTest(self, per_channel=True).run_test()
-    #     GradientPTQTest(self, per_channel=True, hessian_weights=False).run_test()
-    #     GradientPTQTest(self, per_channel=True, log_norm_weights=False).run_test()
-    #     GradientPTQWeightsUpdateTest(self).run_test()
-    #     GradientPTQLearnRateZeroTest(self).run_test()
-    #     GradientPTQWeightedLossTest(self).run_test()
-    #     GradientPTQTest(self,
-    #                     quant_method=QuantizationMethod.UNIFORM,
-    #                     rounding_type=RoundingType.SoftQuantizer,
-    #                     per_channel=False,
-    #                     quantization_parameter_learning=False).run_test()
-    #     GradientPTQTest(self,
-    #                     quant_method=QuantizationMethod.UNIFORM,
-    #                     rounding_type=RoundingType.SoftQuantizer,
-    #                     per_channel=True,
-    #                     quantization_parameter_learning=False).run_test()
-    #     GradientPTQLearnRateZeroTest(self,
-    #                                  quant_method=QuantizationMethod.UNIFORM,
-    #                                  rounding_type=RoundingType.SoftQuantizer,
-    #                                  quantization_parameter_learning=False).run_test()
-    #     GradientPTQTest(self,
-    #                     rounding_type=RoundingType.SoftQuantizer,
-    #                     per_channel=False).run_test()
-    #     GradientPTQTest(self,
-    #                     rounding_type=RoundingType.SoftQuantizer,
-    #                     per_channel=True).run_test()
-    #     GradientPTQTest(self,
-    #                     rounding_type=RoundingType.SoftQuantizer,
-    #                     per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
-    #     GradientPTQWeightedLossTest(self,
-    #                                 rounding_type=RoundingType.SoftQuantizer,
-    #                                 per_channel=True, hessian_weights=True, log_norm_weights=True,
-    #                                 scaled_log_norm=True).run_test()
-    #     GradientPTQNoTempLearningTest(self,
-    #                                   rounding_type=RoundingType.SoftQuantizer).run_test()
-    #     GradientPTQWeightsUpdateTest(self,
-    #                                  rounding_type=RoundingType.SoftQuantizer).run_test()
-    #     GradientPTQLearnRateZeroTest(self,
-    #                                  rounding_type=RoundingType.SoftQuantizer).run_test()
-    #     GradientPTQWithDepthwiseTest(self,
-    #                                  rounding_type=RoundingType.SoftQuantizer).run_test()
-    #
-    #     tf.config.run_functions_eagerly(False)
+
+    def test_gptq(self):
+        # This call removes the effect of @tf.function decoration and executes the decorated function eagerly, which
+        # enabled tracing for code coverage.
+        tf.config.run_functions_eagerly(True)
+        GradientPTQTest(self).run_test()
+        GradientPTQTest(self, per_channel=True).run_test()
+        GradientPTQTest(self, per_channel=True, hessian_weights=False).run_test()
+        GradientPTQTest(self, per_channel=True, log_norm_weights=False).run_test()
+        GradientPTQWeightsUpdateTest(self).run_test()
+        GradientPTQLearnRateZeroTest(self).run_test()
+        GradientPTQWeightedLossTest(self).run_test()
+        GradientPTQTest(self,
+                        quant_method=QuantizationMethod.UNIFORM,
+                        rounding_type=RoundingType.SoftQuantizer,
+                        per_channel=False,
+                        quantization_parameter_learning=False).run_test()
+        GradientPTQTest(self,
+                        quant_method=QuantizationMethod.UNIFORM,
+                        rounding_type=RoundingType.SoftQuantizer,
+                        per_channel=True,
+                        quantization_parameter_learning=False).run_test()
+        GradientPTQLearnRateZeroTest(self,
+                                     quant_method=QuantizationMethod.UNIFORM,
+                                     rounding_type=RoundingType.SoftQuantizer,
+                                     quantization_parameter_learning=False).run_test()
+        GradientPTQTest(self,
+                        rounding_type=RoundingType.SoftQuantizer,
+                        per_channel=False).run_test()
+        GradientPTQTest(self,
+                        rounding_type=RoundingType.SoftQuantizer,
+                        per_channel=True).run_test()
+        GradientPTQTest(self,
+                        rounding_type=RoundingType.SoftQuantizer,
+                        per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
+        GradientPTQWeightedLossTest(self,
+                                    rounding_type=RoundingType.SoftQuantizer,
+                                    per_channel=True, hessian_weights=True, log_norm_weights=True,
+                                    scaled_log_norm=True).run_test()
+        GradientPTQNoTempLearningTest(self,
+                                      rounding_type=RoundingType.SoftQuantizer).run_test()
+        GradientPTQWeightsUpdateTest(self,
+                                     rounding_type=RoundingType.SoftQuantizer).run_test()
+        GradientPTQLearnRateZeroTest(self,
+                                     rounding_type=RoundingType.SoftQuantizer).run_test()
+        GradientPTQWithDepthwiseTest(self,
+                                     rounding_type=RoundingType.SoftQuantizer).run_test()
+
+        tf.config.run_functions_eagerly(False)
 
     # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
     # def test_gptq_new_exporter(self):
