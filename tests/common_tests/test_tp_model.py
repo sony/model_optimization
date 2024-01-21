@@ -106,11 +106,11 @@ class QCOptionsTest(unittest.TestCase):
             str(e.exception))
 
     def test_clone_and_edit_options(self):
-        modified_options = TEST_QCO.clone_and_edit(activation_n_bits=3,
-                                                   weights_n_bits=5)
+        modified_options = TEST_QCO.clone_and_edit(activation_n_bits=3).clone_and_edit_weight_attribute(attrs=[KERNEL_ATTR],
+                                                                                                        weights_n_bits=5)
 
         self.assertEqual(modified_options.quantization_config_list[0].activation_n_bits, 3)
-        self.assertEqual(modified_options.quantization_config_list[0].weights_n_bits, 5)
+        self.assertEqual(modified_options.quantization_config_list[0].attr_weights_configs_mapping[KERNEL_ATTR].weights_n_bits, 5)
 
     def test_qco_without_base_config(self):
         tp.QuantizationConfigOptions([TEST_QC])  # Should work fine as it has only one qc.
