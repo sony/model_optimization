@@ -49,6 +49,8 @@ class OldApiTest(BasePytorchTest):
         base_config, _, default_config = get_op_quantization_configs()
         base_config = base_config.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 16}},
                                                  activation_n_bits=16)
+        default_config = default_config.clone_and_edit(activation_n_bits=16)
+
         mp_bitwidth_candidates_list = [(8, 16), (2, 16), (4, 16), (16, 16)]
         mp_op_cfg_list = []
         for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
