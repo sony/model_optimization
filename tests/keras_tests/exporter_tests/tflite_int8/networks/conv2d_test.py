@@ -34,7 +34,7 @@ class TestConv2DSymmetricTFLiteINT8Exporter(TFLiteINT8ExporterBaseTest):
         return self.get_one_layer_model(layers.Conv2D(6, 5))
 
     def get_tpc(self):
-        return get_int8_tpc(edit_params_dict={'weights_quantization_method': QuantizationMethod.SYMMETRIC})
+        return get_int8_tpc(edit_weights_params_dict={'weights_quantization_method': QuantizationMethod.SYMMETRIC})
 
     def run_checks(self):
         # Fetch quantized weights from int8 model tensors
@@ -68,7 +68,7 @@ class TestConv2DPOTTFLiteINT8Exporter(TestConv2DSymmetricTFLiteINT8Exporter):
         self.weights_diff_tolerance = 0
 
     def get_tpc(self):
-        return get_int8_tpc(edit_params_dict={'weights_quantization_method': QuantizationMethod.POWER_OF_TWO})
+        return get_int8_tpc(edit_weights_params_dict={'weights_quantization_method': QuantizationMethod.POWER_OF_TWO})
 
     def run_checks(self):
         super(TestConv2DPOTTFLiteINT8Exporter, self).run_checks()

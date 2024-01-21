@@ -219,4 +219,4 @@ def generate_test_op_qc(default_weight_attr_config: tp.AttributeQuantizationConf
                                    quantization_preserving=False,
                                    fixed_scale=None,
                                    fixed_zero_point=None,
-                                   simd_size=None)
+                                   simd_size=32)

@@ -45,7 +45,7 @@ class TestMBV2UniformActivationTFLiteINT8Exporter(TestMBV2TFLiteINT8Exporter):
 
 
     def get_tpc(self):
-        return get_int8_tpc(edit_params_dict={'activation_quantization_method': QuantizationMethod.UNIFORM})
+        return get_int8_tpc(edit_act_params_dict={'activation_quantization_method': QuantizationMethod.UNIFORM})
 
     def run_checks(self):
         pass

@@ -18,7 +18,7 @@ import tensorflow as tf
 from packaging import version
 
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS, \
-    KERAS_DEPTHWISE_KERNEL
+    KERAS_DEPTHWISE_KERNEL, WEIGHTS_N_BITS
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
@@ -37,10 +37,11 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 tp = mct.target_platform
 
 
-def get_tp_model(edit_params_dict) -> TargetPlatformModel:
+def get_tp_model(edit_weights_params_dict, edit_act_params_dict) -> TargetPlatformModel:
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
 
-    updated_config = base_config.clone_and_edit(**edit_params_dict)
+    updated_config = base_config.clone_and_edit(attr_to_edit={KERNEL_ATTR: edit_weights_params_dict},
+                                                **edit_act_params_dict)
     op_cfg_list = [updated_config]
 
     return generate_tp_model(default_config=updated_config,
@@ -49,14 +50,15 @@ def get_tp_model(edit_params_dict) -> TargetPlatformModel:
                              name='int8_tp_model')
 
 
-def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig]]:
+def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig], OpQuantizationConfig]:
     eight_bits = generate_test_op_qc(**generate_test_attr_configs())
-    four_bits = eight_bits.clone_and_edit(weights_n_bits=4,
-                                          simd_size=eight_bits.simd_size*2)
-    two_bits = eight_bits.clone_and_edit(weights_n_bits=2,
-                                         simd_size=eight_bits.simd_size*4)
+    four_bits = eight_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}},
+                                          simd_size=eight_bits.simd_size * 2)
+    two_bits = eight_bits.clone_and_edit({KERNEL_ATTR: {WEIGHTS_N_BITS: 2}},
+                                         simd_size=eight_bits.simd_size * 4)
     mixed_precision_cfg_list = [eight_bits, four_bits, two_bits]
-    return eight_bits, mixed_precision_cfg_list
+    default_config = eight_bits.clone_and_edit(attr_weights_configs_mapping={})
+    return eight_bits, mixed_precision_cfg_list, default_config
 
 
 def generate_tp_model(default_config: OpQuantizationConfig,
@@ -67,9 +69,10 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     generated_tpc = tp.TargetPlatformModel(default_configuration_options, name=name)
     with generated_tpc:
         tp.OperatorsSet("NoQuantization",
-                        tp.get_default_quantization_config_options().clone_and_edit(
-                            enable_weights_quantization=False,
-                            enable_activation_quantization=False))
+                        tp.get_default_quantization_config_options()
+                        .clone_and_edit(enable_activation_quantization=False)
+                        .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+
         mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
                                                                              base_config=base_config)
 
@@ -95,8 +98,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     return generated_tpc
 
 
-def get_int8_tpc(edit_params_dict) -> tp.TargetPlatformCapabilities:
-    default_tp_model = get_tp_model(edit_params_dict)
+def get_int8_tpc(edit_weights_params_dict={}, edit_act_params_dict={}) -> tp.TargetPlatformCapabilities:
+    default_tp_model = get_tp_model(edit_weights_params_dict, edit_act_params_dict)
     return generate_keras_tpc(name='int8_tpc', tp_model=default_tp_model)
 
 
