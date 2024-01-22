@@ -13,17 +13,22 @@
 # limitations under the License.
 # ==============================================================================
 import unittest
+from functools import partial
+
+import torch
 from torch import nn
 import model_compression_toolkit as mct
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
+from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import LayerNormNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
     MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
     MixedPrecisionBopsAndWeightsKPITest, MixedPrecisionBopsAndActivationKPITest, MixedPrecisionBopsAndTotalKPITest, \
     MixedPrecisionBopsWeightsActivationKPITest, MixedPrecisionBopsMultipleOutEdgesTest
 from tests.pytorch_tests.model_tests.feature_models.qat_test import QuantizationAwareTrainingTest, \
-    QuantizationAwareTrainingMixedPrecisionCfgTest, QuantizationAwareTrainingMixedPrecisionKpiCfgTest, QuantizationAwareTrainingQuantizerHolderTest
+    QuantizationAwareTrainingMixedPrecisionCfgTest, QuantizationAwareTrainingMixedPrecisionKpiCfgTest, \
+    QuantizationAwareTrainingQuantizerHolderTest
 from tests.pytorch_tests.model_tests.feature_models.relu_replacement_test import SingleLayerReplacementTest, \
     ReluReplacementTest, ReluReplacementWithAddBiasTest
 from tests.pytorch_tests.model_tests.feature_models.remove_assert_test import AssertNetTest
@@ -32,7 +37,8 @@ from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSame
 from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest, BNForwardFoldingNetTest
 from tests.pytorch_tests.model_tests.feature_models.linear_collapsing_test import TwoConv2DCollapsingTest, \
     ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest
-from tests.pytorch_tests.model_tests.feature_models.residual_collapsing_test import ResidualCollapsingTest1, ResidualCollapsingTest2
+from tests.pytorch_tests.model_tests.feature_models.residual_collapsing_test import ResidualCollapsingTest1, \
+    ResidualCollapsingTest2
 from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPercisionActivationSearch8Bit, MixedPercisionActivationSearch2Bit, MixedPercisionActivationSearch4Bit, \
@@ -71,7 +77,8 @@ from tests.pytorch_tests.model_tests.feature_models.shift_negative_activation_te
 from tests.pytorch_tests.model_tests.feature_models.split_concat_net_test import SplitConcatNetTest
 from tests.pytorch_tests.model_tests.feature_models.torch_tensor_attr_net_test import TorchTensorAttrNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_function_test import BNFNetTest
-from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccuracyTest, GPTQWeightsUpdateTest, GPTQLearnRateZeroTest
+from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccuracyTest, GPTQWeightsUpdateTest, \
+    GPTQLearnRateZeroTest
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
 from tests.pytorch_tests.model_tests.feature_models.old_api_test import OldApiTest
@@ -115,6 +122,15 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         AddNetTest(self).run_test()
 
+    def test_layer_norm_net(self):
+        """
+        These tests check the nn.functional.layer_norm operations.
+        """
+        LayerNormNetTest(self, has_weight=True, has_bias=True).run_test()
+        LayerNormNetTest(self, has_weight=True, has_bias=False).run_test()
+        LayerNormNetTest(self, has_weight=False, has_bias=True).run_test()
+        LayerNormNetTest(self, has_weight=False, has_bias=False).run_test()
+
     def test_assert_net(self):
         """
         This tests check that the assert operation is being
@@ -132,12 +148,16 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the BatchNorm folding feature.
         """
-        BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=1)).run_test()
-        BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=3, groups=3)).run_test()  # DW-Conv test
-        BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(2, 1))).run_test()
-        BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=2), fold_applied=False).run_test()
-        BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=(3, 1), groups=3), fold_applied=False).run_test()  # DW-Conv test
-        BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(1, 3)), fold_applied=False).run_test()
+        for functional in [True, False]:
+            BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=1), functional).run_test()
+            BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=3, groups=3), functional).run_test()  # DW-Conv test
+            BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(2, 1)), functional).run_test()
+            BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=2), functional, fold_applied=False).run_test()
+            BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=(3, 1), groups=3),
+                             functional, fold_applied=False).run_test()  # DW-Conv test
+            BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(1, 3)), functional, fold_applied=False).run_test()
+        BNFoldingNetTest(self, nn.ConvTranspose2d(6, 9, kernel_size=(5, 4), groups=3), False).run_test()
+        BNFoldingNetTest(self, nn.ConvTranspose2d(3, 3, kernel_size=(4, 2), groups=3), False).run_test()
 
     def test_bn_forward_folding(self):
         """
@@ -147,7 +167,8 @@ class FeatureModelsTestRunner(unittest.TestCase):
         BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3), is_dw=True).run_test()  # DW-Conv test
         BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1), is_dw=True).run_test()
         BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), fold_applied=False, is_dw=True).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), fold_applied=False, is_dw=True).run_test()  # DW-Conv test
+        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), fold_applied=False,
+                                is_dw=True).run_test()  # DW-Conv test
         BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, (1, 3)), fold_applied=False, is_dw=True).run_test()
         BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), add_bn=True, is_dw=True).run_test()
 
@@ -468,7 +489,8 @@ class FeatureModelsTestRunner(unittest.TestCase):
         GPTQAccuracyTest(self, per_channel=True, hessian_weights=False).run_test()
         GPTQAccuracyTest(self, per_channel=True, log_norm_weights=False).run_test()
         GPTQWeightsUpdateTest(self).run_test()
-        GPTQLearnRateZeroTest(self, experimental_exporter=False).run_test() # TODO: check why weights are different between gptq and ptq when using experimental exporter flag. May be due to different quantization ways (fake-quant pytorch layer vs numpy quantinzation in core/common/quantization/quantizers/quantizers_helpers)
+        GPTQLearnRateZeroTest(self,
+                              experimental_exporter=False).run_test()  # TODO: check why weights are different between gptq and ptq when using experimental exporter flag. May be due to different quantization ways (fake-quant pytorch layer vs numpy quantinzation in core/common/quantization/quantizers/quantizers_helpers)
 
         GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
         GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
@@ -480,11 +502,17 @@ class FeatureModelsTestRunner(unittest.TestCase):
         GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
         GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer, experimental_exporter=False).run_test()
 
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, weights_quant_method=QuantizationMethod.UNIFORM).run_test()
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, weights_quant_method=QuantizationMethod.UNIFORM, per_channel=False, params_learning=False).run_test()
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, weights_quant_method=QuantizationMethod.UNIFORM,
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         weights_quant_method=QuantizationMethod.UNIFORM).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         weights_quant_method=QuantizationMethod.UNIFORM, per_channel=False,
+                         params_learning=False).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         weights_quant_method=QuantizationMethod.UNIFORM,
                          per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
-        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer, weights_quant_method=QuantizationMethod.UNIFORM, params_learning=False).run_test() #TODO: When params learning is True, the uniform quantizer gets a min value  > max value
+        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer,
+                              weights_quant_method=QuantizationMethod.UNIFORM,
+                              params_learning=False).run_test()  # TODO: When params learning is True, the uniform quantizer gets a min value  > max value
 
     def test_qat(self):
         """
