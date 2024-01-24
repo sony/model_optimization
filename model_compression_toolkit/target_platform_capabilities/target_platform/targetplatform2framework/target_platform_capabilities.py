@@ -244,6 +244,7 @@ class TargetPlatformCapabilities(ImmutableClass):
     def _get_layer_attr_mapping(self, layer: Any, layers_attr_mapping: Dict[Tuple[type], str]) -> str:
         """
         Extracts the framework attribute name of the given layer from the layers-attributes mapping.
+
         Args:
             layer: The op type to extract the attribute name for.
             layers_attr_mapping: A mapping between framework op types and their corresponding attributes names.

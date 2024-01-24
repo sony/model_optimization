@@ -143,18 +143,16 @@ def _create_node_single_candidate_qc(qc: QuantizationConfig,
 
     """
 
-    # get attributes for weights quantization
-    weights_cfg = op_cfg.attr_weights_configs_mapping.get(kernel_attr)
-    if weights_cfg is None:
-        # the node doesn't have a specified kernel config. Using the default attribute config for quantization.
-        # TODO: This should be the behavior for all attributes that are not specified in the attribute config mapping,
-        #  which currently disables the quantization of the weights attribute.
-        weights_cfg = op_cfg.default_weight_attr_config
+    # get attributes for weights quantization.
+    # if the node doesn't have a specified kernel config we use the default attribute config for quantization.
+    # TODO: This should be the behavior for all attributes that are not specified in the attribute config mapping,
+    #  which currently disables the quantization of the weights attribute.
+    weights_cfg = op_cfg.attr_weights_configs_mapping.get(kernel_attr, op_cfg.default_weight_attr_config)
 
     weights_quantization_fn = get_weights_quantization_fn(weights_cfg.weights_quantization_method)
 
     if weights_quantization_fn is None:
-        Logger.critical('Unknown quantization method for weights')  # pragma: no cover
+        Logger.critical(f'Unknown quantization method for weights for quantizing attribute: {kernel_attr}')  # pragma: no cover
 
     weights_quantization_params_fn = get_weights_quantization_params_fn(weights_cfg.weights_quantization_method)
 
@@ -198,7 +196,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
 
     candidates = []
 
-    # TODO: Currently, we are using fw_info to get the kernel attribute, but this would changed once we enabe multi
+    # TODO: Currently, we are using fw_info to get the kernel attribute, but this would changed once we enable multi
     #  attribute quantization via AttributeQuantizationConfig class (needs to be implemented)
 
     kernel_attr = fw_info.get_kernel_op_attributes(node_type)

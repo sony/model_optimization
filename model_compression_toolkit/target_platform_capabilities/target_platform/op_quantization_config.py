@@ -17,6 +17,28 @@ import copy
 from typing import List, Dict, Union, Any
 
 from mct_quantizers import QuantizationMethod
+from model_compression_toolkit.logger import Logger
+
+
+def clone_and_edit_object_params(obj: Any, **kwargs: Dict) -> Any:
+    """
+    Clones the given object and edit some of its parameters.
+
+    Args:
+        obj: An object to clone.
+        **kwargs: Keyword arguments to edit in the cloned object.
+
+    Returns:
+        Edited copy of the given object.
+    """
+
+    obj_copy = copy.deepcopy(obj)
+    for k, v in kwargs.items():
+        assert hasattr(obj_copy,
+                       k), f'Edit parameter is possible only for existing parameters in the given object, ' \
+                           f'but {k} is not a parameter of {obj_copy}.'
+        setattr(obj_copy, k, v)
+    return obj_copy
 
 
 class AttributeQuantizationConfig:
@@ -59,13 +81,7 @@ class AttributeQuantizationConfig:
             Edited quantization configuration.
         """
 
-        qc = copy.deepcopy(self)
-        for k, v in kwargs.items():
-            assert hasattr(qc,
-                           k), f'Edit attributes is possible only for existing attributes in configuration, ' \
-                               f'but {k} is not an attribute of {qc}'
-            setattr(qc, k, v)
-        return qc
+        return clone_and_edit_object_params(self, **kwargs)
 
     def __eq__(self, other):
         """
@@ -149,12 +165,7 @@ class OpQuantizationConfig:
             Edited quantization configuration.
         """
 
-        qc = copy.deepcopy(self)
-        for k, v in kwargs.items():
-            assert hasattr(qc,
-                           k), f'Edit attributes is possible only for existing attributes in configuration, ' \
-                               f'but {k} is not an attribute of {qc}'
-            setattr(qc, k, v)
+        qc = clone_and_edit_object_params(self, **kwargs)
 
         # optionally: editing specific parameters in the config of specified attributes
         edited_attrs = copy.deepcopy(qc.attr_weights_configs_mapping)
@@ -252,7 +263,8 @@ class QuantizationConfigOptions(object):
         Clones the quantization configurations and edits some of their attributes' parameters.
 
         Args:
-            attrs: attributes names to clone their configurations.
+            attrs: attributes names to clone their configurations. If None is provided, updating the configurations
+                of all attributes in the operation attributes config mapping.
             **kwargs: Keyword arguments to edit in the attributes configuration.
 
         Returns:
@@ -266,7 +278,8 @@ class QuantizationConfigOptions(object):
             if attrs is None:
                 attrs_to_update = list(qc.attr_weights_configs_mapping.keys())
             else:
-                assert isinstance(attrs, List), f"Expecting a list of attribute but got {type(attrs)}."
+                if not isinstance(attrs, List):
+                    Logger.error(f"Expecting a list of attribute but got {type(attrs)}.")
                 attrs_to_update = attrs
 
             for attr in attrs_to_update:
