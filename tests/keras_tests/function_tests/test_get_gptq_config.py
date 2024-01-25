@@ -106,7 +106,7 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                           train_bias=True,
                                                           loss=multiple_tensors_mse_loss,
                                                           rounding_type=RoundingType.STE,
-                                                          gptq_quantizer_params_override={MAX_LSB_STR: DefaultDict({}, 1)}),
+                                                          gptq_quantizer_params_override={MAX_LSB_STR: DefaultDict(default_value=1)}),
                                       get_keras_gptq_config(n_epochs=1,
                                                             optimizer=tf.keras.optimizers.Adam()),
                                       get_keras_gptq_config(n_epochs=1,
