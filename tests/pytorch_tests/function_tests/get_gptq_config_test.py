@@ -80,7 +80,7 @@ class TestGetGPTQConfig(BasePytorchTest):
                 {QUANT_PARAM_LEARNING_STR: self.quantization_parameters_learning}
         elif self.rounding_type == RoundingType.STE:
             gptqv2_config.gptq_quantizer_params_override = \
-                {MAX_LSB_STR: DefaultDict({}, 1)}
+                {MAX_LSB_STR: DefaultDict(default_value=1)}
         else:
             gptqv2_config.gptq_quantizer_params_override = None
 
