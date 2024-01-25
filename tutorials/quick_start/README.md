@@ -142,7 +142,7 @@ in the future.
     </tr>
     <tr>
         <td rowspan="2">Object Detection</td>
-        <td rowspan="3"><a href="https://github.com/ultralytics">ultralytics</a></td>
+        <td rowspan="4"><a href="https://github.com/ultralytics">ultralytics</a></td>
         <td>yolov8n</td>
         <td>COCO</td>
         <td>37.04</td>
@@ -166,6 +166,15 @@ in the future.
         <td>13.6</td>
         <td>30.18</td>
         <td>3.4</td>
+    </tr>
+    <tr>
+        <td>Pose Estimation</td>
+        <td>yolov8n-pose</td>
+        <td>COCO</td>
+        <td>50.92</td>
+        <td>13.12</td>
+        <td>49.18</td>
+        <td>3.28</td>
     </tr>
 </table>
 

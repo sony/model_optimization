@@ -19,17 +19,13 @@
  The Licence of the ultralytics project is shown in: https://github.com/ultralytics/ultralytics/blob/main/LICENSE
 """
 import logging
-from enum import Enum
 
 import torch
 from ultralytics.utils.torch_utils import initialize_weights
-from ultralytics import YOLO
 
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.replacers import C2fModuleReplacer, \
-    YOLOReplacer
-from tutorials.quick_start.pytorch_fw.ultralytics_lib.detect_replacers import DetectModuleReplacer, \
-    DetectionModelModuleReplacer
-from tutorials.quick_start.pytorch_fw.ultralytics_lib.segment_replacers import SegmentModuleReplacer
+    YOLOReplacer, TASK_MAP
+from tutorials.quick_start.pytorch_fw.ultralytics_lib.detect_replacers import DetectionModelModuleReplacer
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.replacers import prepare_model_for_ultralytics_val
 from tutorials.quick_start.common.model_lib import BaseModelLib
 from tutorials.quick_start.common.constants import MODEL_NAME, BATCH_SIZE, COCO_DATASET, VALIDATION_DATASET_FOLDER
@@ -37,11 +33,6 @@ from tutorials.quick_start.common.results import DatasetInfo
 from tutorials.resources.yolov8.yolov8_preprocess import yolov8_preprocess_chw_transpose
 from model_compression_toolkit.core import FolderImageLoader
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PytorchModel
-
-TaskModuleReplacer = {
-    'detect': DetectModuleReplacer(),
-    'segment': SegmentModuleReplacer()
-}
 
 
 class ModelLib(BaseModelLib):
@@ -65,7 +56,7 @@ class ModelLib(BaseModelLib):
         self.model = self.ultralytics_model.model
         self.model = DetectionModelModuleReplacer().replace(self.model)
         self.model = C2fModuleReplacer().replace(self.model)
-        self.model = TaskModuleReplacer[self.ultralytics_model.task].replace(self.model)
+        self.model = TASK_MAP[self.ultralytics_model.task]['moduleReplacer'].replace(self.model)
 
         # load pre-trained weights
         initialize_weights(self.model)

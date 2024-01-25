@@ -20,7 +20,6 @@
 """
 
 import torch
-from torch import nn
 
 from common.model_lib import ModuleReplacer
 from overrides import override
@@ -30,20 +29,25 @@ from ultralytics.cfg import get_cfg
 from ultralytics.utils import DEFAULT_CFG
 from ultralytics.utils.checks import check_imgsz
 from pathlib import Path
-from ultralytics.models import yolo
 
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PytorchModel
-from tutorials.quick_start.pytorch_fw.ultralytics_lib.detect_replacers import DetectionValidatorReplacer
+from tutorials.quick_start.pytorch_fw.ultralytics_lib.detect_replacers import DetectionValidatorReplacer, \
+    DetectModuleReplacer
+from tutorials.quick_start.pytorch_fw.ultralytics_lib.pose_replacers import PoseValidatorReplacer, PoseModuleReplacer
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.replace_module import replace_2d_deg_module
-from tutorials.quick_start.pytorch_fw.ultralytics_lib.segment_replacers import SegmentationValidatorReplacer
+from tutorials.quick_start.pytorch_fw.ultralytics_lib.segment_replacers import SegmentationValidatorReplacer, \
+    SegmentModuleReplacer
 
 TASK_MAP = {
-            'detect': {
-                'validator': yolo.detect.DetectionValidator},
-            'segment': {
-                'validator': yolo.segment.SegmentationValidator},
-            'pose': {
-                'validator': yolo.pose.PoseValidator}
+    'detect': {
+        'moduleReplacer': DetectModuleReplacer(),
+        'validator': DetectionValidatorReplacer},
+    'segment': {
+        'moduleReplacer': SegmentModuleReplacer(),
+        'validator': SegmentationValidatorReplacer},
+    'pose': {
+        'moduleReplacer': PoseModuleReplacer(),
+        'validator': PoseValidatorReplacer}
 }
 
 
@@ -82,11 +86,6 @@ class C2fModuleReplacer(ModuleReplacer):
         return replace_2d_deg_module(model, C2f, self.get_new_module, self.get_config)
 
 
-# Replace the TASK_MAP validators with the new ValidatorReplacers
-TASK_MAP['detect']['validator'] = DetectionValidatorReplacer
-TASK_MAP['segment']['validator'] = SegmentationValidatorReplacer
-
-
 class YOLOReplacer(YOLO):
     """
     Replaces the YOLO class to include the modified DetectionValidator
@@ -107,6 +106,7 @@ class YOLOReplacer(YOLO):
         overrides['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         args = get_cfg(cfg=DEFAULT_CFG, overrides=overrides)
         args.data = data or args.data
+        args.data = "coco-pose.yaml" if self.task == 'pose' else args.data
         if 'task' in overrides:
             self.task = args.task
         else:
