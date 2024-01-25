@@ -17,7 +17,7 @@
   - [Export Quantized Models](#pytorch-export)
 
 ## Introduction
-Dive into MCT with our collection of tutorials, covering a wide 
+Dive into the Model-Compression-Toolkit (MCT) with our collection of tutorials, covering a wide 
 range of compression techniques for Keras and Pytorch models. We provide
 both Python scripts and interactive Jupyter notebooks for an
 engaging and hands-on experience.
@@ -26,7 +26,7 @@ engaging and hands-on experience.
 ## Keras Tutorials
 
 <details id="keras-ptq">
-  <summary>Post-Training Quantization</summary>
+  <summary>Post-Training Quantization (PTQ)</summary>
   
   | Tutorial                     | Included Features                                                                                   |
   |------------------------------|-----------------------------------------------------------------------------------------------------|
@@ -39,7 +39,7 @@ engaging and hands-on experience.
 </details>
 
 <details id="keras-gptq">
-  <summary>Gradient-Based Post-Training Quantization</summary>
+  <summary>Gradient-Based Post-Training Quantization (GPTQ)</summary>
 
   | Tutorial                     | Included Features       |
   |------------------------------|---------------|
@@ -48,7 +48,7 @@ engaging and hands-on experience.
 </details>
 
 <details id="keras-qat">
-  <summary>Quantization-Aware Training</summary>
+  <summary>Quantization-Aware Training (QAT)</summary>
   
   | Tutorial                                                                          | Included Features      |
   |-----------------------------------------------------------------------------------|--------------|
@@ -98,7 +98,7 @@ engaging and hands-on experience.
 
 
 <details id="pytorch-ptq">
-  <summary>Post-Training Quantization</summary>
+  <summary>Post-Training Quantization (PTQ)</summary>
   
   | Tutorial                                                                                                                              | Included Features                                                                                   |
   |---------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
@@ -111,7 +111,7 @@ engaging and hands-on experience.
 
 
 <details id="pytorch-qat">
-  <summary>Quantization-Aware Training</summary>
+  <summary>Quantization-Aware Training (QAT)</summary>
   
   | Tutorial                                                                          | Included Features      |
   |-----------------------------------------------------------------------------------|--------------|
@@ -122,9 +122,9 @@ engaging and hands-on experience.
 <details id="pytorch-data-generation">
   <summary>Data Generation</summary>
   
-  | Tutorial                                                                                                                          | Included Features                                              |
-  |-----------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------|
-  | [Data-Free Quantization using Data Generation](tutorials/notebooks/pytorch/data_generation/example_pytorch_data_generation.ipynb) | &#x2705; Data-Free Quantization <br/> &#x2705; Data Generation |
+  | Tutorial                                                                                                                          | Included Features                                                                 |
+  |-----------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+  | [Data-Free Quantization using Data Generation](tutorials/notebooks/pytorch/data_generation/example_pytorch_data_generation.ipynb) | &#x2705; PTQ <br/> &#x2705; Data-Free Quantization <br/> &#x2705; Data Generation |
 
 </details>
 
