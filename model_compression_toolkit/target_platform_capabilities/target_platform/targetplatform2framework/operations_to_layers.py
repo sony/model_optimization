@@ -15,7 +15,6 @@
 
 from typing import List, Any, Dict
 
-from model_compression_toolkit.core.common import defaultdict
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import  _current_tpc
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
@@ -31,14 +30,15 @@ class OperationsSetToLayers(TargetPlatformCapabilitiesComponent):
     def __init__(self,
                  op_set_name: str,
                  layers: List[Any],
-                 attr_mapping: Dict[str, defaultdict] = None):
+                 attr_mapping: Dict[str, Any] = None):
         """
 
         Args:
             op_set_name (str): Name of OperatorsSet to associate with layers.
             layers (List[Any]): List of layers/FilterLayerParams to associate with OperatorsSet.
-            attr_mapping (dict): A mapping between a general attribute name to a dictionary that maps a layer type to
-            the layer's framework name of this attribute.
+            attr_mapping (dict): A mapping between a general attribute name to a DefaultDict that maps a layer
++                type to the layer's framework name of this attribute (the dictionary type is not specified to
++                handle circular dependency).
         """
         self.layers = layers
         self.attr_mapping = attr_mapping

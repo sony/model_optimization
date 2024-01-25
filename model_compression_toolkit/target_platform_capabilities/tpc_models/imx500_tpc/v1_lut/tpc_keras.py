@@ -15,7 +15,7 @@
 import tensorflow as tf
 from packaging import version
 
-from model_compression_toolkit import DefaultDict
+from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.constants import FOUND_SONY_CUSTOM_LAYERS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, \
     KERAS_DEPTHWISE_KERNEL, BIAS
@@ -101,10 +101,10 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                      KERNEL_ATTR: DefaultDict({
                                          DepthwiseConv2D: KERAS_DEPTHWISE_KERNEL,
                                          tf.nn.depthwise_conv2d: KERAS_DEPTHWISE_KERNEL}, default_value=KERAS_KERNEL),
-                                     BIAS_ATTR: DefaultDict({}, default_value=BIAS)})
+                                     BIAS_ATTR: DefaultDict(default_value=BIAS)})
         tp.OperationsSetToLayers("FullyConnected", [Dense],
-                                 attr_mapping={KERNEL_ATTR: DefaultDict({}, default_value=KERAS_KERNEL),
-                                               BIAS_ATTR: DefaultDict({}, default_value=BIAS)})
+                                 attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                                               BIAS_ATTR: DefaultDict(default_value=BIAS)})
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                              tf.nn.relu6,
                                              tf.nn.leaky_relu,

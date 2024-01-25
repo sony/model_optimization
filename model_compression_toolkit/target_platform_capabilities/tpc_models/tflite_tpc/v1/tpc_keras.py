@@ -15,7 +15,7 @@
 import tensorflow as tf
 from packaging import version
 
-from model_compression_toolkit import DefaultDict
+from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
@@ -90,8 +90,8 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
 
         tp.OperationsSetToLayers("FullyConnected", [Dense],
                                  attr_mapping={
-                                     KERNEL_ATTR: DefaultDict({}, default_value=KERAS_KERNEL),
-                                     BIAS_ATTR: DefaultDict({}, default_value=BIAS)})
+                                     KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                                     BIAS_ATTR: DefaultDict(default_value=BIAS)})
         tp.OperationsSetToLayers("L2Normalization", [tf.math.l2_normalize])
         tp.OperationsSetToLayers("LogSoftmax", [tf.nn.log_softmax])
         tp.OperationsSetToLayers("Tanh", [tf.nn.tanh, tp.LayerFilterParams(Activation, activation="tanh")])
