@@ -26,17 +26,17 @@ class DefaultDict:
     """
 
     def __init__(self,
-                 known_dict: Dict[Any, Any],
+                 known_dict: Dict[Any, Any] = None,
                  default_value: Any = None):
         """
 
         Args:
-            known_dict: Dictionary to wrap.
+            known_dict: Dictionary to wrap. If None is provided, initializes an empty dictionary.
             default_value: default value when requested key is not in known_dict.
         """
 
         self.default_value = default_value
-        self.known_dict = known_dict
+        self.known_dict = known_dict if known_dict is not None else {}
 
     def get(self, key: Any) -> Any:
         """

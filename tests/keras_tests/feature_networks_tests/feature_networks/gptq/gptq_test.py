@@ -72,7 +72,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         if rounding_type == RoundingType.SoftQuantizer:
             self.override_params = {QUANT_PARAM_LEARNING_STR: quantization_parameter_learning}
         elif rounding_type == RoundingType.STE:
-            self.override_params = {MAX_LSB_STR: DefaultDict({}, 1)}
+            self.override_params = {MAX_LSB_STR: DefaultDict(default_value=1)}
         else:
             self.override_params = None
 
