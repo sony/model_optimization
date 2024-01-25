@@ -16,6 +16,7 @@ import torch
 from torch.nn import Conv2d, Linear, BatchNorm2d, ConvTranspose2d, Hardtanh, ReLU, ReLU6
 from torch.nn.functional import relu, relu6, hardtanh
 
+from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR, \
     BIAS
 from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_tpc.v1.tp_model import get_tp_model
@@ -47,7 +48,8 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                 name=name,
                                                 version=TPC_VERSION)
 
-    pytorch_linear_attr_mapping = {KERNEL_ATTR: {tuple(): PYTORCH_KERNEL}, BIAS_ATTR: {tuple(): BIAS}}
+    pytorch_linear_attr_mapping = {KERNEL_ATTR: DefaultDict({}, default_value=PYTORCH_KERNEL),
+                                   BIAS_ATTR: DefaultDict({}, default_value=BIAS)}
 
     with pytorch_tpc:
         tp.OperationsSetToLayers("Conv", [Conv2d,

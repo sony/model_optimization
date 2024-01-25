@@ -16,6 +16,7 @@ import tensorflow as tf
 
 from packaging import version
 
+from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, \
     KERAS_DEPTHWISE_KERNEL, BIAS
 from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_tpc.v1 import __version__ as TPC_VERSION
@@ -63,9 +64,11 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                   tf.nn.conv2d,
                                   tf.nn.depthwise_conv2d,
                                   tf.nn.conv2d_transpose],
-                                 attr_mapping={KERNEL_ATTR: {
-                                     tuple([DepthwiseConv2D, tf.nn.depthwise_conv2d]): KERAS_DEPTHWISE_KERNEL,
-                                     tuple(): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}})
+                                 attr_mapping={
+                                     KERNEL_ATTR: DefaultDict({
+                                         DepthwiseConv2D: KERAS_DEPTHWISE_KERNEL,
+                                         tf.nn.depthwise_conv2d: KERAS_DEPTHWISE_KERNEL}, default_value=KERAS_KERNEL),
+                                     BIAS_ATTR: DefaultDict({}, default_value=BIAS)})
 
         tp.OperationsSetToLayers("Linear", [Dense],
                                  attr_mapping={KERNEL_ATTR: {tuple(): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}})

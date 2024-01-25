@@ -16,6 +16,7 @@ import torch
 from torch.nn import AvgPool2d, MaxPool2d
 from torch.nn.functional import avg_pool2d, max_pool2d, interpolate
 
+from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR, \
     BIAS
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import Eq
@@ -72,7 +73,8 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     torch.unbind])
 
         tp.OperationsSetToLayers("FullyConnected", [torch.nn.Linear, torch.nn.functional.linear],
-                                 attr_mapping={KERNEL_ATTR: {tuple(): PYTORCH_KERNEL}, BIAS_ATTR: {tuple(): BIAS}})
+                                 attr_mapping={KERNEL_ATTR: DefaultDict({}, default_value=PYTORCH_KERNEL),
+                                               BIAS_ATTR: DefaultDict({}, default_value=BIAS)})
         tp.OperationsSetToLayers("L2Normalization",
                                  [tp.LayerFilterParams(torch.nn.functional.normalize, Eq('p', 2) | Eq('p', None))])
         tp.OperationsSetToLayers("LogSoftmax", [torch.nn.LogSoftmax])
