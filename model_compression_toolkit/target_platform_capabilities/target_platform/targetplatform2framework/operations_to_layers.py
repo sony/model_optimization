@@ -22,7 +22,6 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.oper
     OperatorsSetBase
 
 
-
 class OperationsSetToLayers(TargetPlatformCapabilitiesComponent):
     """
     Associate an OperatorsSet to a list of framework's layers.
