@@ -1,4 +1,4 @@
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,27 +13,28 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import List, Tuple, Dict
+from typing import Tuple, Dict
 
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import \
     PruningFrameworkImplementation
 from model_compression_toolkit.core.common.pruning.pruning_section import PruningSection
-from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.core.keras.constants import BIAS, GROUPS, FILTERS, UNITS, USE_BIAS
-import keras
+from model_compression_toolkit.core.pytorch.constants import BIAS, GROUPS, OUT_CHANNELS, OUT_FEATURES, NUM_FEATURES, \
+    IN_CHANNELS, IN_FEATURES, NUM_PARAMETERS
+import torch
 
 import numpy as np
 
 from model_compression_toolkit.logger import Logger
 
 
-class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementation):
+class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplementation):
     """
-    Implementation of the PruningFramework for the Keras framework. This class provides
+    Implementation of the PruningFramework for the Pytorch framework. This class provides
     concrete implementations of the abstract methods defined in PruningFrameworkImplementation
-    for the Keras framework.
+    for the Pytorch framework.
     """
 
     def prune_entry_node(self,
@@ -41,7 +42,7 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
                          output_mask: np.ndarray,
                          fw_info: FrameworkInfo):
         """
-        Prunes the entry node of a model in Keras.
+        Prunes the entry node of a model in Pytorch.
 
         Args:
             node (BaseNode): The entry node to be pruned.
@@ -49,10 +50,10 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
             fw_info (FrameworkInfo): Framework-specific information object.
 
         """
-        return _prune_keras_edge_node(node=node,
-                                      mask=output_mask,
-                                      fw_info=fw_info,
-                                      is_exit_node=False)
+        return _prune_pytorch_edge_node(node=node,
+                                        mask=output_mask,
+                                        fw_info=fw_info,
+                                        is_exit_node=False)
 
     def prune_intermediate_node(self,
                                 node: BaseNode,
@@ -60,7 +61,7 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
                                 output_mask: np.ndarray,
                                 fw_info: FrameworkInfo):
         """
-        Prunes an intermediate node in a Keras model.
+        Prunes an intermediate node in a Pytorch model.
 
         Args:
             node (BaseNode): The intermediate node to be pruned.
@@ -69,20 +70,30 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
             fw_info (FrameworkInfo): Framework-specific information object.
 
         """
-        _edit_node_input_shape(input_mask, node)
+        pruning_en = True
+        _edit_node_input_shape(node, input_mask, fw_info)
         pruned_parameters = {}
         mask_bool = output_mask.astype(bool)
-        for k, v in node.weights.items():
-            # Apply the mask to the weights.
-            pruned_parameters[k] = v.compress(mask_bool, axis=-1)
         node.weights = pruned_parameters
+        if node.type == torch.nn.BatchNorm2d:
+            node.framework_attr[NUM_FEATURES] = int(np.sum(input_mask))
+        elif node.type == torch.nn.PReLU:
+            if node.framework_attr[NUM_PARAMETERS] > 1:
+                node.framework_attr[NUM_PARAMETERS] = int(np.sum(input_mask))
+            else:
+                pruning_en = False
+
+        if pruning_en:
+            for k, v in node.weights.items():
+                # Apply the mask to the weights.
+                pruned_parameters[k] = v.compress(mask_bool, axis=-1)
 
     def prune_exit_node(self,
                         node: BaseNode,
                         input_mask: np.ndarray,
                         fw_info: FrameworkInfo):
         """
-        Prunes the exit node of a model in Keras.
+        Prunes the exit node of a model in Pytorch.
 
         Args:
             node (BaseNode): The exit node to be pruned.
@@ -90,14 +101,14 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
             fw_info (FrameworkInfo): Framework-specific information object.
 
         """
-        return _prune_keras_edge_node(node=node,
-                                      mask=input_mask,
-                                      fw_info=fw_info,
-                                      is_exit_node=True)
+        return _prune_pytorch_edge_node(node=node,
+                                        mask=input_mask,
+                                        fw_info=fw_info,
+                                        is_exit_node=True)
 
     def is_node_entry_node(self, node: BaseNode) -> bool:
         """
-        Determines whether a node is an entry node in a Keras model.
+        Determines whether a node is an entry node in a Pytorch model.
 
         Args:
             node (BaseNode): The node to be checked.
@@ -105,30 +116,30 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
         Returns:
             bool: Boolean indicating if the node is an entry node.
         """
-        return _is_keras_node_pruning_section_edge(node)
+        return _is_pytorch_node_pruning_section_edge(node)
 
     def is_node_exit_node(self,
                           node: BaseNode,
                           corresponding_entry_node: BaseNode,
                           fw_info: FrameworkInfo) -> bool:
         """
-        Determines whether a node is an exit node in a Keras model.
+        Determines whether a node is an exit node in a Pytorch model.
 
         Args:
             node (BaseNode): The node to be checked.
             corresponding_entry_node (BaseNode): The entry node of the pruning section that is checked.
-            fw_info (FrameworkInfo): Framework-specific information object.
+            fw_info (FrameworkInfo) Framework-specific information object.
 
         Returns:
             bool: Boolean indicating if the node is an exit node.
         """
-        return _is_keras_node_pruning_section_edge(node) and PruningSection.has_matching_channel_count(node,
+        return _is_pytorch_node_pruning_section_edge(node) and PruningSection.has_matching_channel_count(node,
                                                                                                        corresponding_entry_node,
                                                                                                        fw_info)
 
     def is_node_intermediate_pruning_section(self, node: BaseNode) -> bool:
         """
-        Determines whether a node is part of the intermediate section in the pruning process of a Keras model.
+        Determines whether a node is part of the intermediate section in the pruning process of a Pytorch model.
 
         Args:
             node (BaseNode): The node to be checked.
@@ -136,11 +147,10 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
         Returns:
             bool: Boolean indicating if the node is part of the intermediate pruning section.
         """
-        # Nodes that are not Conv2D, Conv2DTranspose, DepthwiseConv2D, or Dense are considered intermediate.
-        return node.type not in [keras.layers.DepthwiseConv2D,
-                                 keras.layers.Conv2D,
-                                 keras.layers.Conv2DTranspose,
-                                 keras.layers.Dense]
+        # Nodes that are not Conv2d, ConvTranspose2d, or Linear are considered intermediate.
+        return node.type not in [torch.nn.Conv2d,
+                                 torch.nn.ConvTranspose2d,
+                                 torch.nn.Linear]
 
     def attrs_oi_channels_info_for_pruning(self,
                                            node: BaseNode,
@@ -164,7 +174,7 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
             fw_info (FrameworkInfo): Contains framework-specific information and utilities.
 
         Returns:
-            Dict[str, Tuple[int, int]]: A dictionary where each key is an attribute name (like 'kernel' or 'bias')
+            Dict[str, Tuple[int, int]]: A dictionary where each key is an attribute name (like 'weight' or 'bias')
             and each value is a tuple representing the output and input channel axis indices respectively.
         """
 
@@ -187,18 +197,23 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
             # 3. The input channel axis is irrelevant since these attributes are pruned only by
             #    their output channels.
             for attr in list(node.weights.keys()):
-                attributes_with_axis[attr] = (-1, None)
+                # if the number of float parameters is 1 or less
+                if node.get_num_parameters(fw_info)[1] <= 1:
+                    attributes_with_axis[attr] = (None, None)
+                else:
+                    attributes_with_axis[attr] = (-1, None)
+                # attributes_with_axis[attr] = (-1, None)
 
         return attributes_with_axis
 
 
-def _is_keras_node_pruning_section_edge(node: BaseNode) -> bool:
+def _is_pytorch_node_pruning_section_edge(node: BaseNode) -> bool:
     """
-    Determines if a Keras node is an edge of a pruning section.
+    Determines if a Pytorch node is an edge of a pruning section.
 
     In the context of pruning, an 'edge' node is a layer that can potentially be pruned.
     This function identifies such nodes based on their type and attributes. Specifically,
-    Conv2D and Conv2DTranspose layers with 'groups' attribute set to 1, and Dense layers
+    Conv2d and ConvTranspose2d layers with 'groups' attribute set to 1, and Linear layers
     are considered as edges for pruning sections.
 
     Args:
@@ -209,25 +224,25 @@ def _is_keras_node_pruning_section_edge(node: BaseNode) -> bool:
     """
 
     # Check if the node is a Conv2D or Conv2DTranspose layer with groups set to 1.
-    if node.type in [keras.layers.Conv2D, keras.layers.Conv2DTranspose]:
+    if node.type in [torch.nn.Conv2d, torch.nn.ConvTranspose2d]:
         return node.framework_attr[GROUPS] == 1
-    return node.type == keras.layers.Dense
+    return node.type == torch.nn.Linear
 
 
 
-def _prune_keras_edge_node(node: BaseNode,
-                           mask: np.ndarray,
-                           fw_info: FrameworkInfo,
-                           is_exit_node: bool):
+def _prune_pytorch_edge_node(node: BaseNode,
+                             mask: np.ndarray,
+                             fw_info: FrameworkInfo,
+                             is_exit_node: bool):
     """
-    Prunes the given Keras node by applying the mask to the node's weights (kernels and biases).
+    Prunes the given Pytorch node by applying the mask to the node's weights (weights and biases).
     This function can handle both entry and exit nodes by specifying the is_exit_node parameter.
 
     Args:
-        node: The node to be pruned.
-        mask: The pruning mask to be applied.
-        fw_info: Framework-specific information object.
-        is_exit_node: A boolean indicating whether the node is an exit node.
+        node (BaseNode): The node to be pruned.
+        mask (np.ndarray): The pruning mask to be applied.
+        fw_info (FrameworkInfo): Framework-specific information object.
+        is_exit_node (bool): A boolean indicating whether the node is an exit node.
 
     """
 
@@ -242,26 +257,32 @@ def _prune_keras_edge_node(node: BaseNode,
     pruned_kernel = kernel.compress(mask_bool, axis=axis_to_prune)
     node.set_weights_by_keys(name=kernel_attr, tensor=pruned_kernel)
 
-    if not is_exit_node and node.framework_attr[USE_BIAS]:
+    if not is_exit_node and node.framework_attr[BIAS]:
         # Prune the bias if applicable and it's an entry node.
         bias = node.get_weights_by_keys(BIAS)
         pruned_bias = bias.compress(mask_bool)
         node.set_weights_by_keys(name=BIAS, tensor=pruned_bias)
 
     if not is_exit_node:
-        # Update 'filters' or 'units' attributes for entry node Conv2D/Conv2DTranspose layers.
-        if node.type in [keras.layers.Conv2D, keras.layers.Conv2DTranspose]:
-            node.framework_attr[FILTERS] = int(np.sum(mask))
-        elif node.type == keras.layers.Dense:
-            node.framework_attr[UNITS] = int(np.sum(mask))
+        # Update 'out_channels' or 'out_features' attributes for entry nodes
+        # Conv2d,ConvTranspose2d / Linear layers.
+        if node.type in [torch.nn.Conv2d, torch.nn.ConvTranspose2d]:
+            node.framework_attr[OUT_CHANNELS] = int(np.sum(mask))
+        elif node.type == torch.nn.Linear:
+            node.framework_attr[OUT_FEATURES] = int(np.sum(mask))
 
     if is_exit_node:
+        if node.type in [torch.nn.Conv2d, torch.nn.ConvTranspose2d]:
+            node.framework_attr[IN_CHANNELS] = int(np.sum(mask))
+        elif node.type == torch.nn.Linear:
+            node.framework_attr[IN_FEATURES] = int(np.sum(mask))
         # Adjust the input shape for the last node in the section.
-        _edit_node_input_shape(mask_bool, node)
+        _edit_node_input_shape(node, mask_bool, fw_info)
 
 
-def _edit_node_input_shape(input_mask: np.ndarray,
-                           node: BaseNode):
+def _edit_node_input_shape(node: BaseNode,
+                           input_mask: np.ndarray,
+                           fw_info: FrameworkInfo):
     """
     Adjusts the input shape of a node based on the given input mask.
 
@@ -270,15 +291,17 @@ def _edit_node_input_shape(input_mask: np.ndarray,
     to match the number of channels that remain after pruning.
 
     Args:
-        input_mask (np.ndarray): A binary array where 1 indicates the channel is kept and 0 means pruned.
         node (BaseNode): The node whose input shape needs to be adjusted.
+        input_mask (np.ndarray): A binary array where 1 indicates the channel is kept and 0 means pruned.
+        fw_info (FrameworkInfo): Framework-specific information object.
     """
     # Start with the current input shape of the node.
     new_input_shape = list(node.input_shape)
 
     # Adjust the last dimension of the shape to match the number of unpruned (retained) channels.
     # This is done by summing the mask, as each '1' in the mask represents a retained channel.
-    new_input_shape[-1] = int(np.sum(input_mask))
+    channel_axis = fw_info.out_channel_axis_mapping.get(node.type)
+    new_input_shape[0][channel_axis] = int(np.sum(input_mask))
 
     # Update the node's input shape with the new dimensions.
     node.input_shape = tuple(new_input_shape)

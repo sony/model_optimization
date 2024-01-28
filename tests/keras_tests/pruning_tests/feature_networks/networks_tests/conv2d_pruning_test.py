@@ -18,7 +18,7 @@ import tensorflow as tf
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-from tests.keras_tests.pruning_tests.feature_networks.constant_importance_metric import ConstImportanceMetric, \
+from tests.common_tests.pruninig.constant_importance_metric import ConstImportanceMetric, \
     add_const_importance_metric
 import numpy as np
 from tests.keras_tests.pruning_tests.feature_networks.pruning_keras_feature_test import PruningKerasFeatureTest
