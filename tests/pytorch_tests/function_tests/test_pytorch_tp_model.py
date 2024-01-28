@@ -23,6 +23,7 @@ from torch.nn.functional import hardtanh
 from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
+from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
@@ -102,8 +103,9 @@ class TestPytorchTPModel(unittest.TestCase):
 
         tpc_pytorch = tp.TargetPlatformCapabilities(tpm, name='fw_test')
         with tpc_pytorch:
-            tp.OperationsSetToLayers("conv", [torch.nn.Conv2d], attr_mapping={KERNEL_ATTR: {
-                                     tuple([torch.nn.Conv2d]): PYTORCH_KERNEL}, BIAS_ATTR: {tuple(): BIAS}})
+            tp.OperationsSetToLayers("conv", [torch.nn.Conv2d],
+                                     attr_mapping={KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
+                                                   BIAS_ATTR: DefaultDict(default_value=BIAS)})
             tp.OperationsSetToLayers("tanh", [torch.tanh])
             tp.OperationsSetToLayers("avg_pool2d_kernel_2",
                                      [LayerFilterParams(torch.nn.functional.avg_pool2d, kernel_size=2)])

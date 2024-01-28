@@ -71,7 +71,8 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                      BIAS_ATTR: DefaultDict(default_value=BIAS)})
 
         tp.OperationsSetToLayers("Linear", [Dense],
-                                 attr_mapping={KERNEL_ATTR: {tuple(): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}})
+                                 attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                                               BIAS_ATTR: DefaultDict(default_value=BIAS)})
 
         tp.OperationsSetToLayers("BatchNorm", [BatchNormalization,
                                                tf.nn.batch_normalization])

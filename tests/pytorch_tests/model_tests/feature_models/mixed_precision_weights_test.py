@@ -16,6 +16,7 @@ import torch
 import numpy as np
 from torch.nn import Conv2d
 
+from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core import KPI
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights
 from model_compression_toolkit.core.common.user_info import UserInformation
@@ -125,13 +126,15 @@ class MixedPercisionSearchPartWeightsLayers(MixedPercisionBaseTest):
             tp.OperationsSetToLayers(
                 "Weights_fixed",
                 [torch.nn.Linear],
-                attr_mapping={KERNEL_ATTR: {tuple([torch.nn.Linear]): PYTORCH_KERNEL}, BIAS_ATTR: {tuple(): BIAS}}
+                attr_mapping={KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
+                              BIAS_ATTR: DefaultDict(default_value=BIAS)}
             )
 
             tp.OperationsSetToLayers(
                 "Weights_mp",
                 [torch.nn.Conv2d],
-                attr_mapping={KERNEL_ATTR: {tuple([torch.nn.Conv2d]): PYTORCH_KERNEL}, BIAS_ATTR: {tuple(): BIAS}}
+                attr_mapping={KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
+                              BIAS_ATTR: DefaultDict(default_value=BIAS)}
             )
 
         return {'mixed_precision_model': pytorch_tpc}

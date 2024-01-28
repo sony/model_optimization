@@ -17,6 +17,7 @@
 import numpy as np
 import tensorflow as tf
 
+from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_keras_tpc
@@ -160,13 +161,15 @@ class MixedPercisionSearchPartWeightsLayersTest(MixedPercisionBaseTest):
             tp.OperationsSetToLayers(
                 "Weights_fixed",
                 [layers.Dense],
-                attr_mapping={KERNEL_ATTR: {tuple([layers.Dense]): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}}
+                attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                              BIAS_ATTR: DefaultDict(default_value=BIAS)}
             )
 
             tp.OperationsSetToLayers(
                 "Weights_mp",
                 [layers.Conv2D],
-                attr_mapping={KERNEL_ATTR: {tuple([layers.Conv2D]): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}}
+                attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                              BIAS_ATTR: DefaultDict(default_value=BIAS)}
             )
 
         return keras_tpc

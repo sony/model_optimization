@@ -15,6 +15,7 @@
 from packaging import version
 import tensorflow as tf
 
+from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS, \
     KERAS_DEPTHWISE_KERNEL
 
@@ -94,11 +95,12 @@ def get_tpc_with_activation_mp_keras(base_config, default_config, mp_bitwidth_ca
     # we assume a standard tp model with standard operator sets names,
     # otherwise - need to generate the tpc per test and not with this generic function
     attr_mapping = {'Conv': {
-        KERNEL_ATTR: {
-            tuple([DepthwiseConv2D, tf.nn.depthwise_conv2d]): KERAS_DEPTHWISE_KERNEL,
-            tuple(): KERAS_KERNEL},
-        BIAS_ATTR: {tuple(): BIAS}},
-        'FullyConnected': {KERNEL_ATTR: {tuple(): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}}}
+        KERNEL_ATTR: DefaultDict({
+            DepthwiseConv2D: KERAS_DEPTHWISE_KERNEL,
+            tf.nn.depthwise_conv2d: KERAS_DEPTHWISE_KERNEL}, default_value=KERAS_KERNEL),
+        BIAS_ATTR: DefaultDict(default_value=BIAS)},
+        'FullyConnected': {KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                           BIAS_ATTR: DefaultDict(default_value=BIAS)}}
 
     return generate_test_tpc(name=name,
                              tp_model=mp_tp_model,

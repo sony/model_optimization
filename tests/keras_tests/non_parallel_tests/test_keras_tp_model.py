@@ -22,6 +22,7 @@ from packaging import version
 
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
+from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core.common import BaseNode
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 
@@ -175,8 +176,9 @@ class TestKerasTPModel(unittest.TestCase):
 
         tpc_keras = tp.TargetPlatformCapabilities(tpm, name='fw_test')
         with tpc_keras:
-            tp.OperationsSetToLayers("conv", [Conv2D], attr_mapping={KERNEL_ATTR: {
-                                     tuple([Conv2D]): KERAS_KERNEL}, BIAS_ATTR: {tuple(): BIAS}})
+            tp.OperationsSetToLayers("conv", [Conv2D],
+                                     attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                                                   BIAS_ATTR: DefaultDict(default_value=BIAS)})
             tp.OperationsSetToLayers("tanh", [tf.nn.tanh])
             tp.OperationsSetToLayers("relu", [LayerFilterParams(Activation, activation="relu")])
 
