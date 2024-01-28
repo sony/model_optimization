@@ -30,7 +30,7 @@ engaging and hands-on experience.
   
   | Tutorial                     | Included Features                                                                                   |
   |------------------------------|-----------------------------------------------------------------------------------------------------|
-  | [MobileNetV2](tutorials/notebooks/keras/ptq/example_keras_imagenet.ipynb)  | &#x2705; PTQ                                                                                        |
+  | [MobileNetV2](keras/ptq/example_keras_imagenet.ipynb)  | &#x2705; PTQ                                                                                        |
   | [Mixed-Precision MobileNetV2](tutorials/notebooks/keras/ptq/example_keras_mobilenet_mixed_precision.ipynb) | &#x2705; PTQ <br/> &#x2705; Mixed-Precision                                                         |
   | [Nanodet-Plus](tutorials/notebooks/keras/ptq/example_keras_nanodet_plus.ipynb)             | &#x2705; PTQ                                                                                        |
   | [YoloV8-nano](tutorials/notebooks/keras/ptq/example_keras_yolov8n.ipynb)              | &#x2705; PTQ                                                                                        |
