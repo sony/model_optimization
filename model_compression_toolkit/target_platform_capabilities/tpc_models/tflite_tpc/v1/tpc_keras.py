@@ -89,6 +89,11 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     SlicingOpLambda])
 
         tp.OperationsSetToLayers("FullyConnected", [Dense],
+                                 # we provide attributes mapping that maps each layer type in the operations set
+                                 # that has weights attributes with provided quantization config (in the tp model) to
+                                 # its framework-specific attribute name.
+                                 # note that a DefaultDict should be provided if not all the layer types in the
+                                 # operation set are provided separately in the mapping.
                                  attr_mapping={
                                      KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
                                      BIAS_ATTR: DefaultDict(default_value=BIAS)})

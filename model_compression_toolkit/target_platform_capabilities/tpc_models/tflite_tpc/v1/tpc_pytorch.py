@@ -73,6 +73,11 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     torch.unbind])
 
         tp.OperationsSetToLayers("FullyConnected", [torch.nn.Linear, torch.nn.functional.linear],
+                                 # we provide attributes mapping that maps each layer type in the operations set
+                                 # that has weights attributes with provided quantization config (in the tp model) to
+                                 # its framework-specific attribute name.
+                                 # note that a DefaultDict should be provided if not all the layer types in the
+                                 # operation set are provided separately in the mapping.
                                  attr_mapping={KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
                                                BIAS_ATTR: DefaultDict(default_value=BIAS)})
         tp.OperationsSetToLayers("L2Normalization",
