@@ -130,7 +130,7 @@ class OpQuantizationConfig:
             quantization_preserving (bool): Whether quantization parameters should be the same for an operator's input and output.
             fixed_scale (float): Scale to use for an operator quantization parameters.
             fixed_zero_point (int): Zero-point to use for an operator quantization parameters.
-            simd_size (int): An integer representing the Single Instruction, Multiple Data (SIMD) width of an operator. It indicates the number of data elements that can be fetched and processed simultaneously in a single instruction.
+            simd_size (int): Per op integer representing the Single Instruction, Multiple Data (SIMD) width of an operator. It indicates the number of data elements that can be fetched and processed simultaneously in a single instruction.
 
         """
 
@@ -283,9 +283,9 @@ class QuantizationConfigOptions(object):
                 attrs_to_update = attrs
 
             for attr in attrs_to_update:
-                assert qc.attr_weights_configs_mapping.get(attr) is not None, \
-                    (f'Edit attributes is possible only for existing attributes '
-                     f'in the configuration weights config mapping, but {attr} is not an attribute of {qc}.')
+                if qc.attr_weights_configs_mapping.get(attr) is None:
+                    Logger.error(f'Edit attributes is possible only for existing attributes '
+                                 f'in the configuration weights config mapping, but {attr} is not an attribute of {qc}.')
                 self.__edit_quantization_configuration(qc.attr_weights_configs_mapping[attr], kwargs)
         return qc_options
 
