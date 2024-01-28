@@ -31,10 +31,10 @@ engaging and hands-on experience.
   | Tutorial                     | Included Features                                                                                   |
   |------------------------------|-----------------------------------------------------------------------------------------------------|
   | [MobileNetV2](keras/ptq/example_keras_imagenet.ipynb)  | &#x2705; PTQ                                                                                        |
-  | [Mixed-Precision MobileNetV2](tutorials/notebooks/keras/ptq/example_keras_mobilenet_mixed_precision.ipynb) | &#x2705; PTQ <br/> &#x2705; Mixed-Precision                                                         |
-  | [Nanodet-Plus](tutorials/notebooks/keras/ptq/example_keras_nanodet_plus.ipynb)             | &#x2705; PTQ                                                                                        |
-  | [YoloV8-nano](tutorials/notebooks/keras/ptq/example_keras_yolov8n.ipynb)              | &#x2705; PTQ                                                                                        |
-  | [EfficientDetLite0](tutorials/notebooks/keras/ptq/example_keras_effdet_lite0.ipynb) | &#x2705; PTQ <br/> &#x2705; [sony-custom-layers](https://github.com/sony/custom_layers) integration |
+  | [Mixed-Precision MobileNetV2](keras/ptq/example_keras_mobilenet_mixed_precision.ipynb) | &#x2705; PTQ <br/> &#x2705; Mixed-Precision                                                         |
+  | [Nanodet-Plus](keras/ptq/example_keras_nanodet_plus.ipynb)             | &#x2705; PTQ                                                                                        |
+  | [YoloV8-nano](keras/ptq/example_keras_yolov8n.ipynb)              | &#x2705; PTQ                                                                                        |
+  | [EfficientDetLite0](keras/ptq/example_keras_effdet_lite0.ipynb) | &#x2705; PTQ <br/> &#x2705; [sony-custom-layers](https://github.com/sony/custom_layers) integration |
 
 </details>
 
@@ -43,7 +43,7 @@ engaging and hands-on experience.
 
   | Tutorial                     | Included Features       |
   |------------------------------|---------------|
-  | [MobileNetV2](tutorials/notebooks/keras/gptq/example_keras_mobilenet_gptq.ipynb)           | &#x2705; GPTQ |
+  | [MobileNetV2](keras/gptq/example_keras_mobilenet_gptq.ipynb)           | &#x2705; GPTQ |
 
 </details>
 
@@ -52,7 +52,7 @@ engaging and hands-on experience.
   
   | Tutorial                                                                          | Included Features      |
   |-----------------------------------------------------------------------------------|--------------|
-  | [QAT on MNIST](tutorials/notebooks/keras/gptq/example_keras_mobilenet_gptq.ipynb) | &#x2705; QAT |
+  | [QAT on MNIST](keras/gptq/example_keras_mobilenet_gptq.ipynb) | &#x2705; QAT |
 
 </details>
 
@@ -62,7 +62,7 @@ engaging and hands-on experience.
 
   | Tutorial                                                            | Included Features          |
   |---------------------------------------------------------------------|------------------|
-  | [Fully-Connected Model Pruning](tutorials/notebooks/keras/pruning/example_keras_pruning_mnist.ipynb) | &#x2705; Pruning |
+  | [Fully-Connected Model Pruning](keras/pruning/example_keras_pruning_mnist.ipynb) | &#x2705; Pruning |
 
 </details>
 
@@ -71,7 +71,7 @@ engaging and hands-on experience.
 
   | Tutorial                                                                              | Included Features         |
   |---------------------------------------------------------------------------------------|-----------------|
-  | [Exporter Usage](tutorials/notebooks/keras/export/example_keras_export.ipynb) | &#x2705; Export |
+  | [Exporter Usage](keras/export/example_keras_export.ipynb) | &#x2705; Export |
   
 </details>
 
@@ -80,7 +80,7 @@ engaging and hands-on experience.
 
   | Tutorial                                                                            | Included Features       |
   |-------------------------------------------------------------------------------------|-------------------------|
-  | [Network Editor Usage](tutorials/notebooks/keras/debug_tools/example_keras_network_editor.ipynb) | &#x2705; Network Editor |
+  | [Network Editor Usage](keras/debug_tools/example_keras_network_editor.ipynb) | &#x2705; Network Editor |
   
 </details>
 
@@ -92,7 +92,7 @@ engaging and hands-on experience.
   
   | Tutorial                                                                                                        |
   |-----------------------------------------------------------------------------------------------------------------|
-  | [Quick Start - Torchvision Pretrained Model](tutorials/notebooks/pytorch/example_quick_start_torchvision.ipynb) |
+  | [Quick Start - Torchvision Pretrained Model](pytorch/example_quick_start_torchvision.ipynb) |
 
 </details>
 
@@ -102,9 +102,9 @@ engaging and hands-on experience.
   
   | Tutorial                                                                                                                              | Included Features                                                                                   |
   |---------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
-  | [Training & Quantizing Model on MNIST](tutorials/notebooks/pytorch/ptq/example_pytorch_quantization_mnist.ipynb)                      | &#x2705; PTQ                                                                                        |
-  | [Mixed-Precision MobileNetV2 on Cifar100](tutorials/notebooks/pytorch/ptq/example_pytorch_mobilenetv2_cifar100_mixed_precision.ipynb) | &#x2705; PTQ <br/> &#x2705; Mixed-Precision                                                         |
-  | [SSDLite MobileNetV3 Quantization](tutorials/notebooks/pytorch/ptq/example_pytorch_ssdlite_mobilenetv3.ipynb)                                    | &#x2705; PTQ                                                                                        |
+  | [Training & Quantizing Model on MNIST](pytorch/ptq/example_pytorch_quantization_mnist.ipynb)                      | &#x2705; PTQ                                                                                        |
+  | [Mixed-Precision MobileNetV2 on Cifar100](pytorch/ptq/example_pytorch_mobilenetv2_cifar100_mixed_precision.ipynb) | &#x2705; PTQ <br/> &#x2705; Mixed-Precision                                                         |
+  | [SSDLite MobileNetV3 Quantization](pytorch/ptq/example_pytorch_ssdlite_mobilenetv3.ipynb)                                    | &#x2705; PTQ                                                                                        |
 
 </details>
 
@@ -115,7 +115,7 @@ engaging and hands-on experience.
   
   | Tutorial                                                                          | Included Features      |
   |-----------------------------------------------------------------------------------|--------------|
-  | [QAT on MNIST](tutorials/notebooks/pytorch/qat/example_pytorch_qat.py) | &#x2705; QAT |
+  | [QAT on MNIST](pytorch/qat/example_pytorch_qat.py) | &#x2705; QAT |
 
 </details>
 
@@ -124,7 +124,7 @@ engaging and hands-on experience.
   
   | Tutorial                                                                                                                          | Included Features                                                                 |
   |-----------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
-  | [Data-Free Quantization using Data Generation](tutorials/notebooks/pytorch/data_generation/example_pytorch_data_generation.ipynb) | &#x2705; PTQ <br/> &#x2705; Data-Free Quantization <br/> &#x2705; Data Generation |
+  | [Data-Free Quantization using Data Generation](pytorch/data_generation/example_pytorch_data_generation.ipynb) | &#x2705; PTQ <br/> &#x2705; Data-Free Quantization <br/> &#x2705; Data Generation |
 
 </details>
 
@@ -134,7 +134,7 @@ engaging and hands-on experience.
 
   | Tutorial                                                                              | Included Features         |
   |---------------------------------------------------------------------------------------|-----------------|
-  | [Exporter Usage](tutorials/notebooks/pytorch/export/example_pytorch_export.ipynb) | &#x2705; Export |
+  | [Exporter Usage](pytorch/export/example_pytorch_export.ipynb) | &#x2705; Export |
   
 </details>
 
