@@ -48,7 +48,6 @@ class LayerNormNet(torch.nn.Module):
         return x
 
 
-
 class LayerNormNetTest(BasePytorchTest):
     """
     This tests check the addition and subtraction operations.

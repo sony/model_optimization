@@ -16,7 +16,7 @@
 
 import torch
 
-from model_compression_toolkit.core.pytorch.constants import PLACEHOLDER, CONSTANT, BUFFER
+from model_compression_toolkit.core.pytorch.constants import PLACEHOLDER
 
 
 class DummyPlaceHolder(torch.nn.Module):
@@ -29,36 +29,3 @@ class DummyPlaceHolder(torch.nn.Module):
 
     def forward(self, x):
         return x
-
-
-class ConstantHolder(torch.nn.Module):
-    """
-    Class for saving constant values or parameters in graph inference.
-    """
-
-    def __init__(self, const_size):
-        super(ConstantHolder, self).__init__()
-        setattr(self, CONSTANT, torch.nn.Parameter(torch.empty(const_size)))
-
-    def __name__(self):
-        return CONSTANT
-
-    def forward(self):
-        return getattr(self, CONSTANT)
-
-
-class BufferHolder(torch.nn.Module):
-    """
-    Class for saving buffers in graph inference.
-    """
-
-    def __init__(self, name):
-        super(BufferHolder, self).__init__()
-        setattr(self, BUFFER, name)
-
-    def __name__(self):
-        return BUFFER
-
-    def forward(self):
-        return self.get_buffer(getattr(self, BUFFER))
-

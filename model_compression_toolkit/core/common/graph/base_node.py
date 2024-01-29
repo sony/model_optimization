@@ -180,7 +180,23 @@ class BaseNode:
         Returns: A list of all weights the node holds.
 
         """
-        return [self.weights[k] for k in self.weights.keys() if self.weights[k] is not None]
+        return [self.weights[k] for k in self.weights.keys()
+                if self.weights[k] is not None and not isinstance(k, int)]
+
+    def insert_positional_weights_to_input_list(self, input_tensors: List) -> List:
+        """
+        Insert node's positional weights to input tensors list.
+
+        Args:
+            input_tensors: activation input tensors to node.
+        Returns:
+            input tensors list with positional weights
+        """
+        for pos, weight in sorted((pos, weight) for pos, weight in self.weights.items()
+                                  if isinstance(pos, int)):
+            input_tensors.insert(pos, weight)
+
+        return input_tensors
 
     def get_num_parameters(self, fw_info) -> Tuple[int,int]:
         """

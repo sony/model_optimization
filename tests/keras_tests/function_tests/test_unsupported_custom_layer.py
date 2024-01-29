@@ -43,9 +43,12 @@ class TestUnsupportedCustomLayer(unittest.TestCase):
                          f'\'test_unsupported_custom_layer.CustomIdentity\'>. Please add the custom layer to TPC ' \
                          f'or file a feature request or an issue if you believe this is an issue.'
 
+        def rep_dataset():
+            yield [np.random.randn(1, 3, 3, 3)]
+
         with self.assertRaises(Exception) as e:
             mct.ptq.keras_post_training_quantization_experimental(model,
-                                                                  lambda _: [np.random.randn(1, 3, 3, 3)])
+                                                                  rep_dataset)
         # Remove class object path to compare with expected error message
         err_msg = str(e.exception)
         err_msg = err_msg[:err_msg.find('<class ')+8] + err_msg[err_msg.find('test_unsupported_custom_layer'):]

@@ -17,6 +17,7 @@ from functools import partial
 from typing import Tuple, Any, Dict, List, Union, Callable
 
 import torch
+import numpy as np
 from networkx import topological_sort
 
 from model_compression_toolkit.core import FrameworkInfo
@@ -29,8 +30,8 @@ from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework.instance_builder import node_builder, identity_wrapper
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
-from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, BufferHolder
-from model_compression_toolkit.core.pytorch.constants import BUFFER
+from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from mct_quantizers.common.constants import ACTIVATION_HOLDER_QUANTIZER
 
 
@@ -61,6 +62,10 @@ def _build_input_tensors_list(node: BaseNode,
             _input_tensors = node_to_output_tensors_dict[ie.source_node]
             input_tensors.append(_input_tensors)
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
+        input_tensors = node.insert_positional_weights_to_input_list(input_tensors)
+        # convert inputs from positional weights (numpy arrays) to tensors
+        input_tensors = [to_torch_tensor(t) if isinstance(t, np.ndarray) else t
+                         for t in input_tensors]
     return input_tensors
 
 
@@ -213,7 +218,7 @@ class PytorchModel(torch.nn.Module):
             else:
                 node_op = self.wrapper(node, node.type)
         else:
-            if self.wrapper is None or node.type == BufferHolder:
+            if self.wrapper is None:
                 node_op = node_builder(node)
             else:
                 node_op = self.wrapper(node, node_builder(node))
@@ -230,10 +235,6 @@ class PytorchModel(torch.nn.Module):
                 setattr(self, node.name, node_op)
             else:
                 self.add_module(node.name, node_op)
-                if node.type == BufferHolder:
-                    self.get_submodule(node.name). \
-                        register_buffer(node.name,
-                                        torch.tensor(node.get_weights_by_keys(BUFFER)).to(get_working_device()))
 
             # Add activation quantization modules if an activation holder is configured for this node
             if node.is_activation_quantization_enabled() and self.get_activation_quantizer_holder is not None:

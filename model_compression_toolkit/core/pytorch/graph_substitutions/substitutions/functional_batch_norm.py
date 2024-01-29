@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import numpy as np
 from torch import nn
 import torch.nn.functional as F
 
@@ -34,20 +35,36 @@ class FunctionalBatchNorm(common.BaseSubstitution):
         bn_node = NodeOperationMatcher(F.batch_norm)
         super().__init__(matcher_instance=bn_node)
 
-    def get_attributes_from_inputs(self, graph: Graph, node: BaseNode) -> dict:
-        input_nodes = graph.get_prev_nodes(node, sink_index_sorted=True)
+    @staticmethod
+    def get_attributes_from_weights(node: BaseNode) -> dict:
+        """
+        convert functional batch_norm positional weights to BatchNorm2d weights
+        Args:
+            node: functional batch_norm node.
 
-        if len(input_nodes) == 5:
-            return {
-                MOVING_MEAN: list(input_nodes[1].weights.values())[0],
-                MOVING_VARIANCE: list(input_nodes[2].weights.values())[0],
-                GAMMA: list(input_nodes[3].weights.values())[0],
-                BETA: list(input_nodes[4].weights.values())[0]
-            }
-        else:
-            Logger.warning(f'functional batch_norm is only folded in the 5 inputs case (input, mean, var, gamma, beta),'
-                           f'got {len(input_nodes)}')
-            return {}
+        Returns:
+            weights dictionary for BatchNorm2d.
+        """
+        if 1 not in node.weights and 2 not in node.weights:
+            Logger.error(f'Missing {MOVING_MEAN} and {MOVING_VARIANCE} in functional batch_norm inputs')
+        weights_dict = {MOVING_MEAN: node.weights[1],
+                        MOVING_VARIANCE: node.weights[2],
+                        GAMMA: np.ones(node.weights[1].shape),
+                        BETA: np.zeros(node.weights[1].shape)}
+
+        has_weight = WEIGHT not in node.framework_attr
+        has_bias = BIAS not in node.framework_attr
+
+        if 3 in node.weights:
+            if has_weight:
+                weights_dict[GAMMA] = node.weights[3]
+            else:
+                weights_dict[BETA] = node.weights[3]
+        if 4 in node.weights:
+            assert has_bias
+            weights_dict[BETA] = node.weights[4]
+
+        return weights_dict
 
     def substitute(self,
                    graph: Graph,
@@ -66,7 +83,7 @@ class FunctionalBatchNorm(common.BaseSubstitution):
             return graph
         out_channels = node.output_shape[0][1]
 
-        bn_node_weights = self.get_attributes_from_inputs(graph, node)
+        bn_node_weights = self.get_attributes_from_weights(node)
         if not bn_node_weights:
             return graph
         new_batchnorm2d = BaseNode(name=node.name + '_into_BatchNorm2d',
@@ -78,17 +95,5 @@ class FunctionalBatchNorm(common.BaseSubstitution):
                                    weights=bn_node_weights,
                                    layer_class=nn.BatchNorm2d)
 
-        num_nodes_before_substitution = len(graph.nodes)
-        num_edges_before_substitution = len(graph.edges)
-
-        batch_norm_consts = graph.get_prev_nodes(node)[1:]
-        for const in batch_norm_consts:
-            graph.remove_edge(const, node)
-            graph.remove_node(const)
-
         graph.replace_node(node, new_batchnorm2d)
-
-        assert num_nodes_before_substitution - len(graph.nodes) == len(batch_norm_consts)
-        assert num_edges_before_substitution - len(graph.edges) == len(batch_norm_consts)
-
         return graph

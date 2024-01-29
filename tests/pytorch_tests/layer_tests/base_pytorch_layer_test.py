@@ -34,7 +34,7 @@ from model_compression_toolkit.ptq import pytorch_post_training_quantization_exp
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.core.pytorch.constants import CALL_FUNCTION, OUTPUT, CALL_METHOD, PLACEHOLDER
-from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, ConstantHolder
+from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy, to_torch_tensor
 from tests.common_tests.base_layer_test import BaseLayerTest, LayerTestMode
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
@@ -45,7 +45,7 @@ from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_m
 PYTORCH_LAYER_TEST_OPS = {
     "kernel_ops": [Conv2d, Linear, ConvTranspose2d],
 
-    "no_quantization": [Dropout, Flatten, ConstantHolder, dropout, flatten, split, operator.getitem, reshape,
+    "no_quantization": [Dropout, Flatten, dropout, flatten, split, operator.getitem, reshape,
                         unsqueeze],
 
     "activation": [DummyPlaceHolder,
@@ -137,11 +137,11 @@ class BasePytorchLayerTest(BaseLayerTest):
         if self.current_mode == LayerTestMode.FLOAT:
             # Disable all features that are enabled by default:
             tp = generate_test_tp_model({'enable_weights_quantization': False,
-                                          'enable_activation_quantization': False})
+                                         'enable_activation_quantization': False})
             return generate_pytorch_tpc(name="base_layer_test", tp_model=tp)
         elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
             tp = generate_test_tp_model({'weights_n_bits': 8,
-                                          'activation_n_bits': 8})
+                                         'activation_n_bits': 8})
             return generate_pytorch_tpc(name="8bit_layer_test", tp_model=tp)
         else:
             raise NotImplemented

@@ -18,7 +18,7 @@ from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 
 """
-This tests check the batch_norm function and demonstrates the usage of BufferHolder node.
+This tests check the batch_norm function.
 """
 
 
@@ -39,7 +39,7 @@ class BNFNet(torch.nn.Module):
 
 class BNFNetTest(BasePytorchTest):
     """
-    This tests check the batch_norm function and demonstrates the usage of BufferHolder node.
+    This test check the batch_norm function.
     """
 
     def __init__(self, unit_test):

@@ -23,17 +23,16 @@ from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.constants import OUTPUT, PLACEHOLDER, TENSOR_META, CALL_FUNCTION, TYPE, \
-    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, GET_ATTR, CONSTANT, BUFFER
-from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder, ConstantHolder, BufferHolder
+    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, GET_ATTR
+from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.logger import Logger
 
 
 def extract_holder_weights(constant_name, node_target, model, weights, to_numpy):
     """
-    Extract layer weights and named buffers for BufferHolder and ConstantHolder.
+    Extract layer weights and named buffers to a dictionary.
     Args:
-        constant_name: name to write the parameters under, CONSTANT for ConstantHolder and
-         BUFFER for BufferHolder.
+        constant_name: name to write the parameters under, should be the node name.
         node_target: relevant parameter name from Pytorch FX model.
         model: Pytorch FX model.
         weights: dictionary containing the weights of the node.
@@ -76,6 +75,8 @@ def nodes_builder(model: GraphModule,
     nodes = []
     output_nodes = []
     fx_node_2_graph_node = {}
+    consts_dict = {}
+    used_consts = set()
 
     for node in model.graph.nodes:
         # extract node type and framework attributes
@@ -109,11 +110,6 @@ def nodes_builder(model: GraphModule,
             else:
                 raise Exception(f'Call method of type \'{node.target}\' is currently not supported.')
         elif node.op == GET_ATTR:
-            if node.meta[TYPE] == torch.Tensor:
-                node_type = BufferHolder
-            else:
-                node_type = ConstantHolder
-            node_has_activation = False
             Logger.warning(
                 'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
                 'converting the model.')
@@ -131,17 +127,19 @@ def nodes_builder(model: GraphModule,
             weights.update(named_buffer_weights)
 
         if node.op == GET_ATTR:
-            if node_type == ConstantHolder:
-                weights = extract_holder_weights(CONSTANT, node.target, model, weights, to_numpy)
-                framework_attr.update(const_size=weights.get(CONSTANT).shape)
-            elif node_type == BufferHolder:
-                weights = extract_holder_weights(BUFFER, node.target, model, weights, to_numpy)
-                framework_attr.update(name=node.name)
+            new_const = extract_holder_weights(node, node.target, model, weights, to_numpy)
+            if list(new_const.keys())[0] in consts_dict:
+                Logger.error('Constant weight recorded twice')
+            consts_dict.update(new_const)
+            continue
 
-        # extract input shapes
+        # extract input shapes and const weights
         input_shape = []
         if node.op != PLACEHOLDER:
-            for input_node in node.all_input_nodes:
+            for i, input_node in enumerate(node.all_input_nodes):
+                if input_node in consts_dict:
+                    used_consts.add(input_node)
+                    weights.update({i: consts_dict[input_node]})
                 tensor_meta = input_node.meta
                 if tensor_meta[TYPE] == torch.Tensor:
                     input_shape += [list(tensor_meta[TENSOR_META].shape)]
@@ -220,6 +218,11 @@ def nodes_builder(model: GraphModule,
         fx_node_2_graph_node[node] = graph_node
         nodes.append(graph_node)
 
+    # make sure all extracted constants were used in the graph
+    not_connected_consts = [c for c in consts_dict if c not in used_consts]
+    if not_connected_consts:
+        Logger.error(f'error reading graph - constants not connected in graph: {not_connected_consts}')
+
     # generate graph outputs list
     for node in output_nodes:
         outputs.append(OutTensor(fx_node_2_graph_node[node], output_nodes.index(node)))
@@ -228,7 +231,7 @@ def nodes_builder(model: GraphModule,
 
 
 def edges_builder(model: GraphModule,
-                   fx_node_2_graph_node: Dict) -> List:
+                  fx_node_2_graph_node: Dict) -> List:
     """
 
     Args:
@@ -238,25 +241,25 @@ def edges_builder(model: GraphModule,
     Returns:
         List of graph edges
     """
-    src_index = 0 # in fx src_index is always zero because fx uses the getitem operator to fetch node outputs
+    src_index = 0  # in fx src_index is always zero because fx uses the getitem operator to fetch node outputs
     edges = []
     connectivity_dict = {}
     for node in model.graph.nodes:
         if node.op != OUTPUT:
             for input_node in node.all_input_nodes:
+                if input_node in fx_node_2_graph_node:
+                    # n_edges_for_input_node is for the case that the input node appears more than
+                    # once as the input of the node, for example add(x, x)
+                    n_edges_for_input_node = sum([1 for a in node.args if input_node == a])
+                    n_edges_for_input_node = max(n_edges_for_input_node, 1)
 
-                # n_edges_for_input_node is for the case that the input node appears more than
-                # once as the input of the node, for example add(x, x)
-                n_edges_for_input_node = sum([1 for a in node.args if input_node == a])
-                n_edges_for_input_node = max(n_edges_for_input_node, 1)
-
-                dst_index = node.all_input_nodes.index(input_node)
-                for i in range(n_edges_for_input_node):
-                    if connectivity_dict.get(input_node):
-                        connectivity_dict[input_node].append((node, dst_index))
-                    else:
-                        connectivity_dict[input_node] = [(node, dst_index)]
-                    dst_index += 1
+                    dst_index = node.all_input_nodes.index(input_node)
+                    for i in range(n_edges_for_input_node):
+                        if connectivity_dict.get(input_node):
+                            connectivity_dict[input_node].append((node, dst_index))
+                        else:
+                            connectivity_dict[input_node] = [(node, dst_index)]
+                        dst_index += 1
     for node in model.graph.nodes:
         out_nodes = connectivity_dict.get(node)
         if out_nodes:

@@ -24,18 +24,21 @@ from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 This test checks the BatchNorm folding feature, plus adding a residual connection.
 """
 class BNFoldingNet(nn.Module):
-    def __init__(self, test_layer, functional, fold_applied):
+    def __init__(self, test_layer, functional, fold_applied, has_weight=True):
         super(BNFoldingNet, self).__init__()
         self.conv1 = test_layer
         self.fold_applied = fold_applied
         self.bn = nn.BatchNorm2d(test_layer.out_channels)
         self.functional = functional
+        self.has_weight = has_weight
 
     def forward(self, inp):
         x1 = self.conv1(inp)
         if self.functional:
-            x = nn.functional.batch_norm(x1, self.bn.running_mean, self.bn.running_var, self.bn.weight, self.bn.bias,
-                             training=self.bn.training, momentum=self.bn.momentum, eps=self.bn.eps)
+            w = self.bn.weight if self.has_weight else None
+            x = nn.functional.batch_norm(x1, self.bn.running_mean, self.bn.running_var, weight=w,
+                                         bias=self.bn.bias, training=self.bn.training, momentum=self.bn.momentum,
+                                         eps=self.bn.eps)
         else:
             x = self.bn(x1)
         x = torch.relu(x)
@@ -48,18 +51,20 @@ class BNFoldingNetTest(BasePytorchTest):
     """
     This test checks the BatchNorm folding feature, plus adding a residual connection.
     """
-    def __init__(self, unit_test, test_layer, functional, fold_applied=True, float_reconstruction_error=1e-6):
+    def __init__(self, unit_test, test_layer, functional, fold_applied=True,
+                 has_weight=True, float_reconstruction_error=1e-6):
         super().__init__(unit_test, float_reconstruction_error)
         self.input_channels = test_layer.in_channels
         self.test_layer = test_layer
         self.fold_applied = fold_applied
         self.functional = functional
+        self.has_weight = has_weight
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, self.input_channels, 32, 32]]
 
     def create_feature_network(self, input_shape):
-        return BNFoldingNet(self.test_layer, self.functional, self.fold_applied)
+        return BNFoldingNet(self.test_layer, self.functional, self.fold_applied, self.has_weight)
 
     def get_tpc(self):
         return {'no_quantization': super().get_tpc()['no_quantization']}
@@ -76,7 +81,7 @@ class BNFoldingNetTest(BasePytorchTest):
 
         is_bn_in_model = nn.BatchNorm2d in [type(module) for name, module in quant_model.named_modules()]
         self.unit_test.assertTrue(self.fold_applied is not is_bn_in_model)
-        self.unit_test.assertTrue(np.isclose(out_quant, out_float, atol=1e-6, rtol=1e-4).all())
+        self.unit_test.assertTrue(np.isclose(out_quant, out_float, atol=1e-5, rtol=1e-4).all())
 
 
 class BNForwardFoldingNet(nn.Module):

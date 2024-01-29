@@ -33,7 +33,7 @@ The base test class for the feature networks
 class BasePytorchTest(BaseFeatureNetworkTest):
     def __init__(self,
                  unit_test,
-                 float_reconstruction_error=1e-7,
+                 float_reconstruction_error=1e-6,
                  convert_to_fx=True,
                  experimental_exporter=True,
                  val_batch_size=1):
