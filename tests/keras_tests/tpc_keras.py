@@ -15,7 +15,7 @@
 from packaging import version
 import tensorflow as tf
 
-from model_compression_toolkit import DefaultDict
+from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS, \
     KERAS_DEPTHWISE_KERNEL
 

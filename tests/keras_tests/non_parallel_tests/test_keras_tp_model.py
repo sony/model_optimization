@@ -22,7 +22,7 @@ from packaging import version
 
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
-from model_compression_toolkit import DefaultDict
+from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.core.common import BaseNode
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 
