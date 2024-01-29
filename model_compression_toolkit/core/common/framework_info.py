@@ -20,8 +20,7 @@ from typing import Dict, Any, List
 
 
 
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
-from model_compression_toolkit.core.common.graph.base_node import BaseNode
+from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 
 
