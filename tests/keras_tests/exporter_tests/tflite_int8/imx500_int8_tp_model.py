@@ -17,7 +17,7 @@ from typing import List, Tuple
 import tensorflow as tf
 from packaging import version
 
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
+from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS, \
     KERAS_DEPTHWISE_KERNEL, WEIGHTS_N_BITS
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs

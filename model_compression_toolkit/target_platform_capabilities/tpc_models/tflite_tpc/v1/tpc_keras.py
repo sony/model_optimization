@@ -15,7 +15,7 @@
 import tensorflow as tf
 from packaging import version
 
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
+from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS
 
 if version.parse(tf.__version__) >= version.parse("2.13"):

@@ -16,7 +16,7 @@ import torch
 import numpy as np
 from torch.nn import Conv2d
 
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
+from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core import KPI
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights
 from model_compression_toolkit.core.common.user_info import UserInformation
