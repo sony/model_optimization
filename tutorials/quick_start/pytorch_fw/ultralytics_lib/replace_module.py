@@ -1,5 +1,7 @@
+import torch.nn
 
-def replace_2d_deg_module(model, old_module, new_module, get_config):
+
+def replace_2d_deg_module(model: torch.nn.Module, old_module: type, new_module: callable, get_config: callable):
     """
     Replaces a 2nd degree submodule in the given ultralytics model with a new module.
 
