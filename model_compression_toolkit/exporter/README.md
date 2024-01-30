@@ -18,4 +18,4 @@ please [open an issue](https://github.com/sony/model_optimization/issues/new/cho
 
 ## Usage Examples
 
-Try our notebooks to export [Keras](../../tutorials/notebooks/example_keras_export.ipynb) or [Pytorch](../../tutorials/notebooks/example_pytorch_export.ipynb) models using different formats.
+Try our notebooks to export [Keras](../../tutorials/notebooks/keras/export/example_keras_export.ipynb) or [Pytorch](../../tutorials/notebooks/pytorch/export/example_pytorch_export.ipynb) models using different formats.
