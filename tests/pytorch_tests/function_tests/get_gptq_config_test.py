@@ -18,7 +18,8 @@ from torch import nn
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.gptq import get_pytorch_gptq_config, pytorch_gradient_post_training_quantization_experimental, RoundingType
-from model_compression_toolkit.core import CoreConfig, QuantizationConfig, QuantizationErrorMethod, DefaultDict
+from model_compression_toolkit.core import CoreConfig, QuantizationConfig, QuantizationErrorMethod
+from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model

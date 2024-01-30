@@ -17,8 +17,8 @@ from torch.nn.functional import hardsigmoid, relu, relu6, softmax
 from torch.nn import Conv2d, ConvTranspose2d, Linear
 from torch import sigmoid
 
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo, ChannelAxis
+from model_compression_toolkit.defaultdict import DefaultDict
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.constants import SOFTMAX_THRESHOLD
 from model_compression_toolkit.core.pytorch.constants import KERNEL

@@ -14,9 +14,7 @@
 # ==============================================================================
 from enum import Enum
 from typing import Callable, Any, Dict
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
-from model_compression_toolkit.core import common
-from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR, REG_DEFAULT
+from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
 
 
 class RoundingType(Enum):

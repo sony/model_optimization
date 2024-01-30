@@ -24,7 +24,7 @@ if version.parse(tf.__version__) >= version.parse("2.13"):
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU
 
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
+from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.constants import SOFTMAX_THRESHOLD
