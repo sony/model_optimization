@@ -8,7 +8,7 @@ This example demonstrates how to use MCT 'quick start' with Ultralytics object d
 ### Installation 
 Install the required library using `pip`:
 ```bash
-pip install ultralytics==8.0.47
+pip install ultralytics==8.0.232
  ```
 
 ### Usage Examples
@@ -41,7 +41,8 @@ For more information on the dataset format please refer the [ultralytics docs](h
 During the process, we perform a few manipulations to achieve better quantization results:
 
 1. We replace certain modules with modules supported by `torch.fx`, which our project relies on. The `torch.fx` toolkit helps us acquire a static graph representation from PyTorch models, enabling model compression manipulations like batch norm folding.
-2. We remove the last part of the detection head, responsible for bounding box decoding, and include it as part of the postprocessing. You can find the additional postprocessing in the new definition of the `postprocess` method under [replacer.py](./replacers.py).
+2. We remove the last part of the detection head, responsible for bounding box decoding, and include it as part of the postprocessing. You can find the additional postprocessing in the new definition of the `postprocess` method under [detect_replacer.py](./detect_replacers.py).
+3. In Segmentation and Pose-Estimation tasks, which use the detect head, we use the replaced detect head and also modify the postprocessing accordingly. You can find the additional postprocessing in the new definition of the `postprocess` method under [segment_replacers.py](./segment_replacers.py) and [pose_replacers.py](./pose_replacers.py).
 
 
 ## License

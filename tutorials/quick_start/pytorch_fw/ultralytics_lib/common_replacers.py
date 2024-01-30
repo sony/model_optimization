@@ -1,4 +1,4 @@
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
  The Licence of the ultralytics project is shown in: https://github.com/ultralytics/ultralytics/blob/main/LICENSE
 """
+from typing import Any
 
 import torch
 
@@ -31,6 +32,8 @@ from ultralytics.utils.checks import check_imgsz
 from pathlib import Path
 
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PytorchModel
+from tutorials.quick_start.common.constants import MODULE_REPLACER, VALIDATOR, DETECT, SEGMENT, POSE, RECT, MODE, \
+    DEVICE, VAL, COCO_POSE
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.detect_replacers import DetectionValidatorReplacer, \
     DetectModuleReplacer
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.pose_replacers import PoseValidatorReplacer, PoseModuleReplacer
@@ -39,15 +42,15 @@ from tutorials.quick_start.pytorch_fw.ultralytics_lib.segment_replacers import S
     SegmentModuleReplacer
 
 TASK_MAP = {
-    'detect': {
-        'moduleReplacer': DetectModuleReplacer(),
-        'validator': DetectionValidatorReplacer},
-    'segment': {
-        'moduleReplacer': SegmentModuleReplacer(),
-        'validator': SegmentationValidatorReplacer},
-    'pose': {
-        'moduleReplacer': PoseModuleReplacer(),
-        'validator': PoseValidatorReplacer}
+    DETECT: {
+        MODULE_REPLACER: DetectModuleReplacer(),
+        VALIDATOR: DetectionValidatorReplacer},
+    SEGMENT: {
+        MODULE_REPLACER: SegmentModuleReplacer(),
+        VALIDATOR: SegmentationValidatorReplacer},
+    POSE: {
+        MODULE_REPLACER: PoseModuleReplacer(),
+        VALIDATOR: PoseValidatorReplacer}
 }
 
 
@@ -56,6 +59,7 @@ class C2fReplacer(C2f):
     """
     A new C2f module definition supported by torch.fx
     """
+
     @override
     def forward(self, x):
         y1 = self.cv1(x).chunk(2, 1)
@@ -90,6 +94,7 @@ class YOLOReplacer(YOLO):
     """
     Replaces the YOLO class to include the modified DetectionValidator
     """
+
     @override
     def val(self, data=None, **kwargs):
         """
@@ -100,13 +105,13 @@ class YOLOReplacer(YOLO):
             **kwargs : Any other args accepted by the validators. To see all args check 'configuration' section in docs
         """
         overrides = self.overrides.copy()
-        overrides['rect'] = False  # rect batches as default
+        overrides[RECT] = False  # rect batches as default
         overrides.update(kwargs)
-        overrides['mode'] = 'val'
-        overrides['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        overrides[MODE] = VAL
+        overrides[DEVICE] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         args = get_cfg(cfg=DEFAULT_CFG, overrides=overrides)
         args.data = data or args.data
-        args.data = "coco-pose.yaml" if self.task == 'pose' else args.data
+        args.data = COCO_POSE if self.task == 'pose' else args.data
         if 'task' in overrides:
             self.task = args.task
         else:
@@ -115,7 +120,7 @@ class YOLOReplacer(YOLO):
             args.imgsz = self.model.args['imgsz']  # use trained imgsz unless custom value is passed
         args.imgsz = check_imgsz(args.imgsz, max_dim=1)
 
-        validator = TASK_MAP[self.task]['validator'](args=args)
+        validator = TASK_MAP[self.task][VALIDATOR](args=args)
         validator.model = self.model
         validator(model=self.model)
         self.metrics_data = validator.metrics
@@ -123,10 +128,17 @@ class YOLOReplacer(YOLO):
         return validator.metrics
 
 
-def prepare_model_for_ultralytics_val(ultralytics_model, model, quantized=False):
+def prepare_model_for_ultralytics_val(ultralytics_model: YOLOReplacer, model: Any, quantized=False):
     """
     Prepares the model for Ultralytics validation by setting necessary attributes.
+    Post quantization, MCT returns a PytorchModel instance, which does not have some of the arguments required by
+    Ultralytics code. We replace the model with a custom model that has these attributes.
+    Args:
+        ultralytics_model: The Ultralytics model instance.
+        model: The model to validate.
+        quantized: Whether the model is quantized.
     """
+
     class CustomPytorchModel(PytorchModel):
         def __init__(self, graph, append2output, return_float_outputs, wrapper, get_activation_quantizer_holder_fn):
             super().__init__(graph, append2output, return_float_outputs, wrapper, get_activation_quantizer_holder_fn)
@@ -134,6 +146,7 @@ def prepare_model_for_ultralytics_val(ultralytics_model, model, quantized=False)
             self.names = ultralytics_model.model.names
             self.stride = ultralytics_model.model.stride
             self.device = next(model.parameters()).device
+
         def forward(self, x, augment=False, visualize=False, embed=False):
             return super().forward(x)
 
@@ -153,7 +166,5 @@ def prepare_model_for_ultralytics_val(ultralytics_model, model, quantized=False)
                 setattr(custom_model, attr_name, attr_value)
 
         setattr(ultralytics_model, 'model', custom_model if quantized else model)
-
-    # ultralytics_model.to(next(model.parameters()).device)
 
     return ultralytics_model
