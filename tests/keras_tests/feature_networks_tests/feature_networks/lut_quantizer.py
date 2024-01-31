@@ -26,6 +26,9 @@ from model_compression_toolkit.core.common.network_editors.node_filters import N
 from model_compression_toolkit.core.keras.constants import KERNEL
 from mct_quantizers.keras.quantizers import ActivationLutPOTInferableQuantizer
 from mct_quantizers.common.constants import THRESHOLD, LUT_VALUES
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, generate_test_op_qc, \
+    generate_test_tp_model
+from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import generate_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
@@ -57,21 +60,9 @@ class LUTWeightsQuantizerTest(BaseKerasFeatureNetworkTest):
 
     def get_tpc(self):
         qmethod = tp.QuantizationMethod.LUT_SYM_QUANTIZER if self.is_symmetric else tp.QuantizationMethod.LUT_POT_QUANTIZER
-        qco = tp.QuantizationConfigOptions(
-            [tp.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-                                     weights_quantization_method=qmethod,
-                                     activation_n_bits=8,
-                                     weights_n_bits=self.weights_n_bits,
-                                     weights_per_channel_threshold=True,
-                                     enable_weights_quantization=True,
-                                     enable_activation_quantization=True,
-                                     quantization_preserving=False,
-                                     fixed_scale=None,
-                                     fixed_zero_point=None,
-                                     weights_multiplier_nbits=None,
-                                     simd_size=None
-                                     )])
-        return tp.TargetPlatformCapabilities(tp.TargetPlatformModel(qco))
+        tp_model = generate_test_tp_model({'weights_n_bits': self.weights_n_bits,
+                                           'weights_quantization_method': qmethod})
+        return generate_keras_tpc(name='lut_quantizer_test', tp_model=tp_model)
 
     def get_debug_config(self):
         return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
@@ -111,21 +102,9 @@ class LUTActivationQuantizerTest(BaseKerasFeatureNetworkTest):
         super().__init__(unit_test, num_calibration_iter=5, val_batch_size=32, experimental_exporter=True)
 
     def get_tpc(self):
-        qco = tp.QuantizationConfigOptions(
-            [tp.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.LUT_POT_QUANTIZER,
-                                     weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-                                     activation_n_bits=self.activation_n_bits,
-                                     weights_n_bits=8,
-                                     weights_per_channel_threshold=True,
-                                     enable_weights_quantization=True,
-                                     enable_activation_quantization=True,
-                                     quantization_preserving=False,
-                                     fixed_scale=None,
-                                     fixed_zero_point=None,
-                                     weights_multiplier_nbits=None,
-                                     simd_size=None
-                                     )])
-        return tp.TargetPlatformCapabilities(tp.TargetPlatformModel(qco))
+        tp_model = generate_test_tp_model({'activation_quantization_method': tp.QuantizationMethod.LUT_POT_QUANTIZER,
+                                           'activation_n_bits': self.activation_n_bits})
+        return generate_keras_tpc(name='lut_quantizer_test', tp_model=tp_model)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, self.num_conv_channels]]

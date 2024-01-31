@@ -36,6 +36,7 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
 from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
@@ -199,11 +200,13 @@ class TestLpSearchBitwidth(unittest.TestCase):
 class TestSearchBitwidthConfiguration(unittest.TestCase):
 
     def run_search_bitwidth_config_test(self, core_config):
-        base_config, mixed_precision_cfg_list = get_op_quantization_configs()
+        base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
         base_config = base_config.clone_and_edit(enable_activation_quantization=False)
 
         tpc = get_weights_only_mp_tpc_keras(base_config=base_config,
-                                            mp_bitwidth_candidates_list=[(c.weights_n_bits, c.activation_n_bits) for c
+                                            default_config=default_config,
+                                            mp_bitwidth_candidates_list=[(c.attr_weights_configs_mapping[KERNEL_ATTR].weights_n_bits,
+                                                                          c.activation_n_bits) for c
                                                                          in mixed_precision_cfg_list],
                                             name="bitwidth_cfg_test")
 

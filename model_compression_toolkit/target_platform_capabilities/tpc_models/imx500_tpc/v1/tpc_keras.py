@@ -14,7 +14,11 @@
 # ==============================================================================
 import tensorflow as tf
 from packaging import version
+
+from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.constants import FOUND_SONY_CUSTOM_LAYERS
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_DEPTHWISE_KERNEL, \
+    KERAS_KERNEL, BIAS_ATTR, BIAS
 
 if FOUND_SONY_CUSTOM_LAYERS:
     from sony_custom_layers.keras.object_detection.ssd_post_process import SSDPostProcess
@@ -85,14 +89,26 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
 
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", no_quant_list)
-
-        tp.OperationsSetToLayers("Conv", [Conv2D,
-                                          DepthwiseConv2D,
-                                          Conv2DTranspose,
-                                          tf.nn.conv2d,
-                                          tf.nn.depthwise_conv2d,
-                                          tf.nn.conv2d_transpose])
-        tp.OperationsSetToLayers("FullyConnected", [Dense])
+        tp.OperationsSetToLayers("Conv",
+                                 [Conv2D,
+                                  DepthwiseConv2D,
+                                  Conv2DTranspose,
+                                  tf.nn.conv2d,
+                                  tf.nn.depthwise_conv2d,
+                                  tf.nn.conv2d_transpose],
+                                 # we provide attributes mapping that maps each layer type in the operations set
+                                 # that has weights attributes with provided quantization config (in the tp model) to
+                                 # its framework-specific attribute name.
+                                 # note that a DefaultDict should be provided if not all the layer types in the
+                                 # operation set are provided separately in the mapping.
+                                 attr_mapping={
+                                     KERNEL_ATTR: DefaultDict({
+                                         DepthwiseConv2D: KERAS_DEPTHWISE_KERNEL,
+                                         tf.nn.depthwise_conv2d: KERAS_DEPTHWISE_KERNEL}, default_value=KERAS_KERNEL),
+                                     BIAS_ATTR: DefaultDict(default_value=BIAS)})
+        tp.OperationsSetToLayers("FullyConnected", [Dense],
+                                 attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                                               BIAS_ATTR: DefaultDict(default_value=BIAS)})
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
                                              tf.nn.relu6,
                                              tf.nn.leaky_relu,

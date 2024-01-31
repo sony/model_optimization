@@ -74,7 +74,7 @@ class TFLiteINT8ExporterBaseTest:
         return [(16, 16, 3)]
 
     def get_tpc(self):
-        return get_int8_tpc(edit_params_dict={})
+        return get_int8_tpc()
 
     def __get_repr_dataset(self):
         for _ in range(1):

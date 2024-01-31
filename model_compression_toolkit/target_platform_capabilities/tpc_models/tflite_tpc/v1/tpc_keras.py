@@ -15,6 +15,9 @@
 import tensorflow as tf
 from packaging import version
 
+from model_compression_toolkit.defaultdict import DefaultDict
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS
+
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, Dense, Reshape, ZeroPadding2D, AveragePooling2D, Activation, DepthwiseConv2D, \
         MaxPooling2D, ReLU, Add, Softmax, Concatenate, Multiply, Maximum, Minimum, BatchNormalization
@@ -85,7 +88,15 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     tf.slice,
                                                     SlicingOpLambda])
 
-        tp.OperationsSetToLayers("FullyConnected", [Dense])
+        tp.OperationsSetToLayers("FullyConnected", [Dense],
+                                 # we provide attributes mapping that maps each layer type in the operations set
+                                 # that has weights attributes with provided quantization config (in the tp model) to
+                                 # its framework-specific attribute name.
+                                 # note that a DefaultDict should be provided if not all the layer types in the
+                                 # operation set are provided separately in the mapping.
+                                 attr_mapping={
+                                     KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                                     BIAS_ATTR: DefaultDict(default_value=BIAS)})
         tp.OperationsSetToLayers("L2Normalization", [tf.math.l2_normalize])
         tp.OperationsSetToLayers("LogSoftmax", [tf.nn.log_softmax])
         tp.OperationsSetToLayers("Tanh", [tf.nn.tanh, tp.LayerFilterParams(Activation, activation="tanh")])

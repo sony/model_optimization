@@ -16,24 +16,15 @@
 import unittest
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
 from model_compression_toolkit.target_platform_capabilities.target_platform import get_default_quantization_config_options
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, generate_test_op_qc
 
 tp = mct.target_platform
 
-TEST_QC = tp.OpQuantizationConfig(enable_activation_quantization=True,
-                                   enable_weights_quantization=True,
-                                   activation_n_bits=8,
-                                   weights_n_bits=8,
-                                   weights_per_channel_threshold=True,
-                                   activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-                                   weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-                                   quantization_preserving=False,
-                                   fixed_scale=None,
-                                   fixed_zero_point=None,
-                                   weights_multiplier_nbits=None,
-                                   simd_size=None)
-
+TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
 TEST_QCO = tp.QuantizationConfigOptions([TEST_QC])
 
 
@@ -115,11 +106,11 @@ class QCOptionsTest(unittest.TestCase):
             str(e.exception))
 
     def test_clone_and_edit_options(self):
-        modified_options = TEST_QCO.clone_and_edit(activation_n_bits=3,
-                                                   weights_n_bits=5)
+        modified_options = TEST_QCO.clone_and_edit(activation_n_bits=3).clone_and_edit_weight_attribute(attrs=[KERNEL_ATTR],
+                                                                                                        weights_n_bits=5)
 
         self.assertEqual(modified_options.quantization_config_list[0].activation_n_bits, 3)
-        self.assertEqual(modified_options.quantization_config_list[0].weights_n_bits, 5)
+        self.assertEqual(modified_options.quantization_config_list[0].attr_weights_configs_mapping[KERNEL_ATTR].weights_n_bits, 5)
 
     def test_qco_without_base_config(self):
         tp.QuantizationConfigOptions([TEST_QC])  # Should work fine as it has only one qc.

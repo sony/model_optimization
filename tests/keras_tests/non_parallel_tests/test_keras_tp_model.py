@@ -22,7 +22,9 @@ from packaging import version
 
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
+from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common import BaseNode
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, Conv2DTranspose, ReLU, Activation, BatchNormalization
@@ -40,11 +42,14 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
     Greater, \
     Smaller, GreaterEq, Eq, SmallerEq, Contains
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
-    QNNPACK_TP_MODEL, TFLITE_TP_MODEL
+    QNNPACK_TP_MODEL, TFLITE_TP_MODEL, KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL, BIAS, WEIGHTS_N_BITS
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-from tests.common_tests.test_tp_model import TEST_QCO, TEST_QC
 
 tp = mct.target_platform
+
+
+TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
+TEST_QCO = tp.QuantizationConfigOptions([TEST_QC])
 
 
 def get_node(layer) -> BaseNode:
@@ -154,23 +159,26 @@ class TestKerasTPModel(unittest.TestCase):
 
     def test_qco_by_keras_layer(self):
         default_qco = tp.QuantizationConfigOptions([TEST_QC])
-        hm = tp.TargetPlatformModel(default_qco, name='test')
-        with hm:
-            mixed_precision_configuration_options = tp.QuantizationConfigOptions([TEST_QC,
-                                                                                  TEST_QC.clone_and_edit(
-                                                                                      weights_n_bits=4),
-                                                                                  TEST_QC.clone_and_edit(
-                                                                                      weights_n_bits=2)],
-                                                                                 base_config=TEST_QC)
+        default_qco = default_qco.clone_and_edit(attr_weights_configs_mapping={})
+        tpm = tp.TargetPlatformModel(default_qco, name='test')
+        with tpm:
+            mixed_precision_configuration_options = tp.QuantizationConfigOptions(
+                quantization_config_list=[TEST_QC,
+                                          TEST_QC.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}}),
+                                          TEST_QC.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 2}})],
+                base_config=TEST_QC)
 
             tp.OperatorsSet("conv", mixed_precision_configuration_options)
-            sevenbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=7)
+            sevenbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=7,
+                                                   attr_weights_configs_mapping={})
             tp.OperatorsSet("tanh", sevenbit_qco)
             tp.OperatorsSet("relu")
 
-        hm_keras = tp.TargetPlatformCapabilities(hm, name='fw_test')
-        with hm_keras:
-            tp.OperationsSetToLayers("conv", [Conv2D])
+        tpc_keras = tp.TargetPlatformCapabilities(tpm, name='fw_test')
+        with tpc_keras:
+            tp.OperationsSetToLayers("conv", [Conv2D],
+                                     attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                                                   BIAS_ATTR: DefaultDict(default_value=BIAS)})
             tp.OperationsSetToLayers("tanh", [tf.nn.tanh])
             tp.OperationsSetToLayers("relu", [LayerFilterParams(Activation, activation="relu")])
 
@@ -178,11 +186,15 @@ class TestKerasTPModel(unittest.TestCase):
         tanh_node = get_node(tf.nn.tanh)
         relu_node = get_node(Activation('relu'))
 
-        conv_qco = conv_node.get_qco(hm_keras)
-        tanh_qco = tanh_node.get_qco(hm_keras)
-        relu_qco = relu_node.get_qco(hm_keras)
+        conv_qco = conv_node.get_qco(tpc_keras)
+        tanh_qco = tanh_node.get_qco(tpc_keras)
+        relu_qco = relu_node.get_qco(tpc_keras)
 
-        self.assertEqual(conv_qco, mixed_precision_configuration_options)
+        self.assertEqual(len(conv_qco.quantization_config_list),
+                         len(mixed_precision_configuration_options.quantization_config_list))
+        for i in range(len(conv_qco.quantization_config_list)):
+            self.assertEqual(conv_qco.quantization_config_list[i].attr_weights_configs_mapping[KERAS_KERNEL],
+                             mixed_precision_configuration_options.quantization_config_list[i].attr_weights_configs_mapping[KERNEL_ATTR])
         self.assertEqual(tanh_qco, sevenbit_qco)
         self.assertEqual(relu_qco, default_qco)
 

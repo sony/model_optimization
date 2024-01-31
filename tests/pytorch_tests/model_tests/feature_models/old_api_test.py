@@ -17,11 +17,11 @@ import numpy as np
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, WEIGHTS_N_BITS
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import generate_tp_model
-from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model, generate_pytorch_tpc, get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 
 
 class OneLayerConv2dNet(torch.nn.Module):
@@ -45,17 +45,19 @@ class OldApiTest(BasePytorchTest):
         self.input_shape = [(1, 3, 8, 8)]
 
     def get_mp_tpc(self):
-        base_config, _ = get_op_quantization_configs()
-        base_config = base_config.clone_and_edit(weights_n_bits=16,
+        base_config, _, default_config = get_op_quantization_configs()
+        base_config = base_config.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 16}},
                                                  activation_n_bits=16)
+        default_config = default_config.clone_and_edit(activation_n_bits=16)
+
         mp_bitwidth_candidates_list = [(8, 16), (2, 16), (4, 16), (16, 16)]
         mp_op_cfg_list = []
         for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
-            candidate_cfg = base_config.clone_and_edit(weights_n_bits=weights_n_bits,
+            candidate_cfg = base_config.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: weights_n_bits}},
                                                        activation_n_bits=activation_n_bits)
             mp_op_cfg_list.append(candidate_cfg)
 
-        tp_model = generate_tp_model(default_config=base_config,
+        tp_model = generate_tp_model(default_config=default_config,
                                      base_config=base_config,
                                      mixed_precision_cfg_list=mp_op_cfg_list,
                                      name='default_tp_model')
@@ -64,9 +66,12 @@ class OldApiTest(BasePytorchTest):
                                          ftp_name='mixed_precision_pytorch_test')
 
     def get_mp_quant_config(self):
-        qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
-                                         relu_bound_to_power_of_2=False, weights_bias_correction=True,
-                                         input_scaling=False, activation_channel_equalization=False)
+        qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
+                                         mct.core.QuantizationErrorMethod.MSE,
+                                         weights_bias_correction=True,
+                                         activation_channel_equalization=False,
+                                         relu_bound_to_power_of_2=False,
+                                         input_scaling=False)
         return mct.core.MixedPrecisionQuantizationConfig(qc, num_of_images=1)
 
     def get_kpi(self):

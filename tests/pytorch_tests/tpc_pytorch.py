@@ -14,7 +14,9 @@
 # ==============================================================================
 
 import model_compression_toolkit as mct
-
+from model_compression_toolkit.defaultdict import DefaultDict
+from model_compression_toolkit.core.pytorch.constants import BIAS
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
@@ -43,10 +45,18 @@ def get_mp_activation_pytorch_tpc_dict(tpc_model, test_name, tpc_name):
         "Input": [DummyPlaceHolder],
     }
 
+    # we assume a standard tp model with standard operator sets names,
+    # otherwise - need to generate the tpc per test and not with this generic function
+    attr_mapping = {'Conv': {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
+                             BIAS_ATTR: DefaultDict(default_value=BIAS)},
+                    'FullyConnected': {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
+                                       BIAS_ATTR: DefaultDict(default_value=BIAS)}}
+
     return {
         test_name: generate_test_tpc(name=tpc_name,
                                      tp_model=tpc_model,
                                      base_tpc=generate_pytorch_tpc(name=f"base_{tpc_name}",
                                                                    tp_model=tpc_model),
-                                     op_sets_to_layer_add=op_sets_to_layer_add),
+                                     op_sets_to_layer_add=op_sets_to_layer_add,
+                                     attr_mapping=attr_mapping),
     }

@@ -15,6 +15,10 @@
 import torch
 from torch.nn import AvgPool2d, MaxPool2d
 from torch.nn.functional import avg_pool2d, max_pool2d, interpolate
+
+from model_compression_toolkit.defaultdict import DefaultDict
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR, \
+    BIAS
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import Eq
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.tflite_tpc.v1.tp_model import get_tp_model
@@ -68,7 +72,14 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     torch.select,
                                                     torch.unbind])
 
-        tp.OperationsSetToLayers("FullyConnected", [torch.nn.Linear, torch.nn.functional.linear])
+        tp.OperationsSetToLayers("FullyConnected", [torch.nn.Linear, torch.nn.functional.linear],
+                                 # we provide attributes mapping that maps each layer type in the operations set
+                                 # that has weights attributes with provided quantization config (in the tp model) to
+                                 # its framework-specific attribute name.
+                                 # note that a DefaultDict should be provided if not all the layer types in the
+                                 # operation set are provided separately in the mapping.
+                                 attr_mapping={KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
+                                               BIAS_ATTR: DefaultDict(default_value=BIAS)})
         tp.OperationsSetToLayers("L2Normalization",
                                  [tp.LayerFilterParams(torch.nn.functional.normalize, Eq('p', 2) | Eq('p', None))])
         tp.OperationsSetToLayers("LogSoftmax", [torch.nn.LogSoftmax])

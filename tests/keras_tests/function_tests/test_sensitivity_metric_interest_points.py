@@ -19,6 +19,9 @@ from keras.applications.densenet import DenseNet121
 from keras.applications.mobilenet_v2 import MobileNetV2
 
 from packaging import version
+
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
+
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers.core import TFOpLambda
 else:
@@ -54,11 +57,13 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
     graph = keras_impl.model_reader(in_model, dummy_representative_dataset)  # model reading
     graph.set_fw_info(fw_info)
 
-    base_config, mixed_precision_cfg_list = get_op_quantization_configs()
+    base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
     base_config = base_config.clone_and_edit(enable_activation_quantization=False)
 
     tpc = get_weights_only_mp_tpc_keras(base_config=base_config,
-                                        mp_bitwidth_candidates_list=[(c.weights_n_bits, c.activation_n_bits) for c in mixed_precision_cfg_list],
+                                        default_config=default_config,
+                                        mp_bitwidth_candidates_list=[(c.attr_weights_configs_mapping[KERNEL_ATTR].weights_n_bits,
+                                                                      c.activation_n_bits) for c in mixed_precision_cfg_list],
                                         name="sem_test")
 
     graph.set_tpc(tpc)

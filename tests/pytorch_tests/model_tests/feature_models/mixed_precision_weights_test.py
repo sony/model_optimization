@@ -16,9 +16,12 @@ import torch
 import numpy as np
 from torch.nn import Conv2d
 
+from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core import KPI
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights
 from model_compression_toolkit.core.common.user_info import UserInformation
+from model_compression_toolkit.core.pytorch.constants import BIAS
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model, get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
@@ -94,7 +97,7 @@ class MixedPercisionSearchPartWeightsLayers(MixedPercisionBaseTest):
         # Building a TPC that gives Conv layers mixed precision candidates and Dense layers a fixed candidate.
         # Both layers that have weights to quantized, so we want to verify that finalizing the model is successful.
         # Note that this is important that the quantization config options would include also activation quantization.
-        cfg, mixed_precision_cfg_list = get_op_quantization_configs()
+        cfg, mixed_precision_cfg_list, _ = get_op_quantization_configs()
 
         two_bit_cfg = mixed_precision_cfg_list[2]
 
@@ -119,11 +122,15 @@ class MixedPercisionSearchPartWeightsLayers(MixedPercisionBaseTest):
             tp.OperationsSetToLayers(
                 "Weights_fixed",
                 [torch.nn.Linear],
+                attr_mapping={KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
+                              BIAS_ATTR: DefaultDict(default_value=BIAS)}
             )
 
             tp.OperationsSetToLayers(
                 "Weights_mp",
                 [torch.nn.Conv2d],
+                attr_mapping={KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
+                              BIAS_ATTR: DefaultDict(default_value=BIAS)}
             )
 
         return {'mixed_precision_model': pytorch_tpc}
@@ -187,10 +194,11 @@ class MixedPercisionActivationDisabledTest(MixedPercisionBaseTest):
         super().__init__(unit_test)
 
     def get_fw_hw_model(self):
-        base_config, _ = get_op_quantization_configs()
+        base_config, _, default_config = get_op_quantization_configs()
         return get_pytorch_test_tpc_dict(
             tp_model=generate_mixed_precision_test_tp_model(
                 base_cfg=base_config.clone_and_edit(enable_activation_quantization=False),
+                default_config=default_config,
                 mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)]),
             test_name='mixed_precision_model',
             ftp_name='mixed_precision_pytorch_test')

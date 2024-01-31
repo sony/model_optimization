@@ -27,26 +27,11 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, generate_test_op_qc
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 
 tp = mct.target_platform
-
-
-def get_base_config():
-    return tp.OpQuantizationConfig(
-        activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-        activation_n_bits=8,
-        weights_n_bits=8,
-        weights_per_channel_threshold=True,
-        enable_weights_quantization=True,
-        enable_activation_quantization=True,
-        quantization_preserving=False,
-        fixed_scale=None,
-        fixed_zero_point=None,
-        weights_multiplier_nbits=None,
-        simd_size=None
-    )
 
 
 def get_full_bitwidth_candidates():
@@ -55,10 +40,11 @@ def get_full_bitwidth_candidates():
             (2, 8), (2, 4), (2, 2)]
 
 
-def prepare_graph(in_model, base_config, bitwidth_candidates):
+def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
     tpc = get_tpc_with_activation_mp_keras(base_config=base_config,
                                            mp_bitwidth_candidates_list=bitwidth_candidates,
-                                           name="candidates_filter_test")
+                                           name="candidates_filter_test",
+                                           default_config=default_config)
 
     fw_info = DEFAULT_KERAS_INFO
     keras_impl = KerasImplementation()
@@ -99,9 +85,13 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         input_shape = (8, 8, 3)
         in_model = create_model_conv2d_relu(input_shape)
 
+        base_config = generate_test_op_qc(**generate_test_attr_configs())
+        default_config = base_config.clone_and_edit(attr_weights_configs_mapping={})
+
         graph = prepare_graph(in_model,
-                              base_config=get_base_config(),
-                              bitwidth_candidates=get_full_bitwidth_candidates())
+                              base_config=base_config,
+                              bitwidth_candidates=get_full_bitwidth_candidates(),
+                              default_config=default_config)
 
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
@@ -124,9 +114,13 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         input_shape = (8, 8, 3)
         in_model = create_model_conv2d_only(input_shape)
 
+        base_config = generate_test_op_qc(**generate_test_attr_configs(enable_kernel_weights_quantization=False))
+        default_config = base_config.clone_and_edit(attr_weights_configs_mapping={})
+
         graph = prepare_graph(in_model,
-                              base_config=get_base_config().clone_and_edit(enable_weights_quantization=False),
-                              bitwidth_candidates=get_full_bitwidth_candidates())
+                              base_config=base_config,
+                              bitwidth_candidates=get_full_bitwidth_candidates(),
+                              default_config=default_config)
 
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
@@ -148,9 +142,14 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         input_shape = (8, 8, 3)
         in_model = create_model_conv2d_relu(input_shape)
 
+        base_config = generate_test_op_qc(enable_activation_quantization=False,
+                                          **generate_test_attr_configs())
+        default_config = base_config.clone_and_edit(attr_weights_configs_mapping={})
+
         graph = prepare_graph(in_model,
-                              base_config=get_base_config().clone_and_edit(enable_activation_quantization=False),
-                              bitwidth_candidates=get_full_bitwidth_candidates())
+                              base_config=base_config,
+                              bitwidth_candidates=get_full_bitwidth_candidates(),
+                              default_config=default_config)
 
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
@@ -168,9 +167,13 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         input_shape = (8, 8, 3)
         in_model = create_model_single_conv2d(input_shape)
 
+        base_config = generate_test_op_qc(**generate_test_attr_configs(enable_kernel_weights_quantization=False))
+        default_config = base_config.clone_and_edit(attr_weights_configs_mapping={})
+
         graph = prepare_graph(in_model,
-                              base_config=get_base_config().clone_and_edit(enable_weights_quantization=False),
-                              bitwidth_candidates=[(8, 8), (4, 8), (2, 8)])
+                              base_config=base_config,
+                              bitwidth_candidates=[(8, 8), (4, 8), (2, 8)],
+                              default_config=default_config)
 
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)

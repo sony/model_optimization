@@ -188,6 +188,16 @@ class TargetPlatformCapabilities(ImmutableClass):
                 qco = self.tp_model.get_config_options_by_operators_set(op2layers.name)
                 if qco is None:
                     qco = self.tp_model.default_qco
+
+                # here, we need to take care of mapping a general attribute name into a framework and
+                # layer type specific attribute name.
+                # attr_mapping is a mapping between an attribute generic name to a dictionary that maps each
+                # layer type to its framework-specific attribute name.
+                # in the loop below, v is the inner dictionary.
+                layer_attrs_mapping = None if op2layers.attr_mapping is None else \
+                    {k: v.get(l) for k, v in op2layers.attr_mapping.items()}
+                qco = qco.clone_and_map_weights_attr_keys(layer_attrs_mapping)
+
                 if isinstance(l, LayerFilterParams):
                     filterlayer2qco.update({l: qco})
                 else:

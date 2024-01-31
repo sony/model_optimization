@@ -104,10 +104,11 @@ class BaseMixedPrecisionBopsTest(BasePytorchTest):
         self.mixed_precision_candidates_list = mixed_precision_candidates_list
 
     def get_tpc(self):
-        base_config, _ = get_op_quantization_configs()
+        base_config, _, default_config = get_op_quantization_configs()
         return get_mp_activation_pytorch_tpc_dict(
             tpc_model=generate_tp_model_with_activation_mp(
                 base_cfg=base_config,
+                default_config=default_config,
                 mp_bitwidth_candidates_list=self.mixed_precision_candidates_list),
             test_name='mixed_precision_bops_model',
             tpc_name='mixed_precision_bops_pytorch_test')

@@ -78,11 +78,11 @@ def create_network_4(input_shape):
 
 
 def generate_base_tpc():
-    default_config, mixed_precision_cfg_list = get_op_quantization_configs()
+    base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
     default_configuration_options = tp.QuantizationConfigOptions([default_config])
     generated_tp = tp.TargetPlatformModel(default_configuration_options, name='layer_fusing_test')
     mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
-                                                                         base_config=default_config)
+                                                                         base_config=base_config)
 
     return generated_tp, mixed_precision_configuration_options
 

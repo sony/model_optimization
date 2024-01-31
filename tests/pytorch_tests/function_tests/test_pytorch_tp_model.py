@@ -23,18 +23,24 @@ from torch.nn.functional import hardtanh
 from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import Greater, Smaller, Eq
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import DEFAULT_MIXEDPRECISION_CONFIG
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
+    TFLITE_TP_MODEL, QNNPACK_TP_MODEL, KERNEL_ATTR, WEIGHTS_N_BITS, PYTORCH_KERNEL, BIAS_ATTR, BIAS
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-from tests.common_tests.test_tp_model import TEST_QC, TEST_QCO
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import LayerTestModel
 
 tp = mct.target_platform
+
+
+TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
+TEST_QCO = tp.QuantizationConfigOptions([TEST_QC])
 
 
 class TestPytorchTPModel(unittest.TestCase):
@@ -74,45 +80,54 @@ class TestPytorchTPModel(unittest.TestCase):
 
     def test_qco_by_pytorch_layer(self):
         default_qco = tp.QuantizationConfigOptions([TEST_QC])
-        hm = tp.TargetPlatformModel(default_qco, name='test')
-        with hm:
-            mixed_precision_configuration_options = tp.QuantizationConfigOptions([TEST_QC,
-                                                                                   TEST_QC.clone_and_edit(
-                                                                                       weights_n_bits=4),
-                                                                                   TEST_QC.clone_and_edit(
-                                                                                       weights_n_bits=2)],
-                                                                                  base_config=TEST_QC)
+        default_qco = default_qco.clone_and_edit(attr_weights_configs_mapping={})
+        tpm = tp.TargetPlatformModel(default_qco, name='test')
+        with tpm:
+            mixed_precision_configuration_options = tp.QuantizationConfigOptions(
+                [TEST_QC,
+                 TEST_QC.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}}),
+                 TEST_QC.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 2}})],
+                base_config=TEST_QC)
 
             tp.OperatorsSet("conv", mixed_precision_configuration_options)
 
-            sevenbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=7)
+            sevenbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=7,
+                                                   attr_weights_configs_mapping={})
             tp.OperatorsSet("tanh", sevenbit_qco)
 
-            sixbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=6)
+            sixbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=6,
+                                                 attr_weights_configs_mapping={})
             tp.OperatorsSet("avg_pool2d_kernel_2", sixbit_qco)
 
             tp.OperatorsSet("avg_pool2d")
 
-        hm_pytorch = tp.TargetPlatformCapabilities(hm, name='fw_test')
-        with hm_pytorch:
-            tp.OperationsSetToLayers("conv", [torch.nn.Conv2d])
+        tpc_pytorch = tp.TargetPlatformCapabilities(tpm, name='fw_test')
+        with tpc_pytorch:
+            tp.OperationsSetToLayers("conv", [torch.nn.Conv2d],
+                                     attr_mapping={KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
+                                                   BIAS_ATTR: DefaultDict(default_value=BIAS)})
             tp.OperationsSetToLayers("tanh", [torch.tanh])
             tp.OperationsSetToLayers("avg_pool2d_kernel_2",
-                                      [LayerFilterParams(torch.nn.functional.avg_pool2d, kernel_size=2)])
+                                     [LayerFilterParams(torch.nn.functional.avg_pool2d, kernel_size=2)])
             tp.OperationsSetToLayers("avg_pool2d",
-                                      [torch.nn.functional.avg_pool2d])
+                                     [torch.nn.functional.avg_pool2d])
 
         conv_node = get_node(torch.nn.Conv2d(3, 3, (1, 1)))
         tanh_node = get_node(torch.tanh)
         avg_pool2d_k2 = get_node(partial(torch.nn.functional.avg_pool2d, kernel_size=2))
         avg_pool2d = get_node(partial(torch.nn.functional.avg_pool2d, kernel_size=1))
 
-        conv_qco = conv_node.get_qco(hm_pytorch)
-        tanh_qco = tanh_node.get_qco(hm_pytorch)
-        avg_pool2d_k2_qco = avg_pool2d_k2.get_qco(hm_pytorch)
-        avg_pool2d_qco = avg_pool2d.get_qco(hm_pytorch)
+        conv_qco = conv_node.get_qco(tpc_pytorch)
+        tanh_qco = tanh_node.get_qco(tpc_pytorch)
+        avg_pool2d_k2_qco = avg_pool2d_k2.get_qco(tpc_pytorch)
+        avg_pool2d_qco = avg_pool2d.get_qco(tpc_pytorch)
 
-        self.assertEqual(conv_qco, mixed_precision_configuration_options)
+        self.assertEqual(len(conv_qco.quantization_config_list),
+                         len(mixed_precision_configuration_options.quantization_config_list))
+        for i in range(len(conv_qco.quantization_config_list)):
+            self.assertEqual(conv_qco.quantization_config_list[i].attr_weights_configs_mapping[PYTORCH_KERNEL],
+                             mixed_precision_configuration_options.quantization_config_list[
+                                 i].attr_weights_configs_mapping[KERNEL_ATTR])
         self.assertEqual(tanh_qco, sevenbit_qco)
         self.assertEqual(avg_pool2d_k2_qco, sixbit_qco)
         self.assertEqual(avg_pool2d_qco, default_qco)
