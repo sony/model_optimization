@@ -18,7 +18,8 @@ from typing import List
 import numpy as np
 
 from model_compression_toolkit.gptq import get_keras_gptq_config, keras_gradient_post_training_quantization_experimental, GradientPTQConfigV2, RoundingType
-from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod, CoreConfig, DefaultDict
+from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod, CoreConfig
+from model_compression_toolkit import DefaultDict
 import tensorflow as tf
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
@@ -105,7 +106,7 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                           train_bias=True,
                                                           loss=multiple_tensors_mse_loss,
                                                           rounding_type=RoundingType.STE,
-                                                          gptq_quantizer_params_override={MAX_LSB_STR: DefaultDict({}, 1)}),
+                                                          gptq_quantizer_params_override={MAX_LSB_STR: DefaultDict(default_value=1)}),
                                       get_keras_gptq_config(n_epochs=1,
                                                             optimizer=tf.keras.optimizers.Adam()),
                                       get_keras_gptq_config(n_epochs=1,

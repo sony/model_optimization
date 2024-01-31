@@ -16,7 +16,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from model_compression_toolkit.core import DefaultDict
+from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
@@ -63,7 +63,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         self.log_norm_weights = log_norm_weights
         self.scaled_log_norm = scaled_log_norm
         self.override_params = {QUANT_PARAM_LEARNING_STR: params_learning} if \
-            rounding_type == RoundingType.SoftQuantizer else {MAX_LSB_STR: DefaultDict({}, 1)} \
+            rounding_type == RoundingType.SoftQuantizer else {MAX_LSB_STR: DefaultDict(default_value=1)} \
             if rounding_type == RoundingType.STE else None
 
     def get_quantization_config(self):

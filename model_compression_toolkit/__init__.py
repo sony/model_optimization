@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities import target_platform
 from model_compression_toolkit.target_platform_capabilities.tpc_models.get_target_platform_capabilities import get_target_platform_capabilities
 from model_compression_toolkit import core
@@ -40,7 +41,6 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
 from model_compression_toolkit.logger import set_log_folder
 from model_compression_toolkit.core.common.data_loader import FolderImageLoader
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo, ChannelAxis
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
 from model_compression_toolkit.legacy.keras_quantization_facade import keras_post_training_quantization, keras_post_training_quantization_mixed_precision
 from model_compression_toolkit.legacy.pytorch_quantization_facade import pytorch_post_training_quantization, pytorch_post_training_quantization_mixed_precision
 from model_compression_toolkit.core.keras.kpi_data_facade import keras_kpi_data

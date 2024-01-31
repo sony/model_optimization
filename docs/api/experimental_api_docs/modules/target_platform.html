@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>target_platform Module &#8212; MCT Documentation: ver 1.10.0</title>
+    <title>target_platform Module &#8212; MCT Documentation: ver 1.11.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>  
@@ -98,7 +98,7 @@ Quantization configuration of different operators can be created using OpQuantiz
 <h2>OpQuantizationConfig<a class="headerlink" href="#opquantizationconfig" title="Permalink to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.target_platform.OpQuantizationConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">OpQuantizationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">activation_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_per_channel_threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_weights_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_activation_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantization_preserving</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_zero_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_multiplier_nbits</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.OpQuantizationConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">OpQuantizationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">activation_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_per_channel_threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_weights_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_activation_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantization_preserving</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_zero_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_multiplier_nbits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simd_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.OpQuantizationConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>OpQuantizationConfig is a class to configure the quantization parameters of an operator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -114,6 +114,7 @@ Quantization configuration of different operators can be created using OpQuantiz
 <li><p><strong>fixed_scale</strong> (<em>float</em>) – Scale to use for an operator quantization parameters.</p></li>
 <li><p><strong>fixed_zero_point</strong> (<em>int</em>) – Zero-point to use for an operator quantization parameters.</p></li>
 <li><p><strong>weights_multiplier_nbits</strong> (<em>int</em>) – Number of bits to use when quantizing in look-up-table.</p></li>
+<li><p><strong>simd_size</strong> (<em>int</em>) – An integer representing the Single Instruction, Multiple Data (SIMD) width of an operator. It indicates the number of data elements that can be fetched and processed simultaneously in a single instruction.</p></li>
 </ul>
 </dd>
 </dl>
@@ -358,8 +359,6 @@ can be used as follows:</p>
 <span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
 <span class="kn">from</span> <span class="nn">model_compression_toolkit.target_platform_capabilities.target_platform</span> <span class="kn">import</span> <span class="n">OpQuantizationConfig</span><span class="p">,</span> \
     <span class="n">TargetPlatformModel</span>
-<span class="kn">from</span> <span class="nn">model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format</span> <span class="kn">import</span> \
-    <span class="n">QuantizationFormat</span>
 
 <span class="n">tp</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">target_platform</span>
 
@@ -405,15 +404,19 @@ can be used as follows:</p>
         <span class="n">quantization_preserving</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">fixed_scale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">fixed_zero_point</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">weights_multiplier_nbits</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">weights_multiplier_nbits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">simd_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
 
     <span class="c1"># To quantize a model using mixed-precision, create</span>
     <span class="c1"># a list with more than one OpQuantizationConfig.</span>
     <span class="c1"># In this example, we quantize some operations&#39; weights</span>
     <span class="c1"># using 2, 4 or 8 bits, and when using 2 or 4 bits, it&#39;s possible</span>
     <span class="c1"># to quantize the operations&#39; activations using LUT.</span>
-    <span class="n">four_bits</span> <span class="o">=</span> <span class="n">eight_bits</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-    <span class="n">two_bits</span> <span class="o">=</span> <span class="n">eight_bits</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">four_bits</span> <span class="o">=</span> <span class="n">eight_bits</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+                                          <span class="n">simd_size</span><span class="o">=</span><span class="n">eight_bits</span><span class="o">.</span><span class="n">simd_size</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">two_bits</span> <span class="o">=</span> <span class="n">eight_bits</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                                         <span class="n">simd_size</span><span class="o">=</span><span class="n">eight_bits</span><span class="o">.</span><span class="n">simd_size</span><span class="o">*</span><span class="mi">4</span><span class="p">)</span>
+
     <span class="n">mixed_precision_cfg_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">eight_bits</span><span class="p">,</span> <span class="n">four_bits</span><span class="p">,</span> <span class="n">two_bits</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">eight_bits</span><span class="p">,</span> <span class="n">mixed_precision_cfg_list</span>
@@ -457,8 +460,7 @@ can be used as follows:</p>
         <span class="c1"># be used for operations that will be attached to this set&#39;s label.</span>
         <span class="c1"># Otherwise, it will be a configure-less set (used in fusing):</span>
 
-        <span class="c1"># Set quantization format to fakely quant</span>
-        <span class="n">generated_tpc</span><span class="o">.</span><span class="n">set_quantization_format</span><span class="p">(</span><span class="n">QuantizationFormat</span><span class="o">.</span><span class="n">FAKELY_QUANT</span><span class="p">)</span>
+        <span class="n">generated_tpc</span><span class="o">.</span><span class="n">set_simd_padding</span><span class="p">(</span><span class="n">is_simd_padding</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># May suit for operations like: Dropout, Reshape, etc.</span>
         <span class="n">tp</span><span class="o">.</span><span class="n">OperatorsSet</span><span class="p">(</span><span class="s2">&quot;NoQuantization&quot;</span><span class="p">,</span>
@@ -494,7 +496,6 @@ can be used as follows:</p>
         <span class="n">any_binary</span> <span class="o">=</span> <span class="n">tp</span><span class="o">.</span><span class="n">OperatorSetConcat</span><span class="p">(</span><span class="n">add</span><span class="p">,</span> <span class="n">sub</span><span class="p">,</span> <span class="n">mul</span><span class="p">,</span> <span class="n">div</span><span class="p">)</span>
 
         <span class="c1"># ------------------- #</span>
-        <span class="c1"># Fusions</span>
 </pre></div>
 </div>
 <div class="line-block">
@@ -624,8 +625,6 @@ to the TargetPlatformCapabilities like in the following example:</p>
 <span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
 <span class="kn">from</span> <span class="nn">model_compression_toolkit.target_platform_capabilities.target_platform</span> <span class="kn">import</span> <span class="n">OpQuantizationConfig</span><span class="p">,</span> \
     <span class="n">TargetPlatformModel</span>
-<span class="kn">from</span> <span class="nn">model_compression_toolkit.target_platform_capabilities.target_platform.quantization_format</span> <span class="kn">import</span> \
-    <span class="n">QuantizationFormat</span>
 
 <span class="n">tp</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">target_platform</span>
 
@@ -671,15 +670,19 @@ to the TargetPlatformCapabilities like in the following example:</p>
         <span class="n">quantization_preserving</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">fixed_scale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">fixed_zero_point</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">weights_multiplier_nbits</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">weights_multiplier_nbits</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">simd_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
 
     <span class="c1"># To quantize a model using mixed-precision, create</span>
     <span class="c1"># a list with more than one OpQuantizationConfig.</span>
     <span class="c1"># In this example, we quantize some operations&#39; weights</span>
     <span class="c1"># using 2, 4 or 8 bits, and when using 2 or 4 bits, it&#39;s possible</span>
     <span class="c1"># to quantize the operations&#39; activations using LUT.</span>
-    <span class="n">four_bits</span> <span class="o">=</span> <span class="n">eight_bits</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-    <span class="n">two_bits</span> <span class="o">=</span> <span class="n">eight_bits</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">four_bits</span> <span class="o">=</span> <span class="n">eight_bits</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+                                          <span class="n">simd_size</span><span class="o">=</span><span class="n">eight_bits</span><span class="o">.</span><span class="n">simd_size</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">two_bits</span> <span class="o">=</span> <span class="n">eight_bits</span><span class="o">.</span><span class="n">clone_and_edit</span><span class="p">(</span><span class="n">weights_n_bits</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                                         <span class="n">simd_size</span><span class="o">=</span><span class="n">eight_bits</span><span class="o">.</span><span class="n">simd_size</span><span class="o">*</span><span class="mi">4</span><span class="p">)</span>
+
     <span class="n">mixed_precision_cfg_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">eight_bits</span><span class="p">,</span> <span class="n">four_bits</span><span class="p">,</span> <span class="n">two_bits</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">eight_bits</span><span class="p">,</span> <span class="n">mixed_precision_cfg_list</span>
@@ -689,8 +692,6 @@ to the TargetPlatformCapabilities like in the following example:</p>
                       <span class="n">base_config</span><span class="p">:</span> <span class="n">OpQuantizationConfig</span><span class="p">,</span>
                       <span class="n">mixed_precision_cfg_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OpQuantizationConfig</span><span class="p">],</span>
                       <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TargetPlatformModel</span><span class="p">:</span>
-    <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">    Generates TargetPlatformModel with default defined Operators Sets, based on the given base configuration and</span>
 </pre></div>
 </div>
 </section>
@@ -744,13 +745,13 @@ to the TargetPlatformCapabilities like in the following example:</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.10.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2022, Sony Semiconductor Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.1.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>
 </html>

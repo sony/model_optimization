@@ -42,9 +42,9 @@ check out the [quick-start page](tutorials/quick_start/README.md) and
 the [results CSV](tutorials/quick_start/results/model_quantization_results.csv).
 
 In addition, a set of [notebooks](tutorials/notebooks) are provided for an easy start. For example:
-* [MobileNet with Tensorflow](tutorials/notebooks/example_keras_mobilenet.py).
-* [MobileNetV2 with PyTorch](tutorials/notebooks/example_pytorch_mobilenet_v2.py).
-* [Data Generation for ResNet18 with PyTorch](tutorials/notebooks/example_pytorch_data_generation.ipynb).
+* [MobileNet with Tensorflow](tutorials/notebooks/keras/ptq/example_keras_mobilenet.py).
+* [MobileNetV2 with PyTorch](tutorials/notebooks/pytorch/ptq/example_pytorch_mobilenet_v2.py).
+* [Data Generation for ResNet18 with PyTorch](tutorials/notebooks/pytorch/data_generation/example_pytorch_data_generation.ipynb).
 
 
 ### Supported Versions

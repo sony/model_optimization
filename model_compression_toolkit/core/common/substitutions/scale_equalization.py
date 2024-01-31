@@ -20,7 +20,7 @@ import scipy
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
+from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 

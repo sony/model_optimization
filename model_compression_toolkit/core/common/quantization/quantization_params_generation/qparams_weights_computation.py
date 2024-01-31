@@ -17,14 +17,14 @@ from typing import Dict, Any, Tuple
 import numpy as np
 
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
+from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
 
 
 # If the quantization config does not contain kernel channel mapping or the weights
 # quantization is not per-channel, we use a dummy channel mapping.
-dummy_channel_mapping = DefaultDict({}, (None, None))
+dummy_channel_mapping = DefaultDict(default_value=(None, None))
 
 
 def get_weights_qparams(kernel: np.ndarray,

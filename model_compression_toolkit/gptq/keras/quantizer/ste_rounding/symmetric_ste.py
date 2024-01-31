@@ -24,7 +24,7 @@ from mct_quantizers import QuantizationTarget
 from model_compression_toolkit.gptq.common.gptq_constants import AUXVAR, PTQ_THRESHOLD
 from model_compression_toolkit.gptq.keras.quantizer import quant_utils as qutils
 from model_compression_toolkit.constants import THRESHOLD
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
+from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig
 from mct_quantizers import mark_quantizer
@@ -77,7 +77,7 @@ class STEWeightGPTQQuantizer(BaseKerasGPTQTrainableQuantizer):
 
     def __init__(self,
                  quantization_config: TrainableQuantizerWeightsConfig,
-                 max_lsbs_change_map: dict = DefaultDict({}, 1)):
+                 max_lsbs_change_map: dict = DefaultDict(default_value=1)):
         """
         Initialize a STEWeightGPTQQuantizer object with parameters to use for the quantization.
 

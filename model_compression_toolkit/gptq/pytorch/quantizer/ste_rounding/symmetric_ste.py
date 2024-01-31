@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 from typing import Dict
 import numpy as np
-from model_compression_toolkit.core.common.defaultdict import DefaultDict
+from model_compression_toolkit.defaultdict import DefaultDict
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from mct_quantizers import QuantizationTarget, PytorchQuantizationWrapper
@@ -84,7 +84,7 @@ class STEWeightGPTQQuantizer(BasePytorchGPTQTrainableQuantizer):
 
     def __init__(self,
                  quantization_config: TrainableQuantizerWeightsConfig,
-                 max_lsbs_change_map: dict = DefaultDict({}, 1)):
+                 max_lsbs_change_map: dict = DefaultDict(default_value=1)):
         """
         Construct a Pytorch model that utilize a fake weight quantizer of STE (Straight Through Estimator) for symmetric quantizer.
 

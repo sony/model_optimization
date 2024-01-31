@@ -7,6 +7,7 @@
 exporter Module
 =================================
 
+Allows to export a quantized model in different serialization formats and quantization formats.
 For more details about the export formats and options, please refer to the project's GitHub `README file <https://github.com/sony/model_optimization/tree/main/model_compression_toolkit/exporter>`_.
 Note that this feature is experimental and subject to future changes. If you have any questions or issues, please open an issue in this GitHub repository.
 
@@ -31,12 +32,10 @@ Allows to export a Keras model that was quantized via MCT.
 
 .. autoclass:: model_compression_toolkit.exporter.keras_export_model
 
-|
 
 pytorch_export_model
 ==========================
 Allows to export a Pytorch model that was quantized via MCT.
 
 .. autoclass:: model_compression_toolkit.exporter.pytorch_export_model
-
 
