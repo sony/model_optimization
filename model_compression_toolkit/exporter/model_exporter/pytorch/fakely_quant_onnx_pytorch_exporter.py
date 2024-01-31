@@ -27,7 +27,7 @@ from mct_quantizers import pytorch_quantizers
 if version.parse(torch.__version__) < version.parse("1.12"):
     OPSET_VERSION = 15
 else:
-    OPSET_VERSION = 16
+    OPSET_VERSION = 17
 
 
 class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
