@@ -291,7 +291,7 @@ class QuantizationConfigOptions(object):
 
     def clone_and_map_weights_attr_keys(self, layer_attrs_mapping: Union[Dict[str, str], None]):
         """
-       Clones the quantization configuration options and edits the keys in the each configuration attributes config mapping,
+       Clones the quantization configuration options and edits the keys in each configuration attributes config mapping,
        based on the given attributes names mapping.
 
         Args:
@@ -304,12 +304,18 @@ class QuantizationConfigOptions(object):
         qc_options = copy.deepcopy(self)
 
         for qc in qc_options.quantization_config_list:
-            for attr in list(qc.attr_weights_configs_mapping.keys()):
-                if layer_attrs_mapping is None:
-                    qc.attr_weights_configs_mapping = {}
-                else:
-                    qc.attr_weights_configs_mapping[layer_attrs_mapping[attr]] = (
-                        qc.attr_weights_configs_mapping.pop(attr))
+            if layer_attrs_mapping is None:
+                qc.attr_weights_configs_mapping = {}
+            else:
+                new_attr_mapping = {}
+                for attr in list(qc.attr_weights_configs_mapping.keys()):
+                    new_key = layer_attrs_mapping.get(attr)
+                    if new_key is None:
+                        Logger.error(f"Attribute {attr} does not exist in the given attribute mapping.")
+
+                    new_attr_mapping[new_key] = qc.attr_weights_configs_mapping.pop(attr)
+
+                qc.attr_weights_configs_mapping.update(new_attr_mapping)
 
         return qc_options
 
