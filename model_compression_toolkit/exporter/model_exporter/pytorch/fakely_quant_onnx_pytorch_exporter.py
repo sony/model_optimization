@@ -26,8 +26,11 @@ from mct_quantizers import pytorch_quantizers
 # ONNX opset version 16 is supported from PyTorch 1.12
 if version.parse(torch.__version__) < version.parse("1.12"):
     OPSET_VERSION = 15
-else:
+elif version.parse("1.12.0") <= version.parse(torch.__version__) < version.parse("1.13.0"):
     OPSET_VERSION = 16
+else:
+    # ONNX opset version 17 is supported from PyTorch 1.13
+    OPSET_VERSION = 17
 
 
 class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
