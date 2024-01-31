@@ -34,8 +34,7 @@ class MultipleInputsNodeTests(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      True, False, True)
+                                           mct.core.QuantizationErrorMethod.NOCLIPPING, True, False)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, 3]]

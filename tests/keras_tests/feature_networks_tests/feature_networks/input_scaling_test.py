@@ -39,8 +39,7 @@ class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      input_scaling=True)
+                                           mct.core.QuantizationErrorMethod.NOCLIPPING, input_scaling=True)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         fi = 2 if isinstance(float_model.layers[1], layers.ZeroPadding2D) else 1

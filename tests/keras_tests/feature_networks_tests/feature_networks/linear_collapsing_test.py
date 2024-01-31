@@ -48,8 +48,7 @@ class BaseConv2DCollapsingTest(BaseKerasFeatureNetworkTest, ABC):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      False, False, True)
+                                           mct.core.QuantizationErrorMethod.NOCLIPPING, False, False)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         y = float_model.predict(input_x)

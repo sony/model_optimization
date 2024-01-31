@@ -40,9 +40,8 @@ class UniformActivationTest(BasePytorchTest):
 
     def get_core_configs(self):
         qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                    mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                    shift_negative_activation_correction=True,
-                                    shift_negative_ratio=np.inf)
+                                         mct.core.QuantizationErrorMethod.NOCLIPPING,
+                                         shift_negative_activation_correction=True, shift_negative_ratio=np.inf)
         return {'act_2bit': mct.core.CoreConfig(quantization_config=qc)}
 
     def create_feature_network(self, input_shape):

@@ -53,10 +53,8 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
-                                      False, False, weights_per_channel_threshold=True,
-                                      shift_negative_activation_correction=True,
-                                      shift_negative_ratio=np.inf,
-                                      shift_negative_params_search=self.param_search)
+                                           False, False, shift_negative_activation_correction=True,
+                                           shift_negative_ratio=np.inf, shift_negative_params_search=self.param_search)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

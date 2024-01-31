@@ -50,7 +50,6 @@ class QuantizationConfig:
                  weights_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE,
                  relu_bound_to_power_of_2: bool = False,
                  weights_bias_correction: bool = True,
-                 weights_per_channel_threshold: bool = True,
                  weights_second_moment_correction: bool = False,
                  input_scaling: bool = False,
                  softmax_shift: bool = False,
@@ -73,7 +72,6 @@ class QuantizationConfig:
             relu_bound_to_power_of_2 (bool): Whether to use relu to power of 2 scaling correction or not.
             weights_bias_correction (bool): Whether to use weights bias correction or not.
             weights_second_moment_correction (bool): Whether to use weights second_moment correction or not.
-            weights_per_channel_threshold (bool): Whether to quantize the weights per-channel or not (per-tensor).
             input_scaling (bool): Whether to use input scaling or not.
             softmax_shift (bool): Whether to use softmax shift or not.
             shift_negative_activation_correction (bool): Whether to use shifting negative activation correction or not.
@@ -90,11 +88,11 @@ class QuantizationConfig:
             One may create a quantization configuration to quantize a model according to.
             For example, to quantize a model's weights and activation using thresholds, such that
             weights threshold selection is done using MSE, activation threshold selection is done using NOCLIPPING (min/max),
-            enabling relu_bound_to_power_of_2, weights_bias_correction, and quantizing the weights per-channel,
+            enabling relu_bound_to_power_of_2, weights_bias_correction,
             one can instantiate a quantization configuration:
 
             >>> import model_compression_toolkit as mct
-            >>> qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,weights_error_method=mct.core.QuantizationErrorMethod.MSE,relu_bound_to_power_of_2=True,weights_bias_correction=True,weights_per_channel_threshold=True)
+            >>> qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING, weights_error_method=mct.core.QuantizationErrorMethod.MSE, relu_bound_to_power_of_2=True, weights_bias_correction=True)
 
 
             The QuantizationConfig instanse can then be passed to
@@ -107,7 +105,6 @@ class QuantizationConfig:
         self.relu_bound_to_power_of_2 = relu_bound_to_power_of_2
         self.weights_bias_correction = weights_bias_correction
         self.weights_second_moment_correction = weights_second_moment_correction
-        self.weights_per_channel_threshold = weights_per_channel_threshold
         self.activation_channel_equalization = activation_channel_equalization
         self.input_scaling = input_scaling
         self.softmax_shift = softmax_shift
@@ -126,11 +123,6 @@ class QuantizationConfig:
 
 
 # Default quantization configuration the library use.
-DEFAULTCONFIG = QuantizationConfig(QuantizationErrorMethod.MSE,
-                                   QuantizationErrorMethod.MSE,
-                                   relu_bound_to_power_of_2=False,
-                                   weights_bias_correction=True,
-                                   weights_second_moment_correction=False,
-                                   weights_per_channel_threshold=True,
-                                   input_scaling=False,
-                                   softmax_shift=False)
+DEFAULTCONFIG = QuantizationConfig(QuantizationErrorMethod.MSE, QuantizationErrorMethod.MSE,
+                                   relu_bound_to_power_of_2=False, weights_bias_correction=True,
+                                   weights_second_moment_correction=False, input_scaling=False, softmax_shift=False)
