@@ -67,8 +67,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
 
     def get_core_configs(self):
         base_quant_config = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                                   mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                                   False, True, True)
+                                                        mct.core.QuantizationErrorMethod.NOCLIPPING, False, True)
         base_core_config = mct.core.CoreConfig(quantization_config=base_quant_config,
                                           debug_config=self.get_debug_config())
         return {

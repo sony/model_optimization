@@ -71,9 +71,8 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="kmean_quantizer_test", tp_model=tp)
 
     def get_quantization_config(self):
-        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
-                                           mct.core.QuantizationErrorMethod.MSE,
-                                           False, False, True)
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
+                                           False, False)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, self.num_conv_channels]]
@@ -144,9 +143,7 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.MSE,
                                            weights_error_method=mct.core.QuantizationErrorMethod.MSE,
-                                           relu_bound_to_power_of_2=False,
-                                           weights_bias_correction=False,
-                                           weights_per_channel_threshold=False)
+                                           relu_bound_to_power_of_2=False, weights_bias_correction=False)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # check that the two conv's weights have different values since they where quantized

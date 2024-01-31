@@ -61,7 +61,6 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
                                            mct.core.QuantizationErrorMethod.MSE,
                                            relu_bound_to_power_of_2=False,
                                            weights_bias_correction=True,
-                                           weights_per_channel_threshold=True,
                                            input_scaling=False,
                                            activation_channel_equalization=False)
 
@@ -419,13 +418,9 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
         return [[self.val_batch_size, 224, 244, 3] for _ in range(self.num_of_inputs)]
 
     def get_quantization_config(self):
-        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
-                                      mct.core.QuantizationErrorMethod.MSE,
-                                      relu_bound_to_power_of_2=False,
-                                      weights_bias_correction=True,
-                                      weights_per_channel_threshold=True,
-                                      input_scaling=False,
-                                      activation_channel_equalization=False)
+        return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
+                                           relu_bound_to_power_of_2=False, weights_bias_correction=True,
+                                           input_scaling=False, activation_channel_equalization=False)
 
     def get_mixed_precision_v2_config(self):
         return mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=self.num_of_inputs)

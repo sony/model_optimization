@@ -93,8 +93,7 @@ class TestUniformRangeSelectionWeights(unittest.TestCase):
         self.run_test_for_threshold_method(QuantizationErrorMethod.KL, per_channel=False)
 
     def run_test_for_threshold_method(self, threshold_method, per_channel=True):
-        qc = QuantizationConfig(weights_error_method=threshold_method,
-                                weights_per_channel_threshold=per_channel)
+        qc = QuantizationConfig(weights_error_method=threshold_method)
 
         in_model = create_network()
         graph = prepare_graph_with_quantization_parameters(in_model, KerasImplementation(), DEFAULT_KERAS_INFO,

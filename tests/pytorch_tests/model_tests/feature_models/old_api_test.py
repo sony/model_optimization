@@ -17,7 +17,6 @@ import numpy as np
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, WEIGHTS_N_BITS
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import generate_tp_model
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -70,7 +69,6 @@ class OldApiTest(BasePytorchTest):
         qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
                                          mct.core.QuantizationErrorMethod.MSE,
                                          weights_bias_correction=True,
-                                         weights_per_channel_threshold=True,
                                          activation_channel_equalization=False,
                                          relu_bound_to_power_of_2=False,
                                          input_scaling=False)

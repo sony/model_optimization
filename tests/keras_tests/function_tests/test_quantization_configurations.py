@@ -72,11 +72,8 @@ class TestQuantizationConfigurations(unittest.TestCase):
             tpc = generate_keras_tpc(name="quant_config_weights_test", tp_model=tp)
 
             qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                        weights_error_method=error_method,
-                                        relu_bound_to_power_of_2=False,
-                                        weights_bias_correction=bias_correction,
-                                        weights_per_channel_threshold=per_channel,
-                                        input_scaling=input_scaling)
+                                             weights_error_method=error_method, relu_bound_to_power_of_2=False,
+                                             weights_bias_correction=bias_correction, input_scaling=input_scaling)
             core_config = mct.core.CoreConfig(quantization_config=qc)
             q_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                                            representative_data_gen,
@@ -93,11 +90,10 @@ class TestQuantizationConfigurations(unittest.TestCase):
             tpc = generate_keras_tpc(name="quant_config_activation_test", tp_model=tp)
 
             qc = mct.core.QuantizationConfig(activation_error_method=error_method,
-                                        weights_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                        relu_bound_to_power_of_2=relu_bound_to_power_of_2,
-                                        weights_bias_correction=False,
-                                        weights_per_channel_threshold=False,
-                                        shift_negative_activation_correction=shift_negative_correction)
+                                             weights_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,
+                                             relu_bound_to_power_of_2=relu_bound_to_power_of_2,
+                                             weights_bias_correction=False,
+                                             shift_negative_activation_correction=shift_negative_correction)
             core_config = mct.core.CoreConfig(quantization_config=qc)
 
             q_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model,

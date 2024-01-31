@@ -68,8 +68,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      weights_per_channel_threshold=self.per_channel)
+                                           mct.core.QuantizationErrorMethod.NOCLIPPING)
 
     def create_networks(self):
         return TestModel()

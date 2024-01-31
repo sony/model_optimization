@@ -65,8 +65,7 @@ class TestGetGPTQConfig(BasePytorchTest):
         self.quantization_parameters_learning = quantization_parameters_learning
 
     def run_test(self):
-        qc = QuantizationConfig(QuantizationErrorMethod.MSE,
-                                QuantizationErrorMethod.MSE,
+        qc = QuantizationConfig(QuantizationErrorMethod.MSE, QuantizationErrorMethod.MSE,
                                 weights_bias_correction=False)  # disable bias correction when working with GPTQ
         cc = CoreConfig(quantization_config=qc)
 
