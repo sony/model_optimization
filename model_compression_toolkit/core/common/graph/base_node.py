@@ -52,6 +52,8 @@ class BaseNode:
             input_shape: Input tensor shape of the node.
             output_shape: Input tensor shape of the node.
             weights: Dictionary from a variable name to the weights with that name in the layer the node represents.
+                     Constant inputs to a node are also saved in the weights (AKA positional weights) dictionary and
+                     their key is their position (an integer) in the node's call_args.
             layer_class: Class path of the layer this node represents.
             reuse: Whether this node was duplicated and represents a reused layer.
             reuse_group: Name of group of nodes from the same reused layer.
@@ -177,7 +179,7 @@ class BaseNode:
     def get_weights_list(self):
         """
 
-        Returns: A list of all weights the node holds.
+        Returns: A list of all non-positional weights the node holds.
 
         """
         return [self.weights[k] for k in self.weights.keys()
@@ -185,15 +187,17 @@ class BaseNode:
 
     def insert_positional_weights_to_input_list(self, input_tensors: List) -> List:
         """
-        Insert node's positional weights to input tensors list.
+        Insert node's positional weights to input tensors list. The positional weights are inserted
+        in the node's list of inputs according to their keys in the weights dictionary.
 
         Args:
             input_tensors: activation input tensors to node.
         Returns:
-            input tensors list with positional weights
+            Activation input tensors list with positional weights
         """
         for pos, weight in sorted((pos, weight) for pos, weight in self.weights.items()
                                   if isinstance(pos, int)):
+            assert pos <= len(input_tensors), 'Positional weight index mismatch'
             input_tensors.insert(pos, weight)
 
         return input_tensors

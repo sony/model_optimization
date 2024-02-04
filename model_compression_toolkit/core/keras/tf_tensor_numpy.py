@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Union, List, Tuple
 import tensorflow as tf
 import numpy as np
 
@@ -37,11 +38,14 @@ def to_tf_tensor(tensor):
         raise Exception(f'Conversion of type {type(tensor)} to {type(tf.Tensor)} is not supported')
 
 
-def tf_tensor_to_numpy(tensor: tf.Tensor) -> np.ndarray:
+def tf_tensor_to_numpy(tensor: Union[List, Tuple, np.ndarray, tf.Tensor],
+                       is_single_tensor=False) -> np.ndarray:
     """
     Convert a TF tensor to a Numpy array.
     Args:
         tensor: TF tensor.
+        is_single_tensor: whether input is a value to be converted to a single tensor.
+                          if False, recurse the lists and tuples
 
     Returns:
         Numpy array converted from the input tensor.
@@ -49,9 +53,15 @@ def tf_tensor_to_numpy(tensor: tf.Tensor) -> np.ndarray:
     if isinstance(tensor, np.ndarray):
         return tensor
     elif isinstance(tensor, list):
-        return [tf_tensor_to_numpy(t) for t in tensor]
+        if is_single_tensor:
+            return np.array(tensor)
+        else:
+            return [tf_tensor_to_numpy(t) for t in tensor]
     elif isinstance(tensor, tuple):
-        return (tf_tensor_to_numpy(t) for t in tensor)
+        if is_single_tensor:
+            return np.array(tensor)
+        else:
+            return (tf_tensor_to_numpy(t) for t in tensor)
     elif isinstance(tensor, tf.Tensor):
         return tensor.numpy()
     else:

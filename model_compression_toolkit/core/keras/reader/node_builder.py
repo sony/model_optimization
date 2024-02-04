@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Any, Callable, Dict, Union, List, Tuple
+from typing import Any, Callable, Dict
+import inspect
 
 import tensorflow as tf
 import numpy as np
 from packaging import version
 
 from model_compression_toolkit.core.keras.custom_layer_validation import is_keras_custom_layer
+from model_compression_toolkit.core.keras.tf_tensor_numpy import tf_tensor_to_numpy as to_numpy
 from model_compression_toolkit.logger import Logger
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
@@ -43,45 +45,21 @@ is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray))
 is_tensor = lambda x: isinstance(x, KerasTensor)
 
 
-def to_numpy(x: Union[List, Tuple, np.ndarray, tf.Tensor]) -> np.ndarray:
-    """
-    Convert constant weights from Keras model (can be of multiple types) to a numpy array in internal graph
-    Args:
-        x: constant weight from Keras model.
-
-    Returns:
-        Constant weight conerted to a numpy array.
-    """
-    if isinstance(x, np.ndarray):
-        return x
-    elif isinstance(x, (tuple, list)):
-        return np.array(x)
-    else:
-        return x.numpy()
-
-
 def get_kwargs2index(tf_func: Callable) -> Dict[str, int]:
     """
     Positional weights are saved according to their index in the node's call arguments, so
-    need to know the function arguments name in case the weights are in the kwargs.
+    need to know the function arguments' names in case the weights are in the kwargs.
     Args:
         tf_func: functional node function.
 
     Returns:
         A dictionary with argument number and index: {arg_name: arg_index}.
     """
-    func_dict = {(tf.add, tf.subtract, tf.divide, tf.truediv, tf.multiply, tf.pow): {'x': 0, 'y': 1},
-                 (tf.matmul,): {'a': 0, 'b': 1},
-                 (tf.image.crop_and_resize,): {'image': 0, 'boxes': 1, 'box_indices': 2, 'crop_size': 3},
-                 (tf.image.combined_non_max_suppression,): {'boxes': 0, 'scores': 1}
-                 }
-
-    func_kwargs2index = [kwargs2index for func_list, kwargs2index in func_dict.items()
-                         if tf_func in func_list]
-    if len(func_kwargs2index) == 0:
-        return {}
+    if tf_func in [tf.add, tf.subtract, tf.divide, tf.truediv, tf.multiply, tf.pow,
+                   tf.matmul, tf.image.crop_and_resize, tf.image.combined_non_max_suppression]:
+        return {arg_name: i for i, arg_name in enumerate(inspect.getfullargspec(tf_func).args)}
     else:
-        return func_kwargs2index[0]
+        return {}
 
 
 def build_node(node: KerasNode,
@@ -134,6 +112,12 @@ def build_node(node: KerasNode,
 
         kwarg2index = get_kwargs2index(keras_layer.function)
 
+        # Functional nodes do not have weights, but may have constants in their call_args and\or
+        # call kwargs. Therefore, we extract these constants and save them in the node's weights as
+        # positional weights. Positional weights are weights whose keys are the index of that constant
+        # in the call_args.
+        # All KerasTensor and positional weights are removed from the call_args\kwargs. They are restored
+        # in the model builder.
         if len(weights) > 0:
             Logger.error('Functional nodes are not expected to have weights in framework')
 
@@ -141,7 +125,7 @@ def build_node(node: KerasNode,
         for i, arg in enumerate(op_call_args[0] if inputs_as_list else op_call_args):
             if is_const(arg) or (keras_layer.function is tf.matmul and
                                  isinstance(arg, (tuple, list))):
-                weights.update({i: to_numpy(arg)})
+                weights.update({i: to_numpy(arg, is_single_tensor=True)})
         # remove weights and KerasTensors and weights from op_call_args
         if inputs_as_list:
             op_call_args = tuple(op_call_args[1:])
@@ -154,7 +138,7 @@ def build_node(node: KerasNode,
         for k, v in op_call_kwargs.items():
             if is_const(v) or (keras_layer.function is tf.matmul and
                                isinstance(v, (tuple, list))):
-                weights.update({kwarg2index[k]: to_numpy(v)})
+                weights.update({kwarg2index[k]: to_numpy(v, is_single_tensor=True)})
                 weight_keys.append(k)
         # remove weights and KerasTensors and weights from op_call_kwargs
         op_call_kwargs = {k: v for k, v in op_call_kwargs.items()
@@ -177,7 +161,7 @@ def build_node(node: KerasNode,
         if len(op_call_args) > 0 and isinstance(op_call_args[0], (list, tuple)):
             for i, arg in enumerate(op_call_args[0]):
                 if is_const(arg):
-                    weights.update({i: to_numpy(arg)})
+                    weights.update({i: to_numpy(arg, is_single_tensor=True)})
 
         node = BaseNode(node_name,
                         layer_config,

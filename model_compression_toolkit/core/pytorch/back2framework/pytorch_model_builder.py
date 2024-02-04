@@ -64,8 +64,7 @@ def _build_input_tensors_list(node: BaseNode,
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
         input_tensors = node.insert_positional_weights_to_input_list(input_tensors)
         # convert inputs from positional weights (numpy arrays) to tensors
-        input_tensors = [to_torch_tensor(t) if isinstance(t, np.ndarray) else t
-                         for t in input_tensors]
+        input_tensors = to_torch_tensor(input_tensors)
     return input_tensors
 
 

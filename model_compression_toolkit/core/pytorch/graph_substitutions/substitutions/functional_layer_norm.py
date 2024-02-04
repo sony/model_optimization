@@ -46,7 +46,7 @@ class FunctionalLayerNorm(common.BaseSubstitution):
             normalized_shape: nn.LayerNorm "normalized_shape" argument
 
         Returns:
-            weights dictionary for LayerNorm.
+            Weights dictionary for LayerNorm.
         """
 
         # Define default weight and bias

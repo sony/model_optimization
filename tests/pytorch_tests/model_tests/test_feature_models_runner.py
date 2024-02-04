@@ -194,13 +194,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_bn_function(self):
         """
-        This test check the batch_norm function.
+        This test checks the batch_norm function.
         """
         BNFNetTest(self).run_test()
 
     def test_broken_net(self):
         """
-        This tests checks that the "broken" node (node without output) is being
+        This test checks that the "broken" node (node without output) is being
         removed from the graph during quantization.
         """
         BrokenNetTest(self).run_test()

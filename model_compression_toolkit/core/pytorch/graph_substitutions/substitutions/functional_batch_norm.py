@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Dict
 import numpy as np
 from torch import nn
 import torch.nn.functional as F
@@ -36,14 +37,14 @@ class FunctionalBatchNorm(common.BaseSubstitution):
         super().__init__(matcher_instance=bn_node)
 
     @staticmethod
-    def get_attributes_from_weights(node: BaseNode) -> dict:
+    def get_attributes_from_weights(node: BaseNode) -> Dict:
         """
         convert functional batch_norm positional weights to BatchNorm2d weights
         Args:
             node: functional batch_norm node.
 
         Returns:
-            weights dictionary for BatchNorm2d.
+            Weights dictionary for BatchNorm2d.
         """
         if 1 not in node.weights and 2 not in node.weights:
             Logger.error(f'Missing {MOVING_MEAN} and {MOVING_VARIANCE} in functional batch_norm inputs')
