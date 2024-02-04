@@ -17,8 +17,6 @@
 # # Layer type constants:
 PLACEHOLDER = 'placeholder'
 OUTPUT = 'output'
-CONSTANT = 'constant'
-BUFFER = 'buffer'
 
 # # Module operation type
 CALL_FUNCTION = 'call_function'

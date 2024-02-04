@@ -158,21 +158,10 @@ def op2d_add_const_collapsing_fn(op2d_node: BaseNode,
     """
     bias = op2d_node.get_weights_by_keys(bias_str)
 
-    # read constant from add node
-    if len(add_node.op_call_args) > 0:
-        const = add_node.op_call_args[0]
-    elif 'y' in add_node.op_call_kwargs:
-        const = add_node.op_call_kwargs['y']
-    else:
+    # read constant from add node (either 1st or 2nd positional weight)
+    const = add_node.weights.get(0, add_node.weights.get(1))
+    if const is None:
         Logger.error(f'Unable to read constant from add node: {add_node.name}')  # pragma: no cover
-
-    # convert constant to numpy array
-    if isinstance(const, tf.Tensor):
-        const = const.numpy()
-    elif isinstance(const, list):
-        const = np.array(const)
-    else:
-        Logger.error(f'Unable to convert constant to numpy array: {add_node.name}')  # pragma: no cover
 
     # return new bias
     if bias is None:

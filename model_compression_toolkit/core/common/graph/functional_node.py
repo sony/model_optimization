@@ -16,7 +16,7 @@ class FunctionalNode(BaseNode):
                  output_shape: Tuple[Any],
                  weights: Dict[str, np.ndarray],
                  layer_class: type,
-                 op_call_args: List[Any] = None,
+                 op_call_args: Tuple[Any] = None,
                  op_call_kwargs: Dict[str, Any] = None,
                  reuse: bool = False,
                  reuse_group: str = None,

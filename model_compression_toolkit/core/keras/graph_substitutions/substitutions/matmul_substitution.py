@@ -64,20 +64,9 @@ class MatmulToDenseSubstitution(common.BaseSubstitution):
             return graph
 
         # read const from matmul inputs
-        if len(matmul_node.op_call_args) > 0:
-            w = matmul_node.op_call_args[0]
-        elif 'b' in matmul_node.op_call_kwargs:
-            w = matmul_node.op_call_kwargs['b']
-        else:
+        w = matmul_node.weights.get(1)
+        if w is None:
             Logger.error(f"Matmul substitution: can't locate weight for node {matmul_node.name}")  # pragma: no cover
-
-        # Convert weight const to numpy array
-        if isinstance(w, tf.Tensor):
-            w = w.numpy()
-        elif isinstance(w, list):
-            w = np.array(w)
-        elif not isinstance(w, np.ndarray):
-            Logger.error(f'Unable to convert constant to numpy array: {matmul_node.name}')  # pragma: no cover
 
         if len(w.shape) != 2:
             # weight tensor should be of shape (Cin, Cout)
@@ -85,7 +74,7 @@ class MatmulToDenseSubstitution(common.BaseSubstitution):
 
         # transpose const if "transpose_b" flag is True
         if matmul_node.op_call_kwargs.get(TRANSPOSE_B, False) or (
-                len(matmul_node.op_call_args) >= 3 and matmul_node.op_call_args[2]):
+                len(matmul_node.op_call_args) >= 2 and matmul_node.op_call_args[1]):
             w = w.transpose()
 
         dense_node = BaseNode(matmul_node.name,

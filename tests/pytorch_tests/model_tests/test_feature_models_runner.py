@@ -15,6 +15,7 @@
 import unittest
 from functools import partial
 
+import numpy as np
 import torch
 from torch import nn
 import model_compression_toolkit as mct
@@ -82,6 +83,8 @@ from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccurac
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
 from tests.pytorch_tests.model_tests.feature_models.old_api_test import OldApiTest
+from tests.pytorch_tests.model_tests.feature_models.const_representation_test import ConstRepresentationTest, \
+    ConstRepresentationMultiInputTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 
 
@@ -149,7 +152,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the BatchNorm folding feature.
         """
         for functional in [True, False]:
-            BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=1), functional).run_test()
+            BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=1), functional, has_weight=False).run_test()
             BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=3, groups=3), functional).run_test()  # DW-Conv test
             BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(2, 1)), functional).run_test()
             BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=2), functional, fold_applied=False).run_test()
@@ -191,13 +194,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_bn_function(self):
         """
-        This tests check the batch_norm function and demonstrates the usage of BufferHolder node.
+        This test checks the batch_norm function.
         """
         BNFNetTest(self).run_test()
 
     def test_broken_net(self):
         """
-        This tests checks that the "broken" node (node without output) is being
+        This test checks that the "broken" node (node without output) is being
         removed from the graph during quantization.
         """
         BrokenNetTest(self).run_test()
@@ -217,6 +220,14 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         ResidualCollapsingTest1(self).run_test()
         ResidualCollapsingTest2(self).run_test()
+
+    def test_const_representation(self):
+        c = (np.ones((32,)) + np.random.random((32,))).astype(np.float32)
+        for func in [torch.add, torch.sub, torch.mul, torch.div]:
+            ConstRepresentationTest(self, func, c).run_test()
+            ConstRepresentationTest(self, func, c, input_reverse_order=True).run_test()
+
+        ConstRepresentationMultiInputTest(self).run_test()
 
     def test_permute_substitution(self):
         """

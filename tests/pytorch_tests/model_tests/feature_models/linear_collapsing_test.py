@@ -28,7 +28,7 @@ tp = mct.target_platform
 class BaseConv2DCollapsingTest(BasePytorchFeatureNetworkTest, ABC):
 
     def __init__(self, unit_test):
-        super().__init__(unit_test=unit_test, input_shape=(16,32,32))
+        super().__init__(unit_test=unit_test, input_shape=(16, 32, 32))
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 32,
@@ -52,6 +52,7 @@ class BaseConv2DCollapsingTest(BasePytorchFeatureNetworkTest, ABC):
         cs = cosine_similarity(torch_tensor_to_numpy(y), torch_tensor_to_numpy(y_hat))
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
 
+
 class TwoConv2DCollapsingTest(BaseConv2DCollapsingTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
@@ -69,6 +70,7 @@ class TwoConv2DCollapsingTest(BaseConv2DCollapsingTest):
 
     def create_networks(self):
         return self.Conv2DCollapsingNet()
+
 
 class ThreeConv2DCollapsingTest(BaseConv2DCollapsingTest):
     def __init__(self, unit_test):
@@ -91,6 +93,7 @@ class ThreeConv2DCollapsingTest(BaseConv2DCollapsingTest):
 
     def create_networks(self):
         return self.Conv2DCollapsingNet()
+
 
 class FourConv2DCollapsingTest(BaseConv2DCollapsingTest):
     def __init__(self, unit_test):
@@ -115,6 +118,7 @@ class FourConv2DCollapsingTest(BaseConv2DCollapsingTest):
 
     def create_networks(self):
         return self.Conv2DCollapsingNet()
+
 
 class SixConv2DCollapsingTest(BaseConv2DCollapsingTest):
     def __init__(self, unit_test):

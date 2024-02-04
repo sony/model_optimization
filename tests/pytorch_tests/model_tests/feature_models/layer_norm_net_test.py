@@ -16,9 +16,11 @@ import torch
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
-This tests check the addition and subtraction operations. 
+This test checks the addition and subtraction operations. 
 Both with different layers and with constants.
 """
+
+
 class LayerNormNet(torch.nn.Module):
     def __init__(self, has_weight=None, has_bias=None):
         super(LayerNormNet, self).__init__()
@@ -48,10 +50,9 @@ class LayerNormNet(torch.nn.Module):
         return x
 
 
-
 class LayerNormNetTest(BasePytorchTest):
     """
-    This tests check the addition and subtraction operations.
+    This test checks the addition and subtraction operations.
     Both with different layers and with constants.
     """
     def __init__(self, unit_test, has_weight=None, has_bias=None):

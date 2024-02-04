@@ -96,12 +96,12 @@ if FOUND_TORCH:
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
                 Logger.error("Given quantization config to mixed-precision facade is not of type "
-                                    "MixedPrecisionQuantizationConfigV2. Please use "
-                                    "pytorch_post_training_quantization API, or pass a valid mixed precision "
-                                    "configuration.")  # pragma: no cover
+                             "MixedPrecisionQuantizationConfigV2. Please use "
+                             "pytorch_post_training_quantization API, or pass a valid mixed precision "
+                             "configuration.")  # pragma: no cover
 
             Logger.info("Using experimental mixed-precision quantization. "
-                               "If you encounter an issue please file a bug.")
+                        "If you encounter an issue please file a bug.")
 
         tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
 
