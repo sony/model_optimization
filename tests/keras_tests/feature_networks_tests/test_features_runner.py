@@ -547,6 +547,8 @@ class FeatureNetworkTest(unittest.TestCase):
             ConstRepresentationTest(self, func, c, input_reverse_order=True).run_test()
             ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwrags=True).run_test()
             ConstRepresentationTest(self, func, c, as_layer=True, use_kwrags=True).run_test()
+            ConstRepresentationTest(self, func, 2.45).run_test()
+            ConstRepresentationTest(self, func, 5.1, input_reverse_order=True).run_test()
 
         c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32).reshape((1, -1))
         for func in [layers.Add(), layers.Multiply(), layers.Subtract()]:
