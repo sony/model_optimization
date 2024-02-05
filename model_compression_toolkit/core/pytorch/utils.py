@@ -55,6 +55,8 @@ def to_torch_tensor(tensor):
         return (to_torch_tensor(t) for t in tensor)
     elif isinstance(tensor, np.ndarray):
         return torch.from_numpy(tensor.astype(np.float32)).to(working_device)
+    elif isinstance(tensor, (int, float)):
+        return torch.from_numpy(np.array(tensor).astype(np.float32)).to(working_device)
     else:
         raise Exception(f'Conversion of type {type(tensor)} to {type(torch.Tensor)} is not supported')
 

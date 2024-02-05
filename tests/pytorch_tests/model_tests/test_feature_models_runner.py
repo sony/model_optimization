@@ -120,7 +120,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_add_net(self):
         """
-        This tests check the addition and subtraction operations.
+        This test checks the addition and subtraction operations.
         Both with different layers and with constants.
         """
         AddNetTest(self).run_test()
@@ -226,6 +226,8 @@ class FeatureModelsTestRunner(unittest.TestCase):
         for func in [torch.add, torch.sub, torch.mul, torch.div]:
             ConstRepresentationTest(self, func, c).run_test()
             ConstRepresentationTest(self, func, c, input_reverse_order=True).run_test()
+            ConstRepresentationTest(self, func, 2.45).run_test()
+            ConstRepresentationTest(self, func, 5, input_reverse_order=True).run_test()
 
         ConstRepresentationMultiInputTest(self).run_test()
 
