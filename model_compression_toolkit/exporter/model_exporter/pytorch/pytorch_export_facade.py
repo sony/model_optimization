@@ -21,10 +21,11 @@ from model_compression_toolkit.exporter.model_exporter.pytorch.export_serializat
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 
+
 if FOUND_TORCH:
     import torch.nn
     from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import \
-        FakelyQuantONNXPyTorchExporter
+    FakelyQuantONNXPyTorchExporter, DEFAULT_ONNX_OPSET_VERSION
     from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_torchscript_pytorch_exporter import \
         FakelyQuantTorchScriptPyTorchExporter
     from model_compression_toolkit.exporter.model_wrapper.pytorch.validate_layer import is_pytorch_layer_exportable
@@ -39,7 +40,8 @@ if FOUND_TORCH:
                              repr_dataset: Callable,
                              is_layer_exportable_fn: Callable = is_pytorch_layer_exportable,
                              serialization_format: PytorchExportSerializationFormat = PytorchExportSerializationFormat.ONNX,
-                             quantization_format : QuantizationFormat = QuantizationFormat.MCTQ) -> None:
+                             quantization_format : QuantizationFormat = QuantizationFormat.MCTQ,
+                             onnx_opset_version=DEFAULT_ONNX_OPSET_VERSION) -> None:
         """
         Export a PyTorch quantized model to a torchscript or onnx model.
         The model will be saved to the path in save_model_path.
@@ -56,6 +58,7 @@ if FOUND_TORCH:
             serialization_format: Format to export the model according to (by default
             PytorchExportSerializationFormat.ONNX).
             quantization_format: Format of how quantizers are exported (fakely-quant, int8, MCTQ quantizers).
+            onnx_opset_version: ONNX opset version to use for exported ONNX model.
 
         """
 
@@ -76,13 +79,15 @@ if FOUND_TORCH:
                 exporter = FakelyQuantONNXPyTorchExporter(model,
                                                           is_layer_exportable_fn,
                                                           save_model_path,
-                                                          repr_dataset)
+                                                          repr_dataset,
+                                                          onnx_opset_version=onnx_opset_version)
             elif quantization_format == QuantizationFormat.MCTQ:
                 exporter = FakelyQuantONNXPyTorchExporter(model,
                                                           is_layer_exportable_fn,
                                                           save_model_path,
                                                           repr_dataset,
-                                                          use_onnx_custom_quantizer_ops=True)
+                                                          use_onnx_custom_quantizer_ops=True,
+                                                          onnx_opset_version=onnx_opset_version)
             else:
                 Logger.critical(
                     f'Unsupported quantization {quantization_format} for '
