@@ -33,16 +33,26 @@ class PytorchExporterTestsRunner(unittest.TestCase):
     #########################
     def test_pot2bits_custom_quantizer_onnx(self):
         TestExportONNXWeightPOT2BitsQuantizers().run_test()
+        TestExportONNXWeightPOT2BitsQuantizers(onnx_opset_version=16).run_test()
 
     def test_sym2bits_custom_quantizer_onnx(self):
         TestExportONNXWeightSymmetric2BitsQuantizers().run_test()
+        TestExportONNXWeightSymmetric2BitsQuantizers(onnx_opset_version=16).run_test()
+
+
 
     def test_uniform2bits_custom_quantizer_onnx(self):
         TestExportONNXWeightUniform2BitsQuantizers().run_test()
+        TestExportONNXWeightUniform2BitsQuantizers(onnx_opset_version=16).run_test()
+
 
     def test_lut_pot2bits_custom_quantizer_onnx(self):
         TestExportONNXWeightLUTPOT2BitsQuantizers().run_test()
+        TestExportONNXWeightLUTPOT2BitsQuantizers(onnx_opset_version=16).run_test()
+
 
     def test_lut_sym2bits_custom_quantizer_onnx(self):
         TestExportONNXWeightLUTSymmetric2BitsQuantizers().run_test()
+        TestExportONNXWeightLUTSymmetric2BitsQuantizers(onnx_opset_version=16).run_test()
+
 

@@ -20,10 +20,14 @@ import onnxruntime
 from onnx import numpy_helper
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import \
+    DEFAULT_ONNX_OPSET_VERSION
 from tests.pytorch_tests.exporter_tests.base_pytorch_export_test import BasePytorchExportTest
 
 
 class BasePytorchONNXExportTest(BasePytorchExportTest):
+    def __init__(self, onnx_opset_version=DEFAULT_ONNX_OPSET_VERSION):
+        self.onnx_opset_version=onnx_opset_version
 
     def get_serialization_format(self):
         return mct.exporter.PytorchExportSerializationFormat.ONNX
@@ -78,5 +82,8 @@ class BasePytorchONNXExportTest(BasePytorchExportTest):
 
 class BasePytorchONNXCustomOpsExportTest(BasePytorchONNXExportTest):
 
-    def run_export(self, quantized_model):
-        super().run_export(quantized_model)
+    def __init__(self, onnx_opset_version=DEFAULT_ONNX_OPSET_VERSION):
+        super().__init__(onnx_opset_version=onnx_opset_version)
+
+    def run_export(self, quantized_model, onnx_opset_version=DEFAULT_ONNX_OPSET_VERSION):
+        super().run_export(quantized_model, self.onnx_opset_version)

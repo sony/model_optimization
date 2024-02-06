@@ -21,6 +21,8 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
+from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import \
+    DEFAULT_ONNX_OPSET_VERSION
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tpc_pytorch import \
     generate_pytorch_tpc
@@ -76,10 +78,11 @@ class BasePytorchExportTest(unittest.TestCase):
                                                                        core_config=self.get_core_config(),
                                                                        target_platform_capabilities=self.get_tpc())
 
-    def run_export(self, quantized_model):
+    def run_export(self, quantized_model, onnx_opset_version=DEFAULT_ONNX_OPSET_VERSION):
         self.filepath = self.get_tmp_filepath()
         mct.exporter.pytorch_export_model(quantized_model,
                                           self.filepath,
                                           self.get_dataset,
                                           serialization_format=self.get_serialization_format(),
-                                          quantization_format=self.get_quantization_format())
+                                          quantization_format=self.get_quantization_format(),
+                                          onnx_opset_version=onnx_opset_version)
