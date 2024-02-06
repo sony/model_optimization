@@ -62,7 +62,6 @@ class ModelLib(BaseModelLib):
         # load pre-trained weights
         initialize_weights(self.model)
         self.model.load_state_dict(model_weights)  # load weights
-        # self.ultralytics_model.model = self.model
         super().__init__(args)
 
     def get_model(self):
