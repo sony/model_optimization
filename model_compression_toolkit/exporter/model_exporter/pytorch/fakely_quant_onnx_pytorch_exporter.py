@@ -20,18 +20,9 @@ from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizat
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import BasePyTorchExporter
-from packaging import version
 from mct_quantizers import pytorch_quantizers
 
-# ONNX opset version 16 is supported from PyTorch 1.12
-if version.parse(torch.__version__) < version.parse("1.12"):
-    OPSET_VERSION = 15
-elif version.parse("1.12.0") <= version.parse(torch.__version__) < version.parse("1.13.0"):
-    OPSET_VERSION = 16
-else:
-    # ONNX opset version 17 is supported from PyTorch 1.13
-    OPSET_VERSION = 17
-
+DEFAULT_ONNX_OPSET_VERSION=15
 
 class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
     """
@@ -46,7 +37,8 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
                  is_layer_exportable_fn: Callable,
                  save_model_path: str,
                  repr_dataset: Callable,
-                 use_onnx_custom_quantizer_ops: bool = False):
+                 use_onnx_custom_quantizer_ops: bool = False,
+                 onnx_opset_version=DEFAULT_ONNX_OPSET_VERSION):
         """
 
         Args:
@@ -55,6 +47,7 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
             save_model_path: Path to save the exported model.
             repr_dataset: Representative dataset (needed for creating torch script).
             use_onnx_custom_quantizer_ops: Whether to export quantizers custom ops in ONNX or not.
+            onnx_opset_version: ONNX opset version to use for exported ONNX model.
         """
 
         super().__init__(model,
@@ -63,6 +56,7 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
                          repr_dataset)
 
         self._use_onnx_custom_quantizer_ops = use_onnx_custom_quantizer_ops
+        self._onnx_opset_version = onnx_opset_version
 
 
     def export(self) -> None:
@@ -96,7 +90,7 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
         torch.onnx.export(self.model,
                           model_input,
                           self.save_model_path,
-                          opset_version=OPSET_VERSION,
+                          opset_version=self._onnx_opset_version,
                           verbose=False,
                           input_names=['input'],
                           output_names=['output'],
