@@ -21,7 +21,6 @@
 from typing import Tuple, Any
 
 import torch
-from overrides import override
 from torch import Tensor
 from ultralytics.models.yolo.segment import SegmentationValidator
 from ultralytics.nn.modules import Segment
@@ -43,7 +42,6 @@ class SegmentReplacer(Segment):
         super().__init__(nc, nm, npr, ch)
         self.detect = DetectReplacer.forward
 
-    @override
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor, Tensor, Any]:
         p = self.proto(x[0])  # mask protos
         bs = p.shape[0]  # batch size
@@ -78,7 +76,6 @@ class SegmentationValidatorReplacer(SegmentationValidator, DetectionValidatorRep
     Replaces the SegmentationValidator to include missing functionality from the Segment module.
     Uses the post process function from the DetectionValidatorReplacer, and adds the segmentation post-processing.
     """
-    @override
     def postprocess(self, preds: Tuple[Tensor, Tensor, Tensor, Any]) -> Tuple[list[Tensor], Tensor]:
         a, s = self.create_anchors_strides()
         y_bb, y_cls, masks_coeffs, proto = preds

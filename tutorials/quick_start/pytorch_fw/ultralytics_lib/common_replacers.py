@@ -23,7 +23,6 @@ from typing import Any
 import torch
 
 from common.model_lib import ModuleReplacer
-from overrides import override
 from ultralytics import YOLO
 from ultralytics.nn.modules import C2f
 from ultralytics.cfg import get_cfg
@@ -60,7 +59,6 @@ class C2fReplacer(C2f):
     A new C2f module definition supported by torch.fx
     """
 
-    @override
     def forward(self, x):
         y1 = self.cv1(x).chunk(2, 1)
         y = [y1[0], y1[1]]
@@ -95,7 +93,6 @@ class YOLOReplacer(YOLO):
     Replaces the YOLO class to include the modified DetectionValidator
     """
 
-    @override
     def val(self, data=None, **kwargs):
         """
         Validate a model on a given dataset .

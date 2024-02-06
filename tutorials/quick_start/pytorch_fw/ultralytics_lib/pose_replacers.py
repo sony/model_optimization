@@ -21,7 +21,6 @@
 from typing import Tuple
 
 import torch
-from overrides import override
 from torch import Tensor
 from ultralytics.models.yolo.pose import PoseValidator
 from ultralytics.nn.modules import Pose
@@ -44,7 +43,6 @@ class PoseReplacer(Pose):
         super().__init__(nc, kpt_shape, ch)
         self.detect = DetectReplacer.forward
 
-    @override
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
         """Perform forward pass through YOLO model and return predictions."""
         bs = x[0].shape[0]  # batch size
@@ -76,7 +74,6 @@ class PoseValidatorReplacer(PoseValidator, DetectionValidatorReplacer):
     Replaces the PoseValidator to include missing functionality from the Pose module.
     Uses the post process function from the DetectionValidatorReplacer, and adds the keypoint post-processing.
     """
-    @override
     def postprocess(self, preds: Tuple[Tensor, Tensor, Tensor]) -> list[Tensor]:
         kpt_shape = (17, 3)
         a, s = self.create_anchors_strides()

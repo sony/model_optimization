@@ -21,7 +21,6 @@
 from typing import Tuple
 
 import torch
-from overrides import override
 from torch import Tensor
 from ultralytics.models.yolo.detect import DetectionValidator
 from ultralytics.nn import DetectionModel
@@ -42,7 +41,6 @@ class DetectReplacer(Detect):
     Specifically, we remove the concatenation of the outputs and the dynamic condition
     """
 
-    @override
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         shape = x[0].shape  # BCHW
         for i in range(self.nl):
@@ -90,13 +88,11 @@ class DetectionModelReplacer(DetectionModel):
         return self.predict(x, profile=False, visualize=False, augment=False, embed=False)
 
     # Original predict uses a dynamic condition (if augment) which is not supported by torch.fx and we remove it
-    @override
     def predict(self, x, profile=False, visualize=False, augment=False, embed=False):
         return self._predict_once(x, profile, visualize)  # single-scale inference, train
 
     # Original _predict_once uses a dynamic condition (if profile, if visualize, if embed) which are not supported by
     # torch.fx and we remove them
-    @override
     def _predict_once(self, x, profile=False, visualize=False, embed=False):
         y, dt, embeddings = [], [], []  # outputs
         for m in self.model:
@@ -148,7 +144,6 @@ class DetectionValidatorReplacer(DetectionValidator):
         s = strides.to(device)
         return a, s
 
-    @override
     def postprocess(self, preds: tuple[Tensor, Tensor]) -> list[Tensor]:
         a, s = self.create_anchors_strides()
         dbox = dist2bbox(preds[0], a.unsqueeze(0), xywh=True, dim=1) * s
