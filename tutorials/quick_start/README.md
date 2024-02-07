@@ -113,7 +113,7 @@ in the future.
     </tr> 
     <tr>
         <td rowspan="3"><a href="https://github.com/keras-team/keras-applications">keras_applications</a></td>
-        <td>mobilenet_v2.MobileNetV2</td>
+        <td>MobileNetV2</td>
         <td>ImageNet</td>
         <td>71.85%</td>
         <td>13.88</td>
@@ -121,7 +121,7 @@ in the future.
         <td>3.47</td>
     </tr>
     <tr>
-        <td>efficientnet_v2.EfficientNetV2B0</td>
+        <td>EfficientNetV2B0</td>
         <td>ImageNet</td>
         <td>78.41%</td>
         <td>28.24</td>
@@ -129,7 +129,7 @@ in the future.
         <td>7.06</td>
     </tr>
     <tr>
-        <td>resnet50.ResNet50</td>
+        <td>ResNet50</td>
         <td>ImageNet</td>
         <td>74.22%</td>
         <td>102</td>
