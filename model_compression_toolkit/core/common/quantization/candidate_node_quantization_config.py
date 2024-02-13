@@ -14,7 +14,7 @@
 # ==============================================================================
 from typing import Callable
 
-from model_compression_toolkit import QuantizationConfig
+from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig, \
     NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
