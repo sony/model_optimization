@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.constants import ACTIVATION_QUANTIZATION_CFG, WEIGHTS_QUANTIZATION_CFG, QC, \
-    OP_CFG, ACTIVATION_QUANTIZATION_FN, WEIGHTS_QUANTIZATION_FN, ACTIVATION_QUANT_PARAMS_FN, WEIGHTS_QUANT_PARAMS_FN, \
-    WEIGHTS_CHANNELS_AXIS, WEIGHTS_CFG
+from typing import Callable
+
+from model_compression_toolkit import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig, \
     NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
+from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
+    AttributeQuantizationConfig
+from model_compression_toolkit.logger import Logger
 
 
 ##########################################
@@ -31,22 +33,41 @@ class CandidateNodeQuantizationConfig(BaseNodeQuantizationConfig):
     Class for representing candidate node configuration, which includes weights and activation configuration combined.
     """
 
-    def __init__(self, **kwargs):
-        activation_quantization_cfg = kwargs.get(ACTIVATION_QUANTIZATION_CFG, None)
+    def __init__(self,
+                 qc: QuantizationConfig = None,
+                 op_cfg: OpQuantizationConfig = None,
+                 activation_quantization_cfg: NodeActivationQuantizationConfig = None,
+                 activation_quantization_fn: Callable = None,
+                 activation_quantization_params_fn: Callable = None,
+                 weights_quantization_cfg: NodeWeightsQuantizationConfig = None,
+                 weights_quantization_fn: Callable = None,
+                 weights_quantization_params_fn: Callable = None,
+                 weights_channels_axis: int = None,
+                 weights_cfg: AttributeQuantizationConfig = None):
+
         if activation_quantization_cfg is not None:
             self.activation_quantization_cfg = activation_quantization_cfg
         else:
-            self.activation_quantization_cfg = NodeActivationQuantizationConfig(kwargs.get(QC),
-                                                                                kwargs.get(OP_CFG),
-                                                                                kwargs.get(ACTIVATION_QUANTIZATION_FN),
-                                                                                kwargs.get(ACTIVATION_QUANT_PARAMS_FN))
-        weights_quantization_cfg = kwargs.get(WEIGHTS_QUANTIZATION_CFG, None)
+            if any(v is None for v in (qc, op_cfg, activation_quantization_fn, activation_quantization_params_fn)):
+                Logger.error("Missing some required arguments to initialize "
+                             "a node activation quantization configuration.")
+            self.activation_quantization_cfg = (
+                NodeActivationQuantizationConfig(qc=qc,
+                                                 op_cfg=op_cfg,
+                                                 activation_quantization_fn=activation_quantization_fn,
+                                                 activation_quantization_params_fn=activation_quantization_params_fn))
+
         if weights_quantization_cfg is not None:
             self.weights_quantization_cfg = weights_quantization_cfg
         else:
-            self.weights_quantization_cfg = NodeWeightsQuantizationConfig(kwargs.get(QC),
-                                                                          kwargs.get(OP_CFG),
-                                                                          kwargs.get(WEIGHTS_QUANTIZATION_FN),
-                                                                          kwargs.get(WEIGHTS_QUANT_PARAMS_FN),
-                                                                          kwargs.get(WEIGHTS_CHANNELS_AXIS),
-                                                                          kwargs.get(WEIGHTS_CFG))
+            if any(v is None for v in (qc, op_cfg, weights_quantization_fn, weights_quantization_params_fn,
+                                       weights_cfg)):
+                Logger.error("Missing some required arguments to initialize "
+                             "a node weights quantization configuration.")
+            self.weights_quantization_cfg = (
+                NodeWeightsQuantizationConfig(qc=qc,
+                                              op_cfg=op_cfg,
+                                              weights_quantization_fn=weights_quantization_fn,
+                                              weights_quantization_params_fn=weights_quantization_params_fn,
+                                              weights_channels_axis=weights_channels_axis,
+                                              weights_cfg=weights_cfg))
