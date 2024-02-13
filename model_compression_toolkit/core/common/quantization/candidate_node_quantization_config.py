@@ -44,6 +44,20 @@ class CandidateNodeQuantizationConfig(BaseNodeQuantizationConfig):
                  weights_quantization_params_fn: Callable = None,
                  weights_channels_axis: int = None,
                  weights_cfg: AttributeQuantizationConfig = None):
+        """
+
+        Args:
+            qc: QuantizationConfig to create the node's config from.
+            op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
+            activation_quantization_cfg: An option to pass a NodeActivationQuantizationConfig to create a new config from.
+            activation_quantization_fn: Function to use when quantizing the node's activations.
+            activation_quantization_params_fn: Function to use when computing the threshold for quantizing a node's activations.
+            weights_quantization_cfg: An option to pass a NodeWeightsQuantizationConfig to create a new config from.
+            weights_quantization_fn: Function to use when quantizing the node's weights.
+            weights_quantization_params_fn:  Function to use when computing the threshold for quantizing a node's weights.
+            weights_channels_axis: Axis to quantize a node's kernel when quantizing per-channel.
+            weights_cfg: Weights attribute quantization config.
+        """
 
         if activation_quantization_cfg is not None:
             self.activation_quantization_cfg = activation_quantization_cfg
