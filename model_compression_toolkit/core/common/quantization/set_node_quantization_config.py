@@ -169,7 +169,7 @@ def _create_node_single_candidate_qc(qc: QuantizationConfig,
                                            activation_quantization_params_fn=activation_quantization_params_fn,
                                            weights_quantization_fn=weights_quantization_fn,
                                            weights_quantization_params_fn=weights_quantization_params_fn,
-                                           weight_channel_axis=weight_channel_axis,
+                                           weights_channels_axis=weight_channel_axis,
                                            weights_cfg=weights_cfg)
 
 
