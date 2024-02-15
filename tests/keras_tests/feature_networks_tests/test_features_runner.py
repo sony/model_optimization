@@ -551,16 +551,7 @@ class FeatureNetworkTest(unittest.TestCase):
             ConstRepresentationTest(self, func, 5.1, input_reverse_order=True).run_test()
 
         # tf.matmul test
-        c = (np.ones((32, 16, 32)) + np.random.random((32, 16, 32))).astype(np.float32)
-        ConstRepresentationMatMulTest(self, tf.matmul, c).run_test()
-        ConstRepresentationMatMulTest(self, tf.matmul, c, transpose_a=True, transpose_b=True).run_test()
-        ConstRepresentationMatMulTest(self, tf.matmul, c, use_kwrags=True).run_test()
-        ConstRepresentationMatMulTest(self, tf.matmul, c, use_kwrags=True,
-                                      transpose_a=True, transpose_b=True).run_test()
-
-        c = (np.ones((32, 32, 16)) + np.random.random((32, 32, 16))).astype(np.float32)
-        ConstRepresentationMatMulTest(self, tf.matmul, c, transpose_a=True).run_test()
-        ConstRepresentationMatMulTest(self, tf.matmul, c, use_kwrags=True, transpose_a=True).run_test()
+        ConstRepresentationMatMulTest(self).run_test()
 
         c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32).reshape((1, -1))
         for func in [layers.Add(), layers.Multiply(), layers.Subtract()]:

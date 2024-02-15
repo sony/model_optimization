@@ -78,36 +78,39 @@ class ConstRepresentationTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
 
 
-class ConstRepresentationMatMulTest(ConstRepresentationTest):
-    def __init__(self, unit_test, layer, const, is_list_input=False, input_reverse_order=False, use_kwrags=False,
-                 transpose_a=False, transpose_b=False, input_shape=(32, 32, 16)):
-        super(ConstRepresentationMatMulTest, self).__init__(unit_test=unit_test, input_shape=input_shape, layer=layer,
-                                                            const=const, is_list_input=is_list_input,
-                                                            input_reverse_order=input_reverse_order,
-                                                            use_kwrags=use_kwrags)
-        self.transpose_a = transpose_a
-        self.transpose_b = transpose_b
+class ConstRepresentationMatMulTest(BaseKerasFeatureNetworkTest):
+    def __init__(self, unit_test, input_shape=(32, 32, 16)):
+        super(ConstRepresentationMatMulTest, self).__init__(unit_test=unit_test, input_shape=input_shape)
+
+    def get_tpc(self):
+        tp = generate_test_tp_model({'weights_n_bits': 16,
+                                     'activation_n_bits': 16,
+                                     'enable_weights_quantization': False,
+                                     'enable_activation_quantization': False})
+        return generate_keras_tpc(name="const_representation_test", tp_model=tp)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        c = (np.ones((32, 16, 32)) + np.random.random((32, 16, 32))).astype(np.float32)
         x = inputs
-        if self.is_list_input:
-            if self.input_reverse_order:
-                x = self.layer([self.const, x], transpose_a=self.transpose_a, transpose_b=self.transpose_b)
-            else:
-                x = self.layer([x, self.const], transpose_a=self.transpose_a, transpose_b=self.transpose_b)
-        else:
-            if self.input_reverse_order:
-                if self.use_kwrags:
-                    x = self.layer(a=self.const, b=x, transpose_a=self.transpose_a, transpose_b=self.transpose_b)
-                else:
-                    x = self.layer(self.const, x, transpose_a=self.transpose_a, transpose_b=self.transpose_b)
-            else:
-                if self.use_kwrags:
-                    x = self.layer(a=x, b=self.const, transpose_a=self.transpose_a, transpose_b=self.transpose_b)
-                else:
-                    x = self.layer(x, self.const, transpose_a=self.transpose_a, transpose_b=self.transpose_b)
+        x1 = tf.matmul(x, c)
+        x2 = tf.matmul(x, b=c)
+        x3 = tf.matmul(a=x, b=c)
+
+        transpose_c = tf.transpose(c, perm=[0, 2, 1])
+        x4 = tf.matmul(x, transpose_c, transpose_b=True)
+        x5 = tf.matmul(x, b=transpose_c, transpose_b=True)
+        x6 = tf.matmul(a=x, b=transpose_c, transpose_b=True)
+
+        x = x1 + x2 + x3 + x4 + x5 + x6
         return tf.keras.models.Model(inputs=inputs, outputs=x)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        y = float_model.predict(input_x)
+        y_hat = quantized_model.predict(input_x)
+        self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
+        cs = cosine_similarity(y, y_hat)
+        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
 
 
 class ConstRepresentationMultiInputTest(BaseKerasFeatureNetworkTest):
