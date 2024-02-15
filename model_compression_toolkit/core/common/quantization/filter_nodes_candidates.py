@@ -79,7 +79,7 @@ def filter_node_candidates(node: BaseNode) -> List[CandidateNodeQuantizationConf
 
     filtered_candidates = copy.deepcopy(node.candidates_quantization_cfg)
     final_candidates = copy.deepcopy(node.candidates_quantization_cfg)
-
+    # TODO: need to decide what do we do with the filtering, maybe pass here whether we run MP or not and decide according to this just for the kernel (ignore other attributes)
     if not node.is_weights_quantization_enabled() and not node.is_activation_quantization_enabled():
         # If both weights and activation quantization are disabled, but for some reason the node has multiple candidates
         # then replace it with a single dummy candidate with default bit-width values.

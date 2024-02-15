@@ -557,6 +557,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Returns:
             A list of nodes that their weights can be configured (namely, has one or more weight qc candidate).
         """
+        # TODO: handle is_weights_quantization_enabled call (for kernel only)
         return list(filter(lambda n: n.is_weights_quantization_enabled()
                                      and not n.is_all_weights_candidates_equal()
                                      and (not n.reuse or include_reused_nodes), list(self)))

@@ -76,6 +76,7 @@ def quantization_builder(n: common.BaseNode,
         wq_cand, aq_cand = None, None
 
     weight_quantizers = {}
+    # TODO: handle is_weights_quantization_enabled call (for kernel only)
     if n.is_weights_quantization_enabled():
         quant_method = n.final_weights_quantization_cfg.weights_quantization_method
         quantizer_class = get_trainable_quantizer_class(QuantizationTarget.Weights,

@@ -58,6 +58,7 @@ def set_bit_widths(mixed_precision_enable: bool,
                     assert len(node.candidates_quantization_cfg) > 0, \
                         "Node need to have at least one quantization configuration in order to quantize its activation"
                     node.final_activation_quantization_cfg = copy.deepcopy(node.candidates_quantization_cfg[0].activation_quantization_cfg)
+                # TODO: handle is_weights_quantization_enabled call (for kernel only)
                 if node.is_weights_quantization_enabled():
                     # If we are here, this means that we are in activation-only mixed-precision
                     # (i.e., weights are quantized with fixed bitwidth or not quantized)
@@ -93,7 +94,7 @@ def _get_node_qc_by_bit_widths(node: BaseNode,
     Returns:
         Node quantization configuration if it was found, or None otherwise.
     """
-
+    # TODO: handle is_weights_quantization_enabled call
     if node.is_weights_quantization_enabled() or node.is_activation_quantization_enabled():
         bit_index_in_cfg = bit_width_cfg[node_index_in_graph]
         qc = node.candidates_quantization_cfg[bit_index_in_cfg]

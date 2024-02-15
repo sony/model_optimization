@@ -89,7 +89,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         """
 
         weights_conf_nodes_names = [n.name for n in self.graph.get_weights_configurable_nodes()]
-
+        # TODO: handle is_weights_quantization_enabled call
         if n.is_weights_quantization_enabled():
             kernel_attributes = self.fw_info.get_kernel_op_attributes(n.type)
             if n.name in weights_conf_nodes_names:
@@ -268,6 +268,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         Returns: A list of layers that responsible for the node's quantization.
 
         """
+        # TODO: handle is_weights_quantization_enabled call
         weights_quant = n.is_weights_quantization_enabled()
         act_quant = n.is_activation_quantization_enabled()
 

@@ -495,6 +495,7 @@ def get_output_nodes_for_metric(graph: Graph) -> List[BaseNode]:
     Returns: A list of output nodes.
 
     """
+    # TODO: handle is_weights_quantization_enabled call (for kernel only)
     return [n.node for n in graph.get_outputs() if (n.node.is_weights_quantization_enabled() or
                                                     n.node.is_activation_quantization_enabled())]
 

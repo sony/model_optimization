@@ -13,22 +13,19 @@
 # limitations under the License.
 # ==============================================================================
 
-import copy
 from typing import Any
 
 import numpy as np
 
-from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode, Graph
-from model_compression_toolkit.core.common.quantization.quantize_node import get_quantized_kernel_by_weights_qc
+from model_compression_toolkit.core.common.quantization.quantize_node import get_quantized_weights_attr_by_qc
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.logger import Logger
 
 
 def compute_bias_correction_of_graph(graph: Graph,
-                                     core_config: CoreConfig,
                                      fw_info: FrameworkInfo,
                                      fw_impl: FrameworkImplementation) -> Graph:
     """
@@ -38,7 +35,6 @@ def compute_bias_correction_of_graph(graph: Graph,
     Args:
         graph: Graph with nodes to compute the bias correction for
         each node's weights quantization configuration candidates.
-        core_config: CoreConfig containing parameters of how the model should be quantized.
         fw_info: Framework info like lists of nodes their kernel should quantized.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
@@ -48,15 +44,21 @@ def compute_bias_correction_of_graph(graph: Graph,
     """
 
     for n in graph.nodes:
-        if n.is_weights_quantization_enabled() and core_config.quantization_config.weights_bias_correction:
-            _compute_bias_correction_per_candidate_qc(n,
-                                                      fw_info,
-                                                      graph.get_in_stats_collector(n),
-                                                      fw_impl=fw_impl)
+        # Bias correction is computed based on the quantized kernel, so we need to get the specific kernel attribute
+        # name out of all the weights attributes of the node.
+        if fw_info.is_kernel_op(n):
+            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
+            if n.is_weights_quantization_enabled(kernel_attr):
+                _compute_bias_correction_per_candidate_qc(n,
+                                                          kernel_attr,
+                                                          fw_info,
+                                                          graph.get_in_stats_collector(n),
+                                                          fw_impl=fw_impl)
     return graph
 
 
 def _compute_bias_correction_per_candidate_qc(node: BaseNode,
+                                              kernel_attr: str,
                                               fw_info: FrameworkInfo,
                                               node_in_stats_collector: BaseStatsCollector,
                                               fw_impl: FrameworkImplementation):
@@ -66,6 +68,7 @@ def _compute_bias_correction_per_candidate_qc(node: BaseNode,
 
     Args:
         node: Node to compute the bias correction for its different candidates.
+        kernel_attr: The name of the kernel attribute of the node.
         fw_info: Framework info like lists of nodes their kernel should quantized.
         node_in_stats_collector: Statistics collector of the node for the mean per-channel.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
@@ -73,25 +76,25 @@ def _compute_bias_correction_per_candidate_qc(node: BaseNode,
     """
 
     for candidate_qc in node.candidates_quantization_cfg:
-        if candidate_qc.weights_quantization_cfg.enable_weights_quantization and not \
+        if candidate_qc.weights_quantization_cfg.weights_bias_correction and not \
                 candidate_qc.weights_quantization_cfg.weights_second_moment_correction:
-            quantized_kernel, io_channels_axes = get_quantized_kernel_by_weights_qc(fw_info,
-                                                                                    node,
-                                                                                    candidate_qc.weights_quantization_cfg,
-                                                                                    fw_impl=fw_impl)
 
-            # If a kernel was quantized and weights bias correction is enabled in n.quantization_cfg,
-            # a bias correction term is being calculated and used in the node's bias term.
-            if candidate_qc.weights_quantization_cfg.weights_bias_correction:
-                bias_correction_term = _get_bias_correction_term_of_node(io_channels_axes[0],
-                                                                         node,
-                                                                         node_in_stats_collector,
-                                                                         io_channels_axes[1],
-                                                                         quantized_kernel,
-                                                                         fw_impl=fw_impl)
+            quantized_kernel, io_channels_axes = get_quantized_weights_attr_by_qc(kernel_attr,
+                                                                                  fw_info,
+                                                                                  node,
+                                                                                  candidate_qc.weights_quantization_cfg,
+                                                                                  fw_impl=fw_impl)
 
-                # Store the correction term to use it later,
-                candidate_qc.weights_quantization_cfg.bias_corrected = bias_correction_term
+            bias_correction_term = _get_bias_correction_term_of_node(io_channels_axes[0],
+                                                                     node,
+                                                                     node_in_stats_collector,
+                                                                     io_channels_axes[1],
+                                                                     quantized_kernel,
+                                                                     fw_impl=fw_impl)
+
+            # Store the correction term to use it later,
+            candidate_qc.weights_quantization_cfg.bias_corrected = bias_correction_term
+
 
 def is_non_positive_integer(x: float) -> bool:
     """
@@ -102,6 +105,7 @@ def is_non_positive_integer(x: float) -> bool:
         True if x is non-positive integer
     """
     return x < 1 or int(x) != x
+
 
 def _compute_bias_correction(kernel: np.ndarray,
                              quantized_kernel: np.ndarray,

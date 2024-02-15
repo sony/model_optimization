@@ -175,6 +175,7 @@ class VirtualActivationWeightsNode(BaseNode):
         v_candidates = []
         for c_a in act_node.candidates_quantization_cfg:
             for c_w in weights_node.candidates_quantization_cfg:
+                # TODO: Modify with new attributes quantization signature
                 composed_candidate = CandidateNodeQuantizationConfig(activation_quantization_cfg=c_a.activation_quantization_cfg,
                                                                      weights_quantization_cfg=c_w.weights_quantization_cfg)
                 v_candidates.append(composed_candidate)

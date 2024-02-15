@@ -191,6 +191,7 @@ def total_weights_activation_kpi(mp_cfg: List[int],
 
             # Compute node's weights memory (if no weights to quantize then set to 0)
             node_weights_memory_in_bytes = 0
+            # TODO: handle is_weights_quantization_enabled call (for kernel only)
             if n.is_weights_quantization_enabled() and not n.is_all_weights_candidates_equal():
                 node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_weights_nbits, fw_info)
 

@@ -33,10 +33,9 @@ def get_quantization_quantizers(node: BaseNode) -> Tuple[Dict, List]:
     weight_quantizers = {}
     activation_quantizers = []
 
-    if node.is_weights_quantization_enabled():
-        weight_attrs = DEFAULT_KERAS_INFO.get_kernel_op_attributes(node.type)
-        weight_quantizer = get_weights_quantizer_for_node(node)
-        for attr in weight_attrs:
+    for attr in node.get_node_weights_attributes():
+        if node.is_weights_quantization_enabled(attr):
+            weight_quantizer = get_weights_quantizer_for_node(node)
             weight_quantizers[attr] = weight_quantizer
 
     if node.is_activation_quantization_enabled():

@@ -110,20 +110,25 @@ class BaseNode:
                    qc.activation_quantization_cfg.enable_activation_quantization
         return self.candidates_quantization_cfg[0].activation_quantization_cfg.enable_activation_quantization
 
-    def is_weights_quantization_enabled(self) -> bool:
+    def is_weights_quantization_enabled(self, attr_name: str) -> bool:
         """
+        Checks whether a node's weights attribute quantization is enabled.
+
+        Args:
+            attr_name: An attribute to check if its quantization is enabled.
 
         Returns: Whether node weights quantization is enabled or not.
 
         """
         if self.final_weights_quantization_cfg:
             # if we have a final configuration, then we only care to check if it enables weights quantization
-            return self.final_weights_quantization_cfg.enable_weights_quantization
+            return self.final_weights_quantization_cfg.get_attr_config(attr_name).enable_weights_quantization
 
         for qc in self.candidates_quantization_cfg:
-            assert self.candidates_quantization_cfg[0].weights_quantization_cfg.enable_weights_quantization == \
-                   qc.weights_quantization_cfg.enable_weights_quantization
-        return self.candidates_quantization_cfg[0].weights_quantization_cfg.enable_weights_quantization
+            assert (self.candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(attr_name)
+                    .enable_weights_quantization == qc.weights_quantization_cfg.enable_weights_quantization)
+        return (self.candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(attr_name)
+                .enable_weights_quantization)
 
     def __repr__(self):
         """
@@ -184,6 +189,14 @@ class BaseNode:
         """
         return [self.weights[k] for k in self.weights.keys()
                 if self.weights[k] is not None and not isinstance(k, int)]
+
+    def get_node_weights_attributes(self) -> List[str]:
+        """
+
+        Returns: A list of all weights attributes that the node holds.
+
+        """
+        return [k for k in self.weights.keys() if self.weights[k] is not None]
 
     def insert_positional_weights_to_input_list(self, input_tensors: List) -> List:
         """
@@ -271,6 +284,7 @@ class BaseNode:
         Returns: A dictionary containing information from node's weight quantization configuration candidates.
 
         """
+        # TODO: handle is_weights_quantization_enabled call
         shared_attributes = [CORRECTED_BIAS_ATTRIBUTE, WEIGHTS_NBITS_ATTRIBUTE]
         attr = dict()
         if self.is_weights_quantization_enabled():
@@ -293,6 +307,7 @@ class BaseNode:
         Returns: A dictionary containing information from node's activation quantization configuration candidates.
 
         """
+        # TODO: handle is_weights_quantization_enabled call
         shared_attributes = [ACTIVATION_NBITS_ATTRIBUTE]
         attr = dict()
         if self.is_weights_quantization_enabled():

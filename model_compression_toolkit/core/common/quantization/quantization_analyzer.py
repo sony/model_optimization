@@ -61,6 +61,7 @@ def analyzer_graph(node_analyze_func: Callable,
         # If we use bias correction, and the node has coefficients to quantize, we need to make sure
         # its previous nodes' tensors are consistent with this node.
         # TODO: factor tensor marking in case of bias correction.
+        # TODO: handle is_weights_quantization_enabled call (for kernel only)
         if qc.weights_bias_correction and n.is_weights_quantization_enabled():
             for ie in graph.incoming_edges(n):
                 input_node = ie.source_node

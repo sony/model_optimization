@@ -19,7 +19,7 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
-from model_compression_toolkit.core.common.quantization.quantize_node import get_quantized_kernel_by_weights_qc
+from model_compression_toolkit.core.common.quantization.quantize_node import get_quantized_weights_attr_by_qc
 from model_compression_toolkit.logger import Logger
 
 
@@ -41,18 +41,20 @@ def quantize_graph_weights(graph: Graph,
     # Iterate over nodes in the graph and quantize each node's weights and activations
     # (according to operators groups in framework info).
     for n in graph.nodes():
+        for attr in n.get_node_weights_attributes():
+            if n.is_weights_quantization_enabled(attr):
+                quantized_attr, io_channels_axes = \
+                    get_quantized_weights_attr_by_qc(attr,
+                                                     fw_info,
+                                                     n,
+                                                     n.final_weights_quantization_cfg.get_attr_config(attr),
+                                                     fw_impl=fw_impl)
 
-        if n.is_weights_quantization_enabled():
-            quantized_kernel, io_channels_axes = get_quantized_kernel_by_weights_qc(fw_info,
-                                                                                    n,
-                                                                                    n.final_weights_quantization_cfg,
-                                                                                    fw_impl=fw_impl)
+                Logger.debug(
+                    f'Weights attribute: {attr} of node name: {n.name} has the following quantization params: '
+                    f'{str(n.final_weights_quantization_cfg.get_attr_config(attr).weights_quantization_params)}')
 
-            Logger.debug(
-                f'Node name: {n.name} has the following quantization params: '
-                f'{str(n.final_weights_quantization_cfg.weights_quantization_params)}')
-
-            # Set the kernel node to be the quantized kernel.
-            n.set_weights_by_keys(fw_impl.constants.KERNEL, quantized_kernel)
+                # Set the attribute to be the quantized attribute.
+                n.set_weights_by_keys(attr, quantized_attr)
 
     return graph

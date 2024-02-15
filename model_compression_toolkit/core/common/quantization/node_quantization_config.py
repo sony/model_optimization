@@ -14,10 +14,11 @@
 # ==============================================================================
 
 
-from typing import Callable, Any
+from typing import Callable, Any, List, Tuple
 
 import numpy as np
 
+from model_compression_toolkit.core.common.quantization.quantization_fn_selection import get_weights_quantization_fn
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
@@ -228,44 +229,32 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                      self.shift_negative_threshold_recalculation))
 
 
-class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
+class WeightsAttrQuantizationConfig:
     """
-    Attributes for configuring the quantization of the weights of a node.
+    Configuration for quantizing a weights attribute of a node.
     """
     def __init__(self,
                  qc: QuantizationConfig,
-                 op_cfg: OpQuantizationConfig,
-                 weights_quantization_fn: Callable,
-                 weights_quantization_params_fn: Callable,
-                 weights_channels_axis: int,
-                 weights_cfg: AttributeQuantizationConfig):
+                 weights_attr_cfg: AttributeQuantizationConfig,
+                 weights_channels_axis: Tuple[int, int] = None):
         """
 
         Args:
             qc: QuantizationConfig to create the node's config from.
-            op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
-            weights_quantization_fn: Function to use when quantizing the node's weights.
-            weights_quantization_params_fn:  Function to use when computing the threshold for quantizing a node's weights.
-            weights_channels_axis: Axis to quantize a node's kernel when quantizing per-channel.
-            weights_cfg: Weights attribute quantization config.
+            weights_attr_cfg: AttributeQuantizationConfig with parameters to use when creating the node's attribute quantization config.
+            weights_channels_axis: Axis to quantize a node's attribute when quantizing per-channel (if not quantizing per-channel than expecting None).
         """
-
-        # TODO: after refactoring to enable attributes quantization, all weights quantization arguments
-        #  should be taken per attribute, and not from the weights config
-        self.weights_quantization_fn = weights_quantization_fn
-        self.weights_quantization_params_fn = weights_quantization_params_fn
+        self.weights_quantization_fn = get_weights_quantization_fn(weights_attr_cfg.weights_quantization_method)
+        self.weights_quantization_params_fn = get_weights_quantization_params_fn(weights_attr_cfg.weights_quantization_method)
         self.weights_channels_axis = weights_channels_axis
         self.weights_quantization_params = {}
-        self.weights_quantization_method = weights_cfg.weights_quantization_method
+        self.weights_quantization_method = weights_attr_cfg.weights_quantization_method
         self.weights_error_method = qc.weights_error_method
-        self.weights_n_bits = weights_cfg.weights_n_bits
-        self.weights_bias_correction = qc.weights_bias_correction
-        self.weights_second_moment_correction = qc.weights_second_moment_correction
-        self.weights_per_channel_threshold = weights_cfg.weights_per_channel_threshold
-        self.enable_weights_quantization = weights_cfg.enable_weights_quantization
-        self.min_threshold = qc.min_threshold
+        self.weights_n_bits = weights_attr_cfg.weights_n_bits
+        self.weights_per_channel_threshold = weights_attr_cfg.weights_per_channel_threshold
+        self.enable_weights_quantization = weights_attr_cfg.enable_weights_quantization
         self.l_p_value = qc.l_p_value
-        self.simd_size = op_cfg.simd_size
+
 
 
     @property
@@ -286,7 +275,6 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         """
         self._weights_error_method = value
         self.weights_quantization_params_fn = get_weights_quantization_params_fn(weights_quantization_method=self.weights_quantization_method)
-
 
     def set_weights_quantization_fn(self, weights_quantization_fn: Callable):
         """
@@ -321,10 +309,11 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         for param_name, param_value in weights_params.items():
             self.weights_quantization_params[param_name] = param_value
 
-    def calculate_and_set_weights_params(self, tensor_data: np.ndarray) -> float:
+    def calculate_and_set_weights_params(self, tensor_data: np.ndarray, min_threshold: float):
         """
         Args:
             tensor_data: Tensor content as Numpy array.
+            min_threshold: A minimal threshold to set as quantization parameter.
 
         Returns:
             Recalculated weights quantization params from the kernel and channel axis.
@@ -337,9 +326,9 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                                                                                     n_bits=self.weights_n_bits,
                                                                                     per_channel=self.weights_per_channel_threshold and self.weights_channels_axis is not None,
                                                                                     channel_axis=self.weights_channels_axis,
-                                                                                    min_threshold=self.min_threshold))
+                                                                                    min_threshold=min_threshold))
         else:
-            return self.set_weights_quantization_param({})
+            self.set_weights_quantization_param({})
 
     def has_weights_quantization_params(self) -> bool:
         """
@@ -359,7 +348,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         Returns: Whether the objects are identical or not.
 
         """
-        if not isinstance(other, NodeWeightsQuantizationConfig):
+        if not isinstance(other, WeightsAttrQuantizationConfig):
             return False
 
         return self.weights_quantization_fn == other.weights_quantization_fn and \
@@ -368,13 +357,9 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                self.weights_error_method == other.weights_error_method and \
                self.weights_quantization_method == other.weights_quantization_method and \
                self.weights_n_bits == other.weights_n_bits and \
-               self.weights_bias_correction == other.weights_bias_correction and \
-               self.weights_second_moment_correction == other.weights_second_moment_correction and \
                self.weights_per_channel_threshold == other.weights_per_channel_threshold and \
                self.enable_weights_quantization == other.enable_weights_quantization and \
-               self.min_threshold == other.min_threshold and \
-               self.l_p_value == other.l_p_value and \
-               self.simd_size == other.simd_size
+               self.l_p_value == other.l_p_value
 
     def __hash__(self):
         return hash((self.weights_quantization_fn,
@@ -383,10 +368,72 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                      self.weights_error_method,
                      self.weights_quantization_method,
                      self.weights_n_bits,
-                     self.weights_bias_correction,
-                     self.weights_second_moment_correction,
                      self.weights_per_channel_threshold,
                      self.enable_weights_quantization,
-                     self.min_threshold,
-                     self.l_p_value,
-                     self.simd_size))
+                     self.l_p_value))
+
+
+class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
+    """
+    Holding a mapping between the node's weights attributes and their quantization configurations,
+    in addition to quantization parameters that are global for all attributes of the represented node.
+    """
+    def __init__(self, qc: QuantizationConfig,
+                 op_cfg: OpQuantizationConfig,
+                 weights_channels_axis: int,
+                 node_attrs_list: List[str]):
+        """
+
+        Args:
+            qc: QuantizationConfig to create the node's config from.
+            op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
+            weights_channels_axis: Axis to quantize a node's weights attribute when quantizing per-channel.
+            node_attrs_list: A list of the node's weights attributes names.
+
+        """
+        self.min_threshold = qc.min_threshold
+        self.simd_size = op_cfg.simd_size
+        self.weights_second_moment_correction = qc.weights_second_moment_correction
+        self.weights_bias_correction = qc.weights_bias_correction
+
+        # Initialize a quantization configuration for each of the node's attributes
+        self.attributes_config_mapping = {}
+        for attr in node_attrs_list:
+            attr_cfg = op_cfg.attr_weights_configs_mapping.get(attr, op_cfg.default_weight_attr_config)
+            self.attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
+                                                                                 weights_attr_cfg=attr_cfg,
+                                                                                 weights_channels_axis=weights_channels_axis)
+
+    def get_attr_config(self, attr_name: str) -> WeightsAttrQuantizationConfig:
+        attr_cfg = self.attributes_config_mapping.get(attr_name)
+        if attr_cfg is None:
+            Logger.error(f"Weight attribute {attr_name} config could not be found.")
+
+        return attr_cfg
+
+    def __eq__(self, other: Any) -> bool:
+        """
+        Compares the object to another object to find if they are equal.
+
+        Args:
+            other: An object to compare to.
+
+        Returns: Whether the objects are identical or not.
+
+        """
+        if not isinstance(other, NodeWeightsQuantizationConfig):
+            return False
+
+        return self.min_threshold == other.min_threshold and \
+            self.simd_size == other.simd_size and \
+            self.weights_second_moment_correction == other.weights_second_moment_correction and \
+            self.weights_bias_correction == other.weights_bias_correction and \
+            self.attributes_config_mapping.keys() == other.attributes_config_mapping.keys() and \
+            all([self.attributes_config_mapping[k] == other.attributes_config_mapping[k]
+                 for k in self.attributes_config_mapping.keys()])
+
+    def __hash__(self):
+        return hash((self.min_threshold,
+                     self.simd_size,
+                     self.weights_second_moment_correction,
+                     self.attributes_config_mapping))

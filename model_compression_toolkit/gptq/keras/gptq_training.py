@@ -129,7 +129,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         Returns:
             A boolean whether the layer is to be wrapped with a QuantizeWrapper
         """
-
+        # TODO: handle is_weights_quantization_enabled calls - need to first check if kernel_op and then get the kernel name and check if quantization enabled
         if node.is_weights_quantization_enabled() and not self.fw_info.is_kernel_op(node.type):
             Logger.error(f"GPTQ Error: Quantizing node {node.name} of type {node.type} "
                                 f"without a kernel isn't supported")

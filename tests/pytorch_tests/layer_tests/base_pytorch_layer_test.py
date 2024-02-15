@@ -207,6 +207,7 @@ class BasePytorchLayerTest(BaseLayerTest):
                     quantized_weights = get_layer_weights(getattr(quantized_model, node.target))
                     float_weights = get_layer_weights(getattr(float_model, node.target))
                     for k, v in quantized_weights.items():
+                        # TODO: remove use of kernel op dict
                         if k in fw_info.kernel_ops_attributes_mapping.get(type(op)):
                             float_weight = float_weights.get(k)
                             self.unit_test.assertFalse(float_weight is None)

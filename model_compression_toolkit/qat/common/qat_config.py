@@ -31,7 +31,7 @@ def is_qat_applicable(node: common.BaseNode,
     Returns:
         A boolean whether the layer is to be wrapped with a QuantizeWrapper
     """
-
+    # TODO: handle is_weights_quantization_enabled call (for kernel only)
     if node.is_weights_quantization_enabled() and not fw_info.is_kernel_op(node.type):
         Logger.error("QAT Error: Quantizing a node without a kernel isn't supported")
     return node.is_weights_quantization_enabled() or node.is_activation_quantization_enabled()

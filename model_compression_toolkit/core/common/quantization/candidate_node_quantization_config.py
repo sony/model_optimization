@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable
+from typing import Callable, List
 
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig, \
@@ -40,10 +40,8 @@ class CandidateNodeQuantizationConfig(BaseNodeQuantizationConfig):
                  activation_quantization_fn: Callable = None,
                  activation_quantization_params_fn: Callable = None,
                  weights_quantization_cfg: NodeWeightsQuantizationConfig = None,
-                 weights_quantization_fn: Callable = None,
-                 weights_quantization_params_fn: Callable = None,
                  weights_channels_axis: int = None,
-                 weights_cfg: AttributeQuantizationConfig = None):
+                 node_attrs_list: List[str] = None):
         """
 
         Args:
@@ -53,10 +51,8 @@ class CandidateNodeQuantizationConfig(BaseNodeQuantizationConfig):
             activation_quantization_fn: Function to use when quantizing the node's activations.
             activation_quantization_params_fn: Function to use when computing the threshold for quantizing a node's activations.
             weights_quantization_cfg: An option to pass a NodeWeightsQuantizationConfig to create a new config from.
-            weights_quantization_fn: Function to use when quantizing the node's weights.
-            weights_quantization_params_fn:  Function to use when computing the threshold for quantizing a node's weights.
-            weights_channels_axis: Axis to quantize a node's kernel when quantizing per-channel.
-            weights_cfg: Weights attribute quantization config.
+            weights_channels_axis: Axis to quantize a node's weights attribute when quantizing per-channel.
+            node_attrs_list: A list of the node's weights attributes names.
         """
 
         if activation_quantization_cfg is not None:
@@ -74,14 +70,9 @@ class CandidateNodeQuantizationConfig(BaseNodeQuantizationConfig):
         if weights_quantization_cfg is not None:
             self.weights_quantization_cfg = weights_quantization_cfg
         else:
-            if any(v is None for v in (qc, op_cfg, weights_quantization_fn, weights_quantization_params_fn,
-                                       weights_cfg)):
+            if any(v is None for v in (qc, op_cfg, node_attrs_list)):
                 Logger.error("Missing some required arguments to initialize "
                              "a node weights quantization configuration.")
-            self.weights_quantization_cfg = (
-                NodeWeightsQuantizationConfig(qc=qc,
-                                              op_cfg=op_cfg,
-                                              weights_quantization_fn=weights_quantization_fn,
-                                              weights_quantization_params_fn=weights_quantization_params_fn,
-                                              weights_channels_axis=weights_channels_axis,
-                                              weights_cfg=weights_cfg))
+            self.weights_quantization_cfg = NodeWeightsQuantizationConfig(qc=qc, op_cfg=op_cfg,
+                                                                          weights_channels_axis=weights_channels_axis,
+                                                                          node_attrs_list=node_attrs_list)
