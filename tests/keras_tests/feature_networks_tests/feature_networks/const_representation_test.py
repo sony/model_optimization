@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
 import tensorflow as tf
 import numpy as np
 
@@ -29,28 +28,26 @@ tp = mct.target_platform
 
 class ConstRepresentationTest(BaseKerasFeatureNetworkTest):
 
-    def __init__(self, unit_test, layer, const, is_list_input=False,
-                 as_layer=False, input_reverse_order=False, use_kwrags=False,
+    def __init__(self, unit_test, layer, const, is_list_input=False, input_reverse_order=False, use_kwrags=False,
                  input_shape=(32, 32, 16)):
         super(ConstRepresentationTest, self).__init__(unit_test=unit_test, input_shape=input_shape,
                                                       experimental_exporter=True)
         self.layer = layer
         self.const = const
         self.is_list_input = is_list_input
-        self.as_layer = as_layer
         self.input_reverse_order = input_reverse_order
         self.use_kwrags = use_kwrags
 
     def generate_inputs(self):
         # need positive inputs so won't divide with zero or take root of negative number
-        return [1+np.random.random((in_shape)) for in_shape in self.get_input_shapes()]
+        return [1 + np.random.random(in_shape) for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 16,
                                      'activation_n_bits': 16,
                                      'enable_weights_quantization': False,
                                      'enable_activation_quantization': False})
-        return generate_keras_tpc(name="bn_folding_test", tp_model=tp)
+        return generate_keras_tpc(name="const_representation_test", tp_model=tp)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -81,6 +78,38 @@ class ConstRepresentationTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
 
 
+class ConstRepresentationMatMulTest(ConstRepresentationTest):
+    def __init__(self, unit_test, layer, const, is_list_input=False, input_reverse_order=False, use_kwrags=False,
+                 transpose_a=False, transpose_b=False, input_shape=(32, 32, 16)):
+        super(ConstRepresentationMatMulTest, self).__init__(unit_test=unit_test, input_shape=input_shape, layer=layer,
+                                                            const=const, is_list_input=is_list_input,
+                                                            input_reverse_order=input_reverse_order,
+                                                            use_kwrags=use_kwrags)
+        self.transpose_a = transpose_a
+        self.transpose_b = transpose_b
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = inputs
+        if self.is_list_input:
+            if self.input_reverse_order:
+                x = self.layer([self.const, x], transpose_a=self.transpose_a, transpose_b=self.transpose_b)
+            else:
+                x = self.layer([x, self.const], transpose_a=self.transpose_a, transpose_b=self.transpose_b)
+        else:
+            if self.input_reverse_order:
+                if self.use_kwrags:
+                    x = self.layer(a=self.const, b=x, transpose_a=self.transpose_a, transpose_b=self.transpose_b)
+                else:
+                    x = self.layer(self.const, x, transpose_a=self.transpose_a, transpose_b=self.transpose_b)
+            else:
+                if self.use_kwrags:
+                    x = self.layer(a=x, b=self.const, transpose_a=self.transpose_a, transpose_b=self.transpose_b)
+                else:
+                    x = self.layer(x, self.const, transpose_a=self.transpose_a, transpose_b=self.transpose_b)
+        return tf.keras.models.Model(inputs=inputs, outputs=x)
+
+
 class ConstRepresentationMultiInputTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test, input_shape=(32, 32, 16)):
@@ -92,7 +121,7 @@ class ConstRepresentationMultiInputTest(BaseKerasFeatureNetworkTest):
                                      'activation_n_bits': 16,
                                      'enable_weights_quantization': False,
                                      'enable_activation_quantization': False})
-        return generate_keras_tpc(name="bn_folding_test", tp_model=tp)
+        return generate_keras_tpc(name="const_representation_test", tp_model=tp)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

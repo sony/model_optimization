@@ -40,7 +40,6 @@ layers = keras.layers
 
 REUSED_IDENTIFIER = '_reused_'
 
-
 is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray))
 is_tensor = lambda x: isinstance(x, KerasTensor)
 
@@ -123,26 +122,29 @@ def build_node(node: KerasNode,
 
         # read weights from call args
         for i, arg in enumerate(op_call_args[0] if inputs_as_list else op_call_args):
-            if is_const(arg) or (keras_layer.function is tf.matmul and
-                                 isinstance(arg, (tuple, list))):
+            if is_const(arg) or (
+                    keras_layer.function in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv, tf.pow,
+                                             tf.matmul] and
+                    isinstance(arg, (tuple, list))):
                 weights.update({i: to_numpy(arg, is_single_tensor=True)})
         # remove weights and KerasTensors and weights from op_call_args
         if inputs_as_list:
             op_call_args = tuple(op_call_args[1:])
         else:
             op_call_args = tuple([a for i, a in enumerate(op_call_args)
-                                  if not(i in weights or is_tensor(a))])
+                                  if not (i in weights or is_tensor(a))])
 
         # read weights from call kwargs
         weight_keys = []
         for k, v in op_call_kwargs.items():
-            if is_const(v) or (keras_layer.function is tf.matmul and
+            if is_const(v) or (keras_layer.function in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv, tf.pow,
+                                                        tf.matmul] and
                                isinstance(v, (tuple, list))):
                 weights.update({kwarg2index[k]: to_numpy(v, is_single_tensor=True)})
                 weight_keys.append(k)
         # remove weights and KerasTensors and weights from op_call_kwargs
         op_call_kwargs = {k: v for k, v in op_call_kwargs.items()
-                          if not(kwarg2index.get(k) in weights or is_tensor(v))}
+                          if not (kwarg2index.get(k) in weights or is_tensor(v))}
 
         node = FunctionalNode(node_name,
                               layer_config,
