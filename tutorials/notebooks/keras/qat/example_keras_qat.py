@@ -42,8 +42,8 @@ tp = mct.target_platform
 def get_tpc():
     """
     Assuming a target hardware that uses a power-of-2 threshold for activations and
-    a symmetric threshold for the weights. The activations are quantized to 3 bits, and the weights
-    are quantized to 3 bits. Our assumed hardware does not require quantization of some layers
+    a symmetric threshold for the weights. The activations are quantized to 3 bits, and the kernel weights
+    are quantized to 2 bits. Our assumed hardware does not require quantization of some layers
     (e.g. Flatten & Droupout).
     This function generates a TargetPlatformCapabilities with the above specification.
 
