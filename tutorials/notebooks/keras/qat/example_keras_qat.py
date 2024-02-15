@@ -27,51 +27,92 @@ import argparse
 import numpy as np
 import tensorflow as tf
 from keras import Model, layers, datasets
-from keras.datasets import mnist
+
+from model_compression_toolkit import DefaultDict
+from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import AttributeQuantizationConfig
+from model_compression_toolkit.constants import FLOAT_BITWIDTH
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS
 
 import model_compression_toolkit as mct
 import tempfile
 
+tp = mct.target_platform
+
 
 def get_tpc():
     """
-    Assuming a target hardware that uses power-of-2 thresholds and quantizes weights and activations
-    to 2 and 3 bits, accordingly. Our assumed hardware does not require quantization of some layers
+    Assuming a target hardware that uses a power-of-2 threshold for activations and
+    a symmetric threshold for the weights. The activations are quantized to 3 bits, and the kernel weights
+    are quantized to 2 bits. Our assumed hardware does not require quantization of some layers
     (e.g. Flatten & Droupout).
     This function generates a TargetPlatformCapabilities with the above specification.
 
     Returns:
          TargetPlatformCapabilities object
     """
-    tp = mct.target_platform
-    default_config = tp.OpQuantizationConfig(
-        activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+
+    # define a default quantization config for all non-specified weights attributes.
+    default_weight_attr_config = AttributeQuantizationConfig(
         weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-        activation_n_bits=3,
+        weights_n_bits=8,
+        weights_per_channel_threshold=False,
+        enable_weights_quantization=False,
+        lut_values_bitwidth=None)
+
+    # define a quantization config to quantize the kernel (for layers where there is a kernel attribute).
+    kernel_base_config = AttributeQuantizationConfig(
+        weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
         weights_n_bits=2,
         weights_per_channel_threshold=True,
         enable_weights_quantization=True,
+        lut_values_bitwidth=None)
+
+    # define a quantization config to quantize the bias (for layers where there is a bias attribute).
+    bias_config = AttributeQuantizationConfig(
+        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        weights_n_bits=FLOAT_BITWIDTH,
+        weights_per_channel_threshold=False,
+        enable_weights_quantization=False,
+        lut_values_bitwidth=None)
+
+    # Create a default OpQuantizationConfig where we use default_weight_attr_config as the default
+    # AttributeQuantizationConfig for weights with no specific AttributeQuantizationConfig.
+    # MCT will compress a layer's kernel and bias according to the configurations that are
+    # set in KERNEL_ATTR and BIAS_ATTR that are passed in attr_weights_configs_mapping.
+    default_config = tp.OpQuantizationConfig(
+        default_weight_attr_config=default_weight_attr_config,
+        attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config,
+                                      BIAS_ATTR: bias_config},
+        activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=3,
         enable_activation_quantization=True,
         quantization_preserving=False,
-        fixed_scale=1.0,
-        fixed_zero_point=0,
-        weights_multiplier_nbits=0,
+        fixed_scale=None,
+        fixed_zero_point=None,
         simd_size=None)
 
+    # Set default QuantizationConfigOptions in new TargetPlatformModel to be used when no other
+    # QuantizationConfigOptions is set for an OperatorsSet.
     default_configuration_options = tp.QuantizationConfigOptions([default_config])
     tp_model = tp.TargetPlatformModel(default_configuration_options)
     with tp_model:
+        default_qco = tp.get_default_quantization_config_options()
+        # Group of OperatorsSets that should not be quantized.
         tp.OperatorsSet("NoQuantization",
-                        tp.get_default_quantization_config_options().clone_and_edit(
-                            enable_weights_quantization=False,
-                            enable_activation_quantization=False))
+                        default_qco.clone_and_edit(enable_activation_quantization=False)
+                        .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+        # Group of linear OperatorsSets such as convolution and matmul.
+        tp.OperatorsSet("LinearOp")
 
     tpc = tp.TargetPlatformCapabilities(tp_model)
     with tpc:
         # No need to quantize Flatten and Dropout layers
-        tp.OperationsSetToLayers("NoQuantization", [layers.Flatten,
-                                                    layers.Dropout])
-
+        tp.OperationsSetToLayers("NoQuantization", [layers.Flatten, layers.Dropout])
+        # Assign the framework layers' attributes to KERNEL_ATTR and BIAS_ATTR that were used during creation
+        # of the default OpQuantizationConfig.
+        tp.OperationsSetToLayers("LinearOp", [layers.Dense, layers.Conv2D],
+                                 attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                                               BIAS_ATTR: DefaultDict(default_value=BIAS)})
     return tpc
 
 
@@ -215,10 +256,8 @@ if __name__ == "__main__":
     score = quantized_model.evaluate(x_test, y_test, verbose=0)
     print(f"Quantized model test accuracy: {score[1]:02.4f}")
 
-
     # Export quantized model to Keras.
     # For more details please see: https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/exporter/README.md
-    _, keras_file_path = tempfile.mkstemp('.h5') # Path of exported model
+    _, keras_file_path = tempfile.mkstemp('.keras')  # Path of exported model
     mct.exporter.keras_export_model(model=quantized_model,
                                     save_model_path=keras_file_path)
-    print(f"Quantized model was exporting to Keras here: {keras_file_path}")

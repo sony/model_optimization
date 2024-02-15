@@ -50,9 +50,9 @@ engaging and hands-on experience.
 <details id="keras-qat">
   <summary>Quantization-Aware Training (QAT)</summary>
   
-  | Tutorial                                                                          | Included Features      |
-  |-----------------------------------------------------------------------------------|--------------|
-  | [QAT on MNIST](keras/gptq/example_keras_mobilenet_gptq.ipynb) | &#x2705; QAT |
+  | Tutorial                                          | Included Features      |
+  |---------------------------------------------------|--------------|
+  | [QAT on MNIST](keras/qat/example_keras_qat.ipynb) | &#x2705; QAT |
 
 </details>
 
