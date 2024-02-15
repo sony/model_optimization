@@ -75,6 +75,7 @@ def _merge_inputs(_node, input_tensors: List, op_call_args: List) -> List:
     Merge input tensors list with op_call_args, according to correct order
 
     Args:
+        _node: The node the inputs are for
         input_tensors: activation input tensors to node.
         op_call_args: framework node call args
     Returns:
