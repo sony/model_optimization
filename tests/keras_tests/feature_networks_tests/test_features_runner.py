@@ -127,7 +127,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_pre
 from tests.keras_tests.feature_networks_tests.feature_networks.old_api_test import OldApiTest
 from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substitution_test import MatmulToDenseSubstitutionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.const_representation_test import ConstRepresentationTest, \
-    ConstRepresentationMultiInputTest
+    ConstRepresentationMultiInputTest, ConstRepresentationMatMulTest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
 
 layers = tf.keras.layers
@@ -543,22 +543,24 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_const_representation(self):
         c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32)
         for func in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv, tf.pow]:
-            ConstRepresentationTest(self, func, c, as_layer=True).run_test()
+            ConstRepresentationTest(self, func, c).run_test()
             ConstRepresentationTest(self, func, c, input_reverse_order=True).run_test()
             ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwrags=True).run_test()
-            ConstRepresentationTest(self, func, c, as_layer=True, use_kwrags=True).run_test()
+            ConstRepresentationTest(self, func, c, use_kwrags=True).run_test()
             ConstRepresentationTest(self, func, 2.45).run_test()
             ConstRepresentationTest(self, func, 5.1, input_reverse_order=True).run_test()
 
+        # tf.matmul test
+        ConstRepresentationMatMulTest(self).run_test()
+
         c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32).reshape((1, -1))
         for func in [layers.Add(), layers.Multiply(), layers.Subtract()]:
-            ConstRepresentationTest(self, func, c, as_layer=True, is_list_input=True).run_test()
+            ConstRepresentationTest(self, func, c, is_list_input=True).run_test()
             ConstRepresentationTest(self, func, c, input_reverse_order=True, is_list_input=True).run_test()
             ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwrags=True, is_list_input=True).run_test()
-            ConstRepresentationTest(self, func, c, as_layer=True, use_kwrags=True, is_list_input=True).run_test()
+            ConstRepresentationTest(self, func, c, use_kwrags=True, is_list_input=True).run_test()
 
         ConstRepresentationMultiInputTest(self).run_test()
-
     def test_second_moment(self):
         DepthwiseConv2DSecondMomentTest(self).run_test()
         # DepthwiseConv2DWithMultiplierSecondMomentTest(self).run_test()
