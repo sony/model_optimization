@@ -12,6 +12,7 @@
 - [Pytorch Tutorials](#pytorch-tutorials)
   - [Quick-Start with Torchvision](#pytorch-quickstart-torchvision)
   - [Post-Training Quantization](#pytorch-ptq)
+  - [Gradient-Based Post-Training Quantization](#pytorch-gptq)
   - [Quantization-Aware Training](#pytorch-qat)
   - [Data Generation](#pytorch-data-generation)
   - [Export Quantized Models](#pytorch-export)
@@ -108,7 +109,14 @@ engaging and hands-on experience.
 
 </details>
 
+<details id="pytorch-gptq">
+  <summary>Gradient-Based Post-Training Quantization (GPTQ)</summary>
+  
+  | Tutorial                                                                                     | Included Features        |
+  |----------------------------------------------------------------------------------------------|--------------------------|
+  | [GPTQ MobileNetV2 on Cifar100](pytorch/gptq/example_pytorch_mobilenetv2_cifar100_gptq.ipynb) | &#x2705; Mixed-Precision |
 
+</details>
 
 <details id="pytorch-qat">
   <summary>Quantization-Aware Training (QAT)</summary>
