@@ -15,7 +15,7 @@
 import inspect
 from typing import Dict, List, Tuple, Callable
 import torch
-from torch.fx import GraphModule
+from torch.fx import GraphModule, Node
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.constants import OUTPUT, PLACEHOLDER, TENSOR_META, CALL_FUNCTION, TYPE, \
-    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, GET_ATTR
+    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, TENSOR_INPUT_INDICES, GET_ATTR
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.logger import Logger
 
@@ -176,28 +176,26 @@ def nodes_builder(model: GraphModule,
             graph_node_type = FunctionalNode
             inputs_as_list1 = len(node.args) > 0 and isinstance(node.args[0], (list, tuple)) and all(
                 [isinstance(n, torch.fx.node.Node) for n in node.args[0]])
-            inputs_as_list = inputs_as_list1 or \
-                             (len(node.args) > 0 and node.args[0].op == PLACEHOLDER and node.args[0].meta[TYPE] in (list, tuple))
+            inputs_as_list = inputs_as_list1 or (len(node.args) > 0 and isinstance(node.args[0], Node) and
+                                                 node.args[0].op == PLACEHOLDER and node.args[0].meta[TYPE] in (list, tuple))
+            tensor_input_index = []
+            op_call_args = list(node.args)
             if inputs_as_list:
-                num_inputs = 1
+                op_call_args.pop(0)
             else:
-                input_counter = 0
                 for in_node in node.all_input_nodes:
-                    for arg in node.args:
+                    for i, arg in enumerate(node.args):
                         if arg == in_node:
-                            input_counter += 1
-                num_inputs = max(len(node.all_input_nodes), input_counter)
-            op_call_args = list(node.args[num_inputs:])
+                            tensor_input_index.append(i)
 
             # remove torch.fx.node.Node from inputs to graph_node_type
-            for arg in op_call_args:
-                if isinstance(arg, torch.fx.node.Node):
-                    op_call_args.remove(arg)
+            op_call_args = [arg for arg in op_call_args if not isinstance(arg, Node)]
 
             kwargs = {FUNCTIONAL_OP: node_type,
                       OP_CALL_ARGS: op_call_args,
                       OP_CALL_KWARGS: node_kwargs,
-                      INPUTS_AS_LIST: inputs_as_list}
+                      INPUTS_AS_LIST: inputs_as_list,
+                      TENSOR_INPUT_INDICES: tensor_input_index}
         else:
             graph_node_type = BaseNode
             kwargs = {}

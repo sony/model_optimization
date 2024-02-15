@@ -70,6 +70,27 @@ def _build_input_tensors_list(node: BaseNode,
     return input_tensors
 
 
+def _merge_inputs(_node, input_tensors: List, op_call_args: List) -> List:
+    """
+    Merge input tensors list with op_call_args, according to correct order
+
+    Args:
+        input_tensors: activation input tensors to node.
+        op_call_args: framework node call args
+    Returns:
+        Combined list of input_tensors and op_call_args
+    """
+    if isinstance(_node, FunctionalNode) and _node.tensor_input_indices:
+        assert len(_node.tensor_input_indices) == len(input_tensors), 'Mismatch between input tensors and indices'
+        _input_list = op_call_args.copy()
+        for i, t in zip(_node.tensor_input_indices, input_tensors):
+            _input_list.insert(i, t)
+    else:
+        _input_list = input_tensors + op_call_args
+
+    return _input_list
+
+
 def _run_operation(n: BaseNode,
                    input_tensors: List,
                    op_func: Any,
@@ -96,7 +117,7 @@ def _run_operation(n: BaseNode,
     if isinstance(n, FunctionalNode) and n.inputs_as_list:
         out_tensors_of_n_float = op_func(input_tensors, *op_call_args, **functional_kwargs)
     else:
-        out_tensors_of_n_float = op_func(*input_tensors + op_call_args, **functional_kwargs)
+        out_tensors_of_n_float = op_func(*_merge_inputs(n, input_tensors, op_call_args), **functional_kwargs)
 
     # Add a fake quant node if the node has an activation threshold.
     out_tensors_of_n = out_tensors_of_n_float

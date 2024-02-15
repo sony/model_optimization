@@ -29,7 +29,7 @@ class ConstRepresentationNet(nn.Module):
     def __init__(self, layer, const):
         super().__init__()
         self.layer = layer
-        self.const = to_torch_tensor(const)
+        self.const = to_torch_tensor(const) if isinstance(const, np.ndarray) else const
 
     def forward(self, x):
         return self.layer(x, self.const)
@@ -39,7 +39,7 @@ class ConstRepresentationReverseOrderNet(nn.Module):
     def __init__(self, layer, const):
         super().__init__()
         self.layer = layer
-        self.const = to_torch_tensor(const)
+        self.const = to_torch_tensor(const) if isinstance(const, np.ndarray) else const
 
     def forward(self, x):
         return self.layer(self.const, x)

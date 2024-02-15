@@ -39,7 +39,7 @@ class ReshapeWithStaticShapes(common.BaseSubstitution):
                    graph: Graph,
                    node: BaseNode) -> Graph:
         """
-        Replaces the 'size' attribute to 'reshape' or 'view' operators to be a list of integers,
+        Replaces the 'size' attribute for 'reshape' or 'view' operators to be a list of integers,
         determined by their intended output shape. This replaces 'size' attributes that come from
         nodes in the graph. We delete nodes for which that was their sole purpose.
 
@@ -62,6 +62,9 @@ class ReshapeWithStaticShapes(common.BaseSubstitution):
 
         # configure the new static output shape attribute
         node.op_call_args = node.output_shape
+
+        # remove tensor indices that were converted to static op_calls
+        node.tensor_input_indices = node.tensor_input_indices[:sum([i != [1] for i in node.input_shape])]
 
         # modify the node input info
         node.input_shape = [node.input_shape[0]]
