@@ -21,6 +21,7 @@ from model_compression_toolkit.core.common.user_info import UserInformation
 from common.constants import MODEL_NAME, MODEL_LIBRARY, VALIDATION_DATASET_FOLDER
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from tutorials.quick_start.common.tpc_info import TPCInfo
 
 
 class DatasetInfo:
@@ -44,7 +45,7 @@ class QuantInfo:
     Holds information about the quantization process.
     """
     def __init__(self, user_info: UserInformation,
-                 tpc_info: dict,
+                 tpc_info: TPCInfo,
                  quantization_workflow: str,
                  mp_weights_compression: float = None
                  ):
@@ -53,7 +54,7 @@ class QuantInfo:
 
         Args:
             user_info (UserInformation): Quantization information returned from MCT
-            tpc_info (dict): The target platform capabilities information which is provided to the MCT.
+            tpc_info (TPCInfo): The target platform capabilities information which is provided to the MCT.
             quantization_workflow (str): String to describe the quantization workflow (PTQ, GPTQ etc.).
             mp_weights_compression (float): Weights compression factor for mixed precision KPI
         """
@@ -110,8 +111,8 @@ def parse_results(params: dict, float_acc: float, quant_acc: float, quant_info: 
         A dictionary containing the parsed results.
 
     """
-    a_bits = quant_info.tpc_info['Target Platform Model']['Default quantization config']['activation_n_bits']
-    w_bits = quant_info.tpc_info['Target Platform Model']['Default quantization config']['weights_n_bits']
+    a_bits = quant_info.tpc_info.activation_nbits
+    w_bits = quant_info.tpc_info.weights_nbits
     bit_config = f'W{w_bits}A{a_bits}'
     if quant_info.mp_weights_compression:
         bit_config = f'{bit_config},MP-x{quant_info.mp_weights_compression}'
@@ -126,7 +127,7 @@ def parse_results(params: dict, float_acc: float, quant_acc: float, quant_info: 
     res['Size[MB]'] = round(quant_info.user_info.final_kpi.weights_memory / 1e6, 2)
     res['BitsConfig'] = bit_config
     res['QuantWorkflow'] = quant_info.quantization_workflow
-    res['TPC'] = quant_info.tpc_info['Target Platform Capabilities'] + '-' + quant_info.tpc_info['Version']
+    res['TPC'] = quant_info.tpc_info.tp_model_name + '-' + quant_info.tpc_info.version
 
     return res
 
