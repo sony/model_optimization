@@ -91,14 +91,14 @@ class ConstRepresentationMatMulTest(BaseKerasFeatureNetworkTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        c = (np.ones((32, 16, 32)) + np.random.random((32, 16, 32))).astype(np.float32)
+        c = (np.ones((16, 8)) + np.random.random((16, 8))).astype(np.float32)
         x = inputs
         x1 = tf.matmul(x, c)
         x2 = tf.matmul(x, b=c)
         x3 = tf.matmul(a=x, b=c)
 
-        transpose_c = tf.transpose(c, perm=[0, 2, 1])
-        x4 = tf.matmul(x, transpose_c, transpose_b=True)
+        transpose_c = tf.transpose(c, perm=[1, 0])
+        x4 = tf.matmul(x, transpose_c, False, True)
         x5 = tf.matmul(x, b=transpose_c, transpose_b=True)
         x6 = tf.matmul(a=x, b=transpose_c, transpose_b=True)
 
