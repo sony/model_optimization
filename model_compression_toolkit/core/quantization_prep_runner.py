@@ -79,7 +79,7 @@ def quantization_preparation_runner(graph: Graph,
                         fw_impl,
                         fw_info)
 
-    for _data in tqdm(representative_data_gen()):
+    for _data in tqdm(representative_data_gen(), "Statistics Collection:"):
         mi.infer(_data)
 
     ######################################
