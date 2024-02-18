@@ -214,7 +214,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             n: Node to get its output statistics collector.
 
         Returns:
-            Tensor containing output statistics of the node.
+            BaseStatsCollector object of the node.
         """
         return self.node_to_out_stats_collector.get(n)
 

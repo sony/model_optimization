@@ -24,7 +24,6 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
 from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
@@ -62,25 +61,18 @@ def quantization_preparation_runner(graph: Graph,
     """
 
     ######################################
-    # Graph analyzing (attaching statistics collectors)
-    ######################################
-    analyzer_graph(fw_impl.attach_sc_to_node,
-                   graph,
-                   fw_info,
-                   core_config.quantization_config)  # Mark points for statistics collection
-
-    if tb_w is not None:
-        tb_w.add_graph(graph, 'after_analyzer_graph')
-
-    ######################################
     # Statistic collection
     ######################################
     mi = ModelCollector(graph,
                         fw_impl,
-                        fw_info)
+                        fw_info,
+                        core_config.quantization_config)  # Mark points for statistics collection
 
     for _data in tqdm(representative_data_gen(), "Statistics Collection:"):
         mi.infer(_data)
+
+    if tb_w is not None:
+        tb_w.add_graph(graph, 'after_statistic_collection')
 
     ######################################
     # Edit network according to user

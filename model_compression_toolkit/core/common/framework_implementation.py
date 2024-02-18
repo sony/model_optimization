@@ -171,22 +171,6 @@ class FrameworkImplementation(ABC):
                              f'framework\'s apply_shift_negative_correction method.')  # pragma: no cover
 
     @abstractmethod
-    def attach_sc_to_node(self, node: BaseNode, fw_info: FrameworkInfo) -> BaseStatsCollector:
-        """
-        Return a statistics collector that should be attached to a node's output
-        during statistics collection.
-
-        Args:
-            node: Node to return its collector.
-            fw_info: Information relevant to a specific framework about what is out channel axis (for statistics per-channel).
-
-        Returns:
-            Statistics collector for the node.
-        """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s attach_sc_to_node method.')  # pragma: no cover
-
-    @abstractmethod
     def get_substitutions_channel_equalization(self,
                                                quant_config: QuantizationConfig,
                                                fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
