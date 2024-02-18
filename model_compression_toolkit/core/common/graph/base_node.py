@@ -290,7 +290,7 @@ class BaseNode:
         parameters_dict = dict()
         # We assume that only the kernel attribute have more than one candidate, since we only allow to
         # quantize the kernel using mixed precision
-        multiple_candidates_attr = [attr for attr in self.weights.keys() if self.is_all_weights_candidates_equal(attr)]
+        multiple_candidates_attr = [attr for attr in self.get_node_weights_attributes() if self.is_all_weights_candidates_equal(attr)]
         if len(multiple_candidates_attr) > 1:
             Logger.error(f"Expecting only the kernel attribute to have multiple quantization configuration candidates, "
                          f"but node {self.name} have multiple attributes with several candidates: "

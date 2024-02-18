@@ -24,6 +24,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
@@ -158,10 +159,10 @@ class TestCfgCandidatesFilter(unittest.TestCase):
 
         # checking that layers with weights (conv2d) have filtered weights configurations list
         # when activation quantization is disabled
-        conv2d_candidates = filtered_configurable_nodes[0].candidates_quantization_cfg
-        self.assertTrue(len(conv2d_candidates) == 3,
-                        f"Expects 3 Conv layer candidates, number of candidates is {len(conv2d_candidates)}")
-        self.assertTrue([c.weights_quantization_cfg.weights_n_bits for c in conv2d_candidates] == [8, 4, 2])
+        conv2d_kernel_candidates = filtered_configurable_nodes[0].get_all_weights_attr_candidates(KERNEL)
+        self.assertTrue(len(conv2d_kernel_candidates) == 3,
+                        f"Expects 3 Conv layer kernel candidates, number of candidates is {len(conv2d_kernel_candidates)}")
+        self.assertTrue([c.weights_n_bits for c in conv2d_kernel_candidates] == [8, 4, 2])
 
     def test_cfg_filter_multiple_candidates_weights_disabled(self):
         input_shape = (8, 8, 3)

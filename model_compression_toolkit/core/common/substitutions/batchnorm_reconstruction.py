@@ -119,8 +119,9 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
         bn_node.candidates_quantization_cfg = copy.deepcopy(source_node.candidates_quantization_cfg)
 
         for qc in bn_node.candidates_quantization_cfg:
-            qc.weights_quantization_cfg.enable_weights_quantization = False
             qc.activation_quantization_cfg.enable_activation_quantization = False
+            for attr in bn_node.get_node_weights_attributes():
+                qc.weights_quantization_cfg.get_attr_config(attr).enable_weights_quantization = False
 
         graph.reconnect_out_edges(current_node=source_node, new_node=bn_node)
         graph.replace_output_node(current_node=source_node, new_node=bn_node)
