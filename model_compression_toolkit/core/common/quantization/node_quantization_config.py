@@ -380,7 +380,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
     """
     def __init__(self, qc: QuantizationConfig,
                  op_cfg: OpQuantizationConfig,
-                 weights_channels_axis: int,
+                 weights_channels_axis: Tuple[int, int],
                  node_attrs_list: List[str]):
         """
 

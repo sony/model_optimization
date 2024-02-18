@@ -624,7 +624,7 @@ class ConfigReconstructionHelper:
         weights_node = matching_weights_node[0]
 
         if isinstance(weights_node, VirtualActivationWeightsNode):
-            # TODO: handle is_weights_quantization_enabled call
+            # TODO: handle is_weights_quantization_enabled and is_all_weights_candidates_equal calls
             if weights_node.original_weights_node.is_weights_quantization_enabled() and not \
                     weights_node.original_weights_node.is_all_weights_candidates_equal():
                 assert weights_node.name in self.virtual_sorted_nodes_names  # Sanity check

@@ -55,7 +55,7 @@ def weights_size_kpi(mp_cfg: List[int],
         # Computing non-configurable nodes KPI
         for n in graph.nodes:
             non_configurable_node = n.name not in weights_mp_nodes \
-                                    and n.has_weights_quantization_enabled_candidate() \
+                                    and n.has_kernel_quantization_enabled_candidate(fw_info) \
                                     and not n.reuse \
                                     and n.is_all_weights_candidates_equal()
 
@@ -159,7 +159,7 @@ def total_weights_activation_kpi(mp_cfg: List[int],
 
             # Non-configurable Weights
             is_non_configurable_weights = n.name not in weights_mp_nodes and \
-                                          n.has_weights_quantization_enabled_candidate() and \
+                                          n.has_kernel_quantization_enabled_candidate(fw_info) and \
                                           n.is_all_weights_candidates_equal() and \
                                           not n.reuse
 

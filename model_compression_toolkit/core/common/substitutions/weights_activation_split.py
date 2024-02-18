@@ -49,7 +49,7 @@ class BaseWeightsActivationSplit(BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
-
+        # TODO: handle is_all_weights_candidates_equal call for kernel only
         if not node.is_all_weights_candidates_equal() and not node.is_all_activation_candidates_equal():
             # Node has both different weights and different activation configuration candidates
             weights_bits = [c.weights_quantization_cfg.weights_n_bits for c in node.get_unique_weights_candidates()]

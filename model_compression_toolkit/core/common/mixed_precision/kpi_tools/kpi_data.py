@@ -91,7 +91,7 @@ def compute_nodes_weights_params(graph: Graph, fw_info: FrameworkInfo) -> np.nda
 
     weights_params = []
     for n in graph.nodes:
-        if n.has_weights_quantization_enabled_candidate() and not n.reuse:
+        if n.has_kernel_quantization_enabled_candidate(fw_info) and not n.reuse:
             node_num_weights_params = 0
             for attr in fw_info.get_kernel_op_attributes(n.type):
                 if attr is not None:

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable, List
+from typing import Callable, List, Tuple
 
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig, \
@@ -40,7 +40,7 @@ class CandidateNodeQuantizationConfig(BaseNodeQuantizationConfig):
                  activation_quantization_fn: Callable = None,
                  activation_quantization_params_fn: Callable = None,
                  weights_quantization_cfg: NodeWeightsQuantizationConfig = None,
-                 weights_channels_axis: int = None,
+                 weights_channels_axis: Tuple[int, int] = None,
                  node_attrs_list: List[str] = None):
         """
 
