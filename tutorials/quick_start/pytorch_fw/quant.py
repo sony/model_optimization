@@ -28,6 +28,7 @@ from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2, C
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from tutorials.quick_start.common.constants import BYTES_TO_FP32, MP_WEIGHTS_COMPRESSION
 from tutorials.quick_start.common.results import QuantInfo
+from tutorials.quick_start.common.tpc_info import get_tpc_info
 
 
 def get_tpc(target_platform_name: str, target_platform_version: str) -> TargetPlatformCapabilities:
@@ -143,5 +144,7 @@ def quantize(model: nn.Module,
                                           save_model_path=onnx_file_path,
                                           repr_dataset=representative_data_gen)
 
-
-    return quantized_model, QuantInfo(user_info=quantization_info, tpc_info=tpc.get_info(), quantization_workflow=workflow, mp_weights_compression=mp_wcr)
+    return quantized_model, QuantInfo(user_info=quantization_info,
+                                      tpc_info=get_tpc_info(tpc=tpc),
+                                      quantization_workflow=workflow,
+                                      mp_weights_compression=mp_wcr)

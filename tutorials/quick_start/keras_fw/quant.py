@@ -26,6 +26,7 @@ from model_compression_toolkit import KPI
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2, CoreConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from tutorials.quick_start.common.results import QuantInfo
+from tutorials.quick_start.common.tpc_info import get_tpc_info
 
 
 def get_tpc(target_platform_name: str, target_platform_version: str) -> TargetPlatformCapabilities:
@@ -133,4 +134,7 @@ def quantize(model: tf.keras.Model,
                                                                   core_config=core_conf,
                                                                   target_platform_capabilities=tpc)
 
-    return quantized_model, QuantInfo(user_info=quantization_info, tpc_info=tpc.get_info(), quantization_workflow=workflow, mp_weights_compression=mp_wcr)
+    return quantized_model, QuantInfo(user_info=quantization_info,
+                                      tpc_info=get_tpc_info(tpc=tpc),
+                                      quantization_workflow=workflow,
+                                      mp_weights_compression=mp_wcr)
