@@ -27,21 +27,18 @@ class MeanCollector(BaseCollector):
     """
 
     def __init__(self,
-                 axis: int,
-                 beta: float = 0.99):
+                 axis: int):
         """
         Instantiate a per channel mean collector using a exponential moving average with bias correction.
 
         Args:
             axis: Compute the mean with regard to this axis.
-            beta: Parameter for mean smoothing by EMA.
         """
         super().__init__()
         self.axis = axis
-        self.__state_internal = np.array([0.0])  # mean per-channel
-        self.__state_internal_correction = None
-        self.beta = beta
-        self.i = 0.0
+        self.current_mean = 0
+        self.current_sum = 0
+        self.i = 0
 
     def scale(self, scale_factor: np.ndarray):
         """
@@ -55,7 +52,7 @@ class MeanCollector(BaseCollector):
 
         """
 
-        self.__state_internal_correction *= scale_factor
+        self.current_mean *= scale_factor
 
     def shift(self, shift_value: np.ndarray):
         """
@@ -69,7 +66,7 @@ class MeanCollector(BaseCollector):
 
         """
 
-        self.__state_internal_correction += shift_value
+        self.current_mean += shift_value
 
     @property
     def state(self):
@@ -79,7 +76,7 @@ class MeanCollector(BaseCollector):
         Returns: Mean of the collector after bias correction.
         """
         self.validate_data_correctness()
-        return self.__state_internal_correction
+        return self.current_mean
 
     def update(self,
                x: np.ndarray):
@@ -89,16 +86,12 @@ class MeanCollector(BaseCollector):
         Args:
             x: Tensor that goes through the mean collector and needs to be considered in the mean computation.
         """
-
         self.i += 1  # Update the iteration index
         axis = (len(x.shape) - 1) if self.axis == LAST_AXIS else self.axis
         n = x.shape[axis]
         transpose_index = [axis, *[i for i in range(len(x.shape)) if i != axis]]
-        mu = np.mean(np.reshape(np.transpose(x, transpose_index), [n, -1]), axis=-1)  # compute mean per channel
-        update_state = self.beta * self.__state_internal + (1 - self.beta) * mu
-        self.__state_internal = update_state
+        mu = np.mean(np.reshape(np.transpose(x, transpose_index), [n, -1]), axis=-1) # mean per channel for a batch
+        self.current_sum += mu # sum of all batches
+        self.current_mean = self.current_sum / self.i # mean of all batches
 
-        # Since we use a weighted mean, initial values can be distorted,
-        # so use bias correction to compensate it.
-        bias_correction = 1 - (self.beta ** self.i)
-        self.__state_internal_correction = self.__state_internal / bias_correction
+
