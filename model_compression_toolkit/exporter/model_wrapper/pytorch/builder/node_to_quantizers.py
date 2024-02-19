@@ -34,7 +34,7 @@ def get_quantization_quantizers(node: BaseNode) -> Tuple[Dict, List]:
     weight_quantizers = {}
     for attr in node.get_node_weights_attributes():
         if node.is_weights_quantization_enabled(attr):
-            weight_quantizer = get_weights_quantizer_for_node(node)
+            weight_quantizer = get_weights_quantizer_for_node(node, attr)
             weight_quantizers[attr] = weight_quantizer
 
     activation_quantizers = []

@@ -135,8 +135,8 @@ def get_weights_quantizer_for_node(node: BaseNode, attr_name: str) -> BaseKerasI
     quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
                                                       weights_quantization_method,
                                                       BaseKerasInferableQuantizer)
-    # TODO: need to pass attr name here
-    kwargs = get_inferable_quantizer_kwargs(node_w_qc, QuantizationTarget.Weights)
+
+    kwargs = get_inferable_quantizer_kwargs(node_w_qc, QuantizationTarget.Weights, attr_name)
 
     return quantier_for_node(**kwargs)
 

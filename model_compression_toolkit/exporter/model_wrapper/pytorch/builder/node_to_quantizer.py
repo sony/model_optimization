@@ -30,12 +30,14 @@ from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
 import numpy as np
 
 
-def get_weights_inferable_quantizer_kwargs(node_qc: NodeWeightsQuantizationConfig) -> Dict[str, Any]:
+def get_weights_inferable_quantizer_kwargs(node_qc: NodeWeightsQuantizationConfig, attr_name: str) -> Dict[str, Any]:
     """
     Get the quantization parameters for a weights inferable quantizer.
     Args:
         node_qc: The node quantization configuration of the node for which the quantizer is being created.
             Needs to match the specific quantization target.
+        attr_name: The weights attribute to get its quantizer kwargs (if target is weights quantization).
+
 
     Returns:
         The quantization parameters as a dictionary.
@@ -45,30 +47,35 @@ def get_weights_inferable_quantizer_kwargs(node_qc: NodeWeightsQuantizationConfi
         Logger.error(
             f"Non-compatible node quantization config was given for quantization target Weights.")  # pragma: no cover
 
-    quantization_method = node_qc.weights_quantization_method
+    if attr_name is None:
+        Logger.error(f"Attribute name was not specified for retrieving weights quantizer kwargs.")
+
+    attr_node_qc = node_qc.get_attr_config(attr_name=attr_name)
+
+    quantization_method = attr_node_qc.weights_quantization_method
 
     # Return the appropriate quantization parameters based on the quantization method
     if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                QuantizationMethod.SYMMETRIC]:
-        return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.weights_n_bits,
-                qi_inferable_quantizers_constants.THRESHOLD: node_qc.weights_quantization_params[THRESHOLD].flatten().tolist(),
-                qi_inferable_quantizers_constants.PER_CHANNEL: node_qc.weights_per_channel_threshold,
-                qi_inferable_quantizers_constants.CHANNEL_AXIS: node_qc.weights_channels_axis}
+        return {qi_inferable_quantizers_constants.NUM_BITS: attr_node_qc.weights_n_bits,
+                qi_inferable_quantizers_constants.THRESHOLD: attr_node_qc.weights_quantization_params[THRESHOLD].flatten().tolist(),
+                qi_inferable_quantizers_constants.PER_CHANNEL: attr_node_qc.weights_per_channel_threshold,
+                qi_inferable_quantizers_constants.CHANNEL_AXIS: attr_node_qc.weights_channels_axis}
 
     elif quantization_method in [QuantizationMethod.UNIFORM]:
-        return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.weights_n_bits,
-                qi_inferable_quantizers_constants.PER_CHANNEL: node_qc.weights_per_channel_threshold,
-                qi_inferable_quantizers_constants.MIN_RANGE: node_qc.weights_quantization_params[RANGE_MIN].flatten().tolist(),
-                qi_inferable_quantizers_constants.MAX_RANGE: node_qc.weights_quantization_params[RANGE_MAX].flatten().tolist(),
-                qi_inferable_quantizers_constants.CHANNEL_AXIS: node_qc.weights_channels_axis}
+        return {qi_inferable_quantizers_constants.NUM_BITS: attr_node_qc.weights_n_bits,
+                qi_inferable_quantizers_constants.PER_CHANNEL: attr_node_qc.weights_per_channel_threshold,
+                qi_inferable_quantizers_constants.MIN_RANGE: attr_node_qc.weights_quantization_params[RANGE_MIN].flatten().tolist(),
+                qi_inferable_quantizers_constants.MAX_RANGE: attr_node_qc.weights_quantization_params[RANGE_MAX].flatten().tolist(),
+                qi_inferable_quantizers_constants.CHANNEL_AXIS: attr_node_qc.weights_channels_axis}
 
     elif quantization_method in [QuantizationMethod.LUT_POT_QUANTIZER, QuantizationMethod.LUT_SYM_QUANTIZER]:
-        return {qi_inferable_quantizers_constants.NUM_BITS: node_qc.weights_n_bits,
-                qi_inferable_quantizers_constants.LUT_VALUES: node_qc.weights_quantization_params[LUT_VALUES].flatten().tolist(),
-                qi_inferable_quantizers_constants.THRESHOLD: node_qc.weights_quantization_params[SCALE_PER_CHANNEL].flatten().tolist(),
-                qi_inferable_quantizers_constants.PER_CHANNEL: node_qc.weights_per_channel_threshold,
-                qi_inferable_quantizers_constants.CHANNEL_AXIS: node_qc.weights_channels_axis,
-                qi_inferable_quantizers_constants.INPUT_RANK: len(node_qc.weights_quantization_params[SCALE_PER_CHANNEL].shape)}
+        return {qi_inferable_quantizers_constants.NUM_BITS: attr_node_qc.weights_n_bits,
+                qi_inferable_quantizers_constants.LUT_VALUES: attr_node_qc.weights_quantization_params[LUT_VALUES].flatten().tolist(),
+                qi_inferable_quantizers_constants.THRESHOLD: attr_node_qc.weights_quantization_params[SCALE_PER_CHANNEL].flatten().tolist(),
+                qi_inferable_quantizers_constants.PER_CHANNEL: attr_node_qc.weights_per_channel_threshold,
+                qi_inferable_quantizers_constants.CHANNEL_AXIS: attr_node_qc.weights_channels_axis,
+                qi_inferable_quantizers_constants.INPUT_RANK: len(attr_node_qc.weights_quantization_params[SCALE_PER_CHANNEL].shape)}
                 # TODO: Add LUT_VALUES_BITWIDTH & EPS to node quantization config
 
     else:
@@ -115,12 +122,13 @@ def get_activation_inferable_quantizer_kwargs(node_qc: NodeActivationQuantizatio
         Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
 
 
-def get_weights_quantizer_for_node(node: BaseNode) -> BasePyTorchInferableQuantizer:
+def get_weights_quantizer_for_node(node: BaseNode, attr_name: str) -> BasePyTorchInferableQuantizer:
     """
     Get weights quantizer for a node.
 
     Args:
         node: Node to create a weight quantizer for.
+        attr_name: Attribute name to get its quantizer.
 
     Returns:
         Quantizer for the node's weights.
@@ -130,12 +138,12 @@ def get_weights_quantizer_for_node(node: BaseNode) -> BasePyTorchInferableQuanti
         Logger.critical(f'Can not set quantizer for a node with no final weights quantization configuration')  # pragma:
         # no cover
     node_w_qc = node.final_weights_quantization_cfg
-    weights_quantization_method = node_w_qc.weights_quantization_method
+    weights_quantization_method = node_w_qc.get_attr_config(attr_name).weights_quantization_method
 
     quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
                                                       weights_quantization_method,
                                                       BasePyTorchInferableQuantizer)
-    kwargs = get_weights_inferable_quantizer_kwargs(node_w_qc)
+    kwargs = get_weights_inferable_quantizer_kwargs(node_w_qc, attr_name)
 
     return quantier_for_node(**kwargs)
 
