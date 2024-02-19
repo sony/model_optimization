@@ -92,7 +92,13 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
 
         # This feature disabled for models with weights quantization method of Power of 2
         for qc in source_node.candidates_quantization_cfg:
-            if qc.weights_quantization_cfg.weights_quantization_method == QuantizationMethod.POWER_OF_TWO:
+            # this feature is relevant only for layers with kernel op
+            kernel_attr = graph.fw_info.get_kernel_op_attributes(source_node.type)
+            if kernel_attr is None:
+                # TODO: if tests are failing here, we might want to just log warning and return the graph, without throwing exception
+                Logger.error(f"Can't preform BatchNorm reconstruction on a node {source_node.name} without a kernel op.")
+            if (qc.weights_quantization_cfg.get_attr_config(kernel_attr[0]).weights_quantization_method
+                    == QuantizationMethod.POWER_OF_TWO):
                 Logger.warning("Second moment statistics correction feature disabled for models with weights "
                                "quantization method of Power of 2")
                 for qc_inner in source_node.candidates_quantization_cfg:
@@ -121,6 +127,7 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
         for qc in bn_node.candidates_quantization_cfg:
             qc.activation_quantization_cfg.enable_activation_quantization = False
             for attr in bn_node.get_node_weights_attributes():
+                # we only create a BN layer to collect statistics, so we don't need to quantize anything
                 qc.weights_quantization_cfg.get_attr_config(attr).enable_weights_quantization = False
 
         graph.reconnect_out_edges(current_node=source_node, new_node=bn_node)

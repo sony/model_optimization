@@ -18,6 +18,7 @@ import copy
 import numpy as np
 from typing import Tuple, Callable
 
+from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.graph_matchers import EdgeMatcher, NodeOperationMatcher
@@ -159,7 +160,7 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
         graph.remove_node(bn_node)
         graph.remove_node(source_node)
 
-        self._calc_weights_quantization_params(conv_bn, weights_scale)
+        self._calc_weights_quantization_params(conv_bn, weights_scale, graph.fw_info)
 
         assert num_nodes_before_substitution - len(graph.nodes) == 1
         assert num_edges_before_substitution - len(graph.edges) == 1
@@ -167,31 +168,36 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
 
     def _calc_weights_quantization_params(self,
                                           conv_bn: BaseNode,
-                                          weights_scale: np.ndarray):
+                                          weights_scale: np.ndarray,
+                                          fw_info: FrameworkInfo):
         """
         Update node weights quantization params.
         Args:
             conv_bn: Convolution node to update the weights quantization params.
             weights_scale: Weight scale factor in which to multiply the conv node's weight.
+            fw_info: FrameworkInfo object with information about the specific framework's model
         """
+        # Conv layer is ensured to have a kernel attribute
+        kernel_attr = fw_info.get_kernel_op_attributes(conv_bn.type)[0]
+        conv_bn_kernel_cfg = conv_bn.final_weights_quantization_cfg.get_attr_config(kernel_attr)
         # In case of SYMMETRIC weight quantization method, we update the threshold by weights_scale
-        if conv_bn.final_weights_quantization_cfg.weights_quantization_method == QuantizationMethod.SYMMETRIC:
-            original_threshold = conv_bn.final_weights_quantization_cfg.weights_quantization_params[THRESHOLD]
-            corr_dict = copy.deepcopy(conv_bn.final_weights_quantization_cfg.weights_quantization_params)
+        if conv_bn_kernel_cfg.weights_quantization_method == QuantizationMethod.SYMMETRIC:
+            original_threshold = conv_bn_kernel_cfg.weights_quantization_params[THRESHOLD]
+            corr_dict = copy.deepcopy(conv_bn_kernel_cfg.weights_quantization_params)
             corr_threshold, _ = self.update_kernel_for_bn_refusing_fn(conv_bn, original_threshold, weights_scale)
             corr_dict[THRESHOLD] = corr_threshold
-            conv_bn.final_weights_quantization_cfg.set_weights_quantization_param(corr_dict)
+            conv_bn_kernel_cfg.set_weights_quantization_param(corr_dict)
 
         # In case of UNIFORM weight quantization method, we update the range_min, range_max by weights_scale
-        elif conv_bn.final_weights_quantization_cfg.weights_quantization_method == QuantizationMethod.UNIFORM:
-            corr_dict = copy.deepcopy(conv_bn.final_weights_quantization_cfg.weights_quantization_params)
-            original_range_min = conv_bn.final_weights_quantization_cfg.weights_quantization_params[RANGE_MIN]
+        elif conv_bn_kernel_cfg.weights_quantization_method == QuantizationMethod.UNIFORM:
+            corr_dict = copy.deepcopy(conv_bn_kernel_cfg.weights_quantization_params)
+            original_range_min = conv_bn_kernel_cfg.weights_quantization_params[RANGE_MIN]
             corr_range_min, _ = self.update_kernel_for_bn_refusing_fn(conv_bn, original_range_min, weights_scale)
-            original_range_max = conv_bn.final_weights_quantization_cfg.weights_quantization_params[RANGE_MAX]
+            original_range_max = conv_bn_kernel_cfg.weights_quantization_params[RANGE_MAX]
             corr_range_max, _ = self.update_kernel_for_bn_refusing_fn(conv_bn, original_range_max, weights_scale)
             corr_dict[RANGE_MIN] = corr_range_min
             corr_dict[RANGE_MAX] = corr_range_max
-            conv_bn.final_weights_quantization_cfg.set_weights_quantization_param(corr_dict)
+            conv_bn_kernel_cfg.set_weights_quantization_param(corr_dict)
 
         else:
             Logger.exception("Second moment statistics correction feature disabled for models with weights "

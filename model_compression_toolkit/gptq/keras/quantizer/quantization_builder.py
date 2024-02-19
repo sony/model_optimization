@@ -50,7 +50,8 @@ def quantization_builder(n: common.BaseNode,
     """
 
     weights_quantizers = {}
-    # TODO: handle is_weights_quantization_enabled call (for kernel only)
+    # TODO: need to figure out how to handle this - we need trainable quantizer only for kernel ops,
+    #  but we want to quantize all other quantizable attributes during GPTQ
     if n.is_weights_quantization_enabled():
         quant_method = n.final_weights_quantization_cfg.weights_quantization_method
 

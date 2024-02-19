@@ -64,8 +64,13 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
                 # layer has max config in the given solution, nothing to optimize
                 continue
 
-            node_candidates = search_manager.graph.get_configurable_sorted_nodes()[node_idx].candidates_quantization_cfg
-            valid_candidates = _get_valid_candidates_indices(node_candidates, new_solution[node_idx])
+            current_node = search_manager.graph.get_configurable_sorted_nodes()[node_idx]
+            node_candidates = current_node.candidates_quantization_cfg
+
+            # only weights kernel attribute is quantized with weights mixed precision
+            kernel_attr = search_manager.fw_info.get_kernel_op_attributes(current_node)
+            kernel_attr = None if kernel_attr is None else kernel_attr[0]
+            valid_candidates = _get_valid_candidates_indices(node_candidates, new_solution[node_idx], kernel_attr)
 
             # Create a list of KPIs for the valid candidates.
             updated_kpis = []
@@ -102,22 +107,38 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
 
 
 def _get_valid_candidates_indices(node_candidates: List[CandidateNodeQuantizationConfig],
-                                  current_chosen_index: int) -> List[int]:
+                                  current_chosen_index: int,
+                                  kernel_attr: str = None) -> List[int]:
     """
     Find node's valid candidates to try and improve the node's MP chosen candidate.
-    Valid indices are indices of candidates that have higher number of bits for both weights and activations.
+    Valid indices are indices of candidates that have higher number of bits for both weights and activations
+    (if they are quantized in this node).
 
     Args:
         node_candidates: Candidates of the node.
         current_chosen_index: Current index in MP configuration of the node.
+        kernel_attr: The name of the kernel attribute on the node, otherwise None.
 
     Returns:
         List of indices of valid candidates.
     """
-
     current_candidate = node_candidates[current_chosen_index]
-    weights_num_bits = current_candidate.weights_quantization_cfg.weights_n_bits
-    activation_num_bits = current_candidate.activation_quantization_cfg.activation_n_bits
 
-    # Filter candidates that have higher bit-width for both weights and activations (except for the current index).
-    return [i for i, c in enumerate(node_candidates) if c.activation_quantization_cfg.activation_n_bits >= activation_num_bits and c.weights_quantization_cfg.weights_n_bits >= weights_num_bits and not (c.activation_quantization_cfg.activation_n_bits == activation_num_bits and c.weights_quantization_cfg.weights_n_bits == weights_num_bits)]
+    if kernel_attr is None:
+        # In this node we only quantize activation, so no need to check weights number of bits
+        activation_num_bits = current_candidate.activation_quantization_cfg.activation_n_bits
+
+        # Filter candidates that have higher bit-width for activations
+        return [i for i, c in enumerate(node_candidates) if
+                c.activation_quantization_cfg.activation_n_bits >= activation_num_bits
+                and not (c.activation_quantization_cfg.activation_n_bits == activation_num_bits)]
+    else:
+        weights_num_bits = current_candidate.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits
+        activation_num_bits = current_candidate.activation_quantization_cfg.activation_n_bits
+
+        # Filter candidates that have higher bit-width for both weights and activations (except for the current index).
+        return [i for i, c in enumerate(node_candidates) if
+                c.activation_quantization_cfg.activation_n_bits >= activation_num_bits
+                and c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits >= weights_num_bits
+                and not (c.activation_quantization_cfg.activation_n_bits == activation_num_bits
+                         and c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits == weights_num_bits)]

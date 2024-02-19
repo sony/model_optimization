@@ -557,10 +557,11 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Returns:
             A list of nodes that their weights can be configured (namely, has one or more weight qc candidate).
         """
-        # TODO: handle is_weights_quantization_enabled call (for kernel only)
-        return list(filter(lambda n: n.is_weights_quantization_enabled()
-                                     and not n.is_all_weights_candidates_equal()
-                                     and (not n.reuse or include_reused_nodes), list(self)))
+        # configurability is only relevant for kernel attribute quantization
+        potential_conf_nodes = [n for n in list(self) if self.fw_info.is_kernel_op(n.type)]
+        return list(filter(lambda n: n.is_weights_quantization_enabled(self.fw_info.get_kernel_op_attributes(n.type)[0])
+                                     and not n.is_all_weights_candidates_equal(self.fw_info.get_kernel_op_attributes(n.type)[0])
+                                     and (not n.reuse or include_reused_nodes), potential_conf_nodes))
 
     def get_sorted_weights_configurable_nodes(self,
                                               include_reused_nodes: bool = False) -> List[BaseNode]:
@@ -682,7 +683,9 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         sorted_conf_weights = self.get_sorted_weights_configurable_nodes()
-        return [(n, n.final_weights_quantization_cfg.weights_n_bits) for n in sorted_conf_weights]
+        # a configurable node by definition has a kernel op
+        return [(n, n.final_weights_quantization_cfg.get_attr_config(self.fw_info.get_kernel_op_attributes(n.type)).weights_n_bits)
+                for n in sorted_conf_weights]
 
     def get_final_activation_config(self) -> List[Tuple[BaseNode, int]]:
         """

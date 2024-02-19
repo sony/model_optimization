@@ -255,6 +255,7 @@ class BaseNode:
         Returns: Number of bytes the node's memory requires.
 
         """
+        # TODO: is this method only for MP? if so - get only kernel n_bits from final config, ow, iterate on all attributes and sum memory
         q_params, f_params = self.get_num_parameters(fw_info)
         if self.final_weights_quantization_cfg is None:  # float coefficients
             memory = (f_params+q_params) * FP32_BYTES_PER_PARAMETER

@@ -17,6 +17,7 @@ from abc import ABC, abstractmethod
 from collections import namedtuple
 from typing import Callable
 
+from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.logger import Logger
 
@@ -103,6 +104,7 @@ class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
         Returns:
             The node after its weights' quantization config candidates have been modified.
         """
+        # TODO: need to verify that this is working correctly
         for nqc in node.candidates_quantization_cfg:
             for attr_name, attr_value in self.kwargs.items():
                 nqc.weights_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
@@ -178,16 +180,21 @@ class ChangeQuantizationParamFunction(BaseAction):
     Class ChangeQuantizationParamFunction to change a node's weights/activations quantization params function.
     """
 
-    def __init__(self, activation_quantization_params_fn=None, weights_quantization_params_fn=None):
+    def __init__(self,
+                 attr_name: str,
+                 activation_quantization_params_fn: Callable = None,
+                 weights_quantization_params_fn: Callable = None):
         """
         Init a ChangeQuantizationParamFunction object.
 
         Args:
+            attr_name: The weights attribute's name to set the weights quantization params function for.
             activation_quantization_params_fn: a params function for a node's activations.
             weights_quantization_params_fn: a params function for a node's weights.
         """
         self.activation_quantization_params_fn = activation_quantization_params_fn
         self.weights_quantization_params_fn = weights_quantization_params_fn
+        self.attr_name = attr_name
 
     def apply(self, node: BaseNode, graph, fw_info):
         """
@@ -207,7 +214,8 @@ class ChangeQuantizationParamFunction(BaseAction):
                 nqc.activation_quantization_cfg.set_activation_quantization_params_fn(
                     self.activation_quantization_params_fn)
             if self.weights_quantization_params_fn is not None:
-                nqc.weights_quantization_cfg.set_weights_quantization_params_fn(self.weights_quantization_params_fn)
+                (nqc.weights_quantization_cfg.get_attr_config(self.attr_name)
+                 .set_weights_quantization_params_fn(self.weights_quantization_params_fn))
 
 
 class ChangeFinalActivationQuantizationMethod(BaseAction):
@@ -301,15 +309,17 @@ class ChangeFinalWeightsQuantizationMethod(BaseAction):
     Class ChangeFinalWeightsQuantizationMethod to change a node's weights/activations quantizer function.
     """
 
-    def __init__(self, weights_quantization_method=None):
+    def __init__(self, attr_name: str, weights_quantization_method=None):
         """
         Init a ChangeFinalWeightsQuantizationMethod object.
 
         Args:
+            attr_name: The weights attribute's name to set the weights quantization method for.
             weights_quantization_method: a quantization method for a node's weights.
         """
 
         self.weights_quantization_method = weights_quantization_method
+        self.attr_name = attr_name
 
     def apply(self, node: BaseNode, graph, fw_info):
         """
@@ -329,15 +339,18 @@ class ChangeFinalWeightsQuantizationMethod(BaseAction):
 
             weights_quantization_params_fn = get_weights_quantization_params_fn(self.weights_quantization_method)
 
-            node.final_weights_quantization_cfg.set_weights_quantization_params_fn(weights_quantization_params_fn)
+            (node.final_weights_quantization_cfg.get_attr_config(self.attr_name)
+             .set_weights_quantization_params_fn(weights_quantization_params_fn))
 
             weights_quantization_fn = get_weights_quantization_fn(self.weights_quantization_method)
 
             if weights_quantization_fn is None:
                 raise Exception('Unknown quantization method for weights')  # pragma: no cover
 
-            node.final_weights_quantization_cfg.set_weights_quantization_fn(weights_quantization_fn)
-            node.final_weights_quantization_cfg.weights_quantization_method = self.weights_quantization_method
+            (node.final_weights_quantization_cfg.get_attr_config(self.attr_name)
+             .set_weights_quantization_fn(weights_quantization_fn))
+            node.final_weights_quantization_cfg.get_attr_config(self.attr_name).weights_quantization_method = \
+                self.weights_quantization_method
 
 
 class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
@@ -345,14 +358,16 @@ class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
     Class ChangeCandidatesWeightsQuantizationMethod to change a node's weights quantizer function.
     """
 
-    def __init__(self, weights_quantization_method=None):
+    def __init__(self, attr_name: str, weights_quantization_method: QuantizationMethod = None):
         """
         Init a ChangeCandidatesWeightsQuantizationMethod object.
 
         Args:
             weights_quantization_method: a quantization method for a node's weights.
+            attr_name: The weights attribute's name to set the weights quantization params function for.
         """
         self.weights_quantization_method = weights_quantization_method
+        self.attr_name = attr_name
 
     def apply(self, node: BaseNode, graph: Graph, fw_info: FrameworkInfo):
         """
@@ -373,15 +388,16 @@ class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
 
                 weights_quantization_params_fn = get_weights_quantization_params_fn(self.weights_quantization_method)
 
-                qc.weights_quantization_cfg.set_weights_quantization_params_fn(weights_quantization_params_fn)
+                attr_qc = qc.weights_quantization_cfg.get_attr_config(self.attr_name)
+                attr_qc.set_weights_quantization_params_fn(weights_quantization_params_fn, self.attr_name)
 
                 weights_quantization_fn = get_weights_quantization_fn(self.weights_quantization_method)
 
                 if weights_quantization_fn is None:
                     raise Exception('Unknown quantization method for weights')  # pragma: no cover
 
-                qc.weights_quantization_cfg.set_weights_quantization_fn(weights_quantization_fn)
-                qc.weights_quantization_cfg.weights_quantization_method = self.weights_quantization_method
+                attr_qc.set_weights_quantization_fn(weights_quantization_fn)
+                attr_qc.weights_quantization_method = self.weights_quantization_method
 
 
 class ReplaceLayer(BaseAction):

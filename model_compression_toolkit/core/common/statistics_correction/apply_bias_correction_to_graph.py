@@ -37,16 +37,19 @@ def apply_bias_correction_to_graph(graph_to_apply_bias_correction: Graph,
 
     graph = copy.deepcopy(graph_to_apply_bias_correction)
     for n in graph.nodes:
-        if n.is_weights_quantization_enabled() and core_config.quantization_config.weights_bias_correction \
-                and not n.final_weights_quantization_cfg.weights_second_moment_correction:
+        # bias correction is only relevant for nodes with kernel op
+        kernel_attr = graph.fw_info.get_kernel_op_attributes(n.type)
+        if core_config.quantization_config.weights_bias_correction and kernel_attr is not None and \
+            n.is_weights_quantization_enabled(kernel_attr[0]) and \
+                not n.final_weights_quantization_cfg.get_attr_config(kernel_attr).weights_second_moment_correction:
             # If a kernel was quantized and weights bias correction is enabled in n.quantization_cfg,
             # a bias correction term was calculated during model preparation, and is used now in the node's bias term.
-            if n.final_weights_quantization_cfg.weights_bias_correction:
+            if n.final_weights_quantization_cfg.get_attr_config(kernel_attr).weights_bias_correction:
                 _apply_bias_correction_to_node(n, fw_impl)
     return graph
 
 
-def _apply_bias_correction_to_node(node:BaseNode,
+def _apply_bias_correction_to_node(node: BaseNode,
                                    fw_impl: FrameworkImplementation):
     """
     Set new bias to node using the bias-correction term that is stored in the

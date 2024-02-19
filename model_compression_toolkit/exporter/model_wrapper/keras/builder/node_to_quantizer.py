@@ -28,13 +28,15 @@ from mct_quantizers import constants as qi_keras_consts
 
 
 def get_inferable_quantizer_kwargs(node_qc: BaseNodeQuantizationConfig,
-                                   quantization_target: QuantizationTarget) -> Dict[str, Any]:
+                                   quantization_target: QuantizationTarget,
+                                   attr_name: str = None) -> Dict[str, Any]:
     """
     Get the quantization parameters for an inferable quantizer.
     Args:
         node_qc: The node quantization configuration of the node for which the quantizer is being created.
             Needs to match the specific quantization target.
         quantization_target: The target of the quantization (weights or activations).
+        attr_name: The weights attribute to get its quantizer kwargs (if target is weights quantization).
 
     Returns:
         The quantization parameters as a dictionary.
@@ -44,33 +46,38 @@ def get_inferable_quantizer_kwargs(node_qc: BaseNodeQuantizationConfig,
         if not isinstance(node_qc, NodeWeightsQuantizationConfig):
             Logger.error(f"Non-compatible node quantization config was given for quantization target Weights.")  # pragma: no cover
 
-        quantization_method = node_qc.weights_quantization_method
+        if attr_name is None:
+            Logger.error(f"Attribute name was not specified for retrieving weights quantizer kwargs.")
+
+        attr_node_qc = node_qc.get_attr_config(attr_name=attr_name)
+
+        quantization_method = attr_node_qc.weights_quantization_method
 
         # Return the appropriate quantization parameters based on the quantization method
         if quantization_method in [QuantizationMethod.POWER_OF_TWO,
                                    QuantizationMethod.SYMMETRIC]:
-            return {qi_keras_consts.NUM_BITS: node_qc.weights_n_bits,
-                    qi_keras_consts.THRESHOLD: list(node_qc.weights_quantization_params[THRESHOLD].flatten()),
-                    qi_keras_consts.PER_CHANNEL: node_qc.weights_per_channel_threshold,
-                    qi_keras_consts.CHANNEL_AXIS: node_qc.weights_channels_axis,
-                    qi_keras_consts.INPUT_RANK: len(node_qc.weights_quantization_params[THRESHOLD].shape)}
+            return {qi_keras_consts.NUM_BITS: attr_node_qc.weights_n_bits,
+                    qi_keras_consts.THRESHOLD: list(attr_node_qc.weights_quantization_params[THRESHOLD].flatten()),
+                    qi_keras_consts.PER_CHANNEL: attr_node_qc.weights_per_channel_threshold,
+                    qi_keras_consts.CHANNEL_AXIS: attr_node_qc.weights_channels_axis,
+                    qi_keras_consts.INPUT_RANK: len(attr_node_qc.weights_quantization_params[THRESHOLD].shape)}
 
         elif quantization_method in [QuantizationMethod.UNIFORM]:
-            return {qi_keras_consts.NUM_BITS: node_qc.weights_n_bits,
-                    qi_keras_consts.PER_CHANNEL: node_qc.weights_per_channel_threshold,
-                    qi_keras_consts.MIN_RANGE: list(node_qc.weights_quantization_params[RANGE_MIN].flatten()),
-                    qi_keras_consts.MAX_RANGE: list(node_qc.weights_quantization_params[RANGE_MAX].flatten()),
-                    qi_keras_consts.CHANNEL_AXIS: node_qc.weights_channels_axis,
-                    qi_keras_consts.INPUT_RANK: len(node_qc.weights_quantization_params[RANGE_MIN].shape)}
+            return {qi_keras_consts.NUM_BITS: attr_node_qc.weights_n_bits,
+                    qi_keras_consts.PER_CHANNEL: attr_node_qc.weights_per_channel_threshold,
+                    qi_keras_consts.MIN_RANGE: list(attr_node_qc.weights_quantization_params[RANGE_MIN].flatten()),
+                    qi_keras_consts.MAX_RANGE: list(attr_node_qc.weights_quantization_params[RANGE_MAX].flatten()),
+                    qi_keras_consts.CHANNEL_AXIS: attr_node_qc.weights_channels_axis,
+                    qi_keras_consts.INPUT_RANK: len(attr_node_qc.weights_quantization_params[RANGE_MIN].shape)}
 
         elif quantization_method in [QuantizationMethod.LUT_SYM_QUANTIZER, QuantizationMethod.LUT_POT_QUANTIZER]:
-            return {qi_keras_consts.NUM_BITS: node_qc.weights_n_bits,
-                    qi_keras_consts.PER_CHANNEL: node_qc.weights_per_channel_threshold,
-                    qi_keras_consts.LUT_VALUES: list(node_qc.weights_quantization_params[LUT_VALUES].flatten()),
-                    qi_keras_consts.THRESHOLD: list(node_qc.weights_quantization_params[SCALE_PER_CHANNEL].flatten()),
-                    qi_keras_consts.CHANNEL_AXIS: node_qc.weights_channels_axis,
+            return {qi_keras_consts.NUM_BITS: attr_node_qc.weights_n_bits,
+                    qi_keras_consts.PER_CHANNEL: attr_node_qc.weights_per_channel_threshold,
+                    qi_keras_consts.LUT_VALUES: list(attr_node_qc.weights_quantization_params[LUT_VALUES].flatten()),
+                    qi_keras_consts.THRESHOLD: list(attr_node_qc.weights_quantization_params[SCALE_PER_CHANNEL].flatten()),
+                    qi_keras_consts.CHANNEL_AXIS: attr_node_qc.weights_channels_axis,
                     # TODO: how to pass multiplier nbits and eps for a specific node?
-                    qi_keras_consts.INPUT_RANK: len(node_qc.weights_quantization_params[SCALE_PER_CHANNEL].shape)}
+                    qi_keras_consts.INPUT_RANK: len(attr_node_qc.weights_quantization_params[SCALE_PER_CHANNEL].shape)}
 
         else:
             Logger.critical(f'Not supported quantization method for inferable quantizers.')  # pragma: no cover
@@ -108,23 +115,27 @@ def get_inferable_quantizer_kwargs(node_qc: BaseNodeQuantizationConfig,
         Logger.critical(f'{quantization_target} is not supported')  # pragma: no cover
 
 
-def get_weights_quantizer_for_node(node: BaseNode) -> BaseKerasInferableQuantizer:
+def get_weights_quantizer_for_node(node: BaseNode, attr_name: str) -> BaseKerasInferableQuantizer:
     """
-    Get weights quantizer for a node.
+    Get weights quantizer for a weights attribute of a node.
+
     Args:
         node: Node to create a weight quantizer for.
+        attr_name: Attribute name to get its quantizer.
+
     Returns:
-        Quantizer for the node's weights.
+        Quantizer for the node's weights attribute.
     """
     if node.final_weights_quantization_cfg is None:
         Logger.critical(f'Can not set quantizer for a node with no final weights quantization configuration')  # pragma:
         # no cover
     node_w_qc = node.final_weights_quantization_cfg
-    weights_quantization_method = node_w_qc.weights_quantization_method
+    weights_quantization_method = node_w_qc.get_attr_config(attr_name).weights_quantization_method
 
     quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
                                                       weights_quantization_method,
                                                       BaseKerasInferableQuantizer)
+    # TODO: need to pass attr name here
     kwargs = get_inferable_quantizer_kwargs(node_w_qc, QuantizationTarget.Weights)
 
     return quantier_for_node(**kwargs)

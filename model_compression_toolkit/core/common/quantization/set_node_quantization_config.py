@@ -15,7 +15,7 @@
 
 
 import copy
-from typing import List
+from typing import List, Tuple
 
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.logger import Logger
@@ -86,8 +86,8 @@ def set_quantization_configs_to_node(node: BaseNode,
                                                                   mixed_precision_enable=mixed_precision_enable)
 
     for candidate_qc in node.candidates_quantization_cfg:
-        candidate_qc.weights_quantization_cfg.enable_weights_quantization = \
-            candidate_qc.weights_quantization_cfg.enable_weights_quantization and node.has_weights_to_quantize(fw_info)
+        # TODO: validate change here - because all attributes now have quantization config,
+        #  there is no need to check whether the node has attributes to quantize
         candidate_qc.activation_quantization_cfg.enable_activation_quantization = \
             candidate_qc.activation_quantization_cfg.enable_activation_quantization and node.get_has_activation()
 
@@ -122,7 +122,7 @@ def create_node_activation_qc(qc: QuantizationConfig,
 
 def _create_node_single_candidate_qc(qc: QuantizationConfig,
                                      fw_info: FrameworkInfo,
-                                     weight_channel_axis: int,
+                                     weight_channel_axis: Tuple[int, int],
                                      op_cfg: OpQuantizationConfig,
                                      node_attrs_list: List[str]) -> CandidateNodeQuantizationConfig:
     """
@@ -134,7 +134,7 @@ def _create_node_single_candidate_qc(qc: QuantizationConfig,
         qc: QuantizationConfig to create the node's config from.
         fw_info: Information about the specific framework the node was created from (e.g., whether its
             weights/activations should be quantized)
-        weight_channel_axis: Output channel index of the node's kernel.
+        weight_channel_axis: Output channel index of the node's kernel. TODO: update to input-output channels axis
         op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
         node_attrs_list: A list of the node's weights attributes names.
 
@@ -161,7 +161,7 @@ def _create_node_single_candidate_qc(qc: QuantizationConfig,
 
 def _create_node_candidates_qc(qc: QuantizationConfig,
                                fw_info: FrameworkInfo,
-                               weight_channel_axis: int,
+                               weight_channel_axis: Tuple[int, int],
                                node_qc_options: QuantizationConfigOptions,
                                node_type: type,
                                node_attrs_list: List[str],
@@ -172,7 +172,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
     Args:
         qc: Quantization configuration the quantization process should follow.
         fw_info: Framework information (e.g., which layers should have their kernels' quantized).
-        weight_channel_axis: Output channel index of the node's kernel.
+        weight_channel_axis: Output channel index of the node's kernel. # TODO: update to io channels axis
         node_qc_options: QuantizationConfigOptions for the node with quantization candidates information.
         node_type: The type of the layer that the node represents.
         node_attrs_list: A list of the node's weights attributes names.
@@ -195,5 +195,6 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
                                                            node_attrs_list))
 
     # TODO: make sure to handle multiple config options for MP later (including sorting them)
+    #  and remove unnecessary arguments to this method
 
     return candidates

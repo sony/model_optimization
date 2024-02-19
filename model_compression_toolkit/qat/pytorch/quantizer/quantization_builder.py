@@ -71,12 +71,14 @@ def quantization_builder(n: common.BaseNode,
         activation_quantizers: A list of activations quantization, one for each layer output.).
     """
     if len(n.candidates_quantization_cfg) > 1:
+        # TODO: what are we doing with weights quantization in QAT? only kernel?
         wq_cand, aq_cand = get_trainable_quantizer_quantization_candidates(n)
     else:
         wq_cand, aq_cand = None, None
 
     weight_quantizers = {}
-    # TODO: handle is_weights_quantization_enabled call (for kernel only)
+    # TODO: need to figure out how to handle this - we need trainable quantizer only for kernel ops,
+    #  but we want to quantize all other quantizable attributes during QAT (do we?)
     if n.is_weights_quantization_enabled():
         quant_method = n.final_weights_quantization_cfg.weights_quantization_method
         quantizer_class = get_trainable_quantizer_class(QuantizationTarget.Weights,
