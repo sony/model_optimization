@@ -361,9 +361,9 @@ class BaseNode:
                    self.candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(attr)
                    for attr_candidate in self.get_all_weights_attr_candidates(attr))
 
-    def has_weights_to_quantize(self, fw_info):
+    def has_kernel_weight_to_quantize(self, fw_info):
         """
-        Checks whether the node has weights that need to be quantized according to the framework info.
+        Checks whether the node has kernel attribute that need to be quantized according to the framework info.
 
         Args:
             fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
@@ -376,6 +376,22 @@ class BaseNode:
             if attr and self.get_weights_by_keys(attr) is not None:
                 return True
         return False
+
+    def has_any_weight_attr_to_quantize(self) -> bool:
+        """
+        Checks whether the node has any weights attribute that is supposed to be quantized, based on its provided
+        quantization configuration candidates.
+
+        Returns: Tru if the is at least one weights attribute in the node that is supposed to be quantized.
+
+        """
+        for attr in self.get_node_weights_attributes():
+            attr_candidates = self.get_all_weights_attr_candidates(attr)
+            if any([c.enable_weights_quantization for c in attr_candidates]):
+                return True
+
+        return False
+
 
     def get_total_output_params(self) -> float:
         """

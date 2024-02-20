@@ -43,7 +43,7 @@ def set_bit_widths(mixed_precision_enable: bool,
         Logger.info(f'Set bit widths from configuration: {bit_widths_config}')
         # Get a list of nodes' names we need to finalize (that they have at least one weight qc candidate).
         sorted_nodes_names = graph.get_configurable_sorted_nodes_names()
-        for node in graph.nodes:  # set a specific node qc for each node final weights qc
+        for node in graph.nodes:  # set a specific node qc for each node final qc
             # If it's reused, take the configuration that the base node has
             node_name = node.name if not node.reuse else '_'.join(node.name.split('_')[:-2])
             if node_name in sorted_nodes_names:  # only configurable nodes are in this list
@@ -56,17 +56,16 @@ def set_bit_widths(mixed_precision_enable: bool,
                 if node.is_activation_quantization_enabled():
                     # If we are here, this means that we are in weights-only mixed-precision
                     # (i.e., activations are quantized with fixed bitwidth or not quantized)
-                    # and that this node doesn't have weights to quantize
+                    # and that this node doesn't have kernel to quantize
+                    # (since only the kernel is quantized in mixed precision).
                     assert len(node.candidates_quantization_cfg) > 0, \
                         "Node need to have at least one quantization configuration in order to quantize its activation"
                     node.final_activation_quantization_cfg = copy.deepcopy(node.candidates_quantization_cfg[0].activation_quantization_cfg)
 
-                # TODO: handle is_weights_quantization_enabled call - not only for kernel,
-                #  this is weights not in mixed precision. need to think on all cases
-                if node.is_weights_quantization_enabled():
+                if node.has_any_weight_attr_to_quantize():
                     # If we are here, this means that we are in activation-only mixed-precision
-                    # (i.e., weights are quantized with fixed bitwidth or not quantized)
-                    # and that this node doesn't have activations to quantize
+                    # (i.e., kernel is quantized with fixed bitwidth or not quantized)
+                    # and that this node doesn't have activations to quantize.
                     assert len(node.candidates_quantization_cfg) > 0, \
                         "Node need to have at least one quantization configuration in order to quantize its activation"
                     node.final_weights_quantization_cfg = (

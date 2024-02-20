@@ -142,7 +142,7 @@ def compute_total_bops(graph: Graph, fw_info: FrameworkInfo, fw_impl: FrameworkI
 
     # Go over all configurable nodes that have kernels.
     for n in graph.get_topo_sorted_nodes():
-        if n.has_weights_to_quantize(fw_info):
+        if n.has_kernel_weight_to_quantize(fw_info):
             # If node doesn't have weights then its MAC count is 0, and we shouldn't consider it in the BOPS count.
             incoming_edges = graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
             assert len(incoming_edges) == 1, f"Can't compute BOPS metric for node {n.name} with multiple inputs."
