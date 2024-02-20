@@ -126,11 +126,16 @@ class BaseNode:
             # if we have a final configuration, then we only care to check if it enables weights quantization
             return self.final_weights_quantization_cfg.get_attr_config(attr_name).enable_weights_quantization
 
-        for qc in self.candidates_quantization_cfg:
-            assert (self.candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(attr_name)
-                    .enable_weights_quantization == qc.weights_quantization_cfg.enable_weights_quantization)
-        return (self.candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(attr_name)
-                .enable_weights_quantization)
+        for attr in self.get_node_weights_attributes():
+            attr_candidates = self.get_all_weights_attr_candidates(attr)
+            candidates_enable_quantization = [c.enable_weights_quantization for c in attr_candidates]
+            if len(candidates_enable_quantization) > 0 and len(set(candidates_enable_quantization)) > 1:
+                Logger.error(f"Weights attribute {attr} in node {self.name} has multiple quantization candidates "
+                             f"configuration with incompatible values.")
+            if all(candidates_enable_quantization):
+                return True
+
+        return False
 
     def __repr__(self):
         """
@@ -386,8 +391,7 @@ class BaseNode:
 
         """
         for attr in self.get_node_weights_attributes():
-            attr_candidates = self.get_all_weights_attr_candidates(attr)
-            if any([c.enable_weights_quantization for c in attr_candidates]):
+            if self.is_weights_quantization_enabled(attr):
                 return True
 
         return False
