@@ -98,8 +98,7 @@ class ModelCollector:
         self.fw_info = fw_info
 
         # Assign statisitcs collectors to nodes
-        nodes_sorted = topological_sort(graph)
-        for n in nodes_sorted:
+        for n in graph.get_topo_sorted_nodes():
             sc = create_stats_collector_for_node(n, fw_info=fw_info)  # Get static collector for the node
             # If we use bias correction, and the node has coefficients to quantize, we need to make sure
             # its previous nodes' tensors are consistent with this node.
