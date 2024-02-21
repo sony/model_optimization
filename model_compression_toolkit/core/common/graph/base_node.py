@@ -125,14 +125,13 @@ class BaseNode:
             # if we have a final configuration, then we only care to check if it enables weights quantization
             return self.final_weights_quantization_cfg.get_attr_config(attr_name).enable_weights_quantization
 
-        for attr in self.get_node_weights_attributes():
-            attr_candidates = self.get_all_weights_attr_candidates(attr)
-            candidates_enable_quantization = [c.enable_weights_quantization for c in attr_candidates]
-            if len(candidates_enable_quantization) > 0 and len(set(candidates_enable_quantization)) > 1:
-                Logger.error(f"Weights attribute {attr} in node {self.name} has multiple quantization candidates "
-                             f"configuration with incompatible values.")
-            if all(candidates_enable_quantization):
-                return True
+        attr_candidates = self.get_all_weights_attr_candidates(attr_name)
+        candidates_enable_quantization = [c.enable_weights_quantization for c in attr_candidates]
+        if len(candidates_enable_quantization) > 0 and len(set(candidates_enable_quantization)) > 1:
+            Logger.error(f"Weights attribute {attr_name} in node {self.name} has multiple quantization candidates "
+                         f"configuration with incompatible values.")
+        if all(candidates_enable_quantization):
+            return True
 
         return False
 
@@ -510,7 +509,7 @@ class BaseNode:
         """
         # This method is only used for Mixed precision purposes
         kernel_attr = fw_info.get_kernel_op_attributes(self.type)
-        if kernel_attr is not None:
+        if kernel_attr[0] is not None:
             kernel_attr = kernel_attr[0]
         else:
             return False

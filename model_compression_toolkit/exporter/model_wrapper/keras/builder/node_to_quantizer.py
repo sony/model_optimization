@@ -59,7 +59,7 @@ def get_inferable_quantizer_kwargs(node_qc: BaseNodeQuantizationConfig,
             return {qi_keras_consts.NUM_BITS: attr_node_qc.weights_n_bits,
                     qi_keras_consts.THRESHOLD: list(attr_node_qc.weights_quantization_params[THRESHOLD].flatten()),
                     qi_keras_consts.PER_CHANNEL: attr_node_qc.weights_per_channel_threshold,
-                    qi_keras_consts.CHANNEL_AXIS: attr_node_qc.weights_channels_axis,
+                    qi_keras_consts.CHANNEL_AXIS: attr_node_qc.weights_channels_axis[0],  # output channel axis
                     qi_keras_consts.INPUT_RANK: len(attr_node_qc.weights_quantization_params[THRESHOLD].shape)}
 
         elif quantization_method in [QuantizationMethod.UNIFORM]:
@@ -67,7 +67,7 @@ def get_inferable_quantizer_kwargs(node_qc: BaseNodeQuantizationConfig,
                     qi_keras_consts.PER_CHANNEL: attr_node_qc.weights_per_channel_threshold,
                     qi_keras_consts.MIN_RANGE: list(attr_node_qc.weights_quantization_params[RANGE_MIN].flatten()),
                     qi_keras_consts.MAX_RANGE: list(attr_node_qc.weights_quantization_params[RANGE_MAX].flatten()),
-                    qi_keras_consts.CHANNEL_AXIS: attr_node_qc.weights_channels_axis,
+                    qi_keras_consts.CHANNEL_AXIS: attr_node_qc.weights_channels_axis[0],  # output channel axis
                     qi_keras_consts.INPUT_RANK: len(attr_node_qc.weights_quantization_params[RANGE_MIN].shape)}
 
         elif quantization_method in [QuantizationMethod.LUT_SYM_QUANTIZER, QuantizationMethod.LUT_POT_QUANTIZER]:
@@ -75,7 +75,7 @@ def get_inferable_quantizer_kwargs(node_qc: BaseNodeQuantizationConfig,
                     qi_keras_consts.PER_CHANNEL: attr_node_qc.weights_per_channel_threshold,
                     qi_keras_consts.LUT_VALUES: list(attr_node_qc.weights_quantization_params[LUT_VALUES].flatten()),
                     qi_keras_consts.THRESHOLD: list(attr_node_qc.weights_quantization_params[SCALE_PER_CHANNEL].flatten()),
-                    qi_keras_consts.CHANNEL_AXIS: attr_node_qc.weights_channels_axis,
+                    qi_keras_consts.CHANNEL_AXIS: attr_node_qc.weights_channels_axis[0],  # output channel axis
                     # TODO: how to pass multiplier nbits and eps for a specific node?
                     qi_keras_consts.INPUT_RANK: len(attr_node_qc.weights_quantization_params[SCALE_PER_CHANNEL].shape)}
 

@@ -183,18 +183,28 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
     """
 
     candidates = []
+    if mixed_precision_enable:
+        for op_cfg in node_qc_options.quantization_config_list:
+            candidate_qc = copy.deepcopy(qc)
+            candidates.append(_create_node_single_candidate_qc(candidate_qc,
+                                                               fw_info,
+                                                               weight_channel_axis,
+                                                               op_cfg,
+                                                               node_attrs_list))
 
-    # here we set all configs provided in the TPC op configs options, whether this is
-    # intended for mixed precision or not
-    for op_cfg in node_qc_options.quantization_config_list:
-        candidate_qc = copy.deepcopy(qc)
-        candidates.append(_create_node_single_candidate_qc(candidate_qc,
+        # sorting the candidates by kernel attribute weights number of bits first and then by activation number of bits
+        # (in reversed order), since only kernel attribute is quantized in mixed precision.
+        # we don't need to sort a node that does not represents a kernel op.
+        kernel_attr = fw_info.get_kernel_op_attributes(node_type)[0]
+        if kernel_attr is not None:
+            candidates.sort(key=lambda c: (c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
+                                           c.activation_quantization_cfg.activation_n_bits), reverse=True)
+
+    else:
+        candidates.append(_create_node_single_candidate_qc(qc,
                                                            fw_info,
                                                            weight_channel_axis,
-                                                           op_cfg,
+                                                           node_qc_options.base_config,
                                                            node_attrs_list))
-
-    # TODO: make sure to handle multiple config options for MP later (including sorting them)
-    #  and remove unnecessary arguments to this method
 
     return candidates

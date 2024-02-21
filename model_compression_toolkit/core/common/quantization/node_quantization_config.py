@@ -399,13 +399,46 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         # Initialize a quantization configuration for each of the node's attributes
         self.attributes_config_mapping = {}
         for attr in node_attrs_list:
-            attr_cfg = op_cfg.attr_weights_configs_mapping.get(attr, op_cfg.default_weight_attr_config)
+            # In some frameworks the attribute name is composed of the framework attribute name and the layer name,
+            # therefore, we need to look for the attribute in the op_cfg that is contained in the node attribute's name.
+            attrs_included_in_name = {k: v for k, v in op_cfg.attr_weights_configs_mapping.items() if k in attr}
+            if len(attrs_included_in_name) > 1:
+                Logger.error(f"Found multiple attribute in TPC OpConfig that are contained "
+                             f"in the attribute name '{attr}'."
+                             f"Please fix the TPC attribute names mapping such that each operator's attribute would "
+                             f"have a unique matching name.")
+            if len(attrs_included_in_name) == 0:
+                attr_cfg = op_cfg.default_weight_attr_config
+            else:
+                attr_cfg = list(attrs_included_in_name.values())[0]
+
             self.attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
                                                                                  weights_attr_cfg=attr_cfg,
                                                                                  weights_channels_axis=weights_channels_axis)
 
     def get_attr_config(self, attr_name: str) -> WeightsAttrQuantizationConfig:
-        attr_cfg = self.attributes_config_mapping.get(attr_name)
+        """
+        Returns a weights attribute config for an attribute that contains the given name.
+        If multiple attributes that contain the given name are found - looking for the exact name, otherwise,
+        fails with an error message.
+        If none attributes that contain the given name are found - fails with an error message.
+
+        Args:
+            attr_name: The name of the attribute to get its quantization configuration.
+
+        Returns: An attribute quantization configuration.
+
+        """
+        attrs_with_name = {k: v for k, v in self.attributes_config_mapping.items() if attr_name in k}
+        attr_cfg = None
+        if len(attrs_with_name) == 1:
+            attr_cfg = [v for v in attrs_with_name.values()][0]
+        elif len(attrs_with_name) > 1:
+            Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
+                           f"{list(attrs_with_name.keys())}. Looking for an attributes with the exact name.")
+            # If no attribute with the exact name then an error would be thrown
+            attr_cfg = self.attributes_config_mapping.get(attr_name)
+
         if attr_cfg is None:
             Logger.error(f"Weight attribute {attr_name} config could not be found.")
 
@@ -436,4 +469,4 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         return hash((self.min_threshold,
                      self.simd_size,
                      self.weights_second_moment_correction,
-                     self.attributes_config_mapping))
+                     frozenset(self.attributes_config_mapping)))

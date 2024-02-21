@@ -284,8 +284,9 @@ def _bops_kpi(mp_cfg: List[int],
             node_mac = fw_impl.get_node_mac_operations(n, fw_info)
 
             node_qc = n.candidates_quantization_cfg[_get_node_cfg_idx(n, mp_cfg, mp_nodes)]
-            node_weights_nbits = node_qc.weights_quantization_cfg.weights_n_bits if \
-                node_qc.weights_quantization_cfg.enable_weights_quantization else FLOAT_BITWIDTH
+            kenrel_node_qc = node_qc.weights_quantization_cfg.get_attr_config(fw_info.get_kernel_op_attributes(n.type)[0])
+            node_weights_nbits = kenrel_node_qc.weights_n_bits if \
+                kenrel_node_qc.enable_weights_quantization else FLOAT_BITWIDTH
             input_activation_nbits = input_activation_node_cfg.activation_quantization_cfg.activation_n_bits if \
                 input_activation_node_cfg.activation_quantization_cfg.enable_activation_quantization else FLOAT_BITWIDTH
 
