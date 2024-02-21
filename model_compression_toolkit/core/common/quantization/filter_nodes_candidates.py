@@ -15,7 +15,6 @@
 import copy
 from typing import List
 
-from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 
 from model_compression_toolkit.core.common import Graph, BaseNode
@@ -73,7 +72,7 @@ def _filter_bit_method_dups(candidates: List[CandidateNodeQuantizationConfig],
     return final_candidates
 
 
-def filter_node_candidates(node: BaseNode, fw_info: FrameworkInfo) -> List[CandidateNodeQuantizationConfig]:
+def filter_node_candidates(node: BaseNode, fw_info) -> List[CandidateNodeQuantizationConfig]:
     """
     Updates a node's candidates configuration list.
     If the node's weights quantization is disabled (or it only has activations to quantize), then the updated list

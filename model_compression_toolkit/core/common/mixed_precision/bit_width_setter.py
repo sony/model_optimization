@@ -17,7 +17,6 @@ import copy
 
 from typing import Any, List
 
-from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.logger import Logger
 
@@ -85,7 +84,7 @@ def set_bit_widths(mixed_precision_enable: bool,
 def _get_node_qc_by_bit_widths(node: BaseNode,
                                bit_width_cfg: List[int],
                                node_index_in_graph: int,
-                               fw_info: FrameworkInfo) -> Any:
+                               fw_info) -> Any:
     """
     Get the node's quantization configuration that
     matches to the bit width index as in the MP configuration bit_width_cfg.
@@ -123,7 +122,7 @@ def _get_node_qc_by_bit_widths(node: BaseNode,
 def _set_node_final_qc(bit_width_cfg: List[int],
                        node: BaseNode,
                        node_index_in_graph: int,
-                       fw_info: FrameworkInfo):
+                       fw_info):
     """
     Get the node's quantization configuration that
     matches to the bit width index as in the MP configuration bit_width_cfg, and use it to finalize the node's

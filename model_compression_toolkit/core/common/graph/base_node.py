@@ -18,7 +18,6 @@ from typing import Dict, Any, Tuple, List
 
 import numpy as np
 
-from model_compression_toolkit import FrameworkInfo
 from model_compression_toolkit.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
     ACTIVATION_NBITS_ATTRIBUTE, FP32_BYTES_PER_PARAMETER
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
@@ -500,7 +499,7 @@ class BaseNode:
                              and not seen_candidates.add(candidate.activation_quantization_cfg)]
         return unique_candidates
 
-    def has_kernel_quantization_enabled_candidate(self, fw_info: FrameworkInfo) -> bool:
+    def has_kernel_quantization_enabled_candidate(self, fw_info) -> bool:
         """
         Checks whether the node has quantization configuration candidates that enable kenrel attribute weights quantization.
 
