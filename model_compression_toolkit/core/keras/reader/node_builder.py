@@ -62,6 +62,29 @@ def get_kwargs2index(tf_func: Callable) -> Dict[str, int]:
         return {}
 
 
+def _extract_keras_attr_name(attr_name):
+    """
+    Keras weight attributes names appear in a certain patters - "layer_type_name/attribute_variable_name:idx".
+    In order to enable simple accessing for the layer's attribute, we want to save the weight in the node with
+    just the layer's variable name.
+    E.g., "conv2d/kernel:0" --> "kernel".
+
+    Args:
+        attr_name: A Keras attribute name.
+
+    Returns: A decomposed attribute name.
+
+    """
+    if '/' not in attr_name or ':' not in attr_name:
+        Logger.critical(f"Expecting a Keras layer attribute name to have a characters '/' and ':', "
+                        f"but name '{attr_name}' is not as expected.")
+
+    clean_name = attr_name.split('/')[1]
+    clean_name = clean_name.split(":")[0]
+
+    return clean_name
+
+
 def build_node(node: KerasNode,
                node_name_to_node: dict) -> BaseNode:
     """
@@ -82,7 +105,12 @@ def build_node(node: KerasNode,
     op_call_args = node.call_args
     op_call_kwargs = node.call_kwargs
     layer_class = type(keras_layer)  # class path to instantiating it in back2framework.
-    weights = {v.name: v.numpy() for v in keras_layer.weights}  # layer's weights
+    weights = {_extract_keras_attr_name(v.name): v.numpy() for v in keras_layer.weights}  # layer's weights
+
+    # Verifying that all decomposed weights names exists in the keras layer
+    for w in weights:
+        if not hasattr(keras_layer, w):
+            Logger.critical(f"Layer {keras_layer.name} does not have attribute {w}.")
 
     # If it's a node representing a reused layer, several nodes will contain the same layer instance.
     # Thus, the first time a node of a reused layer is being created, it's being build as a node of a non-reused layer,
