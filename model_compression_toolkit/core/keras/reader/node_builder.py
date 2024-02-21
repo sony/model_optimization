@@ -75,11 +75,8 @@ def _extract_keras_attr_name(attr_name: str) -> str:
     Returns: A decomposed attribute name.
 
     """
-    if '/' not in attr_name or ':' not in attr_name:
-        Logger.critical(f"Expecting a Keras layer attribute name to have a characters '/' and ':', "
-                        f"but name '{attr_name}' is not as expected.")
 
-    clean_name = attr_name.split('/')[1]
+    clean_name = attr_name.split('/')[-1]
     clean_name = clean_name.split(":")[0]
 
     return clean_name
