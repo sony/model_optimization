@@ -62,7 +62,7 @@ def get_kwargs2index(tf_func: Callable) -> Dict[str, int]:
         return {}
 
 
-def _extract_keras_attr_name(attr_name):
+def _extract_keras_attr_name(attr_name: str) -> str:
     """
     Keras weight attributes names appear in a certain patters - "layer_type_name/attribute_variable_name:idx".
     In order to enable simple accessing for the layer's attribute, we want to save the weight in the node with
