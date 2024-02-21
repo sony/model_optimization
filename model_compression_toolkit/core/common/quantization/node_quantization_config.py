@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-from typing import Callable, Any, List, Tuple
+from typing import Callable, Any, List, Tuple, Union
 
 import numpy as np
 
@@ -398,25 +398,33 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
 
         # Initialize a quantization configuration for each of the node's attributes
         self.attributes_config_mapping = {}
+        self.pos_attributes_config_mapping = {}
         for attr in node_attrs_list:
-            # In some frameworks the attribute name is composed of the framework attribute name and the layer name,
-            # therefore, we need to look for the attribute in the op_cfg that is contained in the node attribute's name.
-            attrs_included_in_name = {k: v for k, v in op_cfg.attr_weights_configs_mapping.items() if k in attr}
-            if len(attrs_included_in_name) > 1:
-                Logger.error(f"Found multiple attribute in TPC OpConfig that are contained "
-                             f"in the attribute name '{attr}'."
-                             f"Please fix the TPC attribute names mapping such that each operator's attribute would "
-                             f"have a unique matching name.")
-            if len(attrs_included_in_name) == 0:
-                attr_cfg = op_cfg.default_weight_attr_config
+            if isinstance(attr, int):
+                # this is a positional attribute, so it needs to be handled separately.
+                # we assume that a positional attribute is quantized with the default configuration provided in the TPC.
+                self.pos_attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
+                                                                                         weights_attr_cfg=op_cfg.default_weight_attr_config,
+                                                                                         weights_channels_axis=weights_channels_axis)
             else:
-                attr_cfg = list(attrs_included_in_name.values())[0]
+                # In some frameworks the attribute name is composed of the framework attribute name and the layer name,
+                # therefore, we need to look for the attribute in the op_cfg that is contained in the node attribute's name.
+                attrs_included_in_name = {k: v for k, v in op_cfg.attr_weights_configs_mapping.items() if k in attr}
+                if len(attrs_included_in_name) > 1:
+                    Logger.error(f"Found multiple attribute in TPC OpConfig that are contained "
+                                 f"in the attribute name '{attr}'."
+                                 f"Please fix the TPC attribute names mapping such that each operator's attribute would "
+                                 f"have a unique matching name.")
+                if len(attrs_included_in_name) == 0:
+                    attr_cfg = op_cfg.default_weight_attr_config
+                else:
+                    attr_cfg = list(attrs_included_in_name.values())[0]
 
-            self.attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
-                                                                                 weights_attr_cfg=attr_cfg,
-                                                                                 weights_channels_axis=weights_channels_axis)
+                self.attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
+                                                                                     weights_attr_cfg=attr_cfg,
+                                                                                     weights_channels_axis=weights_channels_axis)
 
-    def get_attr_config(self, attr_name: str) -> WeightsAttrQuantizationConfig:
+    def get_attr_config(self, attr_name: Union[str, int]) -> WeightsAttrQuantizationConfig:
         """
         Returns a weights attribute config for an attribute that contains the given name.
         If multiple attributes that contain the given name are found - looking for the exact name, otherwise,
@@ -429,22 +437,26 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         Returns: An attribute quantization configuration.
 
         """
-        attrs_with_name = {k: v for k, v in self.attributes_config_mapping.items() if attr_name in k}
-        attr_cfg = None
-        if len(attrs_with_name) == 1:
-            attr_cfg = [v for v in attrs_with_name.values()][0]
-        elif len(attrs_with_name) > 1:
-            Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
-                           f"{list(attrs_with_name.keys())}. Looking for an attributes with the exact name.")
-            # If no attribute with the exact name then an error would be thrown
-            attr_cfg = self.attributes_config_mapping.get(attr_name)
+        if isinstance(attr_name, int):
+            # this is a positional attribute
+            attr_cfg = self.pos_attributes_config_mapping.get(attr_name)
+        else:
+            attrs_with_name = {k: v for k, v in self.attributes_config_mapping.items() if attr_name in k}
+            attr_cfg = None
+            if len(attrs_with_name) == 1:
+                attr_cfg = [v for v in attrs_with_name.values()][0]
+            elif len(attrs_with_name) > 1:
+                Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
+                               f"{list(attrs_with_name.keys())}. Looking for an attributes with the exact name.")
+                # If no attribute with the exact name then an error would be thrown
+                attr_cfg = self.attributes_config_mapping.get(attr_name)
 
         if attr_cfg is None:
             Logger.error(f"Weight attribute '{attr_name}' config could not be found.")
 
         return attr_cfg
 
-    def set_attr_config(self, attr_name: str, attr_qc: WeightsAttrQuantizationConfig):
+    def set_attr_config(self, attr_name: Union[str, int], attr_qc: WeightsAttrQuantizationConfig):
         """
         Adding a new attribute with quantization configuration to the node's weights configurations mapping.
 
@@ -453,7 +465,10 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
             attr_qc: The quantization configuration to set.
 
         """
-        self.attributes_config_mapping[attr_name] = attr_qc
+        if isinstance(attr_name, int):
+            self.pos_attributes_config_mapping[attr_name] = attr_qc
+        else:
+            self.attributes_config_mapping[attr_name] = attr_qc
 
     def __eq__(self, other: Any) -> bool:
         """
@@ -474,10 +489,14 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
             self.weights_bias_correction == other.weights_bias_correction and \
             self.attributes_config_mapping.keys() == other.attributes_config_mapping.keys() and \
             all([self.attributes_config_mapping[k] == other.attributes_config_mapping[k]
-                 for k in self.attributes_config_mapping.keys()])
+                 for k in self.attributes_config_mapping.keys()]) and \
+            self.pos_attributes_config_mapping.keys() == other.pos_attributes_config_mapping.keys() and \
+            all([self.pos_attributes_config_mapping[k] == other.pos_attributes_config_mapping[k]
+                 for k in self.pos_attributes_config_mapping.keys()])
 
     def __hash__(self):
         return hash((self.min_threshold,
                      self.simd_size,
                      self.weights_second_moment_correction,
-                     frozenset(self.attributes_config_mapping)))
+                     frozenset(self.attributes_config_mapping),
+                     frozenset(self.pos_attributes_config_mapping)))

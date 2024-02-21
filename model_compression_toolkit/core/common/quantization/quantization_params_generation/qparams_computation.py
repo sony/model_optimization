@@ -71,6 +71,7 @@ def calculate_quantization_params(graph: Graph,
                         output_channels_axis = None
                     weights_params = get_weights_qparams(n.get_weights_by_keys(attr),
                                                          candidate_qc.weights_quantization_cfg,
+                                                         attr_cfg,
                                                          output_channels_axis)
                     # TODO: Verify that it updates on the reference as we expect (changes the attribute config inside the candidates list)
                     attr_cfg.set_weights_quantization_param(weights_params)
