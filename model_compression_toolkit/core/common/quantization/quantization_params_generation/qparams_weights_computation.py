@@ -19,8 +19,8 @@ import numpy as np
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig
-
+from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
+    WeightsAttrQuantizationConfig
 
 # If the quantization config does not contain kernel channel mapping or the weights
 # quantization is not per-channel, we use a dummy channel mapping.
@@ -29,6 +29,7 @@ dummy_channel_mapping = DefaultDict(default_value=(None, None))
 
 def get_weights_qparams(kernel: np.ndarray,
                         weights_quant_config: NodeWeightsQuantizationConfig,
+                        attr_quant_config: WeightsAttrQuantizationConfig,
                         output_channels_axis: int) -> Dict[Any, Any]:
     """
     Compute thresholds to quantize a kernel according to a NodeWeightsQuantizationConfig
@@ -37,25 +38,24 @@ def get_weights_qparams(kernel: np.ndarray,
     Args:
         kernel: Kernel to compute the quantization thresholds to.
         weights_quant_config: Weights quantization configuration to define how the thresholds are computed.
+        attr_quant_config: A specific weights attribute quantization configuration to get its params.
         output_channels_axis: Index of the kernel output channels dimension.
 
     Returns:
         A dictionary with the quantization threshold of the kernel.
     """
-    if weights_quant_config.weights_quantization_params_fn is not None:
-        weights_params = weights_quant_config.weights_quantization_params_fn(kernel,
-                                                                             p=weights_quant_config.l_p_value,
-                                                                             n_bits=weights_quant_config.weights_n_bits,
-                                                                             per_channel=weights_quant_config.weights_per_channel_threshold and output_channels_axis is not None,
-                                                                             channel_axis=output_channels_axis,
-                                                                             min_threshold=weights_quant_config.min_threshold,
-                                                                             quant_error_method=weights_quant_config.weights_error_method)
+    if attr_quant_config.weights_quantization_params_fn is not None:
+        weights_params = attr_quant_config.weights_quantization_params_fn(kernel,
+                                                                          p=attr_quant_config.l_p_value,
+                                                                          n_bits=attr_quant_config.weights_n_bits,
+                                                                          per_channel=attr_quant_config.weights_per_channel_threshold and output_channels_axis is not None,
+                                                                          channel_axis=output_channels_axis,
+                                                                          min_threshold=weights_quant_config.min_threshold,
+                                                                          quant_error_method=attr_quant_config.weights_error_method)
     else:
         weights_params = {}
 
     return weights_params
-
-
 
 
 def _get_kernel_channels_mapping(fw_info:FrameworkInfo,

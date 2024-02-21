@@ -440,9 +440,20 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
             attr_cfg = self.attributes_config_mapping.get(attr_name)
 
         if attr_cfg is None:
-            Logger.error(f"Weight attribute {attr_name} config could not be found.")
+            Logger.error(f"Weight attribute '{attr_name}' config could not be found.")
 
         return attr_cfg
+
+    def set_attr_config(self, attr_name: str, attr_qc: WeightsAttrQuantizationConfig):
+        """
+        Adding a new attribute with quantization configuration to the node's weights configurations mapping.
+
+        Args:
+            attr_name: The name of the attribute to set a quantization configuration to.
+            attr_qc: The quantization configuration to set.
+
+        """
+        self.attributes_config_mapping[attr_name] = attr_qc
 
     def __eq__(self, other: Any) -> bool:
         """

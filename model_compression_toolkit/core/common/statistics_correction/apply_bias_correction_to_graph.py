@@ -14,9 +14,12 @@
 # ==============================================================================
 import copy
 
+from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.target_platform import AttributeQuantizationConfig
 
 
 def apply_bias_correction_to_graph(graph_to_apply_bias_correction: Graph,
@@ -45,12 +48,13 @@ def apply_bias_correction_to_graph(graph_to_apply_bias_correction: Graph,
             # If a kernel was quantized and weights bias correction is enabled in n.quantization_cfg,
             # a bias correction term was calculated during model preparation, and is used now in the node's bias term.
             if n.final_weights_quantization_cfg.weights_bias_correction:
-                _apply_bias_correction_to_node(n, fw_impl)
+                _apply_bias_correction_to_node(n, fw_impl, core_config)
     return graph
 
 
 def _apply_bias_correction_to_node(node: BaseNode,
-                                   fw_impl: FrameworkImplementation):
+                                   fw_impl: FrameworkImplementation,
+                                   core_config: CoreConfig):
     """
     Set new bias to node using the bias-correction term that is stored in the
     final weights quantization configuration.
@@ -58,6 +62,7 @@ def _apply_bias_correction_to_node(node: BaseNode,
     Args:
         node: Node to set its corrected bias after bias-correction.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
+        core_config: CoreConfig containing parameters of how the model should be quantized.
 
     """
     correction = node.final_weights_quantization_cfg.bias_corrected
@@ -67,6 +72,13 @@ def _apply_bias_correction_to_node(node: BaseNode,
     if bias is not None:  # If the layer has bias, we subtract the correction from original bias
         node.set_weights_by_keys(fw_impl.constants.BIAS, node.get_weights_by_keys(fw_impl.constants.BIAS) - correction)
 
-    else:  # It the layer has no bias, we consider it as if it has and its value is 0.
+    else:
+        # If the layer has no bias, we consider it as if it has and its value is 0 and add a "dummy" attribute
+        # configuration with disabled quantization.
         node.set_weights_by_keys(fw_impl.constants.BIAS, - correction)
         node.framework_attr[fw_impl.constants.USE_BIAS] = True  # Mark the use_bias attribute of the node.
+        node.final_weights_quantization_cfg.set_attr_config(fw_impl.constants.BIAS,
+                                                            WeightsAttrQuantizationConfig(
+                                                                core_config.quantization_config,
+                                                                AttributeQuantizationConfig(
+                                                                    enable_weights_quantization=False)))

@@ -19,6 +19,24 @@ from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quan
     get_weights_quantizer_for_node, get_activations_quantizer_for_node
 
 
+def _extract_keras_attr_name(attr_name: str) -> str:
+    """
+    Keras weight attributes names appear in a certain patters - "layer_type_name/attribute_variable_name:idx".
+    In order to map between a layer attribute to its quantizer, we need to extract the actual attribute name.
+    E.g., "conv2d/kernel:0" --> "kernel".
+
+    Args:
+        attr_name: A Keras attribute name.
+
+    Returns: A decomposed attribute name.
+    """
+
+    clean_name = attr_name.split('/')[-1]
+    clean_name = clean_name.split(":")[0]
+
+    return clean_name
+
+
 def get_quantization_quantizers(node: BaseNode) -> Tuple[Dict, List]:
     """
     Create quantizers to wrap a layer for its corresponding node.
@@ -36,7 +54,8 @@ def get_quantization_quantizers(node: BaseNode) -> Tuple[Dict, List]:
     for attr in node.get_node_weights_attributes():
         if node.is_weights_quantization_enabled(attr):
             weight_quantizer = get_weights_quantizer_for_node(node, attr)
-            weight_quantizers[attr] = weight_quantizer
+            var_attr_name = _extract_keras_attr_name(attr)
+            weight_quantizers[var_attr_name] = weight_quantizer
 
     if node.is_activation_quantization_enabled():
         num_of_outputs = len(node.output_shape) if isinstance(node.output_shape, list) else 1
