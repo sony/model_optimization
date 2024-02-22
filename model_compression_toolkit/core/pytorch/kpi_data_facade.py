@@ -38,7 +38,7 @@ if FOUND_TORCH:
 
     def pytorch_kpi_data(in_model: Module,
                          representative_data_gen: Callable,
-                         core_config: CoreConfig = CoreConfig(),
+                         core_config: CoreConfig = CoreConfig(), # TODO: Why pytorch is initilized and keras not?
                          fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                          target_platform_capabilities: TargetPlatformCapabilities = PYTORCH_DEFAULT_TPC) -> KPI:
         """
