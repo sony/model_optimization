@@ -34,6 +34,7 @@ from model_compression_toolkit.core.common.statistics_correction.statistics_corr
     statistics_correction_runner
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
+from model_compression_toolkit.core.keras.constants import KERNEL
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 
@@ -292,10 +293,10 @@ class BaseChangeQuantizationMethodQCAttrTest(BaseKerasFeatureNetworkTest):
             for node in filtered_nodes:
                 if node.final_weights_quantization_cfg is not None and hasattr(self.action,
                                                                                'weights_quantization_method'):
-                    self.unit_test.assertTrue(node.final_weights_quantization_cfg.weights_quantization_method
-                                              == self.action.weights_quantization_method)
+                    self.unit_test.assertTrue(node.final_weights_quantization_cfg.get_attr_config(KERNEL)
+                                              .weights_quantization_method == self.action.weights_quantization_method)
                 elif node.final_activation_quantization_cfg is not None and hasattr(self.action,
-                                                                                  'activation_quantization_method'):
+                                                                                    'activation_quantization_method'):
                     self.unit_test.assertTrue(node.final_activation_quantization_cfg.activation_quantization_method
                                               == self.action.activation_quantization_method)
                 else:
@@ -304,8 +305,9 @@ class BaseChangeQuantizationMethodQCAttrTest(BaseKerasFeatureNetworkTest):
                             self.unit_test.assertTrue(nqc.activation_quantization_cfg.activation_quantization_method
                                                       == self.action.activation_quantization_method)
                         if hasattr(self.action, 'weights_quantization_method'):
-                            self.unit_test.assertTrue(nqc.weights_quantization_cfg.weights_quantization_method
-                                                      == self.action.weights_quantization_method)
+                            self.unit_test.assertTrue(nqc.weights_quantization_cfg.get_attr_config(KERNEL)
+                                                      .weights_quantization_method ==
+                                                      self.action.weights_quantization_method)
 
 
 class ChangeCandidatesActivationQuantizationMethodQCAttrTest(BaseChangeQuantizationMethodQCAttrTest):
@@ -321,7 +323,8 @@ class ChangeCandidatesWeightsQuantizationMethodQCAttrTest(BaseChangeQuantization
 
     def __init__(self, unit_test):
         edit_filter = NodeTypeFilter(layers.Conv2D)
-        action = ChangeCandidatesWeightsQuantizationMethod(weights_quantization_method=QuantizationMethod.UNIFORM)
+        action = ChangeCandidatesWeightsQuantizationMethod(attr_name=KERNEL,
+                                                           weights_quantization_method=QuantizationMethod.UNIFORM)
         prepare_graph_func = prepare_graph_for_first_network_editor
         super().__init__(unit_test, edit_filter=edit_filter, action=action, prepare_graph_func=prepare_graph_func)
 
@@ -339,6 +342,7 @@ class ChangeFinalsWeightsQuantizationMethodQCAttrTest(BaseChangeQuantizationMeth
 
     def __init__(self, unit_test):
         edit_filter = NodeTypeFilter(layers.Conv2D)
-        action = ChangeFinalWeightsQuantizationMethod(weights_quantization_method=QuantizationMethod.UNIFORM)
+        action = ChangeFinalWeightsQuantizationMethod(attr_name=KERNEL,
+                                                      weights_quantization_method=QuantizationMethod.UNIFORM)
         prepare_graph_func = prepare_graph_for_second_network_editor
         super().__init__(unit_test, edit_filter=edit_filter, action=action, prepare_graph_func=prepare_graph_func)

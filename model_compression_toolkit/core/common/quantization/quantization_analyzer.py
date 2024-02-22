@@ -63,7 +63,7 @@ def analyzer_graph(node_analyze_func: Callable,
         # bias correction is relevant only for nodes with kernel op.
         # TODO: factor tensor marking in case of bias correction.
         kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
-        if qc.weights_bias_correction and kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr[0]):
+        if qc.weights_bias_correction and kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr):
             for ie in graph.incoming_edges(n):
                 input_node = ie.source_node
                 create_tensor2node(graph,

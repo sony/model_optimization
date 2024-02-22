@@ -325,7 +325,7 @@ class WeightsAttrQuantizationConfig:
                                                                                     p=self.l_p_value,
                                                                                     n_bits=self.weights_n_bits,
                                                                                     per_channel=self.weights_per_channel_threshold and self.weights_channels_axis is not None,
-                                                                                    channel_axis=self.weights_channels_axis,
+                                                                                    channel_axis=self.weights_channels_axis[0],  # output channel axis
                                                                                     min_threshold=min_threshold))
         else:
             self.set_weights_quantization_param({})
@@ -469,6 +469,12 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
             self.pos_attributes_config_mapping[attr_name] = attr_qc
         else:
             self.attributes_config_mapping[attr_name] = attr_qc
+
+    def has_attribute_config(self, attr_name: Union[str, int]) -> bool:
+        if isinstance(attr_name, int):
+            return self.pos_attributes_config_mapping.get(attr_name) is not None
+        else:
+            return self.attributes_config_mapping.get(attr_name) is not None
 
     def __eq__(self, other: Any) -> bool:
         """

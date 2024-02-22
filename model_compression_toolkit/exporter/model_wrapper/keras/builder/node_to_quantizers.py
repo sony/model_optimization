@@ -54,8 +54,9 @@ def get_quantization_quantizers(node: BaseNode) -> Tuple[Dict, List]:
     for attr in node.get_node_weights_attributes():
         if node.is_weights_quantization_enabled(attr):
             weight_quantizer = get_weights_quantizer_for_node(node, attr)
-            var_attr_name = _extract_keras_attr_name(attr)
-            weight_quantizers[var_attr_name] = weight_quantizer
+            # var_attr_name = _extract_keras_attr_name(attr)
+            # weight_quantizers[var_attr_name] = weight_quantizer
+            weight_quantizers[attr] = weight_quantizer
 
     if node.is_activation_quantization_enabled():
         num_of_outputs = len(node.output_shape) if isinstance(node.output_shape, list) else 1

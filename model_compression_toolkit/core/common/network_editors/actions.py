@@ -389,7 +389,7 @@ class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
                 weights_quantization_params_fn = get_weights_quantization_params_fn(self.weights_quantization_method)
 
                 attr_qc = qc.weights_quantization_cfg.get_attr_config(self.attr_name)
-                attr_qc.set_weights_quantization_params_fn(weights_quantization_params_fn, self.attr_name)
+                attr_qc.set_weights_quantization_params_fn(weights_quantization_params_fn)
 
                 weights_quantization_fn = get_weights_quantization_fn(self.weights_quantization_method)
 
