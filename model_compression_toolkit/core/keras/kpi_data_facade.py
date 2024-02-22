@@ -36,11 +36,11 @@ if FOUND_TF:
 
     KERAS_DEFAULT_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
-    def keras_kpi_data_experimental(in_model: Model,
-                                    representative_data_gen: Callable,
-                                    core_config: CoreConfig,
-                                    fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                                    target_platform_capabilities: TargetPlatformCapabilities = KERAS_DEFAULT_TPC) -> KPI:
+    def keras_kpi_data(in_model: Model,
+                       representative_data_gen: Callable,
+                       core_config: CoreConfig,
+                       fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
+                       target_platform_capabilities: TargetPlatformCapabilities = KERAS_DEFAULT_TPC) -> KPI:
         """
         Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
         Builds the computation graph from the given model and hw modeling, and uses it to compute the KPI data.
@@ -71,7 +71,7 @@ if FOUND_TF:
             Import MCT and call for KPI data calculation:
 
             >>> import model_compression_toolkit as mct
-            >>> kpi_data = mct.core.keras_kpi_data_experimental(model, repr_datagen)
+            >>> kpi_data = mct.core.keras_kpi_data(model, repr_datagen)
 
         """
 
@@ -91,7 +91,7 @@ if FOUND_TF:
 else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use this function.
-    def keras_kpi_data_experimental(*args, **kwargs):
+    def keras_kpi_data(*args, **kwargs):
         Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_kpi_data_experimental. '
+                        'when using keras_kpi_data. '
                         'Could not find Tensorflow package.')  # pragma: no cover
