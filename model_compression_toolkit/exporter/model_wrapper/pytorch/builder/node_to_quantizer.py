@@ -60,21 +60,23 @@ def get_weights_inferable_quantizer_kwargs(node_qc: NodeWeightsQuantizationConfi
         return {qi_inferable_quantizers_constants.NUM_BITS: attr_node_qc.weights_n_bits,
                 qi_inferable_quantizers_constants.THRESHOLD: attr_node_qc.weights_quantization_params[THRESHOLD].flatten().tolist(),
                 qi_inferable_quantizers_constants.PER_CHANNEL: attr_node_qc.weights_per_channel_threshold,
-                qi_inferable_quantizers_constants.CHANNEL_AXIS: attr_node_qc.weights_channels_axis}
+                qi_inferable_quantizers_constants.CHANNEL_AXIS: attr_node_qc.weights_channels_axis[0],  # output channel axis
+                }
 
     elif quantization_method in [QuantizationMethod.UNIFORM]:
         return {qi_inferable_quantizers_constants.NUM_BITS: attr_node_qc.weights_n_bits,
                 qi_inferable_quantizers_constants.PER_CHANNEL: attr_node_qc.weights_per_channel_threshold,
                 qi_inferable_quantizers_constants.MIN_RANGE: attr_node_qc.weights_quantization_params[RANGE_MIN].flatten().tolist(),
                 qi_inferable_quantizers_constants.MAX_RANGE: attr_node_qc.weights_quantization_params[RANGE_MAX].flatten().tolist(),
-                qi_inferable_quantizers_constants.CHANNEL_AXIS: attr_node_qc.weights_channels_axis}
+                qi_inferable_quantizers_constants.CHANNEL_AXIS: attr_node_qc.weights_channels_axis[0],  # output channel axis
+                }
 
     elif quantization_method in [QuantizationMethod.LUT_POT_QUANTIZER, QuantizationMethod.LUT_SYM_QUANTIZER]:
         return {qi_inferable_quantizers_constants.NUM_BITS: attr_node_qc.weights_n_bits,
                 qi_inferable_quantizers_constants.LUT_VALUES: attr_node_qc.weights_quantization_params[LUT_VALUES].flatten().tolist(),
                 qi_inferable_quantizers_constants.THRESHOLD: attr_node_qc.weights_quantization_params[SCALE_PER_CHANNEL].flatten().tolist(),
                 qi_inferable_quantizers_constants.PER_CHANNEL: attr_node_qc.weights_per_channel_threshold,
-                qi_inferable_quantizers_constants.CHANNEL_AXIS: attr_node_qc.weights_channels_axis,
+                qi_inferable_quantizers_constants.CHANNEL_AXIS: attr_node_qc.weights_channels_axis[0],  # output channel axis
                 qi_inferable_quantizers_constants.INPUT_RANK: len(attr_node_qc.weights_quantization_params[SCALE_PER_CHANNEL].shape)}
                 # TODO: Add LUT_VALUES_BITWIDTH & EPS to node quantization config
 

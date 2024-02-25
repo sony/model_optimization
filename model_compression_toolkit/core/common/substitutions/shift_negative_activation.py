@@ -16,11 +16,14 @@ import copy
 import numpy as np
 from typing import List, Tuple, Any, Callable
 
+from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod, \
+    AttributeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import create_node_activation_qc, \
     set_quantization_configs_to_node
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
@@ -63,6 +66,12 @@ def op2d_bias_correction(op2d_node: BaseNode,
     if bias is None:
         bias = 0.0
         op2d_node.framework_attr[bias_flag_str] = True
+        # Add an attribute quantization configuration to the newly added bias attribute, with disabled quantization
+        for qc in op2d_node.candidates_quantization_cfg:
+            qc.weights_quantization_cfg.set_attr_config(bias_flag_str,
+                                                        WeightsAttrQuantizationConfig(QuantizationConfig(),
+                                                                                      AttributeQuantizationConfig(
+                                                                                          enable_weights_quantization=False)))
 
     # Each node adds a different noise due to the shifting. It depends on the
     # dimensions of the kernel, thus the correction term is a function of
