@@ -88,8 +88,7 @@ def filter_node_candidates(node: BaseNode, fw_info) -> List[CandidateNodeQuantiz
 
     filtered_candidates = copy.deepcopy(node.candidates_quantization_cfg)
     final_candidates = copy.deepcopy(node.candidates_quantization_cfg)
-    kernel_attr = fw_info.get_kernel_op_attributes(node.type)
-    kernel_attr = None if kernel_attr is None else kernel_attr[0]
+    kernel_attr = fw_info.get_kernel_op_attributes(node.type)[0]
 
     if (kernel_attr is None or not node.is_weights_quantization_enabled(kernel_attr)) and not node.is_activation_quantization_enabled():
         # If activation quantization is disabled and the node doesn't have a kernel or doesn't quantize the kernel,
