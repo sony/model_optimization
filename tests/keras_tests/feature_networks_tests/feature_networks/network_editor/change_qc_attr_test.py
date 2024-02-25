@@ -36,8 +36,7 @@ class ChangeFinalWeightQCAttrTest(BaseKerasFeatureNetworkTest):
 
     def get_debug_config(self):
         return DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.Conv2D),
-                                                    action=ChangeFinalWeightsQuantConfigAttr(attr_name=KERNEL,
-                                                                                             weights_bias_correction=False))])
+                                                    action=ChangeFinalWeightsQuantConfigAttr(weights_bias_correction=False))])
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

@@ -86,7 +86,7 @@ class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
     Change attributes in a layer's weights quantization configuration candidates.
     """
 
-    def __init__(self, attr_name: str, **kwargs):
+    def __init__(self, attr_name: str = None, **kwargs):
         """
         Args:
             attr_name: The weights attribute's name to set the weights quantization params function for.
@@ -119,7 +119,7 @@ class ChangeFinalWeightsQuantConfigAttr(BaseAction):
     Change attributes in a layer's final weights quantization config.
     """
 
-    def __init__(self, attr_name: str, **kwargs):
+    def __init__(self, attr_name: str = None, **kwargs):
         """
         Args:
             attr_name: The weights attribute's name to set the weights quantization params function for.
