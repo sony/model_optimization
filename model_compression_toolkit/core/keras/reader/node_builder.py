@@ -13,9 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 from typing import Any, Callable, Dict
-import inspect
 
 import tensorflow as tf
+from tensorflow.python.util import tf_inspect
+
 import numpy as np
 from packaging import version
 
@@ -56,8 +57,7 @@ def get_kwargs2index(tf_func: Callable) -> Dict[str, int]:
     """
     if tf_func in [tf.add, tf.subtract, tf.divide, tf.truediv, tf.multiply, tf.pow,
                    tf.matmul, tf.image.crop_and_resize, tf.image.combined_non_max_suppression]:
-        # We utilized tf_func.__wrapped__ to circumvent compatibility issues with different versions of TensorFlow.
-        return {arg_name: i for i, arg_name in enumerate(inspect.getfullargspec(tf_func.__wrapped__).args)}
+        return {arg_name: i for i, arg_name in enumerate(tf_inspect.getfullargspec(tf_func).args)}
     else:
         return {}
 
