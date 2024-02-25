@@ -113,14 +113,15 @@ if FOUND_TF:
                                    regularization_factor=regularization_factor)
 
 
-    def keras_gradient_post_training_quantization(in_model: Model,
-                                                  representative_data_gen: Callable,
-                                                  gptq_config: GradientPTQConfigV2,
-                                                  gptq_representative_data_gen: Callable = None,
-                                                  target_kpi: KPI = None,
-                                                  core_config: CoreConfig = CoreConfig(),
-                                                  fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                                                  target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
+    def keras_gradient_post_training_quantization_experimental(in_model: Model,
+                                                               representative_data_gen: Callable,
+                                                               gptq_config: GradientPTQConfigV2,
+                                                               gptq_representative_data_gen: Callable = None,
+                                                               target_kpi: KPI = None,
+                                                               core_config: CoreConfig = CoreConfig(),
+                                                               fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
+                                                               target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC,
+                                                               new_experimental_exporter: bool = True) -> Tuple[Model, UserInformation]:
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
         symmetric constraint quantization thresholds (power of two).
@@ -146,6 +147,7 @@ if FOUND_TF:
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
+            new_experimental_exporter (bool): Whether to wrap the quantized model using quantization information or not. Enabled by default. Experimental and subject to future changes.
 
         Returns:
 
@@ -230,8 +232,19 @@ if FOUND_TF:
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen, tb_w, tg_gptq, fw_impl, fw_info)
 
-        return get_exportable_keras_model(tg_gptq)
+        if new_experimental_exporter:
+            Logger.warning('Using new experimental wrapped and ready for export models. To '
+                           'disable it, please set new_experimental_exporter to False when '
+                           'calling keras_gradient_post_training_quantization_experimental. '
+                           'If you encounter an issue please file a bug.')
 
+            return get_exportable_keras_model(tg_gptq)
+
+        return export_model(tg_gptq,
+                            fw_info,
+                            fw_impl,
+                            tb_w,
+                            bit_widths_config)
 
 else:
     # If tensorflow is not installed,
