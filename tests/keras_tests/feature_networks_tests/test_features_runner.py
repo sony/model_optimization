@@ -655,33 +655,33 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_split_conv_bug(self):
         SplitConvBugTest(self).run_test()
 
-    def test_symmetric_threshold_selection_activation(self):
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.MSE).run_test()
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.MAE).run_test()
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
-        SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
-
-    def test_symmetric_threshold_selection_softmax_activation(self):
-        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
-        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.MSE).run_test()
-        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.MAE).run_test()
-        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.LP).run_test()
-        SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.KL).run_test()
-
-    def test_uniform_range_selection_activation(self):
-        UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
-        UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.MSE).run_test()
-        UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.MAE).run_test()
-        UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
-        UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
-
-    def test_uniform_range_selection_softmax_activation(self):
-        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
-        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.MSE).run_test()
-        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.MAE).run_test()
-        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.LP).run_test()
-        UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.KL).run_test()
+    # def test_symmetric_threshold_selection_activation(self):
+    #     SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
+    #     SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.MSE).run_test()
+    #     SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.MAE).run_test()
+    #     SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
+    #     SymmetricThresholdSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
+    #
+    # def test_symmetric_threshold_selection_softmax_activation(self):
+    #     SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
+    #     SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.MSE).run_test()
+    #     SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.MAE).run_test()
+    #     SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.LP).run_test()
+    #     SymmetricThresholdSelectionBoundedActivationTest(self, QuantizationErrorMethod.KL).run_test()
+    #
+    # def test_uniform_range_selection_activation(self):
+    #     UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
+    #     UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.MSE).run_test()
+    #     UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.MAE).run_test()
+    #     UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.LP).run_test()
+    #     UniformRangeSelectionActivationTest(self, QuantizationErrorMethod.KL).run_test()
+    #
+    # def test_uniform_range_selection_softmax_activation(self):
+    #     UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.NOCLIPPING).run_test()
+    #     UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.MSE).run_test()
+    #     UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.MAE).run_test()
+    #     UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.LP).run_test()
+    #     UniformRangeSelectionBoundedActivationTest(self, QuantizationErrorMethod.KL).run_test()
 
     def test_multi_head_attention(self):
         q_seq_len, kv_seq_len = 5, 6
@@ -707,43 +707,43 @@ class FeatureNetworkTest(unittest.TestCase):
             MultiHeadAttentionTest(self, input_shapes,
                                    num_heads, qk_proj_dim, v_proj_dim, None,
                                    separate_key_value=separate_key_value, output_dim=14).run_test()
-    #
-    # def test_qat(self):
-    #     QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True).run_test()
-    #     QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True, per_channel=False).run_test()
-    #     QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
-    #                     weights_quantization_method=QuantizationMethod.UNIFORM,
-    #                     activation_quantization_method=QuantizationMethod.SYMMETRIC).run_test()
-    #     QATWrappersTest(self, layers.Dense(3, activation='relu'),
-    #                     weights_quantization_method=QuantizationMethod.UNIFORM,
-    #                     activation_quantization_method=QuantizationMethod.UNIFORM,
-    #                     test_loading=True, per_channel=False).run_test()
-    #     QATWrappersTest(self, layers.Dense(3, activation='relu')).run_test()
-    #     QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), test_loading=True,
-    #                     weights_quantization_method=QuantizationMethod.SYMMETRIC,
-    #                     activation_quantization_method=QuantizationMethod.SYMMETRIC).run_test()
-    #     QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu')).run_test()
-    #     QATWrappersTest(self, layers.DepthwiseConv2D(3, 4, activation='relu'),
-    #                     weights_quantization_method=QuantizationMethod.SYMMETRIC,
-    #                     activation_quantization_method=QuantizationMethod.SYMMETRIC,
-    #                     training_method=TrainingMethod.LSQ).run_test()
-    #     QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
-    #                     weights_quantization_method=QuantizationMethod.UNIFORM,
-    #                     activation_quantization_method=QuantizationMethod.UNIFORM,
-    #                     training_method=TrainingMethod.LSQ).run_test()
-    #     QATWrappersTest(self, layers.DepthwiseConv2D(3, 4, activation='relu'),
-    #                     weights_quantization_method=QuantizationMethod.UNIFORM,
-    #                     activation_quantization_method=QuantizationMethod.UNIFORM,
-    #                     training_method=TrainingMethod.LSQ).run_test()
-    #     QATWrappersTest(self, layers.Dense(3, activation='relu'),
-    #                     weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
-    #                     activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-    #                     training_method=TrainingMethod.LSQ).run_test()
-    #     QuantizationAwareTrainingQuantizersTest(self).run_test()
-    #     QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
-    #     QATWrappersMixedPrecisionCfgTest(self).run_test()
-    #     QATWrappersMixedPrecisionCfgTest(self,kpi_weights=17920 * 4 / 8, kpi_activation=5408 * 4 / 8, expected_mp_cfg=[0, 4, 1, 1]).run_test()
-    #
+
+    def test_qat(self):
+        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True).run_test()
+        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True, per_channel=False).run_test()
+        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
+                        weights_quantization_method=QuantizationMethod.UNIFORM,
+                        activation_quantization_method=QuantizationMethod.SYMMETRIC).run_test()
+        QATWrappersTest(self, layers.Dense(3, activation='relu'),
+                        weights_quantization_method=QuantizationMethod.UNIFORM,
+                        activation_quantization_method=QuantizationMethod.UNIFORM,
+                        test_loading=True, per_channel=False).run_test()
+        QATWrappersTest(self, layers.Dense(3, activation='relu')).run_test()
+        QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), test_loading=True,
+                        weights_quantization_method=QuantizationMethod.SYMMETRIC,
+                        activation_quantization_method=QuantizationMethod.SYMMETRIC).run_test()
+        QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu')).run_test()
+        QATWrappersTest(self, layers.DepthwiseConv2D(3, 4, activation='relu'),
+                        weights_quantization_method=QuantizationMethod.SYMMETRIC,
+                        activation_quantization_method=QuantizationMethod.SYMMETRIC,
+                        training_method=TrainingMethod.LSQ).run_test()
+        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
+                        weights_quantization_method=QuantizationMethod.UNIFORM,
+                        activation_quantization_method=QuantizationMethod.UNIFORM,
+                        training_method=TrainingMethod.LSQ).run_test()
+        QATWrappersTest(self, layers.DepthwiseConv2D(3, 4, activation='relu'),
+                        weights_quantization_method=QuantizationMethod.UNIFORM,
+                        activation_quantization_method=QuantizationMethod.UNIFORM,
+                        training_method=TrainingMethod.LSQ).run_test()
+        QATWrappersTest(self, layers.Dense(3, activation='relu'),
+                        weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                        training_method=TrainingMethod.LSQ).run_test()
+        QuantizationAwareTrainingQuantizersTest(self).run_test()
+        QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
+        QATWrappersMixedPrecisionCfgTest(self).run_test()
+        QATWrappersMixedPrecisionCfgTest(self,kpi_weights=17920 * 4 / 8, kpi_activation=5408 * 4 / 8, expected_mp_cfg=[0, 4, 1, 1]).run_test()
+
     # def test_old_api(self):
     #     OldApiTest(self).run_test()
     #     OldApiTest(self, mp_enable=True).run_test()

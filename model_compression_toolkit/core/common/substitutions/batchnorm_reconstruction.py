@@ -19,12 +19,15 @@ from typing import Callable
 
 import numpy as np
 
+from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core import common
+from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod, \
+    AttributeQuantizationConfig
 
 
 class BatchNormalizationReconstruction(common.BaseSubstitution):
@@ -95,7 +98,6 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
             # this feature is relevant only for layers with kernel op
             kernel_attr = graph.fw_info.get_kernel_op_attributes(source_node.type)
             if kernel_attr is None:
-                # TODO: if tests are failing here, we might want to just log warning and return the graph, without throwing exception
                 Logger.error(f"Can't preform BatchNorm reconstruction on a node {source_node.name} without a kernel op.")
             if (qc.weights_quantization_cfg.get_attr_config(kernel_attr[0]).weights_quantization_method
                     == QuantizationMethod.POWER_OF_TWO):
@@ -128,10 +130,18 @@ class BatchNormalizationReconstruction(common.BaseSubstitution):
             qc.activation_quantization_cfg.enable_activation_quantization = False
             for attr in bn_node.get_node_weights_attributes():
                 if qc.weights_quantization_cfg.has_attribute_config(attr):
-                    # we only create a BN layer to collect statistics, so we don't need to quantize anything
-                    # if the node does not have a configuration for the attribute to begin with we
-                    # don't need to create a new one.
+                    # we only create a BN layer to collect statistics, so we don't need to quantize anything,
+                    # but we do need to add the BN attributes to the reconstructed node.
                     qc.weights_quantization_cfg.get_attr_config(attr).enable_weights_quantization = False
+                else:
+                    # setting a "dummy" attribute configuration with disabled quantization.
+                    # TODO: once enabling BN attributes quantization, need to figure out if thie
+                    #  reconstructed node BN attributes need to be quantized and how.
+                    qc.weights_quantization_cfg.set_attr_config(attr,
+                                                                WeightsAttrQuantizationConfig(
+                                                                    QuantizationConfig(),
+                                                                    AttributeQuantizationConfig(
+                                                                        enable_weights_quantization=False)))
 
         graph.reconnect_out_edges(current_node=source_node, new_node=bn_node)
         graph.replace_output_node(current_node=source_node, new_node=bn_node)
