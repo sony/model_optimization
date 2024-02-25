@@ -48,8 +48,8 @@ def weights_size_kpi(mp_cfg: List[int],
 
     """
     weights_memory = []
-    mp_nodes = graph.get_configurable_sorted_nodes_names()
-    weights_mp_nodes = [n.name for n in graph.get_sorted_weights_configurable_nodes()]
+    mp_nodes = graph.get_configurable_sorted_nodes_names(fw_info)
+    weights_mp_nodes = [n.name for n in graph.get_sorted_weights_configurable_nodes(fw_info)]
 
     if len(mp_cfg) == 0:
         # Computing non-configurable nodes KPI
@@ -65,7 +65,7 @@ def weights_size_kpi(mp_cfg: List[int],
                 weights_memory.append(node_weights_memory_in_bytes)
     else:
         # Go over configurable all nodes that should be taken into consideration when computing the weights KPI.
-        for n in graph.get_sorted_weights_configurable_nodes():
+        for n in graph.get_sorted_weights_configurable_nodes(fw_info):
             node_idx = mp_nodes.index(n.name)
             node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
             node_nbits = node_qc.weights_quantization_cfg.weights_n_bits
@@ -98,7 +98,7 @@ def activation_output_size_kpi(mp_cfg: List[int],
 
     """
     activation_memory = []
-    mp_nodes = graph.get_configurable_sorted_nodes_names()
+    mp_nodes = graph.get_configurable_sorted_nodes_names(fw_info)
     activation_mp_nodes = [n.name for n in graph.get_sorted_activation_configurable_nodes()]
 
     if len(mp_cfg) == 0:
@@ -147,7 +147,7 @@ def total_weights_activation_kpi(mp_cfg: List[int],
 
     """
     weights_activation_memory = []
-    weights_mp_nodes = [n.name for n in graph.get_sorted_weights_configurable_nodes()]
+    weights_mp_nodes = [n.name for n in graph.get_sorted_weights_configurable_nodes(fw_info)]
     activation_mp_nodes = [n.name for n in graph.get_sorted_activation_configurable_nodes()]
 
     if len(mp_cfg) == 0:
@@ -238,7 +238,7 @@ def bops_kpi(mp_cfg: List[int],
 
     virtual_bops_nodes = [n for n in graph.get_topo_sorted_nodes() if isinstance(n, VirtualActivationWeightsNode)]
 
-    mp_nodes = graph.get_configurable_sorted_nodes_names()
+    mp_nodes = graph.get_configurable_sorted_nodes_names(fw_info)
     bops = [n.get_bops_count(fw_impl, fw_info, candidate_idx=_get_node_cfg_idx(n, mp_cfg, mp_nodes)) for n in virtual_bops_nodes]
 
     return np.array(bops)
@@ -262,7 +262,7 @@ def _bops_kpi(mp_cfg: List[int],
 
     """
 
-    mp_nodes = graph.get_configurable_sorted_nodes_names()
+    mp_nodes = graph.get_configurable_sorted_nodes_names(fw_info)
 
     # Go over all nodes that should be taken into consideration when computing the BOPS KPI.
     bops = []

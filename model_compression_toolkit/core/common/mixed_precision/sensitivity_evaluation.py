@@ -82,7 +82,7 @@ class SensitivityEvaluation:
                              f" an HessianInfoService object must be provided but is {hessian_info_service}")
             self.hessian_info_service = hessian_info_service
 
-        self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
+        self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names(self.fw_info)
 
         # Get interest points and output points set for distance measurement and set other helper datasets
         # We define a separate set of output nodes of the model for the purpose of sensitivity computation.

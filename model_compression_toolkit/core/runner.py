@@ -141,7 +141,7 @@ def core_runner(in_model: Any,
 
     if target_kpi is not None:
         # Retrieve lists of tuples (node, node's final weights/activation bitwidth)
-        weights_conf_nodes_bitwidth = tg.get_final_weights_config()
+        weights_conf_nodes_bitwidth = tg.get_final_weights_config(fw_info)
         activation_conf_nodes_bitwidth = tg.get_final_activation_config()
 
         Logger.info(

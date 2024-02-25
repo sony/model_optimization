@@ -68,8 +68,8 @@ class MixedPrecisionSearchManager:
 
         self.compute_kpi_functions = kpi_functions
         self.target_kpi = target_kpi
-        self.min_kpi_config = self.graph.get_min_candidates_config()
-        self.max_kpi_config = self.graph.get_max_candidates_config()
+        self.min_kpi_config = self.graph.get_min_candidates_config(fw_info)
+        self.max_kpi_config = self.graph.get_max_candidates_config(fw_info)
         self.min_kpi = self.compute_min_kpis()
         self.non_conf_kpi_dict = self._non_configurable_nodes_kpi()
 

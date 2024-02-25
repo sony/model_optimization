@@ -41,7 +41,7 @@ def set_bit_widths(mixed_precision_enable: bool,
 
         Logger.info(f'Set bit widths from configuration: {bit_widths_config}')
         # Get a list of nodes' names we need to finalize (that they have at least one weight qc candidate).
-        sorted_nodes_names = graph.get_configurable_sorted_nodes_names()
+        sorted_nodes_names = graph.get_configurable_sorted_nodes_names(graph.fw_info)
         for node in graph.nodes:  # set a specific node qc for each node final qc
             # If it's reused, take the configuration that the base node has
             node_name = node.name if not node.reuse else '_'.join(node.name.split('_')[:-2])

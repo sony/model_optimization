@@ -88,15 +88,15 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
         """
 
-        weights_conf_nodes_names = [n.name for n in self.graph.get_weights_configurable_nodes()]
-        # TODO: handle is_weights_quantization_enabled call
-        if n.is_weights_quantization_enabled():
-            kernel_attributes = self.fw_info.get_kernel_op_attributes(n.type)
+        weights_conf_nodes_names = [n.name for n in self.graph.get_weights_configurable_nodes(self.fw_info)]
+        kernel_attributes = self.fw_info.get_kernel_op_attributes(n.type)[0]
+        if n.is_weights_quantization_enabled(kernel_attributes):
+
             if n.name in weights_conf_nodes_names:
                 return KerasQuantizationWrapper(layer,
-                                                weights_quantizers={attr: ConfigurableWeightsQuantizer(
-                                                    **self._get_weights_configurable_quantizer_kwargs(n, attr))
-                                                    for attr in kernel_attributes})
+                                                weights_quantizers={kernel_attributes: ConfigurableWeightsQuantizer(
+                                                    **self._get_weights_configurable_quantizer_kwargs(n,
+                                                                                                      kernel_attributes))})
             else:
                 node_weights_qc = n.get_unique_weights_candidates()
                 if not len(node_weights_qc) == 1:

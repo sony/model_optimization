@@ -389,94 +389,94 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the Symmetric activation quantizer.
         """
         SymmetricActivationTest(self).run_test()
-    #
-    # def test_mixed_precision_8bit(self):
-    #     """
-    #     This test checks the Mixed Precision search.
-    #     """
-    #     MixedPercisionSearch8Bit(self).run_test()
-    #
-    # def test_mixed_precision_part_weights_layers(self):
-    #     """
-    #     This test checks the Mixed Precision search.
-    #     """
-    #     MixedPercisionSearchPartWeightsLayers(self).run_test()
-    #
-    # def test_mixed_precision_2bit(self):
-    #     """
-    #     This test checks the Mixed Precision search.
-    #     """
-    #     MixedPercisionSearch2Bit(self).run_test()
-    #
-    # def test_reshape_net(self):
-    #     """
-    #     This tests checks the 'reshape_with_static_shapes' substitution.
-    #     We create a model with dynamic input shape attributes to the operators 'reshape' and 'view'.
-    #     We check that the model after conversion replaces the attributes with static-list-of-ints attributes.
-    #     """
-    #     ReshapeNetTest(self).run_test()
-    #
-    # def test_mixed_precision_4bit(self):
-    #     """
-    #     This test checks the Mixed Precision search.
-    #     """
-    #     MixedPercisionSearch4Bit(self).run_test()
-    #
-    # def test_mixed_precision_with_last_layer_distance(self):
-    #     """
-    #     This test checks the Mixed Precision search with last layer distance function.
-    #     """
-    #     MixedPercisionSearchLastLayerDistance(self).run_test()
-    #
-    # def test_mixed_precision_activation_disabled(self):
-    #     """
-    #     This test checks the Mixed Precision search.
-    #     """
-    #     MixedPercisionActivationDisabledTest(self).run_test()
-    #
-    # def test_mixed_precision_activation_8bit(self):
-    #     """
-    #     This test checks the activation Mixed Precision search.
-    #     """
-    #     MixedPercisionActivationSearch8Bit(self).run_test()
-    #
-    # def test_mixed_precision_activation_2bit(self):
-    #     """
-    #     This test checks the activation Mixed Precision search.
-    #     """
-    #     MixedPercisionActivationSearch2Bit(self).run_test()
-    #
-    # def test_mixed_precision_activation_4bit(self):
-    #     """
-    #     This test checks the activation Mixed Precision search.
-    #     """
-    #     MixedPercisionActivationSearch4Bit(self).run_test()
-    #
-    # def test_mixed_precision_activation_4bit_functional(self):
-    #     """
-    #     This test checks the activation Mixed Precision search with functional node.
-    #     """
-    #     MixedPercisionActivationSearch4BitFunctional(self).run_test()
-    #
-    # def test_mixed_precision_multiple_inputs(self):
-    #     """
-    #     This test checks the activation Mixed Precision search with multiple inputs to model.
-    #     """
-    #     MixedPercisionActivationMultipleInputs(self).run_test()
-    #
-    # def test_mixed_precision_bops_kpi(self):
-    #     """
-    #     This test checks different scenarios for mixed-precision quantization with bit-operations constraint.
-    #     """
-    #     MixedPrecisionBopsBasicTest(self).run_test()
-    #     MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
-    #     MixedPrecisionWeightsOnlyBopsTest(self).run_test()
-    #     MixedPrecisionActivationOnlyBopsTest(self).run_test()
-    #     MixedPrecisionBopsAndWeightsKPITest(self).run_test()
-    #     MixedPrecisionBopsAndActivationKPITest(self).run_test()
-    #     MixedPrecisionBopsAndTotalKPITest(self).run_test()
-    #     MixedPrecisionBopsWeightsActivationKPITest(self).run_test()
-    #     MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
+
+    def test_mixed_precision_8bit(self):
+        """
+        This test checks the Mixed Precision search.
+        """
+        MixedPercisionSearch8Bit(self).run_test()
+
+    def test_mixed_precision_part_weights_layers(self):
+        """
+        This test checks the Mixed Precision search.
+        """
+        MixedPercisionSearchPartWeightsLayers(self).run_test()
+
+    def test_mixed_precision_2bit(self):
+        """
+        This test checks the Mixed Precision search.
+        """
+        MixedPercisionSearch2Bit(self).run_test()
+
+    def test_reshape_net(self):
+        """
+        This tests checks the 'reshape_with_static_shapes' substitution.
+        We create a model with dynamic input shape attributes to the operators 'reshape' and 'view'.
+        We check that the model after conversion replaces the attributes with static-list-of-ints attributes.
+        """
+        ReshapeNetTest(self).run_test()
+
+    def test_mixed_precision_4bit(self):
+        """
+        This test checks the Mixed Precision search.
+        """
+        MixedPercisionSearch4Bit(self).run_test()
+
+    def test_mixed_precision_with_last_layer_distance(self):
+        """
+        This test checks the Mixed Precision search with last layer distance function.
+        """
+        MixedPercisionSearchLastLayerDistance(self).run_test()
+
+    def test_mixed_precision_activation_disabled(self):
+        """
+        This test checks the Mixed Precision search.
+        """
+        MixedPercisionActivationDisabledTest(self).run_test()
+
+    def test_mixed_precision_activation_8bit(self):
+        """
+        This test checks the activation Mixed Precision search.
+        """
+        MixedPercisionActivationSearch8Bit(self).run_test()
+
+    def test_mixed_precision_activation_2bit(self):
+        """
+        This test checks the activation Mixed Precision search.
+        """
+        MixedPercisionActivationSearch2Bit(self).run_test()
+
+    def test_mixed_precision_activation_4bit(self):
+        """
+        This test checks the activation Mixed Precision search.
+        """
+        MixedPercisionActivationSearch4Bit(self).run_test()
+
+    def test_mixed_precision_activation_4bit_functional(self):
+        """
+        This test checks the activation Mixed Precision search with functional node.
+        """
+        MixedPercisionActivationSearch4BitFunctional(self).run_test()
+
+    def test_mixed_precision_multiple_inputs(self):
+        """
+        This test checks the activation Mixed Precision search with multiple inputs to model.
+        """
+        MixedPercisionActivationMultipleInputs(self).run_test()
+
+    def test_mixed_precision_bops_kpi(self):
+        """
+        This test checks different scenarios for mixed-precision quantization with bit-operations constraint.
+        """
+        MixedPrecisionBopsBasicTest(self).run_test()
+        MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
+        MixedPrecisionWeightsOnlyBopsTest(self).run_test()
+        MixedPrecisionActivationOnlyBopsTest(self).run_test()
+        MixedPrecisionBopsAndWeightsKPITest(self).run_test()
+        MixedPrecisionBopsAndActivationKPITest(self).run_test()
+        MixedPrecisionBopsAndTotalKPITest(self).run_test()
+        MixedPrecisionBopsWeightsActivationKPITest(self).run_test()
+        MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
     def test_mha_layer_test(self):
         """
@@ -492,89 +492,89 @@ class FeatureModelsTestRunner(unittest.TestCase):
                             kv_seq_len[iter], kdim[iter], vdim[iter], bias=False).run_test()
         MHALayerNetFeatureTest(self, num_heads[0], q_seq_len[0], qdim[0] * num_heads[0],
                                kv_seq_len[0], kdim[0], vdim[0], bias=True, add_bias_kv=True).run_test()
-    #
-    # def test_gptq(self):
-    #     """
-    #     This test checks the GPTQ feature.
-    #     """
-    #     GPTQAccuracyTest(self).run_test()
-    #     GPTQAccuracyTest(self, per_channel=False).run_test()
-    #     GPTQAccuracyTest(self, per_channel=True, hessian_weights=False).run_test()
-    #     GPTQAccuracyTest(self, per_channel=True, log_norm_weights=False).run_test()
-    #     GPTQWeightsUpdateTest(self).run_test()
-    #     GPTQLearnRateZeroTest(self,
-    #                           experimental_exporter=False).run_test()  # TODO: check why weights are different between gptq and ptq when using experimental exporter flag. May be due to different quantization ways (fake-quant pytorch layer vs numpy quantinzation in core/common/quantization/quantizers/quantizers_helpers)
-    #
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
-    #                      params_learning=False).run_test()
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
-    #                      params_learning=True).run_test()
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-    #                      per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
-    #     GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
-    #     GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer, experimental_exporter=False).run_test()
-    #
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-    #                      weights_quant_method=QuantizationMethod.UNIFORM).run_test()
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-    #                      weights_quant_method=QuantizationMethod.UNIFORM, per_channel=False,
-    #                      params_learning=False).run_test()
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-    #                      weights_quant_method=QuantizationMethod.UNIFORM,
-    #                      per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
-    #     GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer,
-    #                           weights_quant_method=QuantizationMethod.UNIFORM,
-    #                           params_learning=False).run_test()  # TODO: When params learning is True, the uniform quantizer gets a min value  > max value
-    #
-    # def test_qat(self):
-    #     """
-    #     This test checks the QAT feature.
-    #     """
-    #     QuantizationAwareTrainingTest(self).run_test()
-    #     QuantizationAwareTrainingTest(self, finalize=True).run_test()
-    #     _method = mct.target_platform.QuantizationMethod.SYMMETRIC
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=_method,
-    #                                   activation_quantization_method=_method
-    #                                   ).run_test()
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=_method,
-    #                                   activation_quantization_method=_method,
-    #                                   finalize=True).run_test()
-    #     _method = mct.target_platform.QuantizationMethod.UNIFORM
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=_method,
-    #                                   activation_quantization_method=_method
-    #                                   ).run_test()
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=_method,
-    #                                   activation_quantization_method=_method,
-    #                                   finalize=True).run_test()
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
-    #                                   activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
-    #                                   training_method=mct.qat.TrainingMethod.LSQ,
-    #                                   finalize=True).run_test()
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
-    #                                   activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
-    #                                   training_method=mct.qat.TrainingMethod.LSQ,
-    #                                   finalize=True).run_test()
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-    #                                   activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-    #                                   training_method=mct.qat.TrainingMethod.LSQ,
-    #                                   finalize=True).run_test()
-    #     QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
-    #     QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
-    #     QuantizationAwareTrainingMixedPrecisionKpiCfgTest(self).run_test()
-    #
-    # def test_old_api(self):
-    #     OldApiTest(self).run_test()
-    #     OldApiTest(self, mp_enable=True).run_test()
-    #     OldApiTest(self, mp_enable=True, gptq_enable=True).run_test()
-    #     OldApiTest(self, gptq_enable=True).run_test()
+
+    def test_gptq(self):
+        """
+        This test checks the GPTQ feature.
+        """
+        GPTQAccuracyTest(self).run_test()
+        GPTQAccuracyTest(self, per_channel=False).run_test()
+        GPTQAccuracyTest(self, per_channel=True, hessian_weights=False).run_test()
+        GPTQAccuracyTest(self, per_channel=True, log_norm_weights=False).run_test()
+        GPTQWeightsUpdateTest(self).run_test()
+        GPTQLearnRateZeroTest(self,
+                              experimental_exporter=False).run_test()  # TODO: check why weights are different between gptq and ptq when using experimental exporter flag. May be due to different quantization ways (fake-quant pytorch layer vs numpy quantinzation in core/common/quantization/quantizers/quantizers_helpers)
+
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
+                         params_learning=False).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
+                         params_learning=True).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
+        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer, experimental_exporter=False).run_test()
+
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         weights_quant_method=QuantizationMethod.UNIFORM).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         weights_quant_method=QuantizationMethod.UNIFORM, per_channel=False,
+                         params_learning=False).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         weights_quant_method=QuantizationMethod.UNIFORM,
+                         per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
+        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer,
+                              weights_quant_method=QuantizationMethod.UNIFORM,
+                              params_learning=False).run_test()  # TODO: When params learning is True, the uniform quantizer gets a min value  > max value
+
+    def test_qat(self):
+        """
+        This test checks the QAT feature.
+        """
+        QuantizationAwareTrainingTest(self).run_test()
+        QuantizationAwareTrainingTest(self, finalize=True).run_test()
+        _method = mct.target_platform.QuantizationMethod.SYMMETRIC
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method
+                                      ).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method,
+                                      finalize=True).run_test()
+        _method = mct.target_platform.QuantizationMethod.UNIFORM
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method
+                                      ).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
+                                      activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
+                                      training_method=mct.qat.TrainingMethod.LSQ,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
+                                      activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
+                                      training_method=mct.qat.TrainingMethod.LSQ,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                      activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                      training_method=mct.qat.TrainingMethod.LSQ,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
+        QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
+        QuantizationAwareTrainingMixedPrecisionKpiCfgTest(self).run_test()
+
+    def test_old_api(self):
+        OldApiTest(self).run_test()
+        OldApiTest(self, mp_enable=True).run_test()
+        OldApiTest(self, mp_enable=True, gptq_enable=True).run_test()
+        OldApiTest(self, gptq_enable=True).run_test()
 
 
 if __name__ == '__main__':

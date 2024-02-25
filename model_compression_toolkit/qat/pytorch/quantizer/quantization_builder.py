@@ -42,8 +42,7 @@ def get_activation_quantizer_holder(n: common.BaseNode,
         A ActivationQuantizationHolder layer for the node's activation quantization.
     """
     _, activation_quantizers = quantization_builder(n,
-                                                    qat_config,
-                                                    DEFAULT_PYTORCH_INFO)
+                                                    qat_config)
 
     # Holder by definition uses a single quantizer for the activation quantization
     # thus we make sure this is the only possible case (unless it's a node with no activation
