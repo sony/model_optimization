@@ -29,9 +29,6 @@ from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
-from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
-    create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
@@ -39,7 +36,6 @@ from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
-from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework import get_pytorch_model_builder
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
@@ -205,19 +201,6 @@ class PytorchImplementation(FrameworkImplementation):
                                                        core_config,
                                                        fw_info)
 
-    def attach_sc_to_node(self,
-                          node: BaseNode,
-                          fw_info: FrameworkInfo) -> BaseStatsCollector:
-        """
-        Return a statistics collector that should be attached to a node's output
-        during statistics collection.
-        Args:
-            node: Node to return its collector.
-            fw_info: Information relevant to a specific framework about what is out channel axis (for statistics per-channel)
-        Returns:
-            Statistics collector for the node.
-        """
-        return create_stats_collector_for_node(node, fw_info)
 
     def get_substitutions_channel_equalization(self,
                                                quant_config: QuantizationConfig,

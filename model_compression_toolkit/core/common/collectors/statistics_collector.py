@@ -102,7 +102,7 @@ class StatsCollector(BaseStatsCollector):
     def get_min_max_values(self) -> Tuple[float, float]:
         """
         Get min/max from collector.
-        When its accessed from outside the tensor, the scale and shift come into consideration.
+        When it's accessed from outside the tensor, the scale and shift come into consideration.
 
         Returns: Min/max from collector.
         """
