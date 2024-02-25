@@ -179,7 +179,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
 
-        filtered_graph_nodes = list(filtered_graph.nodes)
+        filtered_graph_nodes = filtered_graph.get_topo_sorted_nodes()
 
         # checking that layers with weights (conv2d) have filtered weights configurations list
         # when activation quantization is disabled
@@ -187,8 +187,8 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         self.assertTrue(len(conv2d_candidates) == 1,
                         f"Expects 1 Conv layer candidates, number of candidates is {len(conv2d_candidates)}")
         candidate = conv2d_candidates[0]
-        self.assertTrue((candidate.weights_quantization_cfg.weights_n_bits,
-                         candidate.activation_quantization_cfg.activation_n_bits) == (FLOAT_BITWIDTH , 8))
+        self.assertTrue((candidate.weights_quantization_cfg.get_attr_config(KERNEL).weights_n_bits,
+                         candidate.activation_quantization_cfg.activation_n_bits) == (FLOAT_BITWIDTH, 8))
 
 
 if __name__ == '__main__':
