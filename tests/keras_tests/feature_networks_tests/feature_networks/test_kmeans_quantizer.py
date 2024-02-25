@@ -23,6 +23,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 import model_compression_toolkit as mct
 import tensorflow as tf
 
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -92,12 +93,15 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
     def get_debug_config(self):
         return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                                              action=ChangeCandidatesWeightsQuantConfigAttr(
+                                                                 attr_name=KERNEL,
                                                                  weights_quantization_method=target_platform.QuantizationMethod.POWER_OF_TWO)),
                                                     EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                                              action=ChangeCandidatesWeightsQuantConfigAttr(
+                                                                 attr_name=KERNEL,
                                                                  weights_quantization_fn=power_of_two_quantizer)),
                                                     EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                                              action=ChangeCandidatesWeightsQuantConfigAttr(
+                                                                 attr_name=KERNEL,
                                                                  weights_quantization_params_fn=power_of_two_selection_tensor)),
                                                     ])
 

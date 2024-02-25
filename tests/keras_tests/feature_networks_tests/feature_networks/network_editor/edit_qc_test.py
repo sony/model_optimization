@@ -225,7 +225,7 @@ class ChangeCandidatesWeightsQuantConfigAttrTest(BaseChangeQuantConfigAttrTest):
 
     def __init__(self, unit_test):
         edit_filter = NodeTypeFilter(layers.Conv2D)
-        action = ChangeCandidatesWeightsQuantConfigAttr(weights_bias_correction=False)
+        action = ChangeCandidatesWeightsQuantConfigAttr(attr_name=KERNEL, weights_bias_correction=False)
         prepare_graph_func = prepare_graph_for_first_network_editor
         super().__init__(unit_test, edit_filter=edit_filter, action=action, prepare_graph_func=prepare_graph_func)
 
@@ -243,7 +243,8 @@ class ChangeFinalsWeightsQuantConfigAttrTest(BaseChangeQuantConfigAttrTest):
 
     def __init__(self, unit_test):
         edit_filter = NodeTypeFilter(layers.Conv2D)
-        action = ChangeFinalWeightsQuantConfigAttr(weights_bias_correction=False)
+        action = ChangeFinalWeightsQuantConfigAttr(attr_name=KERNEL,
+                                                   weights_bias_correction=False)
         prepare_graph_func = prepare_graph_for_second_network_editor
         super().__init__(unit_test, edit_filter=edit_filter, action=action, prepare_graph_func=prepare_graph_func)
 

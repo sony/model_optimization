@@ -38,11 +38,12 @@ class EditRule(_EditRule):
     and the action is applied on these nodes during the quantization process.
 
     Examples:
-        Create an EditRule to quantize all Conv2D wights using 9 bits:
+        Create an EditRule to quantize all Conv2D kernel attribute wights using 9 bits:
 
         >>> import model_compression_toolkit as mct
+        >>> from model_compression_toolkit.core.keras.constants import KERNEL
         >>> from tensorflow.keras.layers import Conv2D
-        >>> er_list = [mct.network_editor.EditRule(filter=mct.network_editor.NodeTypeFilter(Conv2D), action=mct.network_editor.ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=9))]
+        >>> er_list = [mct.network_editor.EditRule(filter=mct.network_editor.NodeTypeFilter(Conv2D), action=mct.network_editor.ChangeCandidatesWeightsQuantConfigAttr(attr_name=KERNEL, weights_n_bits=9))]
 
         Then the rules list can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization`
         to modify the network during the quantization process.
@@ -85,12 +86,14 @@ class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
     Change attributes in a layer's weights quantization configuration candidates.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, attr_name: str, **kwargs):
         """
         Args:
+            attr_name: The weights attribute's name to set the weights quantization params function for.
             kwargs: Dictionary of attr_name and attr_value to change layer's weights quantization configuration candidates.
         """
         self.kwargs = kwargs
+        self.attr_name = attr_name
 
     def apply(self, node: BaseNode, graph, fw_info):
         """
@@ -104,10 +107,11 @@ class ChangeCandidatesWeightsQuantConfigAttr(BaseAction):
         Returns:
             The node after its weights' quantization config candidates have been modified.
         """
-        # TODO: need to verify that this is working correctly
+
         for nqc in node.candidates_quantization_cfg:
-            for attr_name, attr_value in self.kwargs.items():
-                nqc.weights_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
+            for parameter_name, parameter_value in self.kwargs.items():
+                nqc.weights_quantization_cfg.set_quant_config_attr(parameter_name, parameter_value,
+                                                                   attr_name=self.attr_name)
 
 
 class ChangeFinalWeightsQuantConfigAttr(BaseAction):
@@ -115,17 +119,20 @@ class ChangeFinalWeightsQuantConfigAttr(BaseAction):
     Change attributes in a layer's final weights quantization config.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, attr_name: str, **kwargs):
         """
         Args:
+            attr_name: The weights attribute's name to set the weights quantization params function for.
             kwargs: Dictionary of attr_name and attr_value to change layer's final weights quantization config.
         """
         self.kwargs = kwargs
+        self.attr_name = attr_name
 
     def apply(self, node: BaseNode, graph, fw_info):
         if node.final_weights_quantization_cfg is not None:
-            for attr_name, attr_value in self.kwargs.items():
-                node.final_weights_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
+            for parameter_name, parameter_value in self.kwargs.items():
+                node.final_weights_quantization_cfg.set_quant_config_attr(parameter_name, parameter_value,
+                                                                          self.attr_name)
 
 
 class ChangeCandidatesActivationQuantConfigAttr(BaseAction):
@@ -153,8 +160,8 @@ class ChangeCandidatesActivationQuantConfigAttr(BaseAction):
             The node after its activation quantization configuration candidates have been modified.
         """
         for nqc in node.candidates_quantization_cfg:
-            for attr_name, attr_value in self.kwargs.items():
-                nqc.activation_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
+            for parameter_name, parameter_value in self.kwargs.items():
+                nqc.activation_quantization_cfg.set_quant_config_attr(parameter_name, parameter_value)
 
 
 class ChangeFinalActivationQuantConfigAttr(BaseAction):
@@ -171,8 +178,8 @@ class ChangeFinalActivationQuantConfigAttr(BaseAction):
 
     def apply(self, node: BaseNode, graph, fw_info):
         if node.final_activation_quantization_cfg is not None:
-            for attr_name, attr_value in self.kwargs.items():
-                node.final_activation_quantization_cfg.set_quant_config_attr(attr_name, attr_value)
+            for parameter_name, parameter_value in self.kwargs.items():
+                node.final_activation_quantization_cfg.set_quant_config_attr(parameter_name, parameter_value)
 
 
 class ChangeQuantizationParamFunction(BaseAction):
@@ -181,14 +188,14 @@ class ChangeQuantizationParamFunction(BaseAction):
     """
 
     def __init__(self,
-                 attr_name: str,
+                 attr_name: str = None,
                  activation_quantization_params_fn: Callable = None,
                  weights_quantization_params_fn: Callable = None):
         """
         Init a ChangeQuantizationParamFunction object.
 
         Args:
-            attr_name: The weights attribute's name to set the weights quantization params function for.
+            attr_name: The weights attribute's name to set the weights quantization params function for (if setting weights params).
             activation_quantization_params_fn: a params function for a node's activations.
             weights_quantization_params_fn: a params function for a node's weights.
         """

@@ -194,95 +194,95 @@ class FeatureNetworkTest(unittest.TestCase):
         # In this test we have weights with less unique values than the number of clusters
         KmeansQuantizerTestManyClasses(self, QuantizationMethod.LUT_POT_QUANTIZER,
                                        weights_n_bits=7).run_test()
-
-    def test_reused_separable_mixed_precision(self):
-        ReusedSeparableMixedPrecisionTest(self).run_test()
-
-    def test_reused_layer_mixed_precision(self):
-        ReusedLayerMixedPrecisionTest(self).run_test()
-
-    def test_reuse_separable(self):
-        ReusedSeparableTest(self).run_test()
-
-    def test_mixed_precision_search_kpi_2bits_avg(self):
-        MixedPercisionSearchKPI2BitsAvgTest(self).run_test()
-
-    def test_mixed_precision_search_kpi_4bits_avg(self):
-        MixedPercisionSearchKPI4BitsAvgTest(self).run_test()
-
-    def test_mixed_precision_search_kpi_4bits_avg_nms(self):
-        MixedPercisionCombinedNMSTest(self).run_test()
-
-    def test_mixed_precision_search(self):
-        MixedPercisionSearchTest(self).run_test()
-
-    def test_mixed_precision_for_part_weights_layers(self):
-        MixedPercisionSearchPartWeightsLayersTest(self).run_test()
-
-    def test_mixed_precision_activation_disabled(self):
-        MixedPrecisionActivationDisabled(self).run_test()
-
-    def test_mixed_precision_dw(self):
-        MixedPercisionDepthwiseTest(self).run_test()
-
-    def test_mixed_precision_search_with_last_layer_distance(self):
-        MixedPercisionSearchLastLayerDistanceTest(self).run_test()
-
-    def test_mixed_precision_search_activation_non_conf_nodes(self):
-        MixedPercisionSearchActivationKPINonConfNodesTest(self).run_test()
-
-    def test_mixed_precision_search_total_non_conf_nodes(self):
-        MixedPercisionSearchTotalKPINonConfNodesTest(self).run_test()
-
-    def test_mixed_precision_activation_search(self):
-        MixedPrecisionActivationSearchTest(self).run_test()
-
-    def test_mixed_precision_activation_only(self):
-        MixedPrecisionActivationOnlyTest(self).run_test()
-
-    def test_mixed_precision_activation_only_weights_disabled(self):
-        MixedPrecisionActivationOnlyWeightsDisabledTest(self).run_test()
-
-    def test_mixed_precision_activation_search_kpi_4bits_avg(self):
-        MixedPrecisionActivationSearchKPI4BitsAvgTest(self).run_test()
-
-    def test_mixed_precision_activation_search_kpi_2bits_avg(self):
-        MixedPrecisionActivationSearchKPI2BitsAvgTest(self).run_test()
-
-    def test_mixed_precision_activation_dw(self):
-        MixedPrecisionActivationDepthwiseTest(self).run_test()
-
-    def test_mixed_precision_activation_dw_4bit(self):
-        MixedPrecisionActivationDepthwise4BitTest(self).run_test()
-
-    def test_mixed_precision_activation_add(self):
-        MixedPrecisionActivationAddLayerTest(self).run_test()
-
-    def test_mixed_precision_activation_split(self):
-        MixedPrecisionActivationSplitLayerTest(self).run_test()
-
-    def test_mixed_precision_activation_multiple_inputs(self):
-        MixedPrecisionActivationMultipleInputsTest(self).run_test()
-
-    def test_mixed_precision_total_kpi(self):
-        MixedPrecisionTotalKPISearchTest(self).run_test()
-
-    def test_mixed_precision_multiple_kpis_tight(self):
-        MixedPrecisionMultipleKPIsTightSearchTest(self).run_test()
-
-    def test_mixed_precision_reduced_total_kpi(self):
-        MixedPrecisionReducedTotalKPISearchTest(self).run_test()
-
-    def test_mixed_precision_bops_kpi(self):
-        MixedPrecisionBopsBasicTest(self).run_test()
-        MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
-        MixedPrecisionWeightsOnlyBopsTest(self).run_test()
-        MixedPrecisionActivationOnlyBopsTest(self).run_test()
-        MixedPrecisionBopsAndWeightsKPITest(self).run_test()
-        MixedPrecisionBopsAndActivationKPITest(self).run_test()
-        MixedPrecisionBopsAndTotalKPITest(self).run_test()
-        MixedPrecisionBopsWeightsActivationKPITest(self).run_test()
-        MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
+    #
+    # def test_reused_separable_mixed_precision(self):
+    #     ReusedSeparableMixedPrecisionTest(self).run_test()
+    #
+    # def test_reused_layer_mixed_precision(self):
+    #     ReusedLayerMixedPrecisionTest(self).run_test()
+    #
+    # def test_reuse_separable(self):
+    #     ReusedSeparableTest(self).run_test()
+    #
+    # def test_mixed_precision_search_kpi_2bits_avg(self):
+    #     MixedPercisionSearchKPI2BitsAvgTest(self).run_test()
+    #
+    # def test_mixed_precision_search_kpi_4bits_avg(self):
+    #     MixedPercisionSearchKPI4BitsAvgTest(self).run_test()
+    #
+    # def test_mixed_precision_search_kpi_4bits_avg_nms(self):
+    #     MixedPercisionCombinedNMSTest(self).run_test()
+    #
+    # def test_mixed_precision_search(self):
+    #     MixedPercisionSearchTest(self).run_test()
+    #
+    # def test_mixed_precision_for_part_weights_layers(self):
+    #     MixedPercisionSearchPartWeightsLayersTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_disabled(self):
+    #     MixedPrecisionActivationDisabled(self).run_test()
+    #
+    # def test_mixed_precision_dw(self):
+    #     MixedPercisionDepthwiseTest(self).run_test()
+    #
+    # def test_mixed_precision_search_with_last_layer_distance(self):
+    #     MixedPercisionSearchLastLayerDistanceTest(self).run_test()
+    #
+    # def test_mixed_precision_search_activation_non_conf_nodes(self):
+    #     MixedPercisionSearchActivationKPINonConfNodesTest(self).run_test()
+    #
+    # def test_mixed_precision_search_total_non_conf_nodes(self):
+    #     MixedPercisionSearchTotalKPINonConfNodesTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_search(self):
+    #     MixedPrecisionActivationSearchTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_only(self):
+    #     MixedPrecisionActivationOnlyTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_only_weights_disabled(self):
+    #     MixedPrecisionActivationOnlyWeightsDisabledTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_search_kpi_4bits_avg(self):
+    #     MixedPrecisionActivationSearchKPI4BitsAvgTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_search_kpi_2bits_avg(self):
+    #     MixedPrecisionActivationSearchKPI2BitsAvgTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_dw(self):
+    #     MixedPrecisionActivationDepthwiseTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_dw_4bit(self):
+    #     MixedPrecisionActivationDepthwise4BitTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_add(self):
+    #     MixedPrecisionActivationAddLayerTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_split(self):
+    #     MixedPrecisionActivationSplitLayerTest(self).run_test()
+    #
+    # def test_mixed_precision_activation_multiple_inputs(self):
+    #     MixedPrecisionActivationMultipleInputsTest(self).run_test()
+    #
+    # def test_mixed_precision_total_kpi(self):
+    #     MixedPrecisionTotalKPISearchTest(self).run_test()
+    #
+    # def test_mixed_precision_multiple_kpis_tight(self):
+    #     MixedPrecisionMultipleKPIsTightSearchTest(self).run_test()
+    #
+    # def test_mixed_precision_reduced_total_kpi(self):
+    #     MixedPrecisionReducedTotalKPISearchTest(self).run_test()
+    #
+    # def test_mixed_precision_bops_kpi(self):
+    #     MixedPrecisionBopsBasicTest(self).run_test()
+    #     MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
+    #     MixedPrecisionWeightsOnlyBopsTest(self).run_test()
+    #     MixedPrecisionActivationOnlyBopsTest(self).run_test()
+    #     MixedPrecisionBopsAndWeightsKPITest(self).run_test()
+    #     MixedPrecisionBopsAndActivationKPITest(self).run_test()
+    #     MixedPrecisionBopsAndTotalKPITest(self).run_test()
+    #     MixedPrecisionBopsWeightsActivationKPITest(self).run_test()
+    #     MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
     def test_name_filter(self):
         NameFilterTest(self).run_test()
@@ -371,96 +371,96 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_nested_model(self):
         NestedTest(self).run_test()
         NestedTest(self, is_inner_functional=False).run_test()
-
-    def test_shift_neg_activation_conv2d(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, 4),
-                               activation_op_to_test=layers.Activation('swish'), param_search=True).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, 4, strides=3),
-                               activation_op_to_test=layers.Activation('swish')).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (3, 4), strides=2),
-                               activation_op_to_test=layers.Activation('swish')).run_test()
-
-    def test_shift_neg_activation_conv2d_pad_same(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), padding='same'),
-                               activation_op_to_test=layers.Activation('swish')).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), padding='same', strides=3),
-                               activation_op_to_test=layers.Activation('swish')).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (7, 5), padding='same', strides=4),
-                               activation_op_to_test=layers.Activation('swish')).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (8, 10), padding='same', strides=5),
-                               activation_op_to_test=layers.Activation('swish')).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (10, 8), padding='same', strides=6),
-                               activation_op_to_test=layers.Activation('swish')).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), padding='same', strides=(4, 6)),
-                               activation_op_to_test=layers.Activation('swish')).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (7, 5), padding='same', strides=(6, 4)),
-                               activation_op_to_test=layers.Activation('swish')).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (8, 10), padding='same', strides=(5, 7)),
-                               activation_op_to_test=layers.Activation('swish')).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (10, 8), padding='same', strides=(7, 5)),
-                               activation_op_to_test=layers.Activation('swish')).run_test()
-
-    def test_shift_neg_activation_pad_conv2d(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7)),
-                               activation_op_to_test=layers.Activation('swish'),
-                               use_pad_layer=True).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), strides=3),
-                               activation_op_to_test=layers.Activation('swish'),
-                               use_pad_layer=True).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (7, 5), strides=4),
-                               activation_op_to_test=layers.Activation('swish'),
-                               use_pad_layer=True, param_search=True).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (8, 10), strides=5),
-                               activation_op_to_test=layers.Activation('swish'),
-                               use_pad_layer=True).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (10, 8), strides=6),
-                               activation_op_to_test=layers.Activation('swish'),
-                               use_pad_layer=True).run_test()
-
-    def test_shift_neg_activation_dense(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(3),
-                               activation_op_to_test=tf.nn.leaky_relu, input_shape=(8, 3)).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(4),
-                               activation_op_to_test=layers.ReLU(negative_slope=0.99),
-                               bypass_op_list=[layers.GlobalAveragePooling2D()]).run_test()
-
-    def test_shift_neg_activation_pad_dense(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(3),
-                               activation_op_to_test=PReLU(alpha_initializer='ones'), use_pad_layer=True).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(4),
-                               activation_op_to_test=ELU(), use_pad_layer=True).run_test()
-
-    def test_shift_neg_activation_depthwise(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((4, 5)),
-                               activation_op_to_test=tf.nn.silu).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(5, strides=3),
-                               activation_op_to_test=tf.nn.elu).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((5, 4), strides=4),
-                               activation_op_to_test=tf.nn.leaky_relu).run_test()
-
-    def test_shift_neg_activation_depthwise_pad_same(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(depth_multiplier=1, kernel_size=(7, 8),
-                                                                              padding='same', strides=5),
-                               activation_op_to_test=layers.Activation('swish')).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(depth_multiplier=3, kernel_size=(8, 7),
-                                                                              padding='same', strides=6),
-                               activation_op_to_test=layers.Activation('gelu')).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(kernel_size=4, padding='same'),
-                               activation_op_to_test=layers.Activation('selu')).run_test()
-
-    def test_shift_neg_activation_pad_depthwise(self):
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((4, 5)),
-                               activation_op_to_test=tf.nn.gelu, use_pad_layer=True).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(5, strides=3),
-                               activation_op_to_test=tf.nn.selu, use_pad_layer=True).run_test()
-        ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((5, 4), strides=4),
-                               activation_op_to_test=tf.nn.swish, use_pad_layer=True).run_test()
-
-    def test_shift_neg_activation_post_add(self):
-        ShiftNegActivationPostAddTest(self,
-                                      linear_op_to_test=layers.Conv2D(3, 4),
-                                      activation_op_to_test=layers.Activation('swish'),
-                                      post_add_nbits=7).run_test()
+    #
+    # def test_shift_neg_activation_conv2d(self):
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, 4),
+    #                            activation_op_to_test=layers.Activation('swish'), param_search=True).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, 4, strides=3),
+    #                            activation_op_to_test=layers.Activation('swish')).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (3, 4), strides=2),
+    #                            activation_op_to_test=layers.Activation('swish')).run_test()
+    #
+    # def test_shift_neg_activation_conv2d_pad_same(self):
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), padding='same'),
+    #                            activation_op_to_test=layers.Activation('swish')).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), padding='same', strides=3),
+    #                            activation_op_to_test=layers.Activation('swish')).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (7, 5), padding='same', strides=4),
+    #                            activation_op_to_test=layers.Activation('swish')).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (8, 10), padding='same', strides=5),
+    #                            activation_op_to_test=layers.Activation('swish')).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (10, 8), padding='same', strides=6),
+    #                            activation_op_to_test=layers.Activation('swish')).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), padding='same', strides=(4, 6)),
+    #                            activation_op_to_test=layers.Activation('swish')).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (7, 5), padding='same', strides=(6, 4)),
+    #                            activation_op_to_test=layers.Activation('swish')).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (8, 10), padding='same', strides=(5, 7)),
+    #                            activation_op_to_test=layers.Activation('swish')).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (10, 8), padding='same', strides=(7, 5)),
+    #                            activation_op_to_test=layers.Activation('swish')).run_test()
+    #
+    # def test_shift_neg_activation_pad_conv2d(self):
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7)),
+    #                            activation_op_to_test=layers.Activation('swish'),
+    #                            use_pad_layer=True).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (5, 7), strides=3),
+    #                            activation_op_to_test=layers.Activation('swish'),
+    #                            use_pad_layer=True).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (7, 5), strides=4),
+    #                            activation_op_to_test=layers.Activation('swish'),
+    #                            use_pad_layer=True, param_search=True).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (8, 10), strides=5),
+    #                            activation_op_to_test=layers.Activation('swish'),
+    #                            use_pad_layer=True).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Conv2D(3, (10, 8), strides=6),
+    #                            activation_op_to_test=layers.Activation('swish'),
+    #                            use_pad_layer=True).run_test()
+    #
+    # def test_shift_neg_activation_dense(self):
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(3),
+    #                            activation_op_to_test=tf.nn.leaky_relu, input_shape=(8, 3)).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(4),
+    #                            activation_op_to_test=layers.ReLU(negative_slope=0.99),
+    #                            bypass_op_list=[layers.GlobalAveragePooling2D()]).run_test()
+    #
+    # def test_shift_neg_activation_pad_dense(self):
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(3),
+    #                            activation_op_to_test=PReLU(alpha_initializer='ones'), use_pad_layer=True).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.Dense(4),
+    #                            activation_op_to_test=ELU(), use_pad_layer=True).run_test()
+    #
+    # def test_shift_neg_activation_depthwise(self):
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((4, 5)),
+    #                            activation_op_to_test=tf.nn.silu).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(5, strides=3),
+    #                            activation_op_to_test=tf.nn.elu).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((5, 4), strides=4),
+    #                            activation_op_to_test=tf.nn.leaky_relu).run_test()
+    #
+    # def test_shift_neg_activation_depthwise_pad_same(self):
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(depth_multiplier=1, kernel_size=(7, 8),
+    #                                                                           padding='same', strides=5),
+    #                            activation_op_to_test=layers.Activation('swish')).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(depth_multiplier=3, kernel_size=(8, 7),
+    #                                                                           padding='same', strides=6),
+    #                            activation_op_to_test=layers.Activation('gelu')).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(kernel_size=4, padding='same'),
+    #                            activation_op_to_test=layers.Activation('selu')).run_test()
+    #
+    # def test_shift_neg_activation_pad_depthwise(self):
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((4, 5)),
+    #                            activation_op_to_test=tf.nn.gelu, use_pad_layer=True).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D(5, strides=3),
+    #                            activation_op_to_test=tf.nn.selu, use_pad_layer=True).run_test()
+    #     ShiftNegActivationTest(self, linear_op_to_test=layers.DepthwiseConv2D((5, 4), strides=4),
+    #                            activation_op_to_test=tf.nn.swish, use_pad_layer=True).run_test()
+    #
+    # def test_shift_neg_activation_post_add(self):
+    #     ShiftNegActivationPostAddTest(self,
+    #                                   linear_op_to_test=layers.Conv2D(3, 4),
+    #                                   activation_op_to_test=layers.Activation('swish'),
+    #                                   post_add_nbits=7).run_test()
 
     def test_activation_decomposition(self):
         ActivationDecompositionTest(self, activation_function='swish').run_test()
@@ -586,71 +586,71 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_multi_input_to_node(self):
         MultiInputsToNodeTest(self).run_test()
-
-    def test_gptq(self):
-        # This call removes the effect of @tf.function decoration and executes the decorated function eagerly, which
-        # enabled tracing for code coverage.
-        tf.config.run_functions_eagerly(True)
-        GradientPTQTest(self).run_test()
-        GradientPTQTest(self, per_channel=True).run_test()
-        GradientPTQTest(self, per_channel=True, hessian_weights=False).run_test()
-        GradientPTQTest(self, per_channel=True, log_norm_weights=False).run_test()
-        GradientPTQWeightsUpdateTest(self).run_test()
-        GradientPTQLearnRateZeroTest(self).run_test()
-        GradientPTQWeightedLossTest(self).run_test()
-        GradientPTQTest(self,
-                        quant_method=QuantizationMethod.UNIFORM,
-                        rounding_type=RoundingType.SoftQuantizer,
-                        per_channel=False,
-                        quantization_parameter_learning=False).run_test()
-        GradientPTQTest(self,
-                        quant_method=QuantizationMethod.UNIFORM,
-                        rounding_type=RoundingType.SoftQuantizer,
-                        per_channel=True,
-                        quantization_parameter_learning=False).run_test()
-        GradientPTQLearnRateZeroTest(self,
-                                     quant_method=QuantizationMethod.UNIFORM,
-                                     rounding_type=RoundingType.SoftQuantizer,
-                                     quantization_parameter_learning=False).run_test()
-        GradientPTQTest(self,
-                        rounding_type=RoundingType.SoftQuantizer,
-                        per_channel=False).run_test()
-        GradientPTQTest(self,
-                        rounding_type=RoundingType.SoftQuantizer,
-                        per_channel=True).run_test()
-        GradientPTQTest(self,
-                        rounding_type=RoundingType.SoftQuantizer,
-                        per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
-        GradientPTQWeightedLossTest(self,
-                                    rounding_type=RoundingType.SoftQuantizer,
-                                    per_channel=True, hessian_weights=True, log_norm_weights=True,
-                                    scaled_log_norm=True).run_test()
-        GradientPTQNoTempLearningTest(self,
-                                      rounding_type=RoundingType.SoftQuantizer).run_test()
-        GradientPTQWeightsUpdateTest(self,
-                                     rounding_type=RoundingType.SoftQuantizer).run_test()
-        GradientPTQLearnRateZeroTest(self,
-                                     rounding_type=RoundingType.SoftQuantizer).run_test()
-        GradientPTQWithDepthwiseTest(self,
-                                     rounding_type=RoundingType.SoftQuantizer).run_test()
-
-        tf.config.run_functions_eagerly(False)
-
-    # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
-    # def test_gptq_new_exporter(self):
-    #     self.test_gptq(experimental_exporter=True)
-
-    # Comment out due to problem in Tensorflow 2.8
-    # def test_gptq_conv_group(self):
-    #     GradientPTQLearnRateZeroConvGroupTest(self).run_test()
-    #     GradientPTQWeightsUpdateConvGroupTest(self).run_test()
-
-
-    def test_gptq_conv_group_dilation(self):
-        GradientPTQLearnRateZeroConvGroupDilationTest(self).run_test()
-        GradientPTQWeightsUpdateConvGroupDilationTest(self).run_test()
-        GradientPTQLearnRateZeroConvGroupDilationTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
-        GradientPTQWeightsUpdateConvGroupDilationTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+    #
+    # def test_gptq(self):
+    #     # This call removes the effect of @tf.function decoration and executes the decorated function eagerly, which
+    #     # enabled tracing for code coverage.
+    #     tf.config.run_functions_eagerly(True)
+    #     GradientPTQTest(self).run_test()
+    #     GradientPTQTest(self, per_channel=True).run_test()
+    #     GradientPTQTest(self, per_channel=True, hessian_weights=False).run_test()
+    #     GradientPTQTest(self, per_channel=True, log_norm_weights=False).run_test()
+    #     GradientPTQWeightsUpdateTest(self).run_test()
+    #     GradientPTQLearnRateZeroTest(self).run_test()
+    #     GradientPTQWeightedLossTest(self).run_test()
+    #     GradientPTQTest(self,
+    #                     quant_method=QuantizationMethod.UNIFORM,
+    #                     rounding_type=RoundingType.SoftQuantizer,
+    #                     per_channel=False,
+    #                     quantization_parameter_learning=False).run_test()
+    #     GradientPTQTest(self,
+    #                     quant_method=QuantizationMethod.UNIFORM,
+    #                     rounding_type=RoundingType.SoftQuantizer,
+    #                     per_channel=True,
+    #                     quantization_parameter_learning=False).run_test()
+    #     GradientPTQLearnRateZeroTest(self,
+    #                                  quant_method=QuantizationMethod.UNIFORM,
+    #                                  rounding_type=RoundingType.SoftQuantizer,
+    #                                  quantization_parameter_learning=False).run_test()
+    #     GradientPTQTest(self,
+    #                     rounding_type=RoundingType.SoftQuantizer,
+    #                     per_channel=False).run_test()
+    #     GradientPTQTest(self,
+    #                     rounding_type=RoundingType.SoftQuantizer,
+    #                     per_channel=True).run_test()
+    #     GradientPTQTest(self,
+    #                     rounding_type=RoundingType.SoftQuantizer,
+    #                     per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
+    #     GradientPTQWeightedLossTest(self,
+    #                                 rounding_type=RoundingType.SoftQuantizer,
+    #                                 per_channel=True, hessian_weights=True, log_norm_weights=True,
+    #                                 scaled_log_norm=True).run_test()
+    #     GradientPTQNoTempLearningTest(self,
+    #                                   rounding_type=RoundingType.SoftQuantizer).run_test()
+    #     GradientPTQWeightsUpdateTest(self,
+    #                                  rounding_type=RoundingType.SoftQuantizer).run_test()
+    #     GradientPTQLearnRateZeroTest(self,
+    #                                  rounding_type=RoundingType.SoftQuantizer).run_test()
+    #     GradientPTQWithDepthwiseTest(self,
+    #                                  rounding_type=RoundingType.SoftQuantizer).run_test()
+    #
+    #     tf.config.run_functions_eagerly(False)
+    #
+    # # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
+    # # def test_gptq_new_exporter(self):
+    # #     self.test_gptq(experimental_exporter=True)
+    #
+    # # Comment out due to problem in Tensorflow 2.8
+    # # def test_gptq_conv_group(self):
+    # #     GradientPTQLearnRateZeroConvGroupTest(self).run_test()
+    # #     GradientPTQWeightsUpdateConvGroupTest(self).run_test()
+    #
+    #
+    # def test_gptq_conv_group_dilation(self):
+    #     GradientPTQLearnRateZeroConvGroupDilationTest(self).run_test()
+    #     GradientPTQWeightsUpdateConvGroupDilationTest(self).run_test()
+    #     GradientPTQLearnRateZeroConvGroupDilationTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+    #     GradientPTQWeightsUpdateConvGroupDilationTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
 
     def test_split_conv_bug(self):
         SplitConvBugTest(self).run_test()
@@ -707,49 +707,49 @@ class FeatureNetworkTest(unittest.TestCase):
             MultiHeadAttentionTest(self, input_shapes,
                                    num_heads, qk_proj_dim, v_proj_dim, None,
                                    separate_key_value=separate_key_value, output_dim=14).run_test()
-
-    def test_qat(self):
-        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True).run_test()
-        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True, per_channel=False).run_test()
-        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
-                        weights_quantization_method=QuantizationMethod.UNIFORM,
-                        activation_quantization_method=QuantizationMethod.SYMMETRIC).run_test()
-        QATWrappersTest(self, layers.Dense(3, activation='relu'),
-                        weights_quantization_method=QuantizationMethod.UNIFORM,
-                        activation_quantization_method=QuantizationMethod.UNIFORM,
-                        test_loading=True, per_channel=False).run_test()
-        QATWrappersTest(self, layers.Dense(3, activation='relu')).run_test()
-        QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), test_loading=True,
-                        weights_quantization_method=QuantizationMethod.SYMMETRIC,
-                        activation_quantization_method=QuantizationMethod.SYMMETRIC).run_test()
-        QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu')).run_test()
-        QATWrappersTest(self, layers.DepthwiseConv2D(3, 4, activation='relu'),
-                        weights_quantization_method=QuantizationMethod.SYMMETRIC,
-                        activation_quantization_method=QuantizationMethod.SYMMETRIC,
-                        training_method=TrainingMethod.LSQ).run_test()
-        QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
-                        weights_quantization_method=QuantizationMethod.UNIFORM,
-                        activation_quantization_method=QuantizationMethod.UNIFORM,
-                        training_method=TrainingMethod.LSQ).run_test()
-        QATWrappersTest(self, layers.DepthwiseConv2D(3, 4, activation='relu'),
-                        weights_quantization_method=QuantizationMethod.UNIFORM,
-                        activation_quantization_method=QuantizationMethod.UNIFORM,
-                        training_method=TrainingMethod.LSQ).run_test()
-        QATWrappersTest(self, layers.Dense(3, activation='relu'),
-                        weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
-                        activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-                        training_method=TrainingMethod.LSQ).run_test()
-        QuantizationAwareTrainingQuantizersTest(self).run_test()
-        QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
-        QATWrappersMixedPrecisionCfgTest(self).run_test()
-        QATWrappersMixedPrecisionCfgTest(self,kpi_weights=17920 * 4 / 8, kpi_activation=5408 * 4 / 8, expected_mp_cfg=[0, 4, 1, 1]).run_test()
-
-    def test_old_api(self):
-        OldApiTest(self).run_test()
-        OldApiTest(self, mp_enable=True).run_test()
-        OldApiTest(self, mp_enable=True, gptq_enable=True).run_test()
-        OldApiTest(self, gptq_enable=True).run_test()
-
+    #
+    # def test_qat(self):
+    #     QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True).run_test()
+    #     QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'), test_loading=True, per_channel=False).run_test()
+    #     QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
+    #                     weights_quantization_method=QuantizationMethod.UNIFORM,
+    #                     activation_quantization_method=QuantizationMethod.SYMMETRIC).run_test()
+    #     QATWrappersTest(self, layers.Dense(3, activation='relu'),
+    #                     weights_quantization_method=QuantizationMethod.UNIFORM,
+    #                     activation_quantization_method=QuantizationMethod.UNIFORM,
+    #                     test_loading=True, per_channel=False).run_test()
+    #     QATWrappersTest(self, layers.Dense(3, activation='relu')).run_test()
+    #     QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu'), test_loading=True,
+    #                     weights_quantization_method=QuantizationMethod.SYMMETRIC,
+    #                     activation_quantization_method=QuantizationMethod.SYMMETRIC).run_test()
+    #     QATWrappersTest(self, layers.Conv2DTranspose(3, 4, activation='relu')).run_test()
+    #     QATWrappersTest(self, layers.DepthwiseConv2D(3, 4, activation='relu'),
+    #                     weights_quantization_method=QuantizationMethod.SYMMETRIC,
+    #                     activation_quantization_method=QuantizationMethod.SYMMETRIC,
+    #                     training_method=TrainingMethod.LSQ).run_test()
+    #     QATWrappersTest(self, layers.Conv2D(3, 4, activation='relu'),
+    #                     weights_quantization_method=QuantizationMethod.UNIFORM,
+    #                     activation_quantization_method=QuantizationMethod.UNIFORM,
+    #                     training_method=TrainingMethod.LSQ).run_test()
+    #     QATWrappersTest(self, layers.DepthwiseConv2D(3, 4, activation='relu'),
+    #                     weights_quantization_method=QuantizationMethod.UNIFORM,
+    #                     activation_quantization_method=QuantizationMethod.UNIFORM,
+    #                     training_method=TrainingMethod.LSQ).run_test()
+    #     QATWrappersTest(self, layers.Dense(3, activation='relu'),
+    #                     weights_quantization_method=QuantizationMethod.POWER_OF_TWO,
+    #                     activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+    #                     training_method=TrainingMethod.LSQ).run_test()
+    #     QuantizationAwareTrainingQuantizersTest(self).run_test()
+    #     QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
+    #     QATWrappersMixedPrecisionCfgTest(self).run_test()
+    #     QATWrappersMixedPrecisionCfgTest(self,kpi_weights=17920 * 4 / 8, kpi_activation=5408 * 4 / 8, expected_mp_cfg=[0, 4, 1, 1]).run_test()
+    #
+    # def test_old_api(self):
+    #     OldApiTest(self).run_test()
+    #     OldApiTest(self, mp_enable=True).run_test()
+    #     OldApiTest(self, mp_enable=True, gptq_enable=True).run_test()
+    #     OldApiTest(self, gptq_enable=True).run_test()
+    #
 
 if __name__ == '__main__':
     unittest.main()

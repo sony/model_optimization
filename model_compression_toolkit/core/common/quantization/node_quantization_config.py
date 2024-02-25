@@ -14,7 +14,7 @@
 # ==============================================================================
 
 
-from typing import Callable, Any, List, Tuple, Union
+from typing import Callable, Any, List, Tuple, Union, Dict
 
 import numpy as np
 
@@ -41,18 +41,25 @@ class BaseNodeQuantizationConfig(object):
     Base class for node quantization configuration
     """
 
-    def set_quant_config_attr(self, attr_name, attr_value):
+    def set_quant_config_attr(self, parameter_name: str, parameter_value: Any,
+                              *args: List[Any], **kwargs: Dict[str, Any]):
         """
-        Changes a BaseNodeQuantizationConfig's attribute.
+        Changes a BaseNodeQuantizationConfig's parameter.
+        Note that arg and kwargs are only to allow clean override in the child classes.
 
         Args:
-            attr_name: attribute name to change.
-            attr_value: attribute value to change.
+            parameter_name: parameter name to change.
+            parameter_value: parameter value to change.
+            args: A list of additional arguments.
+            kwargs: A dictionary with additional key arguments.
 
         """
 
-        if hasattr(self, attr_name):
-            setattr(self, attr_name, attr_value)
+        if hasattr(self, parameter_name):
+            setattr(self, parameter_name, parameter_value)
+        else:
+            Logger.warning(f"Parameter {parameter_name} could not be found in the node quantization config and "
+                           f"was not updated!")
 
     def __repr__(self) -> str:
         """
@@ -441,7 +448,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
             # this is a positional attribute
             attr_cfg = self.pos_attributes_config_mapping.get(attr_name)
         else:
-            attrs_with_name = {k: v for k, v in self.attributes_config_mapping.items() if attr_name in k}
+            attrs_with_name = self._extract_config_for_attributes_with_name(attr_name)
             attr_cfg = None
             if len(attrs_with_name) == 1:
                 attr_cfg = [v for v in attrs_with_name.values()][0]
@@ -471,10 +478,70 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
             self.attributes_config_mapping[attr_name] = attr_qc
 
     def has_attribute_config(self, attr_name: Union[str, int]) -> bool:
+        """
+        Checks whether the node weights configuration contains a configuration for a given weights attribute.
+
+        Args:
+            attr_name: The attribute name to check if a quantization configuration is defined for.
+
+        Returns: True if the attribute exists in the attributes configuration mapping, False otherwise.
+
+        """
         if isinstance(attr_name, int):
             return self.pos_attributes_config_mapping.get(attr_name) is not None
         else:
-            return self.attributes_config_mapping.get(attr_name) is not None
+            saved_attr_name = self._extract_config_for_attributes_with_name(attr_name)
+            if len(saved_attr_name) >= 1:
+                return True
+
+        return False
+
+    def _extract_config_for_attributes_with_name(self, attr_name) -> Dict[str, WeightsAttrQuantizationConfig]:
+        """
+        Extract the saved attributes that contain the given attribute name.
+        Relevant to Tensorflow where attributes are presented with the layer name and index,
+        in addition to the attribute actual name.
+
+        Args:
+            attr_name: An attribute to extract its saved name.
+
+        Returns: A mapping between attributes that contain the given name to their configuration.
+
+        """
+        attrs_with_name = {k: v for k, v in self.attributes_config_mapping.items() if attr_name in k}
+        if len(attrs_with_name) > 1:
+            Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
+                           f"{list(attrs_with_name.keys())}.")
+        return attrs_with_name
+
+    def set_quant_config_attr(self, parameter_name: str, parameter_value: Any, attr_name: str = None,
+                              *args: List[Any], **kwargs: Dict[str, Any]):
+        """
+        This method overrides the parent class set_quant_config_attr to enable setting a specific weights
+        attribute config parameter.
+
+        Args:
+            attr_name: attribute name to change.
+            parameter_name: parameter name to change.
+            parameter_value: parameter value to change.
+            args: A list of additional arguments.
+            kwargs: A dictionary with additional key arguments.
+
+        """
+
+        if attr_name is None:
+            super(NodeWeightsQuantizationConfig, self).set_quant_config_attr(parameter_name, parameter_value,
+                                                                             *args, **kwargs)
+        else:
+            if self.has_attribute_config(attr_name):
+                attr_cfg = self.get_attr_config(attr_name)
+                if hasattr(attr_cfg, parameter_name):
+                    setattr(attr_cfg, parameter_name, parameter_value)
+                else:
+                    Logger.warning(f"Parameter {parameter_name} could not be found in the node quantization config of "
+                                   f"weights attribute {attr_name} and was not updated!")
+            else:
+                Logger.error(f"Weights attribute {attr_name} could not be found to set parameter {parameter_name}.")
 
     def __eq__(self, other: Any) -> bool:
         """
