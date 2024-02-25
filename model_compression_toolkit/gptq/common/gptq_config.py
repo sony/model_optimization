@@ -59,7 +59,7 @@ class GPTQHessianScoresConfig:
 
 class GradientPTQConfig:
     """
-    Configuration to use for quantization with GradientPTQ (experimental).
+    Configuration to use for quantization with GradientPTQ.
     """
 
     def __init__(self, n_iter: int,
@@ -116,7 +116,7 @@ class GradientPTQConfig:
 
 class GradientPTQConfigV2(GradientPTQConfig):
     """
-    Configuration to use for quantization with GradientPTQV2 (experimental).
+    Configuration to use for quantization with GradientPTQV2.
     """
     def __init__(self, n_epochs: int,
                  optimizer: Any,
