@@ -21,6 +21,7 @@ from model_compression_toolkit.trainable_infrastructure.common.trainable_quantiz
 
 def get_trainable_quantizer_weights_config(
         n: BaseNode,
+        attr_name: str,
         weights_quantization_candidates: List[TrainableQuantizerCandidateConfig] = None
 ) -> TrainableQuantizerWeightsConfig:
     """
@@ -28,6 +29,7 @@ def get_trainable_quantizer_weights_config(
 
     Args:
         n: BaseNode - the node to build a trainable quantizer from.
+        attr_name: Attribute name to get its weights quantizer configuration.
         weights_quantization_candidates: A list of weights quantizer config candidates.
 
     Returns:
@@ -36,14 +38,15 @@ def get_trainable_quantizer_weights_config(
     if n.final_weights_quantization_cfg is None:
         Logger.error(f'Node must have final_weights_quantization_cfg in order to build quantizer configuration')  # pragma: no cover
 
-    final_cfg = n.final_weights_quantization_cfg
-    return TrainableQuantizerWeightsConfig(final_cfg.weights_quantization_method,
-                                           final_cfg.weights_n_bits,
-                                           final_cfg.weights_quantization_params,
-                                           final_cfg.enable_weights_quantization,
-                                           final_cfg.weights_channels_axis,
-                                           final_cfg.weights_per_channel_threshold,
-                                           final_cfg.min_threshold,
+    final_node_cfg = n.final_weights_quantization_cfg
+    final_attr_cfg = final_node_cfg.get_attr_config(attr_name)
+    return TrainableQuantizerWeightsConfig(final_attr_cfg.weights_quantization_method,
+                                           final_attr_cfg.weights_n_bits,
+                                           final_attr_cfg.weights_quantization_params,
+                                           final_attr_cfg.enable_weights_quantization,
+                                           final_attr_cfg.weights_channels_axis[0],  # Output channel axis
+                                           final_attr_cfg.weights_per_channel_threshold,
+                                           final_node_cfg.min_threshold,
                                            weights_quantization_candidates)
 
 

@@ -35,6 +35,7 @@ from model_compression_toolkit.trainable_infrastructure.common.get_quantizers im
 
 def quantization_builder(n: common.BaseNode,
                          gptq_config: GradientPTQConfigV2,
+                         kernel_attr: str = None
                          ) -> Tuple[Dict[str, BasePytorchQATTrainableQuantizer],
                                     List[BasePyTorchInferableQuantizer]]:
     """
@@ -44,6 +45,7 @@ def quantization_builder(n: common.BaseNode,
     Args:
         n: Node to build its QuantizeConfig.
         gptq_config (GradientPTQConfigV2): GradientPTQConfigV2 configuration.
+        kernel_attr: A potential kernel attribute name to build its trainable quantizer.
 
     Returns:
         A dictionary which maps the weights kernel attribute to a quantizer for GPTQ training.
@@ -51,17 +53,17 @@ def quantization_builder(n: common.BaseNode,
         to be compatible with the quantization infrastructure template.
     """
 
-    # TODO: need to figure out how to handle this - we need trainable quantizer only for kernel ops,
-    #  but we want to quantize all other quantizable attributes during GPTQ
     weights_quantizers = {}
-    if n.is_weights_quantization_enabled():
+    if kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr):
+        # Only nodes with kernel attribute are trainable during GPTQ
         quant_method = n.final_weights_quantization_cfg.weights_quantization_method
         quantizer_class = get_trainable_quantizer_class(quant_target=QuantizationTarget.Weights,
                                                         quantizer_id=gptq_config.rounding_type,
                                                         quant_method=quant_method,
                                                         quantizer_base_class=BasePytorchGPTQTrainableQuantizer)
-        weights_quantizers.update({KERNEL: quantizer_class(get_trainable_quantizer_weights_config(n),
-                                                           **gptq_config.gptq_quantizer_params_override)})
+        weights_quantizers.update({kernel_attr: quantizer_class(get_trainable_quantizer_weights_config(n,
+                                                                                                       kernel_attr),
+                                                                **gptq_config.gptq_quantizer_params_override)})
     activation_quantizers = []
     if n.is_activation_quantization_enabled():
         if n.final_activation_quantization_cfg is None:

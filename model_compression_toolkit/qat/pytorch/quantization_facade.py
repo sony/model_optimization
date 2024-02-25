@@ -62,9 +62,14 @@ if FOUND_TORCH:
 
         """
         if is_qat_applicable(n, DEFAULT_PYTORCH_INFO):
-            weights_quantizers, _ = quantization_builder(n, qat_config, DEFAULT_PYTORCH_INFO)
+            # If we are here, then the node has a kernel attribute to quantize and training during QAT
+            weights_quantizers, _ = quantization_builder(n, qat_config,
+                                                         DEFAULT_PYTORCH_INFO.get_kernel_op_attributes(n.type)[0])
             if len(weights_quantizers) > 0:
                 return PytorchQuantizationWrapper(module, weights_quantizers)
+
+        # TODO: need to check if in this case, if there are other weights attributes that are not trainable but are
+        #  quantized, do we need to wrap them as well?
         return module
 
 

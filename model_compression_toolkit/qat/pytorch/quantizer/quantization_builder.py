@@ -55,7 +55,7 @@ def get_activation_quantizer_holder(n: common.BaseNode,
 
 def quantization_builder(n: common.BaseNode,
                          qat_config: QATConfig,
-                         fw_info: FrameworkInfo,
+                         kernel_attr: str = None,
                          ) -> Tuple[Dict[str, BasePytorchQATTrainableQuantizer],
                                     List[BasePytorchQATTrainableQuantizer]]:
     """
@@ -65,6 +65,7 @@ def quantization_builder(n: common.BaseNode,
         n: Node to build its QuantizeConfig.
         qat_config (QATConfig): QAT configuration
         fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
+        kernel_attr: A potential kernel attribute name to build its trainable quantizer.
 
     Returns:
         weights_quantizers: A dictionary between a weight's name to its quantizer.
@@ -77,18 +78,18 @@ def quantization_builder(n: common.BaseNode,
         wq_cand, aq_cand = None, None
 
     weight_quantizers = {}
-    # TODO: need to figure out how to handle this - we need trainable quantizer only for kernel ops,
-    #  but we want to quantize all other quantizable attributes during QAT (do we?)
-    if n.is_weights_quantization_enabled():
-        quant_method = n.final_weights_quantization_cfg.weights_quantization_method
+    if kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr):
+        # Only nodes with kernel attribute are trainable during QAT
+        quant_method = n.final_weights_quantization_cfg.get_attr_config(kernel_attr).weights_quantization_method
         quantizer_class = get_trainable_quantizer_class(QuantizationTarget.Weights,
                                                         qat_config.weight_training_method,
                                                         quant_method,
                                                         BasePytorchQATTrainableQuantizer)
-        attributes = fw_info.get_kernel_op_attributes(n.type)
-        for attr in attributes:
-            weight_quantizers.update({attr: quantizer_class(get_trainable_quantizer_weights_config(n, wq_cand),
-                                                           **qat_config.weight_quantizer_params_override)})
+
+        weight_quantizers.update({kernel_attr: quantizer_class(get_trainable_quantizer_weights_config(n,
+                                                                                               attr_name=kernel_attr,
+                                                                                               weights_quantization_candidates=wq_cand),
+                                                        **qat_config.weight_quantizer_params_override)})
 
     activation_quantizers = []
     if n.is_activation_quantization_enabled():
