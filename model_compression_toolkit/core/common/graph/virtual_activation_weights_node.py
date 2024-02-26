@@ -132,6 +132,7 @@ class VirtualActivationWeightsNode(BaseNode):
                  output_shape: Tuple[Any],
                  weights: Dict[str, np.ndarray],
                  layer_class: type,
+                 fw_info: FrameworkInfo,
                  reuse: bool = False,
                  reuse_group: str = None,
                  quantization_attr: Dict[str, Any] = None,
@@ -149,6 +150,7 @@ class VirtualActivationWeightsNode(BaseNode):
             output_shape: Input tensor shape of the node.
             weights: Dictionary from a variable name to the weights with that name in the layer the node represents.
             layer_class: Class path of the layer this node represents.
+            fw_info: A FrameworkInfo object with framework specific information,
             reuse: Whether this node was duplicated and represents a reused layer.
             reuse_group: Name of group of nodes from the same reused layer.
             quantization_attr: Attributes the node holds regarding how it should be quantized.
@@ -182,7 +184,8 @@ class VirtualActivationWeightsNode(BaseNode):
                 v_candidates.append(composed_candidate)
 
         # sorting the candidates by weights number of bits first and then by activation number of bits (reversed order)
-        v_candidates.sort(key=lambda c: (c.weights_quantization_cfg.weights_n_bits,
+        kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
+        v_candidates.sort(key=lambda c: (c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
                                          c.activation_quantization_cfg.activation_n_bits), reverse=True)
 
         self.candidates_quantization_cfg = v_candidates
@@ -199,10 +202,12 @@ class VirtualActivationWeightsNode(BaseNode):
         Returns: The BOPS count of the composed node.
 
         """
+        kernel_attr = fw_info.get_kernel_op_attributes(self.original_weights_node.type)[0]
         node_mac = fw_impl.get_node_mac_operations(self.original_weights_node, fw_info)
         candidate = self.candidates_quantization_cfg[candidate_idx]
-        weights_bit = candidate.weights_quantization_cfg.weights_n_bits if \
-            candidate.weights_quantization_cfg.enable_weights_quantization else FLOAT_BITWIDTH
+        kernel_attr_cfg = candidate.weights_quantization_cfg.get_attr_config(kernel_attr)
+        weights_bit = kernel_attr_cfg.weights_n_bits if \
+            kernel_attr_cfg.enable_weights_quantization else FLOAT_BITWIDTH
         activation_bit = candidate.activation_quantization_cfg.activation_n_bits if \
             candidate.activation_quantization_cfg.enable_activation_quantization else FLOAT_BITWIDTH
         node_bops = weights_bit * activation_bit * node_mac

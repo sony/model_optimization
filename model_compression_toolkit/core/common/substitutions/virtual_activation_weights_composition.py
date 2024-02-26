@@ -57,6 +57,7 @@ class BaseVirtualActivationWeightsComposition(BaseSubstitution):
         # the actual arguments values are irrelevant because they are being overridden or not used
         v_node = VirtualActivationWeightsNode(act_node,
                                               weights_node,
+                                              fw_info=graph.fw_info,
                                               **weights_node.__dict__)
 
         # Update graph

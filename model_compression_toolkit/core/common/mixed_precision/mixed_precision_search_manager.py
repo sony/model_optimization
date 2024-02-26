@@ -379,7 +379,7 @@ class ConfigReconstructionHelper:
                                 "set of nodes.")  # pragma: no cover
 
             updated_virtual_nodes = \
-                [(idx, self.virtual_graph.get_configurable_sorted_nodes()[idx]) for idx in changed_virtual_nodes_idx]
+                [(idx, self.virtual_graph.get_configurable_sorted_nodes(self.fw_info)[idx]) for idx in changed_virtual_nodes_idx]
             # Iterating only over the virtual nodes that have updated config
             for virtual_node_idx, n in updated_virtual_nodes:
                 self.reconstruct_node_config(n, virtual_mp_cfg, virtual_node_idx)
@@ -473,7 +473,7 @@ class ConfigReconstructionHelper:
                                 .get_attr_config(kernel_attr).weights_n_bits)
             origin_cfg_idx = [i for i, c in
                               enumerate(weights_node.candidates_quantization_cfg) if
-                              c.weights_quantization_cfg.weights_n_bits == weights_bitwidth]
+                              c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits == weights_bitwidth]
 
             self.update_config_at_original_idx(weights_node, origin_cfg_idx[0])
 
@@ -522,7 +522,7 @@ class ConfigReconstructionHelper:
         activation_bitwidth = activation_node.candidates_quantization_cfg[virtual_mp_cfg[
             self.virtual_sorted_nodes_names.index(activation_node.name)]].activation_quantization_cfg.activation_n_bits
 
-        kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.origin_node.type)[0]
+        kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.type)[0]
 
         weights_bitwidth = (virtual_node.candidates_quantization_cfg[virtual_cfg_idx].weights_quantization_cfg
                             .get_attr_config(kernel_attr).weights_n_bits)
@@ -553,7 +553,7 @@ class ConfigReconstructionHelper:
             virtual_mp_cfg: The virtual graph's chosen mp config.
         """
 
-        kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.origin_node.type)[0]
+        kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.type)[0]
 
         weights_bitwidth = (weights_node.candidates_quantization_cfg[virtual_mp_cfg[
             self.virtual_sorted_nodes_names.index(weights_node.name)]]

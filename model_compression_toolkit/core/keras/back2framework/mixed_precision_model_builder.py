@@ -196,7 +196,8 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                 max_candidate_idx = max_cfg_candidates[0]
 
                 activation_quantizers = [ConfigurableActivationQuantizer(**{'node_q_cfg': node_q_cfg_candidates,
-                                                                            'max_candidate_idx': max_candidate_idx})] \
+                                                                            'max_candidate_idx': max_candidate_idx,
+                                                                            'kernel_attr': kernel_attr})] \
                                         * num_of_outputs
             else:
                 node_act_qc = n.get_unique_activation_candidates()
