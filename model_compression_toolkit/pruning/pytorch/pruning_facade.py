@@ -14,9 +14,6 @@
 # ==============================================================================
 
 from typing import Callable, Tuple
-
-from torch.nn import Module
-
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import FOUND_TORCH, PYTORCH
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
@@ -38,6 +35,7 @@ if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.pruning.pruning_pytorch_implementation import \
         PruningPytorchImplementation
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+    from torch.nn import Module
 
     # Set the default Target Platform Capabilities (TPC) for PyTorch.
     DEFAULT_PYOTRCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
