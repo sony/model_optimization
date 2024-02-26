@@ -97,15 +97,14 @@ class PruningPretrainedModelsTest(unittest.TestCase):
 
         train_loss = 0
         for batch_idx, (inputs, targets) in tqdm(enumerate(trainloader)):
-            with torch.cuda.device(device):
-                inputs = inputs.to(device)
-                targets = targets.to(device)
-                optimizer.zero_grad()
-                outputs = model(inputs)
-                loss = criterion(outputs, targets.squeeze(1))
-                loss.backward()
-                optimizer.step()
-                train_loss += loss.item()
+            inputs = inputs.to(device)
+            targets = targets.to(device)
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, targets.squeeze(1))
+            loss.backward()
+            optimizer.step()
+            train_loss += loss.item()
 
         return model
 
