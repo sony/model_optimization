@@ -17,7 +17,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
 import numpy as np
 
-from tests.common_tests.pruninig.constant_importance_metric import add_const_importance_metric, ConstImportanceMetric
+from tests.common_tests.pruning.constant_importance_metric import add_const_importance_metric, ConstImportanceMetric
 from tests.pytorch_tests.pruning_tests.feature_networks.pruning_pytorch_feature_test import PruningPytorchFeatureTest
 import torch
 

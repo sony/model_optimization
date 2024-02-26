@@ -17,16 +17,20 @@ import tempfile
 from enum import Enum
 import unittest
 
+import torch
+from tqdm import tqdm
+from torch.utils.data import Dataset, DataLoader
+
 import model_compression_toolkit as mct
 import numpy as np
 from packaging import version
-
+from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
 from model_compression_toolkit.constants import FP32_BYTES_PER_PARAMETER
 from model_compression_toolkit.core.common.pruning.importance_metrics.importance_metric_factory import IMPORTANCE_METRIC_DICT
+from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from tests.keras_tests.pruning_tests.random_importance_metric import RandomImportanceMetric
 import torchvision.models as models
-
+from tests.common_tests.pruning.random_importance_metric import RandomImportanceMetric
 from tests.pytorch_tests.utils import count_model_prunable_params
 
 NUM_PRUNING_RATIOS = 1
@@ -46,7 +50,7 @@ class PruningPretrainedModelsTest(unittest.TestCase):
         dense_model = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
         target_crs = np.linspace(0.5, 1, NUM_PRUNING_RATIOS)
         for cr in target_crs:
-            self.run_test(cr, dense_model)
+            self.run_test(cr, dense_model, test_retraining=True)
 
     def test_efficientnetb0_pruning(self):
         # Load a pre-trained EfficientNetB0 model
@@ -85,7 +89,27 @@ class PruningPretrainedModelsTest(unittest.TestCase):
         for cr in target_crs:
             self.run_test(cr, dense_model)
 
-    def run_test(self, cr, dense_model):
+    def _dummy_retrain(self, model, trainloader):
+        criterion = torch.nn.CrossEntropyLoss()
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.003, momentum=0.9, weight_decay=0.0001)
+        model.train()
+        device = get_working_device()
+
+        train_loss = 0
+        for batch_idx, (inputs, targets) in tqdm(enumerate(trainloader)):
+            with torch.cuda.device(device):
+                inputs = inputs.to(device)
+                targets = targets.to(device)
+                optimizer.zero_grad()
+                outputs = model(inputs)
+                loss = criterion(outputs, targets.squeeze(1))
+                loss.backward()
+                optimizer.step()
+                train_loss += loss.item()
+
+        return model
+
+    def run_test(self, cr, dense_model, test_retraining=False):
         """
         Runs a pruning test on a pre-trained model with a specified compression rate (cr).
 
@@ -121,6 +145,14 @@ class PruningPretrainedModelsTest(unittest.TestCase):
         input_tensor = next(self.representative_dataset())[0]
         pruned_outputs = pruned_model(to_torch_tensor(input_tensor))
 
+        # Optionally, retrain the pruned model (using dummy data for 1 epoch) and check it
+        # predicts differently than before retraining.
+        if test_retraining:
+            trainloader = create_dummy_trainloader()
+            retrained_model = self._dummy_retrain(pruned_model, trainloader)
+            retrained_outputs = retrained_model(input_tensor)
+            self.assertTrue(np.sum(np.abs(torch_tensor_to_numpy(pruned_outputs) - torch_tensor_to_numpy(retrained_outputs))) != 0, f"Expected after retraining to have different predictions but are the same")
+
         # Ensure pruned layers had lower importance scores than the channels
         # that remained.
         for layer_name, layer_mask in pruning_info.pruning_masks.items():
@@ -139,9 +171,40 @@ class PruningPretrainedModelsTest(unittest.TestCase):
                         f"Expected the actual compression rate: {actual_cr} to not exceed the target compression "
                         f"rate: {cr}")
 
+class RandomDataset(Dataset):
+    def __init__(self, length):
+        """
+        Initialize the dataset with the specified length.
+        :param length: The total number of items in the dataset.
+        """
+        self.length = length
+
+    def __len__(self):
+        """
+        Return the total number of items in the dataset.
+        """
+        return self.length
+
+    def __getitem__(self, index):
+        """
+        Generate and return a random tensor of size (3, 224, 224).
+        :param index: The index of the item (unused, as data is randomly generated).
+        :return: A random tensor of size (3, 224, 224).
+        """
+        # Generate a random tensor with values in the range [0, 1)
+        random_tensor = torch.rand(3, 224, 224)
+        random_label = torch.randint(0, 1, [1])
+        return random_tensor, random_label
+
 
 # Function to generate an infinite stream of dummy images and labels
-def dummy_data_generator():
-    image = np.random.random((3, 224, 224)).astype(np.float32)
-    label = np.random.randint(0, 2)
-    yield image, label
+def create_dummy_trainloader():
+    # Set the desired length (number of data points) for the dataset
+    dataset_length = 1000  # 1000 data points
+
+    # Create an instance of the RandomDataset
+    random_dataset = RandomDataset(dataset_length)
+
+    # Create a DataLoader to iterate over the RandomDataset
+    batch_size = 4  # Define the batch size
+    return DataLoader(random_dataset, batch_size=batch_size, shuffle=True)

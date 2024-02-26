@@ -70,6 +70,7 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
             fw_info (FrameworkInfo): Framework-specific information object.
 
         """
+        # TODO (reuvenp/liord): Address handling of node parameters that can be either a single value across all channels or distinct per channel, e.g., PReLU. Consider developing a structured approach.
         pruning_en = True
         _edit_node_input_shape(node, input_mask, fw_info)
         pruned_parameters = {}
@@ -134,8 +135,8 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
             bool: Boolean indicating if the node is an exit node.
         """
         return _is_pytorch_node_pruning_section_edge(node) and PruningSection.has_matching_channel_count(node,
-                                                                                                       corresponding_entry_node,
-                                                                                                       fw_info)
+                                                                                                         corresponding_entry_node,
+                                                                                                         fw_info)
 
     def is_node_intermediate_pruning_section(self, node: BaseNode) -> bool:
         """
@@ -148,6 +149,7 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
             bool: Boolean indicating if the node is part of the intermediate pruning section.
         """
         # Nodes that are not Conv2d, ConvTranspose2d, or Linear are considered intermediate.
+        # For PReLU prune attributes only if there is a parameter per channel
         return node.type not in [torch.nn.Conv2d,
                                  torch.nn.ConvTranspose2d,
                                  torch.nn.Linear]
@@ -181,7 +183,7 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
         attributes_with_axis = {}
         if fw_info.is_kernel_op(node.type):
             kernel_attributes = fw_info.get_kernel_op_attributes(node.type)
-            if kernel_attributes is None or len(kernel_attributes)==0:
+            if kernel_attributes is None or len(kernel_attributes) == 0:
                 Logger.error(f"Expected to find attributes but found {kernel_attributes}")
 
             for attr in kernel_attributes:
@@ -197,12 +199,13 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
             # 3. The input channel axis is irrelevant since these attributes are pruned only by
             #    their output channels.
             for attr in list(node.weights.keys()):
-                # if the number of float parameters is 1 or less
+                # If the number of float parameters is 1 or less - is the case where
+                # we have one parameter for all channels. For this case, we don't
+                # want to prune the parameter.
                 if node.get_num_parameters(fw_info)[1] <= 1:
                     attributes_with_axis[attr] = (None, None)
                 else:
                     attributes_with_axis[attr] = (-1, None)
-                # attributes_with_axis[attr] = (-1, None)
 
         return attributes_with_axis
 
@@ -227,7 +230,6 @@ def _is_pytorch_node_pruning_section_edge(node: BaseNode) -> bool:
     if node.type in [torch.nn.Conv2d, torch.nn.ConvTranspose2d]:
         return node.framework_attr[GROUPS] == 1
     return node.type == torch.nn.Linear
-
 
 
 def _prune_pytorch_edge_node(node: BaseNode,
@@ -270,12 +272,18 @@ def _prune_pytorch_edge_node(node: BaseNode,
             node.framework_attr[OUT_CHANNELS] = int(np.sum(mask))
         elif node.type == torch.nn.Linear:
             node.framework_attr[OUT_FEATURES] = int(np.sum(mask))
+        else:
+            Logger.exception(f"{node.type} is currently not supported"
+                             f"as an edge node in a pruning section")
 
     if is_exit_node:
         if node.type in [torch.nn.Conv2d, torch.nn.ConvTranspose2d]:
             node.framework_attr[IN_CHANNELS] = int(np.sum(mask))
         elif node.type == torch.nn.Linear:
             node.framework_attr[IN_FEATURES] = int(np.sum(mask))
+        else:
+            Logger.exception(f"{node.type} is currently not supported"
+                             f"as an edge node in a pruning section")
         # Adjust the input shape for the last node in the section.
         _edit_node_input_shape(node, mask_bool, fw_info)
 
@@ -305,4 +313,3 @@ def _edit_node_input_shape(node: BaseNode,
 
     # Update the node's input shape with the new dimensions.
     node.input_shape = tuple(new_input_shape)
-

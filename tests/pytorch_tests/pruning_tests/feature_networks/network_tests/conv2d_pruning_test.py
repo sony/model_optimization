@@ -19,7 +19,7 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 import numpy as np
 
-from tests.common_tests.pruninig.constant_importance_metric import add_const_importance_metric, ConstImportanceMetric
+from tests.common_tests.pruning.constant_importance_metric import add_const_importance_metric, ConstImportanceMetric
 from tests.pytorch_tests.pruning_tests.feature_networks.pruning_pytorch_feature_test import PruningPytorchFeatureTest
 import torch
 

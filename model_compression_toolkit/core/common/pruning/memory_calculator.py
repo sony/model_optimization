@@ -306,22 +306,25 @@ class MemoryCalculator:
 
             total_params += w.size
 
-        # Get the node channel axis from framework info
-        channel_axis = self.fw_info.out_channel_axis_mapping.get(node.type)
-
         # Adjust the total parameter count if padded channels are to be included.
         if output_mask is not None:
             num_oc = np.sum(output_mask)
-        # Check if node.output_shape is a list of lists.
-        # In this case make sure all the out channels are the same value
-        elif all(isinstance(sublist, list) for sublist in node.output_shape):
-            compare_value = node.output_shape[0][channel_axis]
-            if all(len(sublist) > channel_axis and sublist[channel_axis] == compare_value for sublist in node.output_shape):
-                num_oc = compare_value
-            else:
-                Logger.error("Number of out channels are not the same for all outputs of the node")
         else:
-            num_oc = node.output_shape[channel_axis]
+            # Get the node channel axis from framework info
+            channel_axis = self.fw_info.out_channel_axis_mapping.get(node.type)
+            if channel_axis is None:
+                Logger.error("Channel axis is not defined")
+
+            # Check if node.output_shape is a list of lists.
+            # In this case make sure all the out channels are the same value
+            if all(isinstance(sublist, list) for sublist in node.output_shape):
+                compare_value = node.output_shape[0][channel_axis]
+                if all(len(sublist) > channel_axis and sublist[channel_axis] == compare_value for sublist in node.output_shape):
+                    num_oc = compare_value
+                else:
+                    Logger.error("Number of out channels are not the same for all outputs of the node")
+            else:
+                num_oc = node.output_shape[channel_axis]
 
         if include_padded_channels:
             total_params = self.get_node_nparams_with_padded_channels(node, total_params, num_oc, node.get_simd())

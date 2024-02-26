@@ -22,10 +22,7 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.pruning.channels_grouping import ChannelGrouping
 from model_compression_toolkit.core.common.pruning.importance_metrics.base_importance_metric import BaseImportanceMetric
 import numpy as np
-
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig
-from model_compression_toolkit.core.keras.constants import KERNEL
-
 
 class RandomImportanceMetric(BaseImportanceMetric):
 

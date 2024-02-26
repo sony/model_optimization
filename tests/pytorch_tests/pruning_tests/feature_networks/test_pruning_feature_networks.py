@@ -15,16 +15,13 @@
 import unittest
 
 import torch.nn
-
-from tests.pytorch_tests.pruning_tests.feature_networks.network_tests.conv2d_conv2dtranspose_pruning_test import \
-    Conv2dConv2dTransposePruningTest
+from tests.pytorch_tests.pruning_tests.feature_networks.network_tests.conv2d_conv2dtranspose_pruning_test import Conv2dConv2dTransposePruningTest
 from tests.pytorch_tests.pruning_tests.feature_networks.network_tests.conv2d_pruning_test import Conv2DPruningTest
 from tests.pytorch_tests.pruning_tests.feature_networks.network_tests.conv2dtranspose_conv2d_pruning_test import \
     Conv2dTransposeConv2dPruningTest
 from tests.pytorch_tests.pruning_tests.feature_networks.network_tests.conv2dtranspose_pruning_test import \
     Conv2dTransposePruningTest
 from tests.pytorch_tests.pruning_tests.feature_networks.network_tests.linear_pruning_test import LinearPruningTest
-
 
 class PruningFeatureNetworksTest(unittest.TestCase):
 
