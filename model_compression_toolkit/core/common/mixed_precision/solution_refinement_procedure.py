@@ -64,7 +64,7 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
                 # layer has max config in the given solution, nothing to optimize
                 continue
 
-            current_node = search_manager.graph.get_configurable_sorted_nodes()[node_idx]
+            current_node = search_manager.graph.get_configurable_sorted_nodes(search_manager.fw_info)[node_idx]
             node_candidates = current_node.candidates_quantization_cfg
 
             # only weights kernel attribute is quantized with weights mixed precision
@@ -80,23 +80,22 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
                 updated_kpis.append(node_updated_kpis)
 
             # filter out new configs that don't hold the KPI restrictions
-            node_filtered_kpis = [(node_idx, kpis) for node_idx, kpis in zip(valid_candidates,updated_kpis) if
-                               target_kpi.holds_constraints(kpis)]
+            node_filtered_kpis = [(node_idx, kpis) for node_idx, kpis in zip(valid_candidates, updated_kpis) if
+                                  target_kpi.holds_constraints(kpis)]
 
             if len(node_filtered_kpis) > 0:
                 sorted_by_kpi = sorted(node_filtered_kpis, key=lambda node_kpis: (node_kpis[1].total_memory,
-                                                                               node_kpis[1].weights_memory,
-                                                                               node_kpis[1].activation_memory))
+                                                                                  node_kpis[1].weights_memory,
+                                                                                  node_kpis[1].activation_memory))
                 nodes_kpis[node_idx] = sorted_by_kpi[0][1]
                 nodes_next_candidate[node_idx] = sorted_by_kpi[0][0]
-
 
         if len(nodes_kpis) > 0:
             # filter out new configs that don't hold the KPI restrictions
             node_filtered_kpis = [(node_idx, kpis) for node_idx, kpis in nodes_kpis.items()]
             sorted_by_kpi = sorted(node_filtered_kpis, key=lambda node_kpis: (node_kpis[1].total_memory,
-                                                                           node_kpis[1].weights_memory,
-                                                                           node_kpis[1].activation_memory))
+                                                                              node_kpis[1].weights_memory,
+                                                                              node_kpis[1].activation_memory))
 
             node_idx_to_upgrade = sorted_by_kpi[0][0]
             new_solution[node_idx_to_upgrade] = nodes_next_candidate[node_idx_to_upgrade]

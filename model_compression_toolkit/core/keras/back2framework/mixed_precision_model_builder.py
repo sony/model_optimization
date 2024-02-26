@@ -89,29 +89,35 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         """
 
         weights_conf_nodes_names = [n.name for n in self.graph.get_weights_configurable_nodes(self.fw_info)]
-        kernel_attributes = self.fw_info.get_kernel_op_attributes(n.type)[0]
-        if n.is_weights_quantization_enabled(kernel_attributes):
+        kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
+        if n.is_weights_quantization_enabled(kernel_attr):
 
             if n.name in weights_conf_nodes_names:
                 return KerasQuantizationWrapper(layer,
-                                                weights_quantizers={kernel_attributes: ConfigurableWeightsQuantizer(
+                                                weights_quantizers={kernel_attr: ConfigurableWeightsQuantizer(
                                                     **self._get_weights_configurable_quantizer_kwargs(n,
-                                                                                                      kernel_attributes))})
+                                                                                                      kernel_attr))})
             else:
-                node_weights_qc = n.get_unique_weights_candidates()
+                # TODO: similar to GPTQ and QAT models - do we want to include other quantized attributes that are not
+                #  the kernel attribute in the mixed precision model?
+                #  Currently, we only consider kernel attribute quantization (whether it is in mixed precision
+                #  or single precision).
+                node_weights_qc = n.get_unique_weights_candidates(kernel_attr)
                 if not len(node_weights_qc) == 1:
                     Logger.error(f"Expecting node {n.name} to have a unique weights configuration "  # pragma: no cover
                                  f"but {len(node_weights_qc)} different configurations exist.")
 
                 quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
-                                                                  node_weights_qc[0].weights_quantization_cfg.weights_quantization_method,
+                                                                  node_weights_qc[0].weights_quantization_cfg
+                                                                  .get_attr_config(kernel_attr)
+                                                                  .weights_quantization_method,
                                                                   BaseKerasInferableQuantizer)
                 kwargs = get_inferable_quantizer_kwargs(node_weights_qc[0].weights_quantization_cfg,
-                                                        QuantizationTarget.Weights)
+                                                        QuantizationTarget.Weights,
+                                                        kernel_attr)
 
                 return KerasQuantizationWrapper(layer,
-                                                weights_quantizers={attr: quantier_for_node(**kwargs)
-                                                                    for attr in kernel_attributes})
+                                                weights_quantizers={kernel_attr: quantier_for_node(**kwargs)})
 
         return layer
 
@@ -130,7 +136,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         assert n.candidates_quantization_cfg is not None, f"Node {n.name} candidates_quantization_cfg is None"
         node_q_cfg_candidates = n.candidates_quantization_cfg
         # sort by descending bit width so using indices would be easier
-        node_q_cfg_candidates.sort(key=lambda x: (x.weights_quantization_cfg.weights_n_bits,
+        node_q_cfg_candidates.sort(key=lambda x: (x.weights_quantization_cfg.get_attr_config(attr).weights_n_bits,
                                                   x.activation_quantization_cfg.activation_n_bits), reverse=True)
 
         float_weights = n.get_weights_by_keys(attr)
@@ -168,10 +174,20 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
             if n.name in activation_conf_nodes_names:
                 assert n.candidates_quantization_cfg is not None, f"Node {n.name} candidates_quantization_cfg is None"
                 node_q_cfg_candidates = n.candidates_quantization_cfg
-                # sort by descending bit width so using indices would be easier
-                node_q_cfg_candidates.sort(key=lambda x: (x.weights_quantization_cfg.weights_n_bits,
-                                                          x.activation_quantization_cfg.activation_n_bits),
-                                           reverse=True)
+
+                # sorting the candidates by kernel attribute weights number of bits first and then by
+                # activation number of bits (in reversed order).
+                # since only kernel attribute is quantized in weights mixed precision,
+                # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
+                # TODO: if this works the same as in set_node_candidates - extract this to a helper function of MP
+                kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
+                if kernel_attr is not None:
+                    node_q_cfg_candidates.sort(
+                        key=lambda c: (c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
+                                       c.activation_quantization_cfg.activation_n_bits), reverse=True)
+                else:
+                    node_q_cfg_candidates.sort(key=lambda c: c.activation_quantization_cfg.activation_n_bits,
+                                               reverse=True)
 
                 max_cfg_candidates = n.find_max_candidates_indices()
                 assert len(max_cfg_candidates) == 1, \

@@ -91,6 +91,10 @@ def compute_nodes_weights_params(graph: Graph, fw_info: FrameworkInfo) -> np.nda
 
     weights_params = []
     for n in graph.nodes:
+        # TODO: when enabling multiple attribute quantization by default (currently,
+        #  only kernel quantization is enabled) we should include other attributes memory in the sum of all
+        #  weights memory.
+        #  When implementing this, we should just go over all attributes in the node instead of counting only kernels.
         if n.has_kernel_quantization_enabled_candidate(fw_info) and not n.reuse:
             node_num_weights_params = 0
             for attr in fw_info.get_kernel_op_attributes(n.type):

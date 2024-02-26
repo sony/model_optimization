@@ -76,41 +76,48 @@ def get_trainable_quantizer_activation_config(
                                               activation_quantization_candidates)
 
 
-def get_trainable_quantizer_quantization_candidates(n: BaseNode):
+def get_trainable_quantizer_quantization_candidates(n: BaseNode, attr: str):
     """
     Returns quantization configuration candidates for activation and weights trainable quantizer.
     Checks that the candidates are compatible with trainable quantizer
 
     Args:
         n: BaseNode - the node to build a trainable quantizer from
+        attr: Weights attribute to get its quantization configuration candidates and trainable quantizer.
 
     Returns:
          weights_quantization_candidates - A list of configuration candidates for weights
          activation_quantization_candidates - A list of configuration candidates for activation
     """
-    # all candidates must have the same weights quantization method
-    weights_quantization_methods = set([cfg.weights_quantization_cfg.weights_quantization_method for cfg in n.candidates_quantization_cfg])
-    if len(weights_quantization_methods) > 1:
-        Logger.error(f'Unsupported candidates_quantization_cfg with different weights quantization methods: {weights_quantization_methods}') # pragma: no cover
+
+    if attr is not None:
+        # all candidates must have the same weights quantization method
+        weights_quantization_methods = set([cfg.weights_quantization_cfg.get_attr_config(attr).weights_quantization_method
+                                            for cfg in n.candidates_quantization_cfg])
+        if len(weights_quantization_methods) > 1:
+            Logger.error(f'Unsupported candidates_quantization_cfg with different weights quantization methods: '
+                         f'{weights_quantization_methods}')  # pragma: no cover
 
     # all candidates must have the same activation quantization method
-    activation_quantization_methods = set([cfg.activation_quantization_cfg.activation_quantization_method for cfg in n.candidates_quantization_cfg])
+    activation_quantization_methods = set([cfg.activation_quantization_cfg.activation_quantization_method
+                                           for cfg in n.candidates_quantization_cfg])
     if len(activation_quantization_methods) > 1:
-        Logger.error(f'Unsupported candidates_quantization_cfg with different activation quantization methods: {activation_quantization_methods}') # pragma: no cover
+        Logger.error(f'Unsupported candidates_quantization_cfg with different activation quantization methods: '
+                     f'{activation_quantization_methods}')  # pragma: no cover
 
     # get unique lists of candidates
-    unique_weights_candidates = n.get_unique_weights_candidates()
+    unique_weights_candidates = n.get_unique_weights_candidates(attr)
     unique_activation_candidates = n.get_unique_activation_candidates()
 
     # verify all the combinations of weights_n_bits and activation_n_bits are allowed
     if len(n.candidates_quantization_cfg) != len(unique_weights_candidates) * len(unique_activation_candidates):
         Logger.error(f'Unsupported candidates_quantization_cfg for a trainable quantizer,'
-                            f'it must contain all the combinations of (weights_n_bits X activations_n_bits)') # pragma: no cover
+                     f'it must contain all the combinations of (weights_n_bits X activations_n_bits)')  # pragma: no cover
 
     # generate list of weights quantizer candidates
     weights_cfg_candidates = [TrainableQuantizerCandidateConfig(
-        cfg.weights_quantization_cfg.weights_n_bits,
-        cfg.weights_quantization_cfg.weights_quantization_params) for cfg in unique_weights_candidates]
+        cfg.get_attr_config(attr).weights_n_bits, cfg.get_attr_config(attr).weights_quantization_params)
+        for cfg in unique_weights_candidates]
 
     # generate list of activation quantizer candidates
     activation_cfg_candidates = [TrainableQuantizerCandidateConfig(

@@ -132,12 +132,12 @@ def core_runner(in_model: Any,
     # Edit the graph again after finalizing the configurations.
     # This is since some actions regard the final configuration and should be edited.
     edit_network_graph(tg, fw_info, core_config.debug_config.network_editor)
-    #
-    # _set_final_kpi(graph=tg,
-    #                final_bit_widths_config=bit_widths_config,
-    #                kpi_functions_dict=kpi_functions_mapping,
-    #                fw_info=fw_info,
-    #                fw_impl=fw_impl)
+
+    _set_final_kpi(graph=tg,
+                   final_bit_widths_config=bit_widths_config,
+                   kpi_functions_dict=kpi_functions_mapping,
+                   fw_info=fw_info,
+                   fw_impl=fw_impl)
 
     if target_kpi is not None:
         # Retrieve lists of tuples (node, node's final weights/activation bitwidth)

@@ -86,7 +86,7 @@ class MixedPrecisionSearchManager:
         """
 
         indices_mapping = {}
-        nodes_to_configure = self.graph.get_configurable_sorted_nodes()
+        nodes_to_configure = self.graph.get_configurable_sorted_nodes(self.fw_info)
         for idx, n in enumerate(nodes_to_configure):
             # For each node, get all possible bitwidth indices for it
             # (which is a list from 0 to the length of the candidates mp_config list of the node).
@@ -142,7 +142,7 @@ class MixedPrecisionSearchManager:
         """
         assert isinstance(target, KPITarget), f"{target} is not a valid KPI target"
 
-        configurable_sorted_nodes = self.graph.get_configurable_sorted_nodes()
+        configurable_sorted_nodes = self.graph.get_configurable_sorted_nodes(self.fw_info)
 
         kpi_matrix = []
         for c, c_n in enumerate(configurable_sorted_nodes):
@@ -336,9 +336,10 @@ class ConfigReconstructionHelper:
 
         self.virtual_graph = virtual_graph
         self.original_graph = original_graph
+        self.fw_info = original_graph.fw_info
 
-        self.virtual_sorted_nodes_names = self.virtual_graph.get_configurable_sorted_nodes_names()
-        self.origin_sorted_conf_nodes_names = self.original_graph.get_configurable_sorted_nodes_names()
+        self.virtual_sorted_nodes_names = self.virtual_graph.get_configurable_sorted_nodes_names(self.fw_info)
+        self.origin_sorted_conf_nodes_names = self.original_graph.get_configurable_sorted_nodes_names(self.fw_info)
 
         self.origin_node_idx_to_cfg = {}
 
@@ -383,14 +384,14 @@ class ConfigReconstructionHelper:
             for virtual_node_idx, n in updated_virtual_nodes:
                 self.reconstruct_node_config(n, virtual_mp_cfg, virtual_node_idx)
             # Updating reconstructed config for all other nodes based on provided base_config
-            original_sorted_conf_nodes = self.original_graph.get_configurable_sorted_nodes()
+            original_sorted_conf_nodes = self.original_graph.get_configurable_sorted_nodes(self.fw_info)
             for i in range(len(original_base_config)):
                 if i not in list(self.origin_node_idx_to_cfg.keys()):
                     self.update_config_at_original_idx(n=original_sorted_conf_nodes[i],
                                                        origin_cfg_idx=original_base_config[i])
         else:
             # Reconstruct entire config
-            for virtual_node_idx, n in enumerate(self.virtual_graph.get_configurable_sorted_nodes()):
+            for virtual_node_idx, n in enumerate(self.virtual_graph.get_configurable_sorted_nodes(self.fw_info)):
                 self.reconstruct_node_config(n, virtual_mp_cfg, virtual_node_idx)
 
         res_config = [self.origin_node_idx_to_cfg[key] for key in sorted(self.origin_node_idx_to_cfg.keys())]
@@ -467,7 +468,9 @@ class ConfigReconstructionHelper:
         if weights_node.name in self.origin_sorted_conf_nodes_names:
             # It is possible that the original weights node is not configurable,
             # in this case we don't need to retrieve its bit-width config
-            weights_bitwidth = virtual_node.candidates_quantization_cfg[virtual_cfg_idx].weights_quantization_cfg.weights_n_bits
+            kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.type)[0]
+            weights_bitwidth = (virtual_node.candidates_quantization_cfg[virtual_cfg_idx].weights_quantization_cfg
+                                .get_attr_config(kernel_attr).weights_n_bits)
             origin_cfg_idx = [i for i, c in
                               enumerate(weights_node.candidates_quantization_cfg) if
                               c.weights_quantization_cfg.weights_n_bits == weights_bitwidth]
@@ -519,11 +522,14 @@ class ConfigReconstructionHelper:
         activation_bitwidth = activation_node.candidates_quantization_cfg[virtual_mp_cfg[
             self.virtual_sorted_nodes_names.index(activation_node.name)]].activation_quantization_cfg.activation_n_bits
 
-        weights_bitwidth = virtual_node.candidates_quantization_cfg[virtual_cfg_idx].weights_quantization_cfg.weights_n_bits
+        kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.origin_node.type)[0]
+
+        weights_bitwidth = (virtual_node.candidates_quantization_cfg[virtual_cfg_idx].weights_quantization_cfg
+                            .get_attr_config(kernel_attr).weights_n_bits)
 
         origin_cfg_idx = [i for i, c in
                           enumerate(weights_node.origin_node.candidates_quantization_cfg) if
-                          c.weights_quantization_cfg.weights_n_bits == weights_bitwidth and
+                          c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits == weights_bitwidth and
                           c.activation_quantization_cfg.activation_n_bits == activation_bitwidth]
 
         self.update_config_at_original_idx(weights_node.origin_node, origin_cfg_idx[0])
@@ -547,14 +553,17 @@ class ConfigReconstructionHelper:
             virtual_mp_cfg: The virtual graph's chosen mp config.
         """
 
-        weights_bitwidth = weights_node.candidates_quantization_cfg[virtual_mp_cfg[
-            self.virtual_sorted_nodes_names.index(weights_node.name)]].weights_quantization_cfg.weights_n_bits
+        kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.origin_node.type)[0]
+
+        weights_bitwidth = (weights_node.candidates_quantization_cfg[virtual_mp_cfg[
+            self.virtual_sorted_nodes_names.index(weights_node.name)]]
+                            .weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits)
 
         activation_bitwidth = virtual_node.candidates_quantization_cfg[
             virtual_cfg_idx].activation_quantization_cfg.activation_n_bits
 
         origin_cfg_idx = [i for i, c in enumerate(activation_node.origin_node.candidates_quantization_cfg) if
-                          c.weights_quantization_cfg.weights_n_bits == weights_bitwidth and
+                          c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits == weights_bitwidth and
                           c.activation_quantization_cfg.activation_n_bits == activation_bitwidth]
 
         self.update_config_at_original_idx(activation_node.origin_node, origin_cfg_idx[0])
@@ -624,9 +633,9 @@ class ConfigReconstructionHelper:
         weights_node = matching_weights_node[0]
 
         if isinstance(weights_node, VirtualActivationWeightsNode):
-            # TODO: handle is_weights_quantization_enabled and is_all_weights_candidates_equal calls
-            if weights_node.original_weights_node.is_weights_quantization_enabled() and not \
-                    weights_node.original_weights_node.is_all_weights_candidates_equal():
+            kernel_attr = self.fw_info.get_kernel_op_attributes(weights_node.type)[0]
+            if weights_node.original_weights_node.is_weights_quantization_enabled(kernel_attr) and not \
+                    weights_node.original_weights_node.is_all_weights_candidates_equal(kernel_attr):
                 assert weights_node.name in self.virtual_sorted_nodes_names  # Sanity check
                 # The original node is both weights and activation configurable
                 self.retrieve_weights_activation_config(activation_node, weights_node, virtual_node, virtual_cfg_idx, virtual_mp_cfg)

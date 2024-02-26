@@ -52,6 +52,7 @@ class ConfigurableWeightsQuantizer(BasePyTorchInferableQuantizer):
     def __init__(self,
                  node_q_cfg: List[CandidateNodeQuantizationConfig],
                  float_weights: torch.Tensor,
+                 kernel_attr: str,
                  max_candidate_idx: int = 0):
         """
         Initializes a configurable quantizer.
@@ -60,6 +61,7 @@ class ConfigurableWeightsQuantizer(BasePyTorchInferableQuantizer):
             node_q_cfg: Quantization configuration candidates of the node that generated the layer that will
                 use this quantizer.
             float_weights: Float weights of the layer.
+            kernel_attr: The kernel attribute name of the node. Only layers with kernel op can be configured.
             max_candidate_idx: Index of the node's candidate that has the maximal bitwidth (must exist absolute max).
         """
 
@@ -68,18 +70,21 @@ class ConfigurableWeightsQuantizer(BasePyTorchInferableQuantizer):
         self.node_q_cfg = node_q_cfg
         self.float_weights = float_weights
         self.max_candidate_idx = max_candidate_idx
+        self.kernel_attr = kernel_attr
 
-        verify_candidates_descending_order(self.node_q_cfg)
+        verify_candidates_descending_order(self.node_q_cfg, kernel_attr)
 
         for qc in self.node_q_cfg:
-            if qc.weights_quantization_cfg.enable_weights_quantization != \
-                   self.node_q_cfg[0].weights_quantization_cfg.enable_weights_quantization:
-                Logger.error("Candidates with different weights enabled properties is currently not supported.")  # pragma: no cover
+            if qc.weights_quantization_cfg.get_attr_config(self.kernel_attr).enable_weights_quantization != \
+                   self.node_q_cfg[0].weights_quantization_cfg.get_attr_config(self.kernel_attr).enable_weights_quantization:
+                Logger.error("Candidates with different kernel attribute quantization enabled "
+                             "properties is currently not supported.")
 
         # Initialize quantized weights for each weight that should be quantized.
         self.quantized_weights = init_quantized_weights(node_q_cfg=self.node_q_cfg,
                                                         float_weights=self.float_weights,
-                                                        fw_tensor_convert_func=to_torch_tensor)
+                                                        fw_tensor_convert_func=to_torch_tensor,
+                                                        kernel_attr=kernel_attr)
 
         self.active_quantization_config_index = self.max_candidate_idx
 

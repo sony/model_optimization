@@ -53,22 +53,31 @@ def weights_size_kpi(mp_cfg: List[int],
 
     if len(mp_cfg) == 0:
         # Computing non-configurable nodes KPI
+        # TODO: when enabling multiple attribute quantization by default (currently,
+        #  only kernel quantization is enabled) we should include other attributes memory in the sum of all
+        #  weights memory (when quantized to their default 8-bit, non-configurable).
+        #  When implementing this, we should just go over all attributes in the node instead of counting only kernels.
         for n in graph.nodes:
+            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
+            if kernel_attr is None:
+                continue
             non_configurable_node = n.name not in weights_mp_nodes \
-                                    and n.has_kernel_quantization_enabled_candidate(fw_info) \
                                     and not n.reuse \
-                                    and n.is_all_weights_candidates_equal()
+                                    and n.is_all_weights_candidates_equal(kernel_attr)
 
             if non_configurable_node:
-                node_nbits = n.candidates_quantization_cfg[0].weights_quantization_cfg.weights_n_bits
+                node_nbits = (n.candidates_quantization_cfg[0].weights_quantization_cfg
+                              .get_attr_config(kernel_attr).weights_n_bits)
                 node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
                 weights_memory.append(node_weights_memory_in_bytes)
     else:
         # Go over configurable all nodes that should be taken into consideration when computing the weights KPI.
         for n in graph.get_sorted_weights_configurable_nodes(fw_info):
+            # Only nodes with kernel op can be considered configurable
+            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
             node_idx = mp_nodes.index(n.name)
             node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
-            node_nbits = node_qc.weights_quantization_cfg.weights_n_bits
+            node_nbits = node_qc.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits
 
             node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
 

@@ -466,20 +466,29 @@ class BaseNode:
 
         return [i for i, a_n_bits in max_candidates]
 
-    def get_unique_weights_candidates(self) -> List[Any]:
+    def get_unique_weights_candidates(self, attr: str) -> List[Any]:
         """
-        Returns a list with node's candidates of unique weights bit-width value.
-        If the node have multiple candidates with the same weights bit-width,
+        Returns a list with node's candidates of unique weights bit-width value for the given attribute.
+        If the node have multiple candidates with the same weights bit-width for this attribute,
         the first candidate in the list is returned.
 
-        Returns: A list with node's candidates of unique weights bit-width value.
+        Args:
+            attr: A weights attribute name to get its unique candidates list.
+
+        Returns: A list with node's candidates of unique weights bit-width value for the given attribute.
         """
-        # TODO: handle separately, I think it needs to be per-attribute and get the kernel attribute from the outside
+
+        if attr is None or attr not in self.get_node_weights_attributes():
+            Logger.warning(f"Trying to retrieve quantization configuration candidates for attribute '{attr}', "
+                           f"but such attribute can't be found in node {self.name}."
+                           f"An empty list of candidates is returned.")
+            return []
+
         unique_candidates = copy.deepcopy(self.candidates_quantization_cfg)
         seen_candidates = set()
         unique_candidates = [candidate for candidate in unique_candidates if
-                             candidate.weights_quantization_cfg not in seen_candidates
-                             and not seen_candidates.add(candidate.weights_quantization_cfg)]
+                             candidate.weights_quantization_cfg.get_attr_config(attr) not in seen_candidates
+                             and not seen_candidates.add(candidate.weights_quantization_cfg.get_attr_config(attr))]
         return unique_candidates
 
     def get_unique_activation_candidates(self) -> List[Any]:

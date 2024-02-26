@@ -24,6 +24,7 @@ import numpy as np
 
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
+from model_compression_toolkit.logger import Logger
 
 
 class VirtualSplitNode(BaseNode):
@@ -60,19 +61,20 @@ class VirtualSplitWeightsNode(VirtualSplitNode):
     config.
     """
 
-    def __init__(self, origin_node: BaseNode):
+    def __init__(self, origin_node: BaseNode, kernel_attr: str):
         """
         Init a VirtualSplitWeightsNode object.
 
         Args:
             origin_node: The original node from which the new node was split.
+            kernel_attr: The name of the kernel attribute of the original node.
         """
 
         super().__init__(origin_node)
 
         self.name = origin_node.name + VIRTUAL_WEIGHTS_SUFFIX
 
-        self.candidates_quantization_cfg = origin_node.get_unique_weights_candidates()
+        self.candidates_quantization_cfg = origin_node.get_unique_weights_candidates(kernel_attr)
         for c in self.candidates_quantization_cfg:
             c.activation_quantization_cfg.enable_activation_quantization = False
             c.activation_quantization_cfg.activation_n_bits = FLOAT_BITWIDTH
@@ -175,7 +177,6 @@ class VirtualActivationWeightsNode(BaseNode):
         v_candidates = []
         for c_a in act_node.candidates_quantization_cfg:
             for c_w in weights_node.candidates_quantization_cfg:
-                # TODO: Modify with new attributes quantization signature
                 composed_candidate = CandidateNodeQuantizationConfig(activation_quantization_cfg=c_a.activation_quantization_cfg,
                                                                      weights_quantization_cfg=c_w.weights_quantization_cfg)
                 v_candidates.append(composed_candidate)

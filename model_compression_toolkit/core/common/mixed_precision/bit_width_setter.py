@@ -36,7 +36,8 @@ def set_bit_widths(mixed_precision_enable: bool,
 
     """
     if mixed_precision_enable:
-        assert all([len(n.candidates_quantization_cfg) > 0 for n in graph.get_configurable_sorted_nodes()]), \
+        assert all([len(n.candidates_quantization_cfg) > 0
+                    for n in graph.get_configurable_sorted_nodes(graph.fw_info)]), \
             "All configurable nodes in graph should have at least one candidate configuration in mixed precision mode"
 
         Logger.info(f'Set bit widths from configuration: {bit_widths_config}')

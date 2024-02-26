@@ -70,7 +70,7 @@ def quantization_builder(n: common.BaseNode,
         activation_quantizers: A list of activations quantization, one for each layer output.
     """
     if len(n.candidates_quantization_cfg) > 1:
-        wq_cand, aq_cand = get_trainable_quantizer_quantization_candidates(n)
+        wq_cand, aq_cand = get_trainable_quantizer_quantization_candidates(n, kernel_attr)
     else:
         wq_cand, aq_cand = None, None
 
