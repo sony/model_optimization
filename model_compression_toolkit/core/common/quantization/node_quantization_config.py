@@ -444,6 +444,9 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         Returns: An attribute quantization configuration.
 
         """
+        if attr_name is None:
+            Logger.error("Got 'None' attribute name for retrieving weights attribute quantization configuration.")
+
         if isinstance(attr_name, int):
             # this is a positional attribute
             attr_cfg = self.pos_attributes_config_mapping.get(attr_name)

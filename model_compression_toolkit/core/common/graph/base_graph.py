@@ -702,7 +702,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         """
         sorted_conf_weights = self.get_sorted_weights_configurable_nodes(fw_info)
         # a configurable node by definition has a kernel op
-        return [(n, n.final_weights_quantization_cfg.get_attr_config(self.fw_info.get_kernel_op_attributes(n.type)).weights_n_bits)
+        return [(n, n.final_weights_quantization_cfg.get_attr_config(self.fw_info.get_kernel_op_attributes(n.type)[0]).weights_n_bits)
                 for n in sorted_conf_weights]
 
     def get_final_activation_config(self) -> List[Tuple[BaseNode, int]]:

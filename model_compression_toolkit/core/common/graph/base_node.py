@@ -478,7 +478,7 @@ class BaseNode:
         Returns: A list with node's candidates of unique weights bit-width value for the given attribute.
         """
 
-        if attr is None or attr not in self.get_node_weights_attributes():
+        if attr is None or len(self.get_all_weights_attr_candidates(attr)) == 0:
             Logger.warning(f"Trying to retrieve quantization configuration candidates for attribute '{attr}', "
                            f"but such attribute can't be found in node {self.name}."
                            f"An empty list of candidates is returned.")

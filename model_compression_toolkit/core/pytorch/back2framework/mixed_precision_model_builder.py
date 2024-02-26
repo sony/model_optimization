@@ -89,11 +89,12 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
             if n.name in weights_conf_nodes_names:
                 return PytorchQuantizationWrapper(layer,
-                                                  weights_quantizers={kernel_attr: ConfigurableWeightsQuantizer(
-                                                      **self._get_weights_configurable_quantizer_kwargs(n,
-                                                                                                        kernel_attr))})
+                                                  weights_quantizers={
+                                                      kernel_attr: ConfigurableWeightsQuantizer(
+                                                          **self._get_weights_configurable_quantizer_kwargs(n,
+                                                                                                            kernel_attr))})
             else:
-                # TODO: similar to GPTQ and QAT models - do we want to include other quantized attributes that are not
+                # TODO: Do we want to include other quantized attributes that are not
                 #  the kernel attribute in the mixed precision model?
                 #  Currently, we only consider kernel attribute quantization (whether it is in mixed precision
                 #  or single precision).

@@ -167,15 +167,19 @@ def total_weights_activation_kpi(mp_cfg: List[int],
             node_weights_memory_in_bytes, node_activation_memory_in_bytes = 0, 0
 
             # Non-configurable Weights
-            is_non_configurable_weights = n.name not in weights_mp_nodes and \
-                                          n.has_kernel_quantization_enabled_candidate(fw_info) and \
-                                          n.is_all_weights_candidates_equal() and \
-                                          not n.reuse
+            # TODO: currently considering only kernel attributes in weights KPI. When enabling multi-attribute
+            #  quantization we need to modify this method to count all attributes.
+            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
+            if kernel_attr is not None:
+                is_non_configurable_weights = n.name not in weights_mp_nodes and \
+                                              n.is_all_weights_candidates_equal(kernel_attr) and \
+                                              not n.reuse
 
-            if is_non_configurable_weights:
-                node_nbits = n.candidates_quantization_cfg[0].weights_quantization_cfg.weights_n_bits
-                node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
-                non_configurable = True
+                if is_non_configurable_weights:
+                    node_nbits = (n.candidates_quantization_cfg[0].weights_quantization_cfg
+                                  .get_attr_config(kernel_attr).weights_n_bits)
+                    node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
+                    non_configurable = True
 
             # Non-configurable Activation
             is_non_configurable_activation = n.name not in activation_mp_nodes and \
@@ -193,18 +197,22 @@ def total_weights_activation_kpi(mp_cfg: List[int],
     else:
         # Go over all nodes that should be taken into consideration when computing the weights or
         # activation KPI (all configurable nodes).
-        for node_idx, n in enumerate(graph.get_configurable_sorted_nodes()):
+        for node_idx, n in enumerate(graph.get_configurable_sorted_nodes(fw_info)):
+            # TODO: currently considering only kernel attributes in weights KPI. When enabling multi-attribute
+            #  quantization we need to modify this method to count all attributes.
+
             node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
-            node_weights_nbits = node_qc.weights_quantization_cfg.weights_n_bits
-            node_activation_nbits = node_qc.activation_quantization_cfg.activation_n_bits
 
             # Compute node's weights memory (if no weights to quantize then set to 0)
             node_weights_memory_in_bytes = 0
-            # TODO: handle is_weights_quantization_enabled call (for kernel only)
-            if n.is_weights_quantization_enabled() and not n.is_all_weights_candidates_equal():
-                node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_weights_nbits, fw_info)
+            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
+            if kernel_attr is not None:
+                if n.is_weights_quantization_enabled(kernel_attr) and not n.is_all_weights_candidates_equal(kernel_attr):
+                    node_weights_nbits = node_qc.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits
+                    node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_weights_nbits, fw_info)
 
             # Compute node's activation memory (if node's activation are not being quantized then set to 0)
+            node_activation_nbits = node_qc.activation_quantization_cfg.activation_n_bits
             node_activation_memory_in_bytes = 0
             if n.is_activation_quantization_enabled() and not n.is_all_activation_candidates_equal():
                 node_activation_memory_in_bytes = _compute_node_activation_memory(n, node_activation_nbits)

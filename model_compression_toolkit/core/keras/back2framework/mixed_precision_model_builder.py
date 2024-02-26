@@ -88,17 +88,17 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
         """
 
-        weights_conf_nodes_names = [n.name for n in self.graph.get_weights_configurable_nodes(self.fw_info)]
         kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
-        if n.is_weights_quantization_enabled(kernel_attr):
-
+        if kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr):
+            weights_conf_nodes_names = [node.name for node in self.graph.get_weights_configurable_nodes(self.fw_info)]
             if n.name in weights_conf_nodes_names:
                 return KerasQuantizationWrapper(layer,
-                                                weights_quantizers={kernel_attr: ConfigurableWeightsQuantizer(
-                                                    **self._get_weights_configurable_quantizer_kwargs(n,
-                                                                                                      kernel_attr))})
+                                                weights_quantizers={
+                                                    kernel_attr: ConfigurableWeightsQuantizer(
+                                                        **self._get_weights_configurable_quantizer_kwargs(n,
+                                                                                                          kernel_attr))})
             else:
-                # TODO: similar to GPTQ and QAT models - do we want to include other quantized attributes that are not
+                # TODO: Do we want to include other quantized attributes that are not
                 #  the kernel attribute in the mixed precision model?
                 #  Currently, we only consider kernel attribute quantization (whether it is in mixed precision
                 #  or single precision).
@@ -150,7 +150,8 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
         return {'node_q_cfg': node_q_cfg_candidates,
                 'float_weights': float_weights,
-                'max_candidate_idx': max_candidate_idx
+                'max_candidate_idx': max_candidate_idx,
+                'kernel_attr': attr,
                 }
 
     def mixed_precision_activation_holder(self, n: BaseNode) -> KerasActivationQuantizationHolder:
@@ -235,7 +236,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
 
         # creating a mapping between graph nodes and model's layers for mixed precision configurability
         conf_node2layers = {n.name: self._find_layers_in_model_by_node(n, model.layers)
-                            for n in self.graph.get_configurable_sorted_nodes()}
+                            for n in self.graph.get_configurable_sorted_nodes(self.fw_info)}
 
         return model, user_info, conf_node2layers
 
@@ -273,7 +274,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
     def _find_layers_in_model_by_node(self, n: BaseNode, layers_list: List[Layer]) -> \
             List[Union[KerasQuantizationWrapper, KerasActivationQuantizationHolder]]:
         """
-        Retries layers from an MP model that are matching to the given graph node, that is, these are either
+        Retrieves layers from an MP model that are matching to the given graph node, that is, these are either
         KerasQuantizationWrapper layers or KerasActivationQuantizationHolder layers that are responsible for the graph
         configurable model quantization.
 
@@ -284,8 +285,9 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         Returns: A list of layers that responsible for the node's quantization.
 
         """
-        # TODO: handle is_weights_quantization_enabled call
-        weights_quant = n.is_weights_quantization_enabled()
+        # Only layers with kernel op are considered weights configurable
+        kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
+        weights_quant = False if kernel_attr is None else n.is_weights_quantization_enabled(kernel_attr)
         act_quant = n.is_activation_quantization_enabled()
 
         if weights_quant and not act_quant:
