@@ -258,12 +258,18 @@ class BaseNode:
         Returns: Number of bytes the node's memory requires.
 
         """
-        # TODO: is this method only for MP? if so - get only kernel n_bits from final config, ow, iterate on all attributes and sum memory
+        # TODO: this method is used for tensorboard only. If we want to enable logging of other attributes memory
+        #  then it needs to be modified. But, it might be better to remove this method from the BaseNode completely.
+        kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
+        if kernel_attr is None:
+            return 0
         q_params, f_params = self.get_num_parameters(fw_info)
         if self.final_weights_quantization_cfg is None:  # float coefficients
             memory = (f_params+q_params) * FP32_BYTES_PER_PARAMETER
         else:
-            memory = (f_params * FP32_BYTES_PER_PARAMETER) + (q_params * self.final_weights_quantization_cfg.weights_n_bits / 8)  # in bytes
+            memory = ((f_params * FP32_BYTES_PER_PARAMETER) +
+                      (q_params * self.final_weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits
+                       / 8))  # in bytes
 
         return memory
 
@@ -299,6 +305,9 @@ class BaseNode:
             Logger.error(f"Expecting only the kernel attribute to have multiple quantization configuration candidates, "
                          f"but node {self.name} have multiple attributes with several candidates: "
                          f"{multiple_candidates_attr}")
+        if len(multiple_candidates_attr) == 0:
+            # This node doesn't have a kernel attribute
+            return {}
         attr = multiple_candidates_attr[0]
         if self.is_weights_quantization_enabled(attr):
             parameters_dict = copy.deepcopy(self.candidates_quantization_cfg[0].weights_quantization_cfg.

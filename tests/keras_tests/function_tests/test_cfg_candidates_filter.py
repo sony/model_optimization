@@ -97,7 +97,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
 
-        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes()
+        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes(DEFAULT_KERAS_INFO)
 
         # checking that layers with activation only (input and relu) have filtered configurations list,
         # that they have a configuration for each of the original bitwidth options
@@ -126,7 +126,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
 
-        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes()
+        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes(DEFAULT_KERAS_INFO)
 
         # checking that layers with weights (conv2d) have filtered activation configurations list
         # when weights quantization is disabled
@@ -155,7 +155,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
 
-        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes()
+        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes(DEFAULT_KERAS_INFO)
 
         # checking that layers with weights (conv2d) have filtered weights configurations list
         # when activation quantization is disabled

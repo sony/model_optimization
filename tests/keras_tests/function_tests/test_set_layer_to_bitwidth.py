@@ -67,7 +67,8 @@ class TestKerasSetLayerToBitwidth(unittest.TestCase):
                                          ConfigurableWeightsQuantizer(
                                              node_q_cfg=node.candidates_quantization_cfg,
                                              float_weights=node.get_weights_by_keys(KERNEL),
-                                             max_candidate_idx=node.find_max_candidates_indices()[0])
+                                             max_candidate_idx=node.find_max_candidates_indices()[0],
+                                             kernel_attr=KERNEL)
                                      })
 
         for attr, q in wrapper_layer.weights_quantizers.items():

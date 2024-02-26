@@ -134,7 +134,6 @@ layers = tf.keras.layers
 
 
 class FeatureNetworkTest(unittest.TestCase):
-    """
     def test_per_tensor_weight_quantization(self):
         PerTensorWeightQuantizationTest(self).run_test()
 
@@ -194,7 +193,6 @@ class FeatureNetworkTest(unittest.TestCase):
         # In this test we have weights with less unique values than the number of clusters
         KmeansQuantizerTestManyClasses(self, QuantizationMethod.LUT_POT_QUANTIZER,
                                        weights_n_bits=7).run_test()
-"""
     def test_reused_separable_mixed_precision(self):
         ReusedSeparableMixedPrecisionTest(self).run_test()
 
@@ -283,7 +281,7 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPrecisionBopsAndTotalKPITest(self).run_test()
         MixedPrecisionBopsWeightsActivationKPITest(self).run_test()
         MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
-"""
+
     def test_name_filter(self):
         NameFilterTest(self).run_test()
 
@@ -750,6 +748,6 @@ class FeatureNetworkTest(unittest.TestCase):
         OldApiTest(self, mp_enable=True, gptq_enable=True).run_test()
         OldApiTest(self, gptq_enable=True).run_test()
 
-"""
+
 if __name__ == '__main__':
     unittest.main()
