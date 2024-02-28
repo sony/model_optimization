@@ -20,7 +20,7 @@ import unittest
 from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input
 import numpy as np
 
-from model_compression_toolkit.core import DEFAULTCONFIG, MixedPrecisionQuantizationConfig
+from model_compression_toolkit.core import DEFAULTCONFIG, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitActivationNode, \
     VirtualSplitWeightsNode
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -76,7 +76,7 @@ def get_tpc(mixed_precision_candidates_list):
 
 
 def test_setup(in_model, keras_impl, mixed_precision_candidates_list):
-    qc = MixedPrecisionQuantizationConfig(DEFAULTCONFIG)
+    qc = MixedPrecisionQuantizationConfigV2(DEFAULTCONFIG)
     graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset,
                                        lambda name, _tp: get_tpc(mixed_precision_candidates_list), qc=qc,
                                        mixed_precision_enabled=True)

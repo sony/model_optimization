@@ -14,8 +14,7 @@
 # ==============================================================================
 
 from typing import Callable
-
-from model_compression_toolkit.core import CoreConfig, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2, CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW
@@ -36,7 +35,7 @@ if FOUND_TF:
 
     def keras_kpi_data(in_model: Model,
                        representative_data_gen: Callable,
-                       core_config: CoreConfig,
+                       core_config: CoreConfig = CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2()),
                        fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                        target_platform_capabilities: TargetPlatformCapabilities = KERAS_DEFAULT_TPC) -> KPI:
         """

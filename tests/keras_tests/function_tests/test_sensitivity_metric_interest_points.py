@@ -30,7 +30,7 @@ else:
 from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfig
+    MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import get_mp_interest_points
 from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
@@ -43,11 +43,11 @@ from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
 
 
 def build_ip_list_for_test(in_model, num_interest_points_factor):
-    qc = MixedPrecisionQuantizationConfig(DEFAULTCONFIG,
-                                          compute_mse,
-                                          get_average_weights,
-                                          num_of_images=1,
-                                          num_interest_points_factor=num_interest_points_factor)
+    qc = MixedPrecisionQuantizationConfigV2(DEFAULTCONFIG,
+                                            compute_mse,
+                                            get_average_weights,
+                                            num_of_images=1,
+                                            num_interest_points_factor=num_interest_points_factor)
     fw_info = DEFAULT_KERAS_INFO
     keras_impl = KerasImplementation()
 

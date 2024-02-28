@@ -28,7 +28,7 @@ else:
     from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add
 import numpy as np
 
-from model_compression_toolkit.core import DEFAULTCONFIG, MixedPrecisionQuantizationConfig
+from model_compression_toolkit.core import DEFAULTCONFIG, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitActivationNode, \
     VirtualActivationWeightsNode
@@ -97,7 +97,7 @@ def representative_dataset():
 
 def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_config, default_config):
     fw_info = DEFAULT_KERAS_INFO
-    qc = MixedPrecisionQuantizationConfig(DEFAULTCONFIG)
+    qc = MixedPrecisionQuantizationConfigV2(DEFAULTCONFIG)
 
     graph = keras_impl.model_reader(in_model, representative_dataset)  # model reading
 

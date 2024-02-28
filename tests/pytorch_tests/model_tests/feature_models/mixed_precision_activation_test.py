@@ -15,7 +15,7 @@
 import torch
 import numpy as np
 
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, KPI, CoreConfig, \
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2, KPI, CoreConfig, \
     MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
