@@ -97,7 +97,7 @@ def representative_dataset():
 
 def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_config, default_config):
     fw_info = DEFAULT_KERAS_INFO
-    qc = MixedPrecisionQuantizationConfigV2(DEFAULTCONFIG)
+    qc = mct.core.QuantizationConfig()
 
     graph = keras_impl.model_reader(in_model, representative_dataset)  # model reading
 
