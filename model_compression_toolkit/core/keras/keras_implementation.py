@@ -60,11 +60,9 @@ else:
 from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfigV2
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
-from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.activation_decomposition import \
     ActivationDecomposition
@@ -97,8 +95,6 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.shif
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.dwconv_to_conv import DwconvToConv
 from model_compression_toolkit.core.keras.keras_node_prior_info import create_node_prior_info
 from model_compression_toolkit.core.keras.reader.reader import model_reader
-from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
-    create_stats_collector_for_node
 import model_compression_toolkit.core.keras.constants as keras_constants
 from model_compression_toolkit.core.keras.tf_tensor_numpy import tf_tensor_to_numpy, to_tf_tensor
 from model_compression_toolkit.core.keras.back2framework import get_keras_model_builder
@@ -218,21 +214,6 @@ class KerasImplementation(FrameworkImplementation):
                                                      core_config,
                                                      fw_info)
 
-    def attach_sc_to_node(self,
-                          node: BaseNode,
-                          fw_info: FrameworkInfo) -> BaseStatsCollector:
-        """
-        Return a statistics collector that should be attached to a node's output
-        during statistics collection.
-
-        Args:
-            node: Node to return its collector.
-            fw_info: Information relevant to a specific framework about what is out channel axis (for statistics per-channel)
-
-        Returns:
-            Statistics collector for the node.
-        """
-        return create_stats_collector_for_node(node, fw_info)
 
     def get_substitutions_channel_equalization(self,
                                                quant_config: QuantizationConfig,

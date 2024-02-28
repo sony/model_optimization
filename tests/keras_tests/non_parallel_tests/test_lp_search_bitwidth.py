@@ -28,7 +28,6 @@ from model_compression_toolkit.core.common.mixed_precision.search_methods.linear
     mp_integer_programming_search
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
@@ -234,13 +233,10 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                                              fw_info=fw_info,
                                                              graph=graph)
 
-        analyzer_graph(keras_impl.attach_sc_to_node,
-                       graph,
-                       fw_info)
-
         mi = ModelCollector(graph,
                             fw_info=DEFAULT_KERAS_INFO,
-                            fw_impl=keras_impl)
+                            fw_impl=keras_impl,
+                            qc=core_config.quantization_config)
 
         for i in range(1):
             mi.infer([np.random.randn(*input_shape)])

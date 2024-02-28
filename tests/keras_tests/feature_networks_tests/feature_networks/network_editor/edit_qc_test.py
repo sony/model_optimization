@@ -27,7 +27,6 @@ from model_compression_toolkit.core.common.network_editors.actions import EditRu
     ChangeFinalActivationQuantizationMethod
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeTypeFilter
-from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
 from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
@@ -54,23 +53,17 @@ def prepare_graph_for_first_network_editor(in_model, representative_data_gen, co
                                                  tb_w,
                                                  mixed_precision_enable=core_config.mixed_precision_enable)
 
-    ######################################
-    # Graph analyzing (attaching statistics collectors)
-    ######################################
-    analyzer_graph(fw_impl.attach_sc_to_node,
-                   transformed_graph,
-                   fw_info,
-                   core_config.quantization_config)  # Mark points for statistics collection
-
-    if tb_w is not None:
-        tb_w.add_graph(transformed_graph, 'after_analyzer_graph')
 
     ######################################
     # Statistic collection
     ######################################
     mi = ModelCollector(transformed_graph,
                         fw_impl,
-                        fw_info)
+                        fw_info,
+                        core_config.quantization_config)
+
+    if tb_w is not None:
+        tb_w.add_graph(transformed_graph, 'after_statistic_collection')
 
     for _data in tqdm(representative_data_gen()):
         mi.infer(_data)
