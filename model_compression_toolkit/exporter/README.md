@@ -11,10 +11,6 @@ You can export your quantized model in the following quantization formats:
 * MCTQ: Weights and activations values are quantized but represented in float32 dtype. In this format we use custom quantizer layers - [mct_quantizers](https://github.com/sony/mct_quantizers#readme).
 
 
-### Note
-
-This feature is **experimental and subject to future changes**. If you have any questions or issues,
-please [open an issue](https://github.com/sony/model_optimization/issues/new/choose) in this GitHub repository.
 
 ## Usage Examples
 
