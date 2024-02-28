@@ -25,9 +25,12 @@ from model_compression_toolkit.core.pytorch.mixed_precision.configurable_activat
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_weights_quantizer import \
     ConfigurableWeightsQuantizer
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
+from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
+from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
+
 
 
 class base_model(torch.nn.Module):
@@ -41,10 +44,10 @@ class base_model(torch.nn.Module):
         return x
 
 
-def test_setup(representative_data_gen):
+def test_setup(representative_data_gen, get_tpc_fn):
     model = base_model()
     graph = prepare_graph_with_quantization_parameters(model, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
-                                                       representative_data_gen, generate_pytorch_tpc,
+                                                       representative_data_gen, get_tpc_fn,
                                                        input_shape=(1, 3, 8, 8),
                                                        mixed_precision_enabled=True)
 
@@ -68,7 +71,19 @@ class TestSetLayerToBitwidthWeights(BasePytorchTest):
             yield self.generate_inputs(input_shapes)
 
     def run_test(self, seed=0, **kwargs):
-        node, layer = test_setup(self.representative_data_gen)
+        base_config, _, default_config = get_op_quantization_configs()
+        tpc = get_pytorch_test_tpc_dict(
+            tp_model=generate_mixed_precision_test_tp_model(
+                base_cfg=base_config,
+                default_config=default_config,
+                mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)]),
+            test_name='set_layer_bit_tests',
+            ftp_name='set_layer_bit_tests')['set_layer_bit_tests']
+
+        # In this test we need a dedicated TPC so we just override the TPC generator function that needed to be passed
+        # to the tests preparation helper method
+        node, layer = test_setup(self.representative_data_gen, get_tpc_fn=lambda x, y: tpc)
+
         wrapper_layer = PytorchQuantizationWrapper(layer,
                                                    weights_quantizers={KERNEL:
                                                        ConfigurableWeightsQuantizer(
@@ -106,7 +121,19 @@ class TestSetLayerToBitwidthActivation(BasePytorchTest):
             yield self.generate_inputs(input_shapes)
 
     def run_test(self, seed=0, **kwargs):
-        node, layer = test_setup(self.representative_data_gen)
+        base_config, _, default_config = get_op_quantization_configs()
+        tpc = get_pytorch_test_tpc_dict(
+            tp_model=generate_mixed_precision_test_tp_model(
+                base_cfg=base_config,
+                default_config=default_config,
+                mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2)]),
+            test_name='set_layer_bit_tests',
+            ftp_name='set_layer_bit_tests')['set_layer_bit_tests']
+
+        # In this test we need a dedicated TPC so we just override the TPC generator function that needed to be passed
+        # to the tests preparation helper method
+        node, layer = test_setup(self.representative_data_gen, get_tpc_fn=lambda x, y: tpc)
+
         holder_layer = \
             PytorchActivationQuantizationHolder(ConfigurableActivationQuantizer(
                 node_q_cfg=node.candidates_quantization_cfg,
