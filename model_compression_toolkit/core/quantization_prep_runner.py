@@ -94,9 +94,7 @@ def quantization_preparation_runner(graph: Graph,
     ######################################
     # Calculate quantization params
     ######################################
-    calculate_quantization_params(graph,
-                                  fw_info,
-                                  fw_impl=fw_impl)
+    calculate_quantization_params(graph)
 
     if tb_w is not None:
         tb_w.add_graph(graph, 'thresholds_selection')
