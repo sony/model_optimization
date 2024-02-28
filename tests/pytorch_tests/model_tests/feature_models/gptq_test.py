@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import random
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -97,7 +99,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
 
         # Run MCT with GPTQ
         np.random.seed(self.seed)
-        gptq_model, quantization_info = mct.gptq.pytorch_gradient_post_training_quantization_experimental(
+        gptq_model, quantization_info = mct.gptq.pytorch_gradient_post_training_quantization(
             self.float_model,
             self.representative_data_gen_experimental,
             core_config=self.get_core_config(),

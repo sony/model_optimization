@@ -142,12 +142,12 @@ if __name__ == '__main__':
     gptq_config = mct.gptq.get_keras_gptq_config(n_epochs=args.num_gptq_training_iterations,
                                                  use_hessian_based_weights=args.enable_gptq_hessian_based_weights)
 
-    quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization_experimental(model,
-                                                                                                         representative_data_gen,
-                                                                                                         gptq_config=gptq_config,
-                                                                                                         core_config=config,
-                                                                                                         target_platform_capabilities=target_platform_cap,
-                                                                                                         target_kpi=kpi)
+    quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(model,
+                                                                                            representative_data_gen,
+                                                                                            gptq_config=gptq_config,
+                                                                                            core_config=config,
+                                                                                            target_platform_capabilities=target_platform_cap,
+                                                                                            target_kpi=kpi)
 
     # Export quantized model to TFLite and Keras.
     # For more details please see: https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/exporter/README.md

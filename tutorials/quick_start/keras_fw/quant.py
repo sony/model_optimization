@@ -116,13 +116,13 @@ def quantize(model: tf.keras.Model,
         gptq_conf = mct.gptq.get_keras_gptq_config(n_epochs=n_epochs, optimizer=Adam(learning_rate=args['gptq_lr']))
 
         quantized_model, quantization_info = \
-            mct.gptq.keras_gradient_post_training_quantization_experimental(model,
-                                                                            representative_data_gen=representative_data_gen,
-                                                                            target_kpi=target_kpi,
-                                                                            core_config=core_conf,
-                                                                            gptq_config=gptq_conf,
-                                                                            gptq_representative_data_gen=representative_data_gen,
-                                                                            target_platform_capabilities=tpc)
+            mct.gptq.keras_gradient_post_training_quantization(model,
+                                                               representative_data_gen=representative_data_gen,
+                                                               target_kpi=target_kpi,
+                                                               core_config=core_conf,
+                                                               gptq_config=gptq_conf,
+                                                               gptq_representative_data_gen=representative_data_gen,
+                                                               target_platform_capabilities=tpc)
 
 
     else:
