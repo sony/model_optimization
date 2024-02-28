@@ -63,16 +63,15 @@ def quantization_builder(n: common.BaseNode,
     Args:
         n: Node to build its QuantizeConfig.
         qat_config (QATConfig): QAT configuration
-        fw_info: Framework information (e.g., mapping from layers to their attributes to quantize).
         kernel_attr: A potential kernel attribute name to build its trainable quantizer.
 
     Returns:
         weights_quantizers: A dictionary between a weight's name to its quantizer.
         activation_quantizers: A list of activations quantization, one for each layer output.).
     """
+
     if len(n.candidates_quantization_cfg) > 1:
-        # TODO: what are we doing with weights quantization in QAT? only kernel?
-        wq_cand, aq_cand = get_trainable_quantizer_quantization_candidates(n)
+        wq_cand, aq_cand = get_trainable_quantizer_quantization_candidates(n, kernel_attr)
     else:
         wq_cand, aq_cand = None, None
 

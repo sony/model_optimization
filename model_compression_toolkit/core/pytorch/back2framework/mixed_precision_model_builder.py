@@ -85,14 +85,15 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
         weights_conf_nodes_names = [n.name for n in self.graph.get_weights_configurable_nodes(self.fw_info)]
         kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
-        if n.is_weights_quantization_enabled(kernel_attr):
+        if kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr):
 
             if n.name in weights_conf_nodes_names:
                 return PytorchQuantizationWrapper(layer,
                                                   weights_quantizers={
                                                       kernel_attr: ConfigurableWeightsQuantizer(
                                                           **self._get_weights_configurable_quantizer_kwargs(n,
-                                                                                                            kernel_attr))})
+                                                                                                            kernel_attr),
+                                                          kernel_attr=kernel_attr)})
             else:
                 # TODO: Do we want to include other quantized attributes that are not
                 #  the kernel attribute in the mixed precision model?
@@ -224,7 +225,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         # creating a mapping between graph nodes and model's layers for mixed precision configurability
         model_layers = dict(model.named_children())
         conf_node2layers = {n.name: self._find_layers_in_model_by_node(n, model_layers)
-                            for n in self.graph.get_configurable_sorted_nodes()}
+                            for n in self.graph.get_configurable_sorted_nodes(self.fw_info)}
 
         return model, user_info, conf_node2layers
 
@@ -276,8 +277,9 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         Returns: A list of layers that responsible for the node's quantization.
 
         """
-        # TODO: handle is_weights_quantization_enabled call
-        weights_quant = n.is_weights_quantization_enabled()
+        # Only layers with kernel op are considered weights configurable
+        kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
+        weights_quant = False if kernel_attr is None else n.is_weights_quantization_enabled(kernel_attr)
         act_quant = n.is_activation_quantization_enabled()
 
         if weights_quant and not act_quant:
