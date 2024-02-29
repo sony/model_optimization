@@ -24,9 +24,7 @@ if FOUND_TORCH:
     import torch
     from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
     from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
-    from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizers import \
-        get_quantization_quantizers
-
+    import model_compression_toolkit.core as C
 
     def fully_quantized_wrapper(node: common.BaseNode,
                                 module: torch.nn.Module) -> Union[torch.nn.Module,PytorchQuantizationWrapper]:
@@ -40,7 +38,7 @@ if FOUND_TORCH:
         Returns: Wrapped layer
 
         """
-        weight_quantizers, _ = get_quantization_quantizers(node)
+        weight_quantizers, _ = C.pytorch.pytorch_implementation.PytorchImplementation().get_quantization_quantizers(node)
         if len(weight_quantizers) > 0:
             return PytorchQuantizationWrapper(module, weight_quantizers)
         return module
@@ -54,7 +52,7 @@ if FOUND_TORCH:
         Returns:
             A PytorchActivationQuantizationHolder module for the node's activation quantization.
         """
-        _, activation_quantizers = get_quantization_quantizers(node)
+        _, activation_quantizers = C.pytorch.pytorch_implementation.PytorchImplementation().get_quantization_quantizers(node)
         # Holder by definition uses a single quantizer for the activation quantization
         # thus we make sure this is the only possible case (unless it's a node we no activation
         # quantization, which in this case has an empty list).

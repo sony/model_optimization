@@ -45,10 +45,8 @@ def quantize_graph_weights(graph: Graph,
             if n.is_weights_quantization_enabled(attr):
                 quantized_attr, io_channels_axes = \
                     get_quantized_weights_attr_by_qc(attr,
-                                                     fw_info,
                                                      n,
-                                                     n.final_weights_quantization_cfg.get_attr_config(attr),
-                                                     fw_impl=fw_impl)
+                                                     n.final_weights_quantization_cfg.get_attr_config(attr))
 
                 Logger.debug(
                     f'Weights attribute: {attr} of node name: {n.name} has the following quantization params: '

@@ -19,14 +19,14 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.logger import Logger
-from mct_quantizers import KerasActivationQuantizationHolder
 
 if FOUND_TF:
     import tensorflow as tf
     from tensorflow.keras.layers import Layer
     from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
-    from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizers import get_quantization_quantizers
+    import model_compression_toolkit.core as C
     from mct_quantizers import KerasQuantizationWrapper
+    from mct_quantizers import KerasActivationQuantizationHolder
 
     def _get_wrapper(node: common.BaseNode,
                      layer: Layer) -> Layer:
@@ -39,7 +39,7 @@ if FOUND_TF:
         Returns: Wrapped layer with weights quantizers and activation quantizers
 
         """
-        weights_quantizers, _ = get_quantization_quantizers(node)
+        weights_quantizers, _ = C.keras.keras_implementation.KerasImplementation().get_quantization_quantizers(node)
         if len(weights_quantizers) > 0:
             return KerasQuantizationWrapper(layer,
                                             weights_quantizers)
@@ -56,7 +56,7 @@ if FOUND_TF:
         Returns:
             A ActivationQuantizationHolder layer for the node activation quantization.
         """
-        _, activation_quantizers = get_quantization_quantizers(node)
+        _, activation_quantizers = C.keras.keras_implementation.KerasImplementation().get_quantization_quantizers(node)
 
         # Holder by definition uses a single quantizer for the activation quantization
         # thus we make sure this is the only possible case (unless it's a node with no activation

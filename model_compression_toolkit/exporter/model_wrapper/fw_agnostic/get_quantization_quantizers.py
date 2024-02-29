@@ -1,4 +1,4 @@
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,35 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Tuple, List, Dict
+from typing import Dict, List, Tuple, Callable
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizer import \
-    get_activations_quantizer_for_node, get_weights_quantizer_for_node
 
 
-def get_quantization_quantizers(node: BaseNode) -> Tuple[Dict, List]:
+def get_quantization_quantizers(node: BaseNode,
+                                get_weights_quantizer_for_node: Callable,
+                                get_activations_quantizer_for_node: Callable) -> Tuple[Dict, List]:
     """
     Create quantizers to wrap a layer for its corresponding node.
 
     Args:
         node: Node to create quantizers for.
+        get_weights_quantizer_for_node: A function that returns weights quantizer for the node attributes.
+        get_activations_quantizer_for_node: A function that returns activation quantizer for the node activation tensor.
 
     Returns:
         weight_quantizers: A dictionary between a weight's name to its quantizer.
         activation_quantizers: A list of activations quantization, one for each layer output.
-
     """
+
     weight_quantizers = {}
+    activation_quantizers = []
+
     for attr in node.get_node_weights_attributes():
         if node.is_weights_quantization_enabled(attr):
             weight_quantizer = get_weights_quantizer_for_node(node, attr)
             weight_quantizers[attr] = weight_quantizer
 
-    activation_quantizers = []
     if node.is_activation_quantization_enabled():
         num_of_outputs = len(node.output_shape) if isinstance(node.output_shape, list) else 1
         activation_quantizers = [get_activations_quantizer_for_node(node)] * num_of_outputs
-
 
     return weight_quantizers, activation_quantizers

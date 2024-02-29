@@ -27,6 +27,10 @@ from model_compression_toolkit.core.keras.hessian.activation_trace_hessian_calcu
     ActivationTraceHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.weights_trace_hessian_calculator_keras import WeightsTraceHessianCalculatorKeras
+from model_compression_toolkit.exporter.model_wrapper.fw_agnostic.get_quantization_quantizers import \
+    get_quantization_quantizers
+from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
+    get_weights_quantizer_for_node, get_activations_quantizer_for_node
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
@@ -586,3 +590,20 @@ class KerasImplementation(FrameworkImplementation):
         """
 
         return model(inputs)
+
+    def get_quantization_quantizers(self, node: BaseNode):
+        """
+        Returns sets of Keras compatible weights and activation quantizers for the given node.
+
+        Args:
+           node: Node to get quantizers for.
+
+        Returns:
+            weight_quantizers: A dictionary between a weight's name to its quantizer.
+            activation_quantizers: A list of activations quantization, one for each layer output.
+
+        """
+
+        return get_quantization_quantizers(node,
+                                           get_weights_quantizer_for_node,
+                                           get_activations_quantizer_for_node)

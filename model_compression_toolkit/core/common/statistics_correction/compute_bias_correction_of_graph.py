@@ -80,11 +80,9 @@ def _compute_bias_correction_per_candidate_qc(node: BaseNode,
                 candidate_qc.weights_quantization_cfg.weights_second_moment_correction:
 
             quantized_kernel, io_channels_axes = get_quantized_weights_attr_by_qc(kernel_attr,
-                                                                                  fw_info,
                                                                                   node,
                                                                                   candidate_qc.weights_quantization_cfg
-                                                                                  .get_attr_config(kernel_attr),
-                                                                                  fw_impl=fw_impl)
+                                                                                  .get_attr_config(kernel_attr))
 
             bias_correction_term = _get_bias_correction_term_of_node(io_channels_axes[0],
                                                                      node,

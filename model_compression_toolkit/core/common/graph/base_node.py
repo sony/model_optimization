@@ -648,11 +648,12 @@ class BaseNode:
             fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
 
         """
-        kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
-        if kernel_attr is not None:
-            self.candidates_quantization_cfg.sort(
-                key=lambda c: (c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
-                               c.activation_quantization_cfg.activation_n_bits), reverse=True)
-        else:
-            self.candidates_quantization_cfg.sort(key=lambda c: c.activation_quantization_cfg.activation_n_bits,
-                                       reverse=True)
+        if self.candidates_quantization_cfg is not None:
+            kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
+            if kernel_attr is not None:
+                self.candidates_quantization_cfg.sort(
+                    key=lambda c: (c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
+                                   c.activation_quantization_cfg.activation_n_bits), reverse=True)
+            else:
+                self.candidates_quantization_cfg.sort(key=lambda c: c.activation_quantization_cfg.activation_n_bits,
+                                                      reverse=True)
