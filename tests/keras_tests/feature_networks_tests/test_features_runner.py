@@ -124,7 +124,6 @@ from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_pre
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest, MixedPrecisionActivationDisabled, \
     MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationKPINonConfNodesTest, \
     MixedPercisionSearchTotalKPINonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
-from tests.keras_tests.feature_networks_tests.feature_networks.old_api_test import OldApiTest
 from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substitution_test import MatmulToDenseSubstitutionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest, ConstRepresentationMatMulTest
@@ -741,12 +740,6 @@ class FeatureNetworkTest(unittest.TestCase):
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QATWrappersMixedPrecisionCfgTest(self).run_test()
         QATWrappersMixedPrecisionCfgTest(self,kpi_weights=17920 * 4 / 8, kpi_activation=5408 * 4 / 8, expected_mp_cfg=[0, 4, 1, 1]).run_test()
-
-    def test_old_api(self):
-        OldApiTest(self).run_test()
-        OldApiTest(self, mp_enable=True).run_test()
-        OldApiTest(self, mp_enable=True, gptq_enable=True).run_test()
-        OldApiTest(self, gptq_enable=True).run_test()
 
 
 if __name__ == '__main__':

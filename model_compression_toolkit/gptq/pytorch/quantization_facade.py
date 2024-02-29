@@ -46,10 +46,7 @@ if FOUND_TORCH:
     from torch.nn import Module
     from torch.optim import Adam, Optimizer
     from model_compression_toolkit import get_target_platform_capabilities
-
-
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
-
 
     def get_pytorch_gptq_config(n_epochs: int,
                                 optimizer: Optimizer = Adam([torch.Tensor([])], lr=LR_DEFAULT),
@@ -95,14 +92,15 @@ if FOUND_TORCH:
                                    regularization_factor=regularization_factor)
 
 
-    def pytorch_gradient_post_training_quantization_experimental(model: Module,
-                                                                 representative_data_gen: Callable,
-                                                                 target_kpi: KPI = None,
-                                                                 core_config: CoreConfig = CoreConfig(),
-                                                                 gptq_config: GradientPTQConfigV2 = None,
-                                                                 gptq_representative_data_gen: Callable = None,
-                                                                 target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC,
-                                                                 new_experimental_exporter: bool = True):
+    def pytorch_gradient_post_training_quantization(model: Module,
+                                                    representative_data_gen: Callable,
+                                                    target_kpi: KPI = None,
+                                                    core_config: CoreConfig = CoreConfig(),
+                                                    gptq_config: GradientPTQConfigV2 = None,
+                                                    gptq_representative_data_gen: Callable = None,
+                                                    target_platform_capabilities: TargetPlatformCapabilities =
+                                                    DEFAULT_PYTORCH_TPC,
+                                                    new_experimental_exporter: bool = True):
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
@@ -161,11 +159,8 @@ if FOUND_TORCH:
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
                 Logger.error("Given quantization config to mixed-precision facade is not of type "
-                                    "MixedPrecisionQuantizationConfigV2. Please use keras_post_training_quantization "
-                                    "API, or pass a valid mixed precision configuration.")  # pragma: no cover
-
-            Logger.info("Using experimental mixed-precision quantization. "
-                               "If you encounter an issue please file a bug.")
+                             "MixedPrecisionQuantizationConfigV2. Please use keras_post_training_quantization "
+                             "API, or pass a valid mixed precision configuration.")  # pragma: no cover
 
         tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
 
@@ -221,11 +216,11 @@ else:
     # we raise an exception when trying to use these functions.
     def get_pytorch_gptq_config(*args, **kwargs):
         Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_gradient_post_training_quantization_experimental. '
+                        'when using get_pytorch_gptq_config. '
                         'Could not find torch package.')  # pragma: no cover
 
 
-    def pytorch_gradient_post_training_quantization_experimental(*args, **kwargs):
+    def pytorch_gradient_post_training_quantization(*args, **kwargs):
         Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_gradient_post_training_quantization_experimental. '
+                        'when using pytorch_gradient_post_training_quantization. '
                         'Could not find the torch package.')  # pragma: no cover

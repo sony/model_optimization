@@ -82,7 +82,6 @@ from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccurac
     GPTQLearnRateZeroTest
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
-from tests.pytorch_tests.model_tests.feature_models.old_api_test import OldApiTest
 from tests.pytorch_tests.model_tests.feature_models.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
@@ -569,12 +568,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionKpiCfgTest(self).run_test()
-
-    def test_old_api(self):
-        OldApiTest(self).run_test()
-        OldApiTest(self, mp_enable=True).run_test()
-        OldApiTest(self, mp_enable=True, gptq_enable=True).run_test()
-        OldApiTest(self, gptq_enable=True).run_test()
 
 
 if __name__ == '__main__':

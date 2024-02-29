@@ -59,9 +59,6 @@ def _apply_gptq(gptq_config: GradientPTQConfigV2,
 
     """
     if gptq_config is not None and gptq_config.n_epochs > 0:
-        Logger.info("Using experimental Gradient Based PTQ: If you encounter an issue "
-                           "please file a bug. To disable it, do not pass a gptq configuration.")
-
         tg_bias = gptq_training(tg,
                                 tg_bias,
                                 gptq_config,

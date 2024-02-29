@@ -18,7 +18,6 @@ from model_compression_toolkit.core import DEFAULTCONFIG, CoreConfig, DebugConfi
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.model_collector import ModelCollector
-from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
@@ -77,14 +76,11 @@ def prepare_graph_with_quantization_parameters(in_model,
                                        qc,
                                        mixed_precision_enabled)
 
-    analyzer_graph(node_analyze_func=fw_impl.attach_sc_to_node,
-                   graph=graph,
-                   fw_info=fw_info,
-                   qc=qc)
 
     mi = ModelCollector(graph,
                         fw_impl=fw_impl,
-                        fw_info=fw_info)
+                        fw_info=fw_info,
+                        qc=qc)
 
     for i in range(10):
         mi.infer([np.random.randn(*input_shape)])

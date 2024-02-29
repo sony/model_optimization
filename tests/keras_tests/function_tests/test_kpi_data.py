@@ -95,6 +95,7 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
 
     kpi_data = mct.core.keras_kpi_data(in_model=model,
                                        representative_data_gen=random_datagen,
+                                       core_config=mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2()),
                                        target_platform_capabilities=tpc)
 
     return kpi_data

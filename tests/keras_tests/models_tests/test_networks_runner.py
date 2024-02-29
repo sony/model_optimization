@@ -108,7 +108,7 @@ class NetworkTest:
                 learning_rate=0.0001), loss=multiple_tensors_mse_loss)
             arc2 = mct.gptq.GradientPTQConfigV2.from_v1(self.num_calibration_iter, arc)
 
-            ptq_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization_experimental(
+            ptq_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(
                 self.model_float,
                 representative_data_gen,
                 core_config=core_config,

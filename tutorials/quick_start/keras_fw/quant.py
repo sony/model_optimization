@@ -26,6 +26,7 @@ from model_compression_toolkit import KPI
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2, CoreConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from tutorials.quick_start.common.results import QuantInfo
+from tutorials.quick_start.common.tpc_info import get_tpc_info
 
 
 def get_tpc(target_platform_name: str, target_platform_version: str) -> TargetPlatformCapabilities:
@@ -58,7 +59,7 @@ def get_target_kpi(model, weights_compression, representative_data_gen, core_con
         A KPI object computed from MCT and contains info about the target model size.
 
     """
-    kpi_data = mct.core.keras_kpi_data_experimental(model, representative_data_gen, core_config=core_config, target_platform_capabilities=tpc)
+    kpi_data = mct.core.keras_kpi_data(model, representative_data_gen, core_config=core_config, target_platform_capabilities=tpc)
     weights_kpi = BYTES_TO_FP32 * kpi_data.weights_memory / weights_compression # (4 bytes for fp32) * weights memory(in Bytes) / compression rate
     return KPI(weights_memory=weights_kpi)
 
@@ -115,13 +116,13 @@ def quantize(model: tf.keras.Model,
         gptq_conf = mct.gptq.get_keras_gptq_config(n_epochs=n_epochs, optimizer=Adam(learning_rate=args['gptq_lr']))
 
         quantized_model, quantization_info = \
-            mct.gptq.keras_gradient_post_training_quantization_experimental(model,
-                                                                            representative_data_gen=representative_data_gen,
-                                                                            target_kpi=target_kpi,
-                                                                            core_config=core_conf,
-                                                                            gptq_config=gptq_conf,
-                                                                            gptq_representative_data_gen=representative_data_gen,
-                                                                            target_platform_capabilities=tpc)
+            mct.gptq.keras_gradient_post_training_quantization(model,
+                                                               representative_data_gen=representative_data_gen,
+                                                               target_kpi=target_kpi,
+                                                               core_config=core_conf,
+                                                               gptq_config=gptq_conf,
+                                                               gptq_representative_data_gen=representative_data_gen,
+                                                               target_platform_capabilities=tpc)
 
 
     else:
@@ -133,4 +134,7 @@ def quantize(model: tf.keras.Model,
                                                                   core_config=core_conf,
                                                                   target_platform_capabilities=tpc)
 
-    return quantized_model, QuantInfo(user_info=quantization_info, tpc_info=tpc.get_info(), quantization_workflow=workflow, mp_weights_compression=mp_wcr)
+    return quantized_model, QuantInfo(user_info=quantization_info,
+                                      tpc_info=get_tpc_info(tpc=tpc),
+                                      quantization_workflow=workflow,
+                                      mp_weights_compression=mp_wcr)

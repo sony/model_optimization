@@ -19,6 +19,7 @@ from typing import List, Callable
 
 import numpy as np
 from PIL import Image
+from model_compression_toolkit.logger import Logger
 
 #:
 FILETYPES = ['jpeg', 'jpg', 'bmp', 'png']
@@ -72,7 +73,8 @@ class FolderImageLoader(object):
                 if file_type in file_types:
                     self.image_list.append(os.path.join(root, file))
         self.n_files = len(self.image_list)
-        assert self.n_files > 0, f'Folder to load can not be empty.'
+        if self.n_files == 0:
+            Logger.error(f"No files of type: {FILETYPES} are found!") # pragma: no cover
         print(f"Finished Disk Scanning: Found {self.n_files} files")
         self.preprocessing = preprocessing
         self.batch_size = batch_size
