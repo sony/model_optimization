@@ -1,18 +1,18 @@
-# MCT Model Library 
+# MCT Models Library 
 
-bla bla bla ...   
+MCT Models Library is a collection of models sourced from various of repositories and adjusted for Model Compression Toolkit (MCT).
 
 ## Models
- 
 
-## Results
+| Model        | Source Repository                                                         |
+|--------------|---------------------------------------------------------------------------|
+| EfficientDet | [efficientdet-pytorch](https://github.com/rwightman/efficientdet-pytorch) | 
+| Nanodet-Plus | [Nanodet-Plus](https://github.com/RangiLyu/nanodet)                       | 
+| Yolov8n      | [Ultralytics](https://github.com/ultralytics/ultralytics)                 |
+
 
 
 ## License
 This project is licensed under [Apache License 2.0](../../LICENSE.md).
-However, please note that different external packages have their own licenses. When using this project, you have the option to choose one of the following external packages:
-
-- torchvision: [license link](https://github.com/UiPath/torchvision/blob/master/LICENSE), [license copy](./pytorch_fw/torchvision_lib/LICENSE)
-- timm: [license link](https://github.com/huggingface/pytorch-image-models/blob/main/LICENSE), [license copy](./pytorch_fw/timm_lib/LICENSE)
-- ultralytics: [license link](https://github.com/ultralytics/ultralytics/blob/main/LICENSE), [license copy](./pytorch_fw/ultralytics_lib/LICENSE)
-- keras-applications: [license link](https://github.com/keras-team/keras-applications/blob/master/LICENSE), [license copy](./keras_fw/keras_applications/LICENSE)
+However, please note that different repositories have their own licenses. Therefore, when using a model from 
+this library, it's essential to also comply with the licensing terms of the source repositories.
