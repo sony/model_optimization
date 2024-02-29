@@ -556,4 +556,5 @@ class PytorchImplementation(FrameworkImplementation):
 
         return get_quantization_quantizers(node,
                                            get_weights_quantizer_for_node,
-                                           get_activations_quantizer_for_node)
+                                           get_activations_quantizer_for_node,
+                                           node.get_node_weights_attributes())

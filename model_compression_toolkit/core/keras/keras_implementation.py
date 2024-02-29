@@ -604,6 +604,24 @@ class KerasImplementation(FrameworkImplementation):
 
         """
 
+        def _weight_name(w: str) -> str:
+            """
+            Extracts the weight name from the full TensorFlow variable name.
+
+            For example, returns 'kernel' for 'dense_2/kernel:0'.
+
+            Args:
+              w: TensorFlow variable name.
+
+            Returns:
+              Extracted weight name.
+            """
+
+            return w.split(':')[0].split('/')[-1]
+
+        attribute_names = [_weight_name(wn) for wn in node.get_node_weights_attributes()]
+
         return get_quantization_quantizers(node,
                                            get_weights_quantizer_for_node,
-                                           get_activations_quantizer_for_node)
+                                           get_activations_quantizer_for_node,
+                                           attribute_names)

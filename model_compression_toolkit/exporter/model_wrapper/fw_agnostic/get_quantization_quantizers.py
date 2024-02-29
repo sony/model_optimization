@@ -18,7 +18,8 @@ from model_compression_toolkit.core.common import BaseNode
 
 def get_quantization_quantizers(node: BaseNode,
                                 get_weights_quantizer_for_node: Callable,
-                                get_activations_quantizer_for_node: Callable) -> Tuple[Dict, List]:
+                                get_activations_quantizer_for_node: Callable,
+                                attributes_names: List[str] = []) -> Tuple[Dict, List]:
     """
     Create quantizers to wrap a layer for its corresponding node.
 
@@ -26,6 +27,7 @@ def get_quantization_quantizers(node: BaseNode,
         node: Node to create quantizers for.
         get_weights_quantizer_for_node: A function that returns weights quantizer for the node attributes.
         get_activations_quantizer_for_node: A function that returns activation quantizer for the node activation tensor.
+        attributes_names: A potential list of attribute names to set weights quantizers to.
 
     Returns:
         weight_quantizers: A dictionary between a weight's name to its quantizer.
@@ -35,7 +37,7 @@ def get_quantization_quantizers(node: BaseNode,
     weight_quantizers = {}
     activation_quantizers = []
 
-    for attr in node.get_node_weights_attributes():
+    for attr in attributes_names:
         if node.is_weights_quantization_enabled(attr):
             weight_quantizer = get_weights_quantizer_for_node(node, attr)
             weight_quantizers[attr] = weight_quantizer
