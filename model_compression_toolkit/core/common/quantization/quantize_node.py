@@ -15,18 +15,13 @@
 
 
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
 
 
-# TODO: remove FW info if it is no longer necessary here
 def get_quantized_weights_attr_by_qc(attr_name: str,
-                                     fw_info: FrameworkInfo,
                                      n: BaseNode,
-                                     weights_qc: WeightsAttrQuantizationConfig,
-                                     fw_impl: FrameworkImplementation):
+                                     weights_qc: WeightsAttrQuantizationConfig):
     """
     For a weights attribute and weights attribute quantization configuration, compute
     the quantized weights of the node's attribute and return it
@@ -34,26 +29,13 @@ def get_quantized_weights_attr_by_qc(attr_name: str,
 
     Args:
         attr_name: The name of the attribute to quantize.
-        fw_info: A FrameworkInfo object Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).
         n: Node to quantize its weights attribute.
         weights_qc: Weight attribute quantization configuration to use for the quantization.
-        fw_impl: FrameworkImplementation with specific framework implementations.
 
     Returns:
         A quantized kernel of the node using a weights quantization configuration.
     """
 
-    # # If weights should be quantized per-channel but a kernel channels mapping is missing.
-    # if weights_qc.weights_per_channel_threshold and fw_info.kernel_channels_mapping is \
-    #         None:
-    #     Logger.warning(
-    #         'Weights Per Channel Quantization requires channel mapping function but framework info '
-    #         'does not contain one')
-    # output_channels_axis, input_channels_axis = get_channels_axis(weights_qc,
-    #                                                               fw_info,
-    #                                                               n.type)
-
-    # TODO: verify that htis is working without the redundant call to get_channels_axis
     channels_axis = weights_qc.weights_channels_axis
     if channels_axis is not None:
         # switching output and input channel axis order in the tuple because this is what

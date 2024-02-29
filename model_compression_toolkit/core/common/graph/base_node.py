@@ -382,7 +382,6 @@ class BaseNode:
 
         Returns: Whether the node has weights that need to be quantized.
         """
-        # TODO: return to this later, it is possible this method is no longer necessary
         attrs = fw_info.get_kernel_op_attributes(self.type)
         for attr in attrs:
             if attr and self.get_weights_by_keys(attr) is not None:
@@ -634,3 +633,26 @@ class BaseNode:
         if _simd <= 0 or int(_simd) != _simd:
             Logger.error(f"SIMD is expected to be a non-positive integer but found: {_simd}")
         return _simd
+
+    def sort_node_candidates(self, fw_info):
+        """
+        Sorts the node candidates.
+        We assume that the candidates are ordered in the following way (for mixed precision purposes):
+            - If the node has a kernel attribute, then we use the kernel weights number of bits to sort the candidates
+            (in descending order). We use the candidate activation number of bits as a secondary order.
+            - If the node doesn't have a kernel we only consider the candidate activation number of bits to sort
+            the candidates in descending order.
+        The operation is done inplace.
+
+        Args:
+            fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
+
+        """
+        kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
+        if kernel_attr is not None:
+            self.candidates_quantization_cfg.sort(
+                key=lambda c: (c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
+                               c.activation_quantization_cfg.activation_n_bits), reverse=True)
+        else:
+            self.candidates_quantization_cfg.sort(key=lambda c: c.activation_quantization_cfg.activation_n_bits,
+                                       reverse=True)

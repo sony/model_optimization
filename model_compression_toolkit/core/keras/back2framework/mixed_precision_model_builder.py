@@ -172,6 +172,7 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         activation_quantizers = []
         if n.is_activation_quantization_enabled():
             num_of_outputs = len(n.output_shape) if isinstance(n.output_shape, list) else 1
+
             if n.name in activation_conf_nodes_names:
                 assert n.candidates_quantization_cfg is not None, f"Node {n.name} candidates_quantization_cfg is None"
                 node_q_cfg_candidates = n.candidates_quantization_cfg
@@ -180,21 +181,14 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                 # activation number of bits (in reversed order).
                 # since only kernel attribute is quantized in weights mixed precision,
                 # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
-                # TODO: if this works the same as in set_node_candidates - extract this to a helper function of MP
-                kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
-                if kernel_attr is not None:
-                    node_q_cfg_candidates.sort(
-                        key=lambda c: (c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
-                                       c.activation_quantization_cfg.activation_n_bits), reverse=True)
-                else:
-                    node_q_cfg_candidates.sort(key=lambda c: c.activation_quantization_cfg.activation_n_bits,
-                                               reverse=True)
+                n.sort_node_candidates(self.fw_info)
 
                 max_cfg_candidates = n.find_max_candidates_indices()
                 assert len(max_cfg_candidates) == 1, \
                     f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
                 max_candidate_idx = max_cfg_candidates[0]
 
+                kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
                 activation_quantizers = [ConfigurableActivationQuantizer(**{'node_q_cfg': node_q_cfg_candidates,
                                                                             'max_candidate_idx': max_candidate_idx,
                                                                             'kernel_attr': kernel_attr})] \

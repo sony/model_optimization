@@ -81,8 +81,7 @@ def set_quantization_configs_to_node(node: BaseNode,
                                                                   fw_info,
                                                                   weight_channel_axis,
                                                                   node_qc_options,
-                                                                  node.type,
-                                                                  node.get_node_weights_attributes(),
+                                                                  node,
                                                                   mixed_precision_enable=mixed_precision_enable)
 
     for candidate_qc in node.candidates_quantization_cfg:
@@ -132,7 +131,7 @@ def _create_node_single_candidate_qc(qc: QuantizationConfig,
         qc: QuantizationConfig to create the node's config from.
         fw_info: Information about the specific framework the node was created from (e.g., whether its
             weights/activations should be quantized)
-        weight_channel_axis: Output channel index of the node's kernel. TODO: update to input-output channels axis
+        weight_channel_axis: (Output, Input) channel index of the node's kernel.
         op_cfg: OpQuantizationConfig of the node with quantizers types to use when creating node quantization configuration.
         node_attrs_list: A list of the node's weights attributes names.
 
@@ -161,8 +160,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
                                fw_info: FrameworkInfo,
                                weight_channel_axis: Tuple[int, int],
                                node_qc_options: QuantizationConfigOptions,
-                               node_type: type,
-                               node_attrs_list: List[str],
+                               node: BaseNode,
                                mixed_precision_enable: bool = False) -> List[CandidateNodeQuantizationConfig]:
     """
     Create a list of candidates of weights and activation quantization configurations for a node.
@@ -170,10 +168,9 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
     Args:
         qc: Quantization configuration the quantization process should follow.
         fw_info: Framework information (e.g., which layers should have their kernels' quantized).
-        weight_channel_axis: Output channel index of the node's kernel. # TODO: update to io channels axis
+        weight_channel_axis: (Output, Input) channel index of the node's kernel.
         node_qc_options: QuantizationConfigOptions for the node with quantization candidates information.
-        node_type: The type of the layer that the node represents.
-        node_attrs_list: A list of the node's weights attributes names.
+        node: A node to set quantization configuration candidates to.
         mixed_precision_enable: is mixed precision enabled
 
     Returns:
@@ -181,6 +178,8 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
     """
 
     candidates = []
+    node_attrs_list = node.get_node_weights_attributes()
+
     if mixed_precision_enable:
         for op_cfg in node_qc_options.quantization_config_list:
             candidate_qc = copy.deepcopy(qc)
@@ -193,12 +192,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
         # sorting the candidates by kernel attribute weights number of bits first and then by activation number of bits
         # (in reversed order). since only kernel attribute is quantized in weights mixed precision,
         # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
-        kernel_attr = fw_info.get_kernel_op_attributes(node_type)[0]
-        if kernel_attr is not None:
-            candidates.sort(key=lambda c: (c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
-                                           c.activation_quantization_cfg.activation_n_bits), reverse=True)
-        else:
-            candidates.sort(key=lambda c: c.activation_quantization_cfg.activation_n_bits, reverse=True)
+        node.sort_node_candidates(fw_info)
 
     else:
         candidates.append(_create_node_single_candidate_qc(qc,
