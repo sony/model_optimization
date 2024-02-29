@@ -230,7 +230,7 @@ class TensorboardWriter(object):
             if n.final_weights_quantization_cfg is not None:
                 attr.update(n.final_weights_quantization_cfg.__dict__)
             elif n.candidates_quantization_cfg is not None:
-                attr.update(n.get_unified_weights_candidates_dict())
+                attr.update(n.get_unified_weights_candidates_dict(self.fw_info))
             return attr
 
         def __get_node_attr(n: BaseNode) -> Dict[str, Any]:

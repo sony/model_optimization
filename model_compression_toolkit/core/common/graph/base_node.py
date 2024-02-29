@@ -286,12 +286,15 @@ class BaseNode:
         q_params, f_params = self.get_num_parameters(fw_info)
         return (f_params + q_params) * FP32_BYTES_PER_PARAMETER
 
-    def get_unified_weights_candidates_dict(self) -> Dict[str, Any]:
+    def get_unified_weights_candidates_dict(self, fw_info) -> Dict[str, Any]:
         """
         In Mixed-Precision, a node's kernel can have multiple candidates for weights quantization configuration.
         In order to display a single view of a node (for example, for logging in TensorBoard) we need a way
         to create a single dictionary from all candidates.
         This method is aimed to build such an unified dictionary for a node.
+
+        Args:
+            fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
 
         Returns: A dictionary containing information from node's weight quantization configuration candidates.
 
@@ -300,24 +303,21 @@ class BaseNode:
         parameters_dict = dict()
         # We assume that only the kernel attribute have more than one candidate, since we only allow to
         # quantize the kernel using mixed precision
-        multiple_candidates_attr = [attr for attr in self.get_node_weights_attributes() if self.is_all_weights_candidates_equal(attr)]
-        if len(multiple_candidates_attr) > 1:
-            Logger.error(f"Expecting only the kernel attribute to have multiple quantization configuration candidates, "
-                         f"but node {self.name} have multiple attributes with several candidates: "
-                         f"{multiple_candidates_attr}")
-        if len(multiple_candidates_attr) == 0:
+        # TODO: need to modify if we want to present a unified config for other attributes
+        kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
+        if kernel_attr is None:
             # This node doesn't have a kernel attribute
             return {}
-        attr = multiple_candidates_attr[0]
-        if self.is_weights_quantization_enabled(attr):
+
+        if self.is_weights_quantization_enabled(kernel_attr):
             parameters_dict = copy.deepcopy(self.candidates_quantization_cfg[0].weights_quantization_cfg.
-                                            get_attr_config(attr).__dict__)
+                                            get_attr_config(kernel_attr).__dict__)
             for shared_parameter in shared_parameters:
                 if shared_parameter in parameters_dict:
                     unified_param = []
-                    attr_candidates = self.get_all_weights_attr_candidates(attr)
+                    attr_candidates = self.get_all_weights_attr_candidates(kernel_attr)
                     for attr_candidate in attr_candidates:
-                        unified_param.append(getattr(attr_candidates, shared_parameter))
+                        unified_param.append(getattr(attr_candidate, shared_parameter))
                     parameters_dict[shared_parameter] = unified_param
         return parameters_dict
 
