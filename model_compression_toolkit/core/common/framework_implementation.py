@@ -18,7 +18,7 @@ from typing import Callable, Any, List, Tuple, Dict
 import numpy as np
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
@@ -304,7 +304,7 @@ class FrameworkImplementation(ABC):
     @abstractmethod
     def get_sensitivity_evaluator(self,
                                   graph: Graph,
-                                  quant_config: MixedPrecisionQuantizationConfigV2,
+                                  quant_config: MixedPrecisionQuantizationConfig,
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
                                   hessian_info_service: HessianInfoService = None,

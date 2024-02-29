@@ -18,7 +18,7 @@ from enum import Enum
 import numpy as np
 from typing import List, Callable, Dict
 
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
@@ -48,7 +48,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
                      fw_info: FrameworkInfo,
                      fw_impl: FrameworkImplementation,
                      target_kpi: KPI,
-                     mp_config: MixedPrecisionQuantizationConfigV2,
+                     mp_config: MixedPrecisionQuantizationConfig,
                      representative_data_gen: Callable,
                      search_method: BitWidthSearchMethod = BitWidthSearchMethod.INTEGER_PROGRAMMING,
                      hessian_info_service: HessianInfoService=None) -> List[int]:

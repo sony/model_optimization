@@ -14,7 +14,7 @@
 # ==============================================================================
 import torch
 
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
@@ -66,7 +66,7 @@ class TestSensitivityEvalWithNonSupportedOutputBase(BasePytorchTest):
                                                    representative_dataset=self.representative_data_gen)
 
         se = pytorch_impl.get_sensitivity_evaluator(graph,
-                                                    MixedPrecisionQuantizationConfigV2(use_hessian_based_scores=True),
+                                                    MixedPrecisionQuantizationConfig(use_hessian_based_scores=True),
                                                     self.representative_data_gen,
                                                     DEFAULT_PYTORCH_INFO,
                                                     hessian_info_service=hessian_info_service)

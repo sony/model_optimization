@@ -19,7 +19,7 @@ from model_compression_toolkit.core.common.mixed_precision.distance_weighting im
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 
 
-class MixedPrecisionQuantizationConfigV2:
+class MixedPrecisionQuantizationConfig:
 
     def __init__(self,
                  compute_distance_fn: Callable = None,
@@ -33,8 +33,6 @@ class MixedPrecisionQuantizationConfigV2:
                  metric_normalization_threshold: float = 1e10):
         """
         Class with mixed precision parameters to quantize the input model.
-        Unlike QuantizationConfig, number of bits for quantization is a list of possible bit widths to
-        support mixed-precision model quantization.
 
         Args:
             compute_distance_fn (Callable): Function to compute a distance between two tensors.
@@ -68,5 +66,5 @@ class MixedPrecisionQuantizationConfigV2:
 
 
 # Default quantization configuration the library use.
-DEFAULT_MIXEDPRECISION_CONFIG = MixedPrecisionQuantizationConfigV2(compute_distance_fn=compute_mse,
-                                                                   distance_weighting_method=get_average_weights)
+DEFAULT_MIXEDPRECISION_CONFIG = MixedPrecisionQuantizationConfig(compute_distance_fn=compute_mse,
+                                                                 distance_weighting_method=get_average_weights)

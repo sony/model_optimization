@@ -14,7 +14,7 @@
 # ==============================================================================
 
 from typing import Callable
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2, CoreConfig
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW
@@ -35,7 +35,7 @@ if FOUND_TF:
 
     def keras_kpi_data(in_model: Model,
                        representative_data_gen: Callable,
-                       core_config: CoreConfig = CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2()),
+                       core_config: CoreConfig = CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig()),
                        fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                        target_platform_capabilities: TargetPlatformCapabilities = KERAS_DEFAULT_TPC) -> KPI:
         """
@@ -72,9 +72,9 @@ if FOUND_TF:
 
         """
 
-        if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
-            Logger.error("KPI data computation can't be executed without MixedPrecisionQuantizationConfigV2 object."
-                         "Given quant_config is not of type MixedPrecisionQuantizationConfigV2.")
+        if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
+            Logger.error("KPI data computation can't be executed without MixedPrecisionQuantizationConfig object."
+                         "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
 
         fw_impl = KerasImplementation()
 

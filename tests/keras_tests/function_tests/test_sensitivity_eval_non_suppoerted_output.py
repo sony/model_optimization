@@ -17,7 +17,7 @@ import numpy as np
 import tensorflow as tf
 
 
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
@@ -87,7 +87,7 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
                                                        fw_impl=keras_impl)
 
         se = keras_impl.get_sensitivity_evaluator(graph,
-                                                  MixedPrecisionQuantizationConfigV2(use_hessian_based_scores=True),
+                                                  MixedPrecisionQuantizationConfig(use_hessian_based_scores=True),
                                                   representative_dataset,
                                                   DEFAULT_KERAS_INFO,
                                                   hessian_info_service=hessian_info_service)

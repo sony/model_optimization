@@ -25,7 +25,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfigV2
+    MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
     TargetPlatformCapabilities
 from model_compression_toolkit.core.runner import core_runner
@@ -138,16 +138,12 @@ if FOUND_TORCH:
          """
 
         if core_config.mixed_precision_enable:
-            if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
+            if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.error("Given quantization config to mixed-precision facade is not of type "
-                             "MixedPrecisionQuantizationConfigV2. Please use pytorch_post_training_quantization API,"
+                             "MixedPrecisionQuantizationConfig. Please use pytorch_post_training_quantization API,"
                              "or pass a valid mixed precision configuration.")
 
-            Logger.info("Using experimental mixed-precision quantization. "
-                        "If you encounter an issue please file a bug.")
-
         tb_w = init_tensorboard_writer(fw_info)
-
         fw_impl = PytorchImplementation()
 
         # Ignore trace hessian service as we do not use it here

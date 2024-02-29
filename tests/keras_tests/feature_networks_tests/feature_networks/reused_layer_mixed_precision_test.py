@@ -14,7 +14,7 @@
 # ==============================================================================
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfigV2, MixedPrecisionQuantizationConfigV2
+    MixedPrecisionQuantizationConfig, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_keras_tpc
 import model_compression_toolkit as mct
 import tensorflow as tf
@@ -52,7 +52,7 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
                                            input_scaling=True, activation_channel_equalization=True)
 
     def get_mixed_precision_v2_config(self):
-        return MixedPrecisionQuantizationConfigV2()
+        return MixedPrecisionQuantizationConfig()
 
     def create_networks(self):
         layer = layers.Conv2D(3, 4)

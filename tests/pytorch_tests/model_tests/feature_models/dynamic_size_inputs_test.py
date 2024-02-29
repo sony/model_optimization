@@ -18,7 +18,7 @@ import numpy as np
 import torch
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest

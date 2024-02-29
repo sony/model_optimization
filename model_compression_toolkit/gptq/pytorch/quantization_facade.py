@@ -29,7 +29,7 @@ from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfigV2
+    MixedPrecisionQuantizationConfig
 
 LR_DEFAULT = 1e-4
 LR_REST_DEFAULT = 1e-4
@@ -157,9 +157,9 @@ if FOUND_TORCH:
         """
 
         if core_config.mixed_precision_enable:
-            if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
+            if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.error("Given quantization config to mixed-precision facade is not of type "
-                             "MixedPrecisionQuantizationConfigV2. Please use keras_post_training_quantization "
+                             "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization "
                              "API, or pass a valid mixed precision configuration.")  # pragma: no cover
 
         tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
