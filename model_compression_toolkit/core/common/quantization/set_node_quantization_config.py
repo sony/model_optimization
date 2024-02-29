@@ -148,6 +148,15 @@ def _create_node_single_candidate_qc(qc: QuantizationConfig,
 
     activation_quantization_params_fn = get_activation_quantization_params_fn(op_cfg.activation_quantization_method)
 
+    # TODO: remove this validation and warning once enabling all attributes quantization by default
+    attrs_with_enabled_quantization = [attr for attr, cfg in op_cfg.attr_weights_configs_mapping.items()
+                                       if cfg.enable_weights_quantization]
+    if len(attrs_with_enabled_quantization) > 1:
+        Logger.warning(f"Multiple weights attributes quantization is enabled via the provided TPC."
+                       f"Quantizing any attribute other than the kernel is experimental "
+                       f"and may be subject to unstable behavior."
+                       f"Attributes with enabled weights quantization: {attrs_with_enabled_quantization}.")
+
     return CandidateNodeQuantizationConfig(qc=qc,
                                            op_cfg=op_cfg,
                                            activation_quantization_fn=activation_quantization_fn,
