@@ -43,11 +43,10 @@ from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
 
 
 def build_ip_list_for_test(in_model, num_interest_points_factor):
-    qc = MixedPrecisionQuantizationConfigV2(DEFAULTCONFIG,
-                                            compute_mse,
-                                            get_average_weights,
-                                            num_of_images=1,
-                                            num_interest_points_factor=num_interest_points_factor)
+    mp_qc = MixedPrecisionQuantizationConfigV2(compute_mse,
+                                               get_average_weights,
+                                               num_of_images=1,
+                                               num_interest_points_factor=num_interest_points_factor)
     fw_info = DEFAULT_KERAS_INFO
     keras_impl = KerasImplementation()
 
@@ -68,12 +67,12 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
 
     graph.set_tpc(tpc)
     graph = set_quantization_configuration_to_graph(graph=graph,
-                                                    quant_config=qc,
+                                                    quant_config=DEFAULTCONFIG,
                                                     mixed_precision_enable=True)
 
     ips = get_mp_interest_points(graph=graph,
                                  interest_points_classifier=keras_impl.count_node_for_mixed_precision_interest_points,
-                                 num_ip_factor=qc.num_interest_points_factor)
+                                 num_ip_factor=mp_qc.num_interest_points_factor)
 
     return ips, graph, fw_info
 

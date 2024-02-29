@@ -24,6 +24,7 @@ from tensorboard.backend.event_processing import event_file_loader
 from tensorboard.compat.proto.graph_pb2 import GraphDef
 
 import model_compression_toolkit as mct
+from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
@@ -37,6 +38,8 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_set_bit_widths
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
+from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 
 keras = tf.keras
 layers = keras.layers
@@ -107,8 +110,10 @@ class TestFileLogger(unittest.TestCase):
         tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
 
         # Hessian service assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP
-        cfg = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
-        cfg.use_hessian_based_scores = False
+        cfg = DEFAULTCONFIG
+        mp_cfg = mct.core.MixedPrecisionQuantizationConfigV2(compute_distance_fn=compute_mse,
+                                                             distance_weighting_method=get_average_weights,
+                                                             use_hessian_based_scores=False)
 
         # compare max tensor size with plotted max tensor size
         tg = prepare_graph_set_bit_widths(in_model=model,
@@ -119,7 +124,9 @@ class TestFileLogger(unittest.TestCase):
                                           network_editor=[],
                                           quant_config=cfg,
                                           target_kpi=mct.core.KPI(),
-                                          n_iter=1, analyze_similarity=True)
+                                          n_iter=1,
+                                          analyze_similarity=True,
+                                          mp_cfg=mp_cfg)
         tensors_sizes = [4.0 * n.get_total_output_params() / 1000000.0
                          for n in tg.get_sorted_activation_configurable_nodes()]  # in MB
         max_tensor_size = max(tensors_sizes)
