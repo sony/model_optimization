@@ -110,11 +110,11 @@ if __name__ == '__main__':
     # Create a GPTQ quantization configuration and set the number of training iterations.
     gptq_config = mct.gptq.get_keras_gptq_config(n_epochs=args.num_gptq_training_iterations)
 
-    quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization_experimental(model,
-                                                                                                         representative_data_gen,
-                                                                                                         gptq_config=gptq_config,
-                                                                                                         core_config=config,
-                                                                                                         target_platform_capabilities=target_platform_cap)
+    quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(model,
+                                                                                            representative_data_gen,
+                                                                                            gptq_config=gptq_config,
+                                                                                            core_config=config,
+                                                                                            target_platform_capabilities=target_platform_cap)
 
     # Export quantized model to TFLite and Keras.
     # For more details please see: https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/exporter/README.md

@@ -24,7 +24,7 @@ else:
         LayerNormalization
 
 from model_compression_toolkit.core import FrameworkInfo
-from model_compression_toolkit.gptq import keras_gradient_post_training_quantization_experimental
+from model_compression_toolkit.gptq import keras_gradient_post_training_quantization
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -93,7 +93,7 @@ class BaseKerasLayerTest(BaseLayerTest):
         return keras_post_training_quantization_experimental
 
     def get_gptq_facade(self):
-        return keras_gradient_post_training_quantization_experimental
+        return keras_gradient_post_training_quantization
 
     def predict(self, model: Model, input: List[np.ndarray]):
         if self.use_cpu:

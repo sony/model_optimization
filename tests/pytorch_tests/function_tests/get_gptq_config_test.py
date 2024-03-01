@@ -17,7 +17,7 @@ import torch
 from torch import nn
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.gptq import get_pytorch_gptq_config, pytorch_gradient_post_training_quantization_experimental, RoundingType
+from model_compression_toolkit.gptq import get_pytorch_gptq_config, pytorch_gradient_post_training_quantization, RoundingType
 from model_compression_toolkit.core import CoreConfig, QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
@@ -89,8 +89,8 @@ class TestGetGPTQConfig(BasePytorchTest):
 
         float_model = TestModel()
 
-        quant_model, _ = pytorch_gradient_post_training_quantization_experimental(model=float_model,
-                                                                                  representative_data_gen=random_datagen_experimental,
-                                                                                  core_config=cc,
-                                                                                  gptq_config=gptqv2_config,
-                                                                                  target_platform_capabilities=symmetric_weights_tpc)
+        quant_model, _ = pytorch_gradient_post_training_quantization(model=float_model,
+                                                                     representative_data_gen=random_datagen_experimental,
+                                                                     core_config=cc,
+                                                                     gptq_config=gptqv2_config,
+                                                                     target_platform_capabilities=symmetric_weights_tpc)
