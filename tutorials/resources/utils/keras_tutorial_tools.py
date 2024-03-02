@@ -1,36 +1,33 @@
+# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
+
 import tensorflow as tf
 import keras
 import model_compression_toolkit as mct
 import os
 import torchvision
-
-import os
 import subprocess
 import tarfile
-
-def imgnet_download():
-    imagenet_dir = 'imagenet'
-    val_dir = os.path.join(imagenet_dir, 'val')
-    
-    if not os.path.isdir(imagenet_dir):
-        os.makedirs(imagenet_dir, exist_ok=True)
-        subprocess.run(['wget', 'https://image-net.org/data/ILSVRC/2012/ILSVRC2012_devkit_t12.tar.gz', '-P', imagenet_dir])
-        subprocess.run(['wget', 'https://image-net.org/data/ILSVRC/2012/ILSVRC2012_img_val.tar', '-P', imagenet_dir])
-        
-        # Extract the downloaded files
-        with tarfile.open(os.path.join(imagenet_dir, 'ILSVRC2012_devkit_t12.tar.gz'), 'r:gz') as tar:
-            tar.extractall(path=imagenet_dir)
-        with tarfile.open(os.path.join(imagenet_dir, 'ILSVRC2012_img_val.tar'), 'r:') as tar:
-            tar.extractall(path=val_dir)
-    
-def imagenet_preprocess_input(images, labels):
-    return tf.keras.applications.mobilenet_v2.preprocess_input(images), labels
-
 from typing import Generator
 
 
-def get_validation_dataset_fraction(fraction, TEST_DATASET_FOLDER, BATCH_SIZE) -> tf.data.Dataset:
-    """Load a fraction of the validation dataset for evaluation.
+
+def get_validation_dataset_fraction(fraction, test_dataset_folder, batch) -> tf.data.Dataset:
+    """
+    Load a fraction of the validation dataset for evaluation.
 
     Args:
         fraction (float, optional): Fraction of the dataset to load. Defaults to 1.0 (i.e., the entire dataset).
@@ -42,8 +39,8 @@ def get_validation_dataset_fraction(fraction, TEST_DATASET_FOLDER, BATCH_SIZE) -
 
     # Load the dataset to determine the total number of samples
     initial_dataset = tf.keras.utils.image_dataset_from_directory(
-        directory=TEST_DATASET_FOLDER,
-        batch_size=1,  # Use batch size of 1 to easily count samples
+        directory=test_dataset_folder,
+        batch_size=1,  # Use batch size of 1 to count samples
         image_size=[224, 224],
         shuffle=False,
         crop_to_aspect_ratio=True,
@@ -52,10 +49,10 @@ def get_validation_dataset_fraction(fraction, TEST_DATASET_FOLDER, BATCH_SIZE) -
     total_samples = initial_dataset.cardinality().numpy()
     samples_to_take = int(total_samples * fraction)
 
-    # Now, load the dataset again with the desired batch size and take the necessary number of samples
+    # reload the dataset again with batch size + take number of samples
     dataset = tf.keras.utils.image_dataset_from_directory(
         directory=TEST_DATASET_FOLDER,
-        batch_size=BATCH_SIZE,
+        batch_size=batch,
         image_size=[224, 224],
         shuffle=False,
         crop_to_aspect_ratio=True,
@@ -65,14 +62,14 @@ def get_validation_dataset_fraction(fraction, TEST_DATASET_FOLDER, BATCH_SIZE) -
     dataset = dataset.map(lambda x, y: (imagenet_preprocess_input(x, y)))
 
     # Take the calculated number of samples (adjusted for batch size)
-    dataset = dataset.take(samples_to_take // BATCH_SIZE + (1 if samples_to_take % BATCH_SIZE else 0))
+    dataset = dataset.take(samples_to_take // batch + (1 if samples_to_take % batch else 0))
 
     return dataset
 
-from typing import Generator
 
-def get_representative_dataset(fraction, REPRESENTATIVE_DATASET_FOLDER, BATCH_SIZE) -> Generator:
-    """A function that loads a fraction of the dataset and returns a representative dataset generator.
+def get_representative_dataset(fraction, REPRESENTATIVE_DATASET_FOLDER, batch) -> Generator:
+    """
+    A function that loads a fraction of the dataset and returns a representative dataset generator.
 
     Args:
         fraction (float): The fraction of the dataset to load. Defaults to 1.0 (the entire dataset).
@@ -85,7 +82,7 @@ def get_representative_dataset(fraction, REPRESENTATIVE_DATASET_FOLDER, BATCH_SI
     print('Loading dataset, this may take a few minutes ...')    
     dataset = tf.keras.utils.image_dataset_from_directory(
         directory=REPRESENTATIVE_DATASET_FOLDER,
-        batch_size=BATCH_SIZE,
+        batch_size=batch,
         image_size=[224, 224],
         shuffle=True,
         crop_to_aspect_ratio=True,
@@ -107,7 +104,7 @@ def get_representative_dataset(fraction, REPRESENTATIVE_DATASET_FOLDER, BATCH_SI
         for image_batch, _ in dataset.take(batches_to_use):
             yield image_batch.numpy()
 
-    print('images in representative dataset: '+ str(BATCH_SIZE*batches_to_use))
+    print('images in representative dataset: '+ str(batch*batches_to_use))
 
     return representative_dataset
 
