@@ -146,10 +146,10 @@ This pruning technique is designed to compress models for specific hardware arch
 taking into account the target platform's Single Instruction, Multiple Data (SIMD) capabilities. 
 By pruning groups of channels (SIMD groups), our approach not only reduces model size 
 and complexity, but ensures that better utilization of channels is in line with the SIMD architecture 
-for a target KPI of weights memory footprint.
+for a target KPI of weights memory footprint. 
+[Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_pruning_experimental.html)
+[Pytorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_pruning_experimental.html)
 
-
-<u>_Note: Currently, only Keras models pruning is supported._</u>
 
 #### Results
 
@@ -158,7 +158,7 @@ Results for applying pruning to reduce the parameters of the following models by
 | Model           | Dense Model Accuracy | Pruned Model Accuracy |
 |-----------------|----------------------|-----------------------|
 | ResNet50 [2]    | 75.1                 | 72.4                  |
-| DenseNet121 [2] | 75.0                 | 71.15                 |
+| DenseNet121 [3] | 74.44                | 71.71                 |
 
 
 
