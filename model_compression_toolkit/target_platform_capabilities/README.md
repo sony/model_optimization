@@ -30,6 +30,7 @@ One may view the full default target-platform model and its parameters [here](ht
 The simplest way to initiate a TPC and use it in MCT is by using the function [get_target_platform_capabilities](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/get_target_platform_capabilities.html#ug-get-target-platform-capabilities).
 
 For example:
+
 ```python
 from tensorflow.keras.applications.mobilenet import MobileNet
 import model_compression_toolkit as mct
@@ -41,9 +42,10 @@ import numpy as np
 # layers representation.
 target_platform_cap = mct.get_target_platform_capabilities('tensorflow', 'default')
 
-quantized_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(MobileNet(),
-                                                                                       lambda: [np.random.randn(1, 224, 224, 3)],  # Random representative dataset 
-                                                                                       target_platform_capabilities=target_platform_cap)
+quantized_model, quantization_info = mct.ptq.keras_post_training_quantization(MobileNet(),
+                                                                              lambda: [np.random.randn(1, 224, 224, 3)],
+                                                                              # Random representative dataset 
+                                                                              target_platform_capabilities=target_platform_cap)
 ```
 
 Similarly, you can retrieve IMX500, TFLite and QNNPACK target-platform models for Keras and PyTorch frameworks.

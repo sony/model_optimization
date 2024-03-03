@@ -125,10 +125,9 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
         _tpc = self.get_tpc()
         _qat_config = mct.qat.QATConfig(weight_training_method=self.training_method,
                                         activation_training_method=self.training_method)
-        ptq_model, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(model_float,
-                                                                                           self.representative_data_gen_experimental,
-                                                                                           target_platform_capabilities=_tpc,
-                                                                                           new_experimental_exporter=True)
+        ptq_model, quantization_info = mct.ptq.pytorch_post_training_quantization(model_float,
+                                                                                  self.representative_data_gen_experimental,
+                                                                                  target_platform_capabilities=_tpc)
 
 
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(model_float,

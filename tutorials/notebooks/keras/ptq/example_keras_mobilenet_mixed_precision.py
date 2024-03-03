@@ -133,11 +133,11 @@ if __name__ == '__main__':
 
     # It is also possible to constraint only part of the KPI metric, e.g., by providing only weights_memory target
     # in the past KPI object, e.g., kpi = mct.core.KPI(kpi_data.weights_memory * 0.75)
-    quantized_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model,
-                                                                                               representative_data_gen,
-                                                                                               target_kpi=kpi,
-                                                                                               core_config=configuration,
-                                                                                               target_platform_capabilities=target_platform_cap)
+    quantized_model, quantization_info = mct.ptq.keras_post_training_quantization(model,
+                                                                                  representative_data_gen,
+                                                                                  target_kpi=kpi,
+                                                                                  core_config=configuration,
+                                                                                  target_platform_capabilities=target_platform_cap)
 
     # Export quantized model to TFLite and Keras.
     # For more details please see: https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/exporter/README.md

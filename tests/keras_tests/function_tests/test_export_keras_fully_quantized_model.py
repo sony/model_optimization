@@ -64,7 +64,7 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         input_shape = (32, 32, 3)
         self.model = _get_model(input_shape)
         self.representative_data_gen = lambda: [np.random.randn(*((1,) + input_shape))]
-        self.exportable_model = self.run_mct(self.model, new_experimental_exporter=True)
+        self.exportable_model = self.run_mct(self.model)
         self.exportable_model.trainable = False
         self.save_and_load_exportable_model()
         self.save_and_load_exported_tf_fakequant_model()
@@ -72,15 +72,14 @@ class TestKerasFakeQuantExporter(unittest.TestCase):
         self.equal_predictions_between_exportable_and_tf_fq_exported()
         self.tflite_fq_exported_weights()
 
-    def run_mct(self, model, new_experimental_exporter):
+    def run_mct(self, model):
         core_config = mct.core.CoreConfig()
         self.tpc = DEFAULT_KERAS_TPC
-        new_export_model, _ = mct.ptq.keras_post_training_quantization_experimental(
+        new_export_model, _ = mct.ptq.keras_post_training_quantization(
             in_model=model,
             core_config=core_config,
             representative_data_gen=self.representative_data_gen,
-            target_platform_capabilities=self.tpc,
-            new_experimental_exporter=new_experimental_exporter)
+            target_platform_capabilities=self.tpc)
         return new_export_model
 
     def save_and_load_exportable_model(self):

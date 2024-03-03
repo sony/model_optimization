@@ -150,12 +150,11 @@ class TestFileLogger(unittest.TestCase):
         mp_qc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
                                                           use_hessian_based_scores=False)
         core_config = mct.core.CoreConfig(mixed_precision_config=mp_qc)
-        quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(self.model,
-                                                                               rep_data,
-                                                                               target_kpi=mct.core.KPI(np.inf),
-                                                                               core_config=core_config,
-                                                                               target_platform_capabilities=tpc,
-                                                                               new_experimental_exporter=True)
+        quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model,
+                                                                      rep_data,
+                                                                      target_kpi=mct.core.KPI(np.inf),
+                                                                      core_config=core_config,
+                                                                      target_platform_capabilities=tpc)
 
         self.tensorboard_initial_graph_num_of_nodes(num_event_files=1, event_to_test=0)
 
@@ -164,12 +163,11 @@ class TestFileLogger(unittest.TestCase):
 
         # Test Multiple Outputs model Logger
         self.model = MultipleOutputsNet()
-        quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(self.model,
-                                                                               rep_data,
-                                                                               target_kpi=mct.core.KPI(np.inf),
-                                                                               core_config=core_config,
-                                                                               target_platform_capabilities=tpc,
-                                                                               new_experimental_exporter=True)
+        quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model,
+                                                                      rep_data,
+                                                                      target_kpi=mct.core.KPI(np.inf),
+                                                                      core_config=core_config,
+                                                                      target_platform_capabilities=tpc)
 
         # Test tensor size plotting
         self.plot_tensor_sizes()
