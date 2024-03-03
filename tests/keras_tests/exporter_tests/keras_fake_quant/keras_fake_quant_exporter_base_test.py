@@ -46,12 +46,11 @@ class KerasFakeQuantExporterBaseTest(ABC):
         self.model = self.get_model()
 
         # Get fully quantized model
-        self.exportable_model, _ = mct.ptq.keras_post_training_quantization_experimental(
+        self.exportable_model, _ = mct.ptq.keras_post_training_quantization(
             in_model=self.model,
             core_config=mct.core.CoreConfig(quantization_config=self.get_quantization_config()),
             representative_data_gen=self.__get_repr_dataset,
-            target_platform_capabilities=self.get_tpc(),
-            new_experimental_exporter=True)
+            target_platform_capabilities=self.get_tpc())
 
         # Export model in keras format
         _, self.fq_model_file_path = tempfile.mkstemp(DEFAULT_KERAS_EXPORT_EXTENTION)

@@ -336,8 +336,7 @@ class POTSecondMomentTest(BaseSecondMomentTest):
                 ptq_model, quantization_info = self.get_ptq_facade()(model_float,
                                                                      self.representative_data_gen_experimental,
                                                                      core_config=self.get_core_config(),
-                                                                     target_platform_capabilities=self.get_tpc(),
-                                                                     new_experimental_exporter=self.experimental_exporter)
+                                                                     target_platform_capabilities=self.get_tpc())
                 self.compare(ptq_model, model_float, cm=cm, input_x=self.representative_data_gen(),
                              quantization_info=quantization_info)
 

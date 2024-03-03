@@ -73,10 +73,10 @@ class BasePytorchExportTest(unittest.TestCase):
 
     def run_mct(self):
         model = self.get_model()
-        return mct.ptq.pytorch_post_training_quantization_experimental(model,
-                                                                       self.get_dataset,
-                                                                       core_config=self.get_core_config(),
-                                                                       target_platform_capabilities=self.get_tpc())
+        return mct.ptq.pytorch_post_training_quantization(model,
+                                                          self.get_dataset,
+                                                          core_config=self.get_core_config(),
+                                                          target_platform_capabilities=self.get_tpc())
 
     def run_export(self, quantized_model, onnx_opset_version=DEFAULT_ONNX_OPSET_VERSION):
         self.filepath = self.get_tmp_filepath()

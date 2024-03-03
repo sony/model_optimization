@@ -18,6 +18,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+import mct_quantizers
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
@@ -91,11 +92,10 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
 
         # Run MCT with PTQ
         np.random.seed(self.seed)
-        ptq_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(self.float_model,
-                                                                           self.representative_data_gen_experimental,
-                                                                           core_config=self.get_core_config(),
-                                                                           target_platform_capabilities=self.get_tpc(),
-                                                                            new_experimental_exporter=False)
+        ptq_model, _ = mct.ptq.pytorch_post_training_quantization(self.float_model,
+                                                                  self.representative_data_gen_experimental,
+                                                                  core_config=self.get_core_config(),
+                                                                  target_platform_capabilities=self.get_tpc())
 
         # Run MCT with GPTQ
         np.random.seed(self.seed)
@@ -191,8 +191,8 @@ class GPTQLearnRateZeroTest(GPTQBaseTest):
         self.unit_test.assertTrue(np.isclose(np.linalg.norm(ptq_out - float_output),
                                              np.linalg.norm(gptq_out - float_output), atol=1e-3))
 
-        ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))
-        gptq_weights = torch_tensor_to_numpy(list(gptq_model.parameters()))
+        ptq_weights = torch_tensor_to_numpy(self._extract_weights(ptq_model))
+        gptq_weights = torch_tensor_to_numpy(self._extract_weights(gptq_model))
 
         # check number of weights are equal
         self.unit_test.assertTrue(len(ptq_weights) == len(gptq_weights),
@@ -201,3 +201,20 @@ class GPTQLearnRateZeroTest(GPTQBaseTest):
         # check all weights were not updated in gptq model compared to ptq model
         w_diffs = [np.isclose(np.max(np.abs(w_ptq - w_gptq)), 0) for w_ptq, w_gptq in zip(ptq_weights, gptq_weights)]
         self.unit_test.assertTrue(np.all(w_diffs), msg="GPTQ: some weights were updated in zero learning rate test")
+
+    def _extract_weights(self, model):
+        all_weights = []
+
+        for layer in [model.conv1, model.conv2, model.linear]:
+            if isinstance(layer, mct_quantizers.PytorchQuantizationWrapper):
+                special_weights = layer.get_quantized_weights()
+                for _, weight in sorted(special_weights.items()):
+                    all_weights.append(weight)
+                if hasattr(layer.layer, 'bias'):
+                    all_weights.append(layer.layer.bias)
+            else:
+                for param in layer.parameters():
+                    all_weights.append(param)
+
+        return all_weights
+

@@ -145,13 +145,11 @@ class BasePytorchTest(BaseFeatureNetworkTest):
             assert core_config is not None, f"Model name {model_name} does not exists in the test's " \
                                             f"core configs dictionary keys"
 
-            ptq_model, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(in_module=model_float,
-                                                                                               representative_data_gen=representative_data_gen_experimental,
-                                                                                               target_kpi=self.get_kpi(),
-                                                                                               core_config=core_config,
-                                                                                               target_platform_capabilities=tpc,
-                                                                                               new_experimental_exporter=self.experimental_exporter
-                                                                                               )
+            ptq_model, quantization_info = mct.ptq.pytorch_post_training_quantization(in_module=model_float,
+                                                                                      representative_data_gen=representative_data_gen_experimental,
+                                                                                      target_kpi=self.get_kpi(),
+                                                                                      core_config=core_config,
+                                                                                      target_platform_capabilities=tpc)
 
             ptq_models.update({model_name: ptq_model})
         self.compare(ptq_models, model_float, input_x=x, quantization_info=quantization_info)

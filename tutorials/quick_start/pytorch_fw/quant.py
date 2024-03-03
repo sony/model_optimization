@@ -130,11 +130,11 @@ def quantize(model: nn.Module,
     else:
         workflow = 'PTQ'
         quantized_model, quantization_info = \
-            mct.ptq.pytorch_post_training_quantization_experimental(model,
-                                                                    representative_data_gen=representative_data_gen,
-                                                                    target_kpi=target_kpi,
-                                                                    core_config=core_conf,
-                                                                    target_platform_capabilities=tpc)
+            mct.ptq.pytorch_post_training_quantization(model,
+                                                       representative_data_gen=representative_data_gen,
+                                                       target_kpi=target_kpi,
+                                                       core_config=core_conf,
+                                                       target_platform_capabilities=tpc)
 
 
     # Export quantized model to ONNX
