@@ -105,7 +105,6 @@ def prepare_graph_set_bit_widths(in_model,
                                  mp_cfg):
 
     # Config
-    # quantization_config, mp_config = quant_config.separate_configs()
     core_config = CoreConfig(quantization_config=quant_config,
                              mixed_precision_config=mp_cfg,
                              debug_config=DebugConfig(analyze_similarity=analyze_similarity,
