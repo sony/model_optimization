@@ -84,6 +84,11 @@ def set_quantization_configs_to_node(node: BaseNode,
                                                                   node,
                                                                   mixed_precision_enable=mixed_precision_enable)
 
+    # sorting the candidates by kernel attribute weights number of bits first and then by activation number of bits
+    # (in reversed order). since only kernel attribute is quantized in weights mixed precision,
+    # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
+    node.sort_node_candidates(fw_info)
+
     for candidate_qc in node.candidates_quantization_cfg:
         candidate_qc.activation_quantization_cfg.enable_activation_quantization = \
             candidate_qc.activation_quantization_cfg.enable_activation_quantization and node.get_has_activation()
@@ -197,11 +202,6 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
                                                                weight_channel_axis,
                                                                op_cfg,
                                                                node_attrs_list))
-
-        # sorting the candidates by kernel attribute weights number of bits first and then by activation number of bits
-        # (in reversed order). since only kernel attribute is quantized in weights mixed precision,
-        # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
-        node.sort_node_candidates(fw_info)
 
     else:
         candidates.append(_create_node_single_candidate_qc(qc,
