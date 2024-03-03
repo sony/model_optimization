@@ -1,4 +1,4 @@
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ def get_validation_dataset_fraction(fraction, test_dataset_folder, batch) -> tf.
     return dataset
 
 
-def get_representative_dataset(fraction, REPRESENTATIVE_DATASET_FOLDER, batch) -> Generator:
+def get_representative_dataset(fraction, representative_dataset_folder, batch) -> Generator:
     """
     A function that loads a fraction of the dataset and returns a representative dataset generator.
 
@@ -81,7 +81,7 @@ def get_representative_dataset(fraction, REPRESENTATIVE_DATASET_FOLDER, batch) -
 
     print('Loading dataset, this may take a few minutes ...')    
     dataset = tf.keras.utils.image_dataset_from_directory(
-        directory=REPRESENTATIVE_DATASET_FOLDER,
+        directory=representative_dataset_folder,
         batch_size=batch,
         image_size=[224, 224],
         shuffle=True,
