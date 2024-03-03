@@ -76,9 +76,7 @@ def quantized_model_builder_for_second_moment_correction(graph: common.Graph,
     Returns:
         Quantized model for second moment correction.
     """
-    quantized_tg = quantize_graph_weights(graph,
-                                          fw_info=fw_info,
-                                          fw_impl=fw_impl)
+    quantized_tg = quantize_graph_weights(graph)
 
     quantized_model, user_info = fw_impl.model_builder(quantized_tg,
                                                        mode=ModelBuilderMode.FLOAT,

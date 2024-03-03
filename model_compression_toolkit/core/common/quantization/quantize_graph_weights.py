@@ -23,9 +23,7 @@ from model_compression_toolkit.core.common.quantization.quantize_node import get
 from model_compression_toolkit.logger import Logger
 
 
-def quantize_graph_weights(graph: Graph,
-                           fw_info: FrameworkInfo,
-                           fw_impl: FrameworkImplementation) -> Graph:
+def quantize_graph_weights(graph: Graph) -> Graph:
     """
     Get a graph representing a model, and quantize its nodes' weights.
     Each node is quantized according to the passed framework info and quantization configuration.
@@ -34,8 +32,6 @@ def quantize_graph_weights(graph: Graph,
 
     Args:
         graph: Graph to quantize its nodes.
-        fw_info: Framework information needed for quantizing the graph's nodes' weights and activations.
-        fw_impl: FrameworkImplementation with specific framework implementations.
 
     """
     # Iterate over nodes in the graph and quantize each node's weights and activations

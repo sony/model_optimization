@@ -76,10 +76,10 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
                           EditRule(filter=NodeNameScopeFilter(self.scope),
                                    action=ChangeCandidatesWeightsQuantConfigAttr(attr_name=KERNEL,
                                                                                  weights_n_bits=self.weights_n_bits)),
-                          EditRule(filter=NodeNameScopeFilter('2'),
+                          EditRule(filter=NodeNameScopeFilter('change_2'),
                                    action=ChangeCandidatesWeightsQuantConfigAttr(attr_name=KERNEL,
                                                                                  enable_weights_quantization=True)),
-                          EditRule(filter=NodeNameScopeFilter('2') or NodeNameScopeFilter('does_not_exist'),
+                          EditRule(filter=NodeNameScopeFilter('change_2') or NodeNameScopeFilter('does_not_exist'),
                                    action=ChangeCandidatesWeightsQuantConfigAttr(attr_name=KERNEL,
                                                                                  enable_weights_quantization=False))
                           ]
@@ -91,8 +91,8 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name='unchanged')(inputs)
-        x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.scope + '_1')(x)
-        x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.scope + '_2')(x)
+        x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.scope + 'change_1')(x)
+        x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.scope + 'change_2')(x)
         outputs = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False)(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
 
