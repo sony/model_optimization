@@ -98,9 +98,7 @@ if FOUND_TORCH:
                                                     core_config: CoreConfig = CoreConfig(),
                                                     gptq_config: GradientPTQConfigV2 = None,
                                                     gptq_representative_data_gen: Callable = None,
-                                                    target_platform_capabilities: TargetPlatformCapabilities =
-                                                    DEFAULT_PYTORCH_TPC,
-                                                    new_experimental_exporter: bool = True):
+                                                    target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
@@ -125,7 +123,6 @@ if FOUND_TORCH:
             gptq_config (GradientPTQConfigV2): Configuration for using gptq (e.g. optimizer).
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to.
-            new_experimental_exporter (bool): Whether to wrap the quantized model using quantization information or not. Enabled by default. Experimental and subject to future changes.
 
         Returns:
             A quantized module and information the user may need to handle the quantized module.
@@ -194,22 +191,8 @@ if FOUND_TORCH:
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen, tb_w, graph_gptq, fw_impl, DEFAULT_PYTORCH_INFO)
 
-        # ---------------------- #
-        # Export
-        # ---------------------- #
-        if new_experimental_exporter:
-            Logger.warning('Using new experimental wrapped and ready for export models. To '
-                           'disable it, please set new_experimental_exporter to False when '
-                           'calling pytorch_gradient_post_training_quantization_experimental. '
-                           'If you encounter an issue please file a bug.')
+        return get_exportable_pytorch_model(graph_gptq)
 
-            return get_exportable_pytorch_model(graph_gptq)
-
-        return export_model(graph_gptq,
-                            DEFAULT_PYTORCH_INFO,
-                            fw_impl,
-                            tb_w,
-                            bit_widths_config)
 
 else:
     # If torch is not installed,
