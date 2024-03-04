@@ -13,6 +13,7 @@
   - [Quick-Start with Torchvision](#pytorch-quickstart-torchvision)
   - [Post-Training Quantization](#pytorch-ptq)
   - [Quantization-Aware Training](#pytorch-qat)
+  - [Structured Pruning](#pytorch-pruning)
   - [Data Generation](#pytorch-data-generation)
   - [Export Quantized Models](#pytorch-export)
 
@@ -116,6 +117,14 @@ engaging and hands-on experience.
   | Tutorial                                                                          | Included Features      |
   |-----------------------------------------------------------------------------------|--------------|
   | [QAT on MNIST](pytorch/qat/example_pytorch_qat.py) | &#x2705; QAT |
+
+<details id="pytorch-pruning">
+  <summary>Structured Pruning</summary>
+
+  | Tutorial                                                                             | Included Features          |
+  |--------------------------------------------------------------------------------------|------------------|
+  | [Fully-Connected Model Pruning](pytorch/pruning/example_pytorch_pruning_mnist.ipynb) | &#x2705; Pruning |
+
 
 </details>
 

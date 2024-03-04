@@ -1,4 +1,4 @@
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo
-from model_compression_toolkit.core.common.pruning.pruning_config import ImportanceMetric, PruningConfig, ChannelsFilteringStrategy
-from model_compression_toolkit.pruning.keras.pruning_facade import keras_pruning_experimental
-from model_compression_toolkit.pruning.pytorch.pruning_facade import pytorch_pruning_experimental
-
