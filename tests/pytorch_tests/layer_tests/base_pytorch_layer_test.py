@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import random
+
 import operator
 from typing import List, Any, Tuple
 import numpy as np
@@ -60,6 +62,18 @@ PYTORCH_LAYER_TEST_OPS = {
                    BatchNorm2d, concat, cat, mean]
 }
 
+
+def seed_everything(seed_value: int):
+    """
+    Use seed to disable random behaviour. This is needed for the conv2dtranspose layer test, since when
+    using cuda, some optimizations may cause a bit different predictions (for the same input).
+    """
+    random.seed(seed_value)
+    np.random.seed(seed_value)
+    torch.manual_seed(seed_value)
+    torch.cuda.manual_seed_all(seed_value)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 class LayerTestModel(torch.nn.Module):
     def __init__(self, layer):
@@ -275,7 +289,11 @@ class BasePytorchLayerTest(BaseLayerTest):
                     self.unit_test.assertFalse(float_weight is None)
                     self.unit_test.assertTrue(np.sum(np.abs(v - float_weight)) == 0.0)
         input_tensors = self.generate_inputs()
+
+        # Set seed to avoid randomness between predictions.
+        seed_everything(0)
         y = self.predict(float_model, input_tensors)
+        seed_everything(0)
         y_hat = self.predict(quantized_model, input_tensors)
         if isinstance(y, (list, tuple)):
             for fo, qo in zip(y, y_hat):
