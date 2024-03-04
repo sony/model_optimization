@@ -95,13 +95,16 @@ def compute_nodes_weights_params(graph: Graph, fw_info: FrameworkInfo) -> np.nda
         #  only kernel quantization is enabled) we should include other attributes memory in the sum of all
         #  weights memory.
         #  When implementing this, we should just go over all attributes in the node instead of counting only kernels.
-        if n.has_kernel_quantization_enabled_candidate(fw_info) and not n.reuse:
-            node_num_weights_params = 0
-            for attr in fw_info.get_kernel_op_attributes(n.type):
-                if attr is not None:
-                    node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
+        kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
+        if kernel_attr is not None and not n.reuse:
+            kernel_candidates = n.get_all_weights_attr_candidates(kernel_attr)
+            if len(kernel_candidates) > 0 and any([c.enable_weights_quantization for c in kernel_candidates]):
+                node_num_weights_params = 0
+                for attr in fw_info.get_kernel_op_attributes(n.type):
+                    if attr is not None:
+                        node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
 
-            weights_params.append(node_num_weights_params)
+                weights_params.append(node_num_weights_params)
 
     return np.array(weights_params)
 

@@ -16,10 +16,10 @@ from typing import Dict, List, Tuple, Callable
 from model_compression_toolkit.core.common import BaseNode
 
 
-def get_quantization_quantizers(node: BaseNode,
-                                get_weights_quantizer_for_node: Callable,
-                                get_activations_quantizer_for_node: Callable,
-                                attributes_names: List[str] = []) -> Tuple[Dict, List]:
+def get_inferable_quantizers(node: BaseNode,
+                             get_weights_quantizer_for_node: Callable,
+                             get_activations_quantizer_for_node: Callable,
+                             attributes_names: List[str] = []) -> Tuple[Dict, List]:
     """
     Create quantizers to wrap a layer for its corresponding node.
 

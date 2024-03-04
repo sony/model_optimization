@@ -38,7 +38,7 @@ class EditRule(_EditRule):
     and the action is applied on these nodes during the quantization process.
 
     Examples:
-        Create an EditRule to quantize all Conv2D kernel attribute wights using 9 bits:
+        Create an EditRule to quantize all Conv2D kernel attribute weights using 9 bits:
 
         >>> import model_compression_toolkit as mct
         >>> from model_compression_toolkit.core.keras.constants import KERNEL

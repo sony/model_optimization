@@ -201,7 +201,7 @@ class BaseNode:
         Returns: A list of all weights attributes that the node holds.
 
         """
-        return [k for k in self.weights.keys() if self.weights[k] is not None]
+        return [k for k in self.weights if self.weights[k] is not None]
 
     def insert_positional_weights_to_input_list(self, input_tensors: List) -> List:
         """
@@ -393,15 +393,11 @@ class BaseNode:
         Checks whether the node has any weights attribute that is supposed to be quantized, based on its provided
         quantization configuration candidates.
 
-        Returns: Tru if the is at least one weights attribute in the node that is supposed to be quantized.
+        Returns: True if the is at least one weights attribute in the node that is supposed to be quantized.
 
         """
-        for attr in self.get_node_weights_attributes():
-            if self.is_weights_quantization_enabled(attr):
-                return True
 
-        return False
-
+        return any([self.is_weights_quantization_enabled(attr) for attr in self.get_node_weights_attributes()])
 
     def get_total_output_params(self) -> float:
         """
@@ -514,25 +510,6 @@ class BaseNode:
                              candidate.activation_quantization_cfg not in seen_candidates
                              and not seen_candidates.add(candidate.activation_quantization_cfg)]
         return unique_candidates
-
-    def has_kernel_quantization_enabled_candidate(self, fw_info) -> bool:
-        """
-        Checks whether the node has quantization configuration candidates that enable kenrel attribute weights quantization.
-
-        Args:
-            fw_info: Framework info to decide which attributes should be quantized.
-
-        Returns: True if the node has at list one quantization configuration candidate with weights quantization enabled.
-        """
-        # This method is only used for Mixed precision purposes
-        kernel_attr = fw_info.get_kernel_op_attributes(self.type)
-        if kernel_attr[0] is not None:
-            kernel_attr = kernel_attr[0]
-        else:
-            return False
-
-        kernel_candidates = self.get_all_weights_attr_candidates(kernel_attr)
-        return len(kernel_candidates) > 0 and any([c.enable_weights_quantization for c in kernel_candidates])
 
     def has_activation_quantization_enabled_candidate(self) -> bool:
         """

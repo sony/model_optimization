@@ -86,8 +86,8 @@ from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 from model_compression_toolkit.core.pytorch.statistics_correction.apply_second_moment_correction import \
     pytorch_apply_second_moment_correction
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
-from model_compression_toolkit.exporter.model_wrapper.fw_agnostic.get_quantization_quantizers import \
-    get_quantization_quantizers
+from model_compression_toolkit.exporter.model_wrapper.fw_agnostic.get_inferable_quantizers import \
+    get_inferable_quantizers
 from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizer import \
     get_weights_quantizer_for_node, get_activations_quantizer_for_node
 from model_compression_toolkit.logger import Logger
@@ -541,7 +541,7 @@ class PytorchImplementation(FrameworkImplementation):
                                                         fw_impl=self,
                                                         num_iterations_for_approximation=num_iterations_for_approximation)
 
-    def get_quantization_quantizers(self, node: BaseNode):
+    def get_inferable_quantizers(self, node: BaseNode):
         """
         Returns sets of Pytorch compatible weights and activation quantizers for the given node.
 
@@ -554,7 +554,7 @@ class PytorchImplementation(FrameworkImplementation):
 
         """
 
-        return get_quantization_quantizers(node,
-                                           get_weights_quantizer_for_node,
-                                           get_activations_quantizer_for_node,
-                                           node.get_node_weights_attributes())
+        return get_inferable_quantizers(node,
+                                        get_weights_quantizer_for_node,
+                                        get_activations_quantizer_for_node,
+                                        node.get_node_weights_attributes())

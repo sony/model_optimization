@@ -19,20 +19,17 @@ import numpy as np
 import tensorflow as tf
 from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
 from tensorflow.keras.models import Model
-from tensorflow.python.layers.base import Layer
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoService
 from model_compression_toolkit.core.keras.hessian.activation_trace_hessian_calculator_keras import \
     ActivationTraceHessianCalculatorKeras
-from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.weights_trace_hessian_calculator_keras import WeightsTraceHessianCalculatorKeras
-from model_compression_toolkit.exporter.model_wrapper.fw_agnostic.get_quantization_quantizers import \
-    get_quantization_quantizers
+from model_compression_toolkit.exporter.model_wrapper.fw_agnostic.get_inferable_quantizers import \
+    get_inferable_quantizers
 from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
     get_weights_quantizer_for_node, get_activations_quantizer_for_node
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence, compute_cs, compute_mse
@@ -591,7 +588,7 @@ class KerasImplementation(FrameworkImplementation):
 
         return model(inputs)
 
-    def get_quantization_quantizers(self, node: BaseNode):
+    def get_inferable_quantizers(self, node: BaseNode):
         """
         Returns sets of Keras compatible weights and activation quantizers for the given node.
 
@@ -621,7 +618,7 @@ class KerasImplementation(FrameworkImplementation):
 
         attribute_names = [_weight_name(wn) for wn in node.get_node_weights_attributes()]
 
-        return get_quantization_quantizers(node,
-                                           get_weights_quantizer_for_node,
-                                           get_activations_quantizer_for_node,
-                                           attribute_names)
+        return get_inferable_quantizers(node,
+                                        get_weights_quantizer_for_node,
+                                        get_activations_quantizer_for_node,
+                                        attribute_names)

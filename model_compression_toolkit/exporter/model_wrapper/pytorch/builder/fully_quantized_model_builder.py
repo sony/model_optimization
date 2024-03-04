@@ -38,7 +38,7 @@ if FOUND_TORCH:
         Returns: Wrapped layer
 
         """
-        weight_quantizers, _ = C.pytorch.pytorch_implementation.PytorchImplementation().get_quantization_quantizers(node)
+        weight_quantizers, _ = C.pytorch.pytorch_implementation.PytorchImplementation().get_inferable_quantizers(node)
         if len(weight_quantizers) > 0:
             return PytorchQuantizationWrapper(module, weight_quantizers)
         return module
@@ -52,7 +52,7 @@ if FOUND_TORCH:
         Returns:
             A PytorchActivationQuantizationHolder module for the node's activation quantization.
         """
-        _, activation_quantizers = C.pytorch.pytorch_implementation.PytorchImplementation().get_quantization_quantizers(node)
+        _, activation_quantizers = C.pytorch.pytorch_implementation.PytorchImplementation().get_inferable_quantizers(node)
         # Holder by definition uses a single quantizer for the activation quantization
         # thus we make sure this is the only possible case (unless it's a node we no activation
         # quantization, which in this case has an empty list).

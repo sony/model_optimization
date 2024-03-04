@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common.quantization.candidate_node_quantizat
 
 
 def verify_candidates_descending_order(node_q_cfg: List[CandidateNodeQuantizationConfig],
-                                       kernel_attr: str = None):
+                                       kernel_attr: str = None) -> bool:
     """
     Make sure the candidates configurations arrives in descending order.
 
@@ -52,6 +52,8 @@ def verify_candidates_descending_order(node_q_cfg: List[CandidateNodeQuantizatio
             assert candidate_bits < curmax, f"Node's quantization configuration candidates should arrive in " \
                                             f"descending order of activation_nbits."
             curmax = candidate_bits
+
+    return True
 
 
 def init_quantized_weights(node_q_cfg: List[CandidateNodeQuantizationConfig],

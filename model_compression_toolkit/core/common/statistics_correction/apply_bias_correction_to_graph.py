@@ -48,13 +48,13 @@ def apply_bias_correction_to_graph(graph_to_apply_bias_correction: Graph,
             # If a kernel was quantized and weights bias correction is enabled in n.quantization_cfg,
             # a bias correction term was calculated during model preparation, and is used now in the node's bias term.
             if n.final_weights_quantization_cfg.weights_bias_correction:
-                _apply_bias_correction_to_node(n, fw_impl, core_config)
+                _apply_bias_correction_to_node(n, fw_impl, core_config.quantization_config)
     return graph
 
 
 def _apply_bias_correction_to_node(node: BaseNode,
                                    fw_impl: FrameworkImplementation,
-                                   core_config: CoreConfig):
+                                   qc: QuantizationConfig):
     """
     Set new bias to node using the bias-correction term that is stored in the
     final weights quantization configuration.
@@ -62,7 +62,7 @@ def _apply_bias_correction_to_node(node: BaseNode,
     Args:
         node: Node to set its corrected bias after bias-correction.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-        core_config: CoreConfig containing parameters of how the model should be quantized.
+        qc: QuantizationConfig containing parameters of how the model should be quantized.
 
     """
     correction = node.final_weights_quantization_cfg.bias_corrected
@@ -79,6 +79,6 @@ def _apply_bias_correction_to_node(node: BaseNode,
         node.framework_attr[fw_impl.constants.USE_BIAS] = True  # Mark the use_bias attribute of the node.
         node.final_weights_quantization_cfg.set_attr_config(fw_impl.constants.BIAS,
                                                             WeightsAttrQuantizationConfig(
-                                                                core_config.quantization_config,
+                                                                qc,
                                                                 AttributeQuantizationConfig(
                                                                     enable_weights_quantization=False)))

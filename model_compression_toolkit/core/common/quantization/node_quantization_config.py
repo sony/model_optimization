@@ -414,7 +414,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                                                                                          weights_attr_cfg=op_cfg.default_weight_attr_config,
                                                                                          weights_channels_axis=weights_channels_axis)
             else:
-                # In some frameworks the attribute name is composed of the framework attribute name and the layer name,
+                # In Tensorflow, the attribute name is composed of the framework attribute name and the layer name,
                 # therefore, we need to look for the attribute in the op_cfg that is contained in the node attribute's name.
                 attrs_included_in_name = {k: v for k, v in op_cfg.attr_weights_configs_mapping.items() if k in attr}
                 if len(attrs_included_in_name) > 1:
@@ -491,7 +491,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
 
         """
         if isinstance(attr_name, int):
-            return self.pos_attributes_config_mapping.get(attr_name) is not None
+            return self.pos_attributes_config_mapping.get(attr_name, False)
         else:
             saved_attr_name = self._extract_config_for_attributes_with_name(attr_name)
             if len(saved_attr_name) >= 1:
