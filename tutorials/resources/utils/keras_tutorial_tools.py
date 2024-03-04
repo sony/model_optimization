@@ -23,7 +23,8 @@ import subprocess
 import tarfile
 from typing import Generator
 
-
+def imagenet_preprocess_input(images, labels):
+    return tf.keras.applications.mobilenet_v2.preprocess_input(images), labels
 
 def get_validation_dataset_fraction(fraction, test_dataset_folder, batch) -> tf.data.Dataset:
     """
