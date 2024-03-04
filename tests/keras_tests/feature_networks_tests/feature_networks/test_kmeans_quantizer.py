@@ -125,7 +125,8 @@ class KmeansQuantizerTest(KmeansQuantizerTestBase):
         # using different methods (but started as the same value)
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(np.sum(
-            np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())) > 0)
+            np.abs(conv_layers[0].get_quantized_weights()['kernel'] - conv_layers[2].get_quantized_weights()['kernel'])) > 0)
+
 
 
 class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
@@ -150,7 +151,8 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
         # using different methods (but started as the same value)
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(np.sum(
-            np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())) > 0)
+            np.abs(conv_layers[0].get_quantized_weights()['kernel'] - conv_layers[2].get_quantized_weights()[
+                'kernel'])) > 0)
 
 
 class KmeansQuantizerTestManyClasses(KmeansQuantizerTestBase):
