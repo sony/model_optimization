@@ -21,7 +21,7 @@ from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
@@ -66,7 +66,7 @@ if FOUND_TF:
                               loss: Callable = GPTQMultipleTensorsLoss(),
                               log_function: Callable = None,
                               use_hessian_based_weights: bool = True,
-                              regularization_factor: float = REG_DEFAULT) -> GradientPTQConfigV2:
+                              regularization_factor: float = REG_DEFAULT) -> GradientPTQConfig:
         """
         Create a GradientPTQConfigV2 instance for Keras models.
 
@@ -102,20 +102,20 @@ if FOUND_TF:
         """
         bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT,
                                                  momentum=GPTQ_MOMENTUM)
-        return GradientPTQConfigV2(n_epochs,
-                                   optimizer,
-                                   optimizer_rest=optimizer_rest,
-                                   loss=loss,
-                                   log_function=log_function,
-                                   train_bias=True,
-                                   optimizer_bias=bias_optimizer,
-                                   use_hessian_based_weights=use_hessian_based_weights,
-                                   regularization_factor=regularization_factor)
+        return GradientPTQConfig(n_epochs,
+                                 optimizer,
+                                 optimizer_rest=optimizer_rest,
+                                 loss=loss,
+                                 log_function=log_function,
+                                 train_bias=True,
+                                 optimizer_bias=bias_optimizer,
+                                 use_hessian_based_weights=use_hessian_based_weights,
+                                 regularization_factor=regularization_factor)
 
 
     def keras_gradient_post_training_quantization(in_model: Model,
                                                   representative_data_gen: Callable,
-                                                  gptq_config: GradientPTQConfigV2,
+                                                  gptq_config: GradientPTQConfig,
                                                   gptq_representative_data_gen: Callable = None,
                                                   target_kpi: KPI = None,
                                                   core_config: CoreConfig = CoreConfig(),
@@ -140,7 +140,7 @@ if FOUND_TF:
         Args:
             in_model (Model): Keras model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
-            gptq_config (GradientPTQConfigV2): Configuration for using gptq (e.g. optimizer).
+            gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.

@@ -19,7 +19,7 @@ from model_compression_toolkit.core.common.visualization.tensorboard_writer impo
 from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import PYTORCH
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.runner import core_runner
@@ -54,7 +54,7 @@ if FOUND_TORCH:
                                 loss: Callable = multiple_tensors_mse_loss,
                                 log_function: Callable = None,
                                 use_hessian_based_weights: bool = True,
-                                regularization_factor: float = REG_DEFAULT) -> GradientPTQConfigV2:
+                                regularization_factor: float = REG_DEFAULT) -> GradientPTQConfig:
         """
         Create a GradientPTQConfigV2 instance for Pytorch models.
 
@@ -86,17 +86,17 @@ if FOUND_TORCH:
 
         """
         bias_optimizer = torch.optim.SGD([torch.Tensor([])], lr=LR_BIAS_DEFAULT, momentum=GPTQ_MOMENTUM)
-        return GradientPTQConfigV2(n_epochs, optimizer, optimizer_rest=optimizer_rest, loss=loss,
-                                   log_function=log_function, train_bias=True, optimizer_bias=bias_optimizer,
-                                   use_hessian_based_weights=use_hessian_based_weights,
-                                   regularization_factor=regularization_factor)
+        return GradientPTQConfig(n_epochs, optimizer, optimizer_rest=optimizer_rest, loss=loss,
+                                 log_function=log_function, train_bias=True, optimizer_bias=bias_optimizer,
+                                 use_hessian_based_weights=use_hessian_based_weights,
+                                 regularization_factor=regularization_factor)
 
 
     def pytorch_gradient_post_training_quantization(model: Module,
                                                     representative_data_gen: Callable,
                                                     target_kpi: KPI = None,
                                                     core_config: CoreConfig = CoreConfig(),
-                                                    gptq_config: GradientPTQConfigV2 = None,
+                                                    gptq_config: GradientPTQConfig = None,
                                                     gptq_representative_data_gen: Callable = None,
                                                     target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
@@ -120,7 +120,7 @@ if FOUND_TORCH:
             representative_data_gen (Callable): Dataset used for calibration.
             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
-            gptq_config (GradientPTQConfigV2): Configuration for using gptq (e.g. optimizer).
+            gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to.
 
