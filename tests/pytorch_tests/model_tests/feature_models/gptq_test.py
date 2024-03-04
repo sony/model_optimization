@@ -104,8 +104,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
             self.representative_data_gen_experimental,
             core_config=self.get_core_config(),
             target_platform_capabilities=self.get_tpc(),
-            gptq_config=self.get_gptq_configv2(),
-            new_experimental_exporter=self.experimental_exporter)
+            gptq_config=self.get_gptq_configv2())
 
         # Generate inputs
         x = to_torch_tensor(self.representative_data_gen())
