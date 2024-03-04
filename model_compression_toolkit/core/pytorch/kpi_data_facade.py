@@ -22,7 +22,7 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import 
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_data import compute_kpi_data
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.constants import FOUND_TORCH
 
 if FOUND_TORCH:
@@ -38,7 +38,7 @@ if FOUND_TORCH:
 
     def pytorch_kpi_data(in_model: Module,
                          representative_data_gen: Callable,
-                         core_config: CoreConfig = CoreConfig(), # TODO: Why pytorch is initilized and keras not?
+                         core_config: CoreConfig = CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig()),
                          fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                          target_platform_capabilities: TargetPlatformCapabilities = PYTORCH_DEFAULT_TPC) -> KPI:
         """
@@ -75,9 +75,9 @@ if FOUND_TORCH:
 
         """
 
-        if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
-            Logger.error("KPI data computation can't be executed without MixedPrecisionQuantizationConfigV2 object."
-                         "Given quant_config is not of type MixedPrecisionQuantizationConfigV2.")
+        if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
+            Logger.error("KPI data computation can't be executed without MixedPrecisionQuantizationConfig object."
+                         "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
 
         fw_impl = PytorchImplementation()
 

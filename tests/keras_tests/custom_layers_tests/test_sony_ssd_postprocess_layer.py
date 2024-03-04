@@ -48,7 +48,7 @@ class TestSonySsdPostProcessLayer(unittest.TestCase):
         model = keras.Model(inputs=inputs, outputs=outputs)
 
         core_config = mct.core.CoreConfig(
-            mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2(
+            mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(
                 use_hessian_based_scores=False))
         q_model, _ = mct.ptq.keras_post_training_quantization_experimental(model,
                                                                            get_rep_dataset(2, (1, 8, 8, 3)),

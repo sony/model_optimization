@@ -115,8 +115,8 @@ if __name__ == '__main__':
     model = MobileNetV2()
 
     # Create a mixed-precision quantization configuration.
-    mixed_precision_config = mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=args.mixed_precision_num_of_images,
-                                                                         use_hessian_based_scores=args.enable_mixed_precision_gradients_weighting)
+    mixed_precision_config = mct.core.MixedPrecisionQuantizationConfig(num_of_images=args.mixed_precision_num_of_images,
+                                                                       use_hessian_based_scores=args.enable_mixed_precision_gradients_weighting)
 
     # Create a core quantization configuration, set the mixed-precision configuration,
     # and set the number of calibration iterations.

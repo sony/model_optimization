@@ -22,7 +22,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfigV2
+    MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.runner import core_runner
@@ -99,7 +99,7 @@ if FOUND_TF:
             The candidates bitwidth for quantization should be defined in the target platform model.
             In this example we use 1 image to search mixed-precision configuration:
 
-            >>> config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1))
+            >>> config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(num_of_images=1))
 
             For mixed-precision set a target KPI object:
             Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
@@ -123,13 +123,10 @@ if FOUND_TF:
                              fw_info=fw_info).validate()
 
         if core_config.mixed_precision_enable:
-            if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
+            if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.error("Given quantization config to mixed-precision facade is not of type "
-                                    "MixedPrecisionQuantizationConfigV2. Please use keras_post_training_quantization "
+                                    "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization "
                                     "API, or pass a valid mixed precision configuration.")  # pragma: no cover
-
-            Logger.info("Using experimental mixed-precision quantization. "
-                               "If you encounter an issue please file a bug.")
 
         tb_w = init_tensorboard_writer(fw_info)
 

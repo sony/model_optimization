@@ -108,8 +108,8 @@ if __name__ == '__main__':
     # MCT will search a mixed-precision configuration (namely, bit-width for each layer)
     # and quantize the model according to this configuration.
     # The candidates bit-width for quantization should be defined in the target platform model:
-    configuration = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=args.mixed_precision_num_of_images,
-                                                                                                           use_hessian_based_scores=args.enable_mixed_precision_gradients_weighting))
+    configuration = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(num_of_images=args.mixed_precision_num_of_images,
+                                                                                                         use_hessian_based_scores=args.enable_mixed_precision_gradients_weighting))
 
     # Get a TargetPlatformCapabilities object that models the hardware for the quantized model inference.
     # Here, for example, we use the default platform that is attached to a Tensorflow layers representation.
