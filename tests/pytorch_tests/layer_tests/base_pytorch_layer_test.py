@@ -235,9 +235,6 @@ class BasePytorchLayerTest(BaseLayerTest):
 
         # Check inference is possible
         input_tensors = self.generate_inputs()
-        # input_tensors = [t.to('cpu') for t in input_tensors]
-        # quantized_model.to('cpu')
-
         self.predict(quantized_model, input_tensors)
         self.predict(quantized_model_fx, input_tensors)
 
