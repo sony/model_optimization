@@ -18,7 +18,6 @@ from functools import partial
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.kmeans_params import kmeans_tensor
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.lut_kmeans_params import \
     lut_kmeans_tensor, lut_kmeans_histogram
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import \
@@ -70,8 +69,6 @@ def get_weights_quantization_params_fn(weights_quantization_method: Quantization
         params_fn = symmetric_selection_tensor
     elif weights_quantization_method == QuantizationMethod.UNIFORM:
         params_fn = uniform_selection_tensor
-    elif weights_quantization_method == QuantizationMethod.KMEANS:
-        params_fn = kmeans_tensor
     elif weights_quantization_method == QuantizationMethod.LUT_POT_QUANTIZER:
         params_fn = partial(lut_kmeans_tensor, is_symmetric=False)
     elif weights_quantization_method == QuantizationMethod.LUT_SYM_QUANTIZER:
