@@ -178,8 +178,8 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_kmeans_quantizer(self):
         # This test checks that the Kmeans quantization has a different result than symmetric uniform quantization
-        KmeansQuantizerTest(self, QuantizationMethod.KMEANS).run_test()
-        KmeansQuantizerNotPerChannelTest(self, QuantizationMethod.KMEANS).run_test()
+        # KmeansQuantizerTest(self, QuantizationMethod.KMEANS).run_test() # TODO: No KMEANS inferable quantizer
+        # KmeansQuantizerNotPerChannelTest(self, QuantizationMethod.KMEANS).run_test() # TODO: No KMEANS inferable quantizer
 
         # This test checks that the LUT- Kmeans quantization has a different result than symmetric uniform quantization
         KmeansQuantizerTest(self, QuantizationMethod.LUT_POT_QUANTIZER).run_test()
@@ -188,7 +188,7 @@ class FeatureNetworkTest(unittest.TestCase):
         KmeansQuantizerNotPerChannelTest(self, QuantizationMethod.LUT_SYM_QUANTIZER).run_test()
 
         # In this test we have weights with less unique values than the number of clusters
-        KmeansQuantizerTestManyClasses(self, QuantizationMethod.KMEANS, weights_n_bits=8).run_test()
+        # KmeansQuantizerTestManyClasses(self, QuantizationMethod.KMEANS, weights_n_bits=8).run_test() # TODO: No KMEANS inferable quantizer
 
         # In this test we have weights with less unique values than the number of clusters
         KmeansQuantizerTestManyClasses(self, QuantizationMethod.LUT_POT_QUANTIZER,
