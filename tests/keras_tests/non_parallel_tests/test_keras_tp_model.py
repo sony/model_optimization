@@ -255,7 +255,7 @@ class TestGetKerasTPC(unittest.TestCase):
         quantized_model, _ = mct.ptq.keras_post_training_quantization(model,
                                                                       rep_data,
                                                                       target_platform_capabilities=tpc)
-        core_config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
+        core_config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(num_of_images=2,
                                                                                                            use_hessian_based_scores=False))
         quantized_model, _ = mct.ptq.keras_post_training_quantization(model,
                                                                       rep_data,
