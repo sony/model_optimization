@@ -30,8 +30,8 @@ if gpus:
 from effdet.anchors import Anchors, get_feat_sizes
 from effdet.config import get_fpn_config, set_config_readonly
 from effdet.efficientdet import get_feature_info
-from tutorials.mct_models_lib.efficientdet.effnet_keras import create_model, handle_name
-from tutorials.mct_models_lib.efficientdet.effnet_blocks_keras import create_conv2d, create_pool2d
+from tutorials.mct_models_lib.models_keras.efficientdet.effnet_keras import create_model, handle_name
+from tutorials.mct_models_lib.models_keras.efficientdet.effnet_blocks_keras import create_conv2d, create_pool2d
 from tutorials.mct_models_lib.utils.torch2keras_weights_translation import load_state_dict
 
 from sony_custom_layers.keras.object_detection.ssd_post_process import SSDPostProcess

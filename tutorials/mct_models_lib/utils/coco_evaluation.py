@@ -274,3 +274,29 @@ def coco_dataset_generator(dataset_folder: str, annotation_file: str, preprocess
         # After processing all images, yield any remaining images in the last batch
         if len(batch_images) > 0 and (total_images == image_count + 1):
             yield np.array(batch_images), batch_annotations
+
+
+def coco_evaluate(model, preprocess, dataset_folder, annotation_file, batch_size, output_resize):
+
+    # Load COCO evaluation set
+    val_dataset = coco_dataset_generator(dataset_folder=dataset_folder,
+                                         annotation_file=annotation_file,
+                                         preprocess=preprocess,
+                                         batch_size=batch_size)
+
+
+    # Initialize the evaluation metric object
+    coco_metric = CocoEval(annotation_file, output_resize)
+
+    # Iterate and the evaluation set
+    for batch_idx, (images, targets) in enumerate(val_dataset):
+
+        # Run inference on the batch
+        outputs = model(images)
+
+        # Add the model outputs to metric object (a dictionary of outputs after postprocess: boxes, scores & classes)
+        coco_metric.add_batch_detections(outputs, targets)
+        if (batch_idx + 1) % 100 == 0:
+            print(f'processed {(batch_idx + 1) * batch_size} images')
+
+    return coco_metric.result()
