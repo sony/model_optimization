@@ -192,8 +192,7 @@ class BaseNode:
         Returns: A list of all non-positional weights the node holds.
 
         """
-        return [self.weights[k] for k in self.weights.keys()
-                if self.weights[k] is not None and not isinstance(k, int)]
+        return [self.weights[k] for k in self.weights.keys() if not isinstance(k, int)]
 
     def get_node_weights_attributes(self) -> List[str]:
         """
@@ -201,7 +200,7 @@ class BaseNode:
         Returns: A list of all weights attributes that the node holds.
 
         """
-        return [k for k in self.weights if self.weights[k] is not None]
+        return list(self.weights.keys())
 
     def insert_positional_weights_to_input_list(self, input_tensors: List) -> List:
         """
