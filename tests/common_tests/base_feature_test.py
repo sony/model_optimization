@@ -35,9 +35,6 @@ class BaseFeatureNetworkTest(BaseTest):
     def get_gptq_config(self):
         return None
 
-    def get_gptq_configv2(self):
-        return None
-
     def get_kpi(self):
         return None
 
