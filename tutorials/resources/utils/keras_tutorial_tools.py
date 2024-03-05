@@ -54,7 +54,7 @@ def get_validation_dataset_fraction(fraction, test_dataset_folder, batch) -> tf.
 
     # reload the dataset again with batch size + take number of samples
     dataset = tf.keras.utils.image_dataset_from_directory(
-        directory=TEST_DATASET_FOLDER,
+        directory=test_dataset_folder,
         batch_size=batch,
         image_size=[224, 224],
         shuffle=False,
