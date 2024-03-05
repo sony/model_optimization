@@ -69,12 +69,12 @@ class PruningPytorchFeatureTest(BasePytorchFeatureNetworkTest):
                                                                                   pruning_config=self.get_pruning_config(),
                                                                                   target_platform_capabilities=self.get_tpc())
 
-            quantized_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(in_module=model_float,
+            quantized_model, _ = mct.ptq.pytorch_post_training_quantization(in_module=model_float,
                                                                                          core_config=mct.core.CoreConfig(),
                                                                                          representative_data_gen=self.representative_data_gen_experimental,
                                                                                          target_platform_capabilities=self.get_tpc())
 
-            pruned_quantized_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(in_module=pruned_model,
+            pruned_quantized_model, _ = mct.ptq.pytorch_post_training_quantization(in_module=pruned_model,
                                                                                          core_config=mct.core.CoreConfig(),
                                                                                          representative_data_gen=self.representative_data_gen_experimental,
                                                                                          target_platform_capabilities=self.get_tpc())
