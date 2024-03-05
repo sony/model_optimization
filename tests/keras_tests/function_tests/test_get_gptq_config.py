@@ -129,8 +129,7 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                       representative_data_gen=random_datagen_experimental,
                                                       core_config=self.cc,
                                                       gptq_config=gptq_config,
-                                                      target_platform_capabilities=self.pot_weights_tpc,
-                                                      new_experimental_exporter=True)
+                                                      target_platform_capabilities=self.pot_weights_tpc)
 
         tf.config.run_functions_eagerly(False)
 
@@ -144,8 +143,7 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                       representative_data_gen=random_datagen_experimental,
                                                       core_config=self.cc,
                                                       gptq_config=gptq_config,
-                                                      target_platform_capabilities=self.symmetric_weights_tpc,
-                                                      new_experimental_exporter=True)
+                                                      target_platform_capabilities=self.symmetric_weights_tpc)
 
         tf.config.run_functions_eagerly(False)
 
