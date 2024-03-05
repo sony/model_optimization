@@ -128,11 +128,11 @@ def quantize(model: tf.keras.Model,
     else:
         workflow = 'PTQ'
         quantized_model, quantization_info = \
-            mct.ptq.keras_post_training_quantization_experimental(model,
-                                                                  representative_data_gen=representative_data_gen,
-                                                                  target_kpi=target_kpi,
-                                                                  core_config=core_conf,
-                                                                  target_platform_capabilities=tpc)
+            mct.ptq.keras_post_training_quantization(model,
+                                                     representative_data_gen=representative_data_gen,
+                                                     target_kpi=target_kpi,
+                                                     core_config=core_conf,
+                                                     target_platform_capabilities=tpc)
 
     return quantized_model, QuantInfo(user_info=quantization_info,
                                       tpc_info=get_tpc_info(tpc=tpc),

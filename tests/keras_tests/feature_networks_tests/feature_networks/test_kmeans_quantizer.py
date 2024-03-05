@@ -23,6 +23,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 import model_compression_toolkit as mct
 import tensorflow as tf
 
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -125,7 +126,8 @@ class KmeansQuantizerTest(KmeansQuantizerTestBase):
         # using different methods (but started as the same value)
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(np.sum(
-            np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())) > 0)
+            np.abs(conv_layers[0].get_quantized_weights()[KERNEL] - conv_layers[2].get_quantized_weights()[KERNEL])) > 0)
+
 
 
 class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
@@ -150,7 +152,7 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
         # using different methods (but started as the same value)
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(np.sum(
-            np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())) > 0)
+            np.abs(conv_layers[0].get_quantized_weights()[KERNEL] - conv_layers[2].get_quantized_weights()[KERNEL])) > 0)
 
 
 class KmeansQuantizerTestManyClasses(KmeansQuantizerTestBase):

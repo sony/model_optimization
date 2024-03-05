@@ -40,12 +40,11 @@ if FOUND_TF:
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
-    def keras_post_training_quantization_experimental(in_model: Model,
-                                                      representative_data_gen: Callable,
-                                                      target_kpi: KPI = None,
-                                                      core_config: CoreConfig = CoreConfig(),
-                                                      target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC,
-                                                      new_experimental_exporter: bool = True):
+    def keras_post_training_quantization(in_model: Model,
+                                         representative_data_gen: Callable,
+                                         target_kpi: KPI = None,
+                                         core_config: CoreConfig = CoreConfig(),
+                                         target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
          Quantize a trained Keras model using post-training quantization. The model is quantized using a
          symmetric constraint quantization thresholds (power of two).
@@ -65,7 +64,6 @@ if FOUND_TF:
              target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
              target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
-             new_experimental_exporter (bool): Whether to wrap the quantized model using quantization information or not. Enabled by default. Experimental and subject to future changes.
 
          Returns:
 
@@ -111,7 +109,7 @@ if FOUND_TF:
             Pass the model, the representative dataset generator, the configuration and the target KPI to get a
             quantized model:
 
-            >>> quantized_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model, repr_datagen, kpi, core_config=config)
+            >>> quantized_model, quantization_info = mct.ptq.keras_post_training_quantization(model, repr_datagen, kpi, core_config=config)
 
             For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
@@ -150,26 +148,14 @@ if FOUND_TF:
                                         fw_impl,
                                         fw_info)
 
-        if new_experimental_exporter:
-            Logger.warning('Using new experimental wrapped and ready for export models. To '
-                           'disable it, please set new_experimental_exporter to False when '
-                           'calling keras_post_training_quantization_experimental. '
-                           'If you encounter an issue please file a bug.')
-
-            return get_exportable_keras_model(tg)
-
-        return export_model(tg,
-                            fw_info,
-                            fw_impl,
-                            tb_w,
-                            bit_widths_config)
+        return get_exportable_keras_model(tg)
 
 
 
 else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
-    def keras_post_training_quantization_experimental(*args, **kwargs):
+    def keras_post_training_quantization(*args, **kwargs):
         Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_post_training_quantization_experimental. '
+                        'when using keras_post_training_quantization. '
                         'Could not find Tensorflow package.')  # pragma: no cover

@@ -17,7 +17,7 @@ from typing import List
 
 import numpy as np
 
-from model_compression_toolkit.gptq import get_keras_gptq_config, keras_gradient_post_training_quantization, GradientPTQConfigV2, RoundingType
+from model_compression_toolkit.gptq import get_keras_gptq_config, keras_gradient_post_training_quantization, GradientPTQConfig, RoundingType
 from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod, CoreConfig
 from model_compression_toolkit import DefaultDict
 import tensorflow as tf
@@ -73,40 +73,40 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                               scale_log_norm=True,
                                                               hessians_n_iter=20)
 
-        self.gptqv2_configurations = [GradientPTQConfigV2(1, optimizer=tf.keras.optimizers.RMSprop(),
-                                                          optimizer_rest=tf.keras.optimizers.RMSprop(),
-                                                          train_bias=True,
-                                                          loss=multiple_tensors_mse_loss,
-                                                          rounding_type=RoundingType.SoftQuantizer),
-                                      GradientPTQConfigV2(1, optimizer=tf.keras.optimizers.Adam(),
-                                                          optimizer_rest=tf.keras.optimizers.Adam(),
-                                                          train_bias=True,
-                                                          loss=multiple_tensors_mse_loss,
-                                                          rounding_type=RoundingType.SoftQuantizer),
-                                      GradientPTQConfigV2(1, optimizer=tf.keras.optimizers.Adam(),
-                                                          optimizer_rest=tf.keras.optimizers.Adam(),
-                                                          train_bias=True,
-                                                          loss=multiple_tensors_mse_loss,
-                                                          rounding_type=RoundingType.SoftQuantizer,
-                                                          regularization_factor=15),
-                                      GradientPTQConfigV2(1, optimizer=tf.keras.optimizers.Adam(),
-                                                          optimizer_rest=tf.keras.optimizers.Adam(),
-                                                          train_bias=True,
-                                                          loss=multiple_tensors_mse_loss,
-                                                          rounding_type=RoundingType.SoftQuantizer,
-                                                          gptq_quantizer_params_override={QUANT_PARAM_LEARNING_STR: True}),
-                                      GradientPTQConfigV2(1, optimizer=tf.keras.optimizers.Adam(),
-                                                          optimizer_rest=tf.keras.optimizers.Adam(),
-                                                          train_bias=True,
-                                                          loss=multiple_tensors_mse_loss,
-                                                          rounding_type=RoundingType.SoftQuantizer,
-                                                          hessian_weights_config=test_hessian_weights_config),
-                                      GradientPTQConfigV2(1, optimizer=tf.keras.optimizers.Adam(),
-                                                          optimizer_rest=tf.keras.optimizers.Adam(),
-                                                          train_bias=True,
-                                                          loss=multiple_tensors_mse_loss,
-                                                          rounding_type=RoundingType.STE,
-                                                          gptq_quantizer_params_override={MAX_LSB_STR: DefaultDict(default_value=1)}),
+        self.gptqv2_configurations = [GradientPTQConfig(1, optimizer=tf.keras.optimizers.RMSprop(),
+                                                        optimizer_rest=tf.keras.optimizers.RMSprop(),
+                                                        train_bias=True,
+                                                        loss=multiple_tensors_mse_loss,
+                                                        rounding_type=RoundingType.SoftQuantizer),
+                                      GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
+                                                        optimizer_rest=tf.keras.optimizers.Adam(),
+                                                        train_bias=True,
+                                                        loss=multiple_tensors_mse_loss,
+                                                        rounding_type=RoundingType.SoftQuantizer),
+                                      GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
+                                                        optimizer_rest=tf.keras.optimizers.Adam(),
+                                                        train_bias=True,
+                                                        loss=multiple_tensors_mse_loss,
+                                                        rounding_type=RoundingType.SoftQuantizer,
+                                                        regularization_factor=15),
+                                      GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
+                                                        optimizer_rest=tf.keras.optimizers.Adam(),
+                                                        train_bias=True,
+                                                        loss=multiple_tensors_mse_loss,
+                                                        rounding_type=RoundingType.SoftQuantizer,
+                                                        gptq_quantizer_params_override={QUANT_PARAM_LEARNING_STR: True}),
+                                      GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
+                                                        optimizer_rest=tf.keras.optimizers.Adam(),
+                                                        train_bias=True,
+                                                        loss=multiple_tensors_mse_loss,
+                                                        rounding_type=RoundingType.SoftQuantizer,
+                                                        hessian_weights_config=test_hessian_weights_config),
+                                      GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
+                                                        optimizer_rest=tf.keras.optimizers.Adam(),
+                                                        train_bias=True,
+                                                        loss=multiple_tensors_mse_loss,
+                                                        rounding_type=RoundingType.STE,
+                                                        gptq_quantizer_params_override={MAX_LSB_STR: DefaultDict(default_value=1)}),
                                       get_keras_gptq_config(n_epochs=1,
                                                             optimizer=tf.keras.optimizers.Adam()),
                                       get_keras_gptq_config(n_epochs=1,
@@ -129,8 +129,7 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                       representative_data_gen=random_datagen_experimental,
                                                       core_config=self.cc,
                                                       gptq_config=gptq_config,
-                                                      target_platform_capabilities=self.pot_weights_tpc,
-                                                      new_experimental_exporter=True)
+                                                      target_platform_capabilities=self.pot_weights_tpc)
 
         tf.config.run_functions_eagerly(False)
 
@@ -144,8 +143,7 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                       representative_data_gen=random_datagen_experimental,
                                                       core_config=self.cc,
                                                       gptq_config=gptq_config,
-                                                      target_platform_capabilities=self.symmetric_weights_tpc,
-                                                      new_experimental_exporter=True)
+                                                      target_platform_capabilities=self.symmetric_weights_tpc)
 
         tf.config.run_functions_eagerly(False)
 

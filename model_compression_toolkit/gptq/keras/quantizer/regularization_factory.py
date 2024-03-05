@@ -14,7 +14,7 @@
 # ==============================================================================
 from typing import Callable
 
-from model_compression_toolkit.gptq import RoundingType, GradientPTQConfigV2, GradientPTQConfig
+from model_compression_toolkit.gptq import RoundingType, GradientPTQConfig, GradientPTQConfig
 from model_compression_toolkit.gptq.keras.quantizer.soft_rounding.soft_quantizer_reg import \
     SoftQuantizerRegularization
 
@@ -38,8 +38,6 @@ def get_regularization(gptq_config: GradientPTQConfig, representative_data_gen: 
         for _ in representative_data_gen():
             num_batches += 1
 
-        n_epochs = GradientPTQConfigV2.from_v1(n_ptq_iter=num_batches, config_v1=gptq_config).n_epochs if \
-            not type(gptq_config) == GradientPTQConfigV2 else gptq_config.n_epochs
-        return SoftQuantizerRegularization(total_gradient_steps=num_batches * n_epochs)
+        return SoftQuantizerRegularization(total_gradient_steps=num_batches * gptq_config.n_epochs)
     else:
         return lambda m, e_reg: 0

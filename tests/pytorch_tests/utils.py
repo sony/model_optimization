@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import Dict, Any
+
 import torch
 
 from mct_quantizers import PytorchQuantizationWrapper
+from model_compression_toolkit.core.pytorch.constants import BIAS
 
 
 def get_layers_from_model_by_type(model: torch.nn.Module,
@@ -70,3 +73,42 @@ def count_model_prunable_params(model: torch.nn.Module) -> int:
             total_model_params -= 1
 
     return total_model_params
+
+def extract_model_weights(model: torch.nn.Module) -> Dict[str, Any]:
+    """
+    Traverses a given PyTorch model and extracts the weights from all its layers,
+    storing them in a dictionary. This function is specifically designed to handle
+    both standard layers and layers wrapped in a PytorchQuantizationWrapper to get the
+    quantized weights.
+
+    Args:
+        model (torch.nn.Module): The PyTorch model from which weights are to be extracted.
+
+    Returns:
+        dict: A dictionary containing the weights of the model.
+    """
+
+    weights_dict = {}
+    visited_modules = set()
+
+    for name, module in model.named_modules():
+        if module in visited_modules:
+            continue  # Skip already visited modules to avoid redundancy of inner layers (that are wrapped using PytorchQuantizationWrapper)
+
+        if isinstance(module, PytorchQuantizationWrapper):
+            # Extract quantized weights and optionally the bias
+            q_weights = module.get_quantized_weights()
+            if hasattr(module.layer, BIAS):
+                q_weights[BIAS] = module.layer.bias
+
+            # Update the weights dictionary with the quantized weights
+            weights_dict.update({f"{name}.{k}": v for k, v in q_weights.items()})
+
+            # Mark the inner layer as visited
+            visited_modules.add(module.layer)
+        else:
+            # For other modules, directly add their parameters
+            weights_dict.update({f"{name}.{param_name}" if name else param_name: param.data
+                                 for param_name, param in module.named_parameters(recurse=False)})
+
+    return weights_dict

@@ -14,7 +14,7 @@
 # ==============================================================================
 from typing import List, Dict, Tuple
 
-from model_compression_toolkit.gptq import GradientPTQConfigV2
+from model_compression_toolkit.gptq import GradientPTQConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizer import \
@@ -34,7 +34,7 @@ from model_compression_toolkit.trainable_infrastructure.common.get_quantizers im
 
 
 def quantization_builder(n: common.BaseNode,
-                         gptq_config: GradientPTQConfigV2,
+                         gptq_config: GradientPTQConfig,
                          ) -> Tuple[Dict[str, BasePytorchQATTrainableQuantizer],
                                     List[BasePyTorchInferableQuantizer]]:
     """
@@ -43,7 +43,7 @@ def quantization_builder(n: common.BaseNode,
 
     Args:
         n: Node to build its QuantizeConfig.
-        gptq_config (GradientPTQConfigV2): GradientPTQConfigV2 configuration.
+        gptq_config (GradientPTQConfig): GradientPTQConfigV2 configuration.
 
     Returns:
         A dictionary which maps the weights kernel attribute to a quantizer for GPTQ training.
