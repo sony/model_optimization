@@ -32,6 +32,8 @@ def get_validation_dataset_fraction(fraction, test_dataset_folder, batch) -> tf.
 
     Args:
         fraction (float, optional): Fraction of the dataset to load. Defaults to 1.0 (i.e., the entire dataset).
+        test_dataset_folder (str): location of dataset
+        batch (int): batch size when loading dataset.
 
     Returns:
         tf.data.Dataset: A fraction of the validation dataset.
@@ -74,6 +76,8 @@ def get_representative_dataset(fraction, representative_dataset_folder, batch) -
 
     Args:
         fraction (float): The fraction of the dataset to load. Defaults to 1.0 (the entire dataset).
+        test_dataset_folder (str): location of dataset
+        batch (int): batch size when loading dataset.
 
     Returns:
         Generator: A generator yielding batches of preprocessed images.
