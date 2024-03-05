@@ -103,7 +103,7 @@ class NetworkTest:
 
         core_config = mct.core.CoreConfig(quantization_config=qc)
         if self.gptq:
-            arc = mct.gptq.GradientPTQConfig(n_epochs=1, optimizer=tf.keras.optimizers.Adam(
+            arc = mct.gptq.GradientPTQConfig(n_epochs=2, optimizer=tf.keras.optimizers.Adam(
                 learning_rate=0.0001), optimizer_rest=tf.keras.optimizers.Adam(
                 learning_rate=0.0001), loss=multiple_tensors_mse_loss)
 
