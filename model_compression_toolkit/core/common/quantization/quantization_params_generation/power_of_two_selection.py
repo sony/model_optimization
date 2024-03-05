@@ -55,8 +55,9 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
         threshold = max_power_of_two(tensor_max, min_threshold)
     else:
         signed = True  # weights are always signed
+        axis = -1 if per_channel else None
         error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.POWER_OF_TWO,
-                                                                       quant_error_method, p, norm=False, n_bits=n_bits,
+                                                                       quant_error_method, p, axis=axis, norm=False, n_bits=n_bits,
                                                                        signed=signed)
         threshold = qparams_selection_tensor_search(error_function,
                                                     tensor_data,

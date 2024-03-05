@@ -726,9 +726,7 @@ def _error_function_wrapper(error_function: Callable,
         q_tensor: Numpy array with quantized tensor's content.
         in_params: Quantization params the tensor is quantized by (used in specific error functions only).
 
-    Returns: A list of error values per-channel for the quantized tensor, according to the error function.
+    Returns: A array of error values per-channel for the quantized tensor, according to the error function.
     """
-    _error_per_list = []
-    for j in range(float_tensor.shape[0]):  # iterate all channels of the tensor.
-        _error_per_list.append(error_function(float_tensor[j, :], q_tensor[j, :], in_params[j]))
-    return np.asarray(_error_per_list)
+    return error_function(float_tensor, q_tensor, in_params)
+

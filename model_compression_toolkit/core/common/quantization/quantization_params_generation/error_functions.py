@@ -87,13 +87,14 @@ def _lp_error_histogram(q_bins: np.ndarray,
 
     return np.sum((np.power(np.abs((q_bins - bins)[:-1]), p) * counts)) / np.sum(counts)
 
+
 def _kl_error_function(x: np.ndarray,
                        range_min: float,
                        range_max: float,
                        n_bins: int = 2048,
-                       n_bits: int = 8) -> np.float32:
+                       n_bits: int = 8) -> np.ndarray:
     """
-    Compute the error function between a tensor to its quantized version.
+    Compute the error function between a tensor to its quantized version per channel.
     The error is computed based on the KL-divergence the distributions have.
     Number of bins to use when computing the histogram of the float tensor is passed.
     The threshold and number of bits that were used to quantize the tensor are needed to compute the
@@ -107,40 +108,50 @@ def _kl_error_function(x: np.ndarray,
         n_bits: Number of bits the quantized tensor was quantized by.
 
     Returns:
-        The KL-divergence of the float histogram and the quantized histogram of the tensors.
+        The KL-divergence of the float histogram and the quantized histogram of the tensors, per channel
 
     """
-    if range_max <= range_min:
-        # invalid range
-        return np.inf
 
-    # Compute the float histogram
-    bc, bv = np.histogram(x, bins=n_bins)
+    error_list = []
+    for j in range(x.shape[0]):  # iterate all channels of the tensor.
 
-    # If no bins are within the range return infinity.
-    if not _is_range_valid(bv, range_min, range_max):
-        return np.inf
+        if range_max[j] <= range_min[j]:
+            # invalid range
+            error_list.append(np.inf)
+            continue
 
-    # Compute bins values of quantized histogram.
-    # TODO: note that we always do uniform quantization here, since we no longer have threshold, only range
-    q_bins = uniform_quantize_tensor(bv,
-                                     range_min,
-                                     range_max,
-                                     n_bits)
 
-    # Sum all quantized values to a single bin of that value. Other bins of the same value
-    # are zero.
-    bcq, _ = np.histogram(q_bins,
-                          bins=bv,
-                          weights=np.concatenate([bc.flatten(), np.array([0])]))
+        # Compute the float histogram
+        bc, bv = np.histogram(x, bins=n_bins)
 
-    # compute error
-    return _kl_error_histogram(q_bins,
-                               bcq,
-                               bv,
-                               bc,
-                               range_min=range_min,
-                               range_max=range_max)
+        # If no bins are within the range return infinity.
+        if not _is_range_valid(bv, range_min[j], range_max[j]):
+            error_list.append(np.inf)
+            continue
+
+        # Compute bins values of quantized histogram.
+        # TODO: note that we always do uniform quantization here, since we no longer have threshold, only range
+        q_bins = uniform_quantize_tensor(bv,
+                                         range_min[j],
+                                         range_max[j],
+                                         n_bits)
+
+        # Sum all quantized values to a single bin of that value. Other bins of the same value
+        # are zero.
+        bcq, _ = np.histogram(q_bins,
+                              bins=bv,
+                              weights=np.concatenate([bc.flatten(), np.array([0])]))
+
+        # compute error
+        kl_error = _kl_error_histogram(q_bins,
+                                       bcq,
+                                       bv,
+                                       bc,
+                                       range_min=range_min[j],
+                                       range_max=range_max[j])
+        error_list.append(kl_error)
+
+    return np.asarray(error_list)
 
 
 def _kl_error_histogram(q_bins: np.ndarray,
@@ -339,6 +350,7 @@ def _get_sliced_histogram(bins: np.ndarray,
 def get_threshold_selection_tensor_error_function(quantization_method: QuantizationMethod,
                                                   quant_error_method: qc.QuantizationErrorMethod,
                                                   p: int,
+                                                  axis: int = None,
                                                   norm: bool = False,
                                                   n_bits: int = 8,
                                                   signed: bool = True) -> Callable:
@@ -349,6 +361,7 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
         quantization_method: Quantization method for threshold selection
         quant_error_method: the requested error function type.
         p: p-norm to use for the Lp-norm distance.
+        axis: Axis along which the operator has been computed.
         norm: whether to normalize the error function result.
         n_bits: Number of bits to quantize the tensor.
         signed: signed input
@@ -357,9 +370,9 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
     """
 
     quant_method_error_function_mapping = {
-        qc.QuantizationErrorMethod.MSE: lambda x, y, threshold: compute_mse(x, y, norm=norm),
-        qc.QuantizationErrorMethod.MAE: lambda x, y, threshold: compute_mae(x, y, norm=norm),
-        qc.QuantizationErrorMethod.LP: lambda x, y, threshold: compute_lp_norm(x, y, p=p, norm=norm),
+        qc.QuantizationErrorMethod.MSE: lambda x, y, threshold: compute_mse(x, y, norm=norm, axis=axis),
+        qc.QuantizationErrorMethod.MAE: lambda x, y, threshold: compute_mae(x, y, norm=norm, axis=axis),
+        qc.QuantizationErrorMethod.LP: lambda x, y, threshold: compute_lp_norm(x, y, p=p, norm=norm, axis=axis),
         qc.QuantizationErrorMethod.KL:
             lambda x, y, threshold: _kl_error_function(x, range_min=threshold[0], range_max=threshold[1],
                                                        n_bits=n_bits) if quantization_method == QuantizationMethod.UNIFORM
