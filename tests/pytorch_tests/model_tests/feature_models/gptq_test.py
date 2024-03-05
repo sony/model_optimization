@@ -30,6 +30,7 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_
 from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
+from tests.pytorch_tests.utils import extract_model_weights
 
 tp = mct.target_platform
 
@@ -190,8 +191,13 @@ class GPTQLearnRateZeroTest(GPTQBaseTest):
         self.unit_test.assertTrue(np.isclose(np.linalg.norm(ptq_out - float_output),
                                              np.linalg.norm(gptq_out - float_output), atol=1e-3))
 
-        ptq_weights = torch_tensor_to_numpy(self._extract_weights(ptq_model))
-        gptq_weights = torch_tensor_to_numpy(self._extract_weights(gptq_model))
+        ptq_weights = extract_model_weights(ptq_model)
+        ordered_weights = [ptq_weights[key] for key in sorted(ptq_weights.keys())]
+        ptq_weights = torch_tensor_to_numpy(ordered_weights)
+
+        gptq_weights = extract_model_weights(gptq_model)
+        ordered_weights = [gptq_weights[key] for key in sorted(gptq_weights.keys())]
+        gptq_weights = torch_tensor_to_numpy(ordered_weights)
 
         # check number of weights are equal
         self.unit_test.assertTrue(len(ptq_weights) == len(gptq_weights),
@@ -200,20 +206,3 @@ class GPTQLearnRateZeroTest(GPTQBaseTest):
         # check all weights were not updated in gptq model compared to ptq model
         w_diffs = [np.isclose(np.max(np.abs(w_ptq - w_gptq)), 0) for w_ptq, w_gptq in zip(ptq_weights, gptq_weights)]
         self.unit_test.assertTrue(np.all(w_diffs), msg="GPTQ: some weights were updated in zero learning rate test")
-
-    def _extract_weights(self, model):
-        all_weights = []
-
-        for layer in [model.conv1, model.conv2, model.linear]:
-            if isinstance(layer, mct_quantizers.PytorchQuantizationWrapper):
-                special_weights = layer.get_quantized_weights()
-                for _, weight in sorted(special_weights.items()):
-                    all_weights.append(weight)
-                if hasattr(layer.layer, 'bias'):
-                    all_weights.append(layer.layer.bias)
-            else:
-                for param in layer.parameters():
-                    all_weights.append(param)
-
-        return all_weights
-
