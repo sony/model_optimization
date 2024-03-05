@@ -20,6 +20,7 @@ import tensorflow as tf
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.substitutions.scale_equalization import fixed_second_moment_after_relu, \
     fixed_mean_after_relu
+from model_compression_toolkit.core.keras.constants import DEPTHWISE_KERNEL, KERNEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -98,8 +99,8 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
         f_first_linear_op_index = 1
         f_second_linear_op_index = 4 + int(self.zero_pad)
 
-        first_op_attr = 'depthwise_kernel' if isinstance(self.first_op2d, layers.DepthwiseConv2D) else 'kernel'
-        second_op_attr = 'depthwise_kernel' if isinstance(self.second_op2d, layers.DepthwiseConv2D) else 'kernel'
+        first_op_attr = DEPTHWISE_KERNEL if isinstance(self.first_op2d, layers.DepthwiseConv2D) else KERNEL
+        second_op_attr = DEPTHWISE_KERNEL if isinstance(self.second_op2d, layers.DepthwiseConv2D) else KERNEL
 
         quantized_model_layer1_weight = quantized_model.layers[q_first_linear_op_index].get_quantized_weights()[first_op_attr]
         quantized_model_layer2_weight = quantized_model.layers[q_second_linear_op_index].get_quantized_weights()[second_op_attr]
