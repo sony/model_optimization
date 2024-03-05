@@ -76,7 +76,7 @@ def get_trainable_quantizer_activation_config(
                                               activation_quantization_candidates)
 
 
-def get_trainable_quantizer_quantization_candidates(n: BaseNode, attr: str):
+def get_trainable_quantizer_quantization_candidates(n: BaseNode, attr: str = None):
     """
     Returns quantization configuration candidates for activation and weights trainable quantizer.
     Checks that the candidates are compatible with trainable quantizer

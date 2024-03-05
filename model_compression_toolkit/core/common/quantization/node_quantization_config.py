@@ -576,5 +576,6 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         return hash((self.min_threshold,
                      self.simd_size,
                      self.weights_second_moment_correction,
+                     self.weights_bias_correction,
                      frozenset(self.attributes_config_mapping),
                      frozenset(self.pos_attributes_config_mapping)))
