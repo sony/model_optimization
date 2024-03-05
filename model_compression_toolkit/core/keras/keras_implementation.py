@@ -616,7 +616,8 @@ class KerasImplementation(FrameworkImplementation):
 
             return w.split(':')[0].split('/')[-1]
 
-        attribute_names = [_weight_name(wn) for wn in node.get_node_weights_attributes()]
+        attribute_names = [_weight_name(wn) for wn in node.get_node_weights_attributes()
+                           if node.is_weights_quantization_enabled(wn)]
 
         return get_inferable_quantizers(node,
                                         get_weights_quantizer_for_node,

@@ -30,10 +30,8 @@ class ConstRepresentationTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test, layer, const, is_list_input=False, input_reverse_order=False, use_kwrags=False,
                  input_shape=(32, 32, 16)):
-        # TODO: Running test without MCTQ exporter since this feature is not yet supported in MCTQ.
-        #  Need to change the tests once support is added.
         super(ConstRepresentationTest, self).__init__(unit_test=unit_test, input_shape=input_shape,
-                                                      experimental_exporter=False)
+                                                      experimental_exporter=True)
         self.layer = layer
         self.const = const
         self.is_list_input = is_list_input
@@ -118,10 +116,8 @@ class ConstRepresentationMatMulTest(BaseKerasFeatureNetworkTest):
 class ConstRepresentationMultiInputTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test, input_shape=(32, 32, 16)):
-        # TODO: Running test without MCTQ exporter since this feature is not yet supported in MCTQ.
-        #  Need to change the tests once support is added.
         super(ConstRepresentationMultiInputTest, self).__init__(unit_test=unit_test, input_shape=input_shape,
-                                                                experimental_exporter=False)
+                                                                experimental_exporter=True)
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 16,
