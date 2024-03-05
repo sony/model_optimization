@@ -247,6 +247,8 @@ class BasePytorchLayerTest(BaseLayerTest):
             if has_nested_attr(quantized_model, str(node.target)):
                 if type(op) in PYTORCH_LAYER_TEST_OPS['kernel_ops']:
                     quantized_weights = get_layer_weights(get_nested_attr(quantized_model, node.target))
+                    # Extract the original layer name from a wrapped PytorchQuantizationWrapper layer.
+                    # For example: for conv1.layer (when conv1 is wrapping an internal layer), float_layer_name will be conv1
                     float_layer_name = str(node.target).split('.')[0]
                     float_weights = get_layer_weights(getattr(float_model, float_layer_name))
                     for k, v in quantized_weights.items():
