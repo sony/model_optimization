@@ -92,9 +92,9 @@ def _kl_error_function(x: np.ndarray,
                        range_min: float,
                        range_max: float,
                        n_bins: int = 2048,
-                       n_bits: int = 8) -> np.ndarray:
+                       n_bits: int = 8) -> np.float32:
     """
-    Compute the error function between a tensor to its quantized version per channel.
+    Compute the error function between a tensor to its quantized version.
     The error is computed based on the KL-divergence the distributions have.
     Number of bins to use when computing the histogram of the float tensor is passed.
     The threshold and number of bits that were used to quantize the tensor are needed to compute the
@@ -108,49 +108,69 @@ def _kl_error_function(x: np.ndarray,
         n_bits: Number of bits the quantized tensor was quantized by.
 
     Returns:
+        The KL-divergence of the float histogram and the quantized histogram of the tensors.
+
+    """
+    if range_max <= range_min:
+        # invalid range
+        return np.inf
+
+    # Compute the float histogram
+    bc, bv = np.histogram(x, bins=n_bins)
+
+    # If no bins are within the range return infinity.
+    if not _is_range_valid(bv, range_min, range_max):
+        return np.inf
+
+    # Compute bins values of quantized histogram.
+    # TODO: note that we always do uniform quantization here, since we no longer have threshold, only range
+    q_bins = uniform_quantize_tensor(bv,
+                                     range_min,
+                                     range_max,
+                                     n_bits)
+
+    # Sum all quantized values to a single bin of that value. Other bins of the same value
+    # are zero.
+    bcq, _ = np.histogram(q_bins,
+                          bins=bv,
+                          weights=np.concatenate([bc.flatten(), np.array([0])]))
+
+    # compute error
+    return _kl_error_histogram(q_bins,
+                               bcq,
+                               bv,
+                               bc,
+                               range_min=range_min,
+                               range_max=range_max)
+
+
+def _kl_error_function_wrapper(x: np.ndarray,
+                               range_min: np.ndarray,
+                               range_max: np.ndarray,
+                               n_bins: int = 2048,
+                               n_bits: int = 8) -> np.ndarray:
+    """
+    Compute the error function between a tensor to its quantized version per channel.
+    The error is computed based on the KL-divergence the distributions have.
+    Number of bins to use when computing the histogram of the float tensor is passed.
+    The threshold and number of bits that were used to quantize the tensor are needed to compute the
+    histograms boundaries and the number of quantized bins.
+
+    Args:
+        x: Float tensor.
+        range_min: array of min bound on the quantization range.
+        range_max: array of max bound on the quantization range.
+        n_bins: Number of bins for the float histogram.
+        n_bits: Number of bits the quantized tensor was quantized by.
+
+    Returns:
         The KL-divergence of the float histogram and the quantized histogram of the tensors, per channel
 
     """
 
     error_list = []
     for j in range(x.shape[0]):  # iterate all channels of the tensor.
-
-        if range_max[j] <= range_min[j]:
-            # invalid range
-            error_list.append(np.inf)
-            continue
-
-
-        # Compute the float histogram
-        bc, bv = np.histogram(x, bins=n_bins)
-
-        # If no bins are within the range return infinity.
-        if not _is_range_valid(bv, range_min[j], range_max[j]):
-            error_list.append(np.inf)
-            continue
-
-        # Compute bins values of quantized histogram.
-        # TODO: note that we always do uniform quantization here, since we no longer have threshold, only range
-        q_bins = uniform_quantize_tensor(bv,
-                                         range_min[j],
-                                         range_max[j],
-                                         n_bits)
-
-        # Sum all quantized values to a single bin of that value. Other bins of the same value
-        # are zero.
-        bcq, _ = np.histogram(q_bins,
-                              bins=bv,
-                              weights=np.concatenate([bc.flatten(), np.array([0])]))
-
-        # compute error
-        kl_error = _kl_error_histogram(q_bins,
-                                       bcq,
-                                       bv,
-                                       bc,
-                                       range_min=range_min[j],
-                                       range_max=range_max[j])
-        error_list.append(kl_error)
-
+        error_list.append(_kl_error_function(x[j], range_min[j], range_max[j], n_bins=n_bins, n_bits=n_bits))
     return np.asarray(error_list)
 
 
@@ -374,9 +394,9 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
         qc.QuantizationErrorMethod.MAE: lambda x, y, threshold: compute_mae(x, y, norm=norm, axis=axis),
         qc.QuantizationErrorMethod.LP: lambda x, y, threshold: compute_lp_norm(x, y, p=p, norm=norm, axis=axis),
         qc.QuantizationErrorMethod.KL:
-            lambda x, y, threshold: _kl_error_function(x, range_min=threshold[0], range_max=threshold[1],
+            lambda x, y, threshold: _kl_error_function_wrapper(x, range_min=threshold[:,0], range_max=threshold[:,1],
                                                        n_bits=n_bits) if quantization_method == QuantizationMethod.UNIFORM
-            else _kl_error_function(x, range_min=0 if not signed else -threshold, range_max=threshold, n_bits=n_bits)
+            else _kl_error_function_wrapper(x, range_min=0 if not signed else -threshold, range_max=threshold, n_bits=n_bits)
     }
 
     return quant_method_error_function_mapping[quant_error_method]
