@@ -277,7 +277,6 @@ def coco_dataset_generator(dataset_folder: str, annotation_file: str, preprocess
             yield np.array(batch_images), batch_annotations
 
 
-# def coco_evaluate(model, preprocess, dataset_folder, annotation_file, batch_size, output_resize):
 def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotation_file: str, batch_size: int,
                   output_resize: tuple) -> dict:
 
