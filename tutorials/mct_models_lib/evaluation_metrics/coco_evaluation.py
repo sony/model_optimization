@@ -18,7 +18,8 @@ import os
 import numpy as np
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
-from typing import List, Dict, Tuple, Callable
+from typing import List, Dict, Tuple, Callable, Any
+
 
 def coco80_to_coco91(x: np.ndarray) -> np.ndarray:
     """
@@ -276,8 +277,25 @@ def coco_dataset_generator(dataset_folder: str, annotation_file: str, preprocess
             yield np.array(batch_images), batch_annotations
 
 
-def coco_evaluate(model, preprocess, dataset_folder, annotation_file, batch_size, output_resize):
+# def coco_evaluate(model, preprocess, dataset_folder, annotation_file, batch_size, output_resize):
+def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotation_file: str, batch_size: int,
+                  output_resize: tuple) -> dict:
 
+    """
+    Evaluate a model on the COCO dataset.
+
+    Args:
+    - model (Any): The model to evaluate.
+    - preprocess (Callable): Preprocessing function to be applied to images.
+    - dataset_folder (str): Path to the folder containing COCO dataset images.
+    - annotation_file (str): Path to the COCO annotation file.
+    - batch_size (int): Batch size for evaluation.
+    - output_resize (tuple): Tuple representing the output size after resizing.
+
+    Returns:
+    - dict: Evaluation results.
+
+    """
     # Load COCO evaluation set
     val_dataset = coco_dataset_generator(dataset_folder=dataset_folder,
                                          annotation_file=annotation_file,
