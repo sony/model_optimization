@@ -93,12 +93,15 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
     def get_debug_config(self):
         return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                                              action=ChangeCandidatesWeightsQuantConfigAttr(
+                                                                 attr_name=KERNEL,
                                                                  weights_quantization_method=target_platform.QuantizationMethod.POWER_OF_TWO)),
                                                     EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                                              action=ChangeCandidatesWeightsQuantConfigAttr(
+                                                                 attr_name=KERNEL,
                                                                  weights_quantization_fn=power_of_two_quantizer)),
                                                     EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                                              action=ChangeCandidatesWeightsQuantConfigAttr(
+                                                                 attr_name=KERNEL,
                                                                  weights_quantization_params_fn=power_of_two_selection_tensor)),
                                                     ])
 

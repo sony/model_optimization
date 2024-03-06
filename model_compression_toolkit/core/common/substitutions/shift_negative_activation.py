@@ -16,11 +16,14 @@ import copy
 import numpy as np
 from typing import List, Tuple, Any, Callable
 
+from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
+from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import FrameworkInfo, Graph, BaseNode
 from model_compression_toolkit.constants import THRESHOLD, SIGNED, SHIFT_NEGATIVE_NON_LINEAR_NUM_BITS
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod, \
+    AttributeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import create_node_activation_qc, \
     set_quantization_configs_to_node
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
@@ -63,6 +66,12 @@ def op2d_bias_correction(op2d_node: BaseNode,
     if bias is None:
         bias = 0.0
         op2d_node.framework_attr[bias_flag_str] = True
+        # Add an attribute quantization configuration to the newly added bias attribute, with disabled quantization
+        for qc in op2d_node.candidates_quantization_cfg:
+            qc.weights_quantization_cfg.set_attr_config(bias_flag_str,
+                                                        WeightsAttrQuantizationConfig(QuantizationConfig(),
+                                                                                      AttributeQuantizationConfig(
+                                                                                          enable_weights_quantization=False)))
 
     # Each node adds a different noise due to the shifting. It depends on the
     # dimensions of the kernel, thus the correction term is a function of
@@ -348,8 +357,9 @@ def shift_negative_function(graph: Graph,
                                          mixed_precision_enable=core_config.mixed_precision_enable)
 
         for candidate_qc in pad_node.candidates_quantization_cfg:
-            candidate_qc.weights_quantization_cfg.enable_weights_quantization = False
             candidate_qc.activation_quantization_cfg.enable_activation_quantization = False
+            for attr in pad_node.get_node_weights_attributes():
+                candidate_qc.weights_quantization_cfg.get_attr_config(attr).enable_weights_quantization = False
 
         # Insert a pad node between the add node to the op2d, and create statistics for the pad node
         insert_node_before_node(graph,
@@ -382,7 +392,8 @@ def shift_negative_function(graph: Graph,
 
     add_node_qco = add_node.get_qco(graph.tpc).quantization_config_list
     for op_qc_idx, candidate_qc in enumerate(add_node.candidates_quantization_cfg):
-        candidate_qc.weights_quantization_cfg.enable_weights_quantization = False
+        for attr in add_node.get_node_weights_attributes():
+            candidate_qc.weights_quantization_cfg.get_attr_config(attr).enable_weights_quantization = False
 
         candidate_qc.activation_quantization_cfg = create_node_activation_qc(core_config.quantization_config,
                                                                              fw_info,

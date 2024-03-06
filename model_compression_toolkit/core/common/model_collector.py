@@ -100,9 +100,10 @@ class ModelCollector:
         # Assign statisitcs collectors to nodes
         for n in graph.get_topo_sorted_nodes():
             sc = create_stats_collector_for_node(n, fw_info=fw_info)  # Get static collector for the node
-            # If we use bias correction, and the node has coefficients to quantize, we need to make sure
+            # If we use bias correction, and the node has kernel weights to quantize, we need to make sure
             # its previous nodes' tensors are consistent with this node.
-            if qc.weights_bias_correction and n.is_weights_quantization_enabled():
+            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
+            if qc.weights_bias_correction and kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr):
                 for ie in graph.incoming_edges(n):
                     input_node = ie.source_node
                     create_tensor2node(graph,

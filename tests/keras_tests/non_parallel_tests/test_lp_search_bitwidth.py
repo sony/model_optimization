@@ -244,9 +244,8 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         def representative_data_gen():
             yield [np.random.random(input_shape)]
 
-        calculate_quantization_params(graph,
-                                      fw_info,
-                                      fw_impl=keras_impl)
+        calculate_quantization_params(graph)
+
         keras_impl.get_sensitivity_evaluator(graph,
                                              core_config.mixed_precision_config,
                                              representative_data_gen,

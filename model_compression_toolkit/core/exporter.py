@@ -45,9 +45,7 @@ def _quantize_model(tg: Graph,
         Quantized model in the input framework, and information the user may need in order to use the quantized model.
     """
 
-    quantized_tg = quantize_graph_weights(tg,
-                                          fw_info=fw_info,
-                                          fw_impl=fw_impl)
+    quantized_tg = quantize_graph_weights(tg)
     if tb_w is not None:
         tb_w.add_graph(quantized_tg, 'after_quantization')
     ######################################

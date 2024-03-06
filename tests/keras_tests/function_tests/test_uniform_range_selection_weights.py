@@ -21,6 +21,7 @@ from keras.layers import Conv2D, Conv2DTranspose
 import model_compression_toolkit as mct
 from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit.constants import RANGE_MIN, RANGE_MAX
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -101,10 +102,10 @@ class TestUniformRangeSelectionWeights(unittest.TestCase):
                                                            qc=qc, input_shape=(1, 16, 16, 4))
 
         nodes_list = list(graph.nodes)
-        conv1_min = nodes_list[0].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[RANGE_MIN].flatten()
-        conv2_min = nodes_list[1].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[RANGE_MIN].flatten()
-        conv1_max = nodes_list[0].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[RANGE_MAX].flatten()
-        conv2_max = nodes_list[1].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[RANGE_MAX].flatten()
+        conv1_min = nodes_list[0].candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(KERNEL).weights_quantization_params[RANGE_MIN].flatten()
+        conv2_min = nodes_list[1].candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(KERNEL).weights_quantization_params[RANGE_MIN].flatten()
+        conv1_max = nodes_list[0].candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(KERNEL).weights_quantization_params[RANGE_MAX].flatten()
+        conv2_max = nodes_list[1].candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(KERNEL).weights_quantization_params[RANGE_MAX].flatten()
 
         for range_min, range_max in list(zip(conv1_min, conv1_max)):
             self.assertTrue(range_min <= 0 <= range_max,

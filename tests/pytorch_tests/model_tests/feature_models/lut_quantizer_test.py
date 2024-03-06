@@ -18,6 +18,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeNameFilter
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, \
     ChangeCandidatesWeightsQuantizationMethod
+from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
@@ -96,6 +97,7 @@ class LUTWeightsQuantizerTest(BasePytorchTest):
     def get_core_configs(self):
         network_editor = [EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                    action=ChangeCandidatesWeightsQuantizationMethod(
+                                       attr_name=KERNEL,
                                        weights_quantization_method=self.quant_method))]
         return {'lut_quantizer_test': mct.core.CoreConfig(quantization_config=mct.core.QuantizationConfig(
             mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE),

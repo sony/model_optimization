@@ -23,6 +23,7 @@ from model_compression_toolkit.core.common.network_editors.node_filters import N
     NodeTypeFilter
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
     get_weights_quantization_params_fn, get_activation_quantization_params_fn
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tpc_keras import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -73,11 +74,14 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         network_editor = [EditRule(filter=NodeNameScopeFilter(self.scope),
                                    action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
                           EditRule(filter=NodeNameScopeFilter(self.scope),
-                                   action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits)),
-                          EditRule(filter=NodeNameScopeFilter('2'),
-                                   action=ChangeCandidatesWeightsQuantConfigAttr(enable_weights_quantization=True)),
-                          EditRule(filter=NodeNameScopeFilter('2') or NodeNameScopeFilter('does_not_exist'),
-                                   action=ChangeCandidatesWeightsQuantConfigAttr(enable_weights_quantization=False))
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(attr_name=KERNEL,
+                                                                                 weights_n_bits=self.weights_n_bits)),
+                          EditRule(filter=NodeNameScopeFilter('change_2'),
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(attr_name=KERNEL,
+                                                                                 enable_weights_quantization=True)),
+                          EditRule(filter=NodeNameScopeFilter('change_2') or NodeNameScopeFilter('does_not_exist'),
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(attr_name=KERNEL,
+                                                                                 enable_weights_quantization=False))
                           ]
         return mct.core.DebugConfig(network_editor=network_editor)
 
@@ -87,8 +91,8 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name='unchanged')(inputs)
-        x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.scope + '_1')(x)
-        x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.scope + '_2')(x)
+        x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.scope + 'change_1')(x)
+        x = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False, name=self.scope + 'change_2')(x)
         outputs = layers.Conv2D(self.num_conv_channels, self.kernel, use_bias=False)(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
 
@@ -149,7 +153,8 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
         network_editor = [EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                    action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
                           EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                                   action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits))
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(attr_name=KERNEL,
+                                                                                 weights_n_bits=self.weights_n_bits))
                           ]
         return mct.core.DebugConfig(network_editor=network_editor)
 
@@ -218,11 +223,13 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
 
     def get_debug_config(self):
         network_editor = [EditRule(filter=NodeTypeFilter(self.type_to_change),
-                                   action=ChangeCandidatesWeightsQuantConfigAttr(weights_n_bits=self.weights_n_bits)),
+                                   action=ChangeCandidatesWeightsQuantConfigAttr(attr_name=KERNEL,
+                                                                                 weights_n_bits=self.weights_n_bits)),
                           EditRule(filter=NodeTypeFilter(self.type_to_change),
                                    action=ChangeCandidatesActivationQuantConfigAttr(activation_n_bits=self.activation_n_bits)),
                           EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
-                                   action=ChangeQuantizationParamFunction(weights_quantization_params_fn=self.weights_params_fn())),
+                                   action=ChangeQuantizationParamFunction(attr_name=KERNEL,
+                                                                          weights_quantization_params_fn=self.weights_params_fn())),
                           EditRule(filter=NodeTypeFilter(self.type_to_change).__and__(NodeNameFilter(self.node_to_change_name)),
                                    action=ChangeQuantizationParamFunction(
                                        activation_quantization_params_fn=self.activations_params_fn())),

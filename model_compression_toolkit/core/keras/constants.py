@@ -73,7 +73,7 @@ F_STRIDED_SLICE_BEGIN = 'begin_mask'
 F_STRIDED_SLICE_END = 'end_mask'
 
 # Layers variables names:
-KERNEL = 'kernel'
+KERNEL: str = 'kernel'
 DEPTHWISE_KERNEL = 'depthwise_kernel'
 BIAS = 'bias'
 GAMMA = 'gamma'

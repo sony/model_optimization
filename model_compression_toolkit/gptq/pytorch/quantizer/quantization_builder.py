@@ -16,7 +16,6 @@ from typing import List, Dict, Tuple
 
 from model_compression_toolkit.gptq import GradientPTQConfig
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizer import \
     get_activation_inferable_quantizer_kwargs
 from model_compression_toolkit.gptq.pytorch.quantizer.base_pytorch_gptq_quantizer import \
@@ -35,15 +34,16 @@ from model_compression_toolkit.trainable_infrastructure.common.get_quantizers im
 
 def quantization_builder(n: common.BaseNode,
                          gptq_config: GradientPTQConfig,
-                         ) -> Tuple[Dict[str, BasePytorchQATTrainableQuantizer],
-                                    List[BasePyTorchInferableQuantizer]]:
+                         kernel_attr: str = None
+                         ) -> Tuple[Dict[str, BasePytorchQATTrainableQuantizer], List[BasePyTorchInferableQuantizer]]:
     """
     Build quantizers for a node according to its quantization configuration and
     a global NoOpQuantizeConfig object.
 
     Args:
         n: Node to build its QuantizeConfig.
-        gptq_config (GradientPTQConfig): GradientPTQConfigV2 configuration.
+        gptq_config (GradientPTQConfig): GradientPTQConfig configuration.
+        kernel_attr: A potential kernel attribute name to build its trainable quantizer.
 
     Returns:
         A dictionary which maps the weights kernel attribute to a quantizer for GPTQ training.
@@ -52,14 +52,16 @@ def quantization_builder(n: common.BaseNode,
     """
 
     weights_quantizers = {}
-    if n.is_weights_quantization_enabled():
-        quant_method = n.final_weights_quantization_cfg.weights_quantization_method
+    if kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr):
+        # Only nodes with kernel attribute are trainable during GPTQ
+        quant_method = n.final_weights_quantization_cfg.get_attr_config(kernel_attr).weights_quantization_method
         quantizer_class = get_trainable_quantizer_class(quant_target=QuantizationTarget.Weights,
                                                         quantizer_id=gptq_config.rounding_type,
                                                         quant_method=quant_method,
                                                         quantizer_base_class=BasePytorchGPTQTrainableQuantizer)
-        weights_quantizers.update({KERNEL: quantizer_class(get_trainable_quantizer_weights_config(n),
-                                                           **gptq_config.gptq_quantizer_params_override)})
+        weights_quantizers.update({kernel_attr: quantizer_class(get_trainable_quantizer_weights_config(n,
+                                                                                                       kernel_attr),
+                                                                **gptq_config.gptq_quantizer_params_override)})
     activation_quantizers = []
     if n.is_activation_quantization_enabled():
         if n.final_activation_quantization_cfg is None:

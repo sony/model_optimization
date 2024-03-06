@@ -72,12 +72,16 @@ if FOUND_TF:
 
         """
         if is_qat_applicable(n, DEFAULT_KERAS_INFO):
+            # If we are here, then the node has a kernel attribute to quantize and training during QAT
             weights_quantizers, _ = quantization_builder(n,
                                                          qat_config,
-                                                         DEFAULT_KERAS_INFO)
+                                                         DEFAULT_KERAS_INFO.get_kernel_op_attributes(n.type)[0])
             if len(weights_quantizers) > 0:
                 layer.trainable = True
                 return KerasTrainableQuantizationWrapper(layer, weights_quantizers)
+
+        # TODO: need to check if in this case, if there are other weights attributes that are not trainable but are
+        #  quantized, do we need to wrap them as well?
         return layer
 
 

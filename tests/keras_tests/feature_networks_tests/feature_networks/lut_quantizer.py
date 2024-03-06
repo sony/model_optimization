@@ -65,9 +65,12 @@ class LUTWeightsQuantizerTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name='lut_quantizer_test', tp_model=tp_model)
 
     def get_debug_config(self):
-        return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
-                                                        action=ChangeCandidatesWeightsQuantizationMethod(
-                                                            weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO))])
+        return mct.core.DebugConfig(
+            network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
+                                     action=ChangeCandidatesWeightsQuantizationMethod(
+                                         weights_quantization_method=
+                                         mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                         attr_name=KERNEL))])
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, self.num_conv_channels]]

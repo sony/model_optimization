@@ -85,9 +85,7 @@ def prepare_graph_with_quantization_parameters(in_model,
     for i in range(10):
         mi.infer([np.random.randn(*input_shape)])
 
-    calculate_quantization_params(graph,
-                                  fw_info=fw_info,
-                                  fw_impl=fw_impl)
+    calculate_quantization_params(graph)
 
     return graph
 

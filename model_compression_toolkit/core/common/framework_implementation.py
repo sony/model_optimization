@@ -449,3 +449,19 @@ class FrameworkImplementation(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s sensitivity_eval_inference method.')  # pragma: no cover
+
+    def get_inferable_quantizers(self, node: BaseNode):
+        """
+        Returns sets of framework compatible weights and activation quantizers for the given node.
+
+        Args:
+           node: Node to get quantizers for.
+
+        Returns:
+            weight_quantizers: A dictionary between a weight's name to its quantizer.
+            activation_quantizers: A list of activations quantization, one for each layer output.
+
+        """
+
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_inferable_quantizers method.')  # pragma: no cover

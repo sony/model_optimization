@@ -17,6 +17,7 @@ import copy
 from typing import List, Dict, Union, Any
 
 from mct_quantizers import QuantizationMethod
+from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.logger import Logger
 
 
@@ -46,11 +47,11 @@ class AttributeQuantizationConfig:
     Hold the quantization configuration of a weight attribute of a layer.
     """
     def __init__(self,
-                 weights_quantization_method: QuantizationMethod,
-                 weights_n_bits: int,
-                 weights_per_channel_threshold: bool,
-                 enable_weights_quantization: bool,
-                 lut_values_bitwidth: Union[int, None],  # If None - set 8 in hptq, o.w use it
+                 weights_quantization_method: QuantizationMethod = QuantizationMethod.POWER_OF_TWO,
+                 weights_n_bits: int = FLOAT_BITWIDTH,
+                 weights_per_channel_threshold: bool = False,
+                 enable_weights_quantization: bool = False,
+                 lut_values_bitwidth: Union[int, None] = None,  # If None - set 8 in hptq, o.w use it
                  ):
         """
         Initializes an attribute quantization config.

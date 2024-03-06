@@ -67,7 +67,7 @@ class NNVisualizer:
         """
 
         self.graph_float = graph_float
-        self.graph_quantized = quantize_graph_weights(graph_float, fw_info=fw_info, fw_impl=fw_impl)
+        self.graph_quantized = quantize_graph_weights(graph_float)
         self.fw_impl = fw_impl
         self.fw_info = fw_info
 
