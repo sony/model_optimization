@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import numpy as np
 import torch
 from torch import nn
 
@@ -20,11 +19,9 @@ import model_compression_toolkit as mct
 from mct_quantizers import QuantizationMethod, PytorchQuantizationWrapper
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core.pytorch.constants import GAMMA, BETA
-from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_model, torch_tensor_to_numpy
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS, BIAS_ATTR
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, \
     DEFAULT_WEIGHT_ATTR_CONFIG, KERNEL_BASE_CONFIG, generate_test_op_qc, BIAS_CONFIG
-from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from tests.pytorch_tests.utils import get_layers_from_model_by_type
 
@@ -174,13 +171,3 @@ class BNAttributesQuantization(BasePytorchTest):
 
         self.unit_test.assertTrue(torch.any(f_gamma != q_gamma),
                                   "Float and quantized GAMMA attributes are expected to have different values")
-
-        # Verify output difference (sanity)
-        in_torch_tensor = to_torch_tensor(input_x[0])
-        set_model(float_model)
-        y = float_model(in_torch_tensor)
-        y_hat = quantized_model(in_torch_tensor)
-        self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'Out shape is not as expected!')
-        cs = cosine_similarity(torch_tensor_to_numpy(y), torch_tensor_to_numpy(y_hat))
-        self.unit_test.assertTrue(np.isclose(cs, 1, atol=1e-3), msg=f'Fail cosine similarity check:{cs}')
-

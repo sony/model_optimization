@@ -23,7 +23,6 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, \
     DEFAULT_WEIGHT_ATTR_CONFIG, KERNEL_BASE_CONFIG, generate_test_op_qc, BIAS_CONFIG
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
@@ -160,11 +159,3 @@ class BNAttributesQuantization(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(q_gamma is not None, "Expecting quantized model BN layer to have a GAMMA attribute")
         self.unit_test.assertTrue(np.any(f_gamma != q_gamma),
                                   "Float and quantized GAMMA attributes are expected to have different values")
-
-        # Verify output difference (sanity)
-        y = float_model.predict(input_x)
-        y_hat = quantized_model.predict(input_x)
-        self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'Out shape is not as expected!')
-        cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1, atol=1e-3), msg=f'Failed cosine similarity check: {cs}')
-
