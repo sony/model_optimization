@@ -1,14 +1,21 @@
-# MCT Models Library 
+# MCT Model Garden 
 
-MCT Models Library is a collection of models sourced from various of repositories and adjusted for Model Compression Toolkit (MCT).
+MCT Model Garden is a collection of models sourced from various repositories and adjusted for quantization using Model Compression Toolkit (MCT).
+
+Adjustments are sometimes necessary before applying MCT due to various reasons, such as:
+- Enabling the conversion of the model to a static graph (the initial stage in MCT).
+- Enhancing the quantization outcome.
+- Converting unsupported operators.
+
+Note that in many cases, adjustments are unnecessary before applying MCT.
 
 ## Models
 
 | Model        | Source Repository           | MCT Model Garden                                                                                                        | 
 |--------------|-----------------------------|-------------------------------------------------------------------------------------------------------------------------|
-| EfficientDet | [efficientdet-pytorch](https://github.com/rwightman/efficientdet-pytorch) | [model code](https://github.com/sony/model_optimization/tree/main/tutorials/mct_model_garden/models_keras/efficientdet) |
-| Nanodet-Plus | [Nanodet-Plus](https://github.com/RangiLyu/nanodet)         | [model code](https://github.com/sony/model_optimization/tree/main/tutorials/mct_model_garden/models_keras/nanodet)      |                                                                                                                
-| Yolov8n      | [Ultralytics](https://github.com/ultralytics/ultralytics)          | [model code](https://github.com/sony/model_optimization/tree/main/tutorials/mct_model_garden/models_keras/yolov8)       |
+| EfficientDet | [efficientdet-pytorch](https://github.com/rwightman/efficientdet-pytorch) | [model](https://github.com/sony/model_optimization/tree/main/tutorials/mct_model_garden/models_keras/efficientdet) |
+| Nanodet-Plus | [Nanodet-Plus](https://github.com/RangiLyu/nanodet)         | [model](https://github.com/sony/model_optimization/tree/main/tutorials/mct_model_garden/models_keras/nanodet)      |                                                                                                                
+| Yolov8n      | [Ultralytics](https://github.com/ultralytics/ultralytics)          | [model](https://github.com/sony/model_optimization/tree/main/tutorials/mct_model_garden/models_keras/yolov8)       |
 
 
 
