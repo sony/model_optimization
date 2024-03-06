@@ -31,7 +31,7 @@ from tutorials.quick_start.common.model_lib import BaseModelLib
 from tutorials.quick_start.common.constants import MODEL_NAME, BATCH_SIZE, COCO_DATASET, VALIDATION_DATASET_FOLDER, \
     MODULE_REPLACER
 from tutorials.quick_start.common.results import DatasetInfo
-from tutorials.resources.yolov8.yolov8_preprocess import yolov8_preprocess_chw_transpose
+from tutorials.mct_model_garden.yolov8.yolov8_preprocess import yolov8_preprocess_chw_transpose
 from model_compression_toolkit.core import FolderImageLoader
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PytorchModel
 
