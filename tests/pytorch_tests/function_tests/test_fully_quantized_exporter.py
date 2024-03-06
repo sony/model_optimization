@@ -43,11 +43,10 @@ class TestFullyQuantizedExporter(unittest.TestCase):
 
     def run_mct(self, model):
         core_config = mct.core.CoreConfig()
-        new_export_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(
+        new_export_model, _ = mct.ptq.pytorch_post_training_quantization(
             in_module=model,
             core_config=core_config,
-            representative_data_gen=self.representative_data_gen,
-            new_experimental_exporter=True)
+            representative_data_gen=self.representative_data_gen)
         return new_export_model
 
     def set_seed(self, seed):

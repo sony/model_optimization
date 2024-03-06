@@ -75,11 +75,10 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                              weights_error_method=error_method, relu_bound_to_power_of_2=False,
                                              weights_bias_correction=bias_correction, input_scaling=input_scaling)
             core_config = mct.core.CoreConfig(quantization_config=qc)
-            q_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model,
-                                                                                           representative_data_gen,
-                                                                                           core_config=core_config,
-                                                                                           target_platform_capabilities=tpc,
-                                                                                           new_experimental_exporter=True)
+            q_model, quantization_info = mct.ptq.keras_post_training_quantization(model,
+                                                                                  representative_data_gen,
+                                                                                  core_config=core_config,
+                                                                                  target_platform_capabilities=tpc)
 
         model = model_gen()
         for quantize_method, error_method, relu_bound_to_power_of_2, shift_negative_correction in activation_test_combinations:
@@ -96,11 +95,10 @@ class TestQuantizationConfigurations(unittest.TestCase):
                                              shift_negative_activation_correction=shift_negative_correction)
             core_config = mct.core.CoreConfig(quantization_config=qc)
 
-            q_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(model,
-                                                                                           representative_data_gen,
-                                                                                           core_config=core_config,
-                                                                                           target_platform_capabilities=tpc,
-                                                                                           new_experimental_exporter=True)
+            q_model, quantization_info = mct.ptq.keras_post_training_quantization(model,
+                                                                                  representative_data_gen,
+                                                                                  core_config=core_config,
+                                                                                  target_platform_capabilities=tpc)
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@ import numpy as np
 from typing import Callable, Any, List, Tuple
 
 from model_compression_toolkit.constants import AXIS, HESSIAN_OUTPUT_ALPHA
-from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 
@@ -37,7 +37,7 @@ class SensitivityEvaluation:
 
     def __init__(self,
                  graph: Graph,
-                 quant_config: MixedPrecisionQuantizationConfigV2,
+                 quant_config: MixedPrecisionQuantizationConfig,
                  representative_data_gen: Callable,
                  fw_info: FrameworkInfo,
                  fw_impl: Any,

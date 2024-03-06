@@ -222,7 +222,7 @@ if __name__ == '__main__':
     # MCT will search a mixed-precision configuration (namely, bit-width for each layer)
     # and quantize the model according to this configuration.
     # The candidates bit-width for quantization should be defined in the target platform model:
-    configuration = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfigV2(
+    configuration = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(
         num_of_images=args.mixed_precision_num_of_images,
         use_hessian_based_scores=args.enable_mixed_precision_gradients_weighting))
 
@@ -244,11 +244,11 @@ if __name__ == '__main__':
 
     # It is also possible to constraint only part of the KPI metric, e.g., by providing only weights_memory target
     # in the past KPI object, e.g., kpi = mct.core.KPI(kpi_data.weights_memory * 0.75)
-    quantized_model, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(model,
-                                                                                                 representative_data_gen,
-                                                                                                 target_kpi=kpi,
-                                                                                                 core_config=configuration,
-                                                                                                 target_platform_capabilities=target_platform_cap)
+    quantized_model, quantization_info = mct.ptq.pytorch_post_training_quantization(model,
+                                                                                    representative_data_gen,
+                                                                                    target_kpi=kpi,
+                                                                                    core_config=configuration,
+                                                                                    target_platform_capabilities=target_platform_cap)
     # Finally, we evaluate the quantized model:
     print(f'Evaluating quantized model')
     evaluate(quantized_model,

@@ -24,7 +24,7 @@ from common.constants import NUM_REPRESENTATIVE_IMAGES, BATCH_SIZE, REPRESENTATI
     TARGET_PLATFORM_NAME, TARGET_PLATFORM_VERSION
 
 from model_compression_toolkit import KPI
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2, CoreConfig
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, CoreConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from tutorials.quick_start.common.constants import BYTES_TO_FP32, MP_WEIGHTS_COMPRESSION
 from tutorials.quick_start.common.results import QuantInfo
@@ -97,7 +97,7 @@ def quantize(model: nn.Module,
     # Mixed-precision configurations
     mp_wcr = args.get(MP_WEIGHTS_COMPRESSION, None)
     if mp_wcr:
-        mp_conf = MixedPrecisionQuantizationConfigV2()
+        mp_conf = MixedPrecisionQuantizationConfig()
         core_conf = CoreConfig(quantization_config=mct.core.QuantizationConfig(
             shift_negative_activation_correction=True),
                                mixed_precision_config=mp_conf)
@@ -130,11 +130,11 @@ def quantize(model: nn.Module,
     else:
         workflow = 'PTQ'
         quantized_model, quantization_info = \
-            mct.ptq.pytorch_post_training_quantization_experimental(model,
-                                                                    representative_data_gen=representative_data_gen,
-                                                                    target_kpi=target_kpi,
-                                                                    core_config=core_conf,
-                                                                    target_platform_capabilities=tpc)
+            mct.ptq.pytorch_post_training_quantization(model,
+                                                       representative_data_gen=representative_data_gen,
+                                                       target_kpi=target_kpi,
+                                                       core_config=core_conf,
+                                                       target_platform_capabilities=tpc)
 
 
     # Export quantized model to ONNX

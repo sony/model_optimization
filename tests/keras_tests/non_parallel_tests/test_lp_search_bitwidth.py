@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common.mixed_precision.distance_weighting im
     get_last_layer_weights
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfigV2
+    MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width, \
     BitWidthSearchMethod
 from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
@@ -279,18 +279,18 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
     def test_mixed_precision_search_facade(self):
         core_config_avg_weights = CoreConfig(quantization_config=DEFAULTCONFIG,
-                                             mixed_precision_config=MixedPrecisionQuantizationConfigV2(compute_mse,
-                                                                                                       get_average_weights,
-                                                                                                       num_of_images=1,
-                                                                                                       use_hessian_based_scores=False))
+                                             mixed_precision_config=MixedPrecisionQuantizationConfig(compute_mse,
+                                                                                                     get_average_weights,
+                                                                                                     num_of_images=1,
+                                                                                                     use_hessian_based_scores=False))
 
         self.run_search_bitwidth_config_test(core_config_avg_weights)
 
         core_config_last_layer = CoreConfig(quantization_config=DEFAULTCONFIG,
-                                            mixed_precision_config=MixedPrecisionQuantizationConfigV2(compute_mse,
-                                                                                                      get_last_layer_weights,
-                                                                                                      num_of_images=1,
-                                                                                                      use_hessian_based_scores=False))
+                                            mixed_precision_config=MixedPrecisionQuantizationConfig(compute_mse,
+                                                                                                    get_last_layer_weights,
+                                                                                                    num_of_images=1,
+                                                                                                    use_hessian_based_scores=False))
 
         self.run_search_bitwidth_config_test(core_config_last_layer)
 

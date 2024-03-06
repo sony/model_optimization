@@ -26,7 +26,7 @@ from torch.nn import Module, Sigmoid, Softmax
 
 import model_compression_toolkit.core.pytorch.constants as pytorch_constants
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -336,7 +336,7 @@ class PytorchImplementation(FrameworkImplementation):
 
     def get_sensitivity_evaluator(self,
                                   graph: Graph,
-                                  quant_config: MixedPrecisionQuantizationConfigV2,
+                                  quant_config: MixedPrecisionQuantizationConfig,
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
                                   disable_activation_for_metric: bool = False,

@@ -35,9 +35,6 @@ class BaseFeatureNetworkTest(BaseTest):
     def get_gptq_config(self):
         return None
 
-    def get_gptq_configv2(self):
-        return None
-
     def get_kpi(self):
         return None
 
@@ -50,8 +47,7 @@ class BaseFeatureNetworkTest(BaseTest):
                                                                  self.representative_data_gen_experimental,
                                                                  target_kpi=self.get_kpi(),
                                                                  core_config=core_config,
-                                                                 target_platform_capabilities=self.get_tpc(),
-                                                                 new_experimental_exporter=self.experimental_exporter
+                                                                 target_platform_capabilities=self.get_tpc()
                                                                  )
 
             self.compare(ptq_model,

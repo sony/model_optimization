@@ -99,12 +99,12 @@ def prepare_graph_set_bit_widths(in_model,
                                  fw_info,
                                  network_editor,
                                  analyze_similarity,
-                                 tpc):
+                                 tpc,
+                                 mp_cfg):
 
     # Config
-    quantization_config, mp_config = quant_config.separate_configs()
-    core_config = CoreConfig(quantization_config=quantization_config,
-                             mixed_precision_config=mp_config,
+    core_config = CoreConfig(quantization_config=quant_config,
+                             mixed_precision_config=mp_cfg,
                              debug_config=DebugConfig(analyze_similarity=analyze_similarity,
                                                       network_editor=network_editor))
 
@@ -117,7 +117,7 @@ def prepare_graph_set_bit_widths(in_model,
 
     graph = graph_preparation_runner(in_model,
                                      representative_data_gen=_representative_data_gen,
-                                     quantization_config=quantization_config,
+                                     quantization_config=quant_config,
                                      fw_info=fw_info,
                                      fw_impl=fw_impl,
                                      tpc=tpc,

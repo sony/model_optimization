@@ -18,7 +18,7 @@ import numpy as np
 from mct_quantizers.common.get_all_subclasses import get_all_subclasses
 from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
 
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.qat import TrainingMethod
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
@@ -295,7 +295,7 @@ class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
 
     def run_test(self, **kwargs):
         model_float = self.create_networks()
-        config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
+        config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig())
         qat_ready_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init(
             model_float,
             self.representative_data_gen_experimental,

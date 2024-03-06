@@ -22,7 +22,7 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfigV2
+    MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 from model_compression_toolkit.core.exporter import export_model
@@ -39,12 +39,11 @@ if FOUND_TORCH:
 
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
-    def pytorch_post_training_quantization_experimental(in_module: Module,
-                                                        representative_data_gen: Callable,
-                                                        target_kpi: KPI = None,
-                                                        core_config: CoreConfig = CoreConfig(),
-                                                        target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC,
-                                                        new_experimental_exporter: bool = True):
+    def pytorch_post_training_quantization(in_module: Module,
+                                           representative_data_gen: Callable,
+                                           target_kpi: KPI = None,
+                                           core_config: CoreConfig = CoreConfig(),
+                                           target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
@@ -64,7 +63,6 @@ if FOUND_TORCH:
             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to.
-            new_experimental_exporter (bool): Whether to wrap the quantized model using quantization information or not. Enabled by default. Experimental and subject to future changes.
 
         Returns:
             A quantized module and information the user may need to handle the quantized module.
@@ -89,19 +87,16 @@ if FOUND_TORCH:
             Set number of clibration iterations to 1:
 
             >>> import model_compression_toolkit as mct
-            >>> quantized_module, quantization_info = mct.ptq.pytorch_post_training_quantization_experimental(module, repr_datagen)
+            >>> quantized_module, quantization_info = mct.ptq.pytorch_post_training_quantization(module, repr_datagen)
 
         """
 
         if core_config.mixed_precision_enable:
-            if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
+            if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.error("Given quantization config to mixed-precision facade is not of type "
-                             "MixedPrecisionQuantizationConfigV2. Please use "
+                             "MixedPrecisionQuantizationConfig. Please use "
                              "pytorch_post_training_quantization API, or pass a valid mixed precision "
                              "configuration.")  # pragma: no cover
-
-            Logger.info("Using experimental mixed-precision quantization. "
-                        "If you encounter an issue please file a bug.")
 
         tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
 
@@ -126,26 +121,13 @@ if FOUND_TORCH:
                                         fw_impl,
                                         DEFAULT_PYTORCH_INFO)
 
-        if new_experimental_exporter:
-            Logger.warning('Using new experimental wrapped and ready for export models. To '
-                           'disable it, please set new_experimental_exporter to False when '
-                           'calling pytorch_post_training_quantization_experimental. '
-                           'If you encounter an issue please file a bug.')
+        return get_exportable_pytorch_model(tg)
 
-            return get_exportable_pytorch_model(tg)
-
-        quantized_model, user_info = export_model(tg,
-                                                  DEFAULT_PYTORCH_INFO,
-                                                  fw_impl,
-                                                  tb_w,
-                                                  bit_widths_config)
-
-        return quantized_model, user_info
 
 else:
     # If torch is not installed,
     # we raise an exception when trying to use these functions.
-    def pytorch_post_training_quantization_experimental(*args, **kwargs):
+    def pytorch_post_training_quantization(*args, **kwargs):
         Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_post_training_quantization_experimental. '
+                        'when using pytorch_post_training_quantization. '
                         'Could not find the torch package.')  # pragma: no cover

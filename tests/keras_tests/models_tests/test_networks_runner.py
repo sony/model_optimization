@@ -103,25 +103,22 @@ class NetworkTest:
 
         core_config = mct.core.CoreConfig(quantization_config=qc)
         if self.gptq:
-            arc = mct.gptq.GradientPTQConfig(n_iter=2, optimizer=tf.keras.optimizers.Adam(
+            arc = mct.gptq.GradientPTQConfig(n_epochs=2, optimizer=tf.keras.optimizers.Adam(
                 learning_rate=0.0001), optimizer_rest=tf.keras.optimizers.Adam(
                 learning_rate=0.0001), loss=multiple_tensors_mse_loss)
-            arc2 = mct.gptq.GradientPTQConfigV2.from_v1(self.num_calibration_iter, arc)
 
             ptq_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(
                 self.model_float,
                 representative_data_gen,
                 core_config=core_config,
                 fw_info=DEFAULT_KERAS_INFO,
-                gptq_config=arc2,
-                target_platform_capabilities=tpc,
-                new_experimental_exporter=True)
+                gptq_config=arc,
+                target_platform_capabilities=tpc)
         else:
-            ptq_model, quantization_info = mct.ptq.keras_post_training_quantization_experimental(self.model_float,
-                                                                                                 representative_data_gen,
-                                                                                                 core_config=core_config,
-                                                                                                 target_platform_capabilities=tpc,
-                                                                                                 new_experimental_exporter=True)
+            ptq_model, quantization_info = mct.ptq.keras_post_training_quantization(self.model_float,
+                                                                                    representative_data_gen,
+                                                                                    core_config=core_config,
+                                                                                    target_platform_capabilities=tpc)
         self.compare(inputs_list, ptq_model, qc, tpc)
 
 

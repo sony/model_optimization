@@ -76,7 +76,7 @@ def get_tpc(mixed_precision_candidates_list):
 
 
 def test_setup(in_model, keras_impl, mixed_precision_candidates_list):
-    qc = MixedPrecisionQuantizationConfig(DEFAULTCONFIG)
+    qc = DEFAULTCONFIG
     graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset,
                                        lambda name, _tp: get_tpc(mixed_precision_candidates_list), qc=qc,
                                        mixed_precision_enabled=True)

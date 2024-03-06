@@ -53,7 +53,7 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
     graph.set_tpc(tpc)
     graph.set_fw_info(fw_info)
     graph = set_quantization_configuration_to_graph(graph=graph,
-                                                    quant_config=DEFAULT_MIXEDPRECISION_CONFIG,
+                                                    quant_config=mct.core.QuantizationConfig(),
                                                     mixed_precision_enable=True)
     graph = fusion(graph, tpc)
 

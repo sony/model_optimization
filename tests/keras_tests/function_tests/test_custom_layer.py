@@ -97,9 +97,9 @@ class TestCustomLayer(unittest.TestCase):
         x = CustomIdentityWithArg(0)(x)
         model = keras.Model(inputs=inputs, outputs=x)
 
-        q_model, _ = mct.ptq.keras_post_training_quantization_experimental(model,
-                                                                           lambda: [np.random.randn(1, 3, 3, 3)],
-                                                                           target_platform_capabilities=get_tpc())
+        q_model, _ = mct.ptq.keras_post_training_quantization(model,
+                                                              lambda: [np.random.randn(1, 3, 3, 3)],
+                                                              target_platform_capabilities=get_tpc())
 
         # verify the custom layer is in the quantized model
         self.assertTrue(isinstance(q_model.layers[2], CustomIdentity), 'Custom layer should be in the quantized model')

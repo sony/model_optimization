@@ -61,8 +61,8 @@ class GradientPTQConfig:
     """
     Configuration to use for quantization with GradientPTQ.
     """
-
-    def __init__(self, n_iter: int,
+    def __init__(self,
+                 n_epochs: int,
                  optimizer: Any,
                  optimizer_rest: Any = None,
                  loss: Callable = None,
@@ -79,7 +79,7 @@ class GradientPTQConfig:
         Initialize a GradientPTQConfig.
 
         Args:
-            n_iter (int): Number of iterations to train.
+            n_epochs (int): Number of representative dataset epochs to train.
             optimizer (Any): Optimizer to use.
             optimizer_rest (Any): Optimizer to use for bias and quantizer parameters.
             loss (Callable): The loss to use. should accept 6 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
@@ -96,7 +96,8 @@ class GradientPTQConfig:
             gptq_quantizer_params_override (dict): A dictionary of parameters to override in GPTQ quantizer instantiation. Defaults to None (no parameters).
 
         """
-        self.n_iter = n_iter
+
+        self.n_epochs = n_epochs
         self.optimizer = optimizer
         self.optimizer_rest = optimizer_rest
         self.loss = loss
@@ -114,71 +115,3 @@ class GradientPTQConfig:
             else gptq_quantizer_params_override
 
 
-class GradientPTQConfigV2(GradientPTQConfig):
-    """
-    Configuration to use for quantization with GradientPTQV2.
-    """
-    def __init__(self, n_epochs: int,
-                 optimizer: Any,
-                 optimizer_rest: Any = None,
-                 loss: Callable = None,
-                 log_function: Callable = None,
-                 train_bias: bool = True,
-                 rounding_type: RoundingType = RoundingType.SoftQuantizer,
-                 use_hessian_based_weights: bool = True,
-                 optimizer_quantization_parameter: Any = None,
-                 optimizer_bias: Any = None,
-                 regularization_factor: float = REG_DEFAULT,
-                 hessian_weights_config: GPTQHessianScoresConfig = GPTQHessianScoresConfig(),
-                 gptq_quantizer_params_override: Dict[str, Any] = None):
-        """
-        Initialize a GradientPTQConfigV2.
-
-        Args:
-            n_epochs (int): Number of representative dataset epochs to train.
-            optimizer (Any): Optimizer to use.
-            optimizer_rest (Any): Optimizer to use for bias and quantizer parameters.
-            loss (Callable): The loss to use. should accept 6 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors,
-             the 3rd is a list of quantized weights, the 4th is a list of float weights, the 5th and 6th lists are the mean and std of the tensors
-             accordingly. see example in multiple_tensors_mse_loss
-            log_function (Callable): Function to log information about the GPTQ process.
-            train_bias (bool): Whether to update the bias during the training or not.
-            rounding_type (RoundingType): An enum that defines the rounding type.
-            use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
-            optimizer_quantization_parameter (Any): Optimizer to override the rest optimizer  for quantizer parameters.
-            optimizer_bias (Any): Optimizer to override the rest optimizerfor bias.
-            regularization_factor (float): A floating point number that defines the regularization factor.
-            hessian_weights_config (GPTQHessianScoresConfig): A configuration that include all necessary arguments to run a computation of Hessian scores for the GPTQ loss.
-            gptq_quantizer_params_override (dict): A dictionary of parameters to override in GPTQ quantizer instantiation. Defaults to None (no parameters).
-
-        """
-
-        super().__init__(n_iter=None,
-                         optimizer=optimizer,
-                         optimizer_rest=optimizer_rest,
-                         loss=loss,
-                         log_function=log_function,
-                         train_bias=train_bias,
-                         rounding_type=rounding_type,
-                         use_hessian_based_weights=use_hessian_based_weights,
-                         optimizer_quantization_parameter=optimizer_quantization_parameter,
-                         optimizer_bias=optimizer_bias,
-                         regularization_factor=regularization_factor,
-                         hessian_weights_config=hessian_weights_config,
-                         gptq_quantizer_params_override=gptq_quantizer_params_override)
-        self.n_epochs = n_epochs
-
-    @classmethod
-    def from_v1(cls, n_ptq_iter: int, config_v1: GradientPTQConfig):
-        """
-        Initialize a GradientPTQConfigV2 from GradientPTQConfig instance.
-
-        Args:
-            n_ptq_iter (int): Number of PTQ calibration iters (length of representative dataset).
-            config_v1 (GradientPTQConfig): A GPTQ config to convert to V2.
-
-        """
-        n_epochs = int(round(config_v1.n_iter) / n_ptq_iter)
-        v1_params = config_v1.__dict__
-        v1_params = {k: v for k, v in v1_params.items() if k != 'n_iter'}
-        return cls(n_epochs, **v1_params)

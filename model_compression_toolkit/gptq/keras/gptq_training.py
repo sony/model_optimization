@@ -37,7 +37,7 @@ else:
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.gptq.keras.graph_info import get_weights_for_loss, get_gptq_trainable_parameters
 from model_compression_toolkit.gptq.keras.quantizer.regularization_factory import get_regularization
@@ -56,7 +56,7 @@ class KerasGPTQTrainer(GPTQTrainer):
     def __init__(self,
                  graph_float: Graph,
                  graph_quant: Graph,
-                 gptq_config: GradientPTQConfigV2,
+                 gptq_config: GradientPTQConfig,
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo,
                  representative_data_gen: Callable,

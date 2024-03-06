@@ -53,7 +53,7 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
 
     def __init__(self,
                  unit_test,
-                 quantization_method: target_platform.QuantizationMethod.KMEANS,
+                 quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER,
                  weight_fn=get_uniform_weights,
                  weights_n_bits: int = 3):
 
@@ -120,7 +120,7 @@ class KmeansQuantizerTest(KmeansQuantizerTestBase):
 
     def __init__(self,
                  unit_test,
-                 quantization_method: target_platform.QuantizationMethod.KMEANS,
+                 quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER,
                  weights_n_bits: int = 3):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
@@ -129,7 +129,8 @@ class KmeansQuantizerTest(KmeansQuantizerTestBase):
         # using different methods (but started as the same value)
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(np.sum(
-            np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())) > 0)
+            np.abs(conv_layers[0].get_quantized_weights()[KERNEL] - conv_layers[2].get_quantized_weights()[KERNEL])) > 0)
+
 
 
 class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
@@ -140,7 +141,7 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
 
     def __init__(self,
                  unit_test,
-                 quantization_method: target_platform.QuantizationMethod.KMEANS,
+                 quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER,
                  weights_n_bits: int = 3):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
@@ -154,7 +155,7 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
         # using different methods (but started as the same value)
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(np.sum(
-            np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())) > 0)
+            np.abs(conv_layers[0].get_quantized_weights()[KERNEL] - conv_layers[2].get_quantized_weights()[KERNEL])) > 0)
 
 
 class KmeansQuantizerTestManyClasses(KmeansQuantizerTestBase):
@@ -162,7 +163,7 @@ class KmeansQuantizerTestManyClasses(KmeansQuantizerTestBase):
     This test checks the chosen quantization method is different that symmetric uniform
     '''
 
-    def __init__(self, unit_test, quantization_method: target_platform.QuantizationMethod.KMEANS, weights_n_bits: int = 8):
+    def __init__(self, unit_test, quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER, weights_n_bits: int = 8):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -179,7 +180,7 @@ class KmeansQuantizerTestZeroWeights(KmeansQuantizerTestBase):
     '''
 
     def __init__(self, unit_test,
-                 quantization_method: target_platform.QuantizationMethod.KMEANS,
+                 quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER,
                  weights_n_bits: int = 3):
         super().__init__(unit_test, quantization_method, get_zero_as_weights, weights_n_bits)
 
