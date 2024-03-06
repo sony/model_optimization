@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from model_compression_toolkit.logger import Logger
 
 
 def get_current_tpc():
@@ -38,7 +39,7 @@ class _CurrentTPC(object):
 
         """
         if self.tpc is None:
-            raise Exception('TargetPlatformCapabilities is not initialized.')
+            Logger.critical('TargetPlatformCapabilities is not initialized.')
         return self.tpc
 
     def reset(self):

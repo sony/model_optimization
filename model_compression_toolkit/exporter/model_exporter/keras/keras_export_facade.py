@@ -105,6 +105,6 @@ if FOUND_TF:
         return exporter.get_custom_objects()
 else:
     def keras_export_model(*args, **kwargs):
-        Logger.error('Installing tensorflow is mandatory '
+        Logger.critical('Installing tensorflow is mandatory '
                      'when using keras_export_model. '
                      'Could not find some or all of TensorFlow packages.')  # pragma: no cover

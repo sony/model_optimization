@@ -75,7 +75,7 @@ class GPTQTrainer(ABC):
         self.fxp_model, self.gptq_user_info = self.build_gptq_model()
         if self.gptq_config.use_hessian_based_weights:
             if not isinstance(hessian_info_service, HessianInfoService):
-                Logger.error(f"When using hessian based approximations for sensitivity evaluation, "
+                Logger.critical(f"When using hessian based approximations for sensitivity evaluation, "
                              f" an HessianInfoService object must be provided but is {hessian_info_service}")
             self.hessian_service = hessian_info_service
 
@@ -106,7 +106,7 @@ class GPTQTrainer(ABC):
                 else:
                     w2train_res.extend(flattened_bias_weights)
                     if self.gptq_config.optimizer_rest is None:
-                        Logger.error(  # pragma: no cover
+                        Logger.critical(  # pragma: no cover
                             "To enable bias micro training an additional optimizer is required, please define the optimizer_rest")
             if quant_params_learning:
                 if self.gptq_config.optimizer_quantization_parameter is not None:  # Ability to override optimizer
@@ -115,13 +115,13 @@ class GPTQTrainer(ABC):
                 else:
                     w2train_res.extend(trainable_quantization_parameters)
                 if self.gptq_config.optimizer_rest is None:
-                    Logger.error(  # pragma: no cover
+                    Logger.critical(  # pragma: no cover
                         "To enable quantization parameters micro training an additional optimizer is required, please define the optimizer_rest")
             if len(w2train_res) > 0:
                 # Either bias or quantization parameters are trainable but did not provide a specific optimizer,
                 # so we should use optimizer_rest to train them
                 if self.gptq_config.optimizer_rest is None:
-                    Logger.error(  # pragma: no cover
+                    Logger.critical(  # pragma: no cover
                         "To enable bias or quantization parameters micro training an additional optimizer is required, please define the optimizer_rest")
                 optimizer_with_param.append((self.gptq_config.optimizer_rest, w2train_res))
 
@@ -236,9 +236,9 @@ class GPTQTrainer(ABC):
             trace_approx: Trace approximation to validate.
         """
         if not isinstance(trace_approx, list):
-            Logger.error(f"Trace approx was expected to be a list but has a type of {type(trace_approx)}")
+            Logger.critical(f"Trace approx was expected to be a list but has a type of {type(trace_approx)}")
         if len(trace_approx) != 1:
-            Logger.error(
+            Logger.critical(
                 f"Trace approx was expected to be of length 1 (when computing approximations with "
                 f"granularity=HessianInfoGranularity.PER_TENSOR) but has a length of {len(trace_approx)}"
             )

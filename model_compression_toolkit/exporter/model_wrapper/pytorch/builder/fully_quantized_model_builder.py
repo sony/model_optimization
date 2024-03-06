@@ -60,7 +60,7 @@ if FOUND_TORCH:
         # quantization, which in this case has an empty list).
         if len(activation_quantizers) == 1:
             return PytorchActivationQuantizationHolder(activation_quantizers[0])
-        Logger.error(
+        Logger.critical(
             f'PytorchActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
             f'were found for node {node}')
 
@@ -84,6 +84,6 @@ if FOUND_TORCH:
 
 else:
     def get_exportable_pytorch_model(*args, **kwargs):  # pragma: no cover
-        Logger.error('Installing torch is mandatory '
+        Logger.critical('Installing torch is mandatory '
                      'when using get_exportable_pytorch_model. '
                      'Could not find PyTorch package.')

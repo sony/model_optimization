@@ -70,7 +70,7 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
 
         # Check if the target node's layer type is supported
         if not DEFAULT_PYTORCH_INFO.is_kernel_op(self.hessian_request.target_node.type):
-            Logger.error(f"{self.hessian_request.target_node.type} is not supported for Hessian info w.r.t weights.")  # pragma: no cover
+            Logger.critical(f"{self.hessian_request.target_node.type} is not supported for Hessian info w.r.t weights.")  # pragma: no cover
 
         # Float model
         model, _ = FloatPyTorchModelBuilder(graph=self.graph).build_model()
@@ -80,7 +80,7 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
 
         # Get the weight tensor for the target node
         if len(weights_attributes) != 1:
-            Logger.error(f"Hessian scores w.r.t weights is supported, for now, for a single-weight node. Found {len(weights_attributes)}")
+            Logger.critical(f"Hessian scores w.r.t weights is supported, for now, for a single-weight node. Found {len(weights_attributes)}")
 
         weights_tensor = getattr(getattr(model,self.hessian_request.target_node.name),weights_attributes[0])
 

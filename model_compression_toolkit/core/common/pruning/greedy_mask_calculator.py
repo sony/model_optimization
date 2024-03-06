@@ -92,7 +92,7 @@ class GreedyMaskCalculator:
         current_memory = self.memory_calculator.get_pruned_graph_memory(masks=self.oc_pruning_mask.get_mask(),
                                                                         include_padded_channels=self.tpc.is_simd_padding)
         if current_memory > self.target_kpi.weights_memory:
-            Logger.error(f"Minimal required memory is {current_memory}, "
+            Logger.critical(f"Minimal required memory is {current_memory}, "
                          f"but target KPI is {self.target_kpi.weights_memory}")
 
         # Greedily unprune groups (by setting their mask to 1) until the memory target is met
@@ -141,7 +141,7 @@ class GreedyMaskCalculator:
                     best_group_idx = group_idx
 
         if best_node is None:
-            Logger.error("No prunable SIMD group found.")
+            Logger.critical("No prunable SIMD group found.")
 
         return best_node, best_group_idx
 

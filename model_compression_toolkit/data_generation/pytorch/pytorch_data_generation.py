@@ -171,7 +171,7 @@ if FOUND_TORCH:
 
         # Check if the scheduler type is valid
         if scheduler_get_fn is None or scheduler_step_fn is None:
-            Logger.exception(
+            Logger.critical(
                 f'Invalid scheduler_type {data_generation_config.scheduler_type}. Please choose one of '
                 f'{SchedulerType.get_values()}')
 
@@ -191,7 +191,7 @@ if FOUND_TORCH:
         # Create an orig_bn_stats_holder object to hold original BatchNorm statistics
         orig_bn_stats_holder = PytorchOriginalBNStatsHolder(model, data_generation_config.bn_layer_types)
         if orig_bn_stats_holder.get_num_bn_layers() == 0:
-            Logger.exception(
+            Logger.critical(
                 f'Data generation requires a model with at least one Batch Norm layer.')
 
         # Create an ImagesOptimizationHandler object for handling optimization

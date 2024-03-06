@@ -87,7 +87,7 @@ class AttributeFilter(Filter):
         """
 
         if not isinstance(other, AttributeFilter):
-            Logger.error("Not an attribute filter. Can not run an OR operation.")  # pragma: no cover
+            Logger.critical("Not an attribute filter. Can not run an OR operation.")  # pragma: no cover
         return OrAttributeFilter(self, other)
 
     def __and__(self, other: Any):
@@ -101,7 +101,7 @@ class AttributeFilter(Filter):
             AndAttributeFilter that filters with AND between the current AttributeFilter and the passed AttributeFilter.
         """
         if not isinstance(other, AttributeFilter):
-            Logger.error("Not an attribute filter. Can not run an AND operation.")  # pragma: no cover
+            Logger.critical("Not an attribute filter. Can not run an AND operation.")  # pragma: no cover
         return AndAttributeFilter(self, other)
 
     def match(self,

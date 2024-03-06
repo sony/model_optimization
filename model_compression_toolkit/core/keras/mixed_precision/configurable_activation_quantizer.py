@@ -66,7 +66,7 @@ class ConfigurableActivationQuantizer(BaseKerasInferableQuantizer):
         for qc in node_q_cfg:
             if qc.activation_quantization_cfg.enable_activation_quantization != \
                     node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization:
-                Logger.error("Candidates with different activation enabled properties is currently not supported.")  # pragma: no cover
+                Logger.critical("Candidates with different activation enabled properties is currently not supported.")  # pragma: no cover
 
         self.activation_quantizers = init_activation_quantizers(self.node_q_cfg)
         self.active_quantization_config_index = max_candidate_idx  # initialize with first config as default

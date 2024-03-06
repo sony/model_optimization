@@ -38,9 +38,9 @@ def get_keras_model_builder(mode: ModelBuilderMode) -> type:
     """
 
     if not isinstance(mode, ModelBuilderMode):
-        Logger.error(f'get_keras_model_builder expects a mode of type ModelBuilderMode, but {type(mode)} was passed.')
+        Logger.critical(f'get_keras_model_builder expects a mode of type ModelBuilderMode, but {type(mode)} was passed.')
     if mode is None:
-        Logger.error(f'get_keras_model_builder received a mode which is None')
+        Logger.critical(f'get_keras_model_builder received a mode which is None')
     if mode not in keras_model_builders.keys():
-        Logger.error(f'mode {mode} is not in keras model builders factory')
+        Logger.critical(f'mode {mode} is not in keras model builders factory')
     return keras_model_builders.get(mode)

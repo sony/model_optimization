@@ -76,7 +76,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         self.loss_list = []
         self.input_scale = 1
         if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
-            Logger.error("Input scale mismatch between float and GPTQ networks")  # pragma: no cover
+            Logger.critical("Input scale mismatch between float and GPTQ networks")  # pragma: no cover
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
@@ -87,7 +87,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         self.flp_weights_list, self.fxp_weights_list = get_weights_for_loss(self.fxp_model)
         if not (len(self.compare_points) == len(trainable_weights) == len(self.flp_weights_list) == len(
                 self.fxp_weights_list)):
-            Logger.error(
+            Logger.critical(
                 "GPTQ: Mismatch between number of compare points, number of layers with trainable weights " +
                 "and number of float and quantized weights for loss")
 
@@ -156,7 +156,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         # quantization, which in this case has an empty list).
         if len(activation_quantizers) == 1:
             return PytorchActivationQuantizationHolder(activation_quantizers[0])
-        Logger.error(
+        Logger.critical(
             f'PytorchActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
             f'were found for node {n}')
 
@@ -278,7 +278,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
             if isinstance(layer, PytorchQuantizationWrapper):
                 node = self.graph_quant.find_node_by_name(name)
                 if len(node) != 1:
-                    Logger.error(f"Can't update GPTQ graph due to missing layer named: {name}")
+                    Logger.critical(f"Can't update GPTQ graph due to missing layer named: {name}")
                 node = node[0]
                 kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=node.type,
                                                                       fw_info=self.fw_info)

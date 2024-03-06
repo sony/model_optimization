@@ -48,7 +48,7 @@ if FOUND_TF:
             KerasTrainableQuantizationWrapper.__name__: KerasTrainableQuantizationWrapper})
         all_trainable_names = list(qi_trainable_custom_objects.keys())
         if len(set(all_trainable_names)) < len(all_trainable_names):
-            Logger.error(f"Found multiple quantizers with the same name that inherit from BaseKerasTrainableQuantizer"
+            Logger.critical(f"Found multiple quantizers with the same name that inherit from BaseKerasTrainableQuantizer"
                          f"while trying to load a model.")
 
         qi_custom_objects = {**qi_trainable_custom_objects}

@@ -77,8 +77,7 @@ class ConfigurableWeightsQuantizer(BaseKerasInferableQuantizer):
         for qc in self.node_q_cfg:
             if qc.weights_quantization_cfg.get_attr_config(self.kernel_attr).enable_weights_quantization != \
                     self.node_q_cfg[0].weights_quantization_cfg.get_attr_config(self.kernel_attr).enable_weights_quantization:
-                Logger.error("Candidates with different kernel attribute quantization enabled "
-                             "properties is currently not supported.")
+                Logger.critical("Candidates with different weights enabled properties is currently not supported.")
 
         # Initialize quantized weights for each weight that should be quantized.
         self.quantized_weights = init_quantized_weights(node_q_cfg=self.node_q_cfg,
@@ -101,7 +100,7 @@ class ConfigurableWeightsQuantizer(BaseKerasInferableQuantizer):
         """
 
         if index >= len(self.node_q_cfg):
-            Logger.error(f'Quantizer has {len(self.node_q_cfg)} '  # pragma: no cover
+            Logger.critical(f'Quantizer has {len(self.node_q_cfg)} '  # pragma: no cover
                          f'possible nbits. Can not set index {index}')
         self.active_quantization_config_index = index
 

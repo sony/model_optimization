@@ -156,7 +156,7 @@ class TargetPlatformModel(ImmutableClass):
         elif isinstance(tp_model_component, OperatorsSetBase):
             self.operator_set.append(tp_model_component)
         else:
-            raise Exception(f'Trying to append an unfamiliar TargetPlatformModelComponent of type: {type(tp_model_component)}')
+            Logger.critical(f'Trying to append an unfamiliar TargetPlatformModelComponent of type: {type(tp_model_component)}')
 
     def __enter__(self):
         """
@@ -192,7 +192,7 @@ class TargetPlatformModel(ImmutableClass):
         """
         opsets_names = [op.name for op in self.operator_set]
         if (len(set(opsets_names)) != len(opsets_names)):
-            Logger.error(f'OperatorsSet must have unique names')
+            Logger.critical(f'OperatorsSet must have unique names')
 
     def get_default_config(self) -> OpQuantizationConfig:
         """

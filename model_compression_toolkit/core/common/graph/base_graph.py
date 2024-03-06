@@ -102,10 +102,10 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                                                           for filtered_layer in tpc_filtered_layers])
             if n.is_custom:
                 if not is_node_in_tpc:
-                    Logger.error(f'MCT does not support optimizing Keras custom layers, but found layer of type {n.type}. '
+                    Logger.critical(f'MCT does not support optimizing Keras custom layers, but found layer of type {n.type}. '
                                  f'Please add the custom layer to TPC or file a feature request or an issue if you believe this is an issue.')
                 if any([qc.default_weight_attr_config.enable_weights_quantization for qc in n.get_qco(tpc).quantization_config_list]):
-                    Logger.error(f'MCT does not support optimizing Keras custom layers with weights quantization. Layer: {n.type}')
+                    Logger.critical(f'MCT does not support optimizing Keras custom layers with weights quantization. Layer: {n.type}')
 
         self.tpc = tpc
 
@@ -231,7 +231,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         sc = self.node_to_in_stats_collector.get(n)
         if sc is None:
-            Logger.error(f'Input statistics collector of node {n.name} is None')  # pragma: no cover
+            Logger.critical(f'Input statistics collector of node {n.name} is None')  # pragma: no cover
         return sc
 
     def scale_stats_collector(self,
@@ -370,7 +370,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             input_nodes_output_index = [0] * len(input_nodes)
 
         if len(input_nodes_output_index) != len(input_nodes):
-            Logger.error('Graph.add_node_with_in_edges: input_nodes & input_nodes_output_index must be the same '
+            Logger.critical('Graph.add_node_with_in_edges: input_nodes & input_nodes_output_index must be the same '
                          'length')  # pragma: no cover
 
         self.add_node(new_node)
@@ -414,7 +414,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         if new_node is None:
-            Logger.error("Graph received a None value as a new input node.")
+            Logger.critical("Graph received a None value as a new input node.")
 
         graph_inputs = self.get_inputs()
         new_graph_inputs = copy(graph_inputs)
@@ -828,13 +828,13 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         if not fw_impl.is_node_entry_node(entry_node):
-            Logger.error(f"Expected to find an entry node to create its pruning section,"
+            Logger.critical(f"Expected to find an entry node to create its pruning section,"
                          f"but node {entry_node} is not an entry node.")
 
         intermediate_nodes, exit_node = self._find_intermediate_and_exit_nodes(entry_node, fw_impl)
 
         if not fw_impl.is_node_exit_node(exit_node, entry_node, self.fw_info):
-            Logger.error(f"Expected to find exit node when creating a pruning section,"
+            Logger.critical(f"Expected to find exit node when creating a pruning section,"
                          f"but node {exit_node} is not an exit node.")
 
         return PruningSection(entry_node=entry_node,

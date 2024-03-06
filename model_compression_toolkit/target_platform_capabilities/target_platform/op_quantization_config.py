@@ -231,7 +231,7 @@ class QuantizationConfigOptions(object):
         elif len(quantization_config_list) == 1:
             self.base_config = quantization_config_list[0]
         else:
-            raise Exception("QuantizationConfigOptions must have at least one OpQuantizationConfig "
+            Logger.critical("QuantizationConfigOptions must have at least one OpQuantizationConfig "
                             "defined in its options list, but list is empty")
 
     def __eq__(self, other):
@@ -280,12 +280,12 @@ class QuantizationConfigOptions(object):
                 attrs_to_update = list(qc.attr_weights_configs_mapping.keys())
             else:
                 if not isinstance(attrs, List):
-                    Logger.error(f"Expecting a list of attribute but got {type(attrs)}.")
+                    Logger.critical(f"Expecting a list of attribute but got {type(attrs)}.")
                 attrs_to_update = attrs
 
             for attr in attrs_to_update:
                 if qc.attr_weights_configs_mapping.get(attr) is None:
-                    Logger.error(f'Edit attributes is possible only for existing attributes '
+                    Logger.critical(f'Edit attributes is possible only for existing attributes '
                                  f'in the configuration weights config mapping, but {attr} is not an attribute of {qc}.')
                 self.__edit_quantization_configuration(qc.attr_weights_configs_mapping[attr], kwargs)
         return qc_options
@@ -312,7 +312,7 @@ class QuantizationConfigOptions(object):
                 for attr in list(qc.attr_weights_configs_mapping.keys()):
                     new_key = layer_attrs_mapping.get(attr)
                     if new_key is None:
-                        Logger.error(f"Attribute {attr} does not exist in the given attribute mapping.")
+                        Logger.critical(f"Attribute {attr} does not exist in the given attribute mapping.")
 
                     new_attr_mapping[new_key] = qc.attr_weights_configs_mapping.pop(attr)
 

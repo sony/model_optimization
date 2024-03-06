@@ -16,6 +16,8 @@ from typing import Union, List, Tuple
 import tensorflow as tf
 import numpy as np
 
+from model_compression_toolkit.logger import Logger
+
 
 def to_tf_tensor(tensor):
     """
@@ -35,7 +37,7 @@ def to_tf_tensor(tensor):
     elif isinstance(tensor, np.ndarray):
         return tf.convert_to_tensor(tensor.astype(np.float32))
     else:
-        raise Exception(f'Conversion of type {type(tensor)} to {type(tf.Tensor)} is not supported')
+        Logger.critical(f'Conversion of type {type(tensor)} to {type(tf.Tensor)} is not supported')
 
 
 def tf_tensor_to_numpy(tensor: Union[List, Tuple, np.ndarray, tf.Tensor],
@@ -65,4 +67,4 @@ def tf_tensor_to_numpy(tensor: Union[List, Tuple, np.ndarray, tf.Tensor],
     elif isinstance(tensor, tf.Tensor):
         return tensor.numpy()
     else:
-        raise Exception(f'Conversion of type {type(tensor)} to {type(np.ndarray)} is not supported')
+        Logger.critical(f'Conversion of type {type(tensor)} to {type(np.ndarray)} is not supported')

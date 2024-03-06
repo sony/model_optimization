@@ -73,7 +73,7 @@ class PerChannelMask:
             mask_indicator: The new value to set in the mask (either PRUNED or REMAINED).
         """
         if mask_indicator not in [MaskIndicator.PRUNED, MaskIndicator.REMAINED]:
-            Logger.error("Mask value must be either MaskIndicator.PRUNED or MaskIndicator.REMAINED")
+            Logger.critical("Mask value must be either MaskIndicator.PRUNED or MaskIndicator.REMAINED")
         self._mask[node][channel_idx] = mask_indicator.value
 
     def has_pruned_channel(self) -> bool:

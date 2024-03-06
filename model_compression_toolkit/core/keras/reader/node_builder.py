@@ -119,7 +119,7 @@ def build_node(node: KerasNode,
         # All KerasTensor and positional weights are removed from the call_args\kwargs. They are restored
         # in the model builder.
         if len(weights) > 0:
-            Logger.error('Functional nodes are not expected to have weights in framework')
+            Logger.critical('Functional nodes are not expected to have weights in framework')
 
         # read weights from call args
         for i, arg in enumerate(op_call_args[0] if inputs_as_list else op_call_args):

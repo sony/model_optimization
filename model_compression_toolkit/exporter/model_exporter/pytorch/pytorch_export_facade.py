@@ -103,6 +103,6 @@ if FOUND_TORCH:
 
 else:
     def pytorch_export_model(*args, **kwargs):
-        Logger.error('Installing torch is mandatory '
+        Logger.critical('Installing torch is mandatory '
                      'when using pytorch_export_model. '
                      'Could not find PyTorch packages.')  # pragma: no cover

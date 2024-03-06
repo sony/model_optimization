@@ -418,7 +418,7 @@ class ConfigReconstructionHelper:
             if isinstance(weights_node, VirtualSplitWeightsNode):
                 self.get_activation_for_split_weights(weights_node, n, virtual_cfg_idx, virtual_mp_cfg)
             else:
-                Logger.error(f"Virtual graph error - all weights nodes should be split to weights and activation nodes"
+                Logger.critical(f"Virtual graph error - all weights nodes should be split to weights and activation nodes"
                              f"in order to construct the virtual graph, but node {n.name} is not of type "
                              f"VirtualSplitWeightsNode")  # pragma: no cover
 
@@ -441,14 +441,14 @@ class ConfigReconstructionHelper:
                 # It's ok, need to find the node's configuration
                 self.get_activation_for_split_weights(n, n, virtual_cfg_idx, virtual_mp_cfg)
             else:
-                Logger.error(f"Virtual graph error - a weights node is not composed with an activation node,"
+                Logger.critical(f"Virtual graph error - a weights node is not composed with an activation node,"
                              f"but its predecessor doesn't have multiple outputs.")  # pragma: no cover
         elif isinstance(n, VirtualSplitActivationNode):
             self.get_weights_for_split_activation(n, n, virtual_cfg_idx, virtual_mp_cfg)
         else:
             # Node didn't change in virtual graph - candidates list is similar to original
             if n.name not in self.origin_sorted_conf_nodes_names:
-                Logger.error(f"Node {n.name} appears in virtual graph as configurable, "
+                Logger.critical(f"Node {n.name} appears in virtual graph as configurable, "
                              f"but is not configurable in the original graph.")  # pragma: no cover
             origin_idx = self.origin_sorted_conf_nodes_names.index(n.name)
             self.origin_node_idx_to_cfg[origin_idx] = virtual_cfg_idx
@@ -654,7 +654,7 @@ class ConfigReconstructionHelper:
                 # It's ok, need to find the node's configuration
                 self.retrieve_weights_activation_config(activation_node, weights_node, virtual_node, virtual_cfg_idx, virtual_mp_cfg)
             else:
-                Logger.error(f"Virtual graph error - a weights node is not composed with an activation node,"
+                Logger.critical(f"Virtual graph error - a weights node is not composed with an activation node,"
                              f"but its predecessor doesn't have multiple outputs.")  # pragma: no cover
 
     def update_config_at_original_idx(self, n: BaseNode, origin_cfg_idx: int):

@@ -493,7 +493,7 @@ class KerasImplementation(FrameworkImplementation):
                                                       fw_impl=self,
                                                       num_iterations_for_approximation=num_iterations_for_approximation)
         else:
-            Logger.error(f"Keras does not support hessian mode of {trace_hessian_request.mode}")
+            Logger.critical(f"Keras does not support hessian mode of {trace_hessian_request.mode}")
 
     def is_output_node_compatible_for_hessian_score_computation(self,
                                                                 node: BaseNode) -> Any:

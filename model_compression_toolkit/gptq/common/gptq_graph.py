@@ -62,7 +62,7 @@ def get_kernel_attribute_name_for_gptq(layer_type: type, fw_info: FrameworkInfo)
     """
     kernel_attribute = fw_info.get_kernel_op_attributes(layer_type)
     if len(kernel_attribute) != 1:
-        Logger.error(  # pragma: no cover
+        Logger.critical(  # pragma: no cover
             f"In GPTQ training only the kernel weights attribute should be trained, but number of kernel "
             f"attributes is {len(kernel_attribute)}.")
     return kernel_attribute[0]

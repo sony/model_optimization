@@ -76,7 +76,7 @@ if FOUND_TORCH:
         """
 
         if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-            Logger.error("KPI data computation can't be executed without MixedPrecisionQuantizationConfig object."
+            Logger.critical("KPI data computation can't be executed without MixedPrecisionQuantizationConfig object."
                          "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
 
         fw_impl = PytorchImplementation()

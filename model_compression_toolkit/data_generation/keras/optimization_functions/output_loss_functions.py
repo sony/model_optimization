@@ -43,7 +43,7 @@ def regularized_min_max_diff(
         tf.Tensor: The calculated loss.
     """
     if activation_extractor.last_linear_layers is None:
-        Logger.exception(
+        Logger.critical(
             f'Cannot compute regularized min max output loss for the input model. The regularized min max output loss '
             f'requires linear layer without a following BatchNormalization layer. Please choose one of '
             f'{OutputLossType.get_values()}.')

@@ -146,7 +146,7 @@ if FOUND_TORCH:
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-                Logger.error("Given quantization config to mixed-precision facade is not of type "
+                Logger.critical("Given quantization config to mixed-precision facade is not of type "
                              "MixedPrecisionQuantizationConfig. Please use pytorch_post_training_quantization API,"
                              "or pass a valid mixed precision configuration.")
 

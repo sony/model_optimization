@@ -547,7 +547,7 @@ class BaseNode:
         """
 
         if tpc is None:
-            Logger.error(f'Can not retrieve QC options for None TPC')  # pragma: no cover
+            Logger.critical(f'Can not retrieve QC options for None TPC')  # pragma: no cover
 
         for fl, qco in tpc.filterlayer2qco.items():
             if self.is_match_filter_params(fl):
@@ -604,10 +604,10 @@ class BaseNode:
             Logger.warning(f"More than one pruning SIMD option is available."
                            f" Min SIMD is used: {min(simd_list)}")
         if len(simd_list) == 0:
-            Logger.error(f"No SIMD option is available for {self}")
+            Logger.critical(f"No SIMD option is available for {self}")
         _simd = min(simd_list)
         if _simd <= 0 or int(_simd) != _simd:
-            Logger.error(f"SIMD is expected to be a non-positive integer but found: {_simd}")
+            Logger.critical(f"SIMD is expected to be a non-positive integer but found: {_simd}")
         return _simd
 
     def sort_node_candidates(self, fw_info):

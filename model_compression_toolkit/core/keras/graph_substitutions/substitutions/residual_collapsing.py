@@ -62,7 +62,7 @@ def residual_collapsing_fn(first_node: BaseNode,
 
         return kernel
     else:
-        Logger.error("No supported add residual collapsing for {}".format(first_node.type))
+        Logger.critical("No supported add residual collapsing for {}".format(first_node.type))
 
 
 def keras_residual_collapsing() -> ResidualCollapsing:

@@ -65,7 +65,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
 
             if self.hessian_request.target_node in model_output_nodes:
-                Logger.exception("Trying to compute activation Hessian approximation with respect to the model output. "
+                Logger.critical("Trying to compute activation Hessian approximation with respect to the model output. "
                                  "This operation is not supported. "
                                  "Remove the output node from the set of node targets in the Hessian request.")
 
@@ -82,7 +82,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             outputs = model(*self.input_images)
 
             if len(outputs) != len(grad_model_outputs):
-                Logger.error(f"Model for computing activation Hessian approximation expects {len(grad_model_outputs)} "
+                Logger.critical(f"Model for computing activation Hessian approximation expects {len(grad_model_outputs)} "
                              f"outputs, but got {len(outputs)} output tensors.")
 
             # Extracting the intermediate activation tensors and the model real output
@@ -146,5 +146,5 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             return ipts_hessian_trace_approx.tolist()
 
         else:
-            Logger.error(f"{self.hessian_request.granularity} is not supported for Pytorch activation hessian's trace approx calculator")
+            Logger.critical(f"{self.hessian_request.granularity} is not supported for Pytorch activation hessian's trace approx calculator")
 

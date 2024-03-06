@@ -305,7 +305,7 @@ class ChangeCandidatesActivationQuantizationMethod(BaseAction):
                     self.activation_quantization_method)
 
                 if activation_quantization_fn is None:
-                    raise Exception('Unknown quantization method for activations')  # pragma: no cover
+                    Logger.critical('Unknown quantization method for activations')  # pragma: no cover
 
                 qc.activation_quantization_cfg.set_activation_quantization_fn(activation_quantization_fn)
                 qc.activation_quantization_cfg.activation_quantization_method = self.activation_quantization_method
@@ -352,7 +352,7 @@ class ChangeFinalWeightsQuantizationMethod(BaseAction):
             weights_quantization_fn = get_weights_quantization_fn(self.weights_quantization_method)
 
             if weights_quantization_fn is None:
-                raise Exception('Unknown quantization method for weights')  # pragma: no cover
+                Logger.critical('Unknown quantization method for weights')  # pragma: no cover
 
             (node.final_weights_quantization_cfg.get_attr_config(self.attr_name)
              .set_weights_quantization_fn(weights_quantization_fn))
@@ -401,7 +401,7 @@ class ChangeCandidatesWeightsQuantizationMethod(BaseAction):
                 weights_quantization_fn = get_weights_quantization_fn(self.weights_quantization_method)
 
                 if weights_quantization_fn is None:
-                    raise Exception('Unknown quantization method for weights')  # pragma: no cover
+                    Logger.critical('Unknown quantization method for weights')  # pragma: no cover
 
                 attr_qc.set_weights_quantization_fn(weights_quantization_fn)
                 attr_qc.weights_quantization_method = self.weights_quantization_method

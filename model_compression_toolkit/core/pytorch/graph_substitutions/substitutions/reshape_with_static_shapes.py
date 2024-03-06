@@ -58,7 +58,7 @@ class ReshapeWithStaticShapes(common.BaseSubstitution):
         if len(node.output_shape) == 1:
             node.output_shape[0][0] = BATCH_DIM_VALUE
         else:
-            Logger.error('Reshape or view nodes should have a single output shape')  # pragma: no cover
+            Logger.critical('Reshape or view nodes should have a single output shape')  # pragma: no cover
 
         # configure the new static output shape attribute
         node.op_call_args = node.output_shape

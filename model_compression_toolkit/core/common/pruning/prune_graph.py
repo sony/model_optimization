@@ -50,7 +50,7 @@ def build_pruned_graph(graph: Graph,
 
     # Check that each entry node corresponds to a pruning section has an output-channel mask.
     if len(pruning_sections) != len(masks):
-        Logger.error(f"Expected to find same number of masks as number of pruning sections,"
+        Logger.critical(f"Expected to find same number of masks as number of pruning sections,"
                      f"but {len(masks)} masks were given and found {len(pruning_sections)} pruning sections.")
 
     # Apply the pruning masks to each pruning section.
@@ -59,7 +59,7 @@ def build_pruned_graph(graph: Graph,
         # Retrieve the corresponding mask using the node's name (since we use a graph's copy).
         mask = [v for k, v in masks.items() if k.name == pruning_section.entry_node.name]
         if len(mask) != 1:
-            Logger.error(f"Expected to find a single node with name {pruning_section.entry_node.name} in masks dictionary but found {len(mask)}")
+            Logger.critical(f"Expected to find a single node with name {pruning_section.entry_node.name} in masks dictionary but found {len(mask)}")
         mask = mask[0]
 
         # If the mask indicates that some channels are to be pruned, apply it.

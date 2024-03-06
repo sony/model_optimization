@@ -66,5 +66,5 @@ class BaseCollector(object):
         """
 
         if not self.is_legal:
-            Logger.exception(f'{self.__class__.__name__} was manipulated per-channel,'
+            Logger.critical(f'{self.__class__.__name__} was manipulated per-channel,'
                              'but collected per-tensor. Data is invalid.')  # pragma: no cover

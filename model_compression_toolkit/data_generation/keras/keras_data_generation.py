@@ -152,7 +152,7 @@ if FOUND_TF:
                                                        output_loss_function_dict=output_loss_function_dict)
 
         if not all(normalization[1]):
-            Logger.exception(
+            Logger.critical(
                 f'Invalid normalization std {normalization[1]} set to zero,'
                 f'will lead to division by zero., Please choose non-zero normalization std')
 
@@ -161,7 +161,7 @@ if FOUND_TF:
 
         # Check if the scheduler type is valid
         if scheduler_get_fn is None:
-            Logger.exception(
+            Logger.critical(
                 f'Invalid scheduler_type {data_generation_config.scheduler_type}.'
                 f'Please choose one of {SchedulerType.get_values()}')
 

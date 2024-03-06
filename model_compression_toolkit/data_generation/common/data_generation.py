@@ -64,7 +64,7 @@ def get_data_generation_classes(
 
     # Check if the image pipeline type is valid
     if image_pipeline is None:
-        Logger.exception(
+        Logger.critical(
             f'Invalid image_pipeline_type {data_generation_config.image_pipeline_type}.'
             f'Please choose one of {ImagePipelineType.get_values()}')
 
@@ -73,7 +73,7 @@ def get_data_generation_classes(
 
     # Check if the image normalization type is valid
     if normalization is None:
-        Logger.exception(
+        Logger.critical(
             f'Invalid image_normalization_type {data_generation_config.image_normalization_type}.'
             f'Please choose one of {ImageNormalizationType.get_values()}')
 
@@ -81,7 +81,7 @@ def get_data_generation_classes(
     bn_layer_weighting_fn = bn_layer_weighting_function_dict.get(data_generation_config.layer_weighting_type)
 
     if bn_layer_weighting_fn is None:
-        Logger.exception(
+        Logger.critical(
             f'Invalid layer_weighting_type {data_generation_config.layer_weighting_type}.'
             f'Please choose one of {BNLayerWeightingType.get_values()}')
 
@@ -90,7 +90,7 @@ def get_data_generation_classes(
 
     # Check if the data initialization type is valid
     if image_initialization_fn is None:
-        Logger.exception(
+        Logger.critical(
             f'Invalid data_init_type {data_generation_config.data_init_type}.'
             f'Please choose one of {DataInitType.get_values()}')
 
@@ -99,7 +99,7 @@ def get_data_generation_classes(
 
     # Check if the BatchNorm alignment loss type is valid
     if bn_alignment_loss_fn is None:
-        Logger.exception(
+        Logger.critical(
             f'Invalid bn_alignment_loss_type {data_generation_config.bn_alignment_loss_type}.'
             f'Please choose one of {BatchNormAlignemntLossType.get_values()}')
 
@@ -108,7 +108,7 @@ def get_data_generation_classes(
 
     # Check if the output loss type is valid
     if output_loss_fn is None:
-        Logger.exception(
+        Logger.critical(
             f'Invalid output_loss_type {data_generation_config.output_loss_type}.'
             f'Please choose one of {OutputLossType.get_values()}')
 

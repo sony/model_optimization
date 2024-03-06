@@ -101,7 +101,7 @@ def conv2d_collapsing_fn(first_node: BaseNode,
 
         return kernel_collapsed, bias_collapsed
     else:
-        Logger.error("No supported layer collapsing of {} and {}".format(first_node.type, second_node.type))
+        Logger.critical("No supported layer collapsing of {} and {}".format(first_node.type, second_node.type))
 
 
 def pytorch_linear_collapsing() -> Conv2DCollapsing:

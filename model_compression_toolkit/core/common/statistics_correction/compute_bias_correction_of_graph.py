@@ -190,11 +190,11 @@ def _get_bias_correction_term_of_node(input_channels_axis: int,
     """
 
     if output_channels_axis is None:
-        Logger.error(
+        Logger.critical(
             f'Unknown output channel axis for node named: {n.name},'
             f' please update channel mapping function')
     if input_channels_axis is None:
-        Logger.error(
+        Logger.critical(
             f'Unknown input channel axis for node named: {n.name},'
             f' please update channel mapping function')
     # Compute the bias correction term.
