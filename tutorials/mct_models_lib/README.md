@@ -4,11 +4,11 @@ MCT Models Library is a collection of models sourced from various of repositorie
 
 ## Models
 
-| Model        | Source Repository           | 
-|--------------|-----------------------------|
-| EfficientDet | [efficientdet-pytorch](https://github.com/rwightman/efficientdet-pytorch) |
-| Nanodet-Plus | [Nanodet-Plus](https://github.com/RangiLyu/nanodet)         |
-| Yolov8n      | [Ultralytics](https://github.com/ultralytics/ultralytics)          |
+| Model        | Source Repository           | MCT Model Library                                                                                                     | 
+|--------------|-----------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| EfficientDet | [efficientdet-pytorch](https://github.com/rwightman/efficientdet-pytorch) | [model code](https://github.com/sony/model_optimization/tree/main/tutorials/mct_models_lib/models_keras/efficientdet) |
+| Nanodet-Plus | [Nanodet-Plus](https://github.com/RangiLyu/nanodet)         | [model code](https://github.com/sony/model_optimization/tree/main/tutorials/mct_models_lib/models_keras/nanodet)      |                                                                                                                
+| Yolov8n      | [Ultralytics](https://github.com/ultralytics/ultralytics)          | [model code](https://github.com/sony/model_optimization/tree/main/tutorials/mct_models_lib/models_keras/yolov8)       |
 
 
 
