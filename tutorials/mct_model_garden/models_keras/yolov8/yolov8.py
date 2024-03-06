@@ -273,7 +273,7 @@ def dist2bbox(points: tf.Tensor, distance: tf.Tensor) -> tf.Tensor:
     return tf.stack([y1, x1, y2, x2], -1)
 
 class Detect:
-    def __init__(self, nc: int = 80, ch: List[int] = (), name: str = ''):
+    def __init__(self, nc: int = 80, ch: List[int] = (), img_size: int = 640, name: str = ''):
         """
         Detection layer for YOLOv8.
 
@@ -288,8 +288,9 @@ class Detect:
         self.reg_max = 16  # DFL channels
         self.no = nc + self.reg_max * 4  # number of outputs per anchor
         self.feat_sizes = [80, 40, 20]
+        self.feat_sizes = [int(fs * img_size / 640) for fs in self.feat_sizes]
         self.stride_sizes = [8, 16, 32]
-        img_size = 640
+        # img_size = 640
         nd0, nd1, nd2 = np.cumsum([sz ** 2 for sz in self.feat_sizes]) # split per stride/resolution level
 
         c2, c3 = max((16, ch[0] // 4, self.reg_max * 4)), max(ch[0], self.nc)  # channels
@@ -341,7 +342,7 @@ class Detect:
 
         return [y_bb, y_cls]
 
-def parse_model(d: dict, ch: List[int], verbose: bool = True) -> Tuple[List, List[int]]:
+def parse_model(d: dict, ch: List[int], img_size: int = 640) -> Tuple[List, List[int]]:
     """
     Parse a YOLO model.yaml dictionary and construct the model architecture.
 
@@ -380,6 +381,7 @@ def parse_model(d: dict, ch: List[int], verbose: bool = True) -> Tuple[List, Lis
             c2 = sum(ch[x] for x in f)
         elif m is Detect:
             args.append([ch[x] for x in f])
+            args.append(img_size)
         else:
             c2 = ch[f]
 
@@ -402,7 +404,7 @@ def parse_model(d: dict, ch: List[int], verbose: bool = True) -> Tuple[List, Lis
     return layers, sorted(save)
 
 class DetectionModelKeras:
-    def __init__(self, cfg: dict, ch: int = 3, verbose: bool = True):
+    def __init__(self, cfg: dict, ch: int = 3, img_size: int = 640):
         """
         YOLOv8 detection model.
 
@@ -414,7 +416,7 @@ class DetectionModelKeras:
         # Define model
         self.yaml = cfg
         ch = self.yaml['ch'] = self.yaml.get('ch', ch)  # input channels
-        self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch, verbose=verbose)  # model, savelist
+        self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch, img_size=img_size)  # model, savelist
 
     def __call__(self, x):
         y, dt = [], []  # outputs
@@ -438,6 +440,6 @@ def yolov8_keras(model_yaml: str, img_size: int) -> Model:
     """
     cfg = model_yaml
     cfg_dict = yaml_load(cfg, append_filename=True)  # model dict
-    model_func = DetectionModelKeras(cfg_dict, verbose=True)  # model functionality
+    model_func = DetectionModelKeras(cfg_dict, img_size=img_size)  # model functionality
     inputs = Input(shape=(img_size, img_size, 3))
     return Model(inputs, model_func(inputs))
