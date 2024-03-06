@@ -62,8 +62,7 @@ class BaseSecondMomentTest(BaseKerasFeatureNetworkTest, ABC):
         super(BaseSecondMomentTest, self).__init__(unit_test=unit_test,
                                                    val_batch_size=128,
                                                    num_calibration_iter=100,
-                                                   input_shape=(32, 32, 1),
-                                                   experimental_exporter=True)
+                                                   input_shape=(32, 32, 1))
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 16,
@@ -226,7 +225,7 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
         x = layers.Activation('relu')(x)
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
-    def run_test(self, experimental_exporter=False):
+    def run_test(self):
         feature_networks = self.create_networks()
         feature_networks = feature_networks if isinstance(feature_networks, list) else [feature_networks]
         for model_float in feature_networks:

@@ -32,8 +32,7 @@ layers = keras.layers
 class MultipleOutputNodesMultipleTensors(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
         super().__init__(unit_test,
-                         input_shape=(20,20,3),
-                         experimental_exporter=True) # Increase shape as the test has many convolutions
+                         input_shape=(20,20,3)) # Increase shape as the test has many convolutions
 
     def inner_functional_model(self, input_shape):
         inputs = layers.Input(shape=input_shape[1:])

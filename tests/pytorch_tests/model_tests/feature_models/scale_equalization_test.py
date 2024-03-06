@@ -59,16 +59,10 @@ class ScaleEqualizationBaseTest(BasePytorchTest):
         set_model(float_model)
         for model_name, quantized_model in quantized_models.items():
             set_model(quantized_model)
-            if self.experimental_exporter:
-                quantized_model_layer1_weight = quantized_model.layer1_bn.layer.weight.detach().cpu().numpy().squeeze()
-                quantized_model_layer2_weight = quantized_model.layer2.layer.weight.detach().cpu().numpy().squeeze()
-                is_first_transpose = type(quantized_model.layer1_bn.layer) == ConvTranspose2d
-                is_same = type(quantized_model.layer1_bn.layer) == type(quantized_model.layer2.layer)
-            else:
-                quantized_model_layer1_weight = quantized_model.layer1_bn.weight.detach().cpu().numpy().squeeze()
-                quantized_model_layer2_weight = quantized_model.layer2.weight.detach().cpu().numpy().squeeze()
-                is_first_transpose = type(quantized_model.layer1_bn) == ConvTranspose2d
-                is_same = type(quantized_model.layer1_bn) == type(quantized_model.layer2)
+            quantized_model_layer1_weight = quantized_model.layer1_bn.layer.weight.detach().cpu().numpy().squeeze()
+            quantized_model_layer2_weight = quantized_model.layer2.layer.weight.detach().cpu().numpy().squeeze()
+            is_first_transpose = type(quantized_model.layer1_bn.layer) == ConvTranspose2d
+            is_same = type(quantized_model.layer1_bn.layer) == type(quantized_model.layer2.layer)
 
             float_model_layer1_weight = float_model.layer1.weight.detach().cpu().numpy().squeeze()
             float_model_layer2_weight = float_model.layer2.weight.detach().cpu().numpy().squeeze()

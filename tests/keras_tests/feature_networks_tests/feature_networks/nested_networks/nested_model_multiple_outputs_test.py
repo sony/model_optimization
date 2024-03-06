@@ -35,7 +35,7 @@ layers = keras.layers
 
 class NestedModelMultipleOutputsTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, val_batch_size=10, experimental_exporter=True)
+        super().__init__(unit_test, val_batch_size=10 )
 
     def get_tpc(self):
         return get_16bit_tpc("nested_multi_outputs_test")

@@ -252,8 +252,7 @@ class LayerTest(unittest.TestCase):
                             partial(tf.image.crop_and_resize, boxes=boxes, box_indices=box_indices, crop_size=(21, 24),
                                     method='nearest'),
                             partial(tf.image.crop_and_resize, boxes=boxes, box_indices=box_indices, crop_size=(24, 20),
-                                    extrapolation_value=0)],
-                           experimental_exporter=False).run_test()
+                                    extrapolation_value=0)]).run_test()
 
     def test_conv2dtranspose(self):
         BaseKerasLayerTest(self,

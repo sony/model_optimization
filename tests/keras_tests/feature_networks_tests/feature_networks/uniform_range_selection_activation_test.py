@@ -32,7 +32,7 @@ tp = mct.target_platform
 
 class UniformRangeSelectionActivationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, activation_threshold_method):
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test )
         self.activation_threshold_method = activation_threshold_method
 
     def generate_inputs(self):

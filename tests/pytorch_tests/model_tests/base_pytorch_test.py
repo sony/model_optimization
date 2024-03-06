@@ -35,13 +35,11 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                  unit_test,
                  float_reconstruction_error=1e-6,
                  convert_to_fx=True,
-                 experimental_exporter=True,
                  val_batch_size=1):
 
         super().__init__(unit_test, val_batch_size=val_batch_size)
         self.float_reconstruction_error = float_reconstruction_error
         self.convert_to_fx = convert_to_fx
-        self.experimental_exporter = experimental_exporter
 
     def get_tpc(self):
         return {

@@ -37,7 +37,7 @@ tp = mct.target_platform
 
 class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, val_batch_size=1):
-        super().__init__(unit_test, val_batch_size=val_batch_size, experimental_exporter=True)
+        super().__init__(unit_test, val_batch_size=val_batch_size )
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,

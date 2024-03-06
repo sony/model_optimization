@@ -34,7 +34,7 @@ def get_base_mp_nbits_candidates():
 
 class BaseMixedPrecisionBopsTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, mixed_precision_candidates_list):
-        super().__init__(unit_test,experimental_exporter=True)
+        super().__init__(unit_test)
 
         self.mixed_precision_candidates_list = mixed_precision_candidates_list
 

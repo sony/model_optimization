@@ -54,7 +54,7 @@ class ScopeFilterTest(BaseKerasFeatureNetworkTest):
         self.num_conv_channels = 4
         self.scope = 'scope'
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test )
 
     def get_tpc(self):
         tp_model = generate_test_tp_model({
@@ -136,7 +136,7 @@ class NameFilterTest(BaseKerasFeatureNetworkTest):
         # -(kernel*kernel*num_conv_channels*num_conv_channels)/2 : +(
         # kernel*kernel*num_conv_channels*num_conv_channels)/2
         self.conv_w = get_uniform_weights(self.kernel, self.num_conv_channels, self.num_conv_channels)
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test )
 
     def get_tpc(self):
         tp_model = generate_test_tp_model({
@@ -202,7 +202,7 @@ class TypeFilterTest(BaseKerasFeatureNetworkTest):
                                         [self.kernel, self.kernel, self.num_conv_channels, self.num_conv_channels])
         # set a weight above 1
         self.conv_w[0, 0, 0, 0] = 1.1
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test )
 
     def weights_params_fn(self):
         return get_weights_quantization_params_fn(tp.QuantizationMethod.POWER_OF_TWO)
