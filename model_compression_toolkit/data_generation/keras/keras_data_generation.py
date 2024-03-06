@@ -115,13 +115,13 @@ if FOUND_TF:
             output_loss_multiplier=output_loss_multiplier)
 
 
-    def tensorflow_data_generation_experimental(
+    def keras_data_generation_experimental(
             model: tf.keras.Model,
             n_images: int,
             output_image_size: Tuple,
             data_generation_config: DataGenerationConfig) -> tf.Tensor:
         """
-        Function to perform data generation using the provided model and data generation configuration.
+        Function to perform data generation using the provided Keras model and data generation configuration.
 
         Args:
             model (Model): Keras model to generate data for.
@@ -132,7 +132,7 @@ if FOUND_TF:
         Returns:
             List[tf.Tensor]: Finalized list containing generated images.
         """
-        Logger.warning(f"tensorflow_data_generation_experimental is experimental "
+        Logger.warning(f"keras_data_generation_experimental is experimental "
                        f"and is subject to future changes."
                        f"If you encounter an issue, please open an issue in our GitHub "
                        f"project https://github.com/sony/model_optimization")
@@ -333,6 +333,6 @@ else:
                         'Could not find Tensorflow package.')  # pragma: no cover
 
 
-    def tensorflow_data_generation_experimental(*args, **kwargs):
+    def keras_data_generation_experimental(*args, **kwargs):
         Logger.critical('Installing tensorflow is mandatory when using pytorch_data_generation_experimental. '
                         'Could not find Tensorflow package.')  # pragma: no cover

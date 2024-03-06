@@ -49,17 +49,17 @@ import model_compression_toolkit as mct
 
 # Set the configuration parameters for data generation
 data_gen_config = mct.data_generation.get_tensorflow_data_generation_config(
-    n_iter=500,                             # Number of iterations
-    data_gen_batch_size=32,                 # Batch size for data generation
-    extra_pixels=32,                        # image manipulation when generating data                                                     
+    n_iter=500,  # Number of iterations
+    data_gen_batch_size=32,  # Batch size for data generation
+    extra_pixels=32,  # image manipulation when generating data                                                     
     # ... (other configuration parameters)
 )
 
 # Call the data generation function to generate images
-generated_images = mct.data_generation.tensorflow_data_generation_experimental(
-    model=my_model,                         # PyTorch model to generate data for
-    n_images=1024,                          # Number of images to generate
-    output_image_size=224,                  # Size of the output images
+generated_images = mct.data_generation.keras_data_generation_experimental(
+    model=my_model,  # PyTorch model to generate data for
+    n_images=1024,  # Number of images to generate
+    output_image_size=224,  # Size of the output images
     data_generation_config=data_gen_config  # Configuration for data generation
 )
 ```
