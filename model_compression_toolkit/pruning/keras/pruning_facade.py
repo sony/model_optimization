@@ -101,6 +101,10 @@ if FOUND_TF:
 
         """
 
+        Logger.warning(f"keras_pruning_experimental is experimental and is subject to future changes."
+                       f"If you encounter an issue, please open an issue in our GitHub "
+                       f"project https://github.com/sony/model_optimization")
+
         # Instantiate the Keras framework implementation.
         fw_impl = PruningKerasImplementation()
 

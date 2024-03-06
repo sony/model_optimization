@@ -73,13 +73,13 @@ if FOUND_TORCH:
         return module
 
 
-    def pytorch_quantization_aware_training_init(in_model: Module,
-                                                 representative_data_gen: Callable,
-                                                 target_kpi: KPI = None,
-                                                 core_config: CoreConfig = CoreConfig(),
-                                                 qat_config: QATConfig = QATConfig(),
-                                                 fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
-                                                 target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
+    def pytorch_quantization_aware_training_init_experimental(in_model: Module,
+                                                              representative_data_gen: Callable,
+                                                              target_kpi: KPI = None,
+                                                              core_config: CoreConfig = CoreConfig(),
+                                                              qat_config: QATConfig = QATConfig(),
+                                                              fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
+                                                              target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
          Prepare a trained Pytorch model for quantization aware training. First the model quantization is optimized
          with post-training quantization, then the model layers are wrapped with QuantizeWrappers. The model is
@@ -136,11 +136,15 @@ if FOUND_TORCH:
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model. Now the model contains quantizer wrappers for fine tunning the weights:
 
-             >>> quantized_model, quantization_info = pytorch_quantization_aware_training_init(model, repr_datagen, core_config=config)
+             >>> quantized_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model, repr_datagen, core_config=config)
 
              For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
          """
+        Logger.warning(
+            f"pytorch_quantization_aware_training_init_experimental is experimental and is subject to future changes."
+            f"If you encounter an issue, please open an issue in our GitHub "
+            f"project https://github.com/sony/model_optimization")
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
@@ -180,7 +184,7 @@ if FOUND_TORCH:
         return qat_model, user_info
 
 
-    def pytorch_quantization_aware_training_finalize(in_model: Module):
+    def pytorch_quantization_aware_training_finalize_experimental(in_model: Module):
         """
          Convert a model fine-tuned by the user to a network with QuantizeWrappers containing
          InferableQuantizers, that quantizes both the layers weights and outputs
@@ -214,13 +218,18 @@ if FOUND_TORCH:
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
 
-             >>> quantized_model, quantization_info = pytorch_quantization_aware_training_init(model, repr_datagen, core_config=config)
+             >>> quantized_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model, repr_datagen, core_config=config)
 
              Use the quantized model for fine-tuning. Finally, remove the quantizer wrappers and keep a quantize model ready for inference.
 
-             >>> quantized_model = mct.pytorch_quantization_aware_training_finalize(quantized_model)
+             >>> quantized_model = mct.qat.pytorch_quantization_aware_training_finalize_experimental(quantized_model)
 
          """
+        Logger.warning(
+            f"pytorch_quantization_aware_training_finalize_experimental is experimental and is subject to future changes."
+            f"If you encounter an issue, please open an issue in our GitHub "
+            f"project https://github.com/sony/model_optimization")
+
         for _, layer in in_model.named_children():
             if isinstance(layer, (PytorchQuantizationWrapper, PytorchActivationQuantizationHolder)):
                 layer.convert_to_inferable_quantizers()
@@ -231,13 +240,13 @@ if FOUND_TORCH:
 else:
     # If torch is not installed,
     # we raise an exception when trying to use these functions.
-    def pytorch_quantization_aware_training_init(*args, **kwargs):
+    def pytorch_quantization_aware_training_init_experimental(*args, **kwargs):
         Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_quantization_aware_training_init. '
+                        'when using pytorch_quantization_aware_training_init_experimental. '
                         'Could not find the torch package.')  # pragma: no cover
 
 
-    def pytorch_quantization_aware_training_finalize(*args, **kwargs):
+    def pytorch_quantization_aware_training_finalize_experimental(*args, **kwargs):
         Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_quantization_aware_training_finalize. '
+                        'when using pytorch_quantization_aware_training_finalize_experimental. '
                         'Could not find the torch package.')  # pragma: no cover

@@ -132,6 +132,11 @@ if FOUND_TF:
         Returns:
             List[tf.Tensor]: Finalized list containing generated images.
         """
+        Logger.warning(f"tensorflow_data_generation_experimental is experimental "
+                       f"and is subject to future changes."
+                       f"If you encounter an issue, please open an issue in our GitHub "
+                       f"project https://github.com/sony/model_optimization")
+
         # Get Data Generation functions and classes
         image_pipeline, normalization, bn_layer_weighting_fn, bn_alignment_loss_fn, output_loss_fn, \
             init_dataset = get_data_generation_classes(data_generation_config=data_generation_config,

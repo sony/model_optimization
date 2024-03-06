@@ -85,13 +85,13 @@ if FOUND_TF:
         return layer
 
 
-    def keras_quantization_aware_training_init(in_model: Model,
-                                               representative_data_gen: Callable,
-                                               target_kpi: KPI = None,
-                                               core_config: CoreConfig = CoreConfig(),
-                                               qat_config: QATConfig = QATConfig(),
-                                               fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
-                                               target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
+    def keras_quantization_aware_training_init_experimental(in_model: Model,
+                                                            representative_data_gen: Callable,
+                                                            target_kpi: KPI = None,
+                                                            core_config: CoreConfig = CoreConfig(),
+                                                            qat_config: QATConfig = QATConfig(),
+                                                            fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
+                                                            target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
          Prepare a trained Keras model for quantization aware training. First the model quantization is optimized
          with post-training quantization, then the model layers are wrapped with QuantizeWrappers. The model is
@@ -161,7 +161,7 @@ if FOUND_TF:
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
 
-             >>> quantized_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init(model, repr_datagen, kpi, core_config=config)
+             >>> quantized_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init_experimental(model, repr_datagen, kpi, core_config=config)
 
              Use the quantized model for fine-tuning. For loading the model from file, use the custom_objects dictionary:
 
@@ -170,6 +170,11 @@ if FOUND_TF:
              For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
          """
+
+        Logger.warning(f"keras_quantization_aware_training_init_experimental is experimental and is subject to future changes."
+                       f"If you encounter an issue, please open an issue in our GitHub "
+                       f"project https://github.com/sony/model_optimization")
+
         KerasModelValidation(model=in_model,
                              fw_info=fw_info).validate()
 
@@ -207,7 +212,7 @@ if FOUND_TF:
         return qat_model, user_info, {}
 
 
-    def keras_quantization_aware_training_finalize(in_model: Model) -> Model:
+    def keras_quantization_aware_training_finalize_experimental(in_model: Model) -> Model:
         """
          Convert a model fine-tuned by the user (Trainable quantizers) to a model with Inferable quantizers.
 
@@ -252,14 +257,19 @@ if FOUND_TF:
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
 
-             >>> quantized_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init(model, repr_datagen, kpi, core_config=config)
+             >>> quantized_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init_experimental(model, repr_datagen, kpi, core_config=config)
 
              Use the quantized model for fine-tuning. For loading the model from file, use the custom_objects dictionary:
 
              >>> quantized_model = tf.keras.models.load_model(model_file, custom_objects=custom_objects)
-             >>> quantized_model = mct.qat.keras_quantization_aware_training_finalize(quantized_model)
+             >>> quantized_model = mct.qat.keras_quantization_aware_training_finalize_experimental(quantized_model)
 
          """
+        Logger.warning(
+            f"keras_quantization_aware_training_finalize_experimental is experimental and is subject to future changes."
+            f"If you encounter an issue, please open an issue in our GitHub "
+            f"project https://github.com/sony/model_optimization")
+
         def _export(layer):
             if isinstance(layer, KerasTrainableQuantizationWrapper):
                 layer = layer.convert_to_inferable_quantizers()
@@ -282,13 +292,13 @@ if FOUND_TF:
 else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
-    def keras_quantization_aware_training_init(*args, **kwargs):
+    def keras_quantization_aware_training_init_experimental(*args, **kwargs):
         Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_quantization_aware_training_init. '
+                        'when using keras_quantization_aware_training_init_experimental. '
                         'Could not find Tensorflow package.')  # pragma: no cover
 
 
-    def keras_quantization_aware_training_finalize(*args, **kwargs):
+    def keras_quantization_aware_training_finalize_experimental(*args, **kwargs):
         Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_quantization_aware_training_finalize. '
+                        'when using keras_quantization_aware_training_finalize_experimental. '
                         'Could not find Tensorflow package.')  # pragma: no cover
