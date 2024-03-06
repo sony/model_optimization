@@ -21,7 +21,7 @@ import keras.models
 import numpy as np
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import get_target_platform_capabilities, QuantizationConfig
+from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.exporter.model_exporter.keras.base_keras_exporter import DEFAULT_KERAS_EXPORT_EXTENTION
@@ -85,7 +85,7 @@ class KerasFakeQuantExporterBaseTest(ABC):
         return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def get_quantization_config(self):
-        return QuantizationConfig()
+        return mct.core.QuantizationConfig()
 
     def __get_repr_dataset(self):
         yield [np.random.randn(*((1,) + shape)) for shape in self.get_input_shape()]
