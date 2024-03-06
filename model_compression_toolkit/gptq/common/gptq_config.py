@@ -36,8 +36,7 @@ class GPTQHessianScoresConfig:
                  hessians_num_samples: int = 16,
                  norm_scores: bool = True,
                  log_norm: bool = True,
-                 scale_log_norm: bool = False,
-                 hessians_n_iter: int = 50): #TODO: remove
+                 scale_log_norm: bool = False):
 
         """
         Initialize a GPTQHessianWeightsConfig.
@@ -47,14 +46,12 @@ class GPTQHessianScoresConfig:
             norm_scores (bool): Whether to normalize the returned scores of the weighted loss function (to get values between 0 and 1).
             log_norm (bool): Whether to use log normalization for the GPTQ Hessian-based scores.
             scale_log_norm (bool): Whether to scale the final vector of the Hessian-based scores.
-            hessians_n_iter (int): Number of random iterations to run Hessian approximation for GPTQ Hessian-based scores.
         """
 
         self.hessians_num_samples = hessians_num_samples
         self.norm_scores = norm_scores
         self.log_norm = log_norm
         self.scale_log_norm = scale_log_norm
-        self.hessians_n_iter = hessians_n_iter
 
 
 class GradientPTQConfig:
