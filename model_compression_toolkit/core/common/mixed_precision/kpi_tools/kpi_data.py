@@ -91,13 +91,20 @@ def compute_nodes_weights_params(graph: Graph, fw_info: FrameworkInfo) -> np.nda
 
     weights_params = []
     for n in graph.nodes:
-        if n.has_weights_quantization_enabled_candidate() and not n.reuse:
-            node_num_weights_params = 0
-            for attr in fw_info.get_kernel_op_attributes(n.type):
-                if attr is not None:
-                    node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
+        # TODO: when enabling multiple attribute quantization by default (currently,
+        #  only kernel quantization is enabled) we should include other attributes memory in the sum of all
+        #  weights memory.
+        #  When implementing this, we should just go over all attributes in the node instead of counting only kernels.
+        kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
+        if kernel_attr is not None and not n.reuse:
+            kernel_candidates = n.get_all_weights_attr_candidates(kernel_attr)
+            if len(kernel_candidates) > 0 and any([c.enable_weights_quantization for c in kernel_candidates]):
+                node_num_weights_params = 0
+                for attr in fw_info.get_kernel_op_attributes(n.type):
+                    if attr is not None:
+                        node_num_weights_params += n.get_weights_by_keys(attr).flatten().shape[0]
 
-            weights_params.append(node_num_weights_params)
+                weights_params.append(node_num_weights_params)
 
     return np.array(weights_params)
 
@@ -142,7 +149,7 @@ def compute_total_bops(graph: Graph, fw_info: FrameworkInfo, fw_impl: FrameworkI
 
     # Go over all configurable nodes that have kernels.
     for n in graph.get_topo_sorted_nodes():
-        if n.has_weights_to_quantize(fw_info):
+        if n.has_kernel_weight_to_quantize(fw_info):
             # If node doesn't have weights then its MAC count is 0, and we shouldn't consider it in the BOPS count.
             incoming_edges = graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
             assert len(incoming_edges) == 1, f"Can't compute BOPS metric for node {n.name} with multiple inputs."

@@ -82,7 +82,6 @@ from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccurac
     GPTQLearnRateZeroTest
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
-from tests.pytorch_tests.model_tests.feature_models.old_api_test import OldApiTest
 from tests.pytorch_tests.model_tests.feature_models.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
@@ -502,8 +501,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         GPTQAccuracyTest(self, per_channel=True, hessian_weights=False).run_test()
         GPTQAccuracyTest(self, per_channel=True, log_norm_weights=False).run_test()
         GPTQWeightsUpdateTest(self).run_test()
-        GPTQLearnRateZeroTest(self,
-                              experimental_exporter=False).run_test()  # TODO: check why weights are different between gptq and ptq when using experimental exporter flag. May be due to different quantization ways (fake-quant pytorch layer vs numpy quantinzation in core/common/quantization/quantizers/quantizers_helpers)
+        GPTQLearnRateZeroTest(self).run_test()
 
         GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
         GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
@@ -513,7 +511,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
                          per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
         GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
-        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer, experimental_exporter=False).run_test()
+        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
 
         GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
                          weights_quant_method=QuantizationMethod.UNIFORM).run_test()
@@ -569,12 +567,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionKpiCfgTest(self).run_test()
-
-    def test_old_api(self):
-        OldApiTest(self).run_test()
-        OldApiTest(self, mp_enable=True).run_test()
-        OldApiTest(self, mp_enable=True, gptq_enable=True).run_test()
-        OldApiTest(self, gptq_enable=True).run_test()
 
 
 if __name__ == '__main__':

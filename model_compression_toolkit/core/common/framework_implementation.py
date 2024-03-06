@@ -18,7 +18,7 @@ from typing import Callable, Any, List, Tuple, Dict
 import numpy as np
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
@@ -171,22 +171,6 @@ class FrameworkImplementation(ABC):
                              f'framework\'s apply_shift_negative_correction method.')  # pragma: no cover
 
     @abstractmethod
-    def attach_sc_to_node(self, node: BaseNode, fw_info: FrameworkInfo) -> BaseStatsCollector:
-        """
-        Return a statistics collector that should be attached to a node's output
-        during statistics collection.
-
-        Args:
-            node: Node to return its collector.
-            fw_info: Information relevant to a specific framework about what is out channel axis (for statistics per-channel).
-
-        Returns:
-            Statistics collector for the node.
-        """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s attach_sc_to_node method.')  # pragma: no cover
-
-    @abstractmethod
     def get_substitutions_channel_equalization(self,
                                                quant_config: QuantizationConfig,
                                                fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
@@ -320,7 +304,7 @@ class FrameworkImplementation(ABC):
     @abstractmethod
     def get_sensitivity_evaluator(self,
                                   graph: Graph,
-                                  quant_config: MixedPrecisionQuantizationConfigV2,
+                                  quant_config: MixedPrecisionQuantizationConfig,
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
                                   hessian_info_service: HessianInfoService = None,
@@ -465,3 +449,19 @@ class FrameworkImplementation(ABC):
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s sensitivity_eval_inference method.')  # pragma: no cover
+
+    def get_inferable_quantizers(self, node: BaseNode):
+        """
+        Returns sets of framework compatible weights and activation quantizers for the given node.
+
+        Args:
+           node: Node to get quantizers for.
+
+        Returns:
+            weight_quantizers: A dictionary between a weight's name to its quantizer.
+            activation_quantizers: A list of activations quantization, one for each layer output.
+
+        """
+
+        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
+                             f'framework\'s get_inferable_quantizers method.')  # pragma: no cover

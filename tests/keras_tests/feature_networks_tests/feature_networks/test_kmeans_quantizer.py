@@ -23,6 +23,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 import model_compression_toolkit as mct
 import tensorflow as tf
 
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -52,7 +53,7 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
 
     def __init__(self,
                  unit_test,
-                 quantization_method: target_platform.QuantizationMethod.KMEANS,
+                 quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER,
                  weight_fn=get_uniform_weights,
                  weights_n_bits: int = 3):
 
@@ -92,12 +93,15 @@ class KmeansQuantizerTestBase(BaseKerasFeatureNetworkTest):
     def get_debug_config(self):
         return mct.core.DebugConfig(network_editor=[EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                                              action=ChangeCandidatesWeightsQuantConfigAttr(
+                                                                 attr_name=KERNEL,
                                                                  weights_quantization_method=target_platform.QuantizationMethod.POWER_OF_TWO)),
                                                     EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                                              action=ChangeCandidatesWeightsQuantConfigAttr(
+                                                                 attr_name=KERNEL,
                                                                  weights_quantization_fn=power_of_two_quantizer)),
                                                     EditRule(filter=NodeNameFilter(self.node_to_change_name),
                                                              action=ChangeCandidatesWeightsQuantConfigAttr(
+                                                                 attr_name=KERNEL,
                                                                  weights_quantization_params_fn=power_of_two_selection_tensor)),
                                                     ])
 
@@ -116,7 +120,7 @@ class KmeansQuantizerTest(KmeansQuantizerTestBase):
 
     def __init__(self,
                  unit_test,
-                 quantization_method: target_platform.QuantizationMethod.KMEANS,
+                 quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER,
                  weights_n_bits: int = 3):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
@@ -125,7 +129,8 @@ class KmeansQuantizerTest(KmeansQuantizerTestBase):
         # using different methods (but started as the same value)
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(np.sum(
-            np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())) > 0)
+            np.abs(conv_layers[0].get_quantized_weights()[KERNEL] - conv_layers[2].get_quantized_weights()[KERNEL])) > 0)
+
 
 
 class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
@@ -136,7 +141,7 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
 
     def __init__(self,
                  unit_test,
-                 quantization_method: target_platform.QuantizationMethod.KMEANS,
+                 quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER,
                  weights_n_bits: int = 3):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
@@ -150,7 +155,7 @@ class KmeansQuantizerNotPerChannelTest(KmeansQuantizerTestBase):
         # using different methods (but started as the same value)
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         self.unit_test.assertTrue(np.sum(
-            np.abs(conv_layers[0].weights[0].numpy() - conv_layers[2].weights[0].numpy())) > 0)
+            np.abs(conv_layers[0].get_quantized_weights()[KERNEL] - conv_layers[2].get_quantized_weights()[KERNEL])) > 0)
 
 
 class KmeansQuantizerTestManyClasses(KmeansQuantizerTestBase):
@@ -158,7 +163,7 @@ class KmeansQuantizerTestManyClasses(KmeansQuantizerTestBase):
     This test checks the chosen quantization method is different that symmetric uniform
     '''
 
-    def __init__(self, unit_test, quantization_method: target_platform.QuantizationMethod.KMEANS, weights_n_bits: int = 8):
+    def __init__(self, unit_test, quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER, weights_n_bits: int = 8):
         super().__init__(unit_test, quantization_method, get_uniform_weights, weights_n_bits)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -175,7 +180,7 @@ class KmeansQuantizerTestZeroWeights(KmeansQuantizerTestBase):
     '''
 
     def __init__(self, unit_test,
-                 quantization_method: target_platform.QuantizationMethod.KMEANS,
+                 quantization_method: target_platform.QuantizationMethod.LUT_POT_QUANTIZER,
                  weights_n_bits: int = 3):
         super().__init__(unit_test, quantization_method, get_zero_as_weights, weights_n_bits)
 

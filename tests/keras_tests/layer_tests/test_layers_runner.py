@@ -245,12 +245,15 @@ class LayerTest(unittest.TestCase):
         boxes = tf.random.uniform(shape=(5, 4))
         box_indices = tf.random.uniform(shape=(5,), minval=0,
                                         maxval=1, dtype=tf.int32)
+
+        # TODO: Exporting layers with constant weights is not supported. Enable exporter once feature is supported.
         BaseKerasLayerTest(self,
                            [partial(tf.image.crop_and_resize, boxes=boxes, box_indices=box_indices, crop_size=(22, 19)),
                             partial(tf.image.crop_and_resize, boxes=boxes, box_indices=box_indices, crop_size=(21, 24),
                                     method='nearest'),
                             partial(tf.image.crop_and_resize, boxes=boxes, box_indices=box_indices, crop_size=(24, 20),
-                                    extrapolation_value=0)]).run_test()
+                                    extrapolation_value=0)],
+                           experimental_exporter=False).run_test()
 
     def test_conv2dtranspose(self):
         BaseKerasLayerTest(self,

@@ -26,12 +26,9 @@ from torch.nn import Module, Sigmoid, Softmax
 
 import model_compression_toolkit.core.pytorch.constants as pytorch_constants
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
-from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
-    create_stats_collector_for_node
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
@@ -39,7 +36,6 @@ from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
-from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.back2framework import get_pytorch_model_builder
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
@@ -90,6 +86,10 @@ from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 from model_compression_toolkit.core.pytorch.statistics_correction.apply_second_moment_correction import \
     pytorch_apply_second_moment_correction
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
+from model_compression_toolkit.exporter.model_wrapper.fw_agnostic.get_inferable_quantizers import \
+    get_inferable_quantizers
+from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.node_to_quantizer import \
+    get_weights_quantizer_for_node, get_activations_quantizer_for_node
 from model_compression_toolkit.logger import Logger
 
 
@@ -205,19 +205,6 @@ class PytorchImplementation(FrameworkImplementation):
                                                        core_config,
                                                        fw_info)
 
-    def attach_sc_to_node(self,
-                          node: BaseNode,
-                          fw_info: FrameworkInfo) -> BaseStatsCollector:
-        """
-        Return a statistics collector that should be attached to a node's output
-        during statistics collection.
-        Args:
-            node: Node to return its collector.
-            fw_info: Information relevant to a specific framework about what is out channel axis (for statistics per-channel)
-        Returns:
-            Statistics collector for the node.
-        """
-        return create_stats_collector_for_node(node, fw_info)
 
     def get_substitutions_channel_equalization(self,
                                                quant_config: QuantizationConfig,
@@ -349,7 +336,7 @@ class PytorchImplementation(FrameworkImplementation):
 
     def get_sensitivity_evaluator(self,
                                   graph: Graph,
-                                  quant_config: MixedPrecisionQuantizationConfigV2,
+                                  quant_config: MixedPrecisionQuantizationConfig,
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
                                   disable_activation_for_metric: bool = False,
@@ -553,3 +540,21 @@ class PytorchImplementation(FrameworkImplementation):
                                                         input_images=input_images,
                                                         fw_impl=self,
                                                         num_iterations_for_approximation=num_iterations_for_approximation)
+
+    def get_inferable_quantizers(self, node: BaseNode):
+        """
+        Returns sets of Pytorch compatible weights and activation quantizers for the given node.
+
+        Args:
+           node: Node to get quantizers for.
+
+        Returns:
+            weight_quantizers: A dictionary between a weight's name to its quantizer.
+            activation_quantizers: A list of activations quantization, one for each layer output.
+
+        """
+
+        return get_inferable_quantizers(node,
+                                        get_weights_quantizer_for_node,
+                                        get_activations_quantizer_for_node,
+                                        node.get_node_weights_attributes())

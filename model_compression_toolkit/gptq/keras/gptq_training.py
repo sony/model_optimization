@@ -37,7 +37,7 @@ else:
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core import common
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.gptq.keras.graph_info import get_weights_for_loss, get_gptq_trainable_parameters
 from model_compression_toolkit.gptq.keras.quantizer.regularization_factory import get_regularization
@@ -56,7 +56,7 @@ class KerasGPTQTrainer(GPTQTrainer):
     def __init__(self,
                  graph_float: Graph,
                  graph_quant: Graph,
-                 gptq_config: GradientPTQConfigV2,
+                 gptq_config: GradientPTQConfig,
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo,
                  representative_data_gen: Callable,
@@ -129,11 +129,8 @@ class KerasGPTQTrainer(GPTQTrainer):
         Returns:
             A boolean whether the layer is to be wrapped with a QuantizeWrapper
         """
-
-        if node.is_weights_quantization_enabled() and not self.fw_info.is_kernel_op(node.type):
-            Logger.error(f"GPTQ Error: Quantizing node {node.name} of type {node.type} "
-                                f"without a kernel isn't supported")
-        return node.is_weights_quantization_enabled()
+        kernel_attr = self.fw_info.get_kernel_op_attributes(node.type)[0]
+        return kernel_attr is not None and node.is_weights_quantization_enabled(kernel_attr)
 
     def gptq_wrapper(self,
                      n: common.BaseNode,
@@ -149,11 +146,16 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         """
         if self._is_gptq_weights_trainable(n):
+            # If we are here, then the node has a kernel attribute to quantize and training during GPTQ
             weights_quantizers, _ = quantization_builder(n,
-                                                         self.gptq_config) # TODO: split quantizers building into two functions: for weights and activations
+                                                         self.gptq_config,  # TODO: split quantizers building into two functions: for weights and activations
+                                                         self.fw_info.get_kernel_op_attributes(n.type)[0])
             if len(weights_quantizers) > 0:
                 return KerasTrainableQuantizationWrapper(layer,
-                                                   weights_quantizers=weights_quantizers)
+                                                         weights_quantizers=weights_quantizers)
+
+        # TODO: need to check if in this case, if there are other weights attributes that are not trainable but are
+        #  quantized, do we need to wrap them as well?
         return layer
 
     def get_activation_quantizer_holder(self, n: common.BaseNode) -> Callable:

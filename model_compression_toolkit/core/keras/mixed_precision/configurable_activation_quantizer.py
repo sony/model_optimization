@@ -45,7 +45,8 @@ class ConfigurableActivationQuantizer(BaseKerasInferableQuantizer):
 
     def __init__(self,
                  node_q_cfg: List[CandidateNodeQuantizationConfig],
-                 max_candidate_idx: int = 0):
+                 max_candidate_idx: int = 0,
+                 kernel_attr: str = None):
         """
         Initializes a configurable quantizer.
 
@@ -53,13 +54,14 @@ class ConfigurableActivationQuantizer(BaseKerasInferableQuantizer):
             node_q_cfg: Quantization configuration candidates of the node that generated the layer that will
                 use this quantizer.
             max_candidate_idx: Index of the node's candidate that has the maximal bitwidth (must exist absolute max).
+            kernel_attr: A kernel attribute name if the node have a kernel attribute (used only for candidates order validation).
         """
 
         super(ConfigurableActivationQuantizer, self).__init__()
 
         self.node_q_cfg = node_q_cfg
 
-        verify_candidates_descending_order(self.node_q_cfg)
+        verify_candidates_descending_order(self.node_q_cfg, kernel_attr)
 
         for qc in node_q_cfg:
             if qc.activation_quantization_cfg.enable_activation_quantization != \

@@ -83,29 +83,37 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
         """
 
-        weights_conf_nodes_names = [n.name for n in self.graph.get_weights_configurable_nodes()]
+        weights_conf_nodes_names = [n.name for n in self.graph.get_weights_configurable_nodes(self.fw_info)]
+        kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
+        if kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr):
 
-        if n.is_weights_quantization_enabled():
-            kernel_attributes = self.fw_info.get_kernel_op_attributes(n.type)
             if n.name in weights_conf_nodes_names:
                 return PytorchQuantizationWrapper(layer,
-                                                  weights_quantizers={attr: ConfigurableWeightsQuantizer(
-                                                      **self._get_weights_configurable_quantizer_kwargs(n, attr))
-                                                      for attr in kernel_attributes})
+                                                  weights_quantizers={
+                                                      kernel_attr: ConfigurableWeightsQuantizer(
+                                                          **self._get_weights_configurable_quantizer_kwargs(n,
+                                                                                                            kernel_attr),
+                                                          kernel_attr=kernel_attr)})
             else:
-                node_weights_qc = n.get_unique_weights_candidates()
+                # TODO: Do we want to include other quantized attributes that are not
+                #  the kernel attribute in the mixed precision model?
+                #  Currently, we only consider kernel attribute quantization (whether it is in mixed precision
+                #  or single precision).
+                node_weights_qc = n.get_unique_weights_candidates(kernel_attr)
                 if not len(node_weights_qc) == 1:
                     Logger.error(f"Expecting node {n.name} to have a unique weights configuration "  # pragma: no cover
                                  f"but {len(node_weights_qc)} different configurations exist.")
 
                 quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
-                                                                  node_weights_qc[0].weights_quantization_cfg.weights_quantization_method,
+                                                                  node_weights_qc[0].weights_quantization_cfg
+                                                                  .get_attr_config(kernel_attr)
+                                                                  .weights_quantization_method,
                                                                   BasePyTorchInferableQuantizer)
-                kwargs = get_weights_inferable_quantizer_kwargs(node_weights_qc[0].weights_quantization_cfg)
+                kwargs = get_weights_inferable_quantizer_kwargs(node_weights_qc[0].weights_quantization_cfg,
+                                                                kernel_attr)
 
                 return PytorchQuantizationWrapper(layer,
-                                                  weights_quantizers={attr: quantier_for_node(**kwargs)
-                                                                      for attr in kernel_attributes})
+                                                  weights_quantizers={kernel_attr: quantier_for_node(**kwargs)})
 
         return layer
 
@@ -124,7 +132,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         assert n.candidates_quantization_cfg is not None, f"Node {n.name} candidates_quantization_cfg is None"
         node_q_cfg_candidates = n.candidates_quantization_cfg
         # sort by descending bit width so using indices would be easier
-        node_q_cfg_candidates.sort(key=lambda x: (x.weights_quantization_cfg.weights_n_bits,
+        node_q_cfg_candidates.sort(key=lambda x: (x.weights_quantization_cfg.get_attr_config(attr).weights_n_bits,
                                                   x.activation_quantization_cfg.activation_n_bits), reverse=True)
 
         float_weights = n.get_weights_by_keys(attr)
@@ -162,18 +170,22 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
             if n.name in activation_conf_nodes_names:
                 assert n.candidates_quantization_cfg is not None, f"Node {n.name} candidates_quantization_cfg is None"
                 node_q_cfg_candidates = n.candidates_quantization_cfg
-                # sort by descending bit width so using indices would be easier
-                node_q_cfg_candidates.sort(key=lambda x: (x.weights_quantization_cfg.weights_n_bits,
-                                                          x.activation_quantization_cfg.activation_n_bits),
-                                           reverse=True)
+
+                # sorting the candidates by kernel attribute weights number of bits first and then by
+                # activation number of bits (in reversed order).
+                # since only kernel attribute is quantized in weights mixed precision,
+                # if the node doesn't have a kernel attribute, we only sort by activation_n_bits.
+                n.sort_node_candidates(self.fw_info)
 
                 max_cfg_candidates = n.find_max_candidates_indices()
                 assert len(max_cfg_candidates) == 1, \
                     f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
                 max_candidate_idx = max_cfg_candidates[0]
 
+                kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
                 activation_quantizers = [ConfigurableActivationQuantizer(**{'node_q_cfg': node_q_cfg_candidates,
-                                                                            'max_candidate_idx': max_candidate_idx})] \
+                                                                            'max_candidate_idx': max_candidate_idx,
+                                                                            'kernel_attr': kernel_attr})] \
                                         * num_of_outputs
             else:
                 node_act_qc = n.get_unique_activation_candidates()
@@ -207,7 +219,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         # creating a mapping between graph nodes and model's layers for mixed precision configurability
         model_layers = dict(model.named_children())
         conf_node2layers = {n.name: self._find_layers_in_model_by_node(n, model_layers)
-                            for n in self.graph.get_configurable_sorted_nodes()}
+                            for n in self.graph.get_configurable_sorted_nodes(self.fw_info)}
 
         return model, user_info, conf_node2layers
 
@@ -259,7 +271,9 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         Returns: A list of layers that responsible for the node's quantization.
 
         """
-        weights_quant = n.is_weights_quantization_enabled()
+        # Only layers with kernel op are considered weights configurable
+        kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
+        weights_quant = False if kernel_attr is None else n.is_weights_quantization_enabled(kernel_attr)
         act_quant = n.is_activation_quantization_enabled()
 
         if weights_quant and not act_quant:

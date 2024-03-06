@@ -5,7 +5,7 @@ import tensorflow as tf
 from mct_quantizers import KerasActivationQuantizationHolder
 
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
-from model_compression_toolkit.ptq import keras_post_training_quantization_experimental
+from model_compression_toolkit.ptq import keras_post_training_quantization
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.keras_tests.tpc_keras import get_quantization_disabled_keras_tpc
@@ -24,7 +24,7 @@ else:
         LayerNormalization
 
 from model_compression_toolkit.core import FrameworkInfo
-from model_compression_toolkit.gptq import keras_gradient_post_training_quantization_experimental
+from model_compression_toolkit.gptq import keras_gradient_post_training_quantization
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -90,10 +90,10 @@ class BaseKerasLayerTest(BaseLayerTest):
         return KerasImplementation()
 
     def get_ptq_facade(self):
-        return keras_post_training_quantization_experimental
+        return keras_post_training_quantization
 
     def get_gptq_facade(self):
-        return keras_gradient_post_training_quantization_experimental
+        return keras_gradient_post_training_quantization
 
     def predict(self, model: Model, input: List[np.ndarray]):
         if self.use_cpu:

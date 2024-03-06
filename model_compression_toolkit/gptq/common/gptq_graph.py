@@ -39,7 +39,9 @@ def get_compare_points(input_graph: Graph) -> Tuple[List[BaseNode], List[str], L
     compare_points_std = []
     compare_points_name = []
     for n in input_graph.get_topo_sorted_nodes():
-        if len(n.weights) > 0 and n.is_weights_quantization_enabled() and not n.reuse:
+        # only nodes with kernel attribute are currently trained with GPTQ and are used as compare points
+        kernel_attr = input_graph.fw_info.get_kernel_op_attributes(n.type)[0]
+        if kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr) and not n.reuse:
             compare_points.append(n)
             compare_points_name.append(n.name)
             compare_points_std.append(n.prior_info.std_output)

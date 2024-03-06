@@ -20,6 +20,7 @@ import numpy as np
 
 from model_compression_toolkit.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
     ACTIVATION_NBITS_ATTRIBUTE, FP32_BYTES_PER_PARAMETER
+from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationConfigOptions, \
     TargetPlatformCapabilities, LayerFilterParams
@@ -110,20 +111,29 @@ class BaseNode:
                    qc.activation_quantization_cfg.enable_activation_quantization
         return self.candidates_quantization_cfg[0].activation_quantization_cfg.enable_activation_quantization
 
-    def is_weights_quantization_enabled(self) -> bool:
+    def is_weights_quantization_enabled(self, attr_name: str) -> bool:
         """
+        Checks whether a node's weights attribute quantization is enabled.
+
+        Args:
+            attr_name: An attribute to check if its quantization is enabled.
 
         Returns: Whether node weights quantization is enabled or not.
 
         """
         if self.final_weights_quantization_cfg:
             # if we have a final configuration, then we only care to check if it enables weights quantization
-            return self.final_weights_quantization_cfg.enable_weights_quantization
+            return self.final_weights_quantization_cfg.get_attr_config(attr_name).enable_weights_quantization
 
-        for qc in self.candidates_quantization_cfg:
-            assert self.candidates_quantization_cfg[0].weights_quantization_cfg.enable_weights_quantization == \
-                   qc.weights_quantization_cfg.enable_weights_quantization
-        return self.candidates_quantization_cfg[0].weights_quantization_cfg.enable_weights_quantization
+        attr_candidates = self.get_all_weights_attr_candidates(attr_name)
+        candidates_enable_quantization = [c.enable_weights_quantization for c in attr_candidates]
+        if len(candidates_enable_quantization) > 0 and len(set(candidates_enable_quantization)) > 1:
+            Logger.error(f"Weights attribute {attr_name} in node {self.name} has multiple quantization candidates "
+                         f"configuration with incompatible values.")
+        if all(candidates_enable_quantization):
+            return True
+
+        return False
 
     def __repr__(self):
         """
@@ -182,8 +192,15 @@ class BaseNode:
         Returns: A list of all non-positional weights the node holds.
 
         """
-        return [self.weights[k] for k in self.weights.keys()
-                if self.weights[k] is not None and not isinstance(k, int)]
+        return [self.weights[k] for k in self.weights.keys() if not isinstance(k, int)]
+
+    def get_node_weights_attributes(self) -> List[str]:
+        """
+
+        Returns: A list of all weights attributes that the node holds.
+
+        """
+        return list(self.weights.keys())
 
     def insert_positional_weights_to_input_list(self, input_tensors: List) -> List:
         """
@@ -240,11 +257,18 @@ class BaseNode:
         Returns: Number of bytes the node's memory requires.
 
         """
+        # TODO: this method is used for tensorboard only. If we want to enable logging of other attributes memory
+        #  then it needs to be modified. But, it might be better to remove this method from the BaseNode completely.
+        kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
+        if kernel_attr is None:
+            return 0
         q_params, f_params = self.get_num_parameters(fw_info)
         if self.final_weights_quantization_cfg is None:  # float coefficients
             memory = (f_params+q_params) * FP32_BYTES_PER_PARAMETER
         else:
-            memory = (f_params * FP32_BYTES_PER_PARAMETER) + (q_params * self.final_weights_quantization_cfg.weights_n_bits / 8)  # in bytes
+            memory = ((f_params * FP32_BYTES_PER_PARAMETER) +
+                      (q_params * self.final_weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits
+                       / 8))  # in bytes
 
         return memory
 
@@ -261,29 +285,42 @@ class BaseNode:
         q_params, f_params = self.get_num_parameters(fw_info)
         return (f_params + q_params) * FP32_BYTES_PER_PARAMETER
 
-    def get_unified_weights_candidates_dict(self):
+    def get_unified_weights_candidates_dict(self, fw_info) -> Dict[str, Any]:
         """
-        In Mixed-Precision, a node can have multiple candidates for weights quantization configuration.
+        In Mixed-Precision, a node's kernel can have multiple candidates for weights quantization configuration.
         In order to display a single view of a node (for example, for logging in TensorBoard) we need a way
         to create a single dictionary from all candidates.
         This method is aimed to build such an unified dictionary for a node.
 
+        Args:
+            fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
+
         Returns: A dictionary containing information from node's weight quantization configuration candidates.
 
         """
-        shared_attributes = [CORRECTED_BIAS_ATTRIBUTE, WEIGHTS_NBITS_ATTRIBUTE]
-        attr = dict()
-        if self.is_weights_quantization_enabled():
-            attr = copy.deepcopy(self.candidates_quantization_cfg[0].weights_quantization_cfg.__dict__)
-            for shared_attr in shared_attributes:
-                if shared_attr in attr:
-                    unified_attr = []
-                    for candidate in self.candidates_quantization_cfg:
-                        unified_attr.append(getattr(candidate.weights_quantization_cfg, shared_attr))
-                    attr[shared_attr] = unified_attr
-        return attr
+        shared_parameters = [CORRECTED_BIAS_ATTRIBUTE, WEIGHTS_NBITS_ATTRIBUTE]
+        parameters_dict = dict()
+        # We assume that only the kernel attribute have more than one candidate, since we only allow to
+        # quantize the kernel using mixed precision
+        # TODO: need to modify if we want to present a unified config for other attributes
+        kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
+        if kernel_attr is None:
+            # This node doesn't have a kernel attribute
+            return {}
 
-    def get_unified_activation_candidates_dict(self):
+        if self.is_weights_quantization_enabled(kernel_attr):
+            parameters_dict = copy.deepcopy(self.candidates_quantization_cfg[0].weights_quantization_cfg.
+                                            get_attr_config(kernel_attr).__dict__)
+            for shared_parameter in shared_parameters:
+                if shared_parameter in parameters_dict:
+                    unified_param = []
+                    attr_candidates = self.get_all_weights_attr_candidates(kernel_attr)
+                    for attr_candidate in attr_candidates:
+                        unified_param.append(getattr(attr_candidate, shared_parameter))
+                    parameters_dict[shared_parameter] = unified_param
+        return parameters_dict
+
+    def get_unified_activation_candidates_dict(self) -> Dict[str, Any]:
         """
         In Mixed-Precision, a node can have multiple candidates for activation quantization configuration.
         In order to display a single view of a node (for example, for logging in TensorBoard) we need a way
@@ -295,7 +332,7 @@ class BaseNode:
         """
         shared_attributes = [ACTIVATION_NBITS_ATTRIBUTE]
         attr = dict()
-        if self.is_weights_quantization_enabled():
+        if self.is_activation_quantization_enabled():
             attr = copy.deepcopy(self.candidates_quantization_cfg[0].activation_quantization_cfg.__dict__)
             for shared_attr in shared_attributes:
                 if shared_attr in attr:
@@ -305,7 +342,7 @@ class BaseNode:
                     attr[shared_attr] = unified_attr
         return attr
 
-    def is_all_activation_candidates_equal(self):
+    def is_all_activation_candidates_equal(self) -> bool:
         """
         Checks whether all candidates' quantization configuration have the same activation configuration,
         using the self-implemented __eq__ method of class NodeActivationQuantizationConfig.
@@ -317,23 +354,31 @@ class BaseNode:
                    self.candidates_quantization_cfg[0].activation_quantization_cfg
                    for candidate in self.candidates_quantization_cfg)
 
-    def is_all_weights_candidates_equal(self):
+    def is_all_weights_candidates_equal(self, attr: str) -> bool:
         """
-        Checks whether all candidates' quantization configuration have the same weights configuration,
+        Checks whether all candidates' quantization configuration of a given weights attribute
+        have the same weights configuration,
         using the self-implemented __eq__ method of class NodeWeightsQuantizationConfig.
 
-        Returns: True if all candidates have same weights configuration, False otherwise.
+        Args:
+            attr: The attribute name to check if all its quantization configuration candidates are equal.
+
+        Returns: True if all the weights attribute candidates have same configuration, False otherwise.
 
         """
-        return all(candidate.weights_quantization_cfg ==
-                   self.candidates_quantization_cfg[0].weights_quantization_cfg
-                   for candidate in self.candidates_quantization_cfg)
+        # note that if the given attribute name does not exist in the node's attributes mapping,
+        # the inner method would log an exception.
+        return all(attr_candidate ==
+                   self.candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(attr)
+                   for attr_candidate in self.get_all_weights_attr_candidates(attr))
 
-    def has_weights_to_quantize(self, fw_info):
+    def has_kernel_weight_to_quantize(self, fw_info):
         """
-        Checks whether the node has weights that need to be quantized according to the framework info.
+        Checks whether the node has kernel attribute that need to be quantized according to the framework info.
+
         Args:
             fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
+
         Returns: Whether the node has weights that need to be quantized.
         """
         attrs = fw_info.get_kernel_op_attributes(self.type)
@@ -341,6 +386,17 @@ class BaseNode:
             if attr and self.get_weights_by_keys(attr) is not None:
                 return True
         return False
+
+    def has_any_weight_attr_to_quantize(self) -> bool:
+        """
+        Checks whether the node has any weights attribute that is supposed to be quantized, based on its provided
+        quantization configuration candidates.
+
+        Returns: True if the is at least one weights attribute in the node that is supposed to be quantized.
+
+        """
+
+        return any([self.is_weights_quantization_enabled(attr) for attr in self.get_node_weights_attributes()])
 
     def get_total_output_params(self) -> float:
         """
@@ -373,7 +429,7 @@ class BaseNode:
         """
         Returns a list with potential minimal candidates.
         A potential minimal candidate is a candidate which its weights_n_bits and activation_n_bits pair is
-        on the Pareto Front, i.e., there is no other candidates that its n_bits pair exceeds in both entries.
+        on the Pareto Front, i.e., there is no other candidate that its n_bits pair exceeds in both entries.
 
         Returns: A list of indices of potential minimal candidates.
 
@@ -413,20 +469,29 @@ class BaseNode:
 
         return [i for i, a_n_bits in max_candidates]
 
-    def get_unique_weights_candidates(self) -> List[Any]:
+    def get_unique_weights_candidates(self, attr: str) -> List[Any]:
         """
-        Returns a list with node's candidates of unique weights bit-width value.
-        If the node have multiple candidates with the same weights bit-width,
+        Returns a list with node's candidates of unique weights bit-width value for the given attribute.
+        If the node have multiple candidates with the same weights bit-width for this attribute,
         the first candidate in the list is returned.
 
-        Returns: A list with node's candidates of unique weights bit-width value.
+        Args:
+            attr: A weights attribute name to get its unique candidates list.
+
+        Returns: A list with node's candidates of unique weights bit-width value for the given attribute.
         """
+
+        if attr is None or len(self.get_all_weights_attr_candidates(attr)) == 0:
+            Logger.warning(f"Trying to retrieve quantization configuration candidates for attribute '{attr}', "
+                           f"but such attribute can't be found in node {self.name}."
+                           f"An empty list of candidates is returned.")
+            return []
 
         unique_candidates = copy.deepcopy(self.candidates_quantization_cfg)
         seen_candidates = set()
         unique_candidates = [candidate for candidate in unique_candidates if
-                             candidate.weights_quantization_cfg not in seen_candidates
-                             and not seen_candidates.add(candidate.weights_quantization_cfg)]
+                             candidate.weights_quantization_cfg.get_attr_config(attr) not in seen_candidates
+                             and not seen_candidates.add(candidate.weights_quantization_cfg.get_attr_config(attr))]
         return unique_candidates
 
     def get_unique_activation_candidates(self) -> List[Any]:
@@ -445,16 +510,6 @@ class BaseNode:
                              and not seen_candidates.add(candidate.activation_quantization_cfg)]
         return unique_candidates
 
-    def has_weights_quantization_enabled_candidate(self) -> bool:
-        """
-        Checks whether the node has quantization configuration candidates that enable weights quantization.
-
-        Returns: True if the node has at list one quantization configuration candidate with weights quantization enabled.
-        """
-
-        return len(self.candidates_quantization_cfg) > 0 and \
-               any([c.weights_quantization_cfg.enable_weights_quantization for c in self.candidates_quantization_cfg])
-
     def has_activation_quantization_enabled_candidate(self) -> bool:
         """
         Checks whether the node has quantization configuration candidates that enable activation quantization.
@@ -464,6 +519,20 @@ class BaseNode:
 
         return len(self.candidates_quantization_cfg) > 0 and \
                any([c.activation_quantization_cfg.enable_activation_quantization for c in self.candidates_quantization_cfg])
+
+    def get_all_weights_attr_candidates(self, attr: str) -> List[WeightsAttrQuantizationConfig]:
+        """
+        Returns all WeightsAttrQuantizationConfig configuration of the given attribute of the node.
+
+        Args:
+            attr: The attribute name to get its configurations.
+
+        Returns: A list of the attribute's quantization configurations.
+
+        """
+        # note that if the given attribute name does not exist in the node's attributes mapping,
+        # the inner method would log an exception.
+        return [c.weights_quantization_cfg.get_attr_config(attr) for c in self.candidates_quantization_cfg]
 
     def get_qco(self, tpc: TargetPlatformCapabilities) -> QuantizationConfigOptions:
         """
@@ -540,3 +609,27 @@ class BaseNode:
         if _simd <= 0 or int(_simd) != _simd:
             Logger.error(f"SIMD is expected to be a non-positive integer but found: {_simd}")
         return _simd
+
+    def sort_node_candidates(self, fw_info):
+        """
+        Sorts the node candidates.
+        We assume that the candidates are ordered in the following way (for mixed precision purposes):
+            - If the node has a kernel attribute, then we use the kernel weights number of bits to sort the candidates
+            (in descending order). We use the candidate activation number of bits as a secondary order.
+            - If the node doesn't have a kernel we only consider the candidate activation number of bits to sort
+            the candidates in descending order.
+        The operation is done inplace.
+
+        Args:
+            fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
+
+        """
+        if self.candidates_quantization_cfg is not None:
+            kernel_attr = fw_info.get_kernel_op_attributes(self.type)[0]
+            if kernel_attr is not None:
+                self.candidates_quantization_cfg.sort(
+                    key=lambda c: (c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
+                                   c.activation_quantization_cfg.activation_n_bits), reverse=True)
+            else:
+                self.candidates_quantization_cfg.sort(key=lambda c: c.activation_quantization_cfg.activation_n_bits,
+                                                      reverse=True)

@@ -277,7 +277,7 @@ class PytorchModel(torch.nn.Module):
         """
         node_to_output_tensors_dict = dict()
         node_to_output_tensors_dict_float = dict()
-        configurable_nodes = self.graph.get_configurable_sorted_nodes_names()
+        configurable_nodes = self.graph.get_configurable_sorted_nodes_names(DEFAULT_PYTORCH_INFO)
         for node in self.node_sort:
             input_tensors = _build_input_tensors_list(node,
                                                       self.graph,

@@ -21,6 +21,7 @@ from keras.layers import Conv2D, Conv2DTranspose
 import model_compression_toolkit as mct
 from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod
 from model_compression_toolkit.constants import THRESHOLD
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -102,8 +103,8 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
                                                            qc=qc, input_shape=(1, 16, 16, 4))
 
         nodes_list = list(graph.nodes)
-        conv1_threshold = nodes_list[0].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[THRESHOLD]
-        conv2_threshold = nodes_list[1].candidates_quantization_cfg[0].weights_quantization_cfg.weights_quantization_params[THRESHOLD]
+        conv1_threshold = nodes_list[0].candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(KERNEL).weights_quantization_params[THRESHOLD]
+        conv2_threshold = nodes_list[1].candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(KERNEL).weights_quantization_params[THRESHOLD]
         conv1_threshold_log = np.log2(conv1_threshold)
         conv2_threshold_log = np.log2(conv2_threshold)
         self.assertFalse(np.array_equal(conv1_threshold_log, conv1_threshold_log.astype(int)),

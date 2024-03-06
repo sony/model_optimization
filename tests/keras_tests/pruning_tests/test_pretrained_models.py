@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-import tempfile
 from enum import Enum
 
 import unittest
@@ -26,7 +25,7 @@ from packaging import version
 
 from model_compression_toolkit.constants import FP32_BYTES_PER_PARAMETER
 from model_compression_toolkit.core.common.pruning.importance_metrics.importance_metric_factory import IMPORTANCE_METRIC_DICT
-from tests.keras_tests.pruning_tests.random_importance_metric import RandomImportanceMetric
+from tests.common_tests.pruning.random_importance_metric import RandomImportanceMetric
 
 keras = tf.keras
 layers = keras.layers

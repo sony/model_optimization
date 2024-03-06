@@ -20,9 +20,6 @@ auto:exporter:
 auto:gptq:
 - model_compression_toolkit/gptq/**
 
-auto:legacy:
-- model_compression_toolkit/legacy/**
-
 auto:ptq:
 - model_compression_toolkit/ptq/**
 

@@ -62,6 +62,9 @@ DIM = 'dim'
 IN_CHANNELS = 'in_channels'
 OUT_CHANNELS = 'out_channels'
 NUM_FEATURES = 'num_features'
+NUM_PARAMETERS = 'num_parameters'
+IN_FEATURES = 'in_features'
+OUT_FEATURES = 'out_features'
 
 # torch devices
 CUDA = 'cuda'

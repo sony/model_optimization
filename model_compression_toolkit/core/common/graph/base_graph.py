@@ -214,7 +214,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             n: Node to get its output statistics collector.
 
         Returns:
-            Tensor containing output statistics of the node.
+            BaseStatsCollector object of the node.
         """
         return self.node_to_out_stats_collector.get(n)
 
@@ -529,6 +529,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return memory
 
     def get_configurable_sorted_nodes_names(self,
+                                            fw_info: FrameworkInfo,
                                             include_reused_nodes: bool = False) -> List[str]:
         """
         Get a list of nodes' names that can be configured (namely, has one or
@@ -536,45 +537,53 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         order of the graph.
 
         Args:
+            fw_info: FrameworkInfo object with information about the specific framework's model.
             include_reused_nodes: Whether or not to include reused nodes (False by default).
 
         Returns: List of nodes' names that can be configured (namely, has one or
         more weight qc candidate) sorted topology.
 
         """
-        sorted_names = [n.name for n in self.get_configurable_sorted_nodes(include_reused_nodes=include_reused_nodes)]
+        sorted_names = [n.name for n in self.get_configurable_sorted_nodes(fw_info=fw_info,
+                                                                           include_reused_nodes=include_reused_nodes)]
         return sorted_names
 
     def get_weights_configurable_nodes(self,
+                                       fw_info: FrameworkInfo,
                                        include_reused_nodes: bool = False) -> List[BaseNode]:
         """
         Get a list of nodes that their weights can be configured (namely, has one or
         more weight qc candidate and their weights should be quantized).
 
         Args:
+            fw_info: FrameworkInfo object with information about the specific framework's model.
             include_reused_nodes: Whether to include reused nodes (False by default).
 
         Returns:
             A list of nodes that their weights can be configured (namely, has one or more weight qc candidate).
         """
-        return list(filter(lambda n: n.is_weights_quantization_enabled()
-                                     and not n.is_all_weights_candidates_equal()
-                                     and (not n.reuse or include_reused_nodes), list(self)))
+        # configurability is only relevant for kernel attribute quantization
+        potential_conf_nodes = [n for n in list(self) if fw_info.is_kernel_op(n.type)]
+        return list(filter(lambda n: n.is_weights_quantization_enabled(fw_info.get_kernel_op_attributes(n.type)[0])
+                                     and not n.is_all_weights_candidates_equal(fw_info.get_kernel_op_attributes(n.type)[0])
+                                     and (not n.reuse or include_reused_nodes), potential_conf_nodes))
 
     def get_sorted_weights_configurable_nodes(self,
+                                              fw_info: FrameworkInfo,
                                               include_reused_nodes: bool = False) -> List[BaseNode]:
         """
         Get a list of sorted nodes that their weights can be configured (namely, has one or
         more weight qc candidate and their weights should be quantized).
 
         Args:
+            fw_info: FrameworkInfo object with information about the specific framework's model.
             include_reused_nodes: Whether to include reused nodes (False by default).
 
         Returns:
             A list of nodes that their weights can be configured (namely, has one or more weight qc candidate)
             sorted topologically.
         """
-        return self._sort_nodes_in_list(self.get_weights_configurable_nodes(include_reused_nodes))
+        return self._sort_nodes_in_list(self.get_weights_configurable_nodes(fw_info, include_reused_nodes))
 
     def get_activation_configurable_nodes(self) -> List[BaseNode]:
         """
@@ -599,6 +608,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         return self._sort_nodes_in_list(self.get_activation_configurable_nodes())
 
     def get_configurable_sorted_nodes(self,
+                                      fw_info: FrameworkInfo,
                                       include_reused_nodes: bool = False) -> List[BaseNode]:
         """
         Get a list of nodes that can be configured (namely, has one or
@@ -606,13 +616,14 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         The nodes are sorted according to the topological order of the graph.
 
         Args:
+            fw_info: fw_info: FrameworkInfo object with information about the specific framework's model.
             include_reused_nodes: Whether or not to include reused nodes (False by default).
 
         Returns:
              A list of nodes that can be configured (namely, has one or more qc candidate) sorted topology.
 
         """
-        weights_configurable_nodes = self.get_weights_configurable_nodes(include_reused_nodes)
+        weights_configurable_nodes = self.get_weights_configurable_nodes(fw_info, include_reused_nodes)
         activation_configurable_nodes = self.get_activation_configurable_nodes()
 
         # combine and remove duplications
@@ -637,17 +648,20 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                 sorted_configurable_nodes.append(n)
         return sorted_configurable_nodes
 
-    def get_min_candidates_config(self) -> List[int]:
+    def get_min_candidates_config(self, fw_info: FrameworkInfo) -> List[int]:
         """
         Builds a minimal configuration.
         Note: we assume that a minimal configuration exists, i.e., each configurable node has exactly one candidate
             with minimal n_bits (in both weight and activation if both are quantized, or in the relevant one if only
             one of them is quantized)
 
+        Args:
+            fw_info: fw_info: FrameworkInfo object with information about the specific framework's model.
+
         Returns: A list of candidate for each node (list on indices)
         """
 
-        conf_sorted_nodes = self.get_configurable_sorted_nodes()
+        conf_sorted_nodes = self.get_configurable_sorted_nodes(fw_info)
         min_cfg_candidates = [n.find_min_candidates_indices() for n in conf_sorted_nodes]  # list of lists of indices
 
         assert all([len(lst) == 1 for lst in min_cfg_candidates]), \
@@ -655,17 +669,20 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         return [lst[0] for lst in min_cfg_candidates]
 
-    def get_max_candidates_config(self) -> List[int]:
+    def get_max_candidates_config(self, fw_info: FrameworkInfo) -> List[int]:
         """
         Builds a maximal configuration.
         Note: we assume that a maximal configuration exists, i.e., each configurable node has exactly one candidate
             with maximal n_bits (in both weight and activation if both are quantized, or in the relevant one if only
             one of them is quantized)
 
+        Args:
+            fw_info: fw_info: FrameworkInfo object with information about the specific framework's model.
+
         Returns: A list of candidate for each node (list on indices)
         """
 
-        conf_sorted_nodes = self.get_configurable_sorted_nodes()
+        conf_sorted_nodes = self.get_configurable_sorted_nodes(fw_info)
         max_cfg_candidates = [n.find_max_candidates_indices() for n in conf_sorted_nodes]  # list of lists of indices
 
         assert all([len(lst) == 1 for lst in max_cfg_candidates]), \
@@ -673,15 +690,20 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         return [lst[0] for lst in max_cfg_candidates]
 
-    def get_final_weights_config(self) -> List[Tuple[BaseNode, int]]:
+    def get_final_weights_config(self, fw_info: FrameworkInfo) -> List[Tuple[BaseNode, int]]:
         """
         Gets the final number of bits for quantization of each weights' configurable layer.
+
+        Args:
+            fw_info: fw_info: FrameworkInfo object with information about the specific framework's model.
 
         Returns: A list of pairs of (node type, node's weights quantization bitwidth).
 
         """
-        sorted_conf_weights = self.get_sorted_weights_configurable_nodes()
-        return [(n, n.final_weights_quantization_cfg.weights_n_bits) for n in sorted_conf_weights]
+        sorted_conf_weights = self.get_sorted_weights_configurable_nodes(fw_info)
+        # a configurable node by definition has a kernel op
+        return [(n, n.final_weights_quantization_cfg.get_attr_config(self.fw_info.get_kernel_op_attributes(n.type)[0]).weights_n_bits)
+                for n in sorted_conf_weights]
 
     def get_final_activation_config(self) -> List[Tuple[BaseNode, int]]:
         """

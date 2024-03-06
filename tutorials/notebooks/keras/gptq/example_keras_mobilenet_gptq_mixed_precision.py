@@ -115,8 +115,8 @@ if __name__ == '__main__':
     model = MobileNetV2()
 
     # Create a mixed-precision quantization configuration.
-    mixed_precision_config = mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=args.mixed_precision_num_of_images,
-                                                                         use_hessian_based_scores=args.enable_mixed_precision_gradients_weighting)
+    mixed_precision_config = mct.core.MixedPrecisionQuantizationConfig(num_of_images=args.mixed_precision_num_of_images,
+                                                                       use_hessian_based_scores=args.enable_mixed_precision_gradients_weighting)
 
     # Create a core quantization configuration, set the mixed-precision configuration,
     # and set the number of calibration iterations.
@@ -125,10 +125,10 @@ if __name__ == '__main__':
     # Get KPI information to constraint your model's memory size.
     # Retrieve a KPI object with helpful information of each KPI metric,
     # to constraint the quantized model to the desired memory size.
-    kpi_data = mct.core.keras_kpi_data_experimental(model,
-                                               representative_data_gen,
-                                               config,
-                                               target_platform_capabilities=target_platform_cap)
+    kpi_data = mct.core.keras_kpi_data(model,
+                                       representative_data_gen,
+                                       config,
+                                       target_platform_capabilities=target_platform_cap)
 
     # Set a constraint for each of the KPI metrics.
     # Create a KPI object to limit our returned model's size. Note that this values affects only layers and attributes
@@ -142,12 +142,12 @@ if __name__ == '__main__':
     gptq_config = mct.gptq.get_keras_gptq_config(n_epochs=args.num_gptq_training_iterations,
                                                  use_hessian_based_weights=args.enable_gptq_hessian_based_weights)
 
-    quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization_experimental(model,
-                                                                                                         representative_data_gen,
-                                                                                                         gptq_config=gptq_config,
-                                                                                                         core_config=config,
-                                                                                                         target_platform_capabilities=target_platform_cap,
-                                                                                                         target_kpi=kpi)
+    quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(model,
+                                                                                            representative_data_gen,
+                                                                                            gptq_config=gptq_config,
+                                                                                            core_config=config,
+                                                                                            target_platform_capabilities=target_platform_cap,
+                                                                                            target_kpi=kpi)
 
     # Export quantized model to TFLite and Keras.
     # For more details please see: https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/exporter/README.md

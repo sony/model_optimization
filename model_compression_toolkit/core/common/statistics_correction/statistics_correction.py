@@ -57,7 +57,6 @@ def statistics_correction_runner(transformed_graph: Graph,
     # Compute bias correction to nodes' config candidates
     ########################################################
     tg_with_bias = compute_bias_correction_of_graph(tg_with_bias,
-                                                    core_config,
                                                     fw_info,
                                                     fw_impl)
 

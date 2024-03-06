@@ -37,12 +37,11 @@ class TFLiteINT8ExporterBaseTest:
         print(f'Float model was saved to: {self.float_model_file_path}')
 
         # Get fully quantized model
-        self.exportable_model, _ = mct.ptq.keras_post_training_quantization_experimental(
+        self.exportable_model, _ = mct.ptq.keras_post_training_quantization(
             in_model=self.model,
             core_config=mct.core.CoreConfig(),
             representative_data_gen=self.__get_repr_dataset,
-            target_platform_capabilities=self.get_tpc(),
-            new_experimental_exporter=True)
+            target_platform_capabilities=self.get_tpc())
 
         # Disable bias as tflite quantizes them unlike MCT
         for l in self.exportable_model.layers:

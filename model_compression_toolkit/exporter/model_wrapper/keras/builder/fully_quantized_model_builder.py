@@ -19,17 +19,18 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.logger import Logger
-from mct_quantizers import KerasActivationQuantizationHolder
+import model_compression_toolkit.core as C
 
 if FOUND_TF:
     import tensorflow as tf
     from tensorflow.keras.layers import Layer
     from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
-    from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizers import get_quantization_quantizers
     from mct_quantizers import KerasQuantizationWrapper
+    from mct_quantizers import KerasActivationQuantizationHolder
 
     def _get_wrapper(node: common.BaseNode,
-                     layer: Layer) -> Layer:
+                     layer: Layer,
+                     fw_impl=None) -> Layer:
         """
         A function which takes a computational graph node and a keras layer and perform the quantization wrapping
         Args:
@@ -39,14 +40,14 @@ if FOUND_TF:
         Returns: Wrapped layer with weights quantizers and activation quantizers
 
         """
-        weights_quantizers, _ = get_quantization_quantizers(node)
+        weights_quantizers, _ = fw_impl.get_inferable_quantizers(node)
         if len(weights_quantizers) > 0:
             return KerasQuantizationWrapper(layer,
                                             weights_quantizers)
         return layer
 
 
-    def get_activation_quantizer_holder(node: common.BaseNode) -> Callable:
+    def get_activation_quantizer_holder(node: common.BaseNode, fw_impl) -> Callable:
         """
         Retrieve a ActivationQuantizationHolder layer to use for activation quantization for a node.
 
@@ -56,7 +57,7 @@ if FOUND_TF:
         Returns:
             A ActivationQuantizationHolder layer for the node activation quantization.
         """
-        _, activation_quantizers = get_quantization_quantizers(node)
+        _, activation_quantizers = fw_impl.get_inferable_quantizers(node)
 
         # Holder by definition uses a single quantizer for the activation quantization
         # thus we make sure this is the only possible case (unless it's a node with no activation
@@ -67,8 +68,6 @@ if FOUND_TF:
         Logger.error(
             f'ActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
             f'were found for node {node}')
-
-
 
     def get_exportable_keras_model(graph: Graph) -> Tuple[tf.keras.models.Model, UserInformation]:
         """
@@ -83,8 +82,12 @@ if FOUND_TF:
             Exportable Keras model and user information.
         """
         exportable_model, user_info = KerasModelBuilder(graph=graph,
-                                                        wrapper=_get_wrapper,
-                                                        get_activation_quantizer_holder_fn=get_activation_quantizer_holder).build_model()
+                                                        wrapper=lambda n, kn:
+                                                        _get_wrapper(n, kn,
+                                                                     fw_impl=C.keras.keras_implementation.KerasImplementation()),
+                                                        get_activation_quantizer_holder_fn=lambda n:
+                                                        get_activation_quantizer_holder(n,
+                                                                                        fw_impl=C.keras.keras_implementation.KerasImplementation())).build_model()
         exportable_model.trainable = False
         return exportable_model, user_info
 else:

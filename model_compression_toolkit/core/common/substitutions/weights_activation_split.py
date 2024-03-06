@@ -49,21 +49,27 @@ class BaseWeightsActivationSplit(BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
-
-        if not node.is_all_weights_candidates_equal() and not node.is_all_activation_candidates_equal():
+        # The decomposition works on linear nodes, that is, nodes with kernel ops
+        kernel_attr = graph.fw_info.get_kernel_op_attributes(node.type)[0]
+        if kernel_attr is None:
+            Logger.error(f"Trying to split node weights and activation, but node "
+                         f"{node.name} doesn't have a kernel attribute.")
+        if not node.is_all_weights_candidates_equal(kernel_attr) and not node.is_all_activation_candidates_equal():
             # Node has both different weights and different activation configuration candidates
-            weights_bits = [c.weights_quantization_cfg.weights_n_bits for c in node.get_unique_weights_candidates()]
+            weights_bits = [c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits
+                            for c in node.get_unique_weights_candidates(kernel_attr)]
             activation_bits = [c.activation_quantization_cfg.activation_n_bits for c in node.get_unique_activation_candidates()]
             expected_candidates = list(itertools.product(weights_bits, activation_bits))
-            all_candidates_bits = [(c.weights_quantization_cfg.weights_n_bits,
-                                    c.activation_quantization_cfg.activation_n_bits) for c in node.candidates_quantization_cfg]
+            all_candidates_bits = [(c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits,
+                                    c.activation_quantization_cfg.activation_n_bits)
+                                   for c in node.candidates_quantization_cfg]
             if not set(expected_candidates).issubset(all_candidates_bits):
                 # Node is not composite, therefore, can't be split
                 Logger.critical(f"The graph contains a node {node.name} with non composite candidates."
                                 f"In order to run mixed-precision search with BOPS target KPI, "
                                 f"all model layers should be composite.")  # pragma: no cover
 
-        weights_node = VirtualSplitWeightsNode(node)
+        weights_node = VirtualSplitWeightsNode(node, kernel_attr)
         activation_node = VirtualSplitActivationNode(node, self.activation_layer_type, self.fw_attr)
 
         # Update graph

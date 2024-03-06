@@ -44,9 +44,9 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
         Prunes the entry node of a model in Keras.
 
         Args:
-            node: The entry node to be pruned.
-            output_mask: A numpy array representing the mask to be applied to the output channels.
-            fw_info: Framework-specific information object.
+            node (BaseNode): The entry node to be pruned.
+            output_mask (np.ndarray): A numpy array representing the mask to be applied to the output channels.
+            fw_info (FrameworkInfo): Framework-specific information object.
 
         """
         return _prune_keras_edge_node(node=node,
@@ -63,10 +63,10 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
         Prunes an intermediate node in a Keras model.
 
         Args:
-            node: The intermediate node to be pruned.
-            input_mask: A numpy array representing the mask to be applied to the input channels.
-            output_mask: A numpy array representing the mask to be applied to the output channels.
-            fw_info: Framework-specific information object.
+            node (BaseNode): The intermediate node to be pruned.
+            input_mask (np.ndarray): A numpy array representing the mask to be applied to the input channels.
+            output_mask (np.ndarray): A numpy array representing the mask to be applied to the output channels.
+            fw_info (FrameworkInfo): Framework-specific information object.
 
         """
         _edit_node_input_shape(input_mask, node)
@@ -85,9 +85,9 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
         Prunes the exit node of a model in Keras.
 
         Args:
-            node: The exit node to be pruned.
-            input_mask: A numpy array representing the mask to be applied to the input channels.
-            fw_info: Framework-specific information object.
+            node (BaseNode): The exit node to be pruned.
+            input_mask (np.ndarray): A numpy array representing the mask to be applied to the input channels.
+            fw_info (FrameworkInfo): Framework-specific information object.
 
         """
         return _prune_keras_edge_node(node=node,
@@ -100,10 +100,10 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
         Determines whether a node is an entry node in a Keras model.
 
         Args:
-            node: The node to be checked.
+            node (BaseNode): The node to be checked.
 
         Returns:
-            Boolean indicating if the node is an entry node.
+            bool: Boolean indicating if the node is an entry node.
         """
         return _is_keras_node_pruning_section_edge(node)
 
@@ -115,26 +115,26 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
         Determines whether a node is an exit node in a Keras model.
 
         Args:
-            node: The node to be checked.
-            corresponding_entry_node: The entry node of the pruning section that is checked.
-            fw_info: Framework-specific information object.
+            node (BaseNode): The node to be checked.
+            corresponding_entry_node (BaseNode): The entry node of the pruning section that is checked.
+            fw_info (FrameworkInfo): Framework-specific information object.
 
         Returns:
-            Boolean indicating if the node is an exit node.
+            bool: Boolean indicating if the node is an exit node.
         """
         return _is_keras_node_pruning_section_edge(node) and PruningSection.has_matching_channel_count(node,
                                                                                                        corresponding_entry_node,
                                                                                                        fw_info)
 
-    def is_node_intermediate_pruning_section(self, node) -> bool:
+    def is_node_intermediate_pruning_section(self, node: BaseNode) -> bool:
         """
         Determines whether a node is part of the intermediate section in the pruning process of a Keras model.
 
         Args:
-            node: The node to be checked.
+            node (BaseNode): The node to be checked.
 
         Returns:
-            Boolean indicating if the node is part of the intermediate pruning section.
+            bool: Boolean indicating if the node is part of the intermediate pruning section.
         """
         # Nodes that are not Conv2D, Conv2DTranspose, DepthwiseConv2D, or Dense are considered intermediate.
         return node.type not in [keras.layers.DepthwiseConv2D,

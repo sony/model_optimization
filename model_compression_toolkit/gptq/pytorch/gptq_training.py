@@ -25,7 +25,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -46,7 +46,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
     def __init__(self,
                  graph_float: Graph,
                  graph_quant: Graph,
-                 gptq_config: GradientPTQConfigV2,
+                 gptq_config: GradientPTQConfig,
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo,
                  representative_data_gen: Callable,
@@ -103,16 +103,16 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                    node: BaseNode) -> bool:
         """
         A function for deciding if a layer should be fine-tuned during GPTQ.
+
         Args:
             node (BaseNode): Node for quantization decision
+
         Returns:
             A boolean whether the layer is to be wrapped with a Quantization Wrapper.
         """
 
-        if node.is_weights_quantization_enabled() and not self.fw_info.is_kernel_op(node.type):
-            Logger.error(f"GPTQ Error: Quantizing node {node.name} of type {node.type} "
-                         f"without a kernel isn't supported.")
-        return node.is_weights_quantization_enabled()
+        kernel_attr = self.fw_info.get_kernel_op_attributes(node.type)[0]
+        return kernel_attr is not None and node.is_weights_quantization_enabled(kernel_attr)
 
     def gptq_wrapper(self,
                      n: BaseNode,
@@ -128,11 +128,18 @@ class PytorchGPTQTrainer(GPTQTrainer):
         """
 
         if self._is_gptq_weights_trainable(n):
-            weights_quantizers, activation_quantizers = quantization_builder(n, self.gptq_config)
-            return PytorchQuantizationWrapper(layer,
-                                              weights_quantizers=weights_quantizers)
-        else:
-            return layer
+            # If we are here, then the node has a kernel attribute to quantize and training during GPTQ
+            weights_quantizers, _ = quantization_builder(n,
+                                                         self.gptq_config,
+                                                         self.fw_info.get_kernel_op_attributes(n.type)[0])
+
+            if len(weights_quantizers) > 0:
+                return PytorchQuantizationWrapper(layer,
+                                                  weights_quantizers=weights_quantizers)
+
+        # TODO: need to check if in this case, if there are other weights attributes that are not trainable but are
+        #  quantized, do we need to wrap them as well?
+        return layer
 
     def get_activation_quantizer_holder(self, n: BaseNode) -> Callable:
         """

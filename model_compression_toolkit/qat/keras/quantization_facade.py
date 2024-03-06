@@ -22,7 +22,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfigV2
+    MixedPrecisionQuantizationConfig
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
@@ -72,12 +72,16 @@ if FOUND_TF:
 
         """
         if is_qat_applicable(n, DEFAULT_KERAS_INFO):
+            # If we are here, then the node has a kernel attribute to quantize and training during QAT
             weights_quantizers, _ = quantization_builder(n,
                                                          qat_config,
-                                                         DEFAULT_KERAS_INFO)
+                                                         DEFAULT_KERAS_INFO.get_kernel_op_attributes(n.type)[0])
             if len(weights_quantizers) > 0:
                 layer.trainable = True
                 return KerasTrainableQuantizationWrapper(layer, weights_quantizers)
+
+        # TODO: need to check if in this case, if there are other weights attributes that are not trainable but are
+        #  quantized, do we need to wrap them as well?
         return layer
 
 
@@ -145,7 +149,7 @@ if FOUND_TF:
              If mixed precision is desired, create a MCT core config with a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
              The candidates bitwidth for quantization should be defined in the target platform model:
 
-             >>> config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
+             >>> config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig())
 
              For mixed-precision set a target KPI object:
              Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
@@ -170,13 +174,10 @@ if FOUND_TF:
                              fw_info=fw_info).validate()
 
         if core_config.mixed_precision_enable:
-            if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfigV2):
+            if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.error("Given quantization config to mixed-precision facade is not of type "
-                                    "MixedPrecisionQuantizationConfigV2. Please use keras_post_training_quantization API,"
-                                    "or pass a valid mixed precision configuration.")
-
-            Logger.info("Using experimental mixed-precision quantization. "
-                               "If you encounter an issue please file a bug.")
+                             "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization API,"
+                             "or pass a valid mixed precision configuration.")
 
         tb_w = init_tensorboard_writer(fw_info)
 
@@ -239,7 +240,7 @@ if FOUND_TF:
              If mixed precision is desired, create a MCT core config with a mixed-precision configuration, to quantize a model with different bitwidths for different layers.
              The candidates bitwidth for quantization should be defined in the target platform model:
 
-             >>> config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfigV2())
+             >>> config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig())
 
              For mixed-precision set a target KPI object:
              Create a KPI object to limit our returned model's size. Note that this value affects only coefficients

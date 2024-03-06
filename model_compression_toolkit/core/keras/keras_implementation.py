@@ -19,16 +19,17 @@ import numpy as np
 import tensorflow as tf
 from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder
 from tensorflow.keras.models import Model
-from tensorflow.python.layers.base import Layer
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoService
 from model_compression_toolkit.core.keras.hessian.activation_trace_hessian_calculator_keras import \
     ActivationTraceHessianCalculatorKeras
-from model_compression_toolkit.core.keras.hessian.trace_hessian_calculator_keras import TraceHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.weights_trace_hessian_calculator_keras import WeightsTraceHessianCalculatorKeras
+from model_compression_toolkit.exporter.model_wrapper.fw_agnostic.get_inferable_quantizers import \
+    get_inferable_quantizers
+from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
+    get_weights_quantizer_for_node, get_activations_quantizer_for_node
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence, compute_cs, compute_mse
@@ -57,14 +58,12 @@ else:
         Concatenate, Add
     from keras.layers.core import TFOpLambda
 
-from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
-from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.activation_decomposition import \
     ActivationDecomposition
@@ -97,8 +96,6 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.shif
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.dwconv_to_conv import DwconvToConv
 from model_compression_toolkit.core.keras.keras_node_prior_info import create_node_prior_info
 from model_compression_toolkit.core.keras.reader.reader import model_reader
-from model_compression_toolkit.core.common.collectors.statistics_collector_generator import \
-    create_stats_collector_for_node
 import model_compression_toolkit.core.keras.constants as keras_constants
 from model_compression_toolkit.core.keras.tf_tensor_numpy import tf_tensor_to_numpy, to_tf_tensor
 from model_compression_toolkit.core.keras.back2framework import get_keras_model_builder
@@ -218,21 +215,6 @@ class KerasImplementation(FrameworkImplementation):
                                                      core_config,
                                                      fw_info)
 
-    def attach_sc_to_node(self,
-                          node: BaseNode,
-                          fw_info: FrameworkInfo) -> BaseStatsCollector:
-        """
-        Return a statistics collector that should be attached to a node's output
-        during statistics collection.
-
-        Args:
-            node: Node to return its collector.
-            fw_info: Information relevant to a specific framework about what is out channel axis (for statistics per-channel)
-
-        Returns:
-            Statistics collector for the node.
-        """
-        return create_stats_collector_for_node(node, fw_info)
 
     def get_substitutions_channel_equalization(self,
                                                quant_config: QuantizationConfig,
@@ -374,7 +356,7 @@ class KerasImplementation(FrameworkImplementation):
 
     def get_sensitivity_evaluator(self,
                                   graph: Graph,
-                                  quant_config: MixedPrecisionQuantizationConfigV2,
+                                  quant_config: MixedPrecisionQuantizationConfig,
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
                                   disable_activation_for_metric: bool = False,
@@ -605,3 +587,39 @@ class KerasImplementation(FrameworkImplementation):
         """
 
         return model(inputs)
+
+    def get_inferable_quantizers(self, node: BaseNode):
+        """
+        Returns sets of Keras compatible weights and activation quantizers for the given node.
+
+        Args:
+           node: Node to get quantizers for.
+
+        Returns:
+            weight_quantizers: A dictionary between a weight's name to its quantizer.
+            activation_quantizers: A list of activations quantization, one for each layer output.
+
+        """
+
+        def _weight_name(w: str) -> str:
+            """
+            Extracts the weight name from the full TensorFlow variable name.
+
+            For example, returns 'kernel' for 'dense_2/kernel:0'.
+
+            Args:
+              w: TensorFlow variable name.
+
+            Returns:
+              Extracted weight name.
+            """
+
+            return w.split(':')[0].split('/')[-1]
+
+        attribute_names = [_weight_name(wn) for wn in node.get_node_weights_attributes()
+                           if node.is_weights_quantization_enabled(wn)]
+
+        return get_inferable_quantizers(node,
+                                        get_weights_quantizer_for_node,
+                                        get_activations_quantizer_for_node,
+                                        attribute_names)

@@ -14,7 +14,7 @@
 # ==============================================================================
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
-from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
 
 
 class CoreConfig:
@@ -23,14 +23,14 @@ class CoreConfig:
     """
     def __init__(self,
                  quantization_config: QuantizationConfig = QuantizationConfig(),
-                 mixed_precision_config: MixedPrecisionQuantizationConfigV2 = None,
+                 mixed_precision_config: MixedPrecisionQuantizationConfig = None,
                  debug_config: DebugConfig = DebugConfig()
                  ):
         """
 
         Args:
             quantization_config (QuantizationConfig): Config for quantization.
-            mixed_precision_config (MixedPrecisionQuantizationConfigV2): Config for mixed precision quantization (optional, default=None).
+            mixed_precision_config (MixedPrecisionQuantizationConfig): Config for mixed precision quantization (optional, default=None).
             debug_config (DebugConfig): Config for debugging and editing the network quantization process.
         """
         self.quantization_config = quantization_config

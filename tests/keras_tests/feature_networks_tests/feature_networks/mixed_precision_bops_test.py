@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core import KPI, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import KPI, MixedPrecisionQuantizationConfig
 from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add
 
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -47,7 +47,7 @@ class BaseMixedPrecisionBopsTest(BaseKerasFeatureNetworkTest):
                                                 name="mp_bopts_test")
 
     def get_mixed_precision_v2_config(self):
-        return MixedPrecisionQuantizationConfigV2(num_of_images=1)
+        return MixedPrecisionQuantizationConfig(num_of_images=1)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, 3]]

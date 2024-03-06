@@ -48,27 +48,36 @@ def weights_size_kpi(mp_cfg: List[int],
 
     """
     weights_memory = []
-    mp_nodes = graph.get_configurable_sorted_nodes_names()
-    weights_mp_nodes = [n.name for n in graph.get_sorted_weights_configurable_nodes()]
+    mp_nodes = graph.get_configurable_sorted_nodes_names(fw_info)
+    weights_mp_nodes = [n.name for n in graph.get_sorted_weights_configurable_nodes(fw_info)]
 
     if len(mp_cfg) == 0:
         # Computing non-configurable nodes KPI
+        # TODO: when enabling multiple attribute quantization by default (currently,
+        #  only kernel quantization is enabled) we should include other attributes memory in the sum of all
+        #  weights memory (when quantized to their default 8-bit, non-configurable).
+        #  When implementing this, we should just go over all attributes in the node instead of counting only kernels.
         for n in graph.nodes:
+            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
+            if kernel_attr is None:
+                continue
             non_configurable_node = n.name not in weights_mp_nodes \
-                                    and n.has_weights_quantization_enabled_candidate() \
                                     and not n.reuse \
-                                    and n.is_all_weights_candidates_equal()
+                                    and n.is_all_weights_candidates_equal(kernel_attr)
 
             if non_configurable_node:
-                node_nbits = n.candidates_quantization_cfg[0].weights_quantization_cfg.weights_n_bits
+                node_nbits = (n.candidates_quantization_cfg[0].weights_quantization_cfg
+                              .get_attr_config(kernel_attr).weights_n_bits)
                 node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
                 weights_memory.append(node_weights_memory_in_bytes)
     else:
         # Go over configurable all nodes that should be taken into consideration when computing the weights KPI.
-        for n in graph.get_sorted_weights_configurable_nodes():
+        for n in graph.get_sorted_weights_configurable_nodes(fw_info):
+            # Only nodes with kernel op can be considered configurable
+            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
             node_idx = mp_nodes.index(n.name)
             node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
-            node_nbits = node_qc.weights_quantization_cfg.weights_n_bits
+            node_nbits = node_qc.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits
 
             node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
 
@@ -98,7 +107,7 @@ def activation_output_size_kpi(mp_cfg: List[int],
 
     """
     activation_memory = []
-    mp_nodes = graph.get_configurable_sorted_nodes_names()
+    mp_nodes = graph.get_configurable_sorted_nodes_names(fw_info)
     activation_mp_nodes = [n.name for n in graph.get_sorted_activation_configurable_nodes()]
 
     if len(mp_cfg) == 0:
@@ -147,7 +156,7 @@ def total_weights_activation_kpi(mp_cfg: List[int],
 
     """
     weights_activation_memory = []
-    weights_mp_nodes = [n.name for n in graph.get_sorted_weights_configurable_nodes()]
+    weights_mp_nodes = [n.name for n in graph.get_sorted_weights_configurable_nodes(fw_info)]
     activation_mp_nodes = [n.name for n in graph.get_sorted_activation_configurable_nodes()]
 
     if len(mp_cfg) == 0:
@@ -158,15 +167,19 @@ def total_weights_activation_kpi(mp_cfg: List[int],
             node_weights_memory_in_bytes, node_activation_memory_in_bytes = 0, 0
 
             # Non-configurable Weights
-            is_non_configurable_weights = n.name not in weights_mp_nodes and \
-                                          n.has_weights_quantization_enabled_candidate() and \
-                                          n.is_all_weights_candidates_equal() and \
-                                          not n.reuse
+            # TODO: currently considering only kernel attributes in weights KPI. When enabling multi-attribute
+            #  quantization we need to modify this method to count all attributes.
+            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
+            if kernel_attr is not None:
+                is_non_configurable_weights = n.name not in weights_mp_nodes and \
+                                              n.is_all_weights_candidates_equal(kernel_attr) and \
+                                              not n.reuse
 
-            if is_non_configurable_weights:
-                node_nbits = n.candidates_quantization_cfg[0].weights_quantization_cfg.weights_n_bits
-                node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
-                non_configurable = True
+                if is_non_configurable_weights:
+                    node_nbits = (n.candidates_quantization_cfg[0].weights_quantization_cfg
+                                  .get_attr_config(kernel_attr).weights_n_bits)
+                    node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
+                    non_configurable = True
 
             # Non-configurable Activation
             is_non_configurable_activation = n.name not in activation_mp_nodes and \
@@ -184,17 +197,22 @@ def total_weights_activation_kpi(mp_cfg: List[int],
     else:
         # Go over all nodes that should be taken into consideration when computing the weights or
         # activation KPI (all configurable nodes).
-        for node_idx, n in enumerate(graph.get_configurable_sorted_nodes()):
+        for node_idx, n in enumerate(graph.get_configurable_sorted_nodes(fw_info)):
+            # TODO: currently considering only kernel attributes in weights KPI. When enabling multi-attribute
+            #  quantization we need to modify this method to count all attributes.
+
             node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
-            node_weights_nbits = node_qc.weights_quantization_cfg.weights_n_bits
-            node_activation_nbits = node_qc.activation_quantization_cfg.activation_n_bits
 
             # Compute node's weights memory (if no weights to quantize then set to 0)
             node_weights_memory_in_bytes = 0
-            if n.is_weights_quantization_enabled() and not n.is_all_weights_candidates_equal():
-                node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_weights_nbits, fw_info)
+            kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
+            if kernel_attr is not None:
+                if n.is_weights_quantization_enabled(kernel_attr) and not n.is_all_weights_candidates_equal(kernel_attr):
+                    node_weights_nbits = node_qc.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits
+                    node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_weights_nbits, fw_info)
 
             # Compute node's activation memory (if node's activation are not being quantized then set to 0)
+            node_activation_nbits = node_qc.activation_quantization_cfg.activation_n_bits
             node_activation_memory_in_bytes = 0
             if n.is_activation_quantization_enabled() and not n.is_all_activation_candidates_equal():
                 node_activation_memory_in_bytes = _compute_node_activation_memory(n, node_activation_nbits)
@@ -237,7 +255,7 @@ def bops_kpi(mp_cfg: List[int],
 
     virtual_bops_nodes = [n for n in graph.get_topo_sorted_nodes() if isinstance(n, VirtualActivationWeightsNode)]
 
-    mp_nodes = graph.get_configurable_sorted_nodes_names()
+    mp_nodes = graph.get_configurable_sorted_nodes_names(fw_info)
     bops = [n.get_bops_count(fw_impl, fw_info, candidate_idx=_get_node_cfg_idx(n, mp_cfg, mp_nodes)) for n in virtual_bops_nodes]
 
     return np.array(bops)
@@ -261,12 +279,12 @@ def _bops_kpi(mp_cfg: List[int],
 
     """
 
-    mp_nodes = graph.get_configurable_sorted_nodes_names()
+    mp_nodes = graph.get_configurable_sorted_nodes_names(fw_info)
 
     # Go over all nodes that should be taken into consideration when computing the BOPS KPI.
     bops = []
     for n in graph.get_topo_sorted_nodes():
-        if n.has_weights_to_quantize(fw_info):
+        if n.has_kernel_weight_to_quantize(fw_info):
             # If node doesn't have weights then its MAC count is 0, and we shouldn't consider it in the BOPS count.
             incoming_edges = graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
             if len(incoming_edges) != 1:
@@ -283,8 +301,9 @@ def _bops_kpi(mp_cfg: List[int],
             node_mac = fw_impl.get_node_mac_operations(n, fw_info)
 
             node_qc = n.candidates_quantization_cfg[_get_node_cfg_idx(n, mp_cfg, mp_nodes)]
-            node_weights_nbits = node_qc.weights_quantization_cfg.weights_n_bits if \
-                node_qc.weights_quantization_cfg.enable_weights_quantization else FLOAT_BITWIDTH
+            kenrel_node_qc = node_qc.weights_quantization_cfg.get_attr_config(fw_info.get_kernel_op_attributes(n.type)[0])
+            node_weights_nbits = kenrel_node_qc.weights_n_bits if \
+                kenrel_node_qc.enable_weights_quantization else FLOAT_BITWIDTH
             input_activation_nbits = input_activation_node_cfg.activation_quantization_cfg.activation_n_bits if \
                 input_activation_node_cfg.activation_quantization_cfg.enable_activation_quantization else FLOAT_BITWIDTH
 

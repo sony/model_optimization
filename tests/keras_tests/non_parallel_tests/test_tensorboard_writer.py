@@ -24,6 +24,7 @@ from tensorboard.backend.event_processing import event_file_loader
 from tensorboard.compat.proto.graph_pb2 import GraphDef
 
 import model_compression_toolkit as mct
+from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
@@ -37,6 +38,8 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_set_bit_widths
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
+from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 
 keras = tf.keras
 layers = keras.layers
@@ -107,8 +110,10 @@ class TestFileLogger(unittest.TestCase):
         tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
 
         # Hessian service assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP
-        cfg = copy.deepcopy(DEFAULT_MIXEDPRECISION_CONFIG)
-        cfg.use_hessian_based_scores = False
+        cfg = DEFAULTCONFIG
+        mp_cfg = mct.core.MixedPrecisionQuantizationConfig(compute_distance_fn=compute_mse,
+                                                           distance_weighting_method=get_average_weights,
+                                                           use_hessian_based_scores=False)
 
         # compare max tensor size with plotted max tensor size
         tg = prepare_graph_set_bit_widths(in_model=model,
@@ -119,7 +124,9 @@ class TestFileLogger(unittest.TestCase):
                                           network_editor=[],
                                           quant_config=cfg,
                                           target_kpi=mct.core.KPI(),
-                                          n_iter=1, analyze_similarity=True)
+                                          n_iter=1,
+                                          analyze_similarity=True,
+                                          mp_cfg=mp_cfg)
         tensors_sizes = [4.0 * n.get_total_output_params() / 1000000.0
                          for n in tg.get_sorted_activation_configurable_nodes()]  # in MB
         max_tensor_size = max(tensors_sizes)
@@ -140,15 +147,14 @@ class TestFileLogger(unittest.TestCase):
         def rep_data():
             yield [np.random.randn(1, 8, 8, 3)]
 
-        mp_qc = mct.core.MixedPrecisionQuantizationConfigV2(num_of_images=1,
-                                                            use_hessian_based_scores=False)
+        mp_qc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
+                                                          use_hessian_based_scores=False)
         core_config = mct.core.CoreConfig(mixed_precision_config=mp_qc)
-        quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(self.model,
-                                                                               rep_data,
-                                                                               target_kpi=mct.core.KPI(np.inf),
-                                                                               core_config=core_config,
-                                                                               target_platform_capabilities=tpc,
-                                                                               new_experimental_exporter=True)
+        quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model,
+                                                                      rep_data,
+                                                                      target_kpi=mct.core.KPI(np.inf),
+                                                                      core_config=core_config,
+                                                                      target_platform_capabilities=tpc)
 
         self.tensorboard_initial_graph_num_of_nodes(num_event_files=1, event_to_test=0)
 
@@ -157,12 +163,11 @@ class TestFileLogger(unittest.TestCase):
 
         # Test Multiple Outputs model Logger
         self.model = MultipleOutputsNet()
-        quantized_model, _ = mct.ptq.keras_post_training_quantization_experimental(self.model,
-                                                                               rep_data,
-                                                                               target_kpi=mct.core.KPI(np.inf),
-                                                                               core_config=core_config,
-                                                                               target_platform_capabilities=tpc,
-                                                                               new_experimental_exporter=True)
+        quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model,
+                                                                      rep_data,
+                                                                      target_kpi=mct.core.KPI(np.inf),
+                                                                      core_config=core_config,
+                                                                      target_platform_capabilities=tpc)
 
         # Test tensor size plotting
         self.plot_tensor_sizes()

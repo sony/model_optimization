@@ -36,7 +36,7 @@ class PytorchTestLogger(unittest.TestCase):
         Logger.set_log_file('/tmp/')
         model = mobilenet_v2(pretrained=True)
         core_config = mct.core.CoreConfig(debug_config=mct.core.DebugConfig(analyze_similarity=True))
-        mct.ptq.pytorch_post_training_quantization_experimental(model, random_datagen, core_config=core_config)
+        mct.ptq.pytorch_post_training_quantization(model, random_datagen, core_config=core_config)
 
     @classmethod
     def tearDownClass(cls) -> None:

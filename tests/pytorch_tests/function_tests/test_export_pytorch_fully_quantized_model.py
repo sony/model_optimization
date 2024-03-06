@@ -63,7 +63,7 @@ class TestPyTorch2BitONNXExporter(unittest.TestCase):
 
     def setUp(self) -> None:
         self.model = BasicModel()
-        self.exportable_model = self.run_mct(self.model, new_experimental_exporter=True)
+        self.exportable_model = self.run_mct(self.model)
         self.exportable_model.eval()
         pytorch_export_model(model=self.exportable_model,
                              save_model_path=SAVED_MP_MODEL_PATH_ONNX,
@@ -82,14 +82,13 @@ class TestPyTorch2BitONNXExporter(unittest.TestCase):
                                                                      'enable_activation_quantization': True
                                                                      }))
 
-    def run_mct(self, model, new_experimental_exporter):
+    def run_mct(self, model):
         core_config = mct.core.CoreConfig()
-        new_export_model, _ = mct.ptq.pytorch_post_training_quantization_experimental(
+        new_export_model, _ = mct.ptq.pytorch_post_training_quantization(
             in_module=model,
             core_config=core_config,
             representative_data_gen=self.repr_datagen,
-            target_platform_capabilities=self.get_tpc(),
-            new_experimental_exporter=new_experimental_exporter)
+            target_platform_capabilities=self.get_tpc())
         return new_export_model
 
     def test_onnx_inference(self):

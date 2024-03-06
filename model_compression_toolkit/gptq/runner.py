@@ -20,7 +20,7 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
     apply_statistics_correction
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfigV2
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
@@ -32,7 +32,7 @@ from model_compression_toolkit.core.common.statistics_correction.apply_bias_corr
 from model_compression_toolkit.logger import Logger
 
 
-def _apply_gptq(gptq_config: GradientPTQConfigV2,
+def _apply_gptq(gptq_config: GradientPTQConfig,
                 representative_data_gen: Callable,
                 tb_w: TensorboardWriter,
                 tg: Graph,
@@ -59,9 +59,6 @@ def _apply_gptq(gptq_config: GradientPTQConfigV2,
 
     """
     if gptq_config is not None and gptq_config.n_epochs > 0:
-        Logger.info("Using experimental Gradient Based PTQ: If you encounter an issue "
-                           "please file a bug. To disable it, do not pass a gptq configuration.")
-
         tg_bias = gptq_training(tg,
                                 tg_bias,
                                 gptq_config,
@@ -77,7 +74,7 @@ def _apply_gptq(gptq_config: GradientPTQConfigV2,
 
 def gptq_runner(tg: Graph,
                 core_config: CoreConfig,
-                gptq_config: GradientPTQConfigV2,
+                gptq_config: GradientPTQConfig,
                 representative_data_gen: Callable,
                 gptq_representative_data_gen: Callable,
                 fw_info: FrameworkInfo,

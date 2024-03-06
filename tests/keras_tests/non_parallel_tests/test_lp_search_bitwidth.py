@@ -21,14 +21,13 @@ from model_compression_toolkit.core.common.mixed_precision.distance_weighting im
     get_last_layer_weights
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    MixedPrecisionQuantizationConfigV2
+    MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width, \
     BitWidthSearchMethod
 from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
     mp_integer_programming_search
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
@@ -234,13 +233,10 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                                              fw_info=fw_info,
                                                              graph=graph)
 
-        analyzer_graph(keras_impl.attach_sc_to_node,
-                       graph,
-                       fw_info)
-
         mi = ModelCollector(graph,
                             fw_info=DEFAULT_KERAS_INFO,
-                            fw_impl=keras_impl)
+                            fw_impl=keras_impl,
+                            qc=core_config.quantization_config)
 
         for i in range(1):
             mi.infer([np.random.randn(*input_shape)])
@@ -248,9 +244,8 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         def representative_data_gen():
             yield [np.random.random(input_shape)]
 
-        calculate_quantization_params(graph,
-                                      fw_info,
-                                      fw_impl=keras_impl)
+        calculate_quantization_params(graph)
+
         keras_impl.get_sensitivity_evaluator(graph,
                                              core_config.mixed_precision_config,
                                              representative_data_gen,
@@ -284,18 +279,18 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
     def test_mixed_precision_search_facade(self):
         core_config_avg_weights = CoreConfig(quantization_config=DEFAULTCONFIG,
-                                             mixed_precision_config=MixedPrecisionQuantizationConfigV2(compute_mse,
-                                                                                                       get_average_weights,
-                                                                                                       num_of_images=1,
-                                                                                                       use_hessian_based_scores=False))
+                                             mixed_precision_config=MixedPrecisionQuantizationConfig(compute_mse,
+                                                                                                     get_average_weights,
+                                                                                                     num_of_images=1,
+                                                                                                     use_hessian_based_scores=False))
 
         self.run_search_bitwidth_config_test(core_config_avg_weights)
 
         core_config_last_layer = CoreConfig(quantization_config=DEFAULTCONFIG,
-                                            mixed_precision_config=MixedPrecisionQuantizationConfigV2(compute_mse,
-                                                                                                      get_last_layer_weights,
-                                                                                                      num_of_images=1,
-                                                                                                      use_hessian_based_scores=False))
+                                            mixed_precision_config=MixedPrecisionQuantizationConfig(compute_mse,
+                                                                                                    get_last_layer_weights,
+                                                                                                    num_of_images=1,
+                                                                                                    use_hessian_based_scores=False))
 
         self.run_search_bitwidth_config_test(core_config_last_layer)
 

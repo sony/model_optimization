@@ -18,7 +18,6 @@ from model_compression_toolkit.core import DEFAULTCONFIG, CoreConfig, DebugConfi
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.model_collector import ModelCollector
-from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
@@ -77,21 +76,16 @@ def prepare_graph_with_quantization_parameters(in_model,
                                        qc,
                                        mixed_precision_enabled)
 
-    analyzer_graph(node_analyze_func=fw_impl.attach_sc_to_node,
-                   graph=graph,
-                   fw_info=fw_info,
-                   qc=qc)
 
     mi = ModelCollector(graph,
                         fw_impl=fw_impl,
-                        fw_info=fw_info)
+                        fw_info=fw_info,
+                        qc=qc)
 
     for i in range(10):
         mi.infer([np.random.randn(*input_shape)])
 
-    calculate_quantization_params(graph,
-                                  fw_info=fw_info,
-                                  fw_impl=fw_impl)
+    calculate_quantization_params(graph)
 
     return graph
 
@@ -105,12 +99,12 @@ def prepare_graph_set_bit_widths(in_model,
                                  fw_info,
                                  network_editor,
                                  analyze_similarity,
-                                 tpc):
+                                 tpc,
+                                 mp_cfg):
 
     # Config
-    quantization_config, mp_config = quant_config.separate_configs()
-    core_config = CoreConfig(quantization_config=quantization_config,
-                             mixed_precision_config=mp_config,
+    core_config = CoreConfig(quantization_config=quant_config,
+                             mixed_precision_config=mp_cfg,
                              debug_config=DebugConfig(analyze_similarity=analyze_similarity,
                                                       network_editor=network_editor))
 
@@ -123,7 +117,7 @@ def prepare_graph_set_bit_widths(in_model,
 
     graph = graph_preparation_runner(in_model,
                                      representative_data_gen=_representative_data_gen,
-                                     quantization_config=quantization_config,
+                                     quantization_config=quant_config,
                                      fw_info=fw_info,
                                      fw_impl=fw_impl,
                                      tpc=tpc,

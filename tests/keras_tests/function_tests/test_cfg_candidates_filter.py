@@ -24,6 +24,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
@@ -52,7 +53,7 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
     graph.set_tpc(tpc)
     graph.set_fw_info(fw_info)
     graph = set_quantization_configuration_to_graph(graph=graph,
-                                                    quant_config=DEFAULT_MIXEDPRECISION_CONFIG,
+                                                    quant_config=mct.core.QuantizationConfig(),
                                                     mixed_precision_enable=True)
     graph = fusion(graph, tpc)
 
@@ -96,7 +97,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
 
-        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes()
+        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes(DEFAULT_KERAS_INFO)
 
         # checking that layers with activation only (input and relu) have filtered configurations list,
         # that they have a configuration for each of the original bitwidth options
@@ -125,7 +126,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
 
-        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes()
+        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes(DEFAULT_KERAS_INFO)
 
         # checking that layers with weights (conv2d) have filtered activation configurations list
         # when weights quantization is disabled
@@ -154,14 +155,14 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
 
-        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes()
+        filtered_configurable_nodes = filtered_graph.get_configurable_sorted_nodes(DEFAULT_KERAS_INFO)
 
         # checking that layers with weights (conv2d) have filtered weights configurations list
         # when activation quantization is disabled
-        conv2d_candidates = filtered_configurable_nodes[0].candidates_quantization_cfg
-        self.assertTrue(len(conv2d_candidates) == 3,
-                        f"Expects 3 Conv layer candidates, number of candidates is {len(conv2d_candidates)}")
-        self.assertTrue([c.weights_quantization_cfg.weights_n_bits for c in conv2d_candidates] == [8, 4, 2])
+        conv2d_kernel_candidates = filtered_configurable_nodes[0].get_all_weights_attr_candidates(KERNEL)
+        self.assertTrue(len(conv2d_kernel_candidates) == 3,
+                        f"Expects 3 Conv layer kernel candidates, number of candidates is {len(conv2d_kernel_candidates)}")
+        self.assertTrue([c.weights_n_bits for c in conv2d_kernel_candidates] == [8, 4, 2])
 
     def test_cfg_filter_multiple_candidates_weights_disabled(self):
         input_shape = (8, 8, 3)
@@ -178,7 +179,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
 
-        filtered_graph_nodes = list(filtered_graph.nodes)
+        filtered_graph_nodes = filtered_graph.get_topo_sorted_nodes()
 
         # checking that layers with weights (conv2d) have filtered weights configurations list
         # when activation quantization is disabled
@@ -186,8 +187,8 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         self.assertTrue(len(conv2d_candidates) == 1,
                         f"Expects 1 Conv layer candidates, number of candidates is {len(conv2d_candidates)}")
         candidate = conv2d_candidates[0]
-        self.assertTrue((candidate.weights_quantization_cfg.weights_n_bits,
-                         candidate.activation_quantization_cfg.activation_n_bits) == (FLOAT_BITWIDTH , 8))
+        self.assertTrue((candidate.weights_quantization_cfg.get_attr_config(KERNEL).weights_n_bits,
+                         candidate.activation_quantization_cfg.activation_n_bits) == (FLOAT_BITWIDTH, 8))
 
 
 if __name__ == '__main__':

@@ -16,9 +16,9 @@ from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
-from model_compression_toolkit.gptq import keras_gradient_post_training_quantization_experimental
+from model_compression_toolkit.gptq import keras_gradient_post_training_quantization
 from model_compression_toolkit.core import FrameworkInfo
-from model_compression_toolkit.ptq import keras_post_training_quantization_experimental
+from model_compression_toolkit.ptq import keras_post_training_quantization
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
@@ -44,10 +44,10 @@ class BaseKerasFeatureNetworkTest(BaseFeatureNetworkTest):
         return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
     def get_ptq_facade(self):
-        return keras_post_training_quantization_experimental
+        return keras_post_training_quantization
 
     def get_gptq_facade(self):
-        return keras_gradient_post_training_quantization_experimental
+        return keras_gradient_post_training_quantization
 
     def get_fw_info(self) -> FrameworkInfo:
         return DEFAULT_KERAS_INFO

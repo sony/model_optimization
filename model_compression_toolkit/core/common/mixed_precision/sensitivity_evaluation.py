@@ -18,7 +18,7 @@ import numpy as np
 from typing import Callable, Any, List, Tuple
 
 from model_compression_toolkit.constants import AXIS, HESSIAN_OUTPUT_ALPHA
-from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfigV2
+from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 
@@ -37,7 +37,7 @@ class SensitivityEvaluation:
 
     def __init__(self,
                  graph: Graph,
-                 quant_config: MixedPrecisionQuantizationConfigV2,
+                 quant_config: MixedPrecisionQuantizationConfig,
                  representative_data_gen: Callable,
                  fw_info: FrameworkInfo,
                  fw_impl: Any,
@@ -82,7 +82,7 @@ class SensitivityEvaluation:
                              f" an HessianInfoService object must be provided but is {hessian_info_service}")
             self.hessian_info_service = hessian_info_service
 
-        self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names()
+        self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names(self.fw_info)
 
         # Get interest points and output points set for distance measurement and set other helper datasets
         # We define a separate set of output nodes of the model for the purpose of sensitivity computation.
@@ -486,7 +486,7 @@ def get_mp_interest_points(graph: Graph,
 
 def get_output_nodes_for_metric(graph: Graph) -> List[BaseNode]:
     """
-    Returns a list of output nodes that are also quantized (either weights or activation)
+    Returns a list of output nodes that are also quantized (either kernel weights attribute or activation)
     to be used as a set of output points in the distance metric computation.
 
     Args:
@@ -495,8 +495,11 @@ def get_output_nodes_for_metric(graph: Graph) -> List[BaseNode]:
     Returns: A list of output nodes.
 
     """
-    return [n.node for n in graph.get_outputs() if (n.node.is_weights_quantization_enabled() or
-                                                    n.node.is_activation_quantization_enabled())]
+
+    return [n.node for n in graph.get_outputs()
+            if (graph.fw_info.is_kernel_op(n.node.type) and
+                n.node.is_weights_quantization_enabled(graph.fw_info.get_kernel_op_attributes(n.node.type)[0])) or
+            n.node.is_activation_quantization_enabled()]
 
 
 def bound_num_interest_points(sorted_ip_list: List[BaseNode], num_ip_factor: float) -> List[BaseNode]:

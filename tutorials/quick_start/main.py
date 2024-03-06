@@ -15,6 +15,7 @@
 import argparse
 import importlib
 import logging
+import sys
 from typing import Dict, Tuple
 
 from common.results import write_results, read_models_list, parse_results, QuantInfo, plot_results, DatasetInfo
@@ -64,6 +65,15 @@ def argument_handler():
                              ' compression-rate of C, the average bits per parameter = 32/C for the compressed model')
 
     args = parser.parse_args()
+
+    if args.models_list_csv is None:
+        # If models_list_csv is not provided, then the following arguments are required
+        required_args = ['model_name', 'model_library', 'validation_dataset_folder', 'representative_dataset_folder']
+        missing_args = [arg for arg in required_args if getattr(args, arg) is None]
+
+        if missing_args:
+            parser.error(f"Missing required arguments: {', '.join(missing_args)}")
+            sys.exit(1)
     return args
 
 

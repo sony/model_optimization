@@ -23,7 +23,6 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.core.common.quantization.quantization_analyzer import analyzer_graph
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
 from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
@@ -46,14 +45,10 @@ def _collect_and_assign_act_threshold(graph: Graph,
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
      """
 
-    analyzer_graph(fw_impl.attach_sc_to_node,
-                   graph,
-                   fw_info,
-                   core_config.quantization_config)  # Mark points for statistics collection
-
     mi = ModelCollector(graph,
                         fw_impl,
-                        fw_info)
+                        fw_info,
+                        core_config.quantization_config) # Mark points for statistics collection
 
     for _data in tqdm(representative_data_gen()):
         mi.infer(_data)
@@ -81,9 +76,7 @@ def quantized_model_builder_for_second_moment_correction(graph: common.Graph,
     Returns:
         Quantized model for second moment correction.
     """
-    quantized_tg = quantize_graph_weights(graph,
-                                          fw_info=fw_info,
-                                          fw_impl=fw_impl)
+    quantized_tg = quantize_graph_weights(graph)
 
     quantized_model, user_info = fw_impl.model_builder(quantized_tg,
                                                        mode=ModelBuilderMode.FLOAT,

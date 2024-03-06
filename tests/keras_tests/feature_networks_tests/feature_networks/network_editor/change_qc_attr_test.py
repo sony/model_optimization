@@ -20,6 +20,7 @@ from model_compression_toolkit.core import DebugConfig
 from model_compression_toolkit.core.common.network_editors.actions import EditRule, ChangeFinalWeightsQuantConfigAttr, \
     ChangeFinalActivationQuantConfigAttr, ChangeCandidatesActivationQuantConfigAttr
 from model_compression_toolkit.core.common.network_editors.node_filters import NodeTypeFilter
+from model_compression_toolkit.core.keras.constants import KERNEL
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.utils import get_layers_from_model_by_type
 

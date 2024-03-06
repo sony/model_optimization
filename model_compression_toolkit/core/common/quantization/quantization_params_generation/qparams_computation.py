@@ -15,21 +15,17 @@
 from tqdm import tqdm
 from typing import List
 
-from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_weights_computation import \
-    get_weights_qparams, get_channels_axis
+    get_weights_qparams
 from model_compression_toolkit.logger import Logger
 
 
 def calculate_quantization_params(graph: Graph,
-                                  fw_info: FrameworkInfo,
                                   nodes: List[BaseNode] = [],
-                                  specific_nodes: bool = False,
-                                  fw_impl: FrameworkImplementation = None):
+                                  specific_nodes: bool = False):
     """
     For a graph, go over its nodes, compute quantization params (for both weights and activations according
     to the given framework info), and create and attach a NodeQuantizationConfig to each node (containing the
@@ -39,12 +35,10 @@ def calculate_quantization_params(graph: Graph,
     a list of nodes should be passed as well.
 
     Args:
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
         groups of layers by how they should be quantized, etc.)
         graph: Graph to compute its nodes' thresholds.
         nodes: List of nodes to compute their thresholds instead of computing it for all nodes in the graph.
         specific_nodes: Flag to compute thresholds for only specific nodes.
-        fw_impl: FrameworkImplementation with specific framework implementations.
 
     """
 
@@ -57,14 +51,21 @@ def calculate_quantization_params(graph: Graph,
 
     for n in tqdm(nodes_list, "Calculating quantization params"):  # iterate only nodes that we should compute their thresholds
         for candidate_qc in n.candidates_quantization_cfg:
-            if n.is_weights_quantization_enabled():
-                # If node's weights should be quantized, we compute its weights' quantization parameters
-                output_channels_axis, _ = get_channels_axis(candidate_qc.weights_quantization_cfg, fw_info, n.type)
-                weights_params = get_weights_qparams(n.get_weights_by_keys(fw_impl.constants.KERNEL),
-                                                     candidate_qc.weights_quantization_cfg,
-                                                     output_channels_axis)
-                candidate_qc.weights_quantization_cfg.set_weights_quantization_param(weights_params)
-                candidate_qc.weights_quantization_cfg.weights_channels_axis = output_channels_axis
+            for attr in n.get_node_weights_attributes():
+                if n.is_weights_quantization_enabled(attr):
+                    # If the node's weights attribute should be quantized, we compute its quantization parameters
+                    attr_cfg = candidate_qc.weights_quantization_cfg.get_attr_config(attr)
+                    channels_axis = attr_cfg.weights_channels_axis
+                    if channels_axis is not None:
+                        output_channels_axis = channels_axis[0]
+                    else:
+                        output_channels_axis = None
+                    weights_params = get_weights_qparams(n.get_weights_by_keys(attr),
+                                                         candidate_qc.weights_quantization_cfg,
+                                                         attr_cfg,
+                                                         output_channels_axis)
+                    attr_cfg.set_weights_quantization_param(weights_params)
+
             if n.is_activation_quantization_enabled():
                 # If node's activations should be quantized as well, we compute its activation quantization parameters
                 activation_params = get_activations_qparams(

@@ -20,6 +20,7 @@ import tensorflow as tf
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.substitutions.scale_equalization import fixed_second_moment_after_relu, \
     fixed_mean_after_relu
+from model_compression_toolkit.core.keras.constants import DEPTHWISE_KERNEL, KERNEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from tests.keras_tests.tpc_keras import get_16bit_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -98,8 +99,11 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
         f_first_linear_op_index = 1
         f_second_linear_op_index = 4 + int(self.zero_pad)
 
-        quantized_model_layer1_weight = quantized_model.layers[q_first_linear_op_index].weights[0]
-        quantized_model_layer2_weight = quantized_model.layers[q_second_linear_op_index].weights[0]
+        first_op_attr = DEPTHWISE_KERNEL if isinstance(self.first_op2d, layers.DepthwiseConv2D) else KERNEL
+        second_op_attr = DEPTHWISE_KERNEL if isinstance(self.second_op2d, layers.DepthwiseConv2D) else KERNEL
+
+        quantized_model_layer1_weight = quantized_model.layers[q_first_linear_op_index].get_quantized_weights()[first_op_attr]
+        quantized_model_layer2_weight = quantized_model.layers[q_second_linear_op_index].get_quantized_weights()[second_op_attr]
 
         float_model_layer1_weight = float_model.layers[f_first_linear_op_index].weights[0]
         float_model_layer2_weight = float_model.layers[f_second_linear_op_index].weights[0]
@@ -115,24 +119,24 @@ class ScaleEqualizationTest(BaseKerasFeatureNetworkTest):
         scale_factor = np.minimum(scale_factor, 1.0)
 
         # disable bn folding
-        if type(quantized_model.layers[q_first_linear_op_index]) == layers.DepthwiseConv2D:
+        if type(quantized_model.layers[q_first_linear_op_index].layer) == layers.DepthwiseConv2D:
             gamma = gamma.reshape(1, 1, quantized_model_layer1_weight.shape[-2], quantized_model_layer1_weight.shape[-1])
-        elif type(quantized_model.layers[q_first_linear_op_index]) == layers.Conv2DTranspose:
+        elif type(quantized_model.layers[q_first_linear_op_index].layer) == layers.Conv2DTranspose:
             gamma = gamma.reshape(1, 1, -1, 1)
         else:
             gamma = gamma.reshape(1, 1, 1, -1)
         quantized_model_layer1_weight_without_bn_fold = quantized_model_layer1_weight / gamma
 
-        if (type(quantized_model.layers[q_first_linear_op_index]) == layers.DepthwiseConv2D) \
-                or (type(quantized_model.layers[q_second_linear_op_index]) == layers.DepthwiseConv2D):
+        if (type(quantized_model.layers[q_first_linear_op_index].layer) == layers.DepthwiseConv2D) \
+                or (type(quantized_model.layers[q_second_linear_op_index].layer) == layers.DepthwiseConv2D):
             alpha = np.mean(quantized_model_layer1_weight_without_bn_fold / float_model_layer1_weight)
             beta = np.mean(float_model_layer2_weight / quantized_model_layer2_weight)
             scale_factor = np.mean(scale_factor)
         else:
             first_layer_chn_dim = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(
-                type(quantized_model.layers[q_first_linear_op_index]))[0]
+                type(quantized_model.layers[q_first_linear_op_index].layer))[0]
             second_layer_chn_dim = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(
-                type(quantized_model.layers[q_second_linear_op_index]))[1]
+                type(quantized_model.layers[q_second_linear_op_index].layer))[1]
 
             first_layer_axes = tuple(np.delete(np.arange(quantized_model_layer1_weight.numpy().ndim),
                                                first_layer_chn_dim))

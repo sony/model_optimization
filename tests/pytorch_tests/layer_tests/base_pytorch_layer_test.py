@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import random
+
 import operator
 from typing import List, Any, Tuple
 import numpy as np
@@ -30,7 +32,7 @@ from torch.fx import symbolic_trace
 from torch.nn import Module
 
 from model_compression_toolkit.core import FrameworkInfo
-from model_compression_toolkit.ptq import pytorch_post_training_quantization_experimental
+from model_compression_toolkit.ptq import pytorch_post_training_quantization
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.core.pytorch.constants import CALL_FUNCTION, OUTPUT, CALL_METHOD, PLACEHOLDER
@@ -61,6 +63,18 @@ PYTORCH_LAYER_TEST_OPS = {
 }
 
 
+def seed_everything(seed_value: int):
+    """
+    Use seed to disable random behaviour. This is needed for the conv2dtranspose layer test, since when
+    using cuda, some optimizations may cause a bit different predictions (for the same input).
+    """
+    random.seed(seed_value)
+    np.random.seed(seed_value)
+    torch.manual_seed(seed_value)
+    torch.cuda.manual_seed_all(seed_value)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
 class LayerTestModel(torch.nn.Module):
     def __init__(self, layer):
         super(LayerTestModel, self).__init__()
@@ -81,11 +95,39 @@ class OperationTestModel(torch.nn.Module):
 
 def is_node_fake_quant(node):
     return node.target == torch.fake_quantize_per_tensor_affine
+def has_nested_attr(obj, attr):
+    """
+    Check if an object `obj` has a nested attribute `attr`.
+    This function was created to test pytorch layer tests when layers are wrapped using MCTQ
+    PytorchQuantizationWrapper and the internal layer should be checked and accessed.
+    """
+    try:
+        for part in attr.split('.'):
+            obj = getattr(obj, part)
+        return True
+    except Exception:
+        return False
+
+def get_nested_attr(obj, attr, default=None):
+    """
+    Retrieve the value of a nested attribute from an object `obj` if it exists,
+    otherwise return a default value.
+    This function was created to test pytorch layer tests when layers are wrapped using MCTQ
+    PytorchQuantizationWrapper and the internal layer should be checked and accessed.
+    """
+    try:
+        for part in attr.split('.'):
+            obj = getattr(obj, part)
+        return obj
+    except Exception:
+        return default
 
 
 def get_node_operation(node, model):
     if hasattr(model, str(node.target)):
         op = getattr(model, node.target)
+    elif has_nested_attr(model, node.target):
+        op = get_nested_attr(model, node.target)
     elif node.op == CALL_FUNCTION:
         op = node.target
     elif node.op == CALL_METHOD:
@@ -153,7 +195,7 @@ class BasePytorchLayerTest(BaseLayerTest):
         return PytorchImplementation()
 
     def get_ptq_facade(self):
-        return pytorch_post_training_quantization_experimental
+        return pytorch_post_training_quantization
 
     def generate_inputs(self):
         return to_torch_tensor([torch.randn(*in_shape) for in_shape in self.get_input_shapes()])
@@ -202,11 +244,15 @@ class BasePytorchLayerTest(BaseLayerTest):
             op = get_node_operation(node, quantized_model)
             if op == OUTPUT or op == operator.getitem or is_node_fake_quant(node):
                 continue
-            if hasattr(quantized_model, str(node.target)):
+            if has_nested_attr(quantized_model, str(node.target)):
                 if type(op) in PYTORCH_LAYER_TEST_OPS['kernel_ops']:
-                    quantized_weights = get_layer_weights(getattr(quantized_model, node.target))
-                    float_weights = get_layer_weights(getattr(float_model, node.target))
+                    quantized_weights = get_layer_weights(get_nested_attr(quantized_model, node.target))
+                    # Extract the original layer name from a wrapped PytorchQuantizationWrapper layer.
+                    # For example: for conv1.layer (when conv1 is wrapping an internal layer), float_layer_name will be conv1
+                    float_layer_name = str(node.target).split('.')[0]
+                    float_weights = get_layer_weights(getattr(float_model, float_layer_name))
                     for k, v in quantized_weights.items():
+                        # TODO: remove use of kernel op dict
                         if k in fw_info.kernel_ops_attributes_mapping.get(type(op)):
                             float_weight = float_weights.get(k)
                             self.unit_test.assertFalse(float_weight is None)
@@ -243,7 +289,11 @@ class BasePytorchLayerTest(BaseLayerTest):
                     self.unit_test.assertFalse(float_weight is None)
                     self.unit_test.assertTrue(np.sum(np.abs(v - float_weight)) == 0.0)
         input_tensors = self.generate_inputs()
+
+        # Set seed to avoid randomness between predictions.
+        seed_everything(0)
         y = self.predict(float_model, input_tensors)
+        seed_everything(0)
         y_hat = self.predict(quantized_model, input_tensors)
         if isinstance(y, (list, tuple)):
             for fo, qo in zip(y, y_hat):
