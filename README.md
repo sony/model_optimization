@@ -68,7 +68,7 @@ Currently, MCT is being tested on various Python, Pytorch and TensorFlow version
 ## Supported Features
 MCT offers a range of powerful features to optimize neural network models for efficient deployment. These supported features include:
 
-### Data Generation
+### Data Generation [*](#experimental-features)
 MCT provides tools for generating synthetic images based on the statistics stored in a model's batch normalization layers. These generated images are valuable for various compression tasks where image data is required, such as quantization and pruning. 
 You can customize data generation configurations to suit your specific needs. [Go to the Data Generation page.](model_compression_toolkit/data_generation/README.md)
 
@@ -76,7 +76,7 @@ You can customize data generation configurations to suit your specific needs. [G
 MCT supports different quantization methods:
 * Post-training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental)
 * Gradient-based post-training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_gradient_post_training_quantization_experimental.html#ug-pytorch-gradient-post-training-quantization-experimental)
-* Quantization-aware training (QAT)[*](#experimental-features)
+* Quantization-aware training (QAT) [*](#experimental-features)
 
 
 | Quantization Method                           | Complexity | Computational Cost          |
@@ -111,6 +111,15 @@ The specifications of the algorithm are detailed in the paper: _"**EPTQ: Enhance
 More details on the how to use EPTQ via MCT can be found in the [EPTQ guidelines](model_compression_toolkit/gptq/README.md).
 
 
+### Structured Pruning [*](#experimental-features)
+MCT introduces a structured and hardware-aware model pruning.
+This pruning technique is designed to compress models for specific hardware architectures, 
+taking into account the target platform's Single Instruction, Multiple Data (SIMD) capabilities. 
+By pruning groups of channels (SIMD groups), our approach not only reduces model size 
+and complexity, but ensures that better utilization of channels is in line with the SIMD architecture 
+for a target KPI of weights memory footprint.
+[Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_pruning_experimental.html)
+[Pytorch API](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pruning/pytorch/pruning_facade.py#L43) 
 
 #### Experimental features 
 
@@ -140,17 +149,8 @@ In the following table we present the ImageNet validation results for these mode
 
 For more results, please refer to [quick start](https://github.com/sony/model_optimization/tree/main/tutorials/quick_start).
 
-### Structured Pruning
-MCT introduces a structured and hardware-aware model pruning.
-This pruning technique is designed to compress models for specific hardware architectures, 
-taking into account the target platform's Single Instruction, Multiple Data (SIMD) capabilities. 
-By pruning groups of channels (SIMD groups), our approach not only reduces model size 
-and complexity, but ensures that better utilization of channels is in line with the SIMD architecture 
-for a target KPI of weights memory footprint.
-[Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_pruning_experimental.html)
-[Pytorch API](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pruning/pytorch/pruning_facade.py#L43) 
 
-#### Results
+#### Pruning Results
 
 Results for applying pruning to reduce the parameters of the following models by 50%:
 
