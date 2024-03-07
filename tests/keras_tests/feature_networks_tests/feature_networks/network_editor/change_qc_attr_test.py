@@ -31,8 +31,7 @@ layers = keras.layers
 class ChangeFinalWeightQCAttrTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test):
-        super().__init__(unit_test,
-                         experimental_exporter=True)
+        super().__init__(unit_test)
 
     def get_debug_config(self):
         return DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.Conv2D),
@@ -53,7 +52,7 @@ class ChangeFinalWeightQCAttrTest(BaseKerasFeatureNetworkTest):
 class ChangeFinalActivationQCAttrTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test):
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test )
 
     def get_debug_config(self):
         return DebugConfig(network_editor=[EditRule(filter=NodeTypeFilter(layers.Conv2D),

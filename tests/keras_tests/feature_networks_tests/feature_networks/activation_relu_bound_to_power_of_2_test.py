@@ -30,7 +30,7 @@ class ReLUBoundToPOTNetTest(BaseKerasFeatureNetworkTest):
     This test checks the ReLU Bound To POT feature.
     """
     def __init__(self, unit_test):
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test)
 
     def get_quantization_config(self):
         return QuantizationConfig(relu_bound_to_power_of_2=True)

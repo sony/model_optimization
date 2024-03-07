@@ -38,8 +38,7 @@ class NestedTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, is_inner_functional=True):
         self.is_inner_functional = is_inner_functional
         super().__init__(unit_test,
-                         input_shape=(16,16,3),
-                         experimental_exporter=True)
+                         input_shape=(16,16,3))
 
     def get_tpc(self):
         return get_quantization_disabled_keras_tpc("nested_test")

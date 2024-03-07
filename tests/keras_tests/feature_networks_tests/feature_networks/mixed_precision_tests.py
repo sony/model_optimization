@@ -41,7 +41,7 @@ def get_base_mp_nbits_candidates():
 
 class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, activation_layers_idx, num_calibration_iter=1):
-        super().__init__(unit_test, num_calibration_iter=num_calibration_iter, experimental_exporter=True)
+        super().__init__(unit_test, num_calibration_iter=num_calibration_iter)
 
         self.activation_layers_idx = activation_layers_idx
 

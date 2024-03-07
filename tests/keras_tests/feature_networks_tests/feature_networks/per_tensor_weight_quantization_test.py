@@ -29,7 +29,7 @@ layers = keras.layers
 
 class PerTensorWeightQuantizationTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test )
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_per_channel_threshold': False})

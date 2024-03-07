@@ -59,7 +59,7 @@ class BaseBatchNormalizationFolding(BaseKerasFeatureNetworkTest, ABC):
 
     def __init__(self, unit_test, linear_layer):
         self.linear_layer = linear_layer
-        super(BaseBatchNormalizationFolding, self).__init__(unit_test=unit_test, experimental_exporter=True)
+        super(BaseBatchNormalizationFolding, self).__init__(unit_test=unit_test)
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 16,
@@ -240,7 +240,7 @@ class BNForwardFoldingTest(BaseKerasFeatureNetworkTest):
     test that the BN isn't folded
     """
     def __init__(self, unit_test, test_layer, conversion_applied, add_bn=False, is_dwconv=False):
-        super().__init__(unit_test=unit_test, experimental_exporter=True, val_batch_size=2)
+        super().__init__(unit_test=unit_test, val_batch_size=2)
         self.test_layer = test_layer
         self.conversion_applied = conversion_applied
         self.add_bn = add_bn
