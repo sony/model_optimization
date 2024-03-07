@@ -49,7 +49,7 @@ if FOUND_TF:
         scheduler_step_function_dict
 
     # Function to create a DataGenerationConfig object with the specified configuration parameters for Tensorflow
-    def get_tensorflow_data_generation_config(
+    def get_keras_data_generation_config(
             n_iter: int = DEFAULT_N_ITER,
             optimizer: Optimizer = Adam,
             data_gen_batch_size: int = DEFAULT_DATA_GEN_BS,
@@ -328,8 +328,8 @@ if FOUND_TF:
 
 
 else:
-    def get_tensorflow_data_generation_config(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory when using get_tensorflow_data_generation_config. '
+    def get_keras_data_generation_config(*args, **kwargs):
+        Logger.critical('Installing tensorflow is mandatory when using get_keras_data_generation_config. '
                         'Could not find Tensorflow package.')  # pragma: no cover
 
 
