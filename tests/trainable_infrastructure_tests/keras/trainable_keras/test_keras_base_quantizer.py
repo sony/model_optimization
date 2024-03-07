@@ -41,7 +41,7 @@ class TestKerasBaseWeightsQuantizer(BaseKerasTrainableInfrastructureTest):
         with self.unit_test.assertRaises(Exception) as e:
             ZeroWeightsQuantizer(self.get_weights_quantization_config())
         self.unit_test.assertEqual(f'Quantization method mismatch expected: [<QuantizationMethod.POWER_OF_TWO: 0>, '
-                                   f''f'<QuantizationMethod.SYMMETRIC: 2>] and got  QuantizationMethod.UNIFORM',
+                                   f''f'<QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM',
                                    str(e.exception))
 
         with self.unit_test.assertRaises(Exception) as e:
