@@ -52,21 +52,21 @@ Supported Features
 
 Keras:
 
-* :ref:`Post Training Quantization<ug-keras_post_training_quantization_experimental>` [1]
-* :ref:`Gradient based post training using knowledge distillation<ug-keras_gradient_post_training_quantization_experimental>`
-* :ref:`Mixed-precision post training quantization<ug-keras_post_training_quantization_mixed_precision>`
-* :ref:`Init model for Quantization Aware Training<ug-keras_quantization_aware_training_init>` (Experimental)
-* :ref:`Finalize model after Quantization Aware Training<ug-keras_quantization_aware_training_finalize>` (Experimental)
-* :ref:`Structured Pruning<ug-keras_pruning_experimental>` (Experimental)
+* :ref:`Post Training Quantization<ug-keras_post_training_quantization>` [1]
+* :ref:`Gradient based post training using knowledge distillation<ug-keras_gradient_post_training_quantization>`
+* :ref:`Init model for Quantization Aware Training<ug-keras_quantization_aware_training_init_experimental>` (Experimental)
+* :ref:`Finalize model after Quantization Aware Training<ug-keras_quantization_aware_training_finalize_experimental>` (Experimental)
+* :ref:`Structured pruning<ug-keras_pruning_experimental>` (Experimental)
+* :ref:`Data generation<ug-keras_data_generation_experimental>` (Experimental)
 
 Pytorch:
 
-* :ref:`Post Training Quantization<ug-pytorch_post_training_quantization_experimental>` [1]
-* :ref:`Gradient based post training using knowledge distillation<ug-pytorch_gradient_post_training_quantization_experimental>`
-* :ref:`Mixed-precision post training quantization<ug-pytorch_post_training_quantization_mixed_precision>`
-* :ref:`Init model for Quantization Aware Training<ug-pytorch_quantization_aware_training_init>` (Experimental)
-* :ref:`Finalize model after Quantization Aware Training<ug-pytorch_quantization_aware_training_finalize>` (Experimental)
-
+* :ref:`Post Training Quantization<ug-pytorch_post_training_quantization>` [1]
+* :ref:`Gradient based post training using knowledge distillation<ug-pytorch_gradient_post_training_quantization>`
+* :ref:`Init model for Quantization Aware Training<ug-pytorch_quantization_aware_training_init_experimental>` (Experimental)
+* :ref:`Finalize model after Quantization Aware Training<ug-pytorch_quantization_aware_training_finalize_experimental>` (Experimental)
+* :ref:`Structured pruning<ug-pytorch_pruning_experimental>` (Experimental)
+* :ref:`Data generation<ug-pytorch_data_generation_experimental>` (Experimental)
 
 
 Visualization:
@@ -101,7 +101,7 @@ Please visit the MCT API documentation here
     :titlesonly:
     :maxdepth: 1
 
-    API Documentation<../api/experimental_api_docs/index>
+    API Documentation<../api/api_docs/index>
 
 Technical Constraints
 =========================

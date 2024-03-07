@@ -1,11 +1,11 @@
 :orphan:
 
-.. _ug-mixed_precision_quantization_config:
+.. _ug-mixed_precision_quantization_config_v2:
 
 
-===========================================
+===========================================================
 mixed_precision_quantization_config Module
-===========================================
+===========================================================
 
 
 KPI
@@ -13,14 +13,13 @@ KPI
 **Object to configure resources to use when searching for a mixed-precision configuration for a model:**
 
 .. autoclass:: model_compression_toolkit.core.KPI
-    :noindex:
 
 
 |
 
 
-MixedPrecisionQuantizationConfig
-=================================
+MixedPrecisionQuantizationConfigV2
+===================================
 **Class to configure the quantization process of the model when quantizing in mixed-precision:**
 
 .. autoclass:: model_compression_toolkit.core.MixedPrecisionQuantizationConfig
