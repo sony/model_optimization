@@ -86,7 +86,7 @@ if FOUND_TF:
             are represented in float32 data type (thus, each parameter is represented using 4 bytes):
 
             >>> dense_nparams = sum([l.count_params() for l in model.layers])
-            >>> target_kpi = mct.KPI(weights_memory=dense_nparams * 4 * 0.5)
+            >>> target_kpi = mct.core.KPI(weights_memory=dense_nparams * 4 * 0.5)
 
             Optionally, define a pruning configuration. num_score_approximations can be passed
             to configure the number of importance scores that will be calculated for each channel.

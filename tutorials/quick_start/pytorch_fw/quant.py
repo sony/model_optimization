@@ -23,8 +23,7 @@ import logging
 from common.constants import NUM_REPRESENTATIVE_IMAGES, BATCH_SIZE, REPRESENTATIVE_DATASET_FOLDER, \
     TARGET_PLATFORM_NAME, TARGET_PLATFORM_VERSION
 
-from model_compression_toolkit import KPI
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, CoreConfig
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, CoreConfig, KPI
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from tutorials.quick_start.common.constants import BYTES_TO_FP32, MP_WEIGHTS_COMPRESSION
 from tutorials.quick_start.common.results import QuantInfo
