@@ -70,8 +70,7 @@ class TestGetGPTQConfig(unittest.TestCase):
         test_hessian_weights_config = GPTQHessianScoresConfig(hessians_num_samples=2,
                                                               norm_scores=False,
                                                               log_norm=True,
-                                                              scale_log_norm=True,
-                                                              hessians_n_iter=20)
+                                                              scale_log_norm=True)
 
         self.gptqv2_configurations = [GradientPTQConfig(1, optimizer=tf.keras.optimizers.RMSprop(),
                                                         optimizer_rest=tf.keras.optimizers.RMSprop(),
