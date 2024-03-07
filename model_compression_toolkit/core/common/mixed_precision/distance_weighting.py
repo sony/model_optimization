@@ -12,8 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from enum import Enum
 
 import numpy as np
+
+class MpDistanceWeighting(Enum):
+
 
 
 def get_average_weights(distance_matrix: np.ndarray) -> np.ndarray:
@@ -21,6 +25,7 @@ def get_average_weights(distance_matrix: np.ndarray) -> np.ndarray:
     Get weights for weighting the sensitivity among different layers when evaluating MP configurations on
     model's sensitivity. This function returns equal weights for each layer, such that the sensitivity
     is averaged over all layers.
+
     Args:
         distance_matrix: Numpy array at shape (L,M): L -number of interest points, M number of samples.
         The matrix contain the distance for each interest point at each sample.
