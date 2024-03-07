@@ -20,8 +20,8 @@ from keras.layers import ReLU
 from tensorflow.keras.optimizers.legacy import Optimizer, Adam
 from tensorflow.keras.layers import Conv2D, Input, BatchNormalization, Dense, GlobalAveragePooling2D
 
-from model_compression_toolkit.data_generation import tensorflow_data_generation_experimental, \
-    get_tensorflow_data_generation_config
+from model_compression_toolkit.data_generation import keras_data_generation_experimental, \
+    get_keras_data_generation_config
 from model_compression_toolkit.data_generation.common.enums import (SchedulerType,
                                                                     BatchNormAlignemntLossType, OutputLossType,
                                                                     DataInitType, BNLayerWeightingType,
@@ -87,7 +87,7 @@ class BaseKerasDataGenerationTest:
         self.bn_layer_types = bn_layer_types
 
     def run_test(self):
-        data_generation_config = get_tensorflow_data_generation_config(
+        data_generation_config = get_keras_data_generation_config(
             n_iter=self.n_iter,
             data_gen_batch_size=self.data_gen_batch_size,
             initial_lr=self.initial_lr,
@@ -101,7 +101,7 @@ class BaseKerasDataGenerationTest:
             output_loss_type=self.output_loss_type,
             output_loss_multiplier=self.output_loss_multiplier)
 
-        data_loader = tensorflow_data_generation_experimental(
+        data_loader = keras_data_generation_experimental(
             model=self.model,
             n_images=self.n_images,
             output_image_size=self.output_image_size,

@@ -61,9 +61,9 @@ class TestExportingQATModelTorchscript(unittest.TestCase):
         model = self.get_model()
         images = next(self.get_dataset())
 
-        self.qat_ready, _ = mct.qat.pytorch_quantization_aware_training_init(model,
-                                                                             self.get_dataset,
-                                                                             target_platform_capabilities=self.get_tpc())
+        self.qat_ready, _ = mct.qat.pytorch_quantization_aware_training_init_experimental(model,
+                                                                                          self.get_dataset,
+                                                                                          target_platform_capabilities=self.get_tpc())
 
         # Dummy train uses LR 0, thus predictions before and after dummy train should be the same
         a = self.qat_ready(images[0])
@@ -78,7 +78,7 @@ class TestExportingQATModelTorchscript(unittest.TestCase):
         torch.save(self.qat_ready, _qat_ready_model_tmp_filepath)
         self.qat_ready = torch.load(_qat_ready_model_tmp_filepath)
 
-        self.final_model = mct.qat.pytorch_quantization_aware_training_finalize(self.qat_ready)
+        self.final_model = mct.qat.pytorch_quantization_aware_training_finalize_experimental(self.qat_ready)
 
         # Assert final_model can be used for inference, can be saved and loaded
         self.final_model(images[0])

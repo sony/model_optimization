@@ -129,6 +129,10 @@ if FOUND_TORCH:
 
         Examples:
 
+            Import Model Compression Toolkit:
+
+            >>> import model_compression_toolkit as mct
+
             Import a Pytorch module:
 
             >>> from torchvision import models
@@ -149,7 +153,7 @@ if FOUND_TORCH:
 
             Pass the module, the representative dataset generator and the configuration (optional) to get a quantized module
 
-            >>> quantized_module, quantization_info = mct.gptq.pytorch_gradient_post_training_quantization_experimental(module, repr_datagen, core_config=config, gptq_config=gptq_conf)
+            >>> quantized_module, quantization_info = mct.gptq.pytorch_gradient_post_training_quantization(module, repr_datagen, core_config=config, gptq_config=gptq_conf)
 
         """
 

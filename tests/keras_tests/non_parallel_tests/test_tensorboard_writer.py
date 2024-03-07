@@ -24,7 +24,6 @@ from tensorboard.backend.event_processing import event_file_loader
 from tensorboard.compat.proto.graph_pb2 import GraphDef
 
 import model_compression_toolkit as mct
-from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     DEFAULT_MIXEDPRECISION_CONFIG
@@ -110,7 +109,7 @@ class TestFileLogger(unittest.TestCase):
         tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
 
         # Hessian service assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP
-        cfg = DEFAULTCONFIG
+        cfg = mct.core.DEFAULTCONFIG
         mp_cfg = mct.core.MixedPrecisionQuantizationConfig(compute_distance_fn=compute_mse,
                                                            distance_weighting_method=get_average_weights,
                                                            use_hessian_based_scores=False)

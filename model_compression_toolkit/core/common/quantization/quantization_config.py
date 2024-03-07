@@ -82,7 +82,7 @@ class QuantizationConfig:
             block_collapsing (bool): Whether to collapse block one to another in the input network
             shift_negative_ratio (float): Value for the ratio between the minimal negative value of a non-linearity output to its activation threshold, which above it - shifting negative activation should occur if enabled.
             shift_negative_threshold_recalculation (bool): Whether or not to recompute the threshold after shifting negative activation.
-            shift_negative_params_search (bool): Whether to search for optimal shift and threshold in shift negative activation (experimental)
+            shift_negative_params_search (bool): Whether to search for optimal shift and threshold in shift negative activation.
 
         Examples:
             One may create a quantization configuration to quantize a model according to.
