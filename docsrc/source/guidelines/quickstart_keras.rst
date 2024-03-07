@@ -62,7 +62,7 @@ Initialize data loader:
 
     # Create a representative data generator, which returns a list of images.
     # The images can be preprocessed using a list of preprocessing functions.
-    from model_compression_toolkit import FolderImageLoader
+    from model_compression_toolkit.core import FolderImageLoader
     image_data_loader = FolderImageLoader(folder,
                                           preprocessing=[resize, normalization],
                                           batch_size=batch_size)
