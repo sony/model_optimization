@@ -11,52 +11,52 @@ network_editor Module
 
 EditRule
 ==========
-.. autoclass:: model_compression_toolkit.network_editor.EditRule
+.. autoclass:: model_compression_toolkit.core.network_editor.EditRule
 
 Filters
 ==========
 
-.. autoclass:: model_compression_toolkit.network_editor.NodeTypeFilter
+.. autoclass:: model_compression_toolkit.core.network_editor.NodeTypeFilter
 
 |
 
-.. autoclass:: model_compression_toolkit.network_editor.NodeNameFilter
+.. autoclass:: model_compression_toolkit.core.network_editor.NodeNameFilter
 
 |
 
-.. autoclass:: model_compression_toolkit.network_editor.NodeNameScopeFilter
+.. autoclass:: model_compression_toolkit.core.network_editor.NodeNameScopeFilter
 
 
 Actions
 ==========
 
-.. autoclass:: model_compression_toolkit.network_editor.ChangeFinalWeightsQuantConfigAttr
+.. autoclass:: model_compression_toolkit.core.network_editor.ChangeFinalWeightsQuantConfigAttr
 
 |
 
-.. autoclass:: model_compression_toolkit.network_editor.ChangeCandidatesWeightsQuantConfigAttr
+.. autoclass:: model_compression_toolkit.core.network_editor.ChangeCandidatesWeightsQuantConfigAttr
 
 |
 
-.. autoclass:: model_compression_toolkit.network_editor.ChangeFinalActivationQuantConfigAttr
+.. autoclass:: model_compression_toolkit.core.network_editor.ChangeFinalActivationQuantConfigAttr
 
 |
 
-.. autoclass:: model_compression_toolkit.network_editor.ChangeCandidatesActivationQuantConfigAttr
+.. autoclass:: model_compression_toolkit.core.network_editor.ChangeCandidatesActivationQuantConfigAttr
 
 |
 
-.. autoclass:: model_compression_toolkit.network_editor.ChangeQuantizationParamFunction
+.. autoclass:: model_compression_toolkit.core.network_editor.ChangeQuantizationParamFunction
 
 |
 
-.. autoclass:: model_compression_toolkit.network_editor.ChangeFinalWeightsQuantizationMethod
+.. autoclass:: model_compression_toolkit.core.network_editor.ChangeFinalWeightsQuantizationMethod
 
 |
 
-.. autoclass:: model_compression_toolkit.network_editor.ChangeCandidatesWeightsQuantizationMethod
+.. autoclass:: model_compression_toolkit.core.network_editor.ChangeCandidatesWeightsQuantizationMethod
 
 |
 
-.. autoclass:: model_compression_toolkit.network_editor.ChangeCandidatesActivationQuantizationMethod
+.. autoclass:: model_compression_toolkit.core.network_editor.ChangeCandidatesActivationQuantizationMethod
 

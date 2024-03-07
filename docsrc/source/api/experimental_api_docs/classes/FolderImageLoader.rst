@@ -8,7 +8,7 @@ Folder Image Loader API
 
 **The following API can be used to load a folder of images to create a representative dataset for PTQ calibration**
 
-.. autoclass:: model_compression_toolkit.FolderImageLoader
+.. autoclass:: model_compression_toolkit.core.FolderImageLoader
     :members:
 
 
