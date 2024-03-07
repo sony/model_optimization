@@ -39,6 +39,7 @@ class TestPytorchBaseWeightsQuantizer(BasePytorchInfrastructureTest):
 
         with self.unit_test.assertRaises(Exception) as e:
             ZeroWeightsQuantizer(self.get_weights_quantization_config())
+        # TODO: In next MCTQ release, this test will fail due to KMEANS removal. Fix: "QuantizationMethod.SYMMETRIC: 3" -> "QuantizationMethod.SYMMETRIC: 2"
         self.unit_test.assertEqual(f'Quantization method mismatch expected: [<QuantizationMethod.POWER_OF_TWO: 0>, <QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM', str(e.exception))
 
         with self.unit_test.assertRaises(Exception) as e:
@@ -66,6 +67,7 @@ class TestPytorchBaseActivationQuantizer(BasePytorchInfrastructureTest):
 
         with self.unit_test.assertRaises(Exception) as e:
             ZeroActivationsQuantizer(self.get_activation_quantization_config())
+        # TODO: In next MCTQ release, this test will fail due to KMEANS removal. Fix: "QuantizationMethod.SYMMETRIC: 3" -> "QuantizationMethod.SYMMETRIC: 2"
         self.unit_test.assertEqual(f'Quantization method mismatch expected: [<QuantizationMethod.POWER_OF_TWO: 0>, <QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM', str(e.exception))
 
         with self.unit_test.assertRaises(Exception) as e:
