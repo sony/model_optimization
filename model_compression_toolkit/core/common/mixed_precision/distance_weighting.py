@@ -13,11 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 from enum import Enum
+from functools import partial
 
 import numpy as np
-
-class MpDistanceWeighting(Enum):
-
 
 
 def get_average_weights(distance_matrix: np.ndarray) -> np.ndarray:
@@ -55,3 +53,22 @@ def get_last_layer_weights(distance_matrix: np.ndarray) -> np.ndarray:
     w = np.asarray([0 for _ in range(num_nodes)])
     w[-1] = 1
     return w
+
+
+class MpDistanceWeighting(Enum):
+    """
+    Defines mixed precision distance metric weighting methods.
+    The enum values can be used to call a function on a set of arguments and key-arguments.
+
+     AVG - take the average distance on all computed layers.
+
+     LAST_LAYER - take only the distance of the last layer output.
+
+    """
+
+    AVG = partial(get_average_weights)
+    LAST_LAYER = partial(get_last_layer_weights)
+    # HESSIAN_WEIGHTS =
+
+    def __call__(self, distance_matrix: np.ndarray) -> np.ndarray:
+        return self.value(distance_matrix)

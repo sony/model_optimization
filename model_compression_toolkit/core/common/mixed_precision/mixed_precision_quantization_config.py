@@ -15,7 +15,8 @@
 
 from typing import List, Callable
 
-from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights, \
+    MpDistanceWeighting
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 
 
@@ -23,7 +24,7 @@ class MixedPrecisionQuantizationConfig:
 
     def __init__(self,
                  compute_distance_fn: Callable = None,
-                 distance_weighting_method: Callable = get_average_weights,   # TODO: add API for other distance functions and change name
+                 distance_weighting_method: MpDistanceWeighting = MpDistanceWeighting.AVG,
                  num_of_images: int = 32,
                  configuration_overwrite: List[int] = None,
                  num_interest_points_factor: float = 1.0,
@@ -36,7 +37,7 @@ class MixedPrecisionQuantizationConfig:
 
         Args:
             compute_distance_fn (Callable): Function to compute a distance between two tensors. If None, using pre-defined distance methods based on the layer type for each layer.
-            distance_weighting_method (Callable): Function to use when weighting the distances among different layers when computing the sensitivity metric.
+            distance_weighting_method (MpDistanceWeighting): MpDistanceWeighting enum value that provides a function to use when weighting the distances among different layers when computing the sensitivity metric.
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
             configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
             num_interest_points_factor (float): A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
