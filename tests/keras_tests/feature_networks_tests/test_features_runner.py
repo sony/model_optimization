@@ -30,6 +30,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_b
 from tests.keras_tests.feature_networks_tests.feature_networks.add_same_test import AddSameTest
 from tests.keras_tests.feature_networks_tests.feature_networks.bias_correction_dw_test import \
     BiasCorrectionDepthwiseTest
+from tests.keras_tests.feature_networks_tests.feature_networks.bn_attributes_quantization_test import \
+    BNAttributesQuantization
 from tests.keras_tests.feature_networks_tests.feature_networks.bn_folding_test import Conv2DBNFoldingTest, \
     DepthwiseConv2DBNFoldingTest, DepthwiseConv2DBNFoldingHighMultiplierTest, Conv2DTransposeBNFoldingTest, \
     Conv2DBNConcatFoldingTest, SeparableConv2DBNFoldingTest, BNForwardFoldingTest
@@ -729,6 +731,10 @@ class FeatureNetworkTest(unittest.TestCase):
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QATWrappersMixedPrecisionCfgTest(self).run_test()
         QATWrappersMixedPrecisionCfgTest(self,kpi_weights=17920 * 4 / 8, kpi_activation=5408 * 4 / 8, expected_mp_cfg=[0, 4, 1, 1]).run_test()
+
+    def test_bn_attributes_quantization(self):
+        BNAttributesQuantization(self, quantize_linear=False).run_test()
+        BNAttributesQuantization(self, quantize_linear=True).run_test()
 
 
 if __name__ == '__main__':

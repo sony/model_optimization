@@ -18,7 +18,8 @@ import os
 import numpy as np
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
-from typing import List, Dict, Tuple, Callable
+from typing import List, Dict, Tuple, Callable, Any
+
 
 def coco80_to_coco91(x: np.ndarray) -> np.ndarray:
     """
@@ -274,3 +275,45 @@ def coco_dataset_generator(dataset_folder: str, annotation_file: str, preprocess
         # After processing all images, yield any remaining images in the last batch
         if len(batch_images) > 0 and (total_images == image_count + 1):
             yield np.array(batch_images), batch_annotations
+
+
+def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotation_file: str, batch_size: int,
+                  output_resize: tuple) -> dict:
+
+    """
+    Evaluate a model on the COCO dataset.
+
+    Args:
+    - model (Any): The model to evaluate.
+    - preprocess (Callable): Preprocessing function to be applied to images.
+    - dataset_folder (str): Path to the folder containing COCO dataset images.
+    - annotation_file (str): Path to the COCO annotation file.
+    - batch_size (int): Batch size for evaluation.
+    - output_resize (tuple): Tuple representing the output size after resizing.
+
+    Returns:
+    - dict: Evaluation results.
+
+    """
+    # Load COCO evaluation set
+    val_dataset = coco_dataset_generator(dataset_folder=dataset_folder,
+                                         annotation_file=annotation_file,
+                                         preprocess=preprocess,
+                                         batch_size=batch_size)
+
+
+    # Initialize the evaluation metric object
+    coco_metric = CocoEval(annotation_file, output_resize)
+
+    # Iterate and the evaluation set
+    for batch_idx, (images, targets) in enumerate(val_dataset):
+
+        # Run inference on the batch
+        outputs = model(images)
+
+        # Add the model outputs to metric object (a dictionary of outputs after postprocess: boxes, scores & classes)
+        coco_metric.add_batch_detections(outputs, targets)
+        if (batch_idx + 1) % 100 == 0:
+            print(f'processed {(batch_idx + 1) * batch_size} images')
+
+    return coco_metric.result()
