@@ -326,8 +326,8 @@ def nanodet_box_decoding(h, res):
         cls = tf.reshape(cls, [-1, ndet, 80])
         h_cls.append(cls)
         h_bbox.append(bbox)
-    classes = Concatenate(axis=1)([h_cls[0], h_cls[1], h_cls[2], h_cls[3]])
-    boxes = Concatenate(axis=1)([h_bbox[0], h_bbox[1], h_bbox[2], h_bbox[3]])
+    classes = Concatenate(axis=1, name='bb_dec_class')([h_cls[0], h_cls[1], h_cls[2], h_cls[3]])
+    boxes = Concatenate(axis=1, name='bb_dec_bbox')([h_bbox[0], h_bbox[1], h_bbox[2], h_bbox[3]])
     classes = tf.math.sigmoid(classes)
     return classes, boxes
 

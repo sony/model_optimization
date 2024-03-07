@@ -13,4 +13,4 @@
 # limitations under the License.
 # ==============================================================================
 
-from tutorials.resources.efficientdet.effdet_keras import EfficientDetKeras
+from tutorials.mct_model_garden.models_keras.efficientdet.effdet_keras import EfficientDetKeras
