@@ -41,7 +41,7 @@ A nightly version is also available (unstable):
 
 For using with Tensorflow please install the packages:
 `tensorflow <https://www.tensorflow.org/install>`_
-`tensorflow-model-optimization <https://www.tensorflow.org/model_optimization/guide/install>`_
+
 
 For using with Pytorch please install the package:
 `torch <https://pytorch.org/>`_
