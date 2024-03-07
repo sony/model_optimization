@@ -23,11 +23,11 @@ class MixedPrecisionQuantizationConfig:
 
     def __init__(self,
                  compute_distance_fn: Callable = None,
-                 distance_weighting_method: Callable = get_average_weights,
+                 distance_weighting_method: Callable = get_average_weights,   # TODO: add API for other distance functions and change name
                  num_of_images: int = 32,
                  configuration_overwrite: List[int] = None,
                  num_interest_points_factor: float = 1.0,
-                 use_hessian_based_scores: bool = True,
+                 use_hessian_based_scores: bool = False,
                  norm_scores: bool = True,
                  refine_mp_solution: bool = True,
                  metric_normalization_threshold: float = 1e10):
@@ -35,7 +35,7 @@ class MixedPrecisionQuantizationConfig:
         Class with mixed precision parameters to quantize the input model.
 
         Args:
-            compute_distance_fn (Callable): Function to compute a distance between two tensors.
+            compute_distance_fn (Callable): Function to compute a distance between two tensors. If None, using pre-defined distance methods based on the layer type for each layer.
             distance_weighting_method (Callable): Function to use when weighting the distances among different layers when computing the sensitivity metric.
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
             configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
@@ -63,8 +63,3 @@ class MixedPrecisionQuantizationConfig:
         self.norm_scores = norm_scores
 
         self.metric_normalization_threshold = metric_normalization_threshold
-
-
-# Default quantization configuration the library use.
-DEFAULT_MIXEDPRECISION_CONFIG = MixedPrecisionQuantizationConfig(compute_distance_fn=compute_mse,
-                                                                 distance_weighting_method=get_average_weights)

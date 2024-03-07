@@ -26,8 +26,6 @@ from tensorboard.compat.proto.graph_pb2 import GraphDef
 import model_compression_toolkit as mct
 from model_compression_toolkit import DEFAULTCONFIG
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
     ActivationFinalBitwidthConfigVisualizer
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL

@@ -101,7 +101,10 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
             new_solution[node_idx_to_upgrade] = nodes_next_candidate[node_idx_to_upgrade]
             changed = True
 
-    Logger.info(f'Greedy MP algorithm changed configuration from: {mp_solution} to {new_solution}')
+    if any([mp_solution[i] != new_solution[i] for i in range(len(mp_solution))]):
+        Logger.info(f'Greedy MP algorithm changed configuration from (numbers represent indices of the '
+                    f'chosen bit-width candidate for each layer):\n{mp_solution}\nto\n{new_solution}')
+
     return new_solution
 
 
