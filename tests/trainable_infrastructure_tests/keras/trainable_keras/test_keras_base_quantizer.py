@@ -40,6 +40,7 @@ class TestKerasBaseWeightsQuantizer(BaseKerasTrainableInfrastructureTest):
     def run_test(self):
         with self.unit_test.assertRaises(Exception) as e:
             ZeroWeightsQuantizer(self.get_weights_quantization_config())
+        # TODO: In next MCTQ release, this test will fail due to KMEANS removal. Fix: "QuantizationMethod.SYMMETRIC: 3" -> "QuantizationMethod.SYMMETRIC: 2"
         self.unit_test.assertEqual(f'Quantization method mismatch expected: [<QuantizationMethod.POWER_OF_TWO: 0>, '
                                    f''f'<QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM',
                                    str(e.exception))
@@ -72,8 +73,9 @@ class TestKerasBaseActivationsQuantizer(BaseKerasTrainableInfrastructureTest):
     def run_test(self):
         with self.unit_test.assertRaises(Exception) as e:
             ZeroActivationsQuantizer(self.get_activation_quantization_config())
+        # TODO: In next MCTQ release, this test will fail due to KMEANS removal. Fix: "QuantizationMethod.SYMMETRIC: 3" -> "QuantizationMethod.SYMMETRIC: 2"
         self.unit_test.assertEqual(f'Quantization method mismatch expected: [<QuantizationMethod.POWER_OF_TWO: 0>, '
-                                   f'<QuantizationMethod.SYMMETRIC: 2>] and got  QuantizationMethod.UNIFORM',
+                                   f'<QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM',
                                    str(e.exception))
 
         with self.unit_test.assertRaises(Exception) as e:

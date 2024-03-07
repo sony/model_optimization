@@ -21,6 +21,7 @@ from torch import nn
 import model_compression_toolkit as mct
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
+from tests.pytorch_tests.model_tests.feature_models.bn_attributes_quantization_test import BNAttributesQuantization
 from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import LayerNormNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
@@ -567,6 +568,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionKpiCfgTest(self).run_test()
+
+    def test_bn_attributes_quantization(self):
+        """
+        This test checks the quantization of BatchNorm layer attributes.
+        """
+        BNAttributesQuantization(self, quantize_linear=False).run_test()
+        BNAttributesQuantization(self, quantize_linear=True).run_test()
 
 
 if __name__ == '__main__':
