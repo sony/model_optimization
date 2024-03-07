@@ -75,8 +75,10 @@ class SeparableConvDecomposition(common.BaseSubstitution):
         pw_bias = separable_node.get_weights_by_keys(BIAS)
 
         dw_weights_dict = {DEPTHWISE_KERNEL: dw_kernel}
-        pw_weights_dict = {KERNEL: pw_kernel,
-                           BIAS: pw_bias}
+        pw_weights_dict = {KERNEL: pw_kernel}
+
+        if pw_bias is not None:
+            pw_weights_dict[BIAS] = pw_bias
 
         # Split separable node attributes into relevant attributes for each of the new nodes.
         # List of dw attributes that should take from separable as they are.
