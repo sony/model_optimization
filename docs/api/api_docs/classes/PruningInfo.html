@@ -1,0 +1,117 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Pruning Information &#8212; MCT Documentation: ver 1.11.0</title>
+    <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../static/documentation_options.js"></script>
+    <script src="../../../static/jquery.js"></script>
+    <script src="../../../static/underscore.js"></script>
+    <script src="../../../static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../static/doctools.js"></script>
+    <script src="../../../static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Pruning Information</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="pruning-information">
+<span id="ug-pruninginfo"></span><h1>Pruning Information<a class="headerlink" href="#pruning-information" title="Permalink to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_compression_toolkit.pruning.PruningInfo">
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.pruning.</span></span><span class="sig-name descname"><span class="pre">PruningInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pruning_masks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">importance_scores</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.pruning.PruningInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>PruningInfo stores information about a pruned model, including the pruning masks
+and importance scores for each layer. This class acts as a container for accessing
+pruning-related metadata.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.pruning.pruning_masks">
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.pruning.</span></span><span class="sig-name descname"><span class="pre">pruning_masks</span></span><a class="headerlink" href="#model_compression_toolkit.pruning.pruning_masks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores the pruning masks for each layer.
+A pruning mask is an array where each element indicates whether the corresponding
+channel or neuron has been pruned (0) or kept (1).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[BaseNode, np.ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.pruning.importance_scores">
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.pruning.</span></span><span class="sig-name descname"><span class="pre">importance_scores</span></span><a class="headerlink" href="#model_compression_toolkit.pruning.importance_scores" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores the importance scores for each layer.
+Importance scores quantify the significance of each channel in the layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[BaseNode, np.ndarray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Pruning Information</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Sony Semiconductor Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

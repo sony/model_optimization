@@ -2,12 +2,12 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>FrameworkInfo Class &#8212; MCT Documentation: ver 1.4.0</title>
+    <title>FrameworkInfo Class &#8212; MCT Documentation: ver 1.11.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -15,6 +15,7 @@
     <script data-url_root="../../../" id="documentation_options" src="../../../static/documentation_options.js"></script>
     <script src="../../../static/jquery.js"></script>
     <script src="../../../static/underscore.js"></script>
+    <script src="../../../static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../static/doctools.js"></script>
     <script src="../../../static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -30,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.4.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">FrameworkInfo Class</a></li> 
       </ul>
     </div>  
@@ -41,11 +42,11 @@
           <div class="body" role="main">
             
   <section id="frameworkinfo-class">
-<span id="ug-frameworkinfo"></span><h1>FrameworkInfo Class<a class="headerlink" href="#frameworkinfo-class" title="Permalink to this headline">¶</a></h1>
+<span id="ug-frameworkinfo"></span><h1>FrameworkInfo Class<a class="headerlink" href="#frameworkinfo-class" title="Permalink to this heading">¶</a></h1>
 <p><strong>The following API can be used to pass MCT framework-related information to use when optimizing the network</strong></p>
 <dl class="py class">
-<dt class="sig sig-object py" id="model_compression_toolkit.FrameworkInfo">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">FrameworkInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">activation_quantizer_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_quantizer_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_channels_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_min_max_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_min_max_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_ops_attributes_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_channel_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.FrameworkInfo" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model_compression_toolkit.core.FrameworkInfo">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.core.</span></span><span class="sig-name descname"><span class="pre">FrameworkInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">activation_quantizer_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_channels_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_min_max_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_min_max_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_ops_attributes_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channel_axis_mapping</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.core.FrameworkInfo" title="Permalink to this definition">¶</a></dt>
 <dd><p>A class to wrap all information about a specific framework the library needs to quantize a model.
 Specifically, FrameworkInfo holds lists of layers by how they should be quantized, and multiple mappings such as
 layer to it kernel channels indices, and a layer to its min/max values, etc.
@@ -54,15 +55,14 @@ kernel_ops: Layers that have coefficients and need to get quantized (e.g., Conv2
 activation_ops: Layers that their outputs should get quantized (e.g., Add, ReLU, etc.)
 no_quantization_ops:Layers that should not get quantized (e.g., Reshape, Transpose, etc.)</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>activation_quantizer_mapping</strong> (<em>Dict</em><em>[</em><a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.QuantizationMethod" title="model_compression_toolkit.target_platform.QuantizationMethod"><em>QuantizationMethod</em></a><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
-<li><p><strong>weights_quantizer_mapping</strong> (<em>Dict</em><em>[</em><a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.QuantizationMethod" title="model_compression_toolkit.target_platform.QuantizationMethod"><em>QuantizationMethod</em></a><em>, </em><em>Callable</em><em>]</em>) – A dictionary mapping from QuantizationMethod to a quantization function.</p></li>
 <li><p><strong>kernel_channels_mapping</strong> (<a class="reference internal" href="DefaultDict.html#model_compression_toolkit.DefaultDict" title="model_compression_toolkit.DefaultDict"><em>DefaultDict</em></a>) – Dictionary from a layer to a tuple of its kernel in/out channels indices.</p></li>
 <li><p><strong>activation_min_max_mapping</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>tuple</em><em>]</em>) – Dictionary from an activation function to its min/max output values.</p></li>
 <li><p><strong>layer_min_max_mapping</strong> (<em>Dict</em><em>[</em><em>Any</em><em>, </em><em>tuple</em><em>]</em>) – Dictionary from a layer to its min/max output values.</p></li>
 <li><p><strong>kernel_ops_attributes_mapping</strong> (<a class="reference internal" href="DefaultDict.html#model_compression_toolkit.DefaultDict" title="model_compression_toolkit.DefaultDict"><em>DefaultDict</em></a>) – Dictionary from a framework operator to a list of its weights attirbutes to quantize.</p></li>
-<li><p><strong>output_channel_index</strong> (<a class="reference internal" href="#model_compression_toolkit.ChannelAxis" title="model_compression_toolkit.ChannelAxis"><em>ChannelAxis</em></a>) – Index of output channels of the model’s layers (for computing statistics per-channel).</p></li>
+<li><p><strong>out_channel_axis_mapping</strong> (<a class="reference internal" href="DefaultDict.html#model_compression_toolkit.DefaultDict" title="model_compression_toolkit.DefaultDict"><em>DefaultDict</em></a>) – Dictionary of output channels of the model’s layers (for computing statistics per-channel).</p></li>
 </ul>
 </dd>
 </dl>
@@ -94,11 +94,11 @@ set, and we know it’s kernel out/in channel indices are (3, 2) respectivly:</p
 <div class="line"><br /></div>
 </div>
 <section id="channelaxis">
-<h2>ChannelAxis<a class="headerlink" href="#channelaxis" title="Permalink to this headline">¶</a></h2>
+<h2>ChannelAxis<a class="headerlink" href="#channelaxis" title="Permalink to this heading">¶</a></h2>
 <p><strong>Enum to select the output channels format in the model:</strong></p>
 <dl class="py class">
-<dt class="sig sig-object py" id="model_compression_toolkit.ChannelAxis">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">ChannelAxis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.ChannelAxis" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model_compression_toolkit.core.ChannelAxis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.core.</span></span><span class="sig-name descname"><span class="pre">ChannelAxis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.core.ChannelAxis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Index of output channels axis:</p>
 <p>NHWC - Output channels index is last.</p>
 <p>NCHW - Output channels index is 1.</p>
@@ -133,7 +133,7 @@ set, and we know it’s kernel out/in channel indices are (3, 2) respectivly:</p
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -144,13 +144,13 @@ set, and we know it’s kernel out/in channel indices are (3, 2) respectivly:</p
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.4.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">FrameworkInfo Class</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
+        &#169; Copyright 2022, Sony Semiconductor Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>
 </html>

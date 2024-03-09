@@ -52,12 +52,12 @@
   <section id="visualization-within-tensorboard">
 <span id="ug-visualization"></span><h1>Visualization within TensorBoard<a class="headerlink" href="#visualization-within-tensorboard" title="Permalink to this heading">¶</a></h1>
 <p>One may log various graphs and data collected in different phases of the model quantization and display them within the Tensorboard UI.
-To use it, all you have to do is to set a logger path. Setting a path is done by calling <a class="reference internal" href="../api/experimental_api_docs/methods/set_logger_path.html#ug-set-logger-path"><span class="std std-ref">set_log_folder</span></a>.</p>
+To use it, all you have to do is to set a logger path. Setting a path is done by calling <a class="reference internal" href="../api/api_docs/methods/set_logger_path.html#ug-set-logger-path"><span class="std std-ref">set_log_folder</span></a>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
 <span class="n">mct</span><span class="o">.</span><span class="n">set_log_folder</span><span class="p">(</span><span class="s1">&#39;/logger/dir/path&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Then, by calling <a class="reference internal" href="../api/api_docs/methods/keras_post_training_quantization.html#ug-keras-post-training-quantization"><span class="std std-ref">keras_post_training_quantization</span></a>, a TensorBoard writer will log graphs of the model at different stages.
+<p>Then, by calling <a class="reference internal" href="../api/api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization"><span class="std std-ref">keras_post_training_quantization</span></a>, a TensorBoard writer will log graphs of the model at different stages.
 To visualize them, TensorBoard should be launched with:</p>
 <p>tensorboard –logdir=/logger/dir/path</p>
 <div class="line-block">

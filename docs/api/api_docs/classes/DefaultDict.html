@@ -2,12 +2,12 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>DefaultDict Class &#8212; MCT Documentation: ver 1.4.0</title>
+    <title>DefaultDict Class &#8212; MCT Documentation: ver 1.11.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -15,6 +15,7 @@
     <script data-url_root="../../../" id="documentation_options" src="../../../static/documentation_options.js"></script>
     <script src="../../../static/jquery.js"></script>
     <script src="../../../static/underscore.js"></script>
+    <script src="../../../static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../static/doctools.js"></script>
     <script src="../../../static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -30,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.4.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">DefaultDict Class</a></li> 
       </ul>
     </div>  
@@ -41,18 +42,18 @@
           <div class="body" role="main">
             
   <section id="defaultdict-class">
-<span id="ug-defaultdict"></span><h1>DefaultDict Class<a class="headerlink" href="#defaultdict-class" title="Permalink to this headline">¶</a></h1>
+<span id="ug-defaultdict"></span><h1>DefaultDict Class<a class="headerlink" href="#defaultdict-class" title="Permalink to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.DefaultDict">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">DefaultDict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">known_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_factory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.DefaultDict" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">DefaultDict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">known_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.DefaultDict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Default dictionary. It wraps a dictionary given at initialization and return its
 values when requested. If the requested key is not presented at initial dictionary,
-it returns the returned value a default factory (that is passed at initialization) generates.</p>
+it returns the returned value a default value (that is passed at initialization) generates.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>known_dict</strong> (<em>Dict</em><em>[</em><em>Any</em><em>, </em><em>Any</em><em>]</em>) – Dictionary to wrap.</p></li>
-<li><p><strong>default_factory</strong> (<em>Callable</em>) – Callable to get default values when requested key is not in known_dict.</p></li>
+<li><p><strong>known_dict</strong> – Dictionary to wrap. If None is provided, initializes an empty dictionary.</p></li>
+<li><p><strong>default_value</strong> – default value when requested key is not in known_dict.</p></li>
 </ul>
 </dd>
 </dl>
@@ -62,17 +63,24 @@ it returns the returned value a default factory (that is passed at initializatio
 <dd><p>Get the value of the inner dictionary by the given key, If key is not in dictionary,
 it uses the default_factory to return a default value.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>key</strong> (<em>Any</em>) – Key to use in inner dictionary.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> – Key to use in inner dictionary.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Value of the inner dictionary by the given key, or a default value if not exist.
 If default_factory was not passed at initialization, it returns None.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="model_compression_toolkit.DefaultDict.keys">
+<span class="sig-name descname"><span class="pre">keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.DefaultDict.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get keys of known_dict
+Returns: keys of known_dict</p>
 </dd></dl>
 
 </dd></dl>
@@ -95,7 +103,7 @@ If default_factory was not passed at initialization, it returns None.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -106,13 +114,13 @@ If default_factory was not passed at initialization, it returns None.</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.4.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">DefaultDict Class</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
+        &#169; Copyright 2022, Sony Semiconductor Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>
 </html>

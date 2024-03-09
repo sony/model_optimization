@@ -1,0 +1,131 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>qat_config Module &#8212; MCT Documentation: ver 1.11.0</title>
+    <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../static/documentation_options.js"></script>
+    <script src="../../../static/jquery.js"></script>
+    <script src="../../../static/underscore.js"></script>
+    <script src="../../../static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../static/doctools.js"></script>
+    <script src="../../../static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">qat_config Module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="qat-config-module">
+<span id="ug-qat-config"></span><h1>qat_config Module<a class="headerlink" href="#qat-config-module" title="Permalink to this heading">¶</a></h1>
+<section id="trainingmethod">
+<h2>TrainingMethod<a class="headerlink" href="#trainingmethod" title="Permalink to this heading">¶</a></h2>
+<p><strong>Select a QAT training method:</strong></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.qat.TrainingMethod">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.qat.</span></span><span class="sig-name descname"><span class="pre">TrainingMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.qat.TrainingMethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enum for selecting a QAT training method</p>
+<p>STE - Standard straight-through estimator. Includes PowerOfTwo, symmetric &amp; uniform quantizers</p>
+<p>DQA -  DNN Quantization with Attention. Includes a smooth quantization introduces by DQA method</p>
+<p>LSQ - Learned Step size Quantization. Includes PowerOfTwo, symmetric &amp; uniform quantizers: <a class="reference external" href="https://arxiv.org/pdf/1902.08153.pdf">https://arxiv.org/pdf/1902.08153.pdf</a></p>
+</dd></dl>
+
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="qatconfig">
+<h2>QATConfig<a class="headerlink" href="#qatconfig" title="Permalink to this heading">¶</a></h2>
+<p><strong>Class to configure the quantization process of the model when quantizing using Quantization-aware Training (QAT):</strong></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.qat.QATConfig">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.qat.</span></span><span class="sig-name descname"><span class="pre">QATConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight_training_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">TrainingMethod.STE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_training_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">TrainingMethod.STE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_quantizer_params_override</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_quantizer_params_override</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.qat.QATConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>QAT configuration class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>weight_training_method</strong> (<a class="reference internal" href="#model_compression_toolkit.qat.TrainingMethod" title="model_compression_toolkit.qat.TrainingMethod"><em>TrainingMethod</em></a>) – Training method for weight quantizers</p></li>
+<li><p><strong>activation_training_method</strong> (<a class="reference internal" href="#model_compression_toolkit.qat.TrainingMethod" title="model_compression_toolkit.qat.TrainingMethod"><em>TrainingMethod</em></a>) – Training method for activation quantizers:</p></li>
+<li><p><strong>weight_quantizer_params_override</strong> – A dictionary of parameters to override in weight quantization quantizer instantiation. Defaults to None (no parameters)</p></li>
+<li><p><strong>activation_quantizer_params_override</strong> – A dictionary of parameters to override in activation quantization quantizer instantiation. Defaults to None (no parameters)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">qat_config Module</a><ul>
+<li><a class="reference internal" href="#trainingmethod">TrainingMethod</a></li>
+<li><a class="reference internal" href="#qatconfig">QATConfig</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">qat_config Module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Sony Semiconductor Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,123 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Get GradientPTQConfig for Pytorch Models &#8212; MCT Documentation: ver 1.11.0</title>
+    <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../static/documentation_options.js"></script>
+    <script src="../../../static/jquery.js"></script>
+    <script src="../../../static/underscore.js"></script>
+    <script src="../../../static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../static/doctools.js"></script>
+    <script src="../../../static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Get GradientPTQConfig for Pytorch Models</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="get-gradientptqconfig-for-pytorch-models">
+<span id="ug-get-pytorch-gptq-config"></span><h1>Get GradientPTQConfig for Pytorch Models<a class="headerlink" href="#get-gradientptqconfig-for-pytorch-models" title="Permalink to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_compression_toolkit.gptq.get_pytorch_gptq_config">
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.gptq.</span></span><span class="sig-name descname"><span class="pre">get_pytorch_gptq_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_epochs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Adam([torch.Tensor([])],</span> <span class="pre">lr=LR_DEFAULT)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_rest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Adam([torch.Tensor([])],</span> <span class="pre">lr=LR_REST_DEFAULT)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">multiple_tensors_mse_loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_hessian_based_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">REG_DEFAULT</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.gptq.get_pytorch_gptq_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a GradientPTQConfigV2 instance for Pytorch models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_epochs</strong> (<em>int</em>) – Number of epochs for running the representative dataset for fine-tuning.</p></li>
+<li><p><strong>optimizer</strong> (<em>Optimizer</em>) – Pytorch optimizer to use for fine-tuning for auxiliry variable.</p></li>
+<li><p><strong>optimizer_rest</strong> (<em>Optimizer</em>) – Pytorch optimizer to use for fine-tuning of the bias variable.</p></li>
+<li><p><strong>loss</strong> (<em>Callable</em>) – loss to use during fine-tuning. should accept 4 lists of tensors. 1st list of quantized tensors, the 2nd list is the float tensors, the 3rd is a list of quantized weights and the 4th is a list of float weights.</p></li>
+<li><p><strong>log_function</strong> (<em>Callable</em>) – Function to log information about the gptq process.</p></li>
+<li><p><strong>use_hessian_based_weights</strong> (<em>bool</em>) – Whether to use Hessian-based weights for weighted average loss.</p></li>
+<li><p><strong>regularization_factor</strong> (<em>float</em>) – A floating point number that defines the regularization factor.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a GradientPTQConfigV2 object to use when fine-tuning the quantized model using gptq.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Import MCT and Create a GradientPTQConfigV2 to run for 5 epochs:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gptq_conf</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">gptq</span><span class="o">.</span><span class="n">get_pytorch_gptq_config</span><span class="p">(</span><span class="n">n_epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Other PyTorch optimizers can be passed with dummy params:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gptq_conf</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">gptq</span><span class="o">.</span><span class="n">get_pytorch_gptq_config</span><span class="p">(</span><span class="n">n_epochs</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="mi">1</span><span class="p">)]))</span>
+</pre></div>
+</div>
+<p>The configuration can be passed to <code class="xref py py-func docutils literal notranslate"><span class="pre">pytorch_post_training_quantization()</span></code> in order to quantize a pytorch model using gptq.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../classes/GradientPTQConfig.html#model_compression_toolkit.gptq.GradientPTQConfig" title="model_compression_toolkit.gptq.common.gptq_config.GradientPTQConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">GradientPTQConfig</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Get GradientPTQConfig for Pytorch Models</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Sony Semiconductor Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

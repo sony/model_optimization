@@ -2,12 +2,12 @@
 
 <!doctype html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Folder Image Loader API &#8212; MCT Documentation: ver 1.4.0</title>
+    <title>Folder Image Loader API &#8212; MCT Documentation: ver 1.11.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -15,6 +15,7 @@
     <script data-url_root="../../../" id="documentation_options" src="../../../static/documentation_options.js"></script>
     <script src="../../../static/jquery.js"></script>
     <script src="../../../static/underscore.js"></script>
+    <script src="../../../static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../static/doctools.js"></script>
     <script src="../../../static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -30,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.4.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Folder Image Loader API</a></li> 
       </ul>
     </div>  
@@ -41,21 +42,21 @@
           <div class="body" role="main">
             
   <section id="folder-image-loader-api">
-<span id="ug-folderimageloader"></span><h1>Folder Image Loader API<a class="headerlink" href="#folder-image-loader-api" title="Permalink to this headline">¶</a></h1>
+<span id="ug-folderimageloader"></span><h1>Folder Image Loader API<a class="headerlink" href="#folder-image-loader-api" title="Permalink to this heading">¶</a></h1>
 <p><strong>The following API can be used to load a folder of images to create a representative dataset for PTQ calibration</strong></p>
 <dl class="py class">
-<dt class="sig sig-object py" id="model_compression_toolkit.FolderImageLoader">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">FolderImageLoader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">FILETYPES</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.FolderImageLoader" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model_compression_toolkit.core.FolderImageLoader">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.core.</span></span><span class="sig-name descname"><span class="pre">FolderImageLoader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">folder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preprocessing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">FILETYPES</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.core.FolderImageLoader" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class for images loading, processing and retrieving.</p>
 <p>Initialize a FolderImageLoader object.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>folder</strong> (<em>str</em>) – Path of folder with images to load. The path has to exist, and has to contain at</p></li>
+<li><p><strong>folder</strong> – Path of folder with images to load. The path has to exist, and has to contain at</p></li>
 <li><p><strong>image.</strong> (<em>least one</em>) – </p></li>
-<li><p><strong>preprocessing</strong> (<em>List</em><em>[</em><em>Callable</em><em>]</em>) – List of functions to use when processing the images before retrieving them.</p></li>
-<li><p><strong>batch_size</strong> (<em>int</em>) – Number of images to retrieve each sample.</p></li>
-<li><p><strong>file_types</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Files types to scan in the folder. Default list is <a class="reference internal" href="#model_compression_toolkit.common.data_loader.FILETYPES" title="model_compression_toolkit.common.data_loader.FILETYPES"><code class="xref py py-data docutils literal notranslate"><span class="pre">FILETYPES</span></code></a></p></li>
+<li><p><strong>preprocessing</strong> – List of functions to use when processing the images before retrieving them.</p></li>
+<li><p><strong>batch_size</strong> – Number of images to retrieve each sample.</p></li>
+<li><p><strong>file_types</strong> – Files types to scan in the folder. Default list is <a class="reference internal" href="#model_compression_toolkit.core.common.data_loader.FILETYPES" title="model_compression_toolkit.core.common.data_loader.FILETYPES"><code class="xref py py-data docutils literal notranslate"><span class="pre">FILETYPES</span></code></a></p></li>
 </ul>
 </dd>
 </dl>
@@ -74,8 +75,8 @@
 </pre></div>
 </div>
 <dl class="py method">
-<dt class="sig sig-object py" id="model_compression_toolkit.FolderImageLoader.sample">
-<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.FolderImageLoader.sample" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model_compression_toolkit.core.FolderImageLoader.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.core.FolderImageLoader.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns: A sample of batch_size images from the folder the FolderImageLoader scanned.</p>
 </dd></dl>
 
@@ -83,10 +84,10 @@
 
 </section>
 <section id="default-file-types-to-scan">
-<h1>Default file types to scan<a class="headerlink" href="#default-file-types-to-scan" title="Permalink to this headline">¶</a></h1>
+<h1>Default file types to scan<a class="headerlink" href="#default-file-types-to-scan" title="Permalink to this heading">¶</a></h1>
 <dl class="py data">
-<dt class="sig sig-object py" id="model_compression_toolkit.common.data_loader.FILETYPES">
-<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.common.data_loader.</span></span><span class="sig-name descname"><span class="pre">FILETYPES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['jpeg',</span> <span class="pre">'jpg',</span> <span class="pre">'bmp',</span> <span class="pre">'png']</span></em><a class="headerlink" href="#model_compression_toolkit.common.data_loader.FILETYPES" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="model_compression_toolkit.core.common.data_loader.FILETYPES">
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.core.common.data_loader.</span></span><span class="sig-name descname"><span class="pre">FILETYPES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['jpeg',</span> <span class="pre">'jpg',</span> <span class="pre">'bmp',</span> <span class="pre">'png']</span></em><a class="headerlink" href="#model_compression_toolkit.core.common.data_loader.FILETYPES" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </section>
@@ -115,7 +116,7 @@
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -126,13 +127,13 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.4.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Folder Image Loader API</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2022, Sony Semiconductors Israel.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.5.0.
+        &#169; Copyright 2022, Sony Semiconductor Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
     </div>
   </body>
 </html>
