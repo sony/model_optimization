@@ -15,10 +15,6 @@ API Docs
 
 |
 
-.. include:: ./notes/experimental_api_note.rst
-
-|
-
 
 Functions
 =========
