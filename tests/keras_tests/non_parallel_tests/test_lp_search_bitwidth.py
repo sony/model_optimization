@@ -56,7 +56,7 @@ class MockMixedPrecisionSearchManager:
     def __init__(self, layer_to_kpi_mapping):
         self.layer_to_bitwidth_mapping = {0: [0, 1, 2]}
         self.layer_to_kpi_mapping = layer_to_kpi_mapping
-        self.compute_metric_fn = lambda x, y=None, z=None: 0
+        self.compute_metric_fn = lambda x, y=None, z=None: {0: 2, 1: 1, 2: 0}[x[0]]
         self.min_kpi = {KPITarget.WEIGHTS: [[1], [1], [1]],
                         KPITarget.ACTIVATION: [[1], [1], [1]],
                         KPITarget.TOTAL: [[2], [2], [2]],
