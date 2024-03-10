@@ -19,9 +19,12 @@ from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
 
 class RoundingType(Enum):
     """
-    An enum for choosing the GPTQ rounding methods
+    An enum for choosing the GPTQ rounding methods:
+
     0. STRAIGHT-THROUGH ESTIMATOR
+
     1. SoftQuantizer
+
     """
     STE = 0
     SoftQuantizer = 1
