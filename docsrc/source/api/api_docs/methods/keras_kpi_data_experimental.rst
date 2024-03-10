@@ -1,10 +1,10 @@
 :orphan:
 
-.. _ug-keras_kpi_data_experimental:
+.. _ug-keras_kpi_data:
 
 
 =======================================
 Get KPI information for Keras Models
 =======================================
 
-.. autofunction:: model_compression_toolkit.core.keras_kpi_data_experimental
+.. autofunction:: model_compression_toolkit.core.keras_kpi_data
