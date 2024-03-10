@@ -39,7 +39,7 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
 from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
-
+from pulp import *
 
 class MockReconstructionHelper:
     def __init__(self):
@@ -61,10 +61,11 @@ class MockMixedPrecisionSearchManager:
                         KPITarget.ACTIVATION: [[1], [1], [1]],
                         KPITarget.TOTAL: [[2], [2], [2]],
                         KPITarget.BOPS: [[1], [1], [1]]}  # minimal kpi in the tests layer_to_kpi_mapping
-        self.compute_kpi_functions = {KPITarget.WEIGHTS: (None, lambda v: [sum(v)]),
+
+        self.compute_kpi_functions = {KPITarget.WEIGHTS: (None, lambda v: [lpSum(v)]),
                                       KPITarget.ACTIVATION: (None, lambda v: [i for i in v]),
-                                      KPITarget.TOTAL: (None, lambda v: [sum(v[0]) + i for i in v[1]]),
-                                      KPITarget.BOPS: (None, lambda v: [sum(v)])}
+                                      KPITarget.TOTAL: (None, lambda v: [lpSum(v[0]) + i for i in v[1]]),
+                                      KPITarget.BOPS: (None, lambda v: [lpSum(v)])}
         self.max_kpi_config = [0]
         self.config_reconstruction_helper = MockReconstructionHelper()
         self.non_conf_kpi_dict = None
@@ -76,8 +77,8 @@ class MockMixedPrecisionSearchManager:
         elif target == KPITarget.ACTIVATION:
             kpi_matrix = [np.flip(np.array([kpi.activation_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
         elif target == KPITarget.TOTAL:
-            kpi_matrix = [np.flip(np.array([kpi.total_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()])),
-                          np.flip(np.array([kpi.total_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
+            kpi_matrix = [np.flip(np.array([kpi.weights_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()])),
+                          np.flip(np.array([kpi.activation_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
         elif target == KPITarget.BOPS:
             kpi_matrix = [np.flip(np.array([kpi.bops - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
         else:
@@ -114,7 +115,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
                                                 target_kpi=KPI(weights_memory=np.inf))
 
         self.assertTrue(len(bit_cfg) == 1)
-        self.assertTrue(bit_cfg[0] == 2)
+        self.assertTrue(bit_cfg[0] == 0)  # KPI is Inf so expecting for the maximal bit-width result
 
         target_kpi = None  # target KPI is not defined!
         with self.assertRaises(Exception):
@@ -143,7 +144,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
                                                 target_kpi=KPI(activation_memory=np.inf))
 
         self.assertTrue(len(bit_cfg) == 1)
-        self.assertTrue(bit_cfg[0] == 2)
+        self.assertTrue(bit_cfg[0] == 0)  # KPI is Inf so expecting for the maximal bit-width result
 
     def test_search_weights_and_activation(self):
         target_kpi = KPI(weights_memory=2, activation_memory=2)
@@ -167,13 +168,13 @@ class TestLpSearchBitwidth(unittest.TestCase):
                                                 target_kpi=KPI(weights_memory=np.inf, activation_memory=np.inf))
 
         self.assertTrue(len(bit_cfg) == 1)
-        self.assertTrue(bit_cfg[0] == 2)
+        self.assertTrue(bit_cfg[0] == 0)  # KPI is Inf so expecting for the maximal bit-width result
 
     def test_search_total_kpi(self):
-        target_kpi = KPI(total_memory=2)
-        layer_to_kpi_mapping = {0: {2: KPI(total_memory=1),
-                                    1: KPI(total_memory=2),
-                                    0: KPI(total_memory=3)}}
+        target_kpi = KPI(total_memory=4)
+        layer_to_kpi_mapping = {0: {2: KPI(weights_memory=1, activation_memory=1),
+                                    1: KPI(weights_memory=2, activation_memory=2),
+                                    0: KPI(weights_memory=3, activation_memory=3)}}
         mock_search_manager = MockMixedPrecisionSearchManager(layer_to_kpi_mapping)
 
         bit_cfg = mp_integer_programming_search(mock_search_manager,

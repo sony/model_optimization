@@ -299,7 +299,8 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
                     [node_idx],
                     search_manager.max_kpi_config)
 
-            layer_to_metrics_mapping[node_idx][bitwidth_idx] = max(metric_value, max_config_value + eps)
+            layer_to_metrics_mapping[node_idx][bitwidth_idx] = max(metric_value,
+                                                                   layer_to_metrics_mapping[node_idx][bitwidth_idx-1] + eps)
 
     # Finalize distance metric mapping
     search_manager.finalize_distance_metric(layer_to_metrics_mapping)
