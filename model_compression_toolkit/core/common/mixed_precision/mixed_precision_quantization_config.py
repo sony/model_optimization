@@ -15,9 +15,7 @@
 
 from typing import List, Callable
 
-from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights, \
-    MpDistanceWeighting
-from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 
 
 class MixedPrecisionQuantizationConfig:

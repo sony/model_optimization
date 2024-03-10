@@ -18,8 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights, \
-    MpDistanceWeighting
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
@@ -422,7 +421,7 @@ class MixedPercisionSearchLastLayerDistanceTest(MixedPercisionBaseTest):
 
     def get_mixed_precision_config(self):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
-                                                         distance_weighting_method=get_last_layer_weights,
+                                                         distance_weighting_method=MpDistanceWeighting.LAST_LAYER,
                                                          use_hessian_based_scores=False)
 
     def get_kpi(self):

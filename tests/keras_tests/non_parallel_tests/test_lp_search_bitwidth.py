@@ -17,8 +17,7 @@ import unittest
 
 import keras
 from model_compression_toolkit.core import DEFAULTCONFIG
-from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights, \
-    get_last_layer_weights
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
@@ -281,7 +280,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
     def test_mixed_precision_search_facade(self):
         core_config_avg_weights = CoreConfig(quantization_config=DEFAULTCONFIG,
                                              mixed_precision_config=MixedPrecisionQuantizationConfig(compute_mse,
-                                                                                                     get_average_weights,
+                                                                                                     MpDistanceWeighting.AVG,
                                                                                                      num_of_images=1,
                                                                                                      use_hessian_based_scores=False))
 
@@ -289,7 +288,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         core_config_last_layer = CoreConfig(quantization_config=DEFAULTCONFIG,
                                             mixed_precision_config=MixedPrecisionQuantizationConfig(compute_mse,
-                                                                                                    get_last_layer_weights,
+                                                                                                    MpDistanceWeighting.LAST_LAYER,
                                                                                                     num_of_images=1,
                                                                                                     use_hessian_based_scores=False))
 

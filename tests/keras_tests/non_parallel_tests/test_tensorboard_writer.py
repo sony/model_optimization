@@ -35,7 +35,7 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_set_bit_widths
-from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 
 keras = tf.keras
@@ -109,7 +109,7 @@ class TestFileLogger(unittest.TestCase):
         # Hessian service assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP
         cfg = mct.core.DEFAULTCONFIG
         mp_cfg = mct.core.MixedPrecisionQuantizationConfig(compute_distance_fn=compute_mse,
-                                                           distance_weighting_method=get_average_weights,
+                                                           distance_weighting_method=MpDistanceWeighting.AVG,
                                                            use_hessian_based_scores=False)
 
         # compare max tensor size with plotted max tensor size

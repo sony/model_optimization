@@ -18,8 +18,7 @@ from torch.nn import Conv2d
 
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core import KPI
-from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_last_layer_weights, \
-    MpDistanceWeighting
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.constants import BIAS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR
@@ -232,7 +231,7 @@ class MixedPercisionSearchLastLayerDistance(MixedPercisionBaseTest):
     def get_mixed_precision_config(self):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
                                                          use_hessian_based_scores=False,
-                                                         distance_weighting_method=get_last_layer_weights)
+                                                         distance_weighting_method=MpDistanceWeighting.LAST_LAYER)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.compare_results(quantization_info, quantized_models, float_model, 1)
