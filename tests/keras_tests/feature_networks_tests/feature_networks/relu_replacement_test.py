@@ -56,7 +56,7 @@ class SingleReluReplacementTest(BaseKerasFeatureNetworkTest):
     Test1: replacing a single Relu layer with identity layer
     """
     def __init__(self, unit_test):
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test )
 
     def get_tpc(self):
         return get_quantization_disabled_keras_tpc("single_relu_replacement_test")

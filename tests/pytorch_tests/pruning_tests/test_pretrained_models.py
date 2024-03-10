@@ -129,7 +129,7 @@ class PruningPretrainedModelsTest(unittest.TestCase):
         # Perform pruning on the dense model.
         pruned_model, pruning_info = mct.pruning.pytorch_pruning_experimental(
             model=dense_model,
-            target_kpi=mct.KPI(weights_memory=dense_nparams * FP32_BYTES_PER_PARAMETER * cr),
+            target_kpi=mct.core.KPI(weights_memory=dense_nparams * FP32_BYTES_PER_PARAMETER * cr),
             representative_data_gen=self.representative_dataset,
             pruning_config=mct.pruning.PruningConfig(
                 num_score_approximations=1,

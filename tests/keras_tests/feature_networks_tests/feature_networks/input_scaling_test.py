@@ -32,7 +32,7 @@ class BaseInputScalingTest(BaseKerasFeatureNetworkTest):
                  unit_test,
                  linear_layer):
         self.linear_layer = linear_layer
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test)
 
     def get_tpc(self):
         return get_16bit_tpc("input_scaling_range_test")

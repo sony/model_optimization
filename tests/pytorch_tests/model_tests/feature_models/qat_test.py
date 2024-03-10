@@ -130,10 +130,10 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
                                                                                   target_platform_capabilities=_tpc)
 
 
-        qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(model_float,
-                                                                                          self.representative_data_gen_experimental,
-                                                                                          qat_config=_qat_config,
-                                                                                          target_platform_capabilities=_tpc)
+        qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model_float,
+                                                                                                           self.representative_data_gen_experimental,
+                                                                                                           qat_config=_qat_config,
+                                                                                                           target_platform_capabilities=_tpc)
         copy_of_qat_ready_model = copy.deepcopy(qat_ready_model)
 
         # Generate a random dataset
@@ -154,7 +154,7 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
             qat_ready_model = torch.load(_path)
 
         if self.finalize:
-            qat_finalized_model = mct.qat.pytorch_quantization_aware_training_finalize(qat_ready_model)
+            qat_finalized_model = mct.qat.pytorch_quantization_aware_training_finalize_experimental(qat_ready_model)
         else:
             qat_finalized_model = None
 
@@ -263,12 +263,12 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
         model_float = self.create_networks()
         config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig())
         kpi = mct.core.KPI() # inf memory
-        qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(model_float,
-                                                                                          self.representative_data_gen_experimental,
-                                                                                          kpi,
-                                                                                          core_config=config,
-                                                                                          fw_info=self.get_fw_info(),
-                                                                                          target_platform_capabilities=self.get_tpc())
+        qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model_float,
+                                                                                                           self.representative_data_gen_experimental,
+                                                                                                           kpi,
+                                                                                                           core_config=config,
+                                                                                                           fw_info=self.get_fw_info(),
+                                                                                                           target_platform_capabilities=self.get_tpc())
 
         self.compare(qat_ready_model,
                      qat_ready_model,
@@ -309,12 +309,12 @@ class QuantizationAwareTrainingMixedPrecisionKpiCfgTest(QuantizationAwareTrainin
         model_float = self.create_networks()
         config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig())
         kpi = mct.core.KPI(weights_memory=50, activation_memory=40)
-        qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init(model_float,
-                                                                                          self.representative_data_gen_experimental,
-                                                                                          kpi,
-                                                                                          core_config=config,
-                                                                                          fw_info=self.get_fw_info(),
-                                                                                          target_platform_capabilities=self.get_tpc())
+        qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model_float,
+                                                                                                           self.representative_data_gen_experimental,
+                                                                                                           kpi,
+                                                                                                           core_config=config,
+                                                                                                           fw_info=self.get_fw_info(),
+                                                                                                           target_platform_capabilities=self.get_tpc())
 
         self.compare(qat_ready_model,
                      qat_ready_model,

@@ -86,7 +86,7 @@ if FOUND_TF:
             are represented in float32 data type (thus, each parameter is represented using 4 bytes):
 
             >>> dense_nparams = sum([l.count_params() for l in model.layers])
-            >>> target_kpi = mct.KPI(weights_memory=dense_nparams * 4 * 0.5)
+            >>> target_kpi = mct.core.KPI(weights_memory=dense_nparams * 4 * 0.5)
 
             Optionally, define a pruning configuration. num_score_approximations can be passed
             to configure the number of importance scores that will be calculated for each channel.
@@ -100,6 +100,10 @@ if FOUND_TF:
             >>> pruned_model, pruning_info = mct.pruning.keras_pruning_experimental(model=model, target_kpi=target_kpi, representative_data_gen=repr_datagen, pruning_config=pruning_config)
 
         """
+
+        Logger.warning(f"keras_pruning_experimental is experimental and is subject to future changes."
+                       f"If you encounter an issue, please open an issue in our GitHub "
+                       f"project https://github.com/sony/model_optimization")
 
         # Instantiate the Keras framework implementation.
         fw_impl = PruningKerasImplementation()

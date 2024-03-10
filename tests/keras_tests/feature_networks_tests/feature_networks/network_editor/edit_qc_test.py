@@ -178,7 +178,7 @@ class BaseChangeQuantConfigAttrTest(BaseKerasFeatureNetworkTest):
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
-    def run_test(self, experimental_exporter=False):
+    def run_test(self):
         feature_networks = self.create_networks()
         feature_networks = feature_networks if isinstance(feature_networks, list) else [feature_networks]
         for model_float in feature_networks:
@@ -266,7 +266,7 @@ class BaseChangeQuantizationMethodQCAttrTest(BaseKerasFeatureNetworkTest):
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
-    def run_test(self, experimental_exporter=False):
+    def run_test(self):
         feature_networks = self.create_networks()
         feature_networks = feature_networks if isinstance(feature_networks, list) else [feature_networks]
         for model_float in feature_networks:

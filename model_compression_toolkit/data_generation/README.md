@@ -48,25 +48,25 @@ generated_images = mct.data_generation.pytorch_data_generation_experimental(
 import model_compression_toolkit as mct
 
 # Set the configuration parameters for data generation
-data_gen_config = mct.get_tensorflow_data_generation_config(
-    n_iter=500,                             # Number of iterations
-    data_gen_batch_size=32,                 # Batch size for data generation
-    extra_pixels=32,                        # image manipulation when generating data                                                     
+data_gen_config = mct.data_generation.get_keras_data_generation_config(
+    n_iter=500,  # Number of iterations
+    data_gen_batch_size=32,  # Batch size for data generation
+    extra_pixels=32,  # image manipulation when generating data                                                     
     # ... (other configuration parameters)
 )
 
 # Call the data generation function to generate images
-generated_images = mct.tensorflow_data_generation_experimental(
-    model=my_model,                         # PyTorch model to generate data for
-    n_images=1024,                          # Number of images to generate
-    output_image_size=224,                  # Size of the output images
+generated_images = mct.data_generation.keras_data_generation_experimental(
+    model=my_model,  # PyTorch model to generate data for
+    n_images=1024,  # Number of images to generate
+    output_image_size=224,  # Size of the output images
     data_generation_config=data_gen_config  # Configuration for data generation
 )
 ```
 
 ## Configuration Parameters
 
-The `get_pytorch_data_generation_config()` and `get_tensorflow_data_generation_config()` functions allow you to customize various configuration parameters for data generation. Here are the essential parameters that can be tailored to your specific needs:
+The `get_pytorch_data_generation_config()` and `get_keras_data_generation_config()` functions allow you to customize various configuration parameters for data generation. Here are the essential parameters that can be tailored to your specific needs:
 - **'n_iter'** (int):  The number of iterations for the data generation optimization process. Controls the number of iterations used during the optimization process for generating data. Higher values may improve data quality at the cost of increased computation time.
 - **'optimizer'** (Optimizer): The optimizer used during data generation to update the generated images. Specifies the optimization algorithm used to update the generated images during the data generation process. Common optimizers include RAdam, Adam, SGD, etc.
 - **'data_gen_batch_size'** (int): The batch size used during data generation optimization. Determines the number of images processed in each optimization step. A larger batch size may speed up the optimization but requires more memory.

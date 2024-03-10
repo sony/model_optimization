@@ -22,15 +22,13 @@ class BaseLayerTest(BaseTest):
                  input_shape=(8, 8, 3),
                  quantization_modes: List[LayerTestMode] = [LayerTestMode.QUANTIZED_8_BITS, LayerTestMode.FLOAT],
                  is_inputs_a_list=False,
-                 use_cpu=False,
-                 experimental_exporter=False):
+                 use_cpu=False):
 
         super().__init__(unit_test,
                          val_batch_size=val_batch_size,
                          num_calibration_iter=num_calibration_iter,
                          num_of_inputs=num_of_inputs,
-                         input_shape=input_shape,
-                         experimental_exporter=experimental_exporter)
+                         input_shape=input_shape)
 
         self.use_cpu = use_cpu
         self.is_inputs_a_list = is_inputs_a_list

@@ -29,7 +29,7 @@ layers = keras.layers
 
 class MultipleOutputsNodeTests(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test )
 
     def get_tpc(self):
         return get_quantization_disabled_keras_tpc("multiple_outputs_test")

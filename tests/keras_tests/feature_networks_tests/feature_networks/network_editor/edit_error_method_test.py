@@ -42,8 +42,7 @@ class EditActivationErrorMethod(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test):
         super().__init__(unit_test=unit_test,
-                         input_shape=(224, 224, 3),
-                         experimental_exporter=True)
+                         input_shape=(224, 224, 3))
 
     def generate_inputs(self):
         input_data = [np.full(shape=in_shape, fill_value=0.2) for in_shape in self.get_input_shapes()]

@@ -36,8 +36,7 @@ class BiasCorrectionDepthwiseTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test):
         super().__init__(unit_test,
-                         input_shape=(8,8,1),
-                         experimental_exporter=True)
+                         input_shape=(8,8,1))
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(weights_bias_correction=True)

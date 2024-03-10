@@ -35,7 +35,7 @@ layers = keras.layers
 
 class NestedModelMultipleInputsTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test )
 
     def get_tpc(self):
         return get_16bit_tpc("nested_multi_inputs_test")

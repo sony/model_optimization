@@ -27,23 +27,4 @@ from model_compression_toolkit import data_generation
 from model_compression_toolkit import pruning
 from model_compression_toolkit.trainable_infrastructure.keras.load_model import keras_load_quantized_model
 
-
-# Old API (will not be accessible in future releases)
-from model_compression_toolkit.core.common import network_editors as network_editor
-from model_compression_toolkit.core.common.quantization import quantization_config
-from model_compression_toolkit.core.common.mixed_precision import mixed_precision_quantization_config
-from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
-from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, QuantizationErrorMethod, DEFAULTCONFIG
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
-from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.logger import set_log_folder
-from model_compression_toolkit.core.common.data_loader import FolderImageLoader
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo, ChannelAxis
-from model_compression_toolkit.core.keras.kpi_data_facade import keras_kpi_data
-from model_compression_toolkit.core.pytorch.kpi_data_facade import pytorch_kpi_data
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
-from model_compression_toolkit.gptq.common.gptq_config import RoundingType
-from model_compression_toolkit.gptq.keras.quantization_facade import get_keras_gptq_config
-from model_compression_toolkit.gptq.pytorch.quantization_facade import get_pytorch_gptq_config
-
 __version__ = "1.11.0"

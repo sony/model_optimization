@@ -54,7 +54,7 @@ class PruningPytorchFeatureTest(BasePytorchFeatureNetworkTest):
             # substract the 4 bn params if the bn is not used. This is because Back2Framework will create a model without bn
             dense_model_num_params -= count_model_prunable_params(model.bn)
         # Remove only one group of channels only one parameter should be pruned
-        return mct.KPI(weights_memory=(dense_model_num_params-self.simd) * 4)
+        return mct.core.KPI(weights_memory=(dense_model_num_params-self.simd) * 4)
 
     def run_test(self):
         feature_networks = self.create_networks()

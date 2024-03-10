@@ -29,7 +29,7 @@ layers = keras.layers
 class DecomposeSeparableConvTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, depth=1):
         self.depth_multiplier = depth
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(weights_bias_correction=False)

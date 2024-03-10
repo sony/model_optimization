@@ -61,7 +61,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                  hessian_weights=True, log_norm_weights=True, scaled_log_norm=False,
                  quantization_parameter_learning=True):
         super().__init__(unit_test,
-                         input_shape=input_shape, experimental_exporter=True)
+                         input_shape=input_shape )
 
         self.quant_method = quant_method
         self.rounding_type = rounding_type

@@ -49,7 +49,7 @@ if FOUND_TF:
         scheduler_step_function_dict
 
     # Function to create a DataGenerationConfig object with the specified configuration parameters for Tensorflow
-    def get_tensorflow_data_generation_config(
+    def get_keras_data_generation_config(
             n_iter: int = DEFAULT_N_ITER,
             optimizer: Optimizer = Adam,
             data_gen_batch_size: int = DEFAULT_DATA_GEN_BS,
@@ -115,13 +115,13 @@ if FOUND_TF:
             output_loss_multiplier=output_loss_multiplier)
 
 
-    def tensorflow_data_generation_experimental(
+    def keras_data_generation_experimental(
             model: tf.keras.Model,
             n_images: int,
             output_image_size: Tuple,
             data_generation_config: DataGenerationConfig) -> tf.Tensor:
         """
-        Function to perform data generation using the provided model and data generation configuration.
+        Function to perform data generation using the provided Keras model and data generation configuration.
 
         Args:
             model (Model): Keras model to generate data for.
@@ -132,6 +132,11 @@ if FOUND_TF:
         Returns:
             List[tf.Tensor]: Finalized list containing generated images.
         """
+        Logger.warning(f"keras_data_generation_experimental is experimental "
+                       f"and is subject to future changes."
+                       f"If you encounter an issue, please open an issue in our GitHub "
+                       f"project https://github.com/sony/model_optimization")
+
         # Get Data Generation functions and classes
         image_pipeline, normalization, bn_layer_weighting_fn, bn_alignment_loss_fn, output_loss_fn, \
             init_dataset = get_data_generation_classes(data_generation_config=data_generation_config,
@@ -323,11 +328,11 @@ if FOUND_TF:
 
 
 else:
-    def get_tensorflow_data_generation_config(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory when using get_tensorflow_data_generation_config. '
+    def get_keras_data_generation_config(*args, **kwargs):
+        Logger.critical('Installing tensorflow is mandatory when using get_keras_data_generation_config. '
                         'Could not find Tensorflow package.')  # pragma: no cover
 
 
-    def tensorflow_data_generation_experimental(*args, **kwargs):
+    def keras_data_generation_experimental(*args, **kwargs):
         Logger.critical('Installing tensorflow is mandatory when using pytorch_data_generation_experimental. '
                         'Could not find Tensorflow package.')  # pragma: no cover

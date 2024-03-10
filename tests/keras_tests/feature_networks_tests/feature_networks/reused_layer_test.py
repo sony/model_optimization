@@ -28,7 +28,7 @@ layers = keras.layers
 
 class ReusedLayerTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test )
 
     def create_networks(self):
         conv_layer = layers.Conv2D(3, 4)

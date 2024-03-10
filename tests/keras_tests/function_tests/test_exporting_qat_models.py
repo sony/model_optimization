@@ -69,14 +69,14 @@ class TestExportingQATModelBase(unittest.TestCase):
         model = self.get_model()
         images = next(self.get_dataset())
 
-        self.qat_ready, _, _ = mct.qat.keras_quantization_aware_training_init(model,
-                                                                              self.get_dataset)
+        self.qat_ready, _, _ = mct.qat.keras_quantization_aware_training_init_experimental(model,
+                                                                                           self.get_dataset)
         _qat_ready_model_path = tempfile.mkstemp('.h5')[1]
         keras.models.save_model(self.qat_ready, _qat_ready_model_path)
         self.qat_ready = mct_load(_qat_ready_model_path)
 
         qat_ready_pred = self.qat_ready(images)
-        self.final_model = mct.qat.keras_quantization_aware_training_finalize(self.qat_ready)
+        self.final_model = mct.qat.keras_quantization_aware_training_finalize_experimental(self.qat_ready)
 
         _finalized_model_path = tempfile.mkstemp('.h5')[1]
         keras.models.save_model(self.final_model, _finalized_model_path)

@@ -60,7 +60,7 @@ class TestParameterCounter(unittest.TestCase):
         # Apply quantization configuration to the graph. This step is necessary even when not quantizing,
         # as it prepares the graph for the pruning process.
         float_graph_with_compression_config = set_quantization_configuration_to_graph(float_graph,
-                                                                                      quant_config=mct.DEFAULTCONFIG,
+                                                                                      quant_config=mct.core.DEFAULTCONFIG,
                                                                                       mixed_precision_enable=False)
 
 

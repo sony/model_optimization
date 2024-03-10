@@ -30,15 +30,13 @@ class BaseKerasFeatureNetworkTest(BaseFeatureNetworkTest):
                  num_calibration_iter=1,
                  val_batch_size=1,
                  num_of_inputs=1,
-                 input_shape=(8, 8, 3),
-                 experimental_exporter=False):
+                 input_shape=(8, 8, 3)):
 
         super().__init__(unit_test=unit_test,
                          val_batch_size=val_batch_size,
                          num_calibration_iter=num_calibration_iter,
                          num_of_inputs=num_of_inputs,
-                         input_shape=input_shape,
-                         experimental_exporter=experimental_exporter)
+                         input_shape=input_shape)
 
     def get_tpc(self):
         return get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)

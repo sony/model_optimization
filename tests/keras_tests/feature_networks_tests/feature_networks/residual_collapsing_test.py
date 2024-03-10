@@ -29,8 +29,7 @@ class BaseResidualCollapsingTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test):
         super(BaseResidualCollapsingTest, self).__init__(unit_test=unit_test,
-                                                         input_shape=(16,16,3),
-                                                         experimental_exporter=True)
+                                                         input_shape=(16,16,3))
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 32,

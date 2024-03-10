@@ -143,6 +143,12 @@ if FOUND_TORCH:
         Returns:
             List[Tensor]: Finalized list containing generated images.
         """
+
+        Logger.warning(f"pytorch_data_generation_experimental is experimental "
+                       f"and is subject to future changes."
+                       f"If you encounter an issue, please open an issue in our GitHub "
+                       f"project https://github.com/sony/model_optimization")
+
         # get a static graph representation of the model using torch.fx
         fx_model = symbolic_trace(model)
 		

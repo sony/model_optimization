@@ -33,7 +33,7 @@ class SoftmaxShiftTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, kernel_op_layer, activation_function):
         self.activation_function = activation_function
         self.kernel_op_layer = kernel_op_layer
-        super().__init__(unit_test, experimental_exporter=True)
+        super().__init__(unit_test )
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

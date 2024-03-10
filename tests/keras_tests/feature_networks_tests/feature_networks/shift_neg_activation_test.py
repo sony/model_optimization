@@ -46,7 +46,7 @@ class ShiftNegActivationTest(BaseKerasFeatureNetworkTest):
         self.use_pad_layer = use_pad_layer
         self.bypass_op_list = bypass_op_list
         self.param_search = param_search
-        super().__init__(unit_test, input_shape=input_shape, num_calibration_iter=100, experimental_exporter=True)
+        super().__init__(unit_test, input_shape=input_shape, num_calibration_iter=100 )
 
     def get_tpc(self):
         return get_16bit_tpc("shift_negative_test")

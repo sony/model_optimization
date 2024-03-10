@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
     # Define KPI for pruning. Each float32 parameter requires 4 bytes,
     # hence we multiply the total parameter count by 4 to calculate the memory footprint.
-    kpi = mct.KPI(weights_memory=dense_nparams * 4 * args.compression_rate)
+    kpi = mct.core.KPI(weights_memory=dense_nparams * 4 * args.compression_rate)
 
     # Create PruningConfig with the number of approximations MCT will compute as importance metric
     # for each channel when using LFH metric to set scores for each output channel that can be removed.
