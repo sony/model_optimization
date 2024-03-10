@@ -1,6 +1,6 @@
 :orphan:
 
-.. _ug-set_logger_path:
+.. _ug-set_log_folder:
 
 =================================
 Enable a Logger

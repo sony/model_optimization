@@ -12,6 +12,6 @@ DebugConfig
 ==========================
 **Class to configure params for debugging purposes:**
 
-.. autoclass:: model_compression_toolkit.DebugConfig
+.. autoclass:: model_compression_toolkit.core.DebugConfig
 
 
