@@ -68,7 +68,6 @@ class MpDistanceWeighting(Enum):
 
     AVG = partial(get_average_weights)
     LAST_LAYER = partial(get_last_layer_weights)
-    # HESSIAN_WEIGHTS =
 
     def __call__(self, distance_matrix: np.ndarray) -> np.ndarray:
         return self.value(distance_matrix)

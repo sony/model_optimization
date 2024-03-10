@@ -240,7 +240,7 @@ class TestGetPytorchTPC(unittest.TestCase):
                                                                         rep_data,
                                                                         target_platform_capabilities=tpc)
 
-        mp_qc = copy.deepcopy(MixedPrecisionQuantizationConfig())
+        mp_qc = MixedPrecisionQuantizationConfig()
         mp_qc.num_of_images = 1
         core_config = mct.core.CoreConfig(quantization_config=mct.core.QuantizationConfig(),
                                           mixed_precision_config=mp_qc)
