@@ -15,6 +15,7 @@
 
 from typing import List, Callable
 
+from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 
@@ -22,6 +23,7 @@ from model_compression_toolkit.core.common.similarity_analyzer import compute_ms
 class MixedPrecisionQuantizationConfig:
 
     def __init__(self,
+                 target_kpi: KPI = None,
                  compute_distance_fn: Callable = None,
                  distance_weighting_method: Callable = get_average_weights,
                  num_of_images: int = 32,
@@ -35,6 +37,7 @@ class MixedPrecisionQuantizationConfig:
         Class with mixed precision parameters to quantize the input model.
 
         Args:
+            target_kpi (KPI): KPI to constraint the search of the mixed-precision configuration for the model.
             compute_distance_fn (Callable): Function to compute a distance between two tensors.
             distance_weighting_method (Callable): Function to use when weighting the distances among different layers when computing the sensitivity metric.
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
@@ -47,6 +50,7 @@ class MixedPrecisionQuantizationConfig:
 
         """
 
+        self.target_kpi = target_kpi
         self.compute_distance_fn = compute_distance_fn
         self.distance_weighting_method = distance_weighting_method
         self.num_of_images = num_of_images

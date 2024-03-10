@@ -140,7 +140,6 @@ def prepare_graph_set_bit_widths(in_model,
             bit_widths_config = search_bit_width(tg,
                                                  fw_info,
                                                  fw_impl,
-                                                 target_kpi,
                                                  core_config.mixed_precision_config,
                                                  _representative_data_gen)
         else:

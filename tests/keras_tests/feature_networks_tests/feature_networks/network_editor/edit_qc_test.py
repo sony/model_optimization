@@ -133,14 +133,13 @@ def prepare_graph_for_second_network_editor(in_model, representative_data_gen, c
     ######################################
     # Finalize bit widths
     ######################################
-    if target_kpi is not None:
-        assert core_config.mixed_precision_enable
+    if core_config.mixed_precision_enable:
+        assert target_kpi is not None
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
             bit_widths_config = search_bit_width(tg_with_bias,
                                                  fw_info,
                                                  fw_impl,
-                                                 target_kpi,
                                                  core_config.mixed_precision_config,
                                                  representative_data_gen)
         else:

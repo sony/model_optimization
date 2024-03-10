@@ -47,7 +47,6 @@ def core_runner(in_model: Any,
                 fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation,
                 tpc: TargetPlatformCapabilities,
-                target_kpi: KPI = None,
                 tb_w: TensorboardWriter = None):
     """
     Quantize a trained model using post-training quantization.
@@ -67,7 +66,6 @@ def core_runner(in_model: Any,
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tpc: TargetPlatformCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
-        target_kpi: KPI to constraint the search of the mixed-precision configuration for the model.
         tb_w: TensorboardWriter object for logging
 
     Returns:
@@ -106,14 +104,14 @@ def core_runner(in_model: Any,
     ######################################
     # Finalize bit widths
     ######################################
-    if target_kpi is not None:
-        assert core_config.mixed_precision_enable
+    if core_config.mixed_precision_enable:
+        if core_config.mixed_precision_config.target_kpi is None:
+            Logger.critical(f"Trying to run Mixed Precision quantization without providing a valid target KPI.")
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
             bit_widths_config = search_bit_width(tg,
                                                  fw_info,
                                                  fw_impl,
-                                                 target_kpi,
                                                  core_config.mixed_precision_config,
                                                  representative_data_gen,
                                                  hessian_info_service=hessian_info_service)
@@ -139,7 +137,7 @@ def core_runner(in_model: Any,
                    fw_info=fw_info,
                    fw_impl=fw_impl)
 
-    if target_kpi is not None:
+    if core_config.mixed_precision_enable:
         # Retrieve lists of tuples (node, node's final weights/activation bitwidth)
         weights_conf_nodes_bitwidth = tg.get_final_weights_config(fw_info)
         activation_conf_nodes_bitwidth = tg.get_final_activation_config()
