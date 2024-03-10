@@ -726,7 +726,7 @@ def _error_function_wrapper(error_function: Callable,
         q_tensor: Numpy array with quantized tensor's content.
         in_params: Quantization params the tensor is quantized by (used in specific error functions only).
 
-    Returns: A array of error values per-channel for the quantized tensor, according to the error function.
+    Returns: An array of error values for each channel of the quantized tensor, as determined by the specified error function.
     """
     return error_function(float_tensor, q_tensor, in_params)
 
