@@ -93,7 +93,6 @@ def prepare_graph_with_quantization_parameters(in_model,
 def prepare_graph_set_bit_widths(in_model,
                                  fw_impl,
                                  representative_data_gen,
-                                 target_kpi,
                                  n_iter,
                                  quant_config,
                                  fw_info,
@@ -133,8 +132,8 @@ def prepare_graph_set_bit_widths(in_model,
     ######################################
     # Finalize bit widths
     ######################################
-    if target_kpi is not None:
-        assert core_config.mixed_precision_enable
+    if core_config.mixed_precision_enable:
+        assert core_config.mixed_precision_config.target_kpi is not None
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
             bit_widths_config = search_bit_width(tg,
