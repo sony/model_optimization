@@ -110,7 +110,8 @@ class TestFileLogger(unittest.TestCase):
         cfg = mct.core.DEFAULTCONFIG
         mp_cfg = mct.core.MixedPrecisionQuantizationConfig(compute_distance_fn=compute_mse,
                                                            distance_weighting_method=MpDistanceWeighting.AVG,
-                                                           use_hessian_based_scores=False)
+                                                           use_hessian_based_scores=False,
+                                                           target_kpi=mct.core.KPI(np.inf))
 
         # compare max tensor size with plotted max tensor size
         tg = prepare_graph_set_bit_widths(in_model=model,
@@ -120,7 +121,6 @@ class TestFileLogger(unittest.TestCase):
                                           tpc=tpc,
                                           network_editor=[],
                                           quant_config=cfg,
-                                          target_kpi=mct.core.KPI(),
                                           n_iter=1,
                                           analyze_similarity=True,
                                           mp_cfg=mp_cfg)
@@ -145,11 +145,11 @@ class TestFileLogger(unittest.TestCase):
             yield [np.random.randn(1, 8, 8, 3)]
 
         mp_qc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
-                                                          use_hessian_based_scores=False)
+                                                          use_hessian_based_scores=False,
+                                                          target_kpi=mct.core.KPI(np.inf))
         core_config = mct.core.CoreConfig(mixed_precision_config=mp_qc)
         quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model,
                                                                       rep_data,
-                                                                      target_kpi=mct.core.KPI(np.inf),
                                                                       core_config=core_config,
                                                                       target_platform_capabilities=tpc)
 
@@ -162,7 +162,6 @@ class TestFileLogger(unittest.TestCase):
         self.model = MultipleOutputsNet()
         quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model,
                                                                       rep_data,
-                                                                      target_kpi=mct.core.KPI(np.inf),
                                                                       core_config=core_config,
                                                                       target_platform_capabilities=tpc)
 

@@ -47,7 +47,6 @@ search_methods = {
 def search_bit_width(graph_to_search_cfg: Graph,
                      fw_info: FrameworkInfo,
                      fw_impl: FrameworkImplementation,
-                     target_kpi: KPI,
                      mp_config: MixedPrecisionQuantizationConfig,
                      representative_data_gen: Callable,
                      search_method: BitWidthSearchMethod = BitWidthSearchMethod.INTEGER_PROGRAMMING,
@@ -64,7 +63,6 @@ def search_bit_width(graph_to_search_cfg: Graph,
         graph_to_search_cfg: Graph to search a MP configuration for.
         fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
         fw_impl: FrameworkImplementation object with specific framework methods implementation.
-        target_kpi: Target KPI to bound our feasible solution space s.t the configuration does not violate it.
         mp_config: Mixed-precision quantization configuration.
         representative_data_gen: Dataset to use for retrieving images for the models inputs.
         search_method: BitWidthSearchMethod to define which searching method to use.
@@ -76,6 +74,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
         bit-width index on the node).
 
     """
+    target_kpi = mp_config.target_kpi
 
     # target_kpi have to be passed. If it was not passed, the facade is not supposed to get here by now.
     if target_kpi is None:

@@ -87,7 +87,6 @@ if FOUND_TF:
 
     def keras_quantization_aware_training_init_experimental(in_model: Model,
                                                             representative_data_gen: Callable,
-                                                            target_kpi: KPI = None,
                                                             core_config: CoreConfig = CoreConfig(),
                                                             qat_config: QATConfig = QATConfig(),
                                                             fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
@@ -110,7 +109,6 @@ if FOUND_TF:
          Args:
              in_model (Model): Keras model to quantize.
              representative_data_gen (Callable): Dataset used for initial calibration.
-             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
              qat_config (QATConfig): QAT configuration
              fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).  `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
@@ -195,7 +193,6 @@ if FOUND_TF:
                                                fw_info=fw_info,
                                                fw_impl=fw_impl,
                                                tpc=target_platform_capabilities,
-                                               target_kpi=target_kpi,
                                                tb_w=tb_w)
 
         tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)

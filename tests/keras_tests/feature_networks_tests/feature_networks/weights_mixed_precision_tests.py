@@ -45,7 +45,8 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
                                            input_scaling=True, activation_channel_equalization=True)
 
     def get_mixed_precision_config(self):
-        return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1)
+        return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
+                                                         target_kpi=self.get_kpi())
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, 3]]
@@ -81,7 +82,7 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
                                            input_scaling=True, activation_channel_equalization=True)
 
     def get_mixed_precision_config(self):
-        return mct.core.MixedPrecisionQuantizationConfig()
+        return mct.core.MixedPrecisionQuantizationConfig(target_kpi=self.get_kpi())
 
     def get_kpi(self):
         # Return some KPI (it does not really matter the value here as search_methods is not done,
@@ -96,7 +97,7 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
         self.unit_test.assertTrue(np.unique(conv_layers[1].weights[0]).flatten().shape[0] <= 8)
 
 
-class MixedPrecisionSearchTest(MixedPercisionBaseTest):
+class MixedPercisionSearchTest(MixedPercisionBaseTest):
     def __init__(self, unit_test, distance_metric=MpDistanceWeighting.AVG):
         super().__init__(unit_test, val_batch_size=2)
 
@@ -108,7 +109,8 @@ class MixedPrecisionSearchTest(MixedPercisionBaseTest):
 
     def get_mixed_precision_config(self):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
-                                                         distance_weighting_method=self.distance_metric)
+                                                         distance_weighting_method=self.distance_metric,
+                                                         target_kpi=self.get_kpi())
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
@@ -232,6 +234,7 @@ class MixedPercisionCombinedNMSTest(MixedPercisionBaseTest):
 
     def get_mixed_precision_config(self):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
+                                                         target_kpi=self.get_kpi(),
                                                          use_hessian_based_scores=False)
 
     def get_kpi(self):
@@ -372,7 +375,7 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
                                            input_scaling=False, activation_channel_equalization=False)
 
     def get_mixed_precision_config(self):
-        return mct.core.MixedPrecisionQuantizationConfig()
+        return mct.core.MixedPrecisionQuantizationConfig(target_kpi=self.get_kpi())
 
 
 class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
@@ -388,7 +391,8 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
                                            activation_channel_equalization=False)
 
     def get_mixed_precision_config(self):
-        return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1)
+        return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
+                                                         target_kpi=self.get_kpi())
 
     def get_tpc(self):
         base_config, _, default_config = get_op_quantization_configs()
@@ -421,6 +425,7 @@ class MixedPercisionSearchLastLayerDistanceTest(MixedPercisionBaseTest):
 
     def get_mixed_precision_config(self):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
+                                                         target_kpi=self.get_kpi(),
                                                          distance_weighting_method=MpDistanceWeighting.LAST_LAYER,
                                                          use_hessian_based_scores=False)
 
