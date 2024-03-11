@@ -124,7 +124,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.test_kmeans_quant
 from tests.keras_tests.feature_networks_tests.feature_networks.uniform_range_selection_activation_test import \
     UniformRangeSelectionActivationTest, UniformRangeSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
-    MixedPrecisionSearchTest, MixedPercisionDepthwiseTest, \
+    MixedPercisionSearchTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest, MixedPrecisionActivationDisabled, \
     MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationKPINonConfNodesTest, \
     MixedPercisionSearchTotalKPINonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
@@ -204,8 +204,8 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPercisionCombinedNMSTest(self).run_test()
 
     def test_mixed_precision_search(self):
-        MixedPrecisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
-        MixedPrecisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
+        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
+        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
 
     def test_mixed_precision_for_part_weights_layers(self):
         MixedPercisionSearchPartWeightsLayersTest(self).run_test()
