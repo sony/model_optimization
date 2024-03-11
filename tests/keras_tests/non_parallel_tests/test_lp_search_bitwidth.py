@@ -38,7 +38,7 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
 from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
-from pulp import *
+from pulp import lpSum
 
 class MockReconstructionHelper:
     def __init__(self):

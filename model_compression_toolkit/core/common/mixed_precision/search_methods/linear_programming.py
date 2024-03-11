@@ -233,7 +233,7 @@ def _add_set_of_kpi_constraints(search_manager: MixedPrecisionSearchManager,
 
 def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
                                     target_kpi: KPI,
-                                    eps: float = 1e-8) -> Dict[int, Dict[int, float]]:
+                                    eps: float = EPS) -> Dict[int, Dict[int, float]]:
     """
     This function measures the sensitivity of a change in a bitwidth of a layer on the entire model.
     It builds a mapping from a node's index, to its bitwidht's effect on the model sensitivity.
