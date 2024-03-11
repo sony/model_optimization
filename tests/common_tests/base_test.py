@@ -35,13 +35,13 @@ class BaseTest:
 
     def get_core_config(self):
         return CoreConfig(quantization_config=self.get_quantization_config(),
-                          mixed_precision_config=self.get_mixed_precision_v2_config(),
+                          mixed_precision_config=self.get_mixed_precision_config(),
                           debug_config=self.get_debug_config())
 
     def get_quantization_config(self):
         return QuantizationConfig()
 
-    def get_mixed_precision_v2_config(self):
+    def get_mixed_precision_config(self):
         return None
 
     def get_debug_config(self):

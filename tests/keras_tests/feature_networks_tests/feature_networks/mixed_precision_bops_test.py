@@ -46,8 +46,9 @@ class BaseMixedPrecisionBopsTest(BaseKerasFeatureNetworkTest):
                                                 mp_bitwidth_candidates_list=self.mixed_precision_candidates_list,
                                                 name="mp_bopts_test")
 
-    def get_mixed_precision_v2_config(self):
-        return MixedPrecisionQuantizationConfig(num_of_images=1)
+    def get_mixed_precision_config(self):
+        return MixedPrecisionQuantizationConfig(num_of_images=1,
+                                                target_kpi=self.get_kpi())
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, 3]]
