@@ -19,6 +19,7 @@ import numpy as np
 import torch
 from torch import nn
 import model_compression_toolkit as mct
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_attributes_quantization_test import BNAttributesQuantization
@@ -394,7 +395,8 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the Mixed Precision search.
         """
-        MixedPercisionSearch8Bit(self).run_test()
+        MixedPercisionSearch8Bit(self, distance_metric=MpDistanceWeighting.AVG).run_test()
+        MixedPercisionSearch8Bit(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
 
     def test_mixed_precision_part_weights_layers(self):
         """

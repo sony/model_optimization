@@ -18,9 +18,11 @@ import unittest
 
 import numpy as np
 import tensorflow as tf
+from sklearn.metrics.pairwise import distance_metrics
 from tensorflow.keras.layers import PReLU, ELU
 
 from model_compression_toolkit.core import QuantizationErrorMethod
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq import RoundingType
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
@@ -122,7 +124,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.test_kmeans_quant
 from tests.keras_tests.feature_networks_tests.feature_networks.uniform_range_selection_activation_test import \
     UniformRangeSelectionActivationTest, UniformRangeSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
-    MixedPercisionSearchTest, MixedPercisionDepthwiseTest, \
+    MixedPrecisionSearchTest, MixedPercisionDepthwiseTest, \
     MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest, MixedPrecisionActivationDisabled, \
     MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationKPINonConfNodesTest, \
     MixedPercisionSearchTotalKPINonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
@@ -202,7 +204,8 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPercisionCombinedNMSTest(self).run_test()
 
     def test_mixed_precision_search(self):
-        MixedPercisionSearchTest(self).run_test()
+        MixedPrecisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
+        MixedPrecisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
 
     def test_mixed_precision_for_part_weights_layers(self):
         MixedPercisionSearchPartWeightsLayersTest(self).run_test()

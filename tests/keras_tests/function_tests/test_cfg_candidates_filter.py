@@ -19,8 +19,6 @@ from tensorflow.keras.layers import Conv2D, ReLU, Input
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
-from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
@@ -30,7 +28,6 @@ from model_compression_toolkit.core.keras.keras_implementation import KerasImple
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, generate_test_op_qc
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 
 tp = mct.target_platform
 

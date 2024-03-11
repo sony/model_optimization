@@ -232,7 +232,8 @@ def _add_set_of_kpi_constraints(search_manager: MixedPrecisionSearchManager,
 
 
 def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
-                                    target_kpi: KPI) -> Dict[int, Dict[int, float]]:
+                                    target_kpi: KPI,
+                                    eps: float = EPS) -> Dict[int, Dict[int, float]]:
     """
     This function measures the sensitivity of a change in a bitwidth of a layer on the entire model.
     It builds a mapping from a node's index, to its bitwidht's effect on the model sensitivity.
@@ -245,6 +246,7 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
         search_manager: MixedPrecisionSearchManager object to be used for problem formalization.
         target_kpi: KPI to constrain our LP problem with some resources limitations (like model' weights memory
         consumption).
+        eps: Epsilon value to manually increase metric value (if necessary) for numerical stability
 
     Returns:
         Mapping from each node's index in a graph, to a dictionary from the bitwidth index (of this node) to
@@ -287,15 +289,17 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
                         original_base_config=origin_max_config)
                 origin_changed_nodes_indices = [i for i, c in enumerate(origin_max_config) if
                                                 c != origin_mp_model_configuration[i]]
-                layer_to_metrics_mapping[node_idx][bitwidth_idx] = search_manager.compute_metric_fn(
+                metric_value = search_manager.compute_metric_fn(
                     origin_mp_model_configuration,
                     origin_changed_nodes_indices,
                     origin_max_config)
             else:
-                layer_to_metrics_mapping[node_idx][bitwidth_idx] = search_manager.compute_metric_fn(
+                metric_value = search_manager.compute_metric_fn(
                     mp_model_configuration,
                     [node_idx],
                     search_manager.max_kpi_config)
+
+            layer_to_metrics_mapping[node_idx][bitwidth_idx] = max(metric_value, max_config_value + eps)
 
     # Finalize distance metric mapping
     search_manager.finalize_distance_metric(layer_to_metrics_mapping)

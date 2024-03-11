@@ -64,7 +64,7 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
                                            input_scaling=False,
                                            activation_channel_equalization=False)
 
-    def get_mixed_precision_v2_config(self):
+    def get_mixed_precision_config(self):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
                                                          target_kpi=self.get_kpi())
 
@@ -423,7 +423,7 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
                                            relu_bound_to_power_of_2=False, weights_bias_correction=True,
                                            input_scaling=False, activation_channel_equalization=False)
 
-    def get_mixed_precision_v2_config(self):
+    def get_mixed_precision_config(self):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=self.num_of_inputs,
                                                          target_kpi=self.get_kpi())
 
