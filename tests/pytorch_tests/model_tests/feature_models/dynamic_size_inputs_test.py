@@ -120,7 +120,6 @@ class ReshapeNetTest(BasePytorchTest):
             ptq_model, quantization_info = mct.ptq.pytorch_post_training_quantization(
                 in_module=model_float,
                 representative_data_gen=representative_data_gen_experimental,
-                target_kpi=self.get_kpi(),
                 core_config=core_config,
                 target_platform_capabilities=tpc
             )

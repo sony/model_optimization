@@ -90,306 +90,306 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
-
-    def test_single_layer_replacement(self):
-        """
-        This test checks "EditRule" operation with "ReplaceLayer" action
-        Specifically, replacing layer according to its unique name with a custom layer
-        """
-        SingleLayerReplacementTest(self).run_test()
-
-    def test_relu_replacement(self):
-        """
-        This test checks "EditRule" operation with "ReplaceLayer" action
-        Specifically, replacing layer according to its type with a custom layer
-        """
-        ReluReplacementTest(self).run_test()
-
-    def test_relu_replacement_with_add_bias(self):
-        """
-        This test checks "EditRule" operation with "ReplaceLayer" action
-        Specifically, replacing layer with a custom layer which is based on the original layer attributes
-        """
-        ReluReplacementWithAddBiasTest(self).run_test()
-
-    def test_conv2d_replacement(self):
-        """
-        This test checks "EditRule" operation with "ReplaceLayer" action
-        Specifically, updating the weights of Conv2D layer
-        """
-        DwConv2dReplacementTest(self).run_test()
-
-    def test_add_net(self):
-        """
-        This test checks the addition and subtraction operations.
-        Both with different layers and with constants.
-        """
-        AddNetTest(self).run_test()
-
-    def test_layer_norm_net(self):
-        """
-        These tests check the nn.functional.layer_norm operations.
-        """
-        LayerNormNetTest(self, has_weight=True, has_bias=True).run_test()
-        LayerNormNetTest(self, has_weight=True, has_bias=False).run_test()
-        LayerNormNetTest(self, has_weight=False, has_bias=True).run_test()
-        LayerNormNetTest(self, has_weight=False, has_bias=False).run_test()
-
-    def test_assert_net(self):
-        """
-        This tests check that the assert operation is being
-        removed from the graph during quantization.
-        """
-        AssertNetTest(self).run_test()
-
-    def test_add_same(self):
-        """
-        This test checks the special case of addition operation with the same input.
-        """
-        AddSameNetTest(self, float_reconstruction_error=1e-6).run_test()
-
-    def test_bn_folding(self):
-        """
-        This test checks the BatchNorm folding feature.
-        """
-        for functional in [True, False]:
-            BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=1), functional, has_weight=False).run_test()
-            BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=3, groups=3), functional).run_test()  # DW-Conv test
-            BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(2, 1)), functional).run_test()
-            BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=2), functional, fold_applied=False).run_test()
-            BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=(3, 1), groups=3),
-                             functional, fold_applied=False).run_test()  # DW-Conv test
-            BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(1, 3)), functional, fold_applied=False).run_test()
-        BNFoldingNetTest(self, nn.ConvTranspose2d(6, 9, kernel_size=(5, 4), groups=3), False).run_test()
-        BNFoldingNetTest(self, nn.ConvTranspose2d(3, 3, kernel_size=(4, 2), groups=3), False).run_test()
-
-    def test_bn_forward_folding(self):
-        """
-        This test checks the BatchNorm forward folding feature.
-        """
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), is_dw=True).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3), is_dw=True).run_test()  # DW-Conv test
-        BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1), is_dw=True).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), fold_applied=False, is_dw=True).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), fold_applied=False,
-                                is_dw=True).run_test()  # DW-Conv test
-        BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, (1, 3)), fold_applied=False, is_dw=True).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), add_bn=True, is_dw=True).run_test()
-
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1)).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3)).run_test()  # DW-Conv test
-        BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1)).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), fold_applied=False).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), fold_applied=False).run_test()  # DW-Conv test
-        BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, (1, 3)), fold_applied=False).run_test()
-        BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), add_bn=True).run_test()
-
-    def test_second_moment_correction(self):
-        """
-        These are tests for the Second Moment Correction.
-        """
-        ConvSecondMomentNetTest(self).run_test()
-        ConvTSecondMomentNetTest(self).run_test()
-        MultipleInputsConvSecondMomentNetTest(self).run_test()
-        ValueSecondMomentTest(self).run_test()
-
-    def test_bn_function(self):
-        """
-        This test checks the batch_norm function.
-        """
-        BNFNetTest(self).run_test()
-
-    def test_broken_net(self):
-        """
-        This test checks that the "broken" node (node without output) is being
-        removed from the graph during quantization.
-        """
-        BrokenNetTest(self).run_test()
-
-    def test_linear_collapsing(self):
-        """
-        This test checks the linear collapsing feature
-        """
-        TwoConv2DCollapsingTest(self).run_test()
-        ThreeConv2DCollapsingTest(self).run_test()
-        FourConv2DCollapsingTest(self).run_test()
-        SixConv2DCollapsingTest(self).run_test()
-
-    def test_residual_collapsing(self):
-        """
-        This test checks the residual collapsing feature
-        """
-        ResidualCollapsingTest1(self).run_test()
-        ResidualCollapsingTest2(self).run_test()
-
-    def test_const_representation(self):
-        c = (np.ones((32,)) + np.random.random((32,))).astype(np.float32)
-        for func in [torch.add, torch.sub, torch.mul, torch.div]:
-            ConstRepresentationTest(self, func, c).run_test()
-            ConstRepresentationTest(self, func, c, input_reverse_order=True).run_test()
-            ConstRepresentationTest(self, func, 2.45).run_test()
-            ConstRepresentationTest(self, func, 5, input_reverse_order=True).run_test()
-
-        ConstRepresentationMultiInputTest(self).run_test()
-
-    def test_permute_substitution(self):
-        """
-        This test checks the permute substitution feature
-        """
-        PermuteSubstitutionTest(self).run_test()
-
-    def test_constant_conv_substitution(self):
-        """
-        This test checks the constant conv substitution feature
-        """
-        ConstantConvSubstitutionTest(self).run_test()
-        ConstantConvReuseSubstitutionTest(self).run_test()
-        ConstantConvTransposeSubstitutionTest(self).run_test()
-
-    def test_relu_bound_to_power_of_2(self):
-        """
-        This test checks the Relu bound to POT feature.
-        """
-        ReLUBoundToPOTNetTest(self).run_test()
-
-    def test_hardtanh_bound_to_power_of_2(self):
-        """
-        This test checks the Relu bound to POT feature with Hardtanh layer as Relu.
-        """
-        HardtanhBoundToPOTNetTest(self).run_test()
-
-    def test_softmax_layer_shift(self):
-        """
-        This test checks the Softmax shift feature with Softmax as layer.
-        """
-        SoftmaxLayerNetTest(self).run_test()
-
-    def test_softmax_function_shift(self):
-        """
-        This test checks the Softmax shift feature with Softmax as function.
-        """
-        SoftmaxFunctionNetTest(self).run_test()
-
-    def test_scale_equalization(self):
-        # This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a layer
-        ScaleEqualizationNetTest(self).run_test()
-        # This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a layer and with zero padding.
-        ScaleEqualizationWithZeroPadNetTest(self).run_test()
-        # This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a function
-        ScaleEqualizationReluFuncNetTest(self).run_test()
-        # This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a function
-        # and with zero padding.
-        ScaleEqualizationReluFuncWithZeroPadNetTest(self).run_test()
-        # This test checks the Channel Scale Equalization feature in ConvTranspose2D - Relu - Conv2D with Relu as a layer
-        # and with zero padding.
-        ScaleEqualizationConvTransposeWithZeroPadNetTest(self).run_test()
-        # This test checks the Channel Scale Equalization feature in ConvTranspose2D - Relu - Conv2D with Relu as a function.
-        ScaleEqualizationConvTransposeReluFuncNetTest(self).run_test()
-        # This test checks the Channel Scale Equalization feature in Conv2D - Relu - ConvTranspose2D with Relu as a function
-        # and with zero padding.
-        ScaleEqualizationReluFuncConvTransposeWithZeroPadNetTest(self).run_test()
-
-    def test_scalar_tensor(self):
-        """
-        This test checks that we support scalar tensors initialized as torch.tensor(x) where x is int
-        """
-        ScalarTensorTest(self).run_test()
-
-    def test_layer_name(self):
-        """
-        This test checks that we build a correct graph and correctly reconstruct the model
-        given the fact that we reuse nodes and abuse the naming convention of fx (if we resuse
-        "conv1" it will be displayed as "conv1_1". So we intentionally add a node named "conv1_1").
-        """
-        ReuseNameNetTest(self).run_test()
-
-    def test_lut_weights_quantizer(self):
-        """
-        This test checks multiple features:
-        1. That the LUT quantizer quantizes the weights differently than than the Power-of-two quantizer
-        2. That the Network Editor works
-
-        In this test we set the weights of 3 conv2d operator to be the same. We set the quantization method
-        to "Power-of-two". With the Network Editor we change the quantization method of "conv1" to "LUT quantizer".
-        We check that the weights have different values for conv1 and conv2, and that conv2 and conv3 have the same
-        values.
-        """
-        LUTWeightsQuantizerTest(self).run_test()
-        LUTWeightsQuantizerTest(self, quant_method=mct.target_platform.QuantizationMethod.LUT_SYM_QUANTIZER).run_test()
-
-    def test_lut_activation_quantizer(self):
-        """
-        This test checks that activation are quantized correctly using LUT quantizer.
-        """
-        LUTActivationQuantizerTest(self).run_test()
-
-    def test_multiple_output_nodes_multiple_tensors(self):
-        """
-        This test checks that we support the connecting the input tensor to several layers
-        and taking them as outputs
-        """
-        MultipleOutputsMultipleTensorsNetTest(self).run_test()
-
-    def test_multiple_outputs_node(self):
-        """
-        This test checks that we support multiple outputs in the network and multiple
-        outputs from a node
-        """
-        MultipleOutputsNetTest(self).run_test()
-
-    def test_output_in_the_middle(self):
-        """
-        This test checks:
-        That we support taking outputs from the middle of the model.
-        """
-        OutputInTheMiddleNetTest(self).run_test()
-
-    def test_parameter_net(self):
-        """
-        This tests check a model with a parameter which is a constant at inference time.
-        In addition, the model has an addition layer regular constant tensor
-        """
-        ParameterNetTest(self).run_test()
-
-    def test_reuse_layer_net(self):
-        """
-        This test checks:
-        The reuse of a layer in a model.
-        """
-        ReuseLayerNetTest(self).run_test()
-
-    def test_shift_negative_activation_net(self):
-        """
-        This test checks the shift negative activation feature.
-        """
-        ShiftNegaviteActivationNetTest(self).run_test(seed=3)
-
-    def test_split_concat_net(self):
-        """
-        This test checks:
-        1. The "split" and "concat" operations.
-        2. Nodes with multiple outputs and multiple inputs
-        """
-        SplitConcatNetTest(self).run_test()
-
-    def test_torch_tensor_attr_net(self):
-        """
-        This tests checks a model that has calls to torch.Tensor functions,
-        such as torch.Tensor.size and torch.Tensor.view.
-        """
-        TorchTensorAttrNetTest(self).run_test()
-
-    def test_torch_uniform_activation(self):
-        """
-        This test checks the Uniform activation quantizer.
-        """
-        UniformActivationTest(self).run_test()
-
-    def test_torch_symmetric_activation(self):
-        """
-        This test checks the Symmetric activation quantizer.
-        """
-        SymmetricActivationTest(self).run_test()
+    #
+    # def test_single_layer_replacement(self):
+    #     """
+    #     This test checks "EditRule" operation with "ReplaceLayer" action
+    #     Specifically, replacing layer according to its unique name with a custom layer
+    #     """
+    #     SingleLayerReplacementTest(self).run_test()
+    #
+    # def test_relu_replacement(self):
+    #     """
+    #     This test checks "EditRule" operation with "ReplaceLayer" action
+    #     Specifically, replacing layer according to its type with a custom layer
+    #     """
+    #     ReluReplacementTest(self).run_test()
+    #
+    # def test_relu_replacement_with_add_bias(self):
+    #     """
+    #     This test checks "EditRule" operation with "ReplaceLayer" action
+    #     Specifically, replacing layer with a custom layer which is based on the original layer attributes
+    #     """
+    #     ReluReplacementWithAddBiasTest(self).run_test()
+    #
+    # def test_conv2d_replacement(self):
+    #     """
+    #     This test checks "EditRule" operation with "ReplaceLayer" action
+    #     Specifically, updating the weights of Conv2D layer
+    #     """
+    #     DwConv2dReplacementTest(self).run_test()
+    #
+    # def test_add_net(self):
+    #     """
+    #     This test checks the addition and subtraction operations.
+    #     Both with different layers and with constants.
+    #     """
+    #     AddNetTest(self).run_test()
+    #
+    # def test_layer_norm_net(self):
+    #     """
+    #     These tests check the nn.functional.layer_norm operations.
+    #     """
+    #     LayerNormNetTest(self, has_weight=True, has_bias=True).run_test()
+    #     LayerNormNetTest(self, has_weight=True, has_bias=False).run_test()
+    #     LayerNormNetTest(self, has_weight=False, has_bias=True).run_test()
+    #     LayerNormNetTest(self, has_weight=False, has_bias=False).run_test()
+    #
+    # def test_assert_net(self):
+    #     """
+    #     This tests check that the assert operation is being
+    #     removed from the graph during quantization.
+    #     """
+    #     AssertNetTest(self).run_test()
+    #
+    # def test_add_same(self):
+    #     """
+    #     This test checks the special case of addition operation with the same input.
+    #     """
+    #     AddSameNetTest(self, float_reconstruction_error=1e-6).run_test()
+    #
+    # def test_bn_folding(self):
+    #     """
+    #     This test checks the BatchNorm folding feature.
+    #     """
+    #     for functional in [True, False]:
+    #         BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=1), functional, has_weight=False).run_test()
+    #         BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=3, groups=3), functional).run_test()  # DW-Conv test
+    #         BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(2, 1)), functional).run_test()
+    #         BNFoldingNetTest(self, nn.Conv2d(3, 2, kernel_size=2), functional, fold_applied=False).run_test()
+    #         BNFoldingNetTest(self, nn.Conv2d(3, 3, kernel_size=(3, 1), groups=3),
+    #                          functional, fold_applied=False).run_test()  # DW-Conv test
+    #         BNFoldingNetTest(self, nn.ConvTranspose2d(3, 2, kernel_size=(1, 3)), functional, fold_applied=False).run_test()
+    #     BNFoldingNetTest(self, nn.ConvTranspose2d(6, 9, kernel_size=(5, 4), groups=3), False).run_test()
+    #     BNFoldingNetTest(self, nn.ConvTranspose2d(3, 3, kernel_size=(4, 2), groups=3), False).run_test()
+    #
+    # def test_bn_forward_folding(self):
+    #     """
+    #     This test checks the BatchNorm forward folding feature.
+    #     """
+    #     BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), is_dw=True).run_test()
+    #     BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3), is_dw=True).run_test()  # DW-Conv test
+    #     BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1), is_dw=True).run_test()
+    #     BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), fold_applied=False, is_dw=True).run_test()
+    #     BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), fold_applied=False,
+    #                             is_dw=True).run_test()  # DW-Conv test
+    #     BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, (1, 3)), fold_applied=False, is_dw=True).run_test()
+    #     BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), add_bn=True, is_dw=True).run_test()
+    #
+    #     BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1)).run_test()
+    #     BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, 1, groups=3)).run_test()  # DW-Conv test
+    #     BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, 1)).run_test()
+    #     BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 2), fold_applied=False).run_test()
+    #     BNForwardFoldingNetTest(self, nn.Conv2d(3, 3, (3, 1), groups=3), fold_applied=False).run_test()  # DW-Conv test
+    #     BNForwardFoldingNetTest(self, nn.ConvTranspose2d(3, 2, (1, 3)), fold_applied=False).run_test()
+    #     BNForwardFoldingNetTest(self, nn.Conv2d(3, 2, 1), add_bn=True).run_test()
+    #
+    # def test_second_moment_correction(self):
+    #     """
+    #     These are tests for the Second Moment Correction.
+    #     """
+    #     ConvSecondMomentNetTest(self).run_test()
+    #     ConvTSecondMomentNetTest(self).run_test()
+    #     MultipleInputsConvSecondMomentNetTest(self).run_test()
+    #     ValueSecondMomentTest(self).run_test()
+    #
+    # def test_bn_function(self):
+    #     """
+    #     This test checks the batch_norm function.
+    #     """
+    #     BNFNetTest(self).run_test()
+    #
+    # def test_broken_net(self):
+    #     """
+    #     This test checks that the "broken" node (node without output) is being
+    #     removed from the graph during quantization.
+    #     """
+    #     BrokenNetTest(self).run_test()
+    #
+    # def test_linear_collapsing(self):
+    #     """
+    #     This test checks the linear collapsing feature
+    #     """
+    #     TwoConv2DCollapsingTest(self).run_test()
+    #     ThreeConv2DCollapsingTest(self).run_test()
+    #     FourConv2DCollapsingTest(self).run_test()
+    #     SixConv2DCollapsingTest(self).run_test()
+    #
+    # def test_residual_collapsing(self):
+    #     """
+    #     This test checks the residual collapsing feature
+    #     """
+    #     ResidualCollapsingTest1(self).run_test()
+    #     ResidualCollapsingTest2(self).run_test()
+    #
+    # def test_const_representation(self):
+    #     c = (np.ones((32,)) + np.random.random((32,))).astype(np.float32)
+    #     for func in [torch.add, torch.sub, torch.mul, torch.div]:
+    #         ConstRepresentationTest(self, func, c).run_test()
+    #         ConstRepresentationTest(self, func, c, input_reverse_order=True).run_test()
+    #         ConstRepresentationTest(self, func, 2.45).run_test()
+    #         ConstRepresentationTest(self, func, 5, input_reverse_order=True).run_test()
+    #
+    #     ConstRepresentationMultiInputTest(self).run_test()
+    #
+    # def test_permute_substitution(self):
+    #     """
+    #     This test checks the permute substitution feature
+    #     """
+    #     PermuteSubstitutionTest(self).run_test()
+    #
+    # def test_constant_conv_substitution(self):
+    #     """
+    #     This test checks the constant conv substitution feature
+    #     """
+    #     ConstantConvSubstitutionTest(self).run_test()
+    #     ConstantConvReuseSubstitutionTest(self).run_test()
+    #     ConstantConvTransposeSubstitutionTest(self).run_test()
+    #
+    # def test_relu_bound_to_power_of_2(self):
+    #     """
+    #     This test checks the Relu bound to POT feature.
+    #     """
+    #     ReLUBoundToPOTNetTest(self).run_test()
+    #
+    # def test_hardtanh_bound_to_power_of_2(self):
+    #     """
+    #     This test checks the Relu bound to POT feature with Hardtanh layer as Relu.
+    #     """
+    #     HardtanhBoundToPOTNetTest(self).run_test()
+    #
+    # def test_softmax_layer_shift(self):
+    #     """
+    #     This test checks the Softmax shift feature with Softmax as layer.
+    #     """
+    #     SoftmaxLayerNetTest(self).run_test()
+    #
+    # def test_softmax_function_shift(self):
+    #     """
+    #     This test checks the Softmax shift feature with Softmax as function.
+    #     """
+    #     SoftmaxFunctionNetTest(self).run_test()
+    #
+    # def test_scale_equalization(self):
+    #     # This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a layer
+    #     ScaleEqualizationNetTest(self).run_test()
+    #     # This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a layer and with zero padding.
+    #     ScaleEqualizationWithZeroPadNetTest(self).run_test()
+    #     # This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a function
+    #     ScaleEqualizationReluFuncNetTest(self).run_test()
+    #     # This test checks the Channel Scale Equalization feature in Conv2D - Relu - Conv2D with Relu as a function
+    #     # and with zero padding.
+    #     ScaleEqualizationReluFuncWithZeroPadNetTest(self).run_test()
+    #     # This test checks the Channel Scale Equalization feature in ConvTranspose2D - Relu - Conv2D with Relu as a layer
+    #     # and with zero padding.
+    #     ScaleEqualizationConvTransposeWithZeroPadNetTest(self).run_test()
+    #     # This test checks the Channel Scale Equalization feature in ConvTranspose2D - Relu - Conv2D with Relu as a function.
+    #     ScaleEqualizationConvTransposeReluFuncNetTest(self).run_test()
+    #     # This test checks the Channel Scale Equalization feature in Conv2D - Relu - ConvTranspose2D with Relu as a function
+    #     # and with zero padding.
+    #     ScaleEqualizationReluFuncConvTransposeWithZeroPadNetTest(self).run_test()
+    #
+    # def test_scalar_tensor(self):
+    #     """
+    #     This test checks that we support scalar tensors initialized as torch.tensor(x) where x is int
+    #     """
+    #     ScalarTensorTest(self).run_test()
+    #
+    # def test_layer_name(self):
+    #     """
+    #     This test checks that we build a correct graph and correctly reconstruct the model
+    #     given the fact that we reuse nodes and abuse the naming convention of fx (if we resuse
+    #     "conv1" it will be displayed as "conv1_1". So we intentionally add a node named "conv1_1").
+    #     """
+    #     ReuseNameNetTest(self).run_test()
+    #
+    # def test_lut_weights_quantizer(self):
+    #     """
+    #     This test checks multiple features:
+    #     1. That the LUT quantizer quantizes the weights differently than than the Power-of-two quantizer
+    #     2. That the Network Editor works
+    #
+    #     In this test we set the weights of 3 conv2d operator to be the same. We set the quantization method
+    #     to "Power-of-two". With the Network Editor we change the quantization method of "conv1" to "LUT quantizer".
+    #     We check that the weights have different values for conv1 and conv2, and that conv2 and conv3 have the same
+    #     values.
+    #     """
+    #     LUTWeightsQuantizerTest(self).run_test()
+    #     LUTWeightsQuantizerTest(self, quant_method=mct.target_platform.QuantizationMethod.LUT_SYM_QUANTIZER).run_test()
+    #
+    # def test_lut_activation_quantizer(self):
+    #     """
+    #     This test checks that activation are quantized correctly using LUT quantizer.
+    #     """
+    #     LUTActivationQuantizerTest(self).run_test()
+    #
+    # def test_multiple_output_nodes_multiple_tensors(self):
+    #     """
+    #     This test checks that we support the connecting the input tensor to several layers
+    #     and taking them as outputs
+    #     """
+    #     MultipleOutputsMultipleTensorsNetTest(self).run_test()
+    #
+    # def test_multiple_outputs_node(self):
+    #     """
+    #     This test checks that we support multiple outputs in the network and multiple
+    #     outputs from a node
+    #     """
+    #     MultipleOutputsNetTest(self).run_test()
+    #
+    # def test_output_in_the_middle(self):
+    #     """
+    #     This test checks:
+    #     That we support taking outputs from the middle of the model.
+    #     """
+    #     OutputInTheMiddleNetTest(self).run_test()
+    #
+    # def test_parameter_net(self):
+    #     """
+    #     This tests check a model with a parameter which is a constant at inference time.
+    #     In addition, the model has an addition layer regular constant tensor
+    #     """
+    #     ParameterNetTest(self).run_test()
+    #
+    # def test_reuse_layer_net(self):
+    #     """
+    #     This test checks:
+    #     The reuse of a layer in a model.
+    #     """
+    #     ReuseLayerNetTest(self).run_test()
+    #
+    # def test_shift_negative_activation_net(self):
+    #     """
+    #     This test checks the shift negative activation feature.
+    #     """
+    #     ShiftNegaviteActivationNetTest(self).run_test(seed=3)
+    #
+    # def test_split_concat_net(self):
+    #     """
+    #     This test checks:
+    #     1. The "split" and "concat" operations.
+    #     2. Nodes with multiple outputs and multiple inputs
+    #     """
+    #     SplitConcatNetTest(self).run_test()
+    #
+    # def test_torch_tensor_attr_net(self):
+    #     """
+    #     This tests checks a model that has calls to torch.Tensor functions,
+    #     such as torch.Tensor.size and torch.Tensor.view.
+    #     """
+    #     TorchTensorAttrNetTest(self).run_test()
+    #
+    # def test_torch_uniform_activation(self):
+    #     """
+    #     This test checks the Uniform activation quantizer.
+    #     """
+    #     UniformActivationTest(self).run_test()
+    #
+    # def test_torch_symmetric_activation(self):
+    #     """
+    #     This test checks the Symmetric activation quantizer.
+    #     """
+    #     SymmetricActivationTest(self).run_test()
 
     def test_mixed_precision_8bit(self):
         """
@@ -480,53 +480,53 @@ class FeatureModelsTestRunner(unittest.TestCase):
         MixedPrecisionBopsWeightsActivationKPITest(self).run_test()
         MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
-    def test_mha_layer_test(self):
-        """
-        This test checks the MultiHeadAttentionDecomposition feature.
-        """
-        num_heads = [3, 7, 5, 11]
-        q_seq_len, kv_seq_len = [8, 11, 4, 18], [13, 9, 2, 11]
-        qdim, kdim, vdim = [7, 23, 2, 4], [9, None, 7, None], [11, 17, 7, None]
-        for iter in range(len(num_heads)):
-            MHALayerNetTest(self, num_heads[iter], q_seq_len[iter], qdim[iter] * num_heads[iter],
-                            kv_seq_len[iter], kdim[iter], vdim[iter], bias=True).run_test()
-            MHALayerNetTest(self, num_heads[iter], q_seq_len[iter], qdim[iter] * num_heads[iter],
-                            kv_seq_len[iter], kdim[iter], vdim[iter], bias=False).run_test()
-        MHALayerNetFeatureTest(self, num_heads[0], q_seq_len[0], qdim[0] * num_heads[0],
-                               kv_seq_len[0], kdim[0], vdim[0], bias=True, add_bias_kv=True).run_test()
-
-    def test_gptq(self):
-        """
-        This test checks the GPTQ feature.
-        """
-        GPTQAccuracyTest(self).run_test()
-        GPTQAccuracyTest(self, per_channel=False).run_test()
-        GPTQAccuracyTest(self, per_channel=True, hessian_weights=False).run_test()
-        GPTQAccuracyTest(self, per_channel=True, log_norm_weights=False).run_test()
-        GPTQWeightsUpdateTest(self).run_test()
-        GPTQLearnRateZeroTest(self).run_test()
-
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
-                         params_learning=False).run_test()
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
-                         params_learning=True).run_test()
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-                         per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
-        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
-        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
-
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-                         weights_quant_method=QuantizationMethod.UNIFORM).run_test()
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-                         weights_quant_method=QuantizationMethod.UNIFORM, per_channel=False,
-                         params_learning=False).run_test()
-        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-                         weights_quant_method=QuantizationMethod.UNIFORM,
-                         per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
-        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer,
-                              weights_quant_method=QuantizationMethod.UNIFORM,
-                              params_learning=False).run_test()  # TODO: When params learning is True, the uniform quantizer gets a min value  > max value
+    # def test_mha_layer_test(self):
+    #     """
+    #     This test checks the MultiHeadAttentionDecomposition feature.
+    #     """
+    #     num_heads = [3, 7, 5, 11]
+    #     q_seq_len, kv_seq_len = [8, 11, 4, 18], [13, 9, 2, 11]
+    #     qdim, kdim, vdim = [7, 23, 2, 4], [9, None, 7, None], [11, 17, 7, None]
+    #     for iter in range(len(num_heads)):
+    #         MHALayerNetTest(self, num_heads[iter], q_seq_len[iter], qdim[iter] * num_heads[iter],
+    #                         kv_seq_len[iter], kdim[iter], vdim[iter], bias=True).run_test()
+    #         MHALayerNetTest(self, num_heads[iter], q_seq_len[iter], qdim[iter] * num_heads[iter],
+    #                         kv_seq_len[iter], kdim[iter], vdim[iter], bias=False).run_test()
+    #     MHALayerNetFeatureTest(self, num_heads[0], q_seq_len[0], qdim[0] * num_heads[0],
+    #                            kv_seq_len[0], kdim[0], vdim[0], bias=True, add_bias_kv=True).run_test()
+    #
+    # def test_gptq(self):
+    #     """
+    #     This test checks the GPTQ feature.
+    #     """
+    #     GPTQAccuracyTest(self).run_test()
+    #     GPTQAccuracyTest(self, per_channel=False).run_test()
+    #     GPTQAccuracyTest(self, per_channel=True, hessian_weights=False).run_test()
+    #     GPTQAccuracyTest(self, per_channel=True, log_norm_weights=False).run_test()
+    #     GPTQWeightsUpdateTest(self).run_test()
+    #     GPTQLearnRateZeroTest(self).run_test()
+    #
+    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
+    #                      params_learning=False).run_test()
+    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
+    #                      params_learning=True).run_test()
+    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+    #                      per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
+    #     GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+    #     GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+    #
+    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+    #                      weights_quant_method=QuantizationMethod.UNIFORM).run_test()
+    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+    #                      weights_quant_method=QuantizationMethod.UNIFORM, per_channel=False,
+    #                      params_learning=False).run_test()
+    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+    #                      weights_quant_method=QuantizationMethod.UNIFORM,
+    #                      per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
+    #     GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer,
+    #                           weights_quant_method=QuantizationMethod.UNIFORM,
+    #                           params_learning=False).run_test()  # TODO: When params learning is True, the uniform quantizer gets a min value  > max value
 
     def test_qat(self):
         """

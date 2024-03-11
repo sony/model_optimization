@@ -145,11 +145,11 @@ class TestFileLogger(unittest.TestCase):
             yield [np.random.randn(1, 8, 8, 3)]
 
         mp_qc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
-                                                          use_hessian_based_scores=False)
+                                                          use_hessian_based_scores=False,
+                                                          target_kpi=mct.core.KPI(np.inf))
         core_config = mct.core.CoreConfig(mixed_precision_config=mp_qc)
         quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model,
                                                                       rep_data,
-                                                                      target_kpi=mct.core.KPI(np.inf),
                                                                       core_config=core_config,
                                                                       target_platform_capabilities=tpc)
 

@@ -117,7 +117,7 @@ class BaseMixedPrecisionBopsTest(BasePytorchTest):
         qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
                                          relu_bound_to_power_of_2=False, weights_bias_correction=True,
                                          input_scaling=False, activation_channel_equalization=False)
-        mpc = MixedPrecisionQuantizationConfig(num_of_images=1)
+        mpc = MixedPrecisionQuantizationConfig(num_of_images=1, target_kpi=self.get_kpi())
 
         return {"mixed_precision_bops_model": mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
 
