@@ -49,11 +49,11 @@ class TestSonySsdPostProcessLayer(unittest.TestCase):
 
         core_config = mct.core.CoreConfig(
             mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(
-                use_hessian_based_scores=False))
+                use_hessian_based_scores=False,
+                target_kpi=mct.core.KPI(weights_memory=6000)))
         q_model, _ = mct.ptq.keras_post_training_quantization(model,
                                                               get_rep_dataset(2, (1, 8, 8, 3)),
-                                                              core_config=core_config,
-                                                              target_kpi=mct.core.KPI(weights_memory=6000))
+                                                              core_config=core_config)
 
         # verify the custom layer is in the quantized model
         self.assertTrue(isinstance(q_model.layers[-1], SSDPostProcess), 'Custom layer should be in the quantized model')
