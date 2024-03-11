@@ -144,10 +144,13 @@ def core_runner(in_model: Any,
         weights_conf_nodes_bitwidth = tg.get_final_weights_config(fw_info)
         activation_conf_nodes_bitwidth = tg.get_final_activation_config()
 
-        Logger.info(
-            f'Final weights bit-width configuration: {[node_b[1] for node_b in weights_conf_nodes_bitwidth]}')
-        Logger.info(
-            f'Final activation bit-width configuration: {[node_b[1] for node_b in activation_conf_nodes_bitwidth]}')
+        if len(weights_conf_nodes_bitwidth) > 0:
+            Logger.info(
+                f'Final weights bit-width configuration: {[node_b[1] for node_b in weights_conf_nodes_bitwidth]}')
+
+        if len(activation_conf_nodes_bitwidth) > 0:
+            Logger.info(
+                f'Final activation bit-width configuration: {[node_b[1] for node_b in activation_conf_nodes_bitwidth]}')
 
         if tb_w is not None:
             finalize_bitwidth_in_tb(tb_w, weights_conf_nodes_bitwidth, activation_conf_nodes_bitwidth)

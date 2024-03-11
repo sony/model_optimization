@@ -126,7 +126,7 @@ class MixedPercisionActivationMultipleInputs(MixedPercisionActivationBaseTest):
     def get_kpi(self):
         return KPI(np.inf, np.inf)
 
-    def get_mixed_precision_v2_config(self):
+    def get_mixed_precision_config(self):
         return MixedPrecisionQuantizationConfig(num_of_images=4)
 
     def create_feature_network(self, input_shape):
