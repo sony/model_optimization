@@ -97,7 +97,7 @@ def compute_mse(float_tensor: np.ndarray,
         norm: whether to normalize the error function result.
         norm_eps: epsilon value for error normalization stability.
         batch: Whether to run batch similarity analysis or not.
-        axis: Axis along which the operator has been computed (not used in this function).
+        axis: Axis along which the operator has been computed.
 
     Returns:
         The MSE distance between the two tensors.
@@ -129,7 +129,7 @@ def compute_mae(float_tensor: np.ndarray,
         norm: whether to normalize the error function result.
         norm_eps: epsilon value for error normalization stability.
         batch: Whether to run batch similarity analysis or not.
-        axis: Axis along which the operator has been computed (not used in this function).
+        axis: Axis along which the operator has been computed.
 
     Returns:
         The mean average distance between the two tensors.
@@ -158,7 +158,7 @@ def compute_cs(float_tensor: np.ndarray, fxp_tensor: np.ndarray, eps: float = 1e
         fxp_tensor: Second tensor to compare.
         eps: Small value to avoid zero division.
         batch: Whether to run batch similarity analysis or not.
-        axis: Axis along which the operator has been computed (not used in this function).
+        axis: Axis along which the operator has been computed.
 
     Returns:
         The cosine similarity between two tensors.
@@ -200,7 +200,7 @@ def compute_lp_norm(float_tensor: np.ndarray,
         norm: whether to normalize the error function result.
         norm_eps: epsilon value for error normalization stability.
         batch: Whether to run batch similarity analysis or not.
-        axis: Axis along which the operator has been computed (not used in this function).
+        axis: Axis along which the operator has been computed.
 
     Returns:
         The Lp-norm distance between the two tensors.
