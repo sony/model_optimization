@@ -20,7 +20,6 @@ if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, TFOpLambda, Add, DepthwiseConv2D, Dense
 else:
     from keras.layers import Conv2D, TFOpLambda, Add, DepthwiseConv2D, Dense
-import tensorflow as tf
 
 from tests.keras_tests.exporter_tests.keras_fake_quant.keras_fake_quant_exporter_base_test import \
     KerasFakeQuantExporterBaseTest
@@ -59,7 +58,7 @@ class TestTFOpLambdaKerasFQExporter(KerasFakeQuantExporterBaseTest):
         assert self.loaded_model.layers[7].output.ref() == self.loaded_model.layers[9].input.ref()
 
         assert isinstance(self.loaded_model.layers[10], TFOpLambda)
-        assert self.loaded_model.layers[10].function == tf.add
+        assert self.loaded_model.layers[10].symbol == 'math.add'
         assert self.loaded_model.layers[10].input.ref() == self.loaded_model.layers[8].output.ref()
         assert self.loaded_model.layers[10].inbound_nodes[0].call_kwargs['y'].ref() == self.loaded_model.layers[9].output.ref()
 

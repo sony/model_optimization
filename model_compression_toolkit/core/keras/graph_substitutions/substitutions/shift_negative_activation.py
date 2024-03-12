@@ -109,7 +109,8 @@ def create_add_node(add_value: float,
                               quantization_attr={},
                               layer_class=TFOpLambda,
                               op_call_args=[np.array(add_value, dtype=np.float32).reshape([1] * len(input_shape))],
-                              op_call_kwargs={})
+                              op_call_kwargs={},
+                              functional_op=tf.add)
     return add_node
 
 
@@ -157,7 +158,8 @@ def create_pad_node(next_node_name: str,
                               layer_class=TFOpLambda,
                               op_call_args=[],
                               op_call_kwargs={'paddings': num_elements_to_pad,
-                                              'constant_values': value_to_pad})
+                                              'constant_values': value_to_pad},
+                              functional_op=tf.pad)
 
     return pad_node
 

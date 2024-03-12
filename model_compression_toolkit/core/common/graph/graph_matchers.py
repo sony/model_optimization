@@ -35,7 +35,7 @@ class NodeOperationMatcher(node_matcher.BaseNodeMatcher):
 
         self.operation = operation
 
-    def apply(self, input_node_object: Any) -> bool:
+    def apply(self, input_node_object: BaseNode) -> bool:
         """
         Check if input_node_object matches the matcher condition.
 
@@ -47,7 +47,7 @@ class NodeOperationMatcher(node_matcher.BaseNodeMatcher):
             return nothing.
         """
 
-        if input_node_object.type == self.operation:
+        if input_node_object.is_match_type(self.operation):
             return True
 
 

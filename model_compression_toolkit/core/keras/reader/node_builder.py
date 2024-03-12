@@ -43,21 +43,24 @@ REUSED_IDENTIFIER = '_reused_'
 
 is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray))
 is_tensor = lambda x: isinstance(x, KerasTensor)
+tf_function_symbols = [TFOpLambda(f).symbol for f in [tf.add, tf.multiply, tf.subtract, tf.divide,
+                                                      tf.truediv, tf.pow, tf.matmul]]
 
 
-def get_kwargs2index(tf_func: Callable) -> Dict[str, int]:
+def get_kwargs2index(tfoplambda_layer: tf.keras.layers.Layer) -> Dict[str, int]:
     """
     Positional weights are saved according to their index in the node's call arguments, so
     need to know the function arguments' names in case the weights are in the kwargs.
     Args:
-        tf_func: functional node function.
+        tfoplambda_layer: TFOpLambda layer.
 
     Returns:
         A dictionary with argument number and index: {arg_name: arg_index}.
     """
-    if tf_func in [tf.add, tf.subtract, tf.divide, tf.truediv, tf.multiply, tf.pow,
-                   tf.matmul, tf.image.crop_and_resize, tf.image.combined_non_max_suppression]:
-        return {arg_name: i for i, arg_name in enumerate(tf_inspect.getfullargspec(tf_func).args)}
+    if tfoplambda_layer.function in [tf.add, tf.subtract, tf.divide, tf.truediv, tf.multiply, tf.pow,
+                                     tf.matmul, tf.image.crop_and_resize, tf.image.combined_non_max_suppression] or \
+            tfoplambda_layer.symbol in ['__operators__.add', 'math.add', 'math.multiply', 'linalg.matmul', 'concat']:
+        return {arg_name: i for i, arg_name in enumerate(tf_inspect.getfullargspec(tfoplambda_layer.function).args)}
     else:
         return {}
 
@@ -110,7 +113,7 @@ def build_node(node: KerasNode,
         # a flag to indicate that.
         inputs_as_list = __is_functional_inputs_a_list(op_call_args)
 
-        kwarg2index = get_kwargs2index(keras_layer.function)
+        kwarg2index = get_kwargs2index(keras_layer)
 
         # Functional nodes do not have weights, but may have constants in their call_args and\or
         # call kwargs. Therefore, we extract these constants and save them in the node's weights as
@@ -124,8 +127,7 @@ def build_node(node: KerasNode,
         # read weights from call args
         for i, arg in enumerate(op_call_args[0] if inputs_as_list else op_call_args):
             if is_const(arg) or (
-                    keras_layer.function in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv, tf.pow,
-                                             tf.matmul] and
+                    keras_layer.symbol in tf_function_symbols and
                     isinstance(arg, (tuple, list))):
                 weights.update({i: to_numpy(arg, is_single_tensor=True)})
         # remove weights and KerasTensors and weights from op_call_args
