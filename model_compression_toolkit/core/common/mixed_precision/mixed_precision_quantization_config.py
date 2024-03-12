@@ -66,3 +66,14 @@ class MixedPrecisionQuantizationConfig:
         self.norm_scores = norm_scores
 
         self.metric_normalization_threshold = metric_normalization_threshold
+
+    def set_target_kpi(self, target_kpi: KPI):
+        """
+        Setting target KPI in mixed precision config.
+
+        Args:
+            target_kpi: A target KPI to set.
+
+        """
+
+        self.target_kpi = target_kpi

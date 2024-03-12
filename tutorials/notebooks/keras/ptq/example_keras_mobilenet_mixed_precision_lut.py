@@ -136,10 +136,10 @@ if __name__ == '__main__':
     # weights_compression_ratio = 0.4 - About 0.4 of the model's weights memory size when quantized with 8 bits.
     kpi = mct.core.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
     # Note that in this example, activations are quantized with fixed bit-width (non mixed-precision) of 8-bit.
+    configuration.mixed_precision_config.set_target_kpi(kpi)
 
     quantized_model, quantization_info = mct.ptq.keras_post_training_quantization(model,
                                                                                   representative_data_gen,
-                                                                                  target_kpi=kpi,
                                                                                   core_config=configuration,
                                                                                   target_platform_capabilities=target_platform_cap)
 
