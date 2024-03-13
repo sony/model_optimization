@@ -101,8 +101,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
                 #  or single precision).
                 node_weights_qc = n.get_unique_weights_candidates(kernel_attr)
                 if not len(node_weights_qc) == 1:
-                    Logger.critical(f"Expecting node {n.name} to have a unique weights configuration "  # pragma: no cover
-                                 f"but {len(node_weights_qc)} different configurations exist.")
+                    Logger.critical(f"Expected a single weights quantization configuration for node '{n.name}', but found ({len(node_weights_qc)}) configurations.")# pragma: no cover
 
                 quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
                                                                   node_weights_qc[0].weights_quantization_cfg
@@ -139,8 +138,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
         max_cfg_candidates = n.find_max_candidates_indices()
         if not len(max_cfg_candidates) == 1:
-            Logger.critical(f"A maximal config candidate must be defined, "  # pragma: no cover
-                         f"but some node have multiple potential maximal candidates")
+            Logger.critical(f"A maximal configuration candidate must be uniquely defined; however, multiple potential maximal candidates were found.") # pragma: no cover
 
         max_candidate_idx = max_cfg_candidates[0]
 
@@ -179,7 +177,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
 
                 max_cfg_candidates = n.find_max_candidates_indices()
                 assert len(max_cfg_candidates) == 1, \
-                    f"A maximal config candidate must be defined, but some node have multiple potential maximal candidates"
+                    f"A maximal configuration candidate must be uniquely defined; however, multiple potential maximal candidates were found."
                 max_candidate_idx = max_cfg_candidates[0]
 
                 kernel_attr = self.fw_info.get_kernel_op_attributes(n.type)[0]
@@ -189,8 +187,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
                                         * num_of_outputs
             else:
                 node_act_qc = n.get_unique_activation_candidates()
-                assert len(node_act_qc) == 1, f"Expecting node {n.name} to have a unique activation configuration, " \
-                                              f"but {len(node_act_qc)} different configurations exist."
+                assert len(node_act_qc) == 1, f"Expected a single activation configuration for node '{n.name}', but found multiple ({len(node_act_qc)}) configurations."
                 quantizer_for_node = get_inferable_quantizer_class(QuantizationTarget.Activation,
                                                                    node_act_qc[0].activation_quantization_cfg.activation_quantization_method,
                                                                    BasePyTorchInferableQuantizer)
@@ -204,8 +201,7 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         if len(activation_quantizers) == 1:
             return PytorchActivationQuantizationHolder(activation_quantizers[0])
 
-        Logger.critical(f'PytorchActivationQuantizationHolder supports a single quantizer but '  # pragma: no cover
-                     f'{len(activation_quantizers)} quantizers were found for node {n}')
+        Logger.critical(f"PytorchActivationQuantizationHolder expects a single quantizer, but ({len(activation_quantizers)}) quantizers were found for node {n}.")# pragma: no cover
 
     def build_model(self) -> Tuple[torch.nn.Module, UserInformation,
                                    Dict[str, Union[PytorchQuantizationWrapper, PytorchActivationQuantizationHolder]]]:
@@ -283,5 +279,4 @@ class MixedPrecisionPyTorchModelBuilder(PyTorchModelBuilder):
         elif weights_quant and act_quant:
             return self._get_weights_quant_layers(n, named_layers) + self._get_activation_quant_layers(n, named_layers)
         else:  # pragma: no cover
-            Logger.critical(f"Expects node {n.name} to have at either weights or activation quantization configured,"
-                         f"but both are disabled.")
+            Logger.critical(f"Expected node {n.name} to have either weights or activation quantization enabled, but both are disabled.")

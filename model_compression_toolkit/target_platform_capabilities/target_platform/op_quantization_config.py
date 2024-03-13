@@ -215,24 +215,19 @@ class QuantizationConfigOptions(object):
         """
 
         assert isinstance(quantization_config_list,
-                          list), f'QuantizationConfigOptions options list should be of type list, but is: ' \
-                                 f'{type(quantization_config_list)}'
-        assert len(quantization_config_list) > 0, f'Options list can not be empty'
+                          list), f'\'QuantizationConfigOptions\' options list must be a list, but received: {type(quantization_config_list)}.'
+        assert len(quantization_config_list) > 0, f'Options list can not be empty.'
         for cfg in quantization_config_list:
-            assert isinstance(cfg, OpQuantizationConfig), f'Options should be a list of QuantizationConfig objects, ' \
-                                                        f'but found an object type: {type(cfg)}'
+            assert isinstance(cfg, OpQuantizationConfig), f'Each option must be an instance of \'OpQuantizationConfig\', but found an object of type: {type(cfg)}.'
         self.quantization_config_list = quantization_config_list
         if len(quantization_config_list) > 1:
-            assert base_config is not None, f'When quantization config options contains more than one configuration, ' \
-                                            f'a base_config must be passed for non-mixed-precision optimization process'
-            assert base_config in quantization_config_list, f"base_config must be in the given quantization config " \
-                                                            f"list of options"
+            assert base_config is not None, f'For multiple configurations, a \'base_config\' is required for non-mixed-precision optimization.'
+            assert base_config in quantization_config_list, f"\'base_config\' must be included in the quantization config options list."
             self.base_config = base_config
         elif len(quantization_config_list) == 1:
             self.base_config = quantization_config_list[0]
         else:
-            Logger.critical("QuantizationConfigOptions must have at least one OpQuantizationConfig "
-                            "defined in its options list, but list is empty")
+            Logger.critical("\'QuantizationConfigOptions\' requires at least one \'OpQuantizationConfig\'; the provided list is empty.")
 
     def __eq__(self, other):
         """
@@ -280,13 +275,13 @@ class QuantizationConfigOptions(object):
                 attrs_to_update = list(qc.attr_weights_configs_mapping.keys())
             else:
                 if not isinstance(attrs, List):
-                    Logger.critical(f"Expecting a list of attribute but got {type(attrs)}.")
+                    Logger.critical(f"Expected a list of attributes but received {type(attrs)}.")
                 attrs_to_update = attrs
 
             for attr in attrs_to_update:
                 if qc.attr_weights_configs_mapping.get(attr) is None:
-                    Logger.critical(f'Edit attributes is possible only for existing attributes '
-                                 f'in the configuration weights config mapping, but {attr} is not an attribute of {qc}.')
+                    Logger.critical(f'Editing attributes is only possible for existing attributes in the configuration\'s '
+                                    f'weights config mapping; {attr} does not exist in {qc}.')
                 self.__edit_quantization_configuration(qc.attr_weights_configs_mapping[attr], kwargs)
         return qc_options
 
@@ -312,7 +307,7 @@ class QuantizationConfigOptions(object):
                 for attr in list(qc.attr_weights_configs_mapping.keys()):
                     new_key = layer_attrs_mapping.get(attr)
                     if new_key is None:
-                        Logger.critical(f"Attribute {attr} does not exist in the given attribute mapping.")
+                        Logger.critical(f"Attribute \'{attr}\' does not exist in the provided attribute mapping.")
 
                     new_attr_mapping[new_key] = qc.attr_weights_configs_mapping.pop(attr)
 
@@ -323,8 +318,8 @@ class QuantizationConfigOptions(object):
     def __edit_quantization_configuration(self, qc, kwargs):
         for k, v in kwargs.items():
             assert hasattr(qc,
-                           k), f'Edit attributes is possible only for existing attributes in configuration, ' \
-                               f'but {k} is not an attribute of {qc}'
+                           k), (f'Editing is only possible for existing attributes in the configuration; '
+                                f'{k} is not an attribute of {qc}.')
             setattr(qc, k, v)
 
     def get_info(self):

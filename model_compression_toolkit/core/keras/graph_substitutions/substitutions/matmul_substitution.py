@@ -66,7 +66,7 @@ class MatmulToDenseSubstitution(common.BaseSubstitution):
         # read const from matmul inputs
         w = matmul_node.weights.get(1)
         if w is None:
-            Logger.critical(f"Matmul substitution: can't locate weight for node {matmul_node.name}")  # pragma: no cover
+            Logger.critical(f"Matmul substitution failed: Unable to locate weight for node {matmul_node.name}.")  # pragma: no cover
 
         if len(w.shape) != 2:
             # weight tensor should be of shape (Cin, Cout)

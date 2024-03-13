@@ -153,8 +153,7 @@ if FOUND_TF:
 
         if not all(normalization[1]):
             Logger.critical(
-                f'Invalid normalization std {normalization[1]} set to zero,'
-                f'will lead to division by zero., Please choose non-zero normalization std')
+                f'Invalid normalization standard deviation {normalization[1]} set to zero, which will lead to division by zero. Please select a non-zero normalization standard deviation.')
 
         # Get the scheduler functions corresponding to the specified scheduler type
         scheduler_get_fn = scheduler_step_function_dict.get(data_generation_config.scheduler_type)
@@ -162,8 +161,7 @@ if FOUND_TF:
         # Check if the scheduler type is valid
         if scheduler_get_fn is None:
             Logger.critical(
-                f'Invalid scheduler_type {data_generation_config.scheduler_type}.'
-                f'Please choose one of {SchedulerType.get_values()}')
+                f'Invalid scheduler_type {data_generation_config.scheduler_type}. Please select one from {SchedulerType.get_values()}.')
 
         # Create a scheduler object with the specified number of iterations
         scheduler = scheduler_get_fn(n_iter=data_generation_config.n_iter,
@@ -329,10 +327,9 @@ if FOUND_TF:
 
 else:
     def get_keras_data_generation_config(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory when using get_keras_data_generation_config. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+        Logger.critical(
+            "Tensorflow must be installed to use get_tensorflow_data_generation_config. The 'tensorflow' package is missing.")  # pragma: no cover
 
 
     def keras_data_generation_experimental(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory when using pytorch_data_generation_experimental. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+        Logger.critical("Tensorflow must be installed to use tensorflow_data_generation_experimental. The 'tensorflow' package is missing.")  # pragma: no cover

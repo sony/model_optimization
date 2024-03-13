@@ -184,7 +184,7 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
         if fw_info.is_kernel_op(node.type):
             kernel_attributes = fw_info.get_kernel_op_attributes(node.type)
             if kernel_attributes is None or len(kernel_attributes) == 0:
-                Logger.critical(f"Expected to find attributes but found {kernel_attributes}")
+                Logger.critical(f"Expected to find kernel attributes but none were identified.")
 
             for attr in kernel_attributes:
                 attributes_with_axis[attr] = fw_info.kernel_channels_mapping.get(node.type)

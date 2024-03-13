@@ -48,8 +48,8 @@ if FOUND_TF:
             KerasTrainableQuantizationWrapper.__name__: KerasTrainableQuantizationWrapper})
         all_trainable_names = list(qi_trainable_custom_objects.keys())
         if len(set(all_trainable_names)) < len(all_trainable_names):
-            Logger.critical(f"Found multiple quantizers with the same name that inherit from BaseKerasTrainableQuantizer"
-                         f"while trying to load a model.")
+            Logger.critical("Found multiple quantizers with identical names inheriting from "
+                            "'BaseKerasTrainableQuantizer' while trying to load a model.")
 
         qi_custom_objects = {**qi_trainable_custom_objects}
 
@@ -72,6 +72,5 @@ else:
         Returns: A keras Model
 
         """
-        Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_load_quantized_model. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+        Logger.critical("Tensorflow must be installed to use keras_load_quantized_model. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover

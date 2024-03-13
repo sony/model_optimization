@@ -81,8 +81,8 @@ class BaseInputScaling(common.BaseSubstitution):
         linear_layer = nodes_list[-1]
 
         if not input_layer.is_all_activation_candidates_equal():
-            Logger.critical("Input scaling is not supported for more than one activation quantization configuration "
-                            "candidate")
+            Logger.critical("Input scaling is not supported for nodes with more than one activation quantization configuration "
+                            "candidate.")
 
         # all candidates have same activation config, so taking the first candidate for calculations
         threshold = input_layer.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params.get(THRESHOLD)

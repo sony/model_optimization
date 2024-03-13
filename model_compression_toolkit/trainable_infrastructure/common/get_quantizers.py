@@ -44,7 +44,7 @@ def get_trainable_quantizer_class(quant_target: QuantizationTarget,
     """
     qat_quantizer_classes = get_all_subclasses(quantizer_base_class)
     if len(qat_quantizer_classes) == 0:
-        Logger.critical(f"No quantizers were found that inherit from {quantizer_base_class}.")  # pragma: no cover
+        Logger.critical(f"No quantizer classes inherited from {quantizer_base_class} were detected.")  # pragma: no cover
 
     filtered_quantizers = list(filter(lambda q_class: getattr(q_class, QUANTIZATION_TARGET, None) is not None and
                                                       getattr(q_class, QUANTIZATION_TARGET) == quant_target and
@@ -54,9 +54,9 @@ def get_trainable_quantizer_class(quant_target: QuantizationTarget,
                                       qat_quantizer_classes))
 
     if len(filtered_quantizers) != 1:
-        Logger.critical(f"Found {len(filtered_quantizers)} quantizer for target {quant_target.value} "  # pragma: no cover
-                     f"that matches the requested quantization method {quant_method.name} and "
-                     f"quantizer type {quantizer_id.value} but there should be exactly one."
-                     f"The possible quantizers that were found are {filtered_quantizers}.")
+        Logger.critical(f"Found {len(filtered_quantizers)} quantizers for target {quant_target.value}, "
+                        f"matching the requested quantization method {quant_method.name} and "
+                        f"quantizer type {quantizer_id.value}, but exactly one is required. "
+                        f"Identified quantizers: {filtered_quantizers}.")
 
     return filtered_quantizers[0]

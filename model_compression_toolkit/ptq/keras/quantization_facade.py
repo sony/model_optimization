@@ -153,6 +153,5 @@ else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
     def keras_post_training_quantization(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_post_training_quantization. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+        Logger.critical("Tensorflow must be installed to use keras_post_training_quantization. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover

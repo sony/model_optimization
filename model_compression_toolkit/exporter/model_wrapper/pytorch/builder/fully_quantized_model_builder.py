@@ -83,7 +83,6 @@ if FOUND_TORCH:
                                                                    fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation())).build_model()
 
 else:
-    def get_exportable_pytorch_model(*args, **kwargs):  # pragma: no cover
-        Logger.critical('Installing torch is mandatory '
-                     'when using get_exportable_pytorch_model. '
-                     'Could not find PyTorch package.')
+    def get_exportable_pytorch_model(*args, **kwargs):
+        Logger.critical('PyTorch must be installed to use get_exportable_pytorch_model. '
+                        "The 'torch' package is missing.")  # pragma: no cover

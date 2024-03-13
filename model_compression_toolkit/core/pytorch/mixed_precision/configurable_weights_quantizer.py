@@ -77,7 +77,7 @@ class ConfigurableWeightsQuantizer(BasePyTorchInferableQuantizer):
         for qc in self.node_q_cfg:
             if qc.weights_quantization_cfg.get_attr_config(self.kernel_attr).enable_weights_quantization != \
                    self.node_q_cfg[0].weights_quantization_cfg.get_attr_config(self.kernel_attr).enable_weights_quantization:
-                Logger.critical("Candidates with different weights enabled properties is currently not supported.")  # pragma: no cover
+                Logger.critical("Unsupported configuration: Mixing candidates with differing weights quantization states (enabled/disabled).")  # pragma: no cover
 
         # Initialize quantized weights for each weight that should be quantized.
         self.quantized_weights = init_quantized_weights(node_q_cfg=self.node_q_cfg,

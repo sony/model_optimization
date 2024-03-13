@@ -92,6 +92,5 @@ if FOUND_TF:
         return exportable_model, user_info
 else:
     def get_exportable_keras_model(*args, **kwargs):  # pragma: no cover
-        Logger.critical('Installing tensorflow is mandatory '
-                     'when using get_exportable_keras_model. '
-                     'Could not find Tensorflow package.')
+        Logger.critical("Tensorflow must be installed to use get_exportable_keras_model. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover

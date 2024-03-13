@@ -78,8 +78,7 @@ class SensitivityEvaluation:
         self.disable_activation_for_metric = disable_activation_for_metric
         if self.quant_config.use_hessian_based_scores:
             if not isinstance(hessian_info_service, HessianInfoService):
-                Logger.critical(f"When using hessian based approximations for sensitivity evaluation, "
-                             f" an HessianInfoService object must be provided but is {hessian_info_service}")
+                Logger.critical(f"When using Hessian-based approximations for sensitivity evaluation, a valid HessianInfoService object is required; found {type(hessian_info_service)}.")
             self.hessian_info_service = hessian_info_service
 
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names(self.fw_info)
@@ -320,8 +319,7 @@ class SensitivityEvaluation:
         node_name = sorted_configurable_nodes_names[node_idx_to_configure]
         layers_to_config = self.conf_node2layers.get(node_name, None)
         if layers_to_config is None:
-            Logger.critical(
-                f"Couldn't find matching layers in the MP model for node {node_name}.")  # pragma: no cover
+            Logger.critical(f"Matching layers for node {node_name} not found in the mixed precision model configuration.")  # pragma: no cover
 
         for current_layer in layers_to_config:
             self.set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])

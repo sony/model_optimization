@@ -166,4 +166,4 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             return trace_approx_by_node.numpy().tolist()
 
         else:
-            Logger.critical(f"{self.hessian_request.granularity} is not supported for Keras activation hessian's trace approx calculator")
+            Logger.critical(f"{self.hessian_request.granularity} is not supported for Keras activation hessian\'s trace approximation calculator.")

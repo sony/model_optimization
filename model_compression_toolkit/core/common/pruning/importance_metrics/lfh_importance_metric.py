@@ -250,13 +250,13 @@ class LFHImportanceMetric(BaseImportanceMetric):
         kernel_attr = self.fw_info.get_kernel_op_attributes(entry_node.type)
         # Ensure only one kernel attribute exists for the given node.
         if len(kernel_attr) != 1:
-            Logger.critical(f"Expected to found a single attribute but found {len(kernel_attr)} for node {entry_node}")
+            Logger.critical(f"Expected a single attribute but found multiple attributes ({len(kernel_attr)}) for node {entry_node}.")
         kernel_attr = kernel_attr[0]
 
         # Retrieve and validate the axis index for the output channels.
         oc_axis, _ = self.fw_info.kernel_channels_mapping.get(entry_node.type)
         if oc_axis is None or int(oc_axis) != oc_axis:
-            Logger.critical(f"Expected output channel axis to be an integer but is {oc_axis} for node {entry_node}")
+            Logger.critical(f"Invalid output channel axis type for node {entry_node}: expected integer but got {oc_axis}.")
 
         # Get the number of output channels based on the kernel attribute and axis.
         num_oc = entry_node.get_weights_by_keys(kernel_attr[0]).shape[oc_axis]

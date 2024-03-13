@@ -65,10 +65,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
 
             if self.hessian_request.target_node in model_output_nodes:
-                Logger.critical("Trying to compute activation Hessian approximation with respect to the model output. "
-                                 "This operation is not supported. "
-                                 "Remove the output node from the set of node targets in the Hessian request.")
-
+                Logger.critical("Activation Hessian approximation cannot be computed for model outputs. Exclude output nodes from Hessian request targets.")
             grad_model_outputs = [self.hessian_request.target_node] + model_output_nodes
             model, _ = FloatPyTorchModelBuilder(graph=self.graph, append2output=grad_model_outputs).build_model()
             model.eval()
@@ -82,8 +79,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             outputs = model(*self.input_images)
 
             if len(outputs) != len(grad_model_outputs):
-                Logger.critical(f"Model for computing activation Hessian approximation expects {len(grad_model_outputs)} "
-                             f"outputs, but got {len(outputs)} output tensors.")
+                Logger.critical(f"Mismatch in expected and actual model outputs for activation Hessian approximation. Expected {len(grad_model_outputs)} outputs, received {len(outputs)}.")
 
             # Extracting the intermediate activation tensors and the model real output
             # TODO: we are assuming that the hessian request is for a single node.
@@ -146,5 +142,5 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             return ipts_hessian_trace_approx.tolist()
 
         else:
-            Logger.critical(f"{self.hessian_request.granularity} is not supported for Pytorch activation hessian's trace approx calculator")
+            Logger.critical(f"PyTorch activation Hessian's trace approximation does not support {self.hessian_request.granularity} granularity.")
 

@@ -109,4 +109,4 @@ def convert_to_edge(edge: Any) -> Edge:
     elif isinstance(edge, Edge):  # it's already an Edge and no change need to be done
         return edge
 
-    Logger.critical('Edges list contains an object that is not a known edge format.')
+    Logger.critical('Edge conversion failed: unrecognized edge format encountered.')

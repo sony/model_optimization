@@ -290,12 +290,10 @@ else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
     def keras_quantization_aware_training_init_experimental(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_quantization_aware_training_init_experimental. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+        Logger.critical("Tensorflow must be installed to use keras_quantization_aware_training_init_experimental. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover
 
 
     def keras_quantization_aware_training_finalize_experimental(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_quantization_aware_training_finalize_experimental. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+        Logger.critical("Tensorflow must be installed to use keras_quantization_aware_training_finalize_experimental. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover

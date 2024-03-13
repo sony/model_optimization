@@ -171,9 +171,8 @@ if FOUND_TORCH:
 
         # Check if the scheduler type is valid
         if scheduler_get_fn is None or scheduler_step_fn is None:
-            Logger.critical(
-                f'Invalid scheduler_type {data_generation_config.scheduler_type}. Please choose one of '
-                f'{SchedulerType.get_values()}')
+            Logger.critical(f'Invalid output_loss_type {data_generation_config.scheduler_type}. '
+                            f'Please select one from {SchedulerType.get_values()}.')
 
         # Create a scheduler object with the specified number of iterations
         scheduler = scheduler_get_fn(data_generation_config.n_iter)
@@ -192,7 +191,7 @@ if FOUND_TORCH:
         orig_bn_stats_holder = PytorchOriginalBNStatsHolder(model, data_generation_config.bn_layer_types)
         if orig_bn_stats_holder.get_num_bn_layers() == 0:
             Logger.critical(
-                f'Data generation requires a model with at least one Batch Norm layer.')
+                f'Data generation requires a model with at least one BatchNorm layer.')
 
         # Create an ImagesOptimizationHandler object for handling optimization
         all_imgs_opt_handler = PytorchImagesOptimizationHandler(model=model,
@@ -328,12 +327,10 @@ else:
     # If torch is not installed,
     # we raise an exception when trying to use these functions.
     def get_pytorch_data_generation_config(*args, **kwargs):
-        Logger.critical('Installing Pytorch is mandatory '
-                        'when using get_pytorch_data_generation_config. '
-                        'Could not find torch package.')  # pragma: no cover
+        Logger.critical('PyTorch must be installed to use get_pytorch_data_generation_config. '
+                        "The 'torch' package is missing.")  # pragma: no cover
 
 
     def pytorch_data_generation_experimental(*args, **kwargs):
-        Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_data_generation_experimental. '
-                        'Could not find the torch package.')  # pragma: no cover
+        Logger.critical('PyTorch must be installed to use pytorch_data_generation_experimental. '
+                        "The 'torch' package is missing.")  # pragma: no cover

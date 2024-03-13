@@ -47,19 +47,19 @@ class MHAParams:
         # Only batch first network is supported
         if BATCH_FIRST in mha_node.framework_attr.keys():
             if mha_node.framework_attr[BATCH_FIRST] is not True:
-                Logger.critical('Only batch first network is supported')  # pragma: no cover
+                Logger.critical('Only networks with batch first cofiguration are supported.')  # pragma: no cover
         else:
-            Logger.critical('Only batch first network is supported')  # pragma: no cover
+            Logger.critical('Only networks with batch first cofiguration are supported.')  # pragma: no cover
 
         # Add Zero Attn feature is Not Implemented
         if ADD_ZERO_ATTN in mha_node.framework_attr.keys():
             if mha_node.framework_attr[ADD_ZERO_ATTN] is not False:
-                Logger.critical('Add Zero Attn feature is Not Implemented')  # pragma: no cover
+                Logger.critical('Add Zero Attention (Add Zero Attn) feature is not implemented')  # pragma: no cover
 
         # Check if Add Bias KV feature is Active
         if BIAS_K and BIAS_V in mha_node.weights.keys():
             if mha_node.weights[BIAS_K] is not None and mha_node.weights[BIAS_V] is not None:
-                Logger.critical('Add BIAS_KV feature is Not Implemented')  # pragma: no cover
+                Logger.critical('Add Bias to Key/Value (BIAS_KV) feature is not implemented.')  # pragma: no cover
 
         self.embed_dim = mha_node.framework_attr[EMBED_DIM]
         self.num_heads = mha_node.framework_attr[NUM_HEADS]
@@ -702,7 +702,7 @@ class MultiHeadAttentionDecomposition(common.BaseSubstitution):
         """
 
         if mha_node.reuse:
-            Logger.critical("MCT doesn't support reuse of MultiHeadAttention layer")  # pragma: no cover
+            Logger.critical("Reuse of MultiHeadAttention layers is currently not supported.")  # pragma: no cover
         params = MHAParams(mha_node)
 
         # project

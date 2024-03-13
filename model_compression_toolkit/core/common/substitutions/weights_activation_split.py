@@ -65,9 +65,7 @@ class BaseWeightsActivationSplit(BaseSubstitution):
                                    for c in node.candidates_quantization_cfg]
             if not set(expected_candidates).issubset(all_candidates_bits):
                 # Node is not composite, therefore, can't be split
-                Logger.critical(f"The graph contains a node {node.name} with non composite candidates."
-                                f"In order to run mixed-precision search with BOPS target KPI, "
-                                f"all model layers should be composite.")  # pragma: no cover
+                Logger.critical(f"The node {node.name} cannot be split as it has non-composite candidates. For mixed-precision search with BOPS target KPI, all model layers must be composite.")  # pragma: no cover
 
         weights_node = VirtualSplitWeightsNode(node, kernel_attr)
         activation_node = VirtualSplitActivationNode(node, self.activation_layer_type, self.fw_attr)

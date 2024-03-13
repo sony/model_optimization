@@ -65,6 +65,5 @@ if FOUND_TORCH:
 
 else:
     def is_pytorch_layer_exportable(*args, **kwargs):  # pragma: no cover
-        Logger.critical('Installing torch is mandatory '
-                     'when using is_pytorch_layer_exportable. '
-                     'Could not find PyTorch package.')
+        Logger.critical('PyTorch must be installed to use is_pytorch_layer_exportable. '
+                        "The 'torch' package is missing.")  # pragma: no cover

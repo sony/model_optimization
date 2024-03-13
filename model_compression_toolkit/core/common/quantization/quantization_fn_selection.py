@@ -44,5 +44,6 @@ def get_weights_quantization_fn(weights_quantization_method: QuantizationMethod)
         quantizer_fn = lut_kmeans_quantizer
     else:
         Logger.critical(
-            f'No quantizer function for the configuration of quantization method {weights_quantization_method}')
+            f"No quantizer function found for the specified quantization method: {weights_quantization_method}")
+
     return quantizer_fn

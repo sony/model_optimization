@@ -104,7 +104,7 @@ def conv2d_collapsing_fn(first_node: BaseNode,
 
         return kernel_collapsed, bias_collapsed
     else:
-        Logger.critical("No supported layer collapsing of {} and {}".format(first_node.type, second_node.type))
+        Logger.critical(f"Layer collapsing unsupported for combination: {first_node.type} and {second_node.type}.")
 
 
 def keras_linear_collapsing() -> Conv2DCollapsing:
@@ -161,7 +161,7 @@ def op2d_add_const_collapsing_fn(op2d_node: BaseNode,
     # read constant from add node (either 1st or 2nd positional weight)
     const = add_node.weights.get(0, add_node.weights.get(1))
     if const is None:
-        Logger.critical(f'Unable to read constant from add node: {add_node.name}')  # pragma: no cover
+        Logger.critical(f'Failed to read constant from add node: {add_node.name}.')  # pragma: no cover
 
     # return new bias
     if bias is None:

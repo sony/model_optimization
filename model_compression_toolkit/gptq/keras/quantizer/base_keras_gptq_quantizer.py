@@ -61,8 +61,8 @@ if FOUND_TF:
             weights = {}
             for weight, quantizer_vars, quantizer in layer.get_weights_vars():
                 if not isinstance(quantizer, BaseTrainableQuantizer):
-                    Logger.critical(f"Expecting a GPTQ trainable quantizer, "  # pragma: no cover
-                                 f"but got {type(quantizer)} which is not callable.")
+                    Logger.critical(f"Expecting a GPTQ trainable quantizer for layer '{layer.name}', but received {type(quantizer)}. "
+                                    f"Ensure a trainable quantizer is used.") # pragma: no cover
                 weights.update({weight: quantizer(training=False, inputs=quantizer_vars)})
 
             quant_config = {WEIGHTS_QUANTIZATION_PARAMS: self.get_quant_config()}
@@ -105,6 +105,5 @@ if FOUND_TF:
 else:
     class BaseKerasGPTQTrainableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
-            Logger.critical('Installing tensorflow is mandatory '
-                            'when using BaseKerasGPTQTrainableQuantizer. '
-                            'Could not find Tensorflow package.')  # pragma: no cover
+            Logger.critical("Tensorflow must be installed to use BaseKerasGPTQTrainableQuantizer. "
+                            "The 'tensorflow' package is missing.")  # pragma: no cover

@@ -46,9 +46,7 @@ def extract_holder_weights(constant_name, node_target, model, weights, to_numpy)
     named_buffer_weights = {constant_name: to_numpy(parameter) for name, parameter in
                             model.named_buffers() if node_target == name}
     if len(named_parameters_weights) + len(named_buffer_weights) > 1:
-        Logger.critical(
-            f'Constant parameter can only have one tensor. Here we have '
-            f'{len(named_parameters_weights)+ len(named_buffer_weights)}')
+        Logger.critical("A single constant parameter must correspond to exactly one tensor. Found {len(named_parameters_weights) + len(named_buffer_weights)} parameters.")
 
     weights.update(named_parameters_weights)
     weights.update(named_buffer_weights)
@@ -108,13 +106,13 @@ def nodes_builder(model: GraphModule,
             elif hasattr(torch.Tensor, node.target):
                 node_type = getattr(torch.Tensor, node.target)
             else:
-                Logger.critical(f'Call method of type \'{node.target}\' is currently not supported.')
+                Logger.critical(f"The call method '{node.target}' is not supported.")
         elif node.op == GET_ATTR:
             Logger.warning(
                 'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
                 'converting the model.')
         else:
-            Logger.critical(f'Unknown node type: {node.name}')
+            Logger.critical(f'Encountered an unsupported node type in node: {node.name}.')
 
         # extract layer weights and named buffers
         weights = {}
@@ -129,7 +127,7 @@ def nodes_builder(model: GraphModule,
         if node.op == GET_ATTR:
             new_const = extract_holder_weights(node, node.target, model, weights, to_numpy)
             if list(new_const.keys())[0] in consts_dict:
-                Logger.critical('Constant weight recorded twice')
+                Logger.critical('A constant weight appears to have been recorded multiple times.')
             consts_dict.update(new_const)
             continue
 
@@ -219,7 +217,7 @@ def nodes_builder(model: GraphModule,
     # make sure all extracted constants were used in the graph
     not_connected_consts = [c for c in consts_dict if c not in used_consts]
     if not_connected_consts:
-        Logger.critical(f'error reading graph - constants not connected in graph: {not_connected_consts}')
+        Logger.critical(f'Error reading graph: These constants are not connected in the graph: {not_connected_consts}.')
 
     # generate graph outputs list
     for node in output_nodes:

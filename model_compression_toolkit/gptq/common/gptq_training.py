@@ -75,8 +75,8 @@ class GPTQTrainer(ABC):
         self.fxp_model, self.gptq_user_info = self.build_gptq_model()
         if self.gptq_config.use_hessian_based_weights:
             if not isinstance(hessian_info_service, HessianInfoService):
-                Logger.critical(f"When using hessian based approximations for sensitivity evaluation, "
-                             f" an HessianInfoService object must be provided but is {hessian_info_service}")
+                Logger.critical(f"When using Hessian-based approximations for sensitivity evaluation, "
+                                f"an 'HessianInfoService' object must be provided, but received: {hessian_info_service}.")
             self.hessian_service = hessian_info_service
 
     def get_optimizer_with_param(self,
@@ -106,8 +106,8 @@ class GPTQTrainer(ABC):
                 else:
                     w2train_res.extend(flattened_bias_weights)
                     if self.gptq_config.optimizer_rest is None:
-                        Logger.critical(  # pragma: no cover
-                            "To enable bias micro training an additional optimizer is required, please define the optimizer_rest")
+                        Logger.critical("To enable bias micro-training, an additional optimizer is required. "
+                                        "Please define the 'optimizer_rest' parameter.")# pragma: no cover
             if quant_params_learning:
                 if self.gptq_config.optimizer_quantization_parameter is not None:  # Ability to override optimizer
                     optimizer_with_param.append((self.gptq_config.optimizer_quantization_parameter,
@@ -115,14 +115,16 @@ class GPTQTrainer(ABC):
                 else:
                     w2train_res.extend(trainable_quantization_parameters)
                 if self.gptq_config.optimizer_rest is None:
-                    Logger.critical(  # pragma: no cover
-                        "To enable quantization parameters micro training an additional optimizer is required, please define the optimizer_rest")
+                    Logger.critical(
+                        "To enable quantization parameters micro-training, an additional optimizer is required. "
+                        "Please define the 'optimizer_rest' parameter.")  # pragma: no cover
             if len(w2train_res) > 0:
                 # Either bias or quantization parameters are trainable but did not provide a specific optimizer,
                 # so we should use optimizer_rest to train them
                 if self.gptq_config.optimizer_rest is None:
-                    Logger.critical(  # pragma: no cover
-                        "To enable bias or quantization parameters micro training an additional optimizer is required, please define the optimizer_rest")
+                    Logger.critical(
+                        "To enable bais or quantization parameters micro-training, an additional optimizer is required. "
+                        "Please define the 'optimizer_rest' parameter.")  # pragma: no cover
                 optimizer_with_param.append((self.gptq_config.optimizer_rest, w2train_res))
 
         return optimizer_with_param
@@ -236,11 +238,11 @@ class GPTQTrainer(ABC):
             trace_approx: Trace approximation to validate.
         """
         if not isinstance(trace_approx, list):
-            Logger.critical(f"Trace approx was expected to be a list but has a type of {type(trace_approx)}")
+            Logger.critical(f"Trace approximation was expected to be a list but is of type: {type(trace_approx)}.")
         if len(trace_approx) != 1:
-            Logger.critical(
-                f"Trace approx was expected to be of length 1 (when computing approximations with "
-                f"granularity=HessianInfoGranularity.PER_TENSOR) but has a length of {len(trace_approx)}"
+            Logger.critical(f"Trace approximation was expected to have a length of 1 "
+                            f"(for computations with granularity set to 'HessianInfoGranularity.PER_TENSOR') "
+                            f"but has a length of {len(trace_approx)}."
             )
 
     @staticmethod

@@ -65,7 +65,7 @@ class ConfigurableActivationQuantizer(BasePyTorchInferableQuantizer):
         for qc in self.node_q_cfg:
             if qc.activation_quantization_cfg.enable_activation_quantization != \
                    self.node_q_cfg[0].activation_quantization_cfg.enable_activation_quantization:
-                Logger.critical("Candidates with different activation enabled properties is currently not supported.")  # pragma: no cover
+                Logger.critical("Unsupported configuration: Mixing candidates with differing activation quantization states (enabled/disabled).")  # pragma: no cover
 
         # Setting layer's activation
         self.activation_quantizers = init_activation_quantizers(self.node_q_cfg)

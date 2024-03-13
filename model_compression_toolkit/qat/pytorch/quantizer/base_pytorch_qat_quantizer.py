@@ -44,6 +44,5 @@ else:
         def __init__(self,
                      quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
             super().__init__(quantization_config)
-            Logger.critical('Installing Pytorch is mandatory '
-                            'when using BasePytorchQATTrainableQuantizer. '
-                            'Could not find torch package.')  # pragma: no cover
+            Logger.critical("Installation of PyTorch is required to use BasePytorchQATTrainableQuantizer. "
+                            "The 'torch' package was not found.")  # pragma: no cover

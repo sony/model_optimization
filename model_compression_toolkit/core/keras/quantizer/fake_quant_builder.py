@@ -69,11 +69,11 @@ def power_of_two_quantization(activation_n_bits: int,
     activation_is_signed = quantization_params.get(SIGNED)
 
     if activation_threshold is None:
-        Logger.critical("Activation threshold is None")  # pragma: no cover
+        Logger.critical("Activation threshold must be specified.")  # pragma: no cover
     if activation_is_signed is None:
-        Logger.critical("activation_is_signed is None")  # pragma: no cover
+        Logger.critical("Parameter 'activation_is_signed' must be specified")  # pragma: no cover
     if not threshold_is_power_of_two(activation_threshold, per_channel=False):
-        Logger.critical("Activation threshold is not power of two")  # pragma: no cover
+        Logger.critical("Activation threshold must be a power of two.")  # pragma: no cover
 
     min_value, max_value = quantizer_min_max_calculator(activation_threshold,
                                                         activation_n_bits,
@@ -99,9 +99,9 @@ def symmetric_quantization(activation_n_bits: int,
     activation_is_signed = quantization_params.get(SIGNED)
 
     if activation_threshold is None:
-        Logger.critical("Activation threshold is None")  # pragma: no cover
+        Logger.critical("Activation threshold must be specified.")  # pragma: no cover
     if activation_is_signed is None:
-        Logger.critical("activation_is_signed is None")  # pragma: no cover
+        Logger.critical("Parameter 'activation_is_signed' must be specified.")  # pragma: no cover
 
     min_value, max_value = quantizer_min_max_calculator(activation_threshold,
                                                         activation_n_bits,
@@ -126,9 +126,9 @@ def uniform_quantization(activation_n_bits: int,
     min_value, max_value = quantization_params.get(RANGE_MIN), quantization_params.get(RANGE_MAX)
 
     if min_value is None:
-        Logger.critical("Min value is None")  # pragma: no cover
+        Logger.critical("Minimum value must be specified.")  # pragma: no cover
     if max_value is None:
-        Logger.critical("Max value is None")  # pragma: no cover
+        Logger.critical("Maximum value must be specified.")  # pragma: no cover
 
     return lambda x: q(x, min_value, max_value, activation_n_bits)
 

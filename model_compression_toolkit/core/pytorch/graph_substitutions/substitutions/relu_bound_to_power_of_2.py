@@ -103,7 +103,7 @@ class ReLUBoundToPowerOfTwo(common.BaseSubstitution):
             else:
                 return graph
         else:
-            Logger.critical(f"In substitution with wrong matched pattern")
+            Logger.critical(f"Encountered an unexpected non-linearity type not supported for this substitution: {non_linear_node.type}.")
         Logger.debug(
             f"Node named:{non_linear_node.name} changed "
             f"to:{non_linear_node.type}")

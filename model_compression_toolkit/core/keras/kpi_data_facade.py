@@ -73,8 +73,7 @@ if FOUND_TF:
         """
 
         if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-            Logger.critical("KPI data computation can't be executed without MixedPrecisionQuantizationConfig object."
-                         "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
+            Logger.critical("KPI data computation requires a MixedPrecisionQuantizationConfig object; provided config is of an incorrect type.")
 
         fw_impl = KerasImplementation()
 
@@ -89,6 +88,5 @@ else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use this function.
     def keras_kpi_data(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_kpi_data. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+        Logger.critical("Tensorflow must be installed to use keras_kpi_data. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover

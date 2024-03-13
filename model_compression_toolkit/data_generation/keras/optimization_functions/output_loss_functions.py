@@ -44,9 +44,7 @@ def regularized_min_max_diff(
     """
     if activation_extractor.last_linear_layers is None:
         Logger.critical(
-            f'Cannot compute regularized min max output loss for the input model. The regularized min max output loss '
-            f'requires linear layer without a following BatchNormalization layer. Please choose one of '
-            f'{OutputLossType.get_values()}.')
+            f'Cannot compute regularized min-max output loss for the input model. This loss requires a linear layer without a subsequent BatchNormalization layer. Please select one from {OutputLossType.get_values()}.')
 
     with tape.stop_recording():
         weights_last_layer = activation_extractor.last_linear_layers.get_weights()[0]

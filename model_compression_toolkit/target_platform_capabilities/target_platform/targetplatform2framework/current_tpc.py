@@ -39,7 +39,7 @@ class _CurrentTPC(object):
 
         """
         if self.tpc is None:
-            Logger.critical('TargetPlatformCapabilities is not initialized.')
+            Logger.critical("'TargetPlatformCapabilities' instance is not initialized.")
         return self.tpc
 
     def reset(self):

@@ -53,13 +53,13 @@ class FunctionalConvSubstitution(common.BaseSubstitution):
         elif func_node.type == conv_transpose2d:
             new_layer = ConvTranspose2d
         else:
-            Logger.critical('mismatch in substitution filter')  # pragma: no cover
+            Logger.critical(f'Substitution filter mismatch. Layer {func_node.type}. Must be {type(Conv2d)} or {type(ConvTranspose2d)}.')  # pragma: no cover
 
         out_channel_index, in_channel_index = self.fw_info.kernel_channels_mapping.get(new_layer)
 
         # Create new node of layer convolution
         if 1 not in func_node.weights:
-            Logger.critical('missing weight input')  # pragma: no cover
+            Logger.critical(f'Weight input missing for node {func_node.name}.')  # pragma: no cover
         weight = func_node.weights[1]
         bias = func_node.weights.get(2)
         framework_attr = func_node.framework_attr
