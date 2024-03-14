@@ -52,7 +52,7 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
                                            input_scaling=True, activation_channel_equalization=True)
 
     def get_mixed_precision_config(self):
-        return MixedPrecisionQuantizationConfig(target_kpi=self.get_kpi())
+        return MixedPrecisionQuantizationConfig()
 
     def create_networks(self):
         layer = layers.Conv2D(3, 4)

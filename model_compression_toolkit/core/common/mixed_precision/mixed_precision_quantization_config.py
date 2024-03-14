@@ -16,13 +16,11 @@
 from typing import List, Callable
 
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
 
 
 class MixedPrecisionQuantizationConfig:
 
     def __init__(self,
-                 target_kpi: KPI = None,
                  compute_distance_fn: Callable = None,
                  distance_weighting_method: MpDistanceWeighting = MpDistanceWeighting.AVG,
                  num_of_images: int = 32,
@@ -36,7 +34,6 @@ class MixedPrecisionQuantizationConfig:
         Class with mixed precision parameters to quantize the input model.
 
         Args:
-            target_kpi (KPI): KPI to constraint the search of the mixed-precision configuration for the model.
             compute_distance_fn (Callable): Function to compute a distance between two tensors. If None, using pre-defined distance methods based on the layer type for each layer.
             distance_weighting_method (MpDistanceWeighting): MpDistanceWeighting enum value that provides a function to use when weighting the distances among different layers when computing the sensitivity metric.
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
@@ -49,7 +46,6 @@ class MixedPrecisionQuantizationConfig:
 
         """
 
-        self.target_kpi = target_kpi
         self.compute_distance_fn = compute_distance_fn
         self.distance_weighting_method = distance_weighting_method
         self.num_of_images = num_of_images
@@ -67,13 +63,15 @@ class MixedPrecisionQuantizationConfig:
 
         self.metric_normalization_threshold = metric_normalization_threshold
 
-    def set_target_kpi(self, target_kpi: KPI):
+        self._mixed_precision_enable = False
+
+    def set_mixed_precision_enable(self):
         """
-        Setting target KPI in mixed precision config.
-
-        Args:
-            target_kpi: A target KPI to set.
-
+        Set a flag in mixed precision config indicating that mixed precision is enabled.
         """
 
-        self.target_kpi = target_kpi
+        self._mixed_precision_enable = True
+
+    @property
+    def mixed_precision_enable(self):
+        return self._mixed_precision_enable

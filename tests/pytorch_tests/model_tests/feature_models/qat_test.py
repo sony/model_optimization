@@ -261,10 +261,11 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
     def run_test(self):
         self._gen_fixed_input()
         model_float = self.create_networks()
+        config = mct.core.CoreConfig()
         kpi = mct.core.KPI()  # inf memory
-        config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig(target_kpi=kpi))
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model_float,
                                                                                                            self.representative_data_gen_experimental,
+                                                                                                           kpi,
                                                                                                            core_config=config,
                                                                                                            target_platform_capabilities=self.get_tpc())
 
@@ -305,10 +306,11 @@ class QuantizationAwareTrainingMixedPrecisionKpiCfgTest(QuantizationAwareTrainin
     def run_test(self):
         self._gen_fixed_input()
         model_float = self.create_networks()
+        config = mct.core.CoreConfig()
         kpi = mct.core.KPI(weights_memory=50, activation_memory=40)
-        config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig(target_kpi=kpi))
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model_float,
                                                                                                            self.representative_data_gen_experimental,
+                                                                                                           kpi,
                                                                                                            core_config=config,
                                                                                                            target_platform_capabilities=self.get_tpc())
 

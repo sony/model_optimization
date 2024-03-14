@@ -23,14 +23,14 @@ class CoreConfig:
     """
     def __init__(self,
                  quantization_config: QuantizationConfig = QuantizationConfig(),
-                 mixed_precision_config: MixedPrecisionQuantizationConfig = None,
+                 mixed_precision_config: MixedPrecisionQuantizationConfig = MixedPrecisionQuantizationConfig(),
                  debug_config: DebugConfig = DebugConfig()
                  ):
         """
 
         Args:
             quantization_config (QuantizationConfig): Config for quantization.
-            mixed_precision_config (MixedPrecisionQuantizationConfig): Config for mixed precision quantization (optional, default=None).
+            mixed_precision_config (MixedPrecisionQuantizationConfig): Config for mixed precision quantization.
             debug_config (DebugConfig): Config for debugging and editing the network quantization process.
         """
         self.quantization_config = quantization_config
@@ -39,5 +39,5 @@ class CoreConfig:
 
     @property
     def mixed_precision_enable(self):
-        return self.mixed_precision_config is not None
+        return self.mixed_precision_config.mixed_precision_enable
 

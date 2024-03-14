@@ -57,7 +57,8 @@ def graph_preparation_runner(in_model: Any,
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tpc: TargetPlatformCapabilities object that models the inference target platform and
             the attached framework operator's information.
-        tb_w: TensorboardWriter object for logging
+        tb_w: TensorboardWriter object for logging.
+        mixed_precision_enable: is mixed precision enabled.
 
     Returns:
         An internal graph representation of the input model.
@@ -103,7 +104,7 @@ def get_finalized_graph(initial_graph: Graph,
             kernel channels indices, groups of layers by how they should be quantized, etc.)
         tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
         fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
-            mixed_precision_enable: is mixed precision enabled.
+        mixed_precision_enable: is mixed precision enabled.
 
     Returns: Graph object that represents the model, after applying all required modifications to it.
     """

@@ -43,6 +43,7 @@ class BaseFeatureNetworkTest(BaseTest):
             core_config = self.get_core_config()
             ptq_model, quantization_info = self.get_ptq_facade()(model_float,
                                                                  self.representative_data_gen_experimental,
+                                                                 target_kpi=self.get_kpi(),
                                                                  core_config=core_config,
                                                                  target_platform_capabilities=self.get_tpc()
                                                                  )

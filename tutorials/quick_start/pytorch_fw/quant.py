@@ -102,10 +102,10 @@ def quantize(model: nn.Module,
             shift_negative_activation_correction=True),
                                mixed_precision_config=mp_conf)
         target_kpi = get_target_kpi(model, mp_wcr, representative_data_gen, core_conf, tpc)
-        core_conf.mixed_precision_config.set_target_kpi(target_kpi)
     else:
         core_conf = CoreConfig(quantization_config=mct.core.QuantizationConfig(
             shift_negative_activation_correction=True))
+        target_kpi = None
 
     # Quantize model
     if args.get('gptq', False):
@@ -120,6 +120,7 @@ def quantize(model: nn.Module,
         quantized_model, quantization_info = \
             mct.gptq.pytorch_gradient_post_training_quantization(model,
                                                                  representative_data_gen=representative_data_gen,
+                                                                 target_kpi=target_kpi,
                                                                  core_config=core_conf,
                                                                  gptq_config=gptq_conf,
                                                                  gptq_representative_data_gen=representative_data_gen,

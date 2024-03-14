@@ -107,11 +107,12 @@ class NetworkTest:
                 learning_rate=0.0001), optimizer_rest=tf.keras.optimizers.Adam(
                 learning_rate=0.0001), loss=multiple_tensors_mse_loss)
 
-            ptq_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(self.model_float,
-                                                                                              representative_data_gen,
-                                                                                              gptq_config=arc,
-                                                                                              core_config=core_config,
-                                                                                              target_platform_capabilities=tpc)
+            ptq_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(
+                self.model_float,
+                representative_data_gen,
+                core_config=core_config,
+                gptq_config=arc,
+                target_platform_capabilities=tpc)
         else:
             ptq_model, quantization_info = mct.ptq.keras_post_training_quantization(self.model_float,
                                                                                     representative_data_gen,

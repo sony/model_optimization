@@ -65,8 +65,7 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
                                            activation_channel_equalization=False)
 
     def get_mixed_precision_config(self):
-        return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
-                                                         target_kpi=self.get_kpi())
+        return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 16, 16, 3]]
