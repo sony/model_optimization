@@ -132,7 +132,7 @@ if FOUND_TORCH:
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model. Now the model contains quantizer wrappers for fine tunning the weights:
 
-             >>> quantized_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model,repr_datagen,core_config=config)
+             >>> quantized_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model, repr_datagen, core_config=config)
 
              For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
@@ -213,7 +213,7 @@ if FOUND_TORCH:
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
 
-             >>> quantized_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model,repr_datagen,core_config=config)
+             >>> quantized_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model, repr_datagen, core_config=config)
 
              Use the quantized model for fine-tuning. Finally, remove the quantizer wrappers and keep a quantize model ready for inference.
 

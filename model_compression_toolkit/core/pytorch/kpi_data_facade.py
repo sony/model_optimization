@@ -69,7 +69,7 @@ if FOUND_TORCH:
             Import mct and call for KPI data calculation:
 
             >>> import model_compression_toolkit as mct
-            >>> kpi_data = mct.core.pytorch_kpi_data(module,repr_datagen)
+            >>> kpi_data = mct.core.pytorch_kpi_data(module, repr_datagen)
 
         """
 

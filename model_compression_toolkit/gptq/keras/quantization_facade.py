@@ -185,7 +185,7 @@ if FOUND_TF:
 
             Pass the model with the representative dataset generator to get a quantized model:
 
-            >>> quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(model,repr_datagen,gptq_config,core_config=config)
+            >>> quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(model, repr_datagen, gptq_config, core_config=config)
 
         """
         KerasModelValidation(model=in_model,
