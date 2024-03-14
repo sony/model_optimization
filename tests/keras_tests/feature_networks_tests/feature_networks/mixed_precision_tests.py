@@ -423,8 +423,7 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
                                            input_scaling=False, activation_channel_equalization=False)
 
     def get_mixed_precision_config(self):
-        return mct.core.MixedPrecisionQuantizationConfig(num_of_images=self.num_of_inputs,
-                                                         target_kpi=self.get_kpi())
+        return mct.core.MixedPrecisionQuantizationConfig(num_of_images=self.num_of_inputs)
 
     def create_networks(self):
         inputs_1 = layers.Input(shape=self.get_input_shapes()[0][1:])

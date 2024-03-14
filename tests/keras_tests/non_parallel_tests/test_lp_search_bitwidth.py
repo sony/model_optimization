@@ -227,7 +227,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         graph.set_tpc(tpc)
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=core_config.quantization_config,
-                                                        mixed_precision_enable=core_config.mixed_precision_enable)
+                                                        mixed_precision_enable=True)
 
         for node in graph.nodes:
             node.prior_info = keras_impl.get_node_prior_info(node=node,

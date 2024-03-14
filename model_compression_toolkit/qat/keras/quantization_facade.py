@@ -193,6 +193,7 @@ if FOUND_TF:
                                                fw_info=DEFAULT_KERAS_INFO,
                                                fw_impl=fw_impl,
                                                tpc=target_platform_capabilities,
+                                               target_kpi=target_kpi,
                                                tb_w=tb_w)
 
         tg = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_KERAS_INFO, fw_impl, tb_w)

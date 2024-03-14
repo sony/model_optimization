@@ -38,7 +38,7 @@ if FOUND_TORCH:
 
     def pytorch_kpi_data(in_model: Module,
                          representative_data_gen: Callable,
-                         core_config: CoreConfig = CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig()),
+                         core_config: CoreConfig = CoreConfig(),
                          target_platform_capabilities: TargetPlatformCapabilities = PYTORCH_DEFAULT_TPC) -> KPI:
         """
         Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
