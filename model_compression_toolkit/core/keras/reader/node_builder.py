@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Any, Callable, Dict
+from typing import Any, List, Dict
 
 import tensorflow as tf
 from tensorflow.python.util import tf_inspect
@@ -43,11 +43,21 @@ REUSED_IDENTIFIER = '_reused_'
 
 is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray))
 is_tensor = lambda x: isinstance(x, KerasTensor)
-tf_function_symbols = [TFOpLambda(f).symbol for f in [tf.add, tf.multiply, tf.subtract, tf.divide,
-                                                      tf.truediv, tf.pow, tf.matmul]]
 
 
-def get_kwargs2index(tfoplambda_layer: tf.keras.layers.Layer) -> Dict[str, int]:
+def get_tf_function_symbols() -> List[str]:
+    """
+    Create a list of tf function symbols, as they are created in the TFOpLambda layer. The
+    symbols are serializations of the function names.
+
+    Returns:
+         A list of TF function symbols,
+    """
+    return [TFOpLambda(f).symbol for f in [tf.add, tf.multiply, tf.subtract, tf.divide,
+                                           tf.truediv, tf.pow, tf.matmul]]
+
+
+def get_kwargs2index(tfoplambda_layer: TFOpLambda) -> Dict[str, int]:
     """
     Positional weights are saved according to their index in the node's call arguments, so
     need to know the function arguments' names in case the weights are in the kwargs.
@@ -125,6 +135,7 @@ def build_node(node: KerasNode,
             Logger.error('Functional nodes are not expected to have weights in framework')
 
         # read weights from call args
+        tf_function_symbols = get_tf_function_symbols()
         for i, arg in enumerate(op_call_args[0] if inputs_as_list else op_call_args):
             if is_const(arg) or (
                     keras_layer.symbol in tf_function_symbols and
