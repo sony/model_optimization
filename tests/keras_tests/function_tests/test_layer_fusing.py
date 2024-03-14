@@ -182,8 +182,10 @@ class TestLayerFusing(unittest.TestCase):
     def _compare(self, fused_nodes, expected_fusions):
         self.assertTrue(len(fused_nodes) == len(expected_fusions),
                         msg=f'Number of fusions is not as expected!')
+        type_names = lambda types_list: [t.__name__ for t in types_list]
         for i, fusion in enumerate(fused_nodes):
-            self.assertTrue(get_type(fusion) == expected_fusions[i],
+            self.assertTrue(get_type(fusion) == expected_fusions[i] or
+                            type_names(get_type(fusion)) == type_names(expected_fusions[i]),
                             msg=f'Miss-match fusion compared to expected!')
 
     def test_layer_fusing_1(self):

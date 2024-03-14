@@ -234,7 +234,7 @@ class Op2DAddConstCollapsingTest(BaseConv2DCollapsingTest):
         for layer in quantized_model.layers:
             if type(layer) in [layers.Conv2D, layers.DepthwiseConv2D, layers.Conv2DTranspose, layers.Dense]:
                 self.unit_test.assertTrue(len(layer.weights) == 2, msg=f'fail Bias should appear in weights!!')
-            elif isinstance(layer, TFOpLambda) and layer.function is tf.add:
+            elif isinstance(layer, TFOpLambda) and (layer.function is tf.add or layer.symbol == TFOpLambda(tf.add).symbol):
                 num_adds += 1
 
         # check all "add"s were folded except the one with 2 tensor inputs

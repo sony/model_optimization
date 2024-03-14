@@ -552,6 +552,7 @@ class FeatureNetworkTest(unittest.TestCase):
             ConstRepresentationTest(self, func, c, use_kwrags=True, is_list_input=True).run_test()
 
         ConstRepresentationMultiInputTest(self).run_test()
+
     def test_second_moment(self):
         DepthwiseConv2DSecondMomentTest(self).run_test()
         # DepthwiseConv2DWithMultiplierSecondMomentTest(self).run_test()

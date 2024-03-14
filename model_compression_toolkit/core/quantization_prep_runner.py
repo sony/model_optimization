@@ -68,7 +68,7 @@ def quantization_preparation_runner(graph: Graph,
                         fw_info,
                         core_config.quantization_config)  # Mark points for statistics collection
 
-    for _data in tqdm(representative_data_gen(), "Statistics Collection:"):
+    for _data in tqdm(representative_data_gen(), "Statistics Collection"):
         mi.infer(_data)
 
     if tb_w is not None:
