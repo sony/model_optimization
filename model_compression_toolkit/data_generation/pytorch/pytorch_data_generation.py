@@ -142,6 +142,33 @@ if FOUND_TORCH:
 
         Returns:
             List[Tensor]: Finalized list containing generated images.
+
+        Examples:
+
+            In this example, we'll walk through generating images using a simple PyTorch model and a data generation configuration. The process involves creating a model, setting up a data generation configuration, and finally generating images with specified parameters.
+
+            Start by importing the Model Compression Toolkit (MCT), PyTorch, and some modules from `torch.nn`:
+
+            >>> import model_compression_toolkit as mct
+            >>> import torch.nn as nn
+            >>> from torch.nn import Conv2d, BatchNorm2d, Flatten, Linear
+
+            Next, define a simple PyTorch model:
+
+            >>> model = nn.Sequential(nn.Conv2d(3, 2, 3), nn.BatchNorm2d(2), nn.Flatten(), nn.Linear(2*6*6, 10))
+
+            Configure the data generation process using `get_pytorch_data_generation_config`. This function allows customization of the data generation process. For simplicity, this example sets the number of iterations (`n_iter`) to 1 and the batch size (`data_gen_batch_size`) to 2.
+
+            >>> config = mct.data_generation.get_pytorch_data_generation_config(n_iter=1, data_gen_batch_size=2)
+
+            Finally, use the `pytorch_data_generation_experimental` function to generate images based on the model and data generation configuration.
+            Notice that this function is experimental and may change in future versions of MCT.
+            The `n_images` parameter specifies the number of images to generate, and `output_image_size` sets the size of the generated images.
+
+            >>> generated_images = mct.data_generation.pytorch_data_generation_experimental(model=model, n_images=4, output_image_size=8, data_generation_config=config)
+
+            The generated images can then be used for various purposes, such as data-free quantization.
+
         """
 
         Logger.warning(f"pytorch_data_generation_experimental is experimental "

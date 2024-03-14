@@ -6,4 +6,5 @@
 Pruning Configuration
 ================================================
 
-.. autofunction:: model_compression_toolkit.pruning.PruningConfig
+.. autoclass:: model_compression_toolkit.pruning.PruningConfig
+    :members:

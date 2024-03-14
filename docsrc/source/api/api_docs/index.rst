@@ -36,18 +36,20 @@ gptq
 qat
 ====
 
-- :ref:`pytorch_quantization_aware_training_init<ug-pytorch_quantization_aware_training_init_experimental>`: A function to use for preparing a Pytorch model for Quantization Aware Training (Experimental)
-- :ref:`pytorch_quantization_aware_training_finalize<ug-pytorch_quantization_aware_training_finalize_experimental>`: A function to finalize a Pytorch model after Quantization Aware Training to a model without QuantizeWrappers (Experimental)
-- :ref:`keras_quantization_aware_training_init<ug-keras_quantization_aware_training_init_experimental>`: A function to use for preparing a Keras model for Quantization Aware Training (Experimental)
-- :ref:`keras_quantization_aware_training_finalize<ug-keras_quantization_aware_training_finalize_experimental>`: A function to finalize a Keras model after Quantization Aware Training to a model without QuantizeWrappers (Experimental)
-- :ref:`qat_config<ug-qat_config>`: Module to create quantization configuration for Quantization-aware Training.
+- :ref:`pytorch_quantization_aware_training_init_experimental<ug-pytorch_quantization_aware_training_init_experimental>`: A function to use for preparing a Pytorch model for Quantization Aware Training (experimental).
+- :ref:`pytorch_quantization_aware_training_finalize_experimental<ug-pytorch_quantization_aware_training_finalize_experimental>`: A function to finalize a Pytorch model after Quantization Aware Training to a model without QuantizeWrappers (experimental).
+- :ref:`keras_quantization_aware_training_init_experimental<ug-keras_quantization_aware_training_init_experimental>`: A function to use for preparing a Keras model for Quantization Aware Training (experimental).
+- :ref:`keras_quantization_aware_training_finalize_experimental<ug-keras_quantization_aware_training_finalize_experimental>`: A function to finalize a Keras model after Quantization Aware Training to a model without QuantizeWrappers (experimental).
+- :ref:`qat_config<ug-qat_config>`: Module to create quantization configuration for Quantization-aware Training (experimental).
 
 core
 =====
 
-- :ref:`CoreConfig<ug-CoreConfig>`: Module to contain configurations of the optimization process.
-- :ref:`quantization_config<ug-quantization_config>`: Module to configure the quantization process.
-- :ref:`mixed_precision_quantization_config<ug-mixed_precision_quantization_config>`: Module to configure the quantization process when using mixed-precision PTQ.
+- :ref:`CoreConfig<ug-CoreConfig>`: Module to contain configurations of the entire optimization process.
+- :ref:`QuantizationConfig<ug-QuantizationConfig>`: Module to configure the quantization process.
+- :ref:`QuantizationErrorMethod<ug-QuantizationErrorMethod>`: Select a method for quantization parameters' selection.
+- :ref:`MixedPrecisionQuantizationConfig<ug-MixedPrecisionQuantizationConfig>`: Module to configure the quantization process when using mixed-precision PTQ.
+- :ref:`KPI<ug-KPI>`: Module to configure resources to use when searching for a configuration for the optimized model.
 - :ref:`network_editor<ug-network_editor>`: Module to modify the optimization process for troubleshooting.
 - :ref:`FolderImageLoader<ug-FolderImageLoader>`: Class to use an images directory as a representative dataset.
 - :ref:`pytorch_kpi_data<ug-pytorch_kpi_data>`: A function to compute KPI data that can be used to calculate the desired target KPI for PyTorch models.
@@ -61,6 +63,8 @@ data_generation
 - :ref:`get_pytorch_data_generation_config<ug-get_pytorch_data_generation_config>`: A function to load a DataGenerationConfig for Pytorch data generation (experimental).
 - :ref:`keras_data_generation_experimental<ug-keras_data_generation_experimental>`: A function to generate data for a Keras model (experimental).
 - :ref:`get_keras_data_generation_config<ug-get_keras_data_generation_config>`: A function to generate a DataGenerationConfig for Tensorflow data generation (experimental).
+- :ref:`DataGenerationConfig<ug-DataGenerationConfig>`: A configuration class for the data generation process (experimental).
+
 
 pruning
 ===========
@@ -68,8 +72,8 @@ pruning
 - :ref:`pytorch_pruning_experimental<ug-pytorch_pruning_experimental>`: A function to apply structured pruning for Pytorch models (experimental).
 - :ref:`keras_pruning_experimental<ug-keras_pruning_experimental>`: A function to apply structured pruning for Keras models (experimental).
 
-- :ref:`PruningConfig<ug-PruningConfig>`: Configuration for the pruning process.
-- :ref:`PruningInfo<ug-PruningInfo>`: Information about the pruned model such as pruned channel indices, etc.
+- :ref:`PruningConfig<ug-PruningConfig>`: Configuration for the pruning process (experimental).
+- :ref:`PruningInfo<ug-PruningInfo>`: Information about the pruned model such as pruned channel indices, etc. (experimental).
 
 
 exporter

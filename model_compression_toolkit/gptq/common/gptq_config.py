@@ -21,9 +21,9 @@ class RoundingType(Enum):
     """
     An enum for choosing the GPTQ rounding methods:
 
-    0. STRAIGHT-THROUGH ESTIMATOR
+    STE - STRAIGHT-THROUGH ESTIMATOR
 
-    1. SoftQuantizer
+    SoftQuantizer - SoftQuantizer
 
     """
     STE = 0
