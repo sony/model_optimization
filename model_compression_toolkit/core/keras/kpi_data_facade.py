@@ -36,7 +36,6 @@ if FOUND_TF:
     def keras_kpi_data(in_model: Model,
                        representative_data_gen: Callable,
                        core_config: CoreConfig = CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig()),
-                       fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                        target_platform_capabilities: TargetPlatformCapabilities = KERAS_DEFAULT_TPC) -> KPI:
         """
         Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
@@ -46,7 +45,6 @@ if FOUND_TF:
             in_model (Model): Keras model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
             core_config (CoreConfig): CoreConfig containing parameters for quantization and mixed precision of how the model should be quantized.
-            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
         Returns:
@@ -82,7 +80,7 @@ if FOUND_TF:
                                 representative_data_gen,
                                 core_config,
                                 target_platform_capabilities,
-                                fw_info,
+                                DEFAULT_KERAS_INFO,
                                 fw_impl)
 
 else:

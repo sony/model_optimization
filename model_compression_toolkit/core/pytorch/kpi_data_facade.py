@@ -39,7 +39,6 @@ if FOUND_TORCH:
     def pytorch_kpi_data(in_model: Module,
                          representative_data_gen: Callable,
                          core_config: CoreConfig = CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig()),
-                         fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                          target_platform_capabilities: TargetPlatformCapabilities = PYTORCH_DEFAULT_TPC) -> KPI:
         """
         Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
@@ -49,7 +48,6 @@ if FOUND_TORCH:
             in_model (Model): PyTorch model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
             core_config (CoreConfig): CoreConfig containing parameters for quantization and mixed precision
-            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default PyTorch info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/pytorch/default_framework_info.py>`_
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to.
 
         Returns:
@@ -85,7 +83,7 @@ if FOUND_TORCH:
                                 representative_data_gen,
                                 core_config,
                                 target_platform_capabilities,
-                                fw_info,
+                                DEFAULT_PYTORCH_INFO,
                                 fw_impl)
 
 else:
