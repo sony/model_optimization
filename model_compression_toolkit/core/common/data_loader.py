@@ -66,7 +66,7 @@ class FolderImageLoader(object):
 
         self.folder = folder
         self.image_list = []
-        print(f"Starting Scanning Disk: {self.folder}")
+        Logger.info(f"Starting Scanning Disk: {self.folder}")
         for root, dirs, files in os.walk(self.folder):
             for file in files:
                 file_type = file.split('.')[-1].lower()

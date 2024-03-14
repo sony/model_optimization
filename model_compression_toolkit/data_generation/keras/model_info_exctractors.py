@@ -21,6 +21,7 @@ from tensorflow.keras.layers import BatchNormalization
 from model_compression_toolkit.data_generation.common.enums import ImageGranularity
 from model_compression_toolkit.data_generation.common.model_info_exctractors import OriginalBNStatsHolder, \
     ActivationExtractor
+from model_compression_toolkit.logger import Logger
 
 
 class KerasOriginalBNStatsHolder(OriginalBNStatsHolder):
@@ -95,7 +96,7 @@ class KerasActivationExtractor(ActivationExtractor):
         self.bn_layer_names = [layer.name for layer in model.layers if isinstance(layer,
                                                                                   self.layer_types_to_extract_inputs)]
         self.num_layers = len(self.bn_layer_names)
-        print(f'Number of layers = {self.num_layers}')
+        Logger.info(f'Number of layers = {self.num_layers}')
 
         # Initialize stats containers
         self.activations = {}
