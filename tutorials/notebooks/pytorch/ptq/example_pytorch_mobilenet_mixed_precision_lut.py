@@ -115,9 +115,7 @@ if __name__ == '__main__':
     # Get KPI information to constraint your model's memory size.
     # Retrieve a KPI object with helpful information of each KPI metric,
     # to constraint the quantized model to the desired memory size.
-    kpi_data = mct.core.pytorch_kpi_data(model,
-                                         representative_data_gen,
-                                         configuration,
+    kpi_data = mct.core.pytorch_kpi_data(model, representative_data_gen, configuration,
                                          target_platform_capabilities=target_platform_cap)
 
     # Set a constraint for each of the KPI metrics.

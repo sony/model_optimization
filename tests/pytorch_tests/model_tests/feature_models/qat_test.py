@@ -266,7 +266,6 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model_float,
                                                                                                            self.representative_data_gen_experimental,
                                                                                                            core_config=config,
-                                                                                                           fw_info=self.get_fw_info(),
                                                                                                            target_platform_capabilities=self.get_tpc())
 
         self.compare(qat_ready_model,
@@ -311,7 +310,6 @@ class QuantizationAwareTrainingMixedPrecisionKpiCfgTest(QuantizationAwareTrainin
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model_float,
                                                                                                            self.representative_data_gen_experimental,
                                                                                                            core_config=config,
-                                                                                                           fw_info=self.get_fw_info(),
                                                                                                            target_platform_capabilities=self.get_tpc())
 
         self.compare(qat_ready_model,
