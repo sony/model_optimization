@@ -74,4 +74,10 @@ class MixedPrecisionQuantizationConfig:
 
     @property
     def mixed_precision_enable(self):
+        """
+        A property that indicates whether mixed precision quantization is enabled.
+
+        Returns: True if mixed precision quantization is enabled
+
+        """
         return self._mixed_precision_enable
