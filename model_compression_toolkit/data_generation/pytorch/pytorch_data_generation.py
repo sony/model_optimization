@@ -129,7 +129,7 @@ if FOUND_TORCH:
     def pytorch_data_generation_experimental(
             model: Module,
             n_images: int,
-            output_image_size: Tuple,
+            output_image_size: int,
             data_generation_config: DataGenerationConfig) -> List[Tensor]:
         """
         Function to perform data generation using the provided model and data generation configuration.
@@ -137,7 +137,7 @@ if FOUND_TORCH:
         Args:
             model (Module): PyTorch model to generate data for.
             n_images (int): Number of images to generate.
-            output_image_size (Tuple): Size of the output images.
+            output_image_size (int): The hight and width size of the output images.
             data_generation_config (DataGenerationConfig): Configuration for data generation.
 
         Returns:
