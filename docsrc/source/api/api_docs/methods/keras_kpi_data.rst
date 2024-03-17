@@ -7,4 +7,4 @@
 Get KPI information for Keras Models
 =======================================
 
-.. autofunction:: model_compression_toolkit.keras_kpi_data
+.. autofunction:: model_compression_toolkit.core.keras_kpi_data

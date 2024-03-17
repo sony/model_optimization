@@ -26,23 +26,16 @@ class PruningInfo:
     and importance scores for each layer. This class acts as a container for accessing
     pruning-related metadata.
 
-    Attributes:
-        pruning_masks (Dict[BaseNode, np.ndarray]): Stores the pruning masks for each layer.
-            A pruning mask is an array where each element indicates whether the corresponding
-            channel or neuron has been pruned (0) or kept (1).
-        importance_scores (Dict[BaseNode, np.ndarray]): Stores the importance scores for each layer.
-            Importance scores quantify the significance of each channel in the layer.
     """
 
     def __init__(self,
                  pruning_masks: Dict[BaseNode, np.ndarray],
                  importance_scores: Dict[BaseNode, np.ndarray]):
         """
-        Initializes the PruningInfo with pruning masks and importance scores.
-
         Args:
-            pruning_masks (Dict[BaseNode, np.ndarray]): Pruning masks for each layer.
-            importance_scores (Dict[BaseNode, np.ndarray]): Importance scores for each layer.
+            pruning_masks (Dict[BaseNode, np.ndarray]): Stores the pruning masks for each layer. A pruning mask is an array where each element indicates whether the corresponding channel or neuron has been pruned (0) or kept (1).
+            importance_scores (Dict[BaseNode, np.ndarray]): Stores the importance scores for each layer. Importance scores quantify the significance of each channel in the layer.
+
         """
         self._pruning_masks = pruning_masks
         self._importance_scores = importance_scores

@@ -1,11 +1,7 @@
 :orphan:
 
-.. _ug-core_config:
+.. _ug-CoreConfig:
 
-
-=================================
-core_config Module
-=================================
 
 
 CoreConfig

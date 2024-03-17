@@ -25,3 +25,5 @@ from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import 
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.keras.kpi_data_facade import keras_kpi_data
 from model_compression_toolkit.core.pytorch.kpi_data_facade import pytorch_kpi_data
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
+

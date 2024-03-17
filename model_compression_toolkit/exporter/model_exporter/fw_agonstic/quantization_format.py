@@ -16,6 +16,16 @@ from enum import Enum
 
 
 class QuantizationFormat(Enum):
+    """
+    Specify which quantization format to use for exporting a quantized model.
+
+    FAKELY_QUANT - Weights and activations are quantized but represented using float data type.
+
+    INT8 - Weights and activations are represented using 8-bit integer data type.
+
+    MCTQ - Weights and activations are quantized using mct_quantizers custom quantizers.
+
+    """
     FAKELY_QUANT = 0
     INT8 = 1
     MCTQ = 2
