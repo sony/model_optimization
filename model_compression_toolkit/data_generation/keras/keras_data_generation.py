@@ -131,7 +131,36 @@ if FOUND_TF:
 
         Returns:
             List[tf.Tensor]: Finalized list containing generated images.
+
+        Examples:
+
+            In this example, we'll walk through generating images using a simple Keras model and a data generation configuration. The process involves creating a model, setting up a data generation configuration, and finally generating images with specified parameters.
+
+            Start by importing the Model Compression Toolkit (MCT), TensorFlow, and some layers from `tensorflow.keras`:
+
+            >>> import model_compression_toolkit as mct
+            >>> from tensorflow.keras.models import Sequential
+            >>> from tensorflow.keras.layers import Conv2D, BatchNormalization, Flatten, Dense, Reshape
+
+            Next, define a simple Keras model:
+
+            >>> model = Sequential([Conv2D(2, 3, input_shape=(8,8,3)), BatchNormalization(), Flatten(), Dense(10)])
+
+            Configure the data generation process using `get_keras_data_generation_config`. This function allows customization of the data generation process. For simplicity, this example sets the number of iterations (`n_iter`) to 1 and the batch size (`data_gen_batch_size`) to 2.
+
+            >>> config = mct.data_generation.get_keras_data_generation_config(n_iter=1, data_gen_batch_size=2)
+
+            Finally, use the `keras_data_generation_experimental` function to generate images based on the model and data generation configuration.
+            Notice that this function is experimental and may change in future versions of MCT.
+            The `n_images` parameter specifies the number of images to generate, and `output_image_size` sets the size of the generated images.
+
+            >>> generated_images = mct.data_generation.keras_data_generation_experimental(model=model, n_images=4, output_image_size=(8, 8), data_generation_config=config)
+
+            The generated images can then be used for various purposes, such as data-free quantization.
+
+
         """
+
         Logger.warning(f"keras_data_generation_experimental is experimental "
                        f"and is subject to future changes."
                        f"If you encounter an issue, please open an issue in our GitHub "
