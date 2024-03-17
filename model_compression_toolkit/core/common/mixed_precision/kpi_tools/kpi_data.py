@@ -47,13 +47,15 @@ def compute_kpi_data(in_model: Any,
 
     """
 
+    # We assume that the kpi_data API is used to compute the model KPI for mixed precision scenario,
+    # so we run graph preparation under the assumption of enabled mixed precision.
     transformed_graph = graph_preparation_runner(in_model,
                                                  representative_data_gen,
                                                  core_config.quantization_config,
                                                  fw_info,
                                                  fw_impl,
                                                  tpc,
-                                                 mixed_precision_enable=core_config.mixed_precision_enable)
+                                                 mixed_precision_enable=True)
 
     # Compute parameters sum
     weights_params = compute_nodes_weights_params(graph=transformed_graph, fw_info=fw_info)

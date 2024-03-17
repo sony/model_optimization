@@ -256,11 +256,11 @@ class TestGetKerasTPC(unittest.TestCase):
                                                                       rep_data,
                                                                       target_platform_capabilities=tpc)
         core_config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(num_of_images=2,
-                                                                                                           use_hessian_based_scores=False,
-                                                                                                           target_kpi=mct.core.KPI(np.inf)))
+                                                                                                           use_hessian_based_scores=False))
         quantized_model, _ = mct.ptq.keras_post_training_quantization(model,
                                                                       rep_data,
                                                                       core_config=core_config,
+                                                                      target_kpi=mct.core.KPI(np.inf),
                                                                       target_platform_capabilities=tpc)
 
     def test_get_keras_supported_version(self):

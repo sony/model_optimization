@@ -94,6 +94,7 @@ if FOUND_TORCH:
 
     def pytorch_gradient_post_training_quantization(model: Module,
                                                     representative_data_gen: Callable,
+                                                    target_kpi: KPI = None,
                                                     core_config: CoreConfig = CoreConfig(),
                                                     gptq_config: GradientPTQConfig = None,
                                                     gptq_representative_data_gen: Callable = None,
@@ -117,6 +118,7 @@ if FOUND_TORCH:
         Args:
             model (Module): Pytorch model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
+            target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
@@ -174,6 +176,7 @@ if FOUND_TORCH:
                                                                      fw_info=DEFAULT_PYTORCH_INFO,
                                                                      fw_impl=fw_impl,
                                                                      tpc=target_platform_capabilities,
+                                                                     target_kpi=target_kpi,
                                                                      tb_w=tb_w)
 
         # ---------------------- #

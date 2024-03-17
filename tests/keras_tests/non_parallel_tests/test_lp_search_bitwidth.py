@@ -227,7 +227,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         graph.set_tpc(tpc)
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=core_config.quantization_config,
-                                                        mixed_precision_enable=core_config.mixed_precision_enable)
+                                                        mixed_precision_enable=True)
 
         for node in graph.nodes:
             node.prior_info = keras_impl.get_node_prior_info(node=node,
@@ -255,6 +255,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         cfg = search_bit_width(graph_to_search_cfg=graph,
                                fw_info=DEFAULT_KERAS_INFO,
                                fw_impl=keras_impl,
+                               target_kpi=KPI(np.inf),
                                mp_config=core_config.mixed_precision_config,
                                representative_data_gen=representative_data_gen,
                                search_method=BitWidthSearchMethod.INTEGER_PROGRAMMING)
@@ -263,23 +264,23 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
             cfg = search_bit_width(graph_to_search_cfg=graph,
                                    fw_info=DEFAULT_KERAS_INFO,
                                    fw_impl=keras_impl,
+                                   target_kpi=KPI(np.inf),
                                    mp_config=core_config.mixed_precision_config,
                                    representative_data_gen=representative_data_gen,
                                    search_method=None)
 
-        core_config.mixed_precision_config.target_kpi = None
         with self.assertRaises(Exception):
             cfg = search_bit_width(graph_to_search_cfg=graph,
                                    fw_info=DEFAULT_KERAS_INFO,
                                    fw_impl=keras_impl,
+                                   target_kpi=None,
                                    mp_config=core_config.mixed_precision_config,
                                    representative_data_gen=representative_data_gen,
                                    search_method=BitWidthSearchMethod.INTEGER_PROGRAMMING)
 
     def test_mixed_precision_search_facade(self):
         core_config_avg_weights = CoreConfig(quantization_config=DEFAULTCONFIG,
-                                             mixed_precision_config=MixedPrecisionQuantizationConfig(KPI(np.inf),
-                                                                                                     compute_mse,
+                                             mixed_precision_config=MixedPrecisionQuantizationConfig(compute_mse,
                                                                                                      MpDistanceWeighting.AVG,
                                                                                                      num_of_images=1,
                                                                                                      use_hessian_based_scores=False))
@@ -287,8 +288,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         self.run_search_bitwidth_config_test(core_config_avg_weights)
 
         core_config_last_layer = CoreConfig(quantization_config=DEFAULTCONFIG,
-                                            mixed_precision_config=MixedPrecisionQuantizationConfig(KPI(np.inf),
-                                                                                                    compute_mse,
+                                            mixed_precision_config=MixedPrecisionQuantizationConfig(compute_mse,
                                                                                                     MpDistanceWeighting.LAST_LAYER,
                                                                                                     num_of_images=1,
                                                                                                     use_hessian_based_scores=False))

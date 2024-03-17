@@ -45,6 +45,9 @@ layers = keras.layers
 def prepare_graph_for_first_network_editor(in_model, representative_data_gen, core_config, fw_info, fw_impl,
                                            tpc, target_kpi=None, tb_w=None):
 
+    if target_kpi is not None:
+        core_config.mixed_precision_enable.set_mixed_precision_enable()
+
     transformed_graph = graph_preparation_runner(in_model,
                                                  representative_data_gen,
                                                  core_config.quantization_config,
@@ -91,6 +94,10 @@ def prepare_graph_for_second_network_editor(in_model, representative_data_gen, c
                                                                tpc=tpc,
                                                                target_kpi=target_kpi,
                                                                tb_w=tb_w)
+
+    if target_kpi is not None:
+        core_config.mixed_precision_enable.set_mixed_precision_enable()
+
     ######################################
     # Calculate quantization params
     ######################################
@@ -133,13 +140,14 @@ def prepare_graph_for_second_network_editor(in_model, representative_data_gen, c
     ######################################
     # Finalize bit widths
     ######################################
-    if core_config.mixed_precision_enable:
-        assert target_kpi is not None
+    if target_kpi is not None:
+        assert core_config.mixed_precision_enable
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
             bit_widths_config = search_bit_width(tg_with_bias,
                                                  fw_info,
                                                  fw_impl,
+                                                 target_kpi,
                                                  core_config.mixed_precision_config,
                                                  representative_data_gen)
         else:

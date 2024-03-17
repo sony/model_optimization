@@ -48,7 +48,7 @@ class MixedPercisionBaseTest(BasePytorchTest):
         qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
                                          relu_bound_to_power_of_2=False, weights_bias_correction=True,
                                          input_scaling=False, activation_channel_equalization=False)
-        mpc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=1, target_kpi=self.get_kpi())
+        mpc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=1)
 
         return {"mixed_precision_model": mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
 
@@ -92,8 +92,7 @@ class MixedPercisionSearch8Bit(MixedPercisionBaseTest):
                                          relu_bound_to_power_of_2=False, weights_bias_correction=True,
                                          input_scaling=False, activation_channel_equalization=False)
         mpc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
-                                                        distance_weighting_method=self.distance_metric,
-                                                        target_kpi=self.get_kpi())
+                                                        distance_weighting_method=self.distance_metric)
 
         return {"mixed_precision_model": mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
 

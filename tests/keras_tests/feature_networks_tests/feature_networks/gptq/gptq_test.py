@@ -114,14 +114,18 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         ptq_model, quantization_info = mct.ptq.keras_post_training_quantization(
             model_float,
             representative_data_gen,
+            target_kpi=self.get_kpi(),
             core_config=core_config,
             target_platform_capabilities=tpc
         )
-        ptq_gptq_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(model_float,
-                                                                                               representative_data_gen,
-                                                                                               gptq_config=self.get_gptq_config(),
-                                                                                               core_config=core_config,
-                                                                                               target_platform_capabilities=tpc)
+        ptq_gptq_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(
+            model_float,
+            representative_data_gen,
+            gptq_config=self.get_gptq_config(),
+            target_kpi=self.get_kpi(),
+            core_config=core_config,
+            target_platform_capabilities=tpc
+        )
 
         self.compare(ptq_model, ptq_gptq_model, input_x=x, quantization_info=quantization_info)
 

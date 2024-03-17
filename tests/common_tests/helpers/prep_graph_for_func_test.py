@@ -93,6 +93,7 @@ def prepare_graph_with_quantization_parameters(in_model,
 def prepare_graph_set_bit_widths(in_model,
                                  fw_impl,
                                  representative_data_gen,
+                                 target_kpi,
                                  n_iter,
                                  quant_config,
                                  fw_info,
@@ -106,6 +107,9 @@ def prepare_graph_set_bit_widths(in_model,
                              mixed_precision_config=mp_cfg,
                              debug_config=DebugConfig(analyze_similarity=analyze_similarity,
                                                       network_editor=network_editor))
+
+    if target_kpi is not None:
+        core_config.mixed_precision_config.set_mixed_precision_enable()
 
     tb_w = init_tensorboard_writer(fw_info)
 
@@ -133,12 +137,13 @@ def prepare_graph_set_bit_widths(in_model,
     # Finalize bit widths
     ######################################
     if core_config.mixed_precision_enable:
-        assert core_config.mixed_precision_config.target_kpi is not None
+
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
             bit_widths_config = search_bit_width(tg,
                                                  fw_info,
                                                  fw_impl,
+                                                 target_kpi,
                                                  core_config.mixed_precision_config,
                                                  _representative_data_gen)
         else:

@@ -87,6 +87,7 @@ if FOUND_TF:
 
     def keras_quantization_aware_training_init_experimental(in_model: Model,
                                                             representative_data_gen: Callable,
+                                                            target_kpi: KPI = None,
                                                             core_config: CoreConfig = CoreConfig(),
                                                             qat_config: QATConfig = QATConfig(),
                                                             target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
@@ -108,6 +109,7 @@ if FOUND_TF:
          Args:
              in_model (Model): Keras model to quantize.
              representative_data_gen (Callable): Dataset used for initial calibration.
+             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
              qat_config (QATConfig): QAT configuration
              target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
@@ -157,7 +159,7 @@ if FOUND_TF:
              Pass the model, the representative dataset generator, the configuration and the target KPI to get a
              quantized model:
 
-             >>> quantized_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init_experimental(model, repr_datagen, kpi, core_config=core_config)
+             >>> quantized_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init_experimental(model, repr_datagen, kpi, core_config=config)
 
              Use the quantized model for fine-tuning. For loading the model from file, use the custom_objects dictionary:
 
@@ -191,6 +193,7 @@ if FOUND_TF:
                                                fw_info=DEFAULT_KERAS_INFO,
                                                fw_impl=fw_impl,
                                                tpc=target_platform_capabilities,
+                                               target_kpi=target_kpi,
                                                tb_w=tb_w)
 
         tg = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_KERAS_INFO, fw_impl, tb_w)
