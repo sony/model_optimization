@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
 from model_compression_toolkit.constants import FOUND_TORCH, FOUND_TF
 from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig
+from model_compression_toolkit.data_generation.common.enums import ImageGranularity, DataInitType, SchedulerType, BNLayerWeightingType, OutputLossType, BatchNormAlignemntLossType, ImagePipelineType, ImageNormalizationType
 
 if FOUND_TF:
     from model_compression_toolkit.data_generation.keras.keras_data_generation import (

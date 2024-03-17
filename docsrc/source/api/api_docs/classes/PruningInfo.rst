@@ -6,5 +6,6 @@
 Pruning Information
 ================================================
 
-.. autofunction:: model_compression_toolkit.pruning.PruningInfo
+.. autoclass:: model_compression_toolkit.pruning.PruningInfo
+    :members:
 

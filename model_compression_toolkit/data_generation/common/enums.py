@@ -29,10 +29,14 @@ class EnumBaseClass(Enum):
 
 class ImageGranularity(EnumBaseClass):
     """
-    An enum for choosing the image dependence granularity when generating images.
-    0. ImageWise
-    1. BatchWise
-    2. AllImages
+    An enum for choosing the image dependence granularity when generating images:
+
+    ImageWise
+
+    BatchWise
+
+    AllImages
+
     """
 
     ImageWise = 0
@@ -42,9 +46,12 @@ class ImageGranularity(EnumBaseClass):
 
 class DataInitType(EnumBaseClass):
     """
-    An enum for choosing the image dependence granularity when generating images.
-    0. Gaussian
-    1. Diverse
+    An enum for choosing the image dependence granularity when generating images:
+
+    Gaussian
+
+    Diverse
+
     """
     Gaussian = 0
     Diverse = 1
@@ -52,9 +59,14 @@ class DataInitType(EnumBaseClass):
 
 class ImagePipelineType(EnumBaseClass):
     """
-    An enum for choosing the image pipeline type for image manipulation.
-    RANDOM_CROP_FLIP: Crop and flip the images.
-    IDENTITY: Do not apply any manipulation (identity transformation).
+    An enum for choosing the image pipeline type for image manipulation:
+
+    RANDOM_CROP - Crop the images.
+
+    RANDOM_CROP_FLIP - Crop and flip the images.
+
+    IDENTITY - Do not apply any manipulation (identity transformation).
+
     """
     RANDOM_CROP = 'random_crop'
     RANDOM_CROP_FLIP = 'random_crop_flip'
@@ -63,10 +75,14 @@ class ImagePipelineType(EnumBaseClass):
 
 class ImageNormalizationType(EnumBaseClass):
     """
-    An enum for choosing the image normalization type.
-    TORCHVISION: Normalize the images using torchvision normalization.
-    KERAS_APPLICATIONS: Normalize the images using keras_applications imagenet normalization.
-    NO_NORMALIZATION: Do not apply any normalization.
+    An enum for choosing the image normalization type:
+
+    TORCHVISION - Normalize the images using torchvision normalization.
+
+    KERAS_APPLICATIONS - Normalize the images using keras_applications imagenet normalization.
+
+    NO_NORMALIZATION - Do not apply any normalization.
+
     """
     TORCHVISION = 'torchvision'
     KERAS_APPLICATIONS = 'keras_applications'
@@ -75,10 +91,14 @@ class ImageNormalizationType(EnumBaseClass):
 
 class BNLayerWeightingType(EnumBaseClass):
     """
-   An enum for choosing the layer weighting type.
-   AVERAGE: Use the same weight per layer.
-   FIRST_LAYER_MULTIPLIER: Use a multiplier for the first layer, all other layers with the same weight.
-   GRAD: Use gradient-based layer weighting.
+   An enum for choosing the layer weighting type:
+
+   AVERAGE - Use the same weight per layer.
+
+   FIRST_LAYER_MULTIPLIER - Use a multiplier for the first layer, all other layers with the same weight.
+
+   GRAD - Use gradient-based layer weighting.
+
    """
     AVERAGE = 'average'
     FIRST_LAYER_MULTIPLIER = 'first_layer_multiplier'
@@ -87,18 +107,24 @@ class BNLayerWeightingType(EnumBaseClass):
 
 class BatchNormAlignemntLossType(EnumBaseClass):
     """
-    An enum for choosing the BatchNorm alignment loss type.
-    L2_SQUARE: Use L2 square loss for BatchNorm alignment.
+    An enum for choosing the BatchNorm alignment loss type:
+
+    L2_SQUARE - Use L2 square loss for BatchNorm alignment.
+
     """
     L2_SQUARE = 'l2_square'
 
 
 class OutputLossType(EnumBaseClass):
     """
-    An enum for choosing the output loss type.
-    NONE: No output loss is applied.
-    MIN_MAX_DIFF: Use min-max difference as the output loss.
-    REGULARIZED_MIN_MAX_DIFF: Use regularized min-max difference as the output loss.
+    An enum for choosing the output loss type:
+
+    NONE - No output loss is applied.
+
+    MIN_MAX_DIFF - Use min-max difference as the output loss.
+
+    REGULARIZED_MIN_MAX_DIFF - Use regularized min-max difference as the output loss.
+
     """
     NONE = 'none'
     MIN_MAX_DIFF = 'min_max_diff'
@@ -107,9 +133,12 @@ class OutputLossType(EnumBaseClass):
 
 class SchedulerType(EnumBaseClass):
     """
-    An enum for choosing the scheduler type for the optimizer.
-    REDUCE_ON_PLATEAU: Use the ReduceOnPlateau scheduler.
-    STEP: Use the Step scheduler.
+    An enum for choosing the scheduler type for the optimizer:
+
+    REDUCE_ON_PLATEAU - Use the ReduceOnPlateau scheduler.
+
+    STEP - Use the Step scheduler.
+
     """
     REDUCE_ON_PLATEAU = 'reduce_on_plateau'
     STEP = 'step'

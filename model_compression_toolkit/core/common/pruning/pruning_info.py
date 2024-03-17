@@ -26,7 +26,7 @@ class PruningInfo:
     and importance scores for each layer. This class acts as a container for accessing
     pruning-related metadata.
 
-    Attributes:
+    Args:
         pruning_masks (Dict[BaseNode, np.ndarray]): Stores the pruning masks for each layer.
             A pruning mask is an array where each element indicates whether the corresponding
             channel or neuron has been pruned (0) or kept (1).
