@@ -164,7 +164,7 @@ Results for applying pruning to reduce the parameters of the following models by
 
 ## Quantization Bag of Tricks
 
-If the quantization process degrades the model's accuarcy too much, check out the [Bag of Tricks](https://github.com/sony/model_optimization/tree/main/FAQ.md)
+If the quantization process degrades the model's accuarcy too much, check out the [Bag of Tricks](https://github.com/sony/model_optimization/tree/main/quantization_bag_of_tricks.md)
 for a few "tricks" for improving the quantization.
 
 ## FAQ

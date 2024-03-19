@@ -74,13 +74,21 @@ if FOUND_TORCH:
         Returns:
             Fully quantized PyTorch model.
         """
-        return PyTorchModelBuilder(graph=graph,
-                                   wrapper=lambda n, m:
-                                   fully_quantized_wrapper(n, m,
-                                                           fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation()),
-                                   get_activation_quantizer_holder_fn=lambda n:
-                                   get_activation_quantizer_holder(n,
-                                                                   fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation())).build_model()
+        exportable_model, user_info = PyTorchModelBuilder(graph=graph,
+                                                          wrapper=lambda n, m:
+                                                          fully_quantized_wrapper(n, m,
+                                                                                  fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation()),
+                                                          get_activation_quantizer_holder_fn=lambda n:
+                                                          get_activation_quantizer_holder(n,
+                                                                                          fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation())).build_model()
+
+        Logger.info("Please run your accuracy evaluation on the exported model to verify it's accuracy.\n"
+                    "Checkout the FAQ and Bag of Tricks pages for resolving common issues and improving the quantized model accuracy:\n"
+                    "FAQ: https://github.com/sony/model_optimization/tree/main/FAQ.md"
+                    "Quantization Bag of Tricks: https://github.com/sony/model_optimization/tree/main/quantization_bag_of_tricks.md")
+
+        return exportable_model, user_info
+
 
 else:
     def get_exportable_pytorch_model(*args, **kwargs):  # pragma: no cover
