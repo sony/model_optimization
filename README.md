@@ -17,6 +17,8 @@ MCT is developed by researchers and engineers working at Sony Semiconductor Isra
 - [Getting Started](#getting-started)
 - [Supported features](#supported-features)
 - [Results](#results)
+- [Quantization Bag of Tricks](#quantization-bag-of-tricks)
+- [FAQ](#faq)
 - [Contributions](#contributions)
 - [License](#license)
 
@@ -160,6 +162,14 @@ Results for applying pruning to reduce the parameters of the following models by
 | DenseNet121 [3] | 74.44                | 71.71                 |
 
 
+## Quantization Bag of Tricks
+
+If the quantization process degrades the model's accuarcy too much, check out the [Bag of Tricks](https://github.com/sony/model_optimization/tree/main/FAQ.md)
+for a few "tricks" for improving the quantization.
+
+## FAQ
+
+Check out the [Frequently Asked Quantions](https://github.com/sony/model_optimization/tree/main/FAQ.md) for common issues.
 
 
 ## Contributions
