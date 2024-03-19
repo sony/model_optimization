@@ -17,7 +17,7 @@ import numpy as np
 from torch.nn import Conv2d
 
 from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.core import KPI
+from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.constants import BIAS
@@ -61,7 +61,7 @@ class MixedPercisionBaseTest(BasePytorchTest):
         raise NotImplementedError
 
     def compare_results(self, quantization_info, quantized_models, float_model, expected_bitwidth_idx):
-        # quantized with the highest precision since KPI==inf
+        # quantized with the highest precision since ResourceUtilization==inf
         self.unit_test.assertTrue((quantization_info.mixed_precision_cfg ==
                                    [expected_bitwidth_idx, expected_bitwidth_idx]).all())
         # verify that quantization occurred
@@ -84,8 +84,8 @@ class MixedPercisionSearch8Bit(MixedPercisionBaseTest):
 
         self.distance_metric = distance_metric
 
-    def get_kpi(self):
-        return KPI(np.inf)
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf)
 
     def get_core_configs(self):
         qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
@@ -161,8 +161,8 @@ class MixedPercisionSearchPartWeightsLayers(MixedPercisionBaseTest):
 
         return ConvLinearModel(input_shape)
 
-    def get_kpi(self):
-        return KPI(np.inf)
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         # We just needed to verify that the graph finalization is working without failing.
@@ -182,8 +182,8 @@ class MixedPercisionSearch2Bit(MixedPercisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_kpi(self):
-        return KPI(96)
+    def get_resource_utilization(self):
+        return ResourceUtilization(96)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.compare_results(quantization_info, quantized_models, float_model, 2)
@@ -193,8 +193,8 @@ class MixedPercisionSearch4Bit(MixedPercisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_kpi(self):
-        return KPI(192)
+    def get_resource_utilization(self):
+        return ResourceUtilization(192)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.compare_results(quantization_info, quantized_models, float_model, 1)
@@ -214,8 +214,8 @@ class MixedPercisionActivationDisabledTest(MixedPercisionBaseTest):
             test_name='mixed_precision_model',
             ftp_name='mixed_precision_pytorch_test')
 
-    def get_kpi(self):
-        return KPI(np.inf)
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.compare_results(quantization_info, quantized_models, float_model, 0)
@@ -225,8 +225,8 @@ class MixedPercisionSearchLastLayerDistance(MixedPercisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_kpi(self):
-        return KPI(192)
+    def get_resource_utilization(self):
+        return ResourceUtilization(192)
 
     def get_mixed_precision_config(self):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,

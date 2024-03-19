@@ -18,9 +18,9 @@ from typing import Callable
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_data import compute_kpi_data
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import compute_resource_utilization_data
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.constants import FOUND_TORCH
@@ -36,13 +36,14 @@ if FOUND_TORCH:
     PYTORCH_DEFAULT_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
 
-    def pytorch_kpi_data(in_model: Module,
-                         representative_data_gen: Callable,
-                         core_config: CoreConfig = CoreConfig(),
-                         target_platform_capabilities: TargetPlatformCapabilities = PYTORCH_DEFAULT_TPC) -> KPI:
+    def pytorch_resource_utilization_data(in_model: Module,
+                                          representative_data_gen: Callable,
+                                          core_config: CoreConfig = CoreConfig(),
+                                          target_platform_capabilities: TargetPlatformCapabilities = PYTORCH_DEFAULT_TPC
+                                          ) -> ResourceUtilization:
         """
-        Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
-        Builds the computation graph from the given model and target platform capabilities, and uses it to compute the KPI data.
+        Computes resource utilization data that can be used to calculate the desired target resource utilization for mixed-precision quantization.
+        Builds the computation graph from the given model and target platform capabilities, and uses it to compute the resource utilization data.
 
         Args:
             in_model (Model): PyTorch model to quantize.
@@ -52,7 +53,7 @@ if FOUND_TORCH:
 
         Returns:
 
-            A KPI object with total weights parameters sum and max activation tensor.
+            A ResourceUtilization object with total weights parameters sum and max activation tensor.
 
         Examples:
 
@@ -66,29 +67,29 @@ if FOUND_TORCH:
             >>> import numpy as np
             >>> def repr_datagen(): yield [np.random.random((1, 3, 224, 224))]
 
-            Import mct and call for KPI data calculation:
+            Import mct and call for resource utilization data calculation:
 
             >>> import model_compression_toolkit as mct
-            >>> kpi_data = mct.core.pytorch_kpi_data(module, repr_datagen)
+            >>> ru_data = mct.core.pytorch_resource_utilization_data(module, repr_datagen)
 
         """
 
         if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-            Logger.error("KPI data computation can't be executed without MixedPrecisionQuantizationConfig object."
+            Logger.error("Resource utilization data computation can't be executed without MixedPrecisionQuantizationConfig object."
                          "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
 
         fw_impl = PytorchImplementation()
 
-        return compute_kpi_data(in_model,
-                                representative_data_gen,
-                                core_config,
-                                target_platform_capabilities,
-                                DEFAULT_PYTORCH_INFO,
-                                fw_impl)
+        return compute_resource_utilization_data(in_model,
+                                                 representative_data_gen,
+                                                 core_config,
+                                                 target_platform_capabilities,
+                                                 DEFAULT_PYTORCH_INFO,
+                                                 fw_impl)
 
 else:
     # If torch is not installed,
     # we raise an exception when trying to use this function.
-    def pytorch_kpi_data(*args, **kwargs):
-        Logger.critical('Installing torch is mandatory when using pytorch_kpi_data. '
+    def pytorch_resource_utilization_data(*args, **kwargs):
+        Logger.critical('Installing torch is mandatory when using pytorch_resource_utilization_data. '
                         'Could not find Tensorflow package.')  # pragma: no cover

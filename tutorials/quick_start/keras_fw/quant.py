@@ -23,7 +23,7 @@ from tutorials.quick_start.common.constants import NUM_REPRESENTATIVE_IMAGES, BA
     REPRESENTATIVE_DATASET_FOLDER, TARGET_PLATFORM_NAME, TARGET_PLATFORM_VERSION, BYTES_TO_FP32, MP_WEIGHTS_COMPRESSION
 
 
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, CoreConfig, KPI
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, CoreConfig, ResourceUtilization
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from tutorials.quick_start.common.results import QuantInfo
 from tutorials.quick_start.common.tpc_info import get_tpc_info
@@ -44,7 +44,7 @@ def get_tpc(target_platform_name: str, target_platform_version: str) -> TargetPl
     return mct.get_target_platform_capabilities('tensorflow', target_platform_name, target_platform_version)
 
 
-def get_target_kpi(model, weights_compression, representative_data_gen, core_config, tpc):
+def get_target_resource_utilization(model, weights_compression, representative_data_gen, core_config, tpc):
     """
     Calculates the model's required size according to the given weights compression rate, to provide as a constraint for mixed precision search.
 
@@ -59,10 +59,10 @@ def get_target_kpi(model, weights_compression, representative_data_gen, core_con
         A KPI object computed from MCT and contains info about the target model size.
 
     """
-    kpi_data = mct.core.keras_kpi_data(model, representative_data_gen, core_config=core_config,
-                                       target_platform_capabilities=tpc)
+    kpi_data = mct.core.keras_resource_utilization_data(model, representative_data_gen, core_config=core_config,
+                                                        target_platform_capabilities=tpc)
     weights_kpi = BYTES_TO_FP32 * kpi_data.weights_memory / weights_compression # (4 bytes for fp32) * weights memory(in Bytes) / compression rate
-    return KPI(weights_memory=weights_kpi)
+    return ResourceUtilization(weights_memory=weights_kpi)
 
 
 def quantize(model: tf.keras.Model,
@@ -100,11 +100,11 @@ def quantize(model: tf.keras.Model,
         core_conf = CoreConfig(quantization_config=mct.core.QuantizationConfig(
             shift_negative_activation_correction=True),
                                mixed_precision_config=mp_conf)
-        target_kpi = get_target_kpi(model, mp_wcr, representative_data_gen, core_conf, tpc)
+        target_resource_utilization = get_target_resource_utilization(model, mp_wcr, representative_data_gen, core_conf, tpc)
     else:
         core_conf = CoreConfig(quantization_config=mct.core.QuantizationConfig(
             shift_negative_activation_correction=True))
-        target_kpi = None
+        target_resource_utilization = None
 
     # Quantize model
     if args.get('gptq', False):
@@ -119,7 +119,7 @@ def quantize(model: tf.keras.Model,
         quantized_model, quantization_info = \
             mct.gptq.keras_gradient_post_training_quantization(model,
                                                                representative_data_gen=representative_data_gen,
-                                                               target_kpi=target_kpi,
+                                                               target_resource_utilization=target_resource_utilization,
                                                                core_config=core_conf,
                                                                gptq_config=gptq_conf,
                                                                gptq_representative_data_gen=representative_data_gen,
@@ -131,7 +131,7 @@ def quantize(model: tf.keras.Model,
         quantized_model, quantization_info = \
             mct.ptq.keras_post_training_quantization(model,
                                                      representative_data_gen=representative_data_gen,
-                                                     target_kpi=target_kpi,
+                                                     target_resource_utilization=target_resource_utilization,
                                                      core_config=core_conf,
                                                      target_platform_capabilities=tpc)
 

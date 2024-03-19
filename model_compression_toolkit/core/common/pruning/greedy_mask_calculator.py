@@ -18,7 +18,7 @@ from typing import List, Dict, Tuple
 
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.mask.per_channel_mask import MaskIndicator
 from model_compression_toolkit.core.common.pruning.memory_calculator import MemoryCalculator
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import PruningFrameworkImplementation
@@ -30,16 +30,16 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 class GreedyMaskCalculator:
     """
     GreedyMaskCalculator calculates pruning masks for prunable nodes to meet a
-    specified target KPI. It employs a greedy approach to selectively unprune channel
+    specified target resource utilization. It employs a greedy approach to selectively unprune channel
     groups (SIMD groups) based on their importance scores. Initially, all channels are
     pruned (mask set to zero), and the calculator iteratively adds back the most significant
-    channel groups until the memory footprint meets the target KPI or all channels are unpruned.
+    channel groups until the memory footprint meets the target resource utilization or all channels are unpruned.
     """
     def __init__(self,
                  prunable_nodes: List[BaseNode],
                  fw_info: FrameworkInfo,
                  simd_groups_scores: Dict[BaseNode, np.ndarray],
-                 target_kpi: KPI,
+                 target_resource_utilization: ResourceUtilization,
                  graph: Graph,
                  fw_impl: PruningFrameworkImplementation,
                  tpc: TargetPlatformCapabilities,
@@ -49,7 +49,7 @@ class GreedyMaskCalculator:
             prunable_nodes (List[BaseNode]): Nodes that are eligible for pruning.
             fw_info (FrameworkInfo): Framework-specific information and utilities.
             simd_groups_scores (Dict[BaseNode, np.ndarray]): Importance scores for each SIMG group in a prunable node.
-            target_kpi (KPI): The target KPI to achieve.
+            target_resource_utilization (ResourceUtilization): The target resource utilization to achieve.
             graph (Graph): The computational graph of the model.
             fw_impl (PruningFrameworkImplementation): Framework-specific implementation details.
             tpc (TargetPlatformCapabilities): Platform-specific constraints and capabilities.
@@ -57,7 +57,7 @@ class GreedyMaskCalculator:
         """
         self.prunable_nodes = prunable_nodes
         self.fw_info = fw_info
-        self.target_kpi = target_kpi
+        self.target_resource_utilization = target_resource_utilization
         self.graph = graph
         self.fw_impl = fw_impl
         self.tpc = tpc
@@ -86,18 +86,18 @@ class GreedyMaskCalculator:
     def compute_mask(self):
         """
         Computes the pruning mask by iteratively adding SIMD groups to unpruned state
-        based on their importance and the target KPI.
+        based on their importance and the target resource utilization.
         """
         # Iteratively unprune the graph while monitoring the memory footprint.
         current_memory = self.memory_calculator.get_pruned_graph_memory(masks=self.oc_pruning_mask.get_mask(),
                                                                         include_padded_channels=self.tpc.is_simd_padding)
-        if current_memory > self.target_kpi.weights_memory:
+        if current_memory > self.target_resource_utilization.weights_memory:
             Logger.error(f"Minimal required memory is {current_memory}, "
-                         f"but target KPI is {self.target_kpi.weights_memory}")
+                         f"but target resource utilization is {self.target_resource_utilization.weights_memory}")
 
         # Greedily unprune groups (by setting their mask to 1) until the memory target is met
         # or all channels unpruned.
-        while current_memory < self.target_kpi.weights_memory and self.oc_pruning_mask.has_pruned_channel():
+        while current_memory < self.target_resource_utilization.weights_memory and self.oc_pruning_mask.has_pruned_channel():
             # Select the best SIMD group (best means highest score which means most sensitive group)
             # to add based on the scores.
             node_to_remain, group_to_remain_idx = self._get_most_sensitive_simd_group_candidate()
@@ -108,7 +108,7 @@ class GreedyMaskCalculator:
                                                                             include_padded_channels=self.tpc.is_simd_padding)
 
         # If the target memory is exceeded, revert the last addition.
-        if current_memory > self.target_kpi.weights_memory:
+        if current_memory > self.target_resource_utilization.weights_memory:
             self.oc_pruning_mask.set_mask_value_for_simd_group(node=node_to_remain,
                                                                group_index=group_to_remain_idx,
                                                                mask_indicator=MaskIndicator.PRUNED)

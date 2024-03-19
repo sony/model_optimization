@@ -31,5 +31,5 @@ class TestPytorchDocsExamples(unittest.TestCase):
     def test_pytorch_gptq_facade(self):
         doctest.testfile("quantization_facade.py", package=gptq.pytorch, verbose=True, raise_on_error=RAISE_ON_ERROR)
 
-    def test_pytorch_kpi_data_facade(self):
-        doctest.testfile("kpi_data_facade.py", package=core.pytorch, verbose=True, raise_on_error=RAISE_ON_ERROR)
+    def test_pytorch_resource_utilization_data_facade(self):
+        doctest.testfile("resource_utilization_data_test.py", package=core.pytorch, verbose=True, raise_on_error=RAISE_ON_ERROR)

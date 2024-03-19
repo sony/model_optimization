@@ -76,7 +76,7 @@ if __name__ == '__main__':
     dense_model = ResNet50()
     dense_nparams = count_model_params(dense_model)
     print(f"Model has {dense_nparams} parameters.")
-    kpi = mct.core.KPI(weights_memory=dense_nparams * 4 * args.compression_rate)
+    kpi = mct.core.ResourceUtilization(weights_memory=dense_nparams * 4 * args.compression_rate)
 
     # Create PruningConfig with the number of approximations MCT will compute as importance metric
     # for each channel when using LFH metric to set scores for each output channel that can be removed.
@@ -84,7 +84,7 @@ if __name__ == '__main__':
 
     # Prune the model.
     pruned_model, pruning_info = mct.pruning.keras_pruning_experimental(model=dense_model,
-                                                                        target_kpi=kpi,
+                                                                        target_resource_utilization=kpi,
                                                                         representative_data_gen=representative_data_gen,
                                                                         target_platform_capabilities=target_platform_cap,
                                                                         pruning_config=pruning_config)

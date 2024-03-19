@@ -125,8 +125,8 @@ if __name__ == '__main__':
     # Get KPI information to constraint your model's memory size.
     # Retrieve a KPI object with helpful information of each KPI metric,
     # to constraint the quantized model to the desired memory size.
-    kpi_data = mct.core.keras_kpi_data(model, representative_data_gen, config,
-                                       target_platform_capabilities=target_platform_cap)
+    kpi_data = mct.core.keras_resource_utilization_data(model, representative_data_gen, config,
+                                                        target_platform_capabilities=target_platform_cap)
 
     # Set a constraint for each of the KPI metrics.
     # Create a KPI object to limit our returned model's size. Note that this values affects only layers and attributes
@@ -145,7 +145,7 @@ if __name__ == '__main__':
                                                                                             gptq_config=gptq_config,
                                                                                             core_config=config,
                                                                                             target_platform_capabilities=target_platform_cap,
-                                                                                            target_kpi=kpi)
+                                                                                            target_resource_utilization=kpi)
 
     # Export quantized model to TFLite and Keras.
     # For more details please see: https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/exporter/README.md

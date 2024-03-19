@@ -124,7 +124,7 @@ def parse_results(params: dict, float_acc: float, quant_acc: float, quant_info: 
     res['TotalImages'] = dataset_info.n_images
     res['FloatAcc'] = round(float_acc, 4)
     res['QuantAcc'] = round(quant_acc, 4)
-    res['Size[MB]'] = round(quant_info.user_info.final_kpi.weights_memory / 1e6, 2)
+    res['Size[MB]'] = round(quant_info.user_info.final_resource_utilization.weights_memory / 1e6, 2)
     res['BitsConfig'] = bit_config
     res['QuantWorkflow'] = quant_info.quantization_workflow
     res['TPC'] = quant_info.tpc_info.tp_model_name + '-' + quant_info.tpc_info.version

@@ -19,7 +19,8 @@ import numpy as np
 import torch
 from torch.nn import Conv2d, BatchNorm2d, ReLU
 
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
+    get_op_quantization_configs
 from model_compression_toolkit.core.pytorch.constants import KERNEL
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp, generate_test_op_qc, \
     generate_test_attr_configs
@@ -88,7 +89,7 @@ class ComplexModel(torch.nn.Module):
 
     def parameters_sum(self):
         return getattr(self.conv1, KERNEL).detach().numpy().flatten().shape[0] + \
-               getattr(self.conv2, KERNEL).detach().numpy().flatten().shape[0]
+            getattr(self.conv2, KERNEL).detach().numpy().flatten().shape[0]
 
     def max_tensor(self):
         _, l_shape = self(torch.from_numpy(next(large_random_datagen())[0]).float())
@@ -109,29 +110,29 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
             mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
                                          (4, 8), (4, 4), (4, 2),
                                          (2, 8), (2, 4), (2, 2)]),
-        test_name='kpi_data_test',
-        tpc_name='kpi_data_test')
+        test_name='ru_data_test',
+        tpc_name='ru_data_test')
 
-    kpi_data = mct.core.pytorch_kpi_data(in_model=model,
-                                         representative_data_gen=random_datagen,
-                                         core_config=mct.core.CoreConfig(),
-                                         target_platform_capabilities=tpc_dict['kpi_data_test'])
+    ru_data = mct.core.pytorch_resource_utilization_data(in_model=model,
+                                                         representative_data_gen=random_datagen,
+                                                         core_config=mct.core.CoreConfig(),
+                                                         target_platform_capabilities=tpc_dict['ru_data_test'])
 
-    return kpi_data
+    return ru_data
 
 
-class KPIDataBaseTestClass(BasePytorchTest):
+class ResourceUtilizationDataBaseTestClass(BasePytorchTest):
 
-    def verify_results(self, kpi, sum_parameters, max_tensor):
-        self.unit_test.assertTrue(kpi.weights_memory == sum_parameters,
+    def verify_results(self, ru, sum_parameters, max_tensor):
+        self.unit_test.assertTrue(ru.weights_memory == sum_parameters,
                                   f"Expects weights_memory to be {sum_parameters} "
-                                  f"but result is {kpi.weights_memory}")
-        self.unit_test.assertTrue(kpi.activation_memory == max_tensor,
+                                  f"but result is {ru.weights_memory}")
+        self.unit_test.assertTrue(ru.activation_memory == max_tensor,
                                   f"Expects activation_memory to be {max_tensor} "
-                                  f"but result is {kpi.activation_memory}")
+                                  f"but result is {ru.activation_memory}")
 
 
-class TestKPIDataBasicAllBitwidth(KPIDataBaseTestClass):
+class TestResourceUtilizationDataBasicAllBitwidth(ResourceUtilizationDataBaseTestClass):
 
     def run_test(self):
         model = BasicModel()
@@ -140,13 +141,13 @@ class TestKPIDataBasicAllBitwidth(KPIDataBaseTestClass):
 
         mp_bitwidth_candidates_list = [(i, j) for i in [8, 4, 2] for j in [8, 4, 2]]
 
-        kpi_data = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
+        ru_data = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
 
         # max should be 8-bit quantization
-        self.verify_results(kpi_data, sum_parameters, max_tensor)
+        self.verify_results(ru_data, sum_parameters, max_tensor)
 
 
-class TestKPIDataBasicPartialBitwidth(KPIDataBaseTestClass):
+class TestResourceUtilizationDataBasicPartialBitwidth(ResourceUtilizationDataBaseTestClass):
 
     def run_test(self):
         model = BasicModel()
@@ -155,12 +156,12 @@ class TestKPIDataBasicPartialBitwidth(KPIDataBaseTestClass):
 
         mp_bitwidth_candidates_list = [(i, j) for i in [4, 2] for j in [4, 2]]
 
-        kpi_data = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
+        ru_data = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
 
-        self.verify_results(kpi_data, sum_parameters, max_tensor)
+        self.verify_results(ru_data, sum_parameters, max_tensor)
 
 
-class TestKPIDataComplesAllBitwidth(KPIDataBaseTestClass):
+class TestResourceUtilizationDataComplesAllBitwidth(ResourceUtilizationDataBaseTestClass):
 
     def run_test(self):
         model = ComplexModel()
@@ -169,13 +170,12 @@ class TestKPIDataComplesAllBitwidth(KPIDataBaseTestClass):
 
         mp_bitwidth_candidates_list = [(i, j) for i in [8, 4, 2] for j in [8, 4, 2]]
 
-        kpi_data = prep_test(model, mp_bitwidth_candidates_list, large_random_datagen)
+        ru_data = prep_test(model, mp_bitwidth_candidates_list, large_random_datagen)
 
-        self.verify_results(kpi_data, sum_parameters, max_tensor)
+        self.verify_results(ru_data, sum_parameters, max_tensor)
 
 
-
-class TestKPIDataComplexPartialBitwidth(KPIDataBaseTestClass):
+class TestResourceUtilizationDataComplexPartialBitwidth(ResourceUtilizationDataBaseTestClass):
 
     def run_test(self):
         model = ComplexModel()
@@ -184,6 +184,6 @@ class TestKPIDataComplexPartialBitwidth(KPIDataBaseTestClass):
 
         mp_bitwidth_candidates_list = [(i, j) for i in [4, 2] for j in [4, 2]]
 
-        kpi_data = prep_test(model, mp_bitwidth_candidates_list, large_random_datagen)
+        ru_data = prep_test(model, mp_bitwidth_candidates_list, large_random_datagen)
 
-        self.verify_results(kpi_data, sum_parameters, max_tensor)
+        self.verify_results(ru_data, sum_parameters, max_tensor)

@@ -20,8 +20,8 @@ from tests.pytorch_tests.function_tests.bn_info_collection_test import BNInfoCol
     Conv2D2BNInfoCollectionTest, Conv2DBNChainInfoCollectionTest, BNChainInfoCollectionTest, \
     BNLayerInfoCollectionTest, INP2BNInfoCollectionTest
 from tests.pytorch_tests.function_tests.get_gptq_config_test import TestGetGPTQConfig
-from tests.pytorch_tests.function_tests.kpi_data_test import TestKPIDataBasicAllBitwidth, \
-    TestKPIDataBasicPartialBitwidth, TestKPIDataComplexPartialBitwidth, TestKPIDataComplesAllBitwidth
+from tests.pytorch_tests.function_tests.resource_utilization_data_test import TestResourceUtilizationDataBasicAllBitwidth, \
+    TestResourceUtilizationDataBasicPartialBitwidth, TestResourceUtilizationDataComplexPartialBitwidth, TestResourceUtilizationDataComplesAllBitwidth
 from tests.pytorch_tests.function_tests.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, \
     LayerFusingTest4
 from tests.pytorch_tests.function_tests.set_device_test import SetDeviceTest
@@ -78,29 +78,29 @@ class FunctionTestRunner(unittest.TestCase):
         """
         INP2BNInfoCollectionTest(self).run_test()
 
-    def test_kpi_data_basic_all(self):
+    def test_ru_data_basic_all(self):
         """
-        This test checks the KPI data Pytorch API.
+        This test checks the resource utilization data Pytorch API.
         """
-        TestKPIDataBasicAllBitwidth(self).run_test()
+        TestResourceUtilizationDataBasicAllBitwidth(self).run_test()
 
-    def test_kpi_data_basic_partial(self):
+    def test_ru_data_basic_partial(self):
         """
-        This test checks the KPI data Pytorch API.
+        This test checks the resource utilization data Pytorch API.
         """
-        TestKPIDataBasicPartialBitwidth(self).run_test()
+        TestResourceUtilizationDataBasicPartialBitwidth(self).run_test()
 
-    def test_kpi_data_complex_all(self):
+    def test_ru_data_complex_all(self):
         """
-        This test checks the KPI data Pytorch API.
+        This test checks the resource utilization data Pytorch API.
         """
-        TestKPIDataComplesAllBitwidth(self).run_test()
+        TestResourceUtilizationDataComplesAllBitwidth(self).run_test()
 
-    def test_kpi_data_complex_partial(self):
+    def test_ru_data_complex_partial(self):
         """
-        This test checks the KPI data Pytorch API.
+        This test checks the resource utilization data Pytorch API.
         """
-        TestKPIDataComplexPartialBitwidth(self).run_test()
+        TestResourceUtilizationDataComplexPartialBitwidth(self).run_test()
 
     def test_activation_hessian_trace(self):
         """

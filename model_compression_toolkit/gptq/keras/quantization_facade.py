@@ -22,7 +22,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import CoreConfig
@@ -116,7 +116,7 @@ if FOUND_TF:
     def keras_gradient_post_training_quantization(in_model: Model, representative_data_gen: Callable,
                                                   gptq_config: GradientPTQConfig,
                                                   gptq_representative_data_gen: Callable = None,
-                                                  target_kpi: KPI = None,
+                                                  target_resource_utilization: ResourceUtilization = None,
                                                   core_config: CoreConfig = CoreConfig(),
                                                   target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
         """
@@ -129,7 +129,7 @@ if FOUND_TF:
         statistics. Then, if given a mixed precision config in the core_config, using an ILP solver we find
         a mixed-precision configuration, and set a bit-width for each layer. The model is then quantized
         (both coefficients and activations by default).
-        In order to limit the maximal model's size, a target KPI need to be passed after weights_memory
+        In order to limit the maximal model's size, a target resource utilization need to be passed after weights_memory
         is set (in bytes).
         Then, the quantized weights are optimized using gradient based post
         training quantization by comparing points between the float and quantized models, and minimizing the observed
@@ -140,7 +140,7 @@ if FOUND_TF:
             representative_data_gen (Callable): Dataset used for calibration.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
-            target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+            target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
@@ -174,12 +174,12 @@ if FOUND_TF:
 
             >>> config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(num_of_images=1))
 
-            For mixed-precision set a target KPI object:
-            Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
+            For mixed-precision set a target resource utilization object:
+            Create a resource utilization object to limit our returned model's size. Note that this value affects only coefficients
             that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
             while the bias will not):
 
-            >>> kpi = mct.core.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+            >>> ru = mct.core.ResourceUtilization(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
             Create GPTQ config:
 
@@ -187,7 +187,7 @@ if FOUND_TF:
 
             Pass the model with the representative dataset generator to get a quantized model:
 
-            >>> quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(model, repr_datagen, gptq_config, target_kpi=kpi, core_config=config)
+            >>> quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(model, repr_datagen, gptq_config, target_resource_utilization=ru, core_config=config)
 
         """
         KerasModelValidation(model=in_model,

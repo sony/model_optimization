@@ -23,9 +23,9 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
     VirtualSplitWeightsNode, VirtualSplitActivationNode
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPITarget, KPI
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_aggregation_methods import MpKpiAggregation
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_methods import MpKpiMetric
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import RUTarget, ResourceUtilization
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_aggregation_methods import MpRuAggregation
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import MpRuMetric
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 
@@ -40,8 +40,8 @@ class MixedPrecisionSearchManager:
                  fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation,
                  sensitivity_evaluator: SensitivityEvaluation,
-                 kpi_functions: Dict[KPITarget, Tuple[MpKpiMetric, MpKpiAggregation]],
-                 target_kpi: KPI,
+                 ru_functions: Dict[RUTarget, Tuple[MpRuMetric, MpRuAggregation]],
+                 target_resource_utilization: ResourceUtilization,
                  original_graph: Graph = None):
         """
 
@@ -51,10 +51,10 @@ class MixedPrecisionSearchManager:
             fw_impl: FrameworkImplementation object with specific framework methods implementation.
             sensitivity_evaluator: A SensitivityEvaluation which provides a function that evaluates the sensitivity of
                 a bit-width configuration for the MP model.
-            kpi_functions: A dictionary with pairs of (MpKpiMethod, MpKpiAggregationMethod) mapping a KPITarget to
-                a couple of kpi metric function and kpi aggregation function.
-            target_kpi: Target KPI to bound our feasible solution space s.t the configuration does not violate it.
-            original_graph: In case we have a search over a virtual graph (if we have BOPS KPI target), then this argument
+            ru_functions: A dictionary with pairs of (MpRuMethod, MpRuAggregationMethod) mapping a RUTarget to
+                a couple of resource utilization metric function and resource utilization aggregation function.
+            target_resource_utilization: Target Resource Utilization to bound our feasible solution space s.t the configuration does not violate it.
+            original_graph: In case we have a search over a virtual graph (if we have BOPS utilization target), then this argument
                 will contain the original graph (for config reconstruction purposes).
         """
 
@@ -66,12 +66,12 @@ class MixedPrecisionSearchManager:
         self.layer_to_bitwidth_mapping = self.get_search_space()
         self.compute_metric_fn = self.get_sensitivity_metric()
 
-        self.compute_kpi_functions = kpi_functions
-        self.target_kpi = target_kpi
-        self.min_kpi_config = self.graph.get_min_candidates_config(fw_info)
-        self.max_kpi_config = self.graph.get_max_candidates_config(fw_info)
-        self.min_kpi = self.compute_min_kpis()
-        self.non_conf_kpi_dict = self._non_configurable_nodes_kpi()
+        self.compute_ru_functions = ru_functions
+        self.target_resource_utilization = target_resource_utilization
+        self.min_ru_config = self.graph.get_min_candidates_config(fw_info)
+        self.max_ru_config = self.graph.get_max_candidates_config(fw_info)
+        self.min_ru = self.compute_min_ru()
+        self.non_conf_ru_dict = self._non_configurable_nodes_ru()
 
         self.config_reconstruction_helper = ConfigReconstructionHelper(virtual_graph=self.graph,
                                                                        original_graph=self.original_graph)
@@ -106,112 +106,114 @@ class MixedPrecisionSearchManager:
 
         return self.sensitivity_evaluator.compute_metric
 
-    def compute_min_kpis(self) -> Dict[KPITarget, np.ndarray]:
+    def compute_min_ru(self) -> Dict[RUTarget, np.ndarray]:
         """
-        Computes a KPIs vector with the values matching to the minimal mp configuration
+        Computes a resource utilization vector with the values matching to the minimal mp configuration
         (i.e., each node is configured with the quantization candidate that would give the minimal size of the
-        node's KPI).
-        The method computes the minimal KPIs vector for each kpi target.
+        node's resource utilization).
+        The method computes the minimal resource utilization vector for each target resource utilization.
 
-        Returns: A dictionary mapping each kpi target to its respective minimal KPIs values.
+        Returns: A dictionary mapping each target resource utilization to its respective minimal 
+        resource utilization values.
 
         """
-        min_kpis = {}
-        for kpi_target, kpi_fns in self.compute_kpi_functions.items():
-            # kpi_fns is a pair of kpi computation method and kpi aggregation method (in this method we only need
-            # the first one)
-            min_kpis[kpi_target] = kpi_fns[0](self.min_kpi_config, self.graph, self.fw_info, self.fw_impl)
+        min_ru = {}
+        for ru_target, ru_fns in self.compute_ru_functions.items():
+            # ru_fns is a pair of resource utilization computation method and 
+            # resource utilization aggregation method (in this method we only need the first one)
+            min_ru[ru_target] = ru_fns[0](self.min_ru_config, self.graph, self.fw_info, self.fw_impl)
 
-        return min_kpis
+        return min_ru
 
-    def compute_kpi_matrix(self, target: KPITarget) -> np.ndarray:
+    def compute_resource_utilization_matrix(self, target: RUTarget) -> np.ndarray:
         """
-        Computes and builds a KPIs matrix, to be used for the mixed-precision search problem formalization.
+        Computes and builds a resource utilization matrix, to be used for the mixed-precision search problem formalization.
         The matrix is constructed as follows (for a given target):
-        - Each row represents the set of KPI values for a specific KPI measure (number of rows should be equal to the
-            length of the output of the respective target compute_kpi function).
-        - Each entry in a specific column represents the KPI value of a given configuration (single layer is configured
-            with specific candidate, all other layer are at the minimal KPI configuration) for the KPI measure of the
-            respective row.
+        - Each row represents the set of resource utilization values for a specific resource utilization 
+            measure (number of rows should be equal to the length of the output of the respective target compute_ru function).
+        - Each entry in a specific column represents the resource utilization value of a given configuration 
+            (single layer is configured with specific candidate, all other layer are at the minimal resource 
+            utilization configuration) for the resource utilization measure of the respective row.
 
         Args:
-            target: The target for which the KPI is calculated (a KPITarget value).
+            target: The resource target for which the resource utilization is calculated (a RUTarget value).
 
-        Returns: A KPI matrix.
+        Returns: A resource utilization matrix.
 
         """
-        assert isinstance(target, KPITarget), f"{target} is not a valid KPI target"
+        assert isinstance(target, RUTarget), f"{target} is not a valid resource target"
 
         configurable_sorted_nodes = self.graph.get_configurable_sorted_nodes(self.fw_info)
 
-        kpi_matrix = []
+        ru_matrix = []
         for c, c_n in enumerate(configurable_sorted_nodes):
             for candidate_idx in range(len(c_n.candidates_quantization_cfg)):
-                if candidate_idx == self.min_kpi_config[c]:
-                    # skip KPI computation for min configuration. Since we compute the difference from min_kpi it'll
+                if candidate_idx == self.min_ru_config[c]:
+                    # skip ru computation for min configuration. Since we compute the difference from min_ru it'll
                     # always be 0 for all entries in the results vector.
-                    candidate_kpis = np.zeros(shape=self.min_kpi[target].shape)
+                    candidate_rus = np.zeros(shape=self.min_ru[target].shape)
                 else:
-                    candidate_kpis = self.compute_candidate_relative_kpis(c, candidate_idx, target)
-                kpi_matrix.append(np.asarray(candidate_kpis))
+                    candidate_rus = self.compute_candidate_relative_ru(c, candidate_idx, target)
+                ru_matrix.append(np.asarray(candidate_rus))
 
-        # We need to transpose the calculated kpi matrix to allow later multiplication with
+        # We need to transpose the calculated ru matrix to allow later multiplication with
         # the indicators' diagonal matrix.
         # We only move the first axis (num of configurations) to be last,
         # the remaining axes include the metric specific nodes (rows dimension of the new tensor)
-        # and the kpi metric values (if they are non-scalars)
-        np_kpi_matrix = np.array(kpi_matrix)
-        return np.moveaxis(np_kpi_matrix, source=0, destination=len(np_kpi_matrix.shape) - 1)
+        # and the ru metric values (if they are non-scalars)
+        np_ru_matrix = np.array(ru_matrix)
+        return np.moveaxis(np_ru_matrix, source=0, destination=len(np_ru_matrix.shape) - 1)
 
-    def compute_candidate_relative_kpis(self,
-                                        conf_node_idx: int,
-                                        candidate_idx: int,
-                                        target: KPITarget) -> np.ndarray:
+    def compute_candidate_relative_ru(self,
+                                      conf_node_idx: int,
+                                      candidate_idx: int,
+                                      target: RUTarget) -> np.ndarray:
         """
-        Computes a KPIs vector for a given candidates of a given configurable node, i.e., the matching KPI vector
-        which is obtained by computing the given target's KPI function on a minimal configuration in which the given
+        Computes a resource utilization vector for a given candidates of a given configurable node, 
+        i.e., the matching resource utilization vector which is obtained by computing the given target's 
+        resource utilization function on a minimal configuration in which the given
         layer's candidates is changed to the new given one.
-        The result is normalized by subtracting the target's minimal KPIs vector.
+        The result is normalized by subtracting the target's minimal resource utilization vector.
 
         Args:
             conf_node_idx: The index of a node in a sorted configurable nodes list.
             candidate_idx: The index of a node's quantization configuration candidate.
-            target: The target for which the KPI is calculated (a KPITarget value).
+            target: The target for which the resource utilization is calculated (a RUTarget value).
 
-        Returns: Normalized node's KPIs vector
+        Returns: Normalized node's resource utilization vector
 
         """
-        return self.compute_node_kpi_for_candidate(conf_node_idx, candidate_idx, target) - \
-               self.get_min_target_kpi(target)
+        return self.compute_node_ru_for_candidate(conf_node_idx, candidate_idx, target) - \
+               self.get_min_target_resource_utilization(target)
 
-    def get_min_target_kpi(self, target: KPITarget) -> np.ndarray:
+    def get_min_target_resource_utilization(self, target: RUTarget) -> np.ndarray:
         """
-        Returns the minimal KPIs vector (pre-calculated on initialization) of a specific target.
+        Returns the minimal resource utilization vector (pre-calculated on initialization) of a specific target.
 
         Args:
-            target: The target for which the KPI is calculated (a KPITarget value).
+            target: The target for which the resource utilization is calculated (a RUTarget value).
 
-        Returns: Minimal KPIs vector.
+        Returns: Minimal resource utilization vector.
 
         """
-        return self.min_kpi[target]
+        return self.min_ru[target]
 
-    def compute_node_kpi_for_candidate(self, conf_node_idx: int, candidate_idx: int, target: KPITarget) -> np.ndarray:
+    def compute_node_ru_for_candidate(self, conf_node_idx: int, candidate_idx: int, target: RUTarget) -> np.ndarray:
         """
-        Computes a KPIs vector after replacing the given node's configuration candidate in the minimal
+        Computes a resource utilization vector after replacing the given node's configuration candidate in the minimal
         target configuration with the given candidate index.
 
         Args:
             conf_node_idx: The index of a node in a sorted configurable nodes list.
-            candidate_idx: Quantization config candidate to be used for the node's KPI computation.
-            target: The target for which the KPI is calculated (a KPITarget value).
+            candidate_idx: Quantization config candidate to be used for the node's resource utilization computation.
+            target: The target for which the resource utilization is calculated (a RUTarget value).
 
-        Returns: Node's KPIs vector.
+        Returns: Node's resource utilization vector.
 
         """
-        return self.compute_kpi_functions[target][0](
+        return self.compute_ru_functions[target][0](
             self.replace_config_in_index(
-                self.min_kpi_config,
+                self.min_ru_config,
                 conf_node_idx,
                 candidate_idx),
             self.graph,
@@ -236,58 +238,60 @@ class MixedPrecisionSearchManager:
         updated_cfg[idx] = value
         return updated_cfg
 
-    def _non_configurable_nodes_kpi(self) -> Dict[KPITarget, np.ndarray]:
+    def _non_configurable_nodes_ru(self) -> Dict[RUTarget, np.ndarray]:
         """
-        Computes a KPI vector of all non-configurable nodes in the given graph for each of the KPI target.
+        Computes a resource utilization vector of all non-configurable nodes in the given graph for each of the 
+        resource utilization targets.
 
-        Returns: A mapping between a KPITarget and its non-configurable nodes' KPI vector.
+        Returns: A mapping between a RUTarget and its non-configurable nodes' resource utilization vector.
         """
 
-        non_conf_kpi_dict = {}
-        for target, kpi_value in self.target_kpi.get_kpi_dict().items():
-            # Call for the KPI method of the given target - empty quantization configuration list is passed since we
+        non_conf_ru_dict = {}
+        for target, ru_value in self.target_resource_utilization.get_resource_utilization_dict().items():
+            # Call for the ru method of the given target - empty quantization configuration list is passed since we
             # compute for non-configurable nodes
-            if target == KPITarget.BOPS:
-                kpi_vector = None
+            if target == RUTarget.BOPS:
+                ru_vector = None
             else:
-                kpi_vector = self.compute_kpi_functions[target][0]([], self.graph, self.fw_info, self.fw_impl)
+                ru_vector = self.compute_ru_functions[target][0]([], self.graph, self.fw_info, self.fw_impl)
 
-            non_conf_kpi_dict[target] = kpi_vector
+            non_conf_ru_dict[target] = ru_vector
 
-        return non_conf_kpi_dict
+        return non_conf_ru_dict
 
-    def compute_kpi_for_config(self, config: List[int]) -> KPI:
+    def compute_resource_utilization_for_config(self, config: List[int]) -> ResourceUtilization:
         """
-        Computes the KPI values for a given mixed-precision configuration.
+        Computes the resource utilization values for a given mixed-precision configuration.
 
         Args:
             config: A mixed-precision configuration (list of candidates indices)
 
-        Returns: A KPI object with the model's KPI values when quantized with the given config.
+        Returns: A ResourceUtilization object with the model's resource utilization values when quantized 
+        with the given config.
 
         """
 
-        kpis_dict = {}
+        ru_dict = {}
 
-        for kpi_target, kpi_fns in self.compute_kpi_functions.items():
-            # Passing False to kpi methods and aggregations to indicates that the computations
+        for ru_target, ru_fns in self.compute_ru_functions.items():
+            # Passing False to ru methods and aggregations to indicates that the computations
             # are not for constraints setting
-            if kpi_target == KPITarget.BOPS:
-                configurable_nodes_kpi_vector = kpi_fns[0](config, self.original_graph, self.fw_info, self.fw_impl, False)
+            if ru_target == RUTarget.BOPS:
+                configurable_nodes_ru_vector = ru_fns[0](config, self.original_graph, self.fw_info, self.fw_impl, False)
             else:
-                configurable_nodes_kpi_vector = kpi_fns[0](config, self.original_graph, self.fw_info, self.fw_impl)
-            non_configurable_nodes_kpi_vector = self.non_conf_kpi_dict.get(kpi_target)
-            if non_configurable_nodes_kpi_vector is None or len(non_configurable_nodes_kpi_vector) == 0:
-                aggr_kpi = self.compute_kpi_functions[kpi_target][1](configurable_nodes_kpi_vector, False)
+                configurable_nodes_ru_vector = ru_fns[0](config, self.original_graph, self.fw_info, self.fw_impl)
+            non_configurable_nodes_ru_vector = self.non_conf_ru_dict.get(ru_target)
+            if non_configurable_nodes_ru_vector is None or len(non_configurable_nodes_ru_vector) == 0:
+                ru_ru = self.compute_ru_functions[ru_target][1](configurable_nodes_ru_vector, False)
             else:
-                aggr_kpi = self.compute_kpi_functions[kpi_target][1](
-                    np.concatenate([configurable_nodes_kpi_vector, non_configurable_nodes_kpi_vector]), False)
+                ru_ru = self.compute_ru_functions[ru_target][1](
+                    np.concatenate([configurable_nodes_ru_vector, non_configurable_nodes_ru_vector]), False)
 
-            kpis_dict[kpi_target] = aggr_kpi[0]
+            ru_dict[ru_target] = ru_ru[0]
 
-        config_kpi = KPI()
-        config_kpi.set_kpi_by_target(kpis_dict)
-        return config_kpi
+        config_ru = ResourceUtilization()
+        config_ru.set_resource_utilization_by_target(ru_dict)
+        return config_ru
 
     def finalize_distance_metric(self, layer_to_metrics_mapping: Dict[int, Dict[int, float]]):
         """
@@ -317,7 +321,7 @@ class MixedPrecisionSearchManager:
 class ConfigReconstructionHelper:
     """
     A class to help reconstruct an original mixed-precision configuration from a virtual one,
-    when running mixed-precision search with BOPS KPI.
+    when running mixed-precision search with BOPS utilization.
     It provides a reconstruct_config_from_virtual_graph which allows to translate a bit-width config of a virtual graph
     to a config of the original configurable nodes.
     """

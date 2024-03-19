@@ -48,7 +48,7 @@ class BaseVirtualActivationWeightsComposition(BaseSubstitution):
 
         if len(graph.out_edges(act_node)) > 1:
             Logger.warning(f"Node {act_node.name} has multiple outgoing edges, which is not supported with "
-                           f"mixed-precision bit-operations KPI, thus, edge {act_node.name} --> {weights_node.name} "
+                           f"mixed-precision bit-operations utilization, thus, edge {act_node.name} --> {weights_node.name} "
                            f"would not be counted in the bit-operations calculations.")
             return graph
 

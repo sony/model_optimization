@@ -28,14 +28,14 @@ from model_compression_toolkit.core.common.graph.virtual_activation_weights_node
 from model_compression_toolkit.logger import Logger
 
 
-def weights_size_kpi(mp_cfg: List[int],
-                     graph: Graph,
-                     fw_info: FrameworkInfo,
-                     fw_impl: FrameworkImplementation) -> np.ndarray:
+def weights_size_utilization(mp_cfg: List[int],
+                             graph: Graph,
+                             fw_info: FrameworkInfo,
+                             fw_impl: FrameworkImplementation) -> np.ndarray:
     """
-    Computes a KPIs vector with the respective weights' memory size for the given weight configurable node,
+    Computes a resource utilization vector with the respective weights' memory size for the given weight configurable node,
     according to the given mixed-precision configuration.
-    If an empty configuration is given, then computes KPI vector for non-configurable nodes.
+    If an empty configuration is given, then computes resource utilization vector for non-configurable nodes.
 
     Args:
         mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
@@ -52,7 +52,7 @@ def weights_size_kpi(mp_cfg: List[int],
     weights_mp_nodes = [n.name for n in graph.get_sorted_weights_configurable_nodes(fw_info)]
 
     if len(mp_cfg) == 0:
-        # Computing non-configurable nodes KPI
+        # Computing non-configurable nodes resource utilization
         # TODO: when enabling multiple attribute quantization by default (currently,
         #  only kernel quantization is enabled) we should include other attributes memory in the sum of all
         #  weights memory (when quantized to their default 8-bit, non-configurable).
@@ -71,7 +71,8 @@ def weights_size_kpi(mp_cfg: List[int],
                 node_weights_memory_in_bytes = _compute_node_weights_memory(n, node_nbits, fw_info)
                 weights_memory.append(node_weights_memory_in_bytes)
     else:
-        # Go over configurable all nodes that should be taken into consideration when computing the weights KPI.
+        # Go over configurable all nodes that should be taken into consideration when computing the weights
+        # resource utilization.
         for n in graph.get_sorted_weights_configurable_nodes(fw_info):
             # Only nodes with kernel op can be considered configurable
             kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
@@ -86,14 +87,14 @@ def weights_size_kpi(mp_cfg: List[int],
     return np.array(weights_memory)
 
 
-def activation_output_size_kpi(mp_cfg: List[int],
-                               graph: Graph,
-                               fw_info: FrameworkInfo,
-                               fw_impl: FrameworkImplementation) -> np.ndarray:
+def activation_output_size_utilization(mp_cfg: List[int],
+                                       graph: Graph,
+                                       fw_info: FrameworkInfo,
+                                       fw_impl: FrameworkImplementation) -> np.ndarray:
     """
-    Computes a KPIs vector with the respective output memory size for each activation configurable node,
+    Computes a resource utilization vector with the respective output memory size for each activation configurable node,
     according to the given mixed-precision configuration.
-    If an empty configuration is given, then computes KPI vector for non-configurable nodes.
+    If an empty configuration is given, then computes resource utilization vector for non-configurable nodes.
 
     Args:
         mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
@@ -111,7 +112,7 @@ def activation_output_size_kpi(mp_cfg: List[int],
     activation_mp_nodes = [n.name for n in graph.get_sorted_activation_configurable_nodes()]
 
     if len(mp_cfg) == 0:
-        # Computing non-configurable nodes KPI
+        # Computing non-configurable nodes resource utilization
         for n in graph.nodes:
             non_configurable_node = n.name not in activation_mp_nodes \
                                     and n.has_activation_quantization_enabled_candidate() \
@@ -122,7 +123,7 @@ def activation_output_size_kpi(mp_cfg: List[int],
                 node_activation_memory_in_bytes = _compute_node_activation_memory(n, node_nbits)
                 activation_memory.append(node_activation_memory_in_bytes)
     else:
-        # Go over all nodes that should be taken into consideration when computing the weights KPI.
+        # Go over all nodes that should be taken into consideration when computing the weights memory utilization.
         for n in graph.get_sorted_activation_configurable_nodes():
             node_idx = mp_nodes.index(n.name)
             node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
@@ -135,14 +136,14 @@ def activation_output_size_kpi(mp_cfg: List[int],
     return np.array(activation_memory)
 
 
-def total_weights_activation_kpi(mp_cfg: List[int],
-                                 graph: Graph,
-                                 fw_info: FrameworkInfo,
-                                 fw_impl: FrameworkImplementation) -> np.ndarray:
+def total_weights_activation_utilization(mp_cfg: List[int],
+                                         graph: Graph,
+                                         fw_info: FrameworkInfo,
+                                         fw_impl: FrameworkImplementation) -> np.ndarray:
     """
-    Computes KPIs tensor with the respective weights size and output memory size for each activation configurable node,
+    Computes resource utilization tensor with the respective weights size and output memory size for each activation configurable node,
     according to the given mixed-precision configuration.
-    If an empty configuration is given, then computes KPI vector for non-configurable nodes.
+    If an empty configuration is given, then computes resource utilization vector for non-configurable nodes.
 
     Args:
         mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
@@ -160,15 +161,15 @@ def total_weights_activation_kpi(mp_cfg: List[int],
     activation_mp_nodes = [n.name for n in graph.get_sorted_activation_configurable_nodes()]
 
     if len(mp_cfg) == 0:
-        # Computing non-configurable nodes KPI
+        # Computing non-configurable nodes utilization
         for n in graph.nodes:
 
             non_configurable = False
             node_weights_memory_in_bytes, node_activation_memory_in_bytes = 0, 0
 
             # Non-configurable Weights
-            # TODO: currently considering only kernel attributes in weights KPI. When enabling multi-attribute
-            #  quantization we need to modify this method to count all attributes.
+            # TODO: currently considering only kernel attributes in weights memory utilization.
+            #  When enabling multi-attribute quantization we need to modify this method to count all attributes.
             kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
             if kernel_attr is not None:
                 is_non_configurable_weights = n.name not in weights_mp_nodes and \
@@ -196,9 +197,9 @@ def total_weights_activation_kpi(mp_cfg: List[int],
                     np.array([node_weights_memory_in_bytes, node_activation_memory_in_bytes]))
     else:
         # Go over all nodes that should be taken into consideration when computing the weights or
-        # activation KPI (all configurable nodes).
+        # activation memory utilization (all configurable nodes).
         for node_idx, n in enumerate(graph.get_configurable_sorted_nodes(fw_info)):
-            # TODO: currently considering only kernel attributes in weights KPI. When enabling multi-attribute
+            # TODO: currently considering only kernel attributes in weights memory utilization. When enabling multi-attribute
             #  quantization we need to modify this method to count all attributes.
 
             node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
@@ -222,13 +223,13 @@ def total_weights_activation_kpi(mp_cfg: List[int],
     return np.array(weights_activation_memory)
 
 
-def bops_kpi(mp_cfg: List[int],
-             graph: Graph,
-             fw_info: FrameworkInfo,
-             fw_impl: FrameworkImplementation,
-             set_constraints: bool = True) -> np.ndarray:
+def bops_utilization(mp_cfg: List[int],
+                     graph: Graph,
+                     fw_info: FrameworkInfo,
+                     fw_impl: FrameworkImplementation,
+                     set_constraints: bool = True) -> np.ndarray:
     """
-    Computes a KPIs vector with the respective bit-operations (BOPS) count for each configurable node,
+    Computes a resource utilization vector with the respective bit-operations (BOPS) count for each configurable node,
     according to the given mixed-precision configuration of a virtual graph with composed nodes.
 
     Args:
@@ -236,7 +237,7 @@ def bops_kpi(mp_cfg: List[int],
         graph: Graph object.
         fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
         fw_impl: FrameworkImplementation object with specific framework methods implementation.
-        set_constraints: A flag for utilizing the method for KPI computation of a
+        set_constraints: A flag for utilizing the method for resource utilization computation of a
             given config not for LP formalization purposes.
 
     Returns: A vector of node's BOPS count.
@@ -245,12 +246,12 @@ def bops_kpi(mp_cfg: List[int],
     """
 
     if not set_constraints:
-        return _bops_kpi(mp_cfg,
-                         graph,
-                         fw_info,
-                         fw_impl)
+        return _bops_utilization(mp_cfg,
+                                 graph,
+                                 fw_info,
+                                 fw_impl)
 
-    # BOPs KPI method considers non-configurable nodes, therefore, it doesn't need separate implementation
+    # BOPs utilization method considers non-configurable nodes, therefore, it doesn't need separate implementation
     # for non-configurable nodes for setting a constraint (no need for separate implementation for len(mp_cfg) = 0).
 
     virtual_bops_nodes = [n for n in graph.get_topo_sorted_nodes() if isinstance(n, VirtualActivationWeightsNode)]
@@ -261,12 +262,12 @@ def bops_kpi(mp_cfg: List[int],
     return np.array(bops)
 
 
-def _bops_kpi(mp_cfg: List[int],
-              graph: Graph,
-              fw_info: FrameworkInfo,
-              fw_impl: FrameworkImplementation) -> np.ndarray:
+def _bops_utilization(mp_cfg: List[int],
+                      graph: Graph,
+                      fw_info: FrameworkInfo,
+                      fw_impl: FrameworkImplementation) -> np.ndarray:
     """
-    Computes a KPIs vector with the respective bit-operations (BOPS) count for each configurable node,
+    Computes a resource utilization vector with the respective bit-operations (BOPS) count for each configurable node,
     according to the given mixed-precision configuration of an original graph.
 
     Args:
@@ -281,7 +282,7 @@ def _bops_kpi(mp_cfg: List[int],
 
     mp_nodes = graph.get_configurable_sorted_nodes_names(fw_info)
 
-    # Go over all nodes that should be taken into consideration when computing the BOPS KPI.
+    # Go over all nodes that should be taken into consideration when computing the BOPS utilization.
     bops = []
     for n in graph.get_topo_sorted_nodes():
         if n.has_kernel_weight_to_quantize(fw_info):
@@ -293,7 +294,7 @@ def _bops_kpi(mp_cfg: List[int],
             input_activation_node = incoming_edges[0].source_node
             if len(graph.out_edges(input_activation_node)) > 1:
                 # In the case where the activation node has multiple outgoing edges
-                # we don't consider this edge in the BOPS KPI calculation
+                # we don't consider this edge in the BOPS utilization calculation
                 continue
 
             input_activation_node_cfg = input_activation_node.candidates_quantization_cfg[_get_node_cfg_idx(input_activation_node, mp_cfg, mp_nodes)]
@@ -338,7 +339,7 @@ def _get_node_cfg_idx(node: BaseNode, mp_cfg: List[int], sorted_configurable_nod
 
 def _get_origin_weights_node(n: BaseNode) -> BaseNode:
     """
-    In case we run a KPI computation on a virtual graph,
+    In case we run a resource utilization computation on a virtual graph,
     this method is used to retrieve the original node out of a virtual weights node,
 
     Args:
@@ -358,7 +359,7 @@ def _get_origin_weights_node(n: BaseNode) -> BaseNode:
 
 def _get_origin_activation_node(n: BaseNode) -> BaseNode:
     """
-    In case we run a KPI computation on a virtual graph,
+    In case we run a resource utilization computation on a virtual graph,
     this method is used to retrieve the original node out of a virtual activation node,
 
     Args:
@@ -417,25 +418,25 @@ def _compute_node_activation_memory(n: BaseNode, node_nbits: int) -> float:
     return node_output_size * node_nbits / BITS_TO_BYTES
 
 
-class MpKpiMetric(Enum):
+class MpRuMetric(Enum):
     """
-    Defines kpi computation functions that can be used to compute KPI for a given target for a given mp config.
-    The enum values can be used to call a function on a set of arguments.
+    Defines resource utilization computation functions that can be used to compute bops_utilization for a given target
+    for a given mp config. The enum values can be used to call a function on a set of arguments.
 
-     WEIGHTS_SIZE - applies the weights_size_kpi function
+     WEIGHTS_SIZE - applies the weights_size_utilization function
 
-     ACTIVATION_OUTPUT_SIZE - applies the activation_output_size_kpi function
+     ACTIVATION_OUTPUT_SIZE - applies the activation_output_size_utilization function
 
-     TOTAL_WEIGHTS_ACTIVATION_SIZE - applies the total_weights_activation_kpi function
+     TOTAL_WEIGHTS_ACTIVATION_SIZE - applies the total_weights_activation_utilization function
 
-     BOPS_COUNT - applies the bops_kpi function
+     BOPS_COUNT - applies the bops_utilization function
 
     """
 
-    WEIGHTS_SIZE = partial(weights_size_kpi)
-    ACTIVATION_OUTPUT_SIZE = partial(activation_output_size_kpi)
-    TOTAL_WEIGHTS_ACTIVATION_SIZE = partial(total_weights_activation_kpi)
-    BOPS_COUNT = partial(bops_kpi)
+    WEIGHTS_SIZE = partial(weights_size_utilization)
+    ACTIVATION_OUTPUT_SIZE = partial(activation_output_size_utilization)
+    TOTAL_WEIGHTS_ACTIVATION_SIZE = partial(total_weights_activation_utilization)
+    BOPS_COUNT = partial(bops_utilization)
 
     def __call__(self, *args):
         return self.value(*args)

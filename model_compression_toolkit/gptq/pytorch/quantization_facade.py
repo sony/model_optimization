@@ -21,7 +21,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.keras.quantization_facade import GPTQ_MOMENTUM
 from model_compression_toolkit.gptq.runner import gptq_runner
@@ -94,7 +94,7 @@ if FOUND_TORCH:
 
     def pytorch_gradient_post_training_quantization(model: Module,
                                                     representative_data_gen: Callable,
-                                                    target_kpi: KPI = None,
+                                                    target_resource_utilization: ResourceUtilization = None,
                                                     core_config: CoreConfig = CoreConfig(),
                                                     gptq_config: GradientPTQConfig = None,
                                                     gptq_representative_data_gen: Callable = None,
@@ -118,7 +118,7 @@ if FOUND_TORCH:
         Args:
             model (Module): Pytorch model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
-            target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+            target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
@@ -176,7 +176,7 @@ if FOUND_TORCH:
                                                                      fw_info=DEFAULT_PYTORCH_INFO,
                                                                      fw_impl=fw_impl,
                                                                      tpc=target_platform_capabilities,
-                                                                     target_kpi=target_kpi,
+                                                                     target_resource_utilization=target_resource_utilization,
                                                                      tb_w=tb_w)
 
         # ---------------------- #
