@@ -45,7 +45,7 @@ class TargetPlatformModelingTest(unittest.TestCase):
             with model:
                 tp.OperatorsSet("opset")
             model.operator_set = []
-        self.assertEqual('Immutable class. Can\'t edit attributes', str(e.exception))
+        self.assertEqual('Immutable class. Can\'t edit attributes.', str(e.exception))
 
     def test_default_options_more_than_single_qc(self):
         test_qco = tp.QuantizationConfigOptions([TEST_QC, TEST_QC], base_config=TEST_QC)
@@ -88,7 +88,7 @@ class OpsetTest(unittest.TestCase):
             with hm:
                 tp.OperatorsSet("conv")
                 tp.OperatorsSet("conv")
-        self.assertEqual('OperatorsSet must have unique names', str(e.exception))
+        self.assertEqual('OperatorsSet must have unique names.', str(e.exception))
 
 
 class QCOptionsTest(unittest.TestCase):
@@ -96,7 +96,7 @@ class QCOptionsTest(unittest.TestCase):
     def test_empty_qc_options(self):
         with self.assertRaises(AssertionError) as e:
             tp.QuantizationConfigOptions([])
-        self.assertEqual('Options list can not be empty', str(e.exception))
+        self.assertEqual('Options list can not be empty.', str(e.exception))
 
     def test_list_of_no_qc(self):
         with self.assertRaises(AssertionError) as e:
