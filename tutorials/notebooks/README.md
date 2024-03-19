@@ -18,7 +18,7 @@ These techniques are crucial for optimizing models further and achieving better 
 
 ## Quantization for Sony-IMX500 deployment
 This section provides a guide on quantizing pre-trained models to meet specific constraints for deployment on the
-processing platform. Our focus will be on quantizing models for deployment on Sony-IMX500 processing platform. 
+processing platform. Our focus will be on quantizing models for deployment on [Sony-IMX500](https://developer.sony.com/imx500/) processing platform. 
 We will cover various tasks and demonstrate the necessary steps to achieve efficient quantization for optimal
 deployment performance.
 - [IMX500 notebooks](IMX500_notebooks.md)
