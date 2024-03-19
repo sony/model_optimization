@@ -22,6 +22,7 @@ import torch
 from torch.fx import symbolic_trace
 from torch.fx.passes.shape_prop import ShapeProp
 
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.pytorch.reader.graph_builders import edges_builder, nodes_builder
 from model_compression_toolkit.core.pytorch.utils import set_model
