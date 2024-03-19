@@ -6,11 +6,11 @@ engaging and hands-on experience.
 
 ## Getting started
 This "hello world" notebook shows how to quickly quantize a pre-trained model using MCT post training quantization technique both for Keras models and Pytorch models.
-- [Keras MobileNetV2 post training quantization](keras/ptq/example_keras_imagenet.ipynb)
-- [Pytorch MobileNetV2 post training quantization](pytorch/ptq/example_pytorch_mobilenet_v2.py)
+- [Keras MobileNetV2 post training quantization](notebooks/keras/ptq/example_keras_imagenet.ipynb)
+- [Pytorch MobileNetV2 post training quantization](notebooks/pytorch/ptq/example_pytorch_mobilenet_v2.py)
 
 ## MCT Features
-In these examples, we will cover more advanced topics related to quantization. 
+In this section, we will cover more advanced topics related to quantization. 
 This includes fine-tuning PTQ (Post-Training Quantization) configurations, exporting models,
 and exploring advanced compression techniques. 
 These techniques are crucial for optimizing models further and achieving better performance in deployment scenarios.
