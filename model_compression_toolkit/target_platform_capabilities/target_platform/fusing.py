@@ -36,8 +36,8 @@ class Fusing(TargetPlatformModelComponent):
             name (str): The name for the Fusing instance. If not provided, it's generated from the operator groups' names.
         """
         assert isinstance(operator_groups_list,
-                          list), f'Expected a list of operator groups, got {type(operator_groups_list)}'
-        assert len(operator_groups_list) >= 2, 'Fusing requires at least two operator groups'
+                          list), f'List of operator groups should be of type list but is {type(operator_groups_list)}'
+        assert len(operator_groups_list) >= 2, f'Fusing can not be created for a single operators group'
 
         # Generate a name from the operator groups if no name is provided
         if name is None:
