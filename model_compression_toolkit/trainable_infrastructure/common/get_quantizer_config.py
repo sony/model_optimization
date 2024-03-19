@@ -95,13 +95,14 @@ def get_trainable_quantizer_quantization_candidates(n: BaseNode, attr: str = Non
     """
 
     if attr is not None:
-    # all candidates must have the same weights quantization method
-    weights_quantization_methods = set([cfg.weights_quantization_cfg.weights_quantization_method for cfg in n.candidates_quantization_cfg])
-    if len(weights_quantization_methods) > 1:
-        Logger.critical(f"Invalid 'candidates_quantization_cfg': Inconsistent weights "
-                        f"quantization methods detected: {weights_quantization_methods}. "
-                        f"Trainable quantizer requires all candidates to have the same weights "
-                        f"quantization method.")  # pragma: no cover
+        # all candidates must have the same weights quantization method
+        weights_quantization_methods = set([cfg.weights_quantization_cfg.get_attr_config(attr).weights_quantization_method
+             for cfg in n.candidates_quantization_cfg])
+        if len(weights_quantization_methods) > 1:
+            Logger.critical(f"Invalid 'candidates_quantization_cfg': Inconsistent weights "
+                            f"quantization methods detected: {weights_quantization_methods}. "
+                            f"Trainable quantizer requires all candidates to have the same weights "
+                            f"quantization method.")  # pragma: no cover
 
     # all candidates must have the same activation quantization method
     activation_quantization_methods = set([cfg.activation_quantization_cfg.activation_quantization_method

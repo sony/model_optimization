@@ -84,7 +84,8 @@ def set_bit_widths(mixed_precision_enable: bool,
 
 def _get_node_qc_by_bit_widths(node: BaseNode,
                                bit_width_cfg: List[int],
-                               node_index_in_graph: int) -> Any:
+                               node_index_in_graph: int,
+                               fw_info) -> Any:
     """
     Get the node's quantization configuration that
     matches to the bit width index as in the MP configuration bit_width_cfg.
