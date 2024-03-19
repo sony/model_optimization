@@ -124,7 +124,7 @@ class OpQuantizationConfig:
 
         Args:
             default_weight_attr_config (AttributeQuantizationConfig): A default attribute quantization configuration for the operation.
-            attr_weights_configs_mapping (dict): A mapping between an op attribute name and its quantization configuration.
+            attr_weights_configs_mapping (Dict[str, AttributeQuantizationConfig]): A mapping between an op attribute name and its quantization configuration.
             activation_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for activation quantization.
             activation_n_bits (int): Number of bits to quantize the activations.
             enable_activation_quantization (bool): Whether to quantize the model activations or not.

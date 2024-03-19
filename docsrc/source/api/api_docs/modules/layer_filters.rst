@@ -15,6 +15,10 @@ one may use the next filters to check if a layer configuration holds the created
 Attribute Filters
 ==================
 
+.. autoclass:: model_compression_toolkit.target_platform.AttributeFilter
+
+|
+
 .. autoclass:: model_compression_toolkit.target_platform.Eq
 
 |
