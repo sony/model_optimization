@@ -70,7 +70,7 @@ class MatmulToDenseSubstitutionTest(BaseKerasFeatureNetworkTest):
 
         num_matmuls = 0
         for layer in quantized_model.layers:
-            if isinstance(layer, TFOpLambda) and layer.function is tf.matmul:
+            if isinstance(layer, TFOpLambda) and layer.symbol is TFOpLambda(tf.matmul).symbol:
                 num_matmuls += 1
 
         # check all "matmul"s were replaced except the one with 2 tensor inputs

@@ -59,7 +59,8 @@ def get_target_kpi(model, weights_compression, representative_data_gen, core_con
         A KPI object computed from MCT and contains info about the target model size.
 
     """
-    kpi_data = mct.core.keras_kpi_data(model, representative_data_gen, core_config=core_config, target_platform_capabilities=tpc)
+    kpi_data = mct.core.keras_kpi_data(model, representative_data_gen, core_config=core_config,
+                                       target_platform_capabilities=tpc)
     weights_kpi = BYTES_TO_FP32 * kpi_data.weights_memory / weights_compression # (4 bytes for fp32) * weights memory(in Bytes) / compression rate
     return KPI(weights_memory=weights_kpi)
 
@@ -100,10 +101,10 @@ def quantize(model: tf.keras.Model,
             shift_negative_activation_correction=True),
                                mixed_precision_config=mp_conf)
         target_kpi = get_target_kpi(model, mp_wcr, representative_data_gen, core_conf, tpc)
-        core_conf.mixed_precision_config.set_target_kpi(target_kpi)
     else:
         core_conf = CoreConfig(quantization_config=mct.core.QuantizationConfig(
             shift_negative_activation_correction=True))
+        target_kpi = None
 
     # Quantize model
     if args.get('gptq', False):
@@ -118,6 +119,7 @@ def quantize(model: tf.keras.Model,
         quantized_model, quantization_info = \
             mct.gptq.keras_gradient_post_training_quantization(model,
                                                                representative_data_gen=representative_data_gen,
+                                                               target_kpi=target_kpi,
                                                                core_config=core_conf,
                                                                gptq_config=gptq_conf,
                                                                gptq_representative_data_gen=representative_data_gen,
@@ -129,6 +131,7 @@ def quantize(model: tf.keras.Model,
         quantized_model, quantization_info = \
             mct.ptq.keras_post_training_quantization(model,
                                                      representative_data_gen=representative_data_gen,
+                                                     target_kpi=target_kpi,
                                                      core_config=core_conf,
                                                      target_platform_capabilities=tpc)
 

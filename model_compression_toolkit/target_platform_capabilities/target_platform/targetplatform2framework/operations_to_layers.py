@@ -35,9 +35,9 @@ class OperationsSetToLayers(TargetPlatformCapabilitiesComponent):
         Args:
             op_set_name (str): Name of OperatorsSet to associate with layers.
             layers (List[Any]): List of layers/FilterLayerParams to associate with OperatorsSet.
-            attr_mapping (dict): A mapping between a general attribute name to a DefaultDict that maps a layer
-+                type to the layer's framework name of this attribute (the dictionary type is not specified to
-+                handle circular dependency).
+            attr_mapping (dict): A mapping between a general attribute name to a DefaultDict that maps a layer type
+            to the layer's framework name of this attribute (the dictionary type is not specified to handle circular
+            dependency).
         """
         self.layers = layers
         self.attr_mapping = attr_mapping

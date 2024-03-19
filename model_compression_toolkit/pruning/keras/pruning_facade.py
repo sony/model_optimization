@@ -40,8 +40,7 @@ if FOUND_TF:
                                    target_kpi: KPI,
                                    representative_data_gen: Callable,
                                    pruning_config: PruningConfig = PruningConfig(),
-                                   target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> \
-            Tuple[Model, PruningInfo]:
+                                   target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, PruningInfo]:
         """
         Perform structured pruning on a Keras model to meet a specified target KPI.
         This function prunes the provided model according to the target KPI by grouping and pruning
@@ -59,11 +58,13 @@ if FOUND_TF:
             target_kpi (KPI): The target Key Performance Indicators to be achieved through pruning.
             representative_data_gen (Callable): A function to generate representative data for pruning analysis.
             pruning_config (PruningConfig): Configuration settings for the pruning process. Defaults to standard config.
-            target_platform_capabilities (TargetPlatformCapabilities): Platform-specific constraints and capabilities.
-                Defaults to DEFAULT_KERAS_TPC.
+            target_platform_capabilities (TargetPlatformCapabilities): Platform-specific constraints and capabilities. Defaults to DEFAULT_KERAS_TPC.
 
         Returns:
             Tuple[Model, PruningInfo]: A tuple containing the pruned Keras model and associated pruning information.
+
+        Note:
+            The pruned model should be fine-tuned or retrained to recover or improve its performance post-pruning.
 
         Examples:
 

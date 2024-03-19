@@ -41,6 +41,7 @@ if FOUND_TORCH:
 
     def pytorch_post_training_quantization(in_module: Module,
                                            representative_data_gen: Callable,
+                                           target_kpi: KPI = None,
                                            core_config: CoreConfig = CoreConfig(),
                                            target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
@@ -59,6 +60,7 @@ if FOUND_TORCH:
         Args:
             in_module (Module): Pytorch module to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
+            target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to.
 
@@ -107,6 +109,7 @@ if FOUND_TORCH:
                                                fw_info=DEFAULT_PYTORCH_INFO,
                                                fw_impl=fw_impl,
                                                tpc=target_platform_capabilities,
+                                               target_kpi=target_kpi,
                                                tb_w=tb_w)
 
         tg = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)

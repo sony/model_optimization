@@ -113,12 +113,11 @@ if FOUND_TF:
                                  regularization_factor=regularization_factor)
 
 
-    def keras_gradient_post_training_quantization(in_model: Model,
-                                                  representative_data_gen: Callable,
+    def keras_gradient_post_training_quantization(in_model: Model, representative_data_gen: Callable,
                                                   gptq_config: GradientPTQConfig,
                                                   gptq_representative_data_gen: Callable = None,
+                                                  target_kpi: KPI = None,
                                                   core_config: CoreConfig = CoreConfig(),
-                                                  fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                                                   target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
@@ -141,8 +140,8 @@ if FOUND_TF:
             representative_data_gen (Callable): Dataset used for calibration.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
+            target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
-            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
         Returns:
@@ -169,6 +168,12 @@ if FOUND_TF:
 
             >>> config = mct.core.CoreConfig()
 
+            If mixed precision is desired, create an MCT core config with a mixed-precision configuration, to quantize a model
+            with different bitwidths for different layers.
+            The candidates bitwidth for quantization should be defined in the target platform model:
+
+            >>> config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(num_of_images=1))
+
             For mixed-precision set a target KPI object:
             Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
             that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
@@ -176,23 +181,17 @@ if FOUND_TF:
 
             >>> kpi = mct.core.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
-            If mixed precision is desired, create an MCT core config with a mixed-precision configuration, to quantize a model
-            with different bitwidths for different layers.
-            The candidates bitwidth for quantization should be defined in the target platform model:
-
-            >>> config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(num_of_images=1, target_kpi=kpi))
-
             Create GPTQ config:
 
             >>> gptq_config = mct.gptq.get_keras_gptq_config(n_epochs=1)
 
             Pass the model with the representative dataset generator to get a quantized model:
 
-            >>> quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(model, repr_datagen, gptq_config, core_config=config)
+            >>> quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(model, repr_datagen, gptq_config, target_kpi=kpi, core_config=config)
 
         """
         KerasModelValidation(model=in_model,
-                             fw_info=fw_info).validate()
+                             fw_info=DEFAULT_KERAS_INFO).validate()
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
@@ -200,14 +199,14 @@ if FOUND_TF:
                                 "Ensure usage of the correct API for keras_post_training_quantization "
                                 "or provide a valid mixed-precision configuration.")  # pragma: no cover
 
-        tb_w = init_tensorboard_writer(fw_info)
+        tb_w = init_tensorboard_writer(DEFAULT_KERAS_INFO)
 
         fw_impl = GPTQKerasImplemantation()
 
         tg, bit_widths_config, hessian_info_service = core_runner(in_model=in_model,
                                                                   representative_data_gen=representative_data_gen,
                                                                   core_config=core_config,
-                                                                  fw_info=fw_info,
+                                                                  fw_info=DEFAULT_KERAS_INFO,
                                                                   fw_impl=fw_impl,
                                                                   tpc=target_platform_capabilities,
                                                                   tb_w=tb_w)
@@ -217,7 +216,7 @@ if FOUND_TF:
                               gptq_config,
                               representative_data_gen,
                               gptq_representative_data_gen if gptq_representative_data_gen else representative_data_gen,
-                              fw_info,
+                              DEFAULT_KERAS_INFO,
                               fw_impl,
                               tb_w,
                               hessian_info_service=hessian_info_service)

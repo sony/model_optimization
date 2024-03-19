@@ -47,6 +47,7 @@ def core_runner(in_model: Any,
                 fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation,
                 tpc: TargetPlatformCapabilities,
+                target_kpi: KPI = None,
                 tb_w: TensorboardWriter = None):
     """
     Quantize a trained model using post-training quantization.
@@ -66,6 +67,7 @@ def core_runner(in_model: Any,
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tpc: TargetPlatformCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
+        target_kpi: KPI to constraint the search of the mixed-precision configuration for the model.
         tb_w: TensorboardWriter object for logging
 
     Returns:
@@ -80,6 +82,13 @@ def core_runner(in_model: Any,
     if batch_data.shape[0] == 1:
         Logger.warning('representative_data_gen generates a batch size of 1 which can be slow for optimization:'
                        ' consider increasing the batch size')
+
+    # Checking whether to run mixed precision quantization
+    if target_kpi is not None:
+        if core_config.mixed_precision_config is None:
+            Logger.critical("Provided an initialized target_kpi, that means that mixed precision quantization is "
+                            "enabled, but the provided MixedPrecisionQuantizationConfig is None.")
+        core_config.mixed_precision_config.set_mixed_precision_enable()
 
     graph = graph_preparation_runner(in_model,
                                      representative_data_gen,
@@ -105,13 +114,12 @@ def core_runner(in_model: Any,
     # Finalize bit widths
     ######################################
     if core_config.mixed_precision_enable:
-        if core_config.mixed_precision_config.target_kpi is None:
-            Logger.critical(f"Trying to run Mixed Precision quantization without providing a valid target KPI.")
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
             bit_widths_config = search_bit_width(tg,
                                                  fw_info,
                                                  fw_impl,
+                                                 target_kpi,
                                                  core_config.mixed_precision_config,
                                                  representative_data_gen,
                                                  hessian_info_service=hessian_info_service)

@@ -87,9 +87,9 @@ if FOUND_TF:
 
     def keras_quantization_aware_training_init_experimental(in_model: Model,
                                                             representative_data_gen: Callable,
+                                                            target_kpi: KPI = None,
                                                             core_config: CoreConfig = CoreConfig(),
                                                             qat_config: QATConfig = QATConfig(),
-                                                            fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                                                             target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
          Prepare a trained Keras model for quantization aware training. First the model quantization is optimized
@@ -109,9 +109,9 @@ if FOUND_TF:
          Args:
              in_model (Model): Keras model to quantize.
              representative_data_gen (Callable): Dataset used for initial calibration.
+             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
              qat_config (QATConfig): QAT configuration
-             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).  `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
              target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
          Returns:
@@ -174,7 +174,7 @@ if FOUND_TF:
                        f"project https://github.com/sony/model_optimization")
 
         KerasModelValidation(model=in_model,
-                             fw_info=fw_info).validate()
+                             fw_info=DEFAULT_KERAS_INFO).validate()
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
@@ -182,7 +182,7 @@ if FOUND_TF:
                              "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization API,"
                              "or pass a valid mixed precision configuration.")
 
-        tb_w = init_tensorboard_writer(fw_info)
+        tb_w = init_tensorboard_writer(DEFAULT_KERAS_INFO)
 
         fw_impl = KerasImplementation()
 
@@ -190,16 +190,17 @@ if FOUND_TF:
         tg, bit_widths_config, _ = core_runner(in_model=in_model,
                                                representative_data_gen=representative_data_gen,
                                                core_config=core_config,
-                                               fw_info=fw_info,
+                                               fw_info=DEFAULT_KERAS_INFO,
                                                fw_impl=fw_impl,
                                                tpc=target_platform_capabilities,
+                                               target_kpi=target_kpi,
                                                tb_w=tb_w)
 
-        tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
+        tg = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_KERAS_INFO, fw_impl, tb_w)
 
         _qat_wrapper = partial(qat_wrapper, qat_config=qat_config)
         qat_model, user_info = KerasModelBuilder(graph=tg,
-                                                 fw_info=fw_info,
+                                                 fw_info=DEFAULT_KERAS_INFO,
                                                  wrapper=_qat_wrapper,
                                                  get_activation_quantizer_holder_fn=partial(get_activation_quantizer_holder,
                                                                                             qat_config=qat_config)).build_model()

@@ -65,10 +65,8 @@ class QuantizationAwareTrainingTest(BaseKerasFeatureNetworkTest):
 
     def run_test(self, **kwargs):
         model_float = self.create_networks()
-        ptq_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init_experimental(model_float,
-                                                                                                                   self.representative_data_gen,
-                                                                                                                   fw_info=self.get_fw_info(),
-                                                                                                                   target_platform_capabilities=self.get_tpc())
+        ptq_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init_experimental(
+            model_float, self.representative_data_gen, target_platform_capabilities=self.get_tpc())
 
         ptq_model2 = None
         if self.test_loading:
@@ -197,11 +195,9 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
 
     def run_test(self, **kwargs):
         model_float = self.create_networks()
-        ptq_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init_experimental(model_float,
-                                                                                                                   self.representative_data_gen,
-                                                                                                                   fw_info=self.get_fw_info(),
-                                                                                                                   qat_config=self.get_qat_config(),
-                                                                                                                   target_platform_capabilities=self.get_tpc())
+        ptq_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init_experimental(
+            model_float, self.representative_data_gen, qat_config=self.get_qat_config(),
+            target_platform_capabilities=self.get_tpc())
 
         # PTQ model
         in_tensor = np.random.randn(1, *ptq_model.input_shape[1:])
@@ -295,15 +291,12 @@ class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
 
     def run_test(self, **kwargs):
         model_float = self.create_networks()
-        config = mct.core.CoreConfig(
-            mixed_precision_config=MixedPrecisionQuantizationConfig(target_kpi=
-                                                                    mct.core.KPI(weights_memory=self.kpi_weights,
-                                                                                 activation_memory=self.kpi_activation)))
+        config = mct.core.CoreConfig()
         qat_ready_model, quantization_info, custom_objects = mct.qat.keras_quantization_aware_training_init_experimental(
             model_float,
             self.representative_data_gen_experimental,
+            mct.core.KPI(weights_memory=self.kpi_weights, activation_memory=self.kpi_activation),
             core_config=config,
-            fw_info=self.get_fw_info(),
             target_platform_capabilities=self.get_tpc())
 
         self.compare(qat_ready_model, quantization_info)

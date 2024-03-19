@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import copy
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Tuple, List, Type
 
 import numpy as np
 
@@ -556,6 +556,19 @@ class BaseNode:
             return tpc.layer2qco.get(self.type)
         return tpc.tp_model.default_qco
 
+    def is_match_type(self, _type: Type) -> bool:
+        """
+        Check if input type matches the node type, either in instance type or in type name. Checking the
+        name string is required because of function types changes that occurred in TF 2.15.
+
+        Args:
+            _type: other node type
+        Returns:
+            Whether _type matches the self node type
+
+        """
+        return _type == self.type or _type.__name__ == self.type.__name__
+
     def is_match_filter_params(self, layer_filter_params: LayerFilterParams) -> bool:
         """
         Check if the node matches a LayerFilterParams according to its
@@ -572,7 +585,7 @@ class BaseNode:
             return False
 
         # Check the node has the same type as the layer in LayerFilterParams
-        if layer_filter_params.layer != self.type:
+        if not self.is_match_type(layer_filter_params.layer):
             return False
 
         # Get attributes from node to filter

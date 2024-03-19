@@ -125,9 +125,7 @@ if __name__ == '__main__':
     # Get KPI information to constraint your model's memory size.
     # Retrieve a KPI object with helpful information of each KPI metric,
     # to constraint the quantized model to the desired memory size.
-    kpi_data = mct.core.keras_kpi_data(model,
-                                       representative_data_gen,
-                                       config,
+    kpi_data = mct.core.keras_kpi_data(model, representative_data_gen, config,
                                        target_platform_capabilities=target_platform_cap)
 
     # Set a constraint for each of the KPI metrics.
@@ -137,7 +135,6 @@ if __name__ == '__main__':
     # examples:
     # weights_compression_ratio = 0.75 - About 0.75 of the model's weights memory size when quantized with 8 bits.
     kpi = mct.core.KPI(kpi_data.weights_memory * args.weights_compression_ratio)
-    config.mixed_precision_config.set_target_kpi(kpi)
 
     # Create a GPTQ quantization configuration and set the number of training iterations.
     gptq_config = mct.gptq.get_keras_gptq_config(n_epochs=args.num_gptq_training_iterations,
@@ -147,7 +144,8 @@ if __name__ == '__main__':
                                                                                             representative_data_gen,
                                                                                             gptq_config=gptq_config,
                                                                                             core_config=config,
-                                                                                            target_platform_capabilities=target_platform_cap)
+                                                                                            target_platform_capabilities=target_platform_cap,
+                                                                                            target_kpi=kpi)
 
     # Export quantized model to TFLite and Keras.
     # For more details please see: https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/exporter/README.md

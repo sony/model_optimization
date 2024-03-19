@@ -229,8 +229,7 @@ if __name__ == "__main__":
     # prepare model for QAT with MCT and return to user for fine-tuning. Due to the relatively easy
     # task of quantizing model trained on MNIST, a custom TPC is used in this example to demonstrate
     # the degradation caused by post training quantization.
-    qat_model, _, _ = mct.qat.keras_quantization_aware_training_init_experimental(model,
-                                                                                  representative_dataset,
+    qat_model, _, _ = mct.qat.keras_quantization_aware_training_init_experimental(model, representative_dataset,
                                                                                   core_config=mct.core.CoreConfig(),
                                                                                   target_platform_capabilities=get_tpc())
 

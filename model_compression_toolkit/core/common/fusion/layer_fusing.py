@@ -31,9 +31,10 @@ def filter_fusing_patterns(fusing_patterns: List[List[Any]], node: BaseNode, idx
         fusing_patterns after filtering non-relevant fusions
     """
     valid_fusing_patterns = []
-    for i,fusing_pattern in enumerate(fusing_patterns):
+    for i, fusing_pattern in enumerate(fusing_patterns):
         if idx < len(fusing_pattern):
-            if (type(fusing_pattern[idx]) == LayerFilterParams and node.is_match_filter_params(fusing_pattern[idx])) or fusing_pattern[idx] == node.type:
+            if (type(fusing_pattern[idx]) == LayerFilterParams and node.is_match_filter_params(fusing_pattern[idx])) or \
+                    node.is_match_type(fusing_pattern[idx]):
                 valid_fusing_patterns.append(fusing_pattern)
 
     # Return only valid patterns for this node
@@ -44,7 +45,7 @@ def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List[BaseNode]) -> 
     """
     Check if the fusion is valid: exist in fusing_patterns
     Args:
-        fusing_patterns: supported fusings
+        fusing_patterns: supported fusing patterns
         nodes: nodes which are participating in fusion
     Returns:
         whether the fusion in valid
@@ -56,8 +57,9 @@ def is_valid_fusion(fusing_patterns: List[List[Any]], nodes: List[BaseNode]) -> 
         if fusion_depth != len(fusing_pattern):
             continue
         counter = 0
-        for i,layer in enumerate(fusing_pattern):
-            if (type(layer) == LayerFilterParams and nodes[i].is_match_filter_params(layer)) or layer == nodes[i].type:
+        for i, layer in enumerate(fusing_pattern):
+            if (type(layer) == LayerFilterParams and nodes[i].is_match_filter_params(layer)) or \
+                    nodes[i].is_match_type(layer):
                 counter += 1
         if counter == fusion_depth:
             return True
@@ -107,7 +109,7 @@ def fusion(graph: Graph, tpc: TargetPlatformCapabilities) -> Graph:
         if node in fused_nodes:
             continue
         # Start fusing search
-        fusing_nodes = [] # nodes that are candidates for participating in fusing
+        fusing_nodes = []  # nodes that are candidates for participating in fusing
         patterns = copy.deepcopy(fusing_patterns)
         next_nodes = [node]
         for i in range(max_layers_fusing):

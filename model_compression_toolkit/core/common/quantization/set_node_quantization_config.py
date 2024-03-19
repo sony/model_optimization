@@ -71,7 +71,7 @@ def set_quantization_configs_to_node(node: BaseNode,
         quant_config: Quantization configuration to generate the node's configurations from.
         fw_info: Information needed for quantization about the specific framework.
         tpc: TargetPlatformCapabilities to get default OpQuantizationConfig.
-        mixed_precision_enable: is mixed precision enabled
+        mixed_precision_enable: is mixed precision enabled.
     """
     node_qc_options = node.get_qco(tpc)
 
