@@ -1,8 +1,9 @@
 # Quantization Troubleshooting for MCT
 
 **Compressing a model with MCT:**
-The Model Compression Toolkit (MCT) is a great tool for compressing your model with only a few lines of code, with a minimal impact on accuracy.
-However, sometimes the compressed model's accuracy decrease is too large. But don't despair, the lost accuracy may be recovered by adjusting the quantization configuration
+The Model Compression Toolkit (MCT) has many features and capabilities for compressing your neural network with a minimal impact on accuracy.
+However, sometimes the compressed model's accuracy decrease is too large.
+But don't despair, the lost accuracy may be recovered by adjusting the quantization configuration
 or quantization setup.
 
 **Recover Accuracy: Troubleshooting:**
@@ -60,14 +61,13 @@ quantizted_model, quantization_info = mct.ptq.keras_post_training_quantization(m
 `shift_negative_ratio`, `shift_negative_threshold_recalculation` & `shift_negative_params_searc` flags.
 Read all about them in the [quantization config](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/common/quantization/quantization_config.py#L83) 
 
-Additional care should be taken when using this feature.????
 
 ### Bias Correction
 MCT applies bias correction by default to overcome induced bias shift caused by weights quantization.
 The applied correction is an estimation of the bias shift that is computed based on (among other things) the collected statistical data generated with the representative dataset.
 Therefore, the effect of the bias correction is sensitive to the distribution and size of the provided representative dataset.
 
-**Solution**: First, verify the bias correction causes a degradation in accuracy by disabling it:
+**Solution**: Verify the bias correction causes a degradation in accuracy by disabling it:
 ```python
 core_config = mct.core.CoreConfig(mct.core.QuantizationConfig(weights_bias_correction=False))
 quantizted_model, quantization_info = mct.ptq.keras_post_training_quantization(model, representative_dataset,
@@ -151,6 +151,3 @@ Check out the [GPTQ tutorial](https://github.com/sony/model_optimization/blob/ma
 *Note #1*: The finetuning process will take longer to finish than PTQ. As in any finetuning, some hyperparameters optimization may be required.
 
 *Note #2*: You can use mixed-precision and GPTQ together.
-
-
-**TODO:** Add Exporter stuff 
