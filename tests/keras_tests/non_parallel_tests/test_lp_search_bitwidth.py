@@ -71,7 +71,7 @@ class MockMixedPrecisionSearchManager:
         self.config_reconstruction_helper = MockReconstructionHelper()
         self.non_conf_ru_dict = None
 
-    def compute_ru_matrix(self, target):
+    def compute_resource_utilization_matrix(self, target):
         # minus 1 is normalization by the minimal resource utilization (which is always 1 in this test)
         if target == RUTarget.WEIGHTS:
             ru_matrix = [np.flip(np.array([ru.weights_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]
