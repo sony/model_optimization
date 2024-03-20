@@ -82,10 +82,10 @@ if FOUND_TORCH:
                                                           get_activation_quantizer_holder(n,
                                                                                           fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation())).build_model()
 
-        Logger.info("Please run your accuracy evaluation on the exported model to verify it's accuracy.\n"
-                    "Checkout the FAQ and Bag of Tricks pages for resolving common issues and improving the quantized model accuracy:\n"
+        Logger.info("Please run your accuracy evaluation on the exported quantized model to verify it's accuracy.\n"
+                    "Checkout the FAQ and Troubleshooting pages for resolving common issues and improving the quantized model accuracy:\n"
                     "FAQ: https://github.com/sony/model_optimization/tree/main/FAQ.md"
-                    "Quantization Bag of Tricks: https://github.com/sony/model_optimization/tree/main/quantization_bag_of_tricks.md")
+                    "Quantization Troubleshooting: https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md")
 
         return exportable_model, user_info
 

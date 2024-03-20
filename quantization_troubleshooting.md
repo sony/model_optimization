@@ -1,10 +1,11 @@
-# Quantization Bag of Tricks for MCT
+# Quantization Troubleshooting for MCT
 
 **Compressing a model with MCT:**
 The Model Compression Toolkit (MCT) is a great tool for compressing your model with only a few lines of code, with a minimal impact on accuracy.
-However, sometimes the compressed model's accuracy decrease is too large. But don't despair, the lost accuracy may be recovered with a few simple "tricks".
+However, sometimes the compressed model's accuracy decrease is too large. But don't despair, the lost accuracy may be recovered by adjusting the quantization configuration
+or quantization setup.
 
-**Recover Accuracy: Bag fo tricks:**
+**Recover Accuracy: Troubleshooting:**
 The following list contains a set of operations that may recover lost accuracy do to compression with MCT.
 Some operations might be relevant to your model and others may not.
 

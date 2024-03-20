@@ -90,10 +90,10 @@ if FOUND_TF:
                                                                                         fw_impl=C.keras.keras_implementation.KerasImplementation())).build_model()
         exportable_model.trainable = False
 
-        Logger.info("Please run your accuracy evaluation on the exported model to verify it's accuracy.\n"
-                    "Checkout the FAQ and Bag of Tricks pages for resolving common issues and improving the quantized model accuracy:\n"
+        Logger.info("Please run your accuracy evaluation on the exported quantized model to verify it's accuracy.\n"
+                    "Checkout the FAQ and Troubleshooting pages for resolving common issues and improving the quantized model accuracy:\n"
                     "FAQ: https://github.com/sony/model_optimization/tree/main/FAQ.md"
-                    "Quantization Bag of Tricks: https://github.com/sony/model_optimization/tree/main/quantization_bag_of_tricks.md")
+                    "Quantization Troubleshooting: https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md")
         return exportable_model, user_info
 else:
     def get_exportable_keras_model(*args, **kwargs):  # pragma: no cover
