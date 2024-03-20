@@ -192,7 +192,7 @@ class TargetPlatformModel(ImmutableClass):
         """
         opsets_names = [op.name for op in self.operator_set]
         if (len(set(opsets_names)) != len(opsets_names)):
-            Logger.critical(f'OperatorsSet must have unique names.')
+            Logger.critical(f'Operator Sets must have unique names.')
 
     def get_default_config(self) -> OpQuantizationConfig:
         """

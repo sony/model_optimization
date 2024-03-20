@@ -54,7 +54,7 @@ class MHAParams:
         # Add Zero Attn feature is Not Implemented
         if ADD_ZERO_ATTN in mha_node.framework_attr.keys():
             if mha_node.framework_attr[ADD_ZERO_ATTN] is not False:
-                Logger.critical('Add Zero Attention (Add Zero Attn) feature is not implemented')  # pragma: no cover
+                Logger.critical('Add Zero Attention (Add Zero Attn) feature is not implemented.')  # pragma: no cover
 
         # Check if Add Bias KV feature is Active
         if BIAS_K and BIAS_V in mha_node.weights.keys():

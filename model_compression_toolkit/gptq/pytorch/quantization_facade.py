@@ -202,10 +202,10 @@ else:
     # If torch is not installed,
     # we raise an exception when trying to use these functions.
     def get_pytorch_gptq_config(*args, **kwargs):
-        Logger.critical("PyTorch must be installed to use get_pytorch_gptq_config. "
+        Logger.critical("PyTorch must be installed to use 'get_pytorch_gptq_config'. "
                         "The 'torch' package is missing.")  # pragma: no cover
 
 
     def pytorch_gradient_post_training_quantization(*args, **kwargs):
-        Logger.critical("PyTorch must be installed to use pytorch_gradient_post_training_quantization. "
+        Logger.critical("PyTorch must be installed to use 'pytorch_gradient_post_training_quantization'. "
                         "The 'torch' package is missing.")  # pragma: no cover

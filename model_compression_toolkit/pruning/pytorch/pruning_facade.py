@@ -165,5 +165,5 @@ else:
         Raises:
             CriticalError: Indicates that PyTorch must be installed to use this function.
         """
-        Logger.critical('PyTorch must be installed to use pytorch_pruning_experimental. '
+        Logger.critical("PyTorch must be installed to use 'pytorch_pruning_experimental'. "
                         "The 'torch' package is missing.")  # pragma: no cover

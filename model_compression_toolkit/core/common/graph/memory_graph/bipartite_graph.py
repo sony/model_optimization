@@ -75,9 +75,7 @@ class DirectedBipartiteGraph(nx.DiGraph):
             edges_list: A list of edges to verify their correction.
         """
         for n1, n2 in edges_list:
-            if n1 in self.a_nodes and n2 in self.a_nodes:
-                Logger.critical(f"Attempted to add edge {(n1, n2)} between nodes of the same partition in a bipartite graph, violating bipartite properties.")
-            if n1 in self.b_nodes and n2 in self.b_nodes:
+            if (n1 in self.a_nodes and n2 in self.a_nodes) or (n1 in self.b_nodes and n2 in self.b_nodes):
                 Logger.critical(f"Attempted to add edge {(n1, n2)} between nodes of the same partition in a bipartite graph, violating bipartite properties.")
 
     def add_nodes_to_a(self, new_nodes: List[Any]):

@@ -128,5 +128,5 @@ else:
     # If torch is not installed,
     # we raise an exception when trying to use these functions.
     def pytorch_post_training_quantization(*args, **kwargs):
-        Logger.critical('PyTorch must be installed to use pytorch_post_training_quantization_experimental. '
+        Logger.critical("PyTorch must be installed to use 'pytorch_post_training_quantization_experimental'. "
                         "The 'torch' package is missing.")  # pragma: no cover

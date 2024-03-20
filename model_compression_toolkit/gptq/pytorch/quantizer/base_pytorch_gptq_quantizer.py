@@ -87,5 +87,5 @@ if FOUND_TORCH:
 else:
     class BasePytorchGPTQTrainableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
-            Logger.critical("PyTorch must be installed to use BasePytorchGPTQTrainableQuantizer. "
+            Logger.critical("PyTorch must be installed to use 'BasePytorchGPTQTrainableQuantizer'. "
                             "The 'torch' package is missing.")  # pragma: no cover

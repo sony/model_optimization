@@ -50,14 +50,14 @@ class TraceHessianCalculator(ABC):
 
         for output_node in graph.get_outputs():
             if not fw_impl.is_output_node_compatible_for_hessian_score_computation(output_node.node):
-                Logger.critical(f"All graph outputs must support Hessian score computation. Incompatible node: {output_node.node}, layer type: {output_node.node.type}. Consider disabling Hessian info computation")
+                Logger.critical(f"All graph outputs must support Hessian score computation. Incompatible node: {output_node.node}, layer type: {output_node.node.type}. Consider disabling Hessian info computation.")
 
         self.input_images = fw_impl.to_tensor(input_images)
         self.num_iterations_for_approximation = num_iterations_for_approximation
 
         # Validate representative dataset has same inputs as graph
         if len(self.input_images)!=len(graph.get_inputs()):
-            Logger.critical(f"The graph requires {len(graph.get_inputs())} inputs, but the provided representative dataset contains {len(self.input_images)} inputs")
+            Logger.critical(f"The graph requires {len(graph.get_inputs())} inputs, but the provided representative dataset contains {len(self.input_images)} inputs.")
 
         # Assert all inputs have a batch size of 1
         for image in self.input_images:

@@ -103,13 +103,13 @@ class BatchNormalizationRefusing(common.BaseSubstitution):
         # If the linear operator is part of a reused group (it is the "base" node, or a reused node),
         # we should skip the substitution.
         if source_node.is_reused():
-            Logger.critical("BN folding substitution cannot proceed if the linear operator is part of a reused group")  # pragma: no cover
+            Logger.critical("BN folding substitution cannot proceed if the linear operator is part of a reused group.")  # pragma: no cover
 
         bn_node = edge_nodes[1]
 
         if len(graph.get_next_nodes(source_node)) > 1 or len(graph.get_prev_nodes(bn_node)) > 1:
             Logger.critical(
-                "BN folding substitution cannot proceed if the linear operator has multiple outputs or the BN layer has multiple inputs")  # pragma: no cover
+                "BN folding substitution cannot proceed if the linear operator has multiple outputs or the BN layer has multiple inputs.")  # pragma: no cover
 
         kernel = source_node.get_weights_by_keys(self.kernel_str)
         bias = source_node.get_weights_by_keys(self.bias_str)

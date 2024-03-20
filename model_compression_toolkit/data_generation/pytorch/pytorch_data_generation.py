@@ -359,5 +359,5 @@ else:
 
 
     def pytorch_data_generation_experimental(*args, **kwargs):
-        Logger.critical('PyTorch must be installed to use pytorch_data_generation_experimental. '
+        Logger.critical("PyTorch must be installed to use 'pytorch_data_generation_experimental'. "
                         "The 'torch' package is missing.")  # pragma: no cover

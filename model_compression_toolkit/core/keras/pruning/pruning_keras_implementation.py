@@ -172,7 +172,7 @@ class PruningKerasImplementation(KerasImplementation, PruningFrameworkImplementa
         if fw_info.is_kernel_op(node.type):
             kernel_attributes = fw_info.get_kernel_op_attributes(node.type)
             if kernel_attributes is None or len(kernel_attributes)==0:
-                Logger.critical(f"Expected kernel attributes for operation, found None or empty.")
+                Logger.critical(f"Expected kernel attributes for operation for node type {node.type}, found None or empty.")
 
             for attr in kernel_attributes:
                 attributes_with_axis[attr] = fw_info.kernel_channels_mapping.get(node.type)

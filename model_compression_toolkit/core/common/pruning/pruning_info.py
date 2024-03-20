@@ -76,7 +76,7 @@ def unroll_simd_scores_to_per_channel_scores(simd_scores: Dict[BaseNode, np.ndar
     """
     if simd_scores is None or simd_groups_indices is None:
         Logger.critical(f"Failed to find scores and indices to create unrolled scores for pruning information."
-                        f" Scores: {simd_scores}, Group indices: {simd_groups_indices}")
+                        f" Scores: {simd_scores}, Group indices: {simd_groups_indices}.")
     _scores = {}
     for node, groups_indices in simd_groups_indices.items():
         node_scores = simd_scores[node]

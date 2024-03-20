@@ -35,14 +35,14 @@ if FOUND_TORCH:
             Check whether a PyTorch layer is a valid exportable layer or not.
         """
         if not isinstance(layer, nn.Module):
-            Logger.critical(f'Exportable layer must be a nn.Module layer, but layer {layer.name} is of type {type(layer)}') # pragma: no cover
+            Logger.critical(f'Exportable layer must be a nn.Module layer, but layer {layer.name} is of type {type(layer)}.') # pragma: no cover
 
         if isinstance(layer, PytorchQuantizationWrapper):
             valid_weights_quantizers = isinstance(layer.weights_quantizers, dict)
             if not valid_weights_quantizers:
                 Logger.critical(
                     f'PytorchQuantizationWrapper must have a weights_quantizers but has a '
-                    f'{type(layer.weights_quantizers)} object') # pragma: no cover
+                    f'{type(layer.weights_quantizers)} object.') # pragma: no cover
 
             if len(layer.weights_quantizers) == 0:
                 Logger.critical(f'PytorchQuantizationWrapper must have at least one weight quantizer, but found {len(layer.weights_quantizers)} quantizers.'
@@ -52,18 +52,18 @@ if FOUND_TORCH:
                 if not isinstance(weights_quantizer, BasePyTorchInferableQuantizer):
                     Logger.critical(
                         f'weights_quantizer must be a BasePyTorchInferableQuantizer object but has a '
-                        f'{type(weights_quantizer)} object')  # pragma: no cover
+                        f'{type(weights_quantizer)} object.')  # pragma: no cover
 
         elif isinstance(layer, PytorchActivationQuantizationHolder):
             if not isinstance(layer.activation_holder_quantizer, BasePyTorchInferableQuantizer):
                 Logger.critical(
                     f'activation quantizer in PytorchActivationQuantizationHolder'
                     f' must be a BasePyTorchInferableQuantizer object but has a '
-                    f'{type(layer.activation_holder_quantizer)} object')  # pragma: no cover
+                    f'{type(layer.activation_holder_quantizer)} object.')  # pragma: no cover
 
         return True
 
 else:
     def is_pytorch_layer_exportable(*args, **kwargs):  # pragma: no cover
-        Logger.critical('PyTorch must be installed to use is_pytorch_layer_exportable. '
+        Logger.critical("PyTorch must be installed to use 'is_pytorch_layer_exportable'. "
                         "The 'torch' package is missing.")  # pragma: no cover

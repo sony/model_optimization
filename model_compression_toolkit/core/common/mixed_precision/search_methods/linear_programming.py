@@ -51,7 +51,7 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
     # bitwidth index to the observed sensitivity of the model when using that bitwidth for that layer.
 
     if target_kpi is None or search_manager is None:
-        Logger.critical("Invalid parameters: target_kpi and search_manager must not be None for mixed-precision search. Ensure valid inputs are provided.")
+        Logger.critical("Invalid parameters: 'target_kpi' and 'search_manager' must not be 'None' for mixed-precision search. Ensure valid inputs are provided.")
 
     layer_to_metrics_mapping = _build_layer_to_metrics_mapping(search_manager, target_kpi)
 
@@ -70,7 +70,7 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
     lp_problem.solve(solver=solver)  # Try to solve the problem.
 
     assert lp_problem.status == LpStatusOptimal, Logger.critical(
-        "No solution found for the LP problem")
+        "No solution found for the LP problem.")
     Logger.info(LpStatus[lp_problem.status])
 
     # Take the bitwidth index only if its corresponding indicator is one.
@@ -176,7 +176,7 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
                                             lp_problem=lp_problem,
                                             non_conf_kpi_vector=non_conf_kpi_vector)
     else:  # pragma: no cover
-        raise Logger.critical("Unable to execute mixed-precision search: 'target_kpi' is None. A valid 'target_kpi' is required.")
+        Logger.critical("Unable to execute mixed-precision search: 'target_kpi' is None. A valid 'target_kpi' is required.")
     return lp_problem
 
 

@@ -244,5 +244,5 @@ else:
 
 
     def pytorch_quantization_aware_training_finalize_experimental(*args, **kwargs):
-        Logger.critical('PyTorch must be installed to use pytorch_quantization_aware_training_finalize_experimental. '
+        Logger.critical("PyTorch must be installed to use 'pytorch_quantization_aware_training_finalize_experimental'. "
                         "The 'torch' package is missing.")  # pragma: no cover

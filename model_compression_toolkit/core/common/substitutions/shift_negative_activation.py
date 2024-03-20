@@ -134,7 +134,7 @@ def insert_node_after_node(graph: Graph,
 
     last_nodes = graph.get_next_nodes(first_node)
     if len(last_nodes) != 1:
-        Logger.critical('Insertion requires exactly one successor node; multiple or no successors found.')  # pragma: no cover
+        Logger.critical(f'Insertion requires exactly one successor node; {len(last_nodes)} successors found.')  # pragma: no cover
     last_node = last_nodes[0]
     insert_node_between_two_nodes(graph, node_to_insert, first_node, last_node)
 

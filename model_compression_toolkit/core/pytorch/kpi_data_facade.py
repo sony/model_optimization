@@ -89,5 +89,5 @@ else:
     # If torch is not installed,
     # we raise an exception when trying to use this function.
     def pytorch_kpi_data(*args, **kwargs):
-        Logger.critical("PyTorch must be installed to use pytorch_kpi_data. The 'torch' package is missing.")  # pragma: no cover
+        Logger.critical("PyTorch must be installed to use 'pytorch_kpi_data'. The 'torch' package is missing.")  # pragma: no cover
 

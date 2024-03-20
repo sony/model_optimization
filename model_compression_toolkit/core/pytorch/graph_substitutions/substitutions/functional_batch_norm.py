@@ -47,7 +47,7 @@ class FunctionalBatchNorm(common.BaseSubstitution):
             Weights dictionary for BatchNorm2d.
         """
         if 1 not in node.weights and 2 not in node.weights:
-            Logger.critical(f'Missing {MOVING_MEAN} and {MOVING_VARIANCE} in functional batch_norm inputs')
+            Logger.critical(f'Missing {MOVING_MEAN} and {MOVING_VARIANCE} in functional batch_norm inputs.')
         weights_dict = {MOVING_MEAN: node.weights[1],
                         MOVING_VARIANCE: node.weights[2],
                         GAMMA: np.ones(node.weights[1].shape),

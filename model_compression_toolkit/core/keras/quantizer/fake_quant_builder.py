@@ -71,7 +71,7 @@ def power_of_two_quantization(activation_n_bits: int,
     if activation_threshold is None:
         Logger.critical("Activation threshold must be specified.")  # pragma: no cover
     if activation_is_signed is None:
-        Logger.critical("Parameter 'activation_is_signed' must be specified")  # pragma: no cover
+        Logger.critical("Parameter 'activation_is_signed' must be specified.")  # pragma: no cover
     if not threshold_is_power_of_two(activation_threshold, per_channel=False):
         Logger.critical("Activation threshold must be a power of two.")  # pragma: no cover
 

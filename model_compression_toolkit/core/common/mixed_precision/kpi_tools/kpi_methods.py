@@ -288,8 +288,7 @@ def _bops_kpi(mp_cfg: List[int],
             # If node doesn't have weights then its MAC count is 0, and we shouldn't consider it in the BOPS count.
             incoming_edges = graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
             if len(incoming_edges) != 1:
-                Logger.critical(f"Unable to compute BOPS metric for node {n.name} due to multiple inputs")  # pragma: no cover
-
+                Logger.critical(f"Unable to compute BOPS metric for node {n.name} due to multiple inputs.")  # pragma: no cover
             input_activation_node = incoming_edges[0].source_node
             if len(graph.out_edges(input_activation_node)) > 1:
                 # In the case where the activation node has multiple outgoing edges
