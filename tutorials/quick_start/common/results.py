@@ -56,7 +56,7 @@ class QuantInfo:
             user_info (UserInformation): Quantization information returned from MCT
             tpc_info (TPCInfo): The target platform capabilities information which is provided to the MCT.
             quantization_workflow (str): String to describe the quantization workflow (PTQ, GPTQ etc.).
-            mp_weights_compression (float): Weights compression factor for mixed precision KPI
+            mp_weights_compression (float): Weights compression factor for mixed precision Resource Utilization constraint.
         """
         self.user_info = user_info
         self.tpc_info = tpc_info

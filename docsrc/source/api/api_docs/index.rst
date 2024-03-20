@@ -49,12 +49,12 @@ core
 - :ref:`QuantizationConfig<ug-QuantizationConfig>`: Module to configure the quantization process.
 - :ref:`QuantizationErrorMethod<ug-QuantizationErrorMethod>`: Select a method for quantization parameters' selection.
 - :ref:`MixedPrecisionQuantizationConfig<ug-MixedPrecisionQuantizationConfig>`: Module to configure the quantization process when using mixed-precision PTQ.
-- :ref:`KPI<ug-KPI>`: Module to configure resources to use when searching for a configuration for the optimized model.
+- :ref:`ResourceUtilization<ug-ResourceUtilization>`: Module to configure resources to use when searching for a configuration for the optimized model.
 - :ref:`MpDistanceWeighting<ug-MpDistanceWeighting>`: Mixed precision distance metric weighting methods.
 - :ref:`network_editor<ug-network_editor>`: Module to modify the optimization process for troubleshooting.
 - :ref:`FolderImageLoader<ug-FolderImageLoader>`: Class to use an images directory as a representative dataset.
-- :ref:`pytorch_kpi_data<ug-pytorch_kpi_data>`: A function to compute KPI data that can be used to calculate the desired target KPI for PyTorch models.
-- :ref:`keras_kpi_data<ug-keras_kpi_data>`: A function to compute KPI data that can be used to calculate the desired target KPI for Keras models.
+- :ref:`pytorch_resource_utilization_data<ug-pytorch_resource_utilization_data>`: A function to compute Resource Utilization data that can be used to calculate the desired target resource utilization for PyTorch models.
+- :ref:`keras_resource_utilization_data<ug-keras_resource_utilization_data>`: A function to compute Resource Utilization data that can be used to calculate the desired target resource utilization for Keras models.
 
 
 data_generation

@@ -18,7 +18,8 @@ import unittest
 import keras
 from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
+    ResourceUtilization, RUTarget
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width, \
@@ -53,39 +54,39 @@ class MockReconstructionHelper:
 
 
 class MockMixedPrecisionSearchManager:
-    def __init__(self, layer_to_kpi_mapping):
+    def __init__(self, layer_to_ru_mapping):
         self.layer_to_bitwidth_mapping = {0: [0, 1, 2]}
-        self.layer_to_kpi_mapping = layer_to_kpi_mapping
+        self.layer_to_ru_mapping = layer_to_ru_mapping
         self.compute_metric_fn = lambda x, y=None, z=None: {0: 2, 1: 1, 2: 0}[x[0]]
         self.min_ru = {RUTarget.WEIGHTS: [[1], [1], [1]],
-                        RUTarget.ACTIVATION: [[1], [1], [1]],
-                        RUTarget.TOTAL: [[2], [2], [2]],
-                        RUTarget.BOPS: [[1], [1], [1]]}  # minimal kpi in the tests layer_to_kpi_mapping
+                       RUTarget.ACTIVATION: [[1], [1], [1]],
+                       RUTarget.TOTAL: [[2], [2], [2]],
+                       RUTarget.BOPS: [[1], [1], [1]]}  # minimal resource utilization in the tests layer_to_ru_mapping
 
-        self.compute_kpi_functions = {RUTarget.WEIGHTS: (None, lambda v: [lpSum(v)]),
-                                      RUTarget.ACTIVATION: (None, lambda v: [i for i in v]),
-                                      RUTarget.TOTAL: (None, lambda v: [lpSum(v[0]) + i for i in v[1]]),
-                                      RUTarget.BOPS: (None, lambda v: [lpSum(v)])}
+        self.compute_ru_functions = {RUTarget.WEIGHTS: (None, lambda v: [lpSum(v)]),
+                                     RUTarget.ACTIVATION: (None, lambda v: [i for i in v]),
+                                     RUTarget.TOTAL: (None, lambda v: [lpSum(v[0]) + i for i in v[1]]),
+                                     RUTarget.BOPS: (None, lambda v: [lpSum(v)])}
         self.max_ru_config = [0]
         self.config_reconstruction_helper = MockReconstructionHelper()
         self.non_conf_ru_dict = None
 
-    def compute_kpi_matrix(self, target):
-        # minus 1 is normalization by the minimal kpi (which is always 1 in this test)
+    def compute_ru_matrix(self, target):
+        # minus 1 is normalization by the minimal resource utilization (which is always 1 in this test)
         if target == RUTarget.WEIGHTS:
-            kpi_matrix = [np.flip(np.array([kpi.weights_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
+            ru_matrix = [np.flip(np.array([ru.weights_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]
         elif target == RUTarget.ACTIVATION:
-            kpi_matrix = [np.flip(np.array([kpi.activation_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
+            ru_matrix = [np.flip(np.array([ru.activation_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]
         elif target == RUTarget.TOTAL:
-            kpi_matrix = [np.flip(np.array([kpi.weights_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()])),
-                          np.flip(np.array([kpi.activation_memory - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
+            ru_matrix = [np.flip(np.array([ru.weights_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()])),
+                         np.flip(np.array([ru.activation_memory - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]
         elif target == RUTarget.BOPS:
-            kpi_matrix = [np.flip(np.array([kpi.bops - 1 for _, kpi in self.layer_to_kpi_mapping[0].items()]))]
+            ru_matrix = [np.flip(np.array([ru.bops - 1 for _, ru in self.layer_to_ru_mapping[0].items()]))]
         else:
             # not supposed to get here
-            kpi_matrix = []
+            ru_matrix = []
 
-        return np.array(kpi_matrix)
+        return np.array(ru_matrix)
 
     def finalize_distance_metric(self, d):
         return d
@@ -95,10 +96,10 @@ class TestLpSearchBitwidth(unittest.TestCase):
 
     def test_search_weights_only(self):
         target_resource_utilization = ResourceUtilization(weights_memory=2)
-        layer_to_kpi_mapping = {0: {2: ResourceUtilization(weights_memory=1),
-                                    1: ResourceUtilization(weights_memory=2),
-                                    0: ResourceUtilization(weights_memory=3)}}
-        mock_search_manager = MockMixedPrecisionSearchManager(layer_to_kpi_mapping)
+        layer_to_ru_mapping = {0: {2: ResourceUtilization(weights_memory=1),
+                                   1: ResourceUtilization(weights_memory=2),
+                                   0: ResourceUtilization(weights_memory=3)}}
+        mock_search_manager = MockMixedPrecisionSearchManager(layer_to_ru_mapping)
 
         bit_cfg = mp_integer_programming_search(mock_search_manager,
                                                 target_resource_utilization=target_resource_utilization)
@@ -124,10 +125,10 @@ class TestLpSearchBitwidth(unittest.TestCase):
 
     def test_search_activation_only(self):
         target_resource_utilization = ResourceUtilization(activation_memory=2)
-        layer_to_kpi_mapping = {0: {2: ResourceUtilization(activation_memory=1),
-                                    1: ResourceUtilization(activation_memory=2),
-                                    0: ResourceUtilization(activation_memory=3)}}
-        mock_search_manager = MockMixedPrecisionSearchManager(layer_to_kpi_mapping)
+        layer_to_ru_mapping = {0: {2: ResourceUtilization(activation_memory=1),
+                                   1: ResourceUtilization(activation_memory=2),
+                                   0: ResourceUtilization(activation_memory=3)}}
+        mock_search_manager = MockMixedPrecisionSearchManager(layer_to_ru_mapping)
 
         bit_cfg = mp_integer_programming_search(mock_search_manager,
                                                 target_resource_utilization=target_resource_utilization)
@@ -141,17 +142,18 @@ class TestLpSearchBitwidth(unittest.TestCase):
                                                     target_resource_utilization=target_resource_utilization)
 
         bit_cfg = mp_integer_programming_search(mock_search_manager,
-                                                target_resource_utilization=ResourceUtilization(activation_memory=np.inf))
+                                                target_resource_utilization=ResourceUtilization(
+                                                    activation_memory=np.inf))
 
         self.assertTrue(len(bit_cfg) == 1)
         self.assertTrue(bit_cfg[0] == 0)  # ResourceUtilization is Inf so expecting for the maximal bit-width result
 
     def test_search_weights_and_activation(self):
         target_resource_utilization = ResourceUtilization(weights_memory=2, activation_memory=2)
-        layer_to_kpi_mapping = {0: {2: ResourceUtilization(weights_memory=1, activation_memory=1),
-                                    1: ResourceUtilization(weights_memory=2, activation_memory=2),
-                                    0: ResourceUtilization(weights_memory=3, activation_memory=3)}}
-        mock_search_manager = MockMixedPrecisionSearchManager(layer_to_kpi_mapping)
+        layer_to_ru_mapping = {0: {2: ResourceUtilization(weights_memory=1, activation_memory=1),
+                                   1: ResourceUtilization(weights_memory=2, activation_memory=2),
+                                   0: ResourceUtilization(weights_memory=3, activation_memory=3)}}
+        mock_search_manager = MockMixedPrecisionSearchManager(layer_to_ru_mapping)
 
         bit_cfg = mp_integer_programming_search(mock_search_manager,
                                                 target_resource_utilization=target_resource_utilization)
@@ -165,17 +167,18 @@ class TestLpSearchBitwidth(unittest.TestCase):
                                                     target_resource_utilization=target_resource_utilization)
 
         bit_cfg = mp_integer_programming_search(mock_search_manager,
-                                                target_resource_utilization=ResourceUtilization(weights_memory=np.inf, activation_memory=np.inf))
+                                                target_resource_utilization=ResourceUtilization(weights_memory=np.inf,
+                                                                                                activation_memory=np.inf))
 
         self.assertTrue(len(bit_cfg) == 1)
         self.assertTrue(bit_cfg[0] == 0)  # ResourceUtilization is Inf so expecting for the maximal bit-width result
 
-    def test_search_total_kpi(self):
+    def test_search_total_resource_utilization(self):
         target_resource_utilization = ResourceUtilization(total_memory=4)
-        layer_to_kpi_mapping = {0: {2: ResourceUtilization(weights_memory=1, activation_memory=1),
-                                    1: ResourceUtilization(weights_memory=2, activation_memory=2),
-                                    0: ResourceUtilization(weights_memory=3, activation_memory=3)}}
-        mock_search_manager = MockMixedPrecisionSearchManager(layer_to_kpi_mapping)
+        layer_to_ru_mapping = {0: {2: ResourceUtilization(weights_memory=1, activation_memory=1),
+                                   1: ResourceUtilization(weights_memory=2, activation_memory=2),
+                                   0: ResourceUtilization(weights_memory=3, activation_memory=3)}}
+        mock_search_manager = MockMixedPrecisionSearchManager(layer_to_ru_mapping)
 
         bit_cfg = mp_integer_programming_search(mock_search_manager,
                                                 target_resource_utilization=target_resource_utilization)
@@ -183,12 +186,12 @@ class TestLpSearchBitwidth(unittest.TestCase):
         self.assertTrue(len(bit_cfg) == 1)
         self.assertTrue(bit_cfg[0] == 1)
 
-    def test_search_bops_kpi(self):
+    def test_search_bops_ru(self):
         target_resource_utilization = ResourceUtilization(bops=2)
-        layer_to_kpi_mapping = {0: {2: ResourceUtilization(bops=1),
-                                    1: ResourceUtilization(bops=2),
-                                    0: ResourceUtilization(bops=3)}}
-        mock_search_manager = MockMixedPrecisionSearchManager(layer_to_kpi_mapping)
+        layer_to_ru_mapping = {0: {2: ResourceUtilization(bops=1),
+                                   1: ResourceUtilization(bops=2),
+                                   0: ResourceUtilization(bops=3)}}
+        mock_search_manager = MockMixedPrecisionSearchManager(layer_to_ru_mapping)
 
         bit_cfg = mp_integer_programming_search(mock_search_manager,
                                                 target_resource_utilization=target_resource_utilization)
@@ -205,9 +208,10 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         tpc = get_weights_only_mp_tpc_keras(base_config=base_config,
                                             default_config=default_config,
-                                            mp_bitwidth_candidates_list=[(c.attr_weights_configs_mapping[KERNEL_ATTR].weights_n_bits,
-                                                                          c.activation_n_bits) for c
-                                                                         in mixed_precision_cfg_list],
+                                            mp_bitwidth_candidates_list=[
+                                                (c.attr_weights_configs_mapping[KERNEL_ATTR].weights_n_bits,
+                                                 c.activation_n_bits) for c
+                                                in mixed_precision_cfg_list],
                                             name="bitwidth_cfg_test")
 
         fw_info = DEFAULT_KERAS_INFO
@@ -294,7 +298,6 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                                                                                     use_hessian_based_scores=False))
 
         self.run_search_bitwidth_config_test(core_config_last_layer)
-
 
 
 if __name__ == '__main__':

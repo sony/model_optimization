@@ -49,20 +49,20 @@ def get_target_resource_utilization(model, weights_compression, representative_d
     Calculates the model's required size according to the given weights compression rate, to provide as a constraint for mixed precision search.
 
     Args:
-        model: The model to calculate the KPI.
+        model: The model to calculate the target resource utilization for.
         weights_compression: The required weights compression ratio.
         representative_data_gen: Callable function to generate the representative dataset.
         core_config (CoreConfig): CoreConfig containing parameters for quantization and mixed precision.
         tpc (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the TensorFlow model according to.
 
     Returns:
-        A KPI object computed from MCT and contains info about the target model size.
+        A ResourceUtilization object computed from MCT and contains info about the target model size.
 
     """
-    kpi_data = mct.core.keras_resource_utilization_data(model, representative_data_gen, core_config=core_config,
+    ru_data = mct.core.keras_resource_utilization_data(model, representative_data_gen, core_config=core_config,
                                                         target_platform_capabilities=tpc)
-    weights_kpi = BYTES_TO_FP32 * kpi_data.weights_memory / weights_compression # (4 bytes for fp32) * weights memory(in Bytes) / compression rate
-    return ResourceUtilization(weights_memory=weights_kpi)
+    weights_ru = BYTES_TO_FP32 * ru_data.weights_memory / weights_compression # (4 bytes for fp32) * weights memory(in Bytes) / compression rate
+    return ResourceUtilization(weights_memory=weights_ru)
 
 
 def quantize(model: tf.keras.Model,

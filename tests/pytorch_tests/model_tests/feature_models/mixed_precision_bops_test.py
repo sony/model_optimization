@@ -182,7 +182,7 @@ class MixedPrecisionActivationOnlyBopsTest(MixedPrecisionBopsAllWeightsLayersTes
         self.unit_test.assertTrue(quantization_info.final_resource_utilization.bops <= self.get_resource_utilization().bops)
 
 
-class MixedPrecisionBopsAndWeightsKPITest(MixedPrecisionBopsAllWeightsLayersTest):
+class MixedPrecisionBopsAndWeightsMemoryUtilizationTest(MixedPrecisionBopsAllWeightsLayersTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -190,7 +190,7 @@ class MixedPrecisionBopsAndWeightsKPITest(MixedPrecisionBopsAllWeightsLayersTest
         return ResourceUtilization(weights_memory=150, bops=3000000)  # should require some quantization to all layers
 
 
-class MixedPrecisionBopsAndActivationKPITest(MixedPrecisionBopsAllWeightsLayersTest):
+class MixedPrecisionBopsAndActivationMemoryUtilizationTest(MixedPrecisionBopsAllWeightsLayersTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -198,7 +198,7 @@ class MixedPrecisionBopsAndActivationKPITest(MixedPrecisionBopsAllWeightsLayersT
         return ResourceUtilization(activation_memory=1000, bops=3000000)  # should require some quantization to all layers
 
 
-class MixedPrecisionBopsAndTotalKPITest(MixedPrecisionBopsAllWeightsLayersTest):
+class MixedPrecisionBopsAndTotalMemoryUtilizationTest(MixedPrecisionBopsAllWeightsLayersTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -206,7 +206,7 @@ class MixedPrecisionBopsAndTotalKPITest(MixedPrecisionBopsAllWeightsLayersTest):
         return ResourceUtilization(total_memory=1100, bops=3000000)  # should require some quantization to all layers
 
 
-class MixedPrecisionBopsWeightsActivationKPITest(MixedPrecisionBopsAllWeightsLayersTest):
+class MixedPrecisionBopsWeightsActivationUtilizationTest(MixedPrecisionBopsAllWeightsLayersTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 

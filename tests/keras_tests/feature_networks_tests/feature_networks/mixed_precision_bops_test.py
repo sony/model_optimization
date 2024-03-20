@@ -121,7 +121,7 @@ class MixedPrecisionActivationOnlyBopsTest(MixedPrecisionBopsAllWeightsLayersTes
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Verify that some layers got bit-width smaller than 8 bits (so checking candidate index is not 0)
         self.unit_test.assertTrue(any(i > 0 for i in quantization_info.mixed_precision_cfg))
-        # Verify final BOPs KPI
+        # Verify final BOPs utilization
         self.unit_test.assertTrue(quantization_info.final_resource_utilization.bops <= self.get_resource_utilization().bops)
 
 

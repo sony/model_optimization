@@ -57,13 +57,13 @@ def get_target_resource_utilization(model, weights_compression, representative_d
         tpc (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the PyTorch model according to.
 
     Returns:
-        A KPI object computed from MCT and contains info about the target model size.
+        A ResourceUtilization object computed from MCT and contains info about the target model size.
 
     """
-    kpi_data = mct.core.pytorch_resource_utilization_data(model, representative_data_gen, core_config=core_config,
+    ru_data = mct.core.pytorch_resource_utilization_data(model, representative_data_gen, core_config=core_config,
                                                           target_platform_capabilities=tpc)
-    weights_kpi = BYTES_TO_FP32 * kpi_data.weights_memory / weights_compression # (4 bytes for fp32) * weights memory(in Bytes) / compression rate
-    return ResourceUtilization(weights_memory=weights_kpi)
+    weights_ru = BYTES_TO_FP32 * ru_data.weights_memory / weights_compression # (4 bytes for fp32) * weights memory(in Bytes) / compression rate
+    return ResourceUtilization(weights_memory=weights_ru)
 
 
 def quantize(model: nn.Module,

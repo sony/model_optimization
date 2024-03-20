@@ -169,7 +169,7 @@ class MixedPercisionSearchPartWeightsLayers(MixedPercisionBaseTest):
         # The actual quantization is not interesting for the sake of this test, so we just verify some
         # degenerated things to see that everything worked.
         self.unit_test.assertTrue(
-            quantization_info.mixed_precision_cfg == [0])  # kpi is infinity -> should give best model - 8bits
+            quantization_info.mixed_precision_cfg == [0])  # resource utilization is infinity -> should give best model - 8bits
 
         quantized_model = quantized_models['mixed_precision_model']
         linear_layer = quantized_model.linear

@@ -27,10 +27,10 @@ from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import L
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
     MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
-    MixedPrecisionBopsAndWeightsKPITest, MixedPrecisionBopsAndActivationKPITest, MixedPrecisionBopsAndTotalKPITest, \
-    MixedPrecisionBopsWeightsActivationKPITest, MixedPrecisionBopsMultipleOutEdgesTest
+    MixedPrecisionBopsAndWeightsMemoryUtilizationTest, MixedPrecisionBopsAndActivationMemoryUtilizationTest, MixedPrecisionBopsAndTotalMemoryUtilizationTest, \
+    MixedPrecisionBopsWeightsActivationUtilizationTest, MixedPrecisionBopsMultipleOutEdgesTest
 from tests.pytorch_tests.model_tests.feature_models.qat_test import QuantizationAwareTrainingTest, \
-    QuantizationAwareTrainingMixedPrecisionCfgTest, QuantizationAwareTrainingMixedPrecisionKpiCfgTest, \
+    QuantizationAwareTrainingMixedPrecisionCfgTest, QuantizationAwareTrainingMixedPrecisionRUCfgTest, \
     QuantizationAwareTrainingQuantizerHolderTest
 from tests.pytorch_tests.model_tests.feature_models.relu_replacement_test import SingleLayerReplacementTest, \
     ReluReplacementTest, ReluReplacementWithAddBiasTest
@@ -466,7 +466,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         MixedPercisionActivationMultipleInputs(self).run_test()
 
-    def test_mixed_precision_bops_kpi(self):
+    def test_mixed_precision_bops_utilization(self):
         """
         This test checks different scenarios for mixed-precision quantization with bit-operations constraint.
         """
@@ -474,10 +474,10 @@ class FeatureModelsTestRunner(unittest.TestCase):
         MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
         MixedPrecisionWeightsOnlyBopsTest(self).run_test()
         MixedPrecisionActivationOnlyBopsTest(self).run_test()
-        MixedPrecisionBopsAndWeightsKPITest(self).run_test()
-        MixedPrecisionBopsAndActivationKPITest(self).run_test()
-        MixedPrecisionBopsAndTotalKPITest(self).run_test()
-        MixedPrecisionBopsWeightsActivationKPITest(self).run_test()
+        MixedPrecisionBopsAndWeightsMemoryUtilizationTest(self).run_test()
+        MixedPrecisionBopsAndActivationMemoryUtilizationTest(self).run_test()
+        MixedPrecisionBopsAndTotalMemoryUtilizationTest(self).run_test()
+        MixedPrecisionBopsWeightsActivationUtilizationTest(self).run_test()
         MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
     def test_mha_layer_test(self):
@@ -569,7 +569,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
                                       finalize=True).run_test()
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
-        QuantizationAwareTrainingMixedPrecisionKpiCfgTest(self).run_test()
+        QuantizationAwareTrainingMixedPrecisionRUCfgTest(self).run_test()
 
     def test_bn_attributes_quantization(self):
         """
