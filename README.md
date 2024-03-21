@@ -37,15 +37,16 @@ For installing the nightly version or installing from source, refer to the [inst
 
 ### Quick start & tutorials 
 
-For an example of how to use MCT with TensorFlow or PyTorch on various models and tasks,
-check out the [quick-start page](tutorials/quick_start/README.md) and
-the [results CSV](tutorials/quick_start/results/model_quantization_results.csv).
-
-In addition, a set of [notebooks](tutorials/README.md) are provided for an easy start. For example:
-* [MobileNet with Tensorflow](tutorials/notebooks/keras/ptq/example_keras_mobilenet.py).
-* [MobileNetV2 with PyTorch](tutorials/notebooks/pytorch/ptq/example_pytorch_mobilenet_v2.py).
+Explore the Model Compression Toolkit (MCT) through our tutorials, 
+covering compression techniques for Keras and PyTorch models. Access interactive [notebooks](tutorials/README.md) 
+for hands-on learning. For example:
+* [Keras MobileNetV2 post training quantization](notebooks/keras/ptq/example_keras_imagenet.ipynb)
+* [Post training quantization with PyTorch](notebooks/pytorch/ptq/example_pytorch_quantization_mnist.ipynb)
 * [Data Generation for ResNet18 with PyTorch](tutorials/notebooks/pytorch/data_generation/example_pytorch_data_generation.ipynb).
 
+Additionally, for quick quantization of a variety of models from well-known collections,
+visit the [quick-start page](tutorials/quick_start/README.md) and the
+[results CSV](tutorials/quick_start/results/model_quantization_results.csv).
 
 ### Supported Versions
 
