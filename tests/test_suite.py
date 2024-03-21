@@ -22,7 +22,7 @@ from tests.common_tests.function_tests.test_collectors_manipulation import TestC
 from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 #  ----------------  Individual test suites
 from tests.common_tests.function_tests.test_histogram_collector import TestHistogramCollector
-from tests.common_tests.function_tests.test_kpi_object import TestKPIObject
+from tests.common_tests.function_tests.test_resource_utilization_object import TestResourceUtilizationObject
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
@@ -62,7 +62,7 @@ if found_tf:
         TestSensitivityEvalWithNonSupportedOutputNodes
     from tests.keras_tests.function_tests.test_set_layer_to_bitwidth import TestKerasSetLayerToBitwidth
     from tests.keras_tests.function_tests.test_export_keras_fully_quantized_model import TestKerasFakeQuantExporter
-    from tests.keras_tests.function_tests.test_kpi_data import TestKPIData
+    from tests.keras_tests.function_tests.test_resource_utilization_data import TestResourceUtilizationData
     from tests.keras_tests.exporter_tests.test_runner import ExporterTestsRunner
     from tests.keras_tests.function_tests.test_get_gptq_config import TestGetGPTQConfig
     from tests.keras_tests.function_tests.test_gptq_loss_functions import TestGPTQLossFunctions
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(QCOptionsTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FusingTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCommonDocsExamples))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKPIObject))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestResourceUtilizationObject))
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
@@ -136,7 +136,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasSetLayerToBitwidth))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityEvalWithNonSupportedOutputNodes))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasFakeQuantExporter))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKPIData))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestResourceUtilizationData))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFileLogger))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGetGPTQConfig))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQLossFunctions))

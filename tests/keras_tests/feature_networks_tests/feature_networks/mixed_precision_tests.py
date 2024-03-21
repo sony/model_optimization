@@ -23,7 +23,7 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 from keras import backend as K
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.user_info import UserInformation
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 from tests.keras_tests.utils import get_layers_from_model_by_type
@@ -110,13 +110,13 @@ class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, activation_layers_idx=[1, 2, 4])
 
-    def get_kpi(self):
-        # kpi is infinity -> should give best model - 8bits on all layers for both weights and activations
-        return KPI(np.inf, np.inf)
+    def get_resource_utilization(self):
+        # resource utilization is infinity -> should give best model - 8bits on all layers for both weights and activations
+        return ResourceUtilization(np.inf, np.inf)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # kpi is infinity -> should give best model - 8bits
+        # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
@@ -128,13 +128,13 @@ class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
                                  unique_tensor_values=256)
 
 
-class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBaseTest):
+class MixedPrecisionActivationSearch4BitsAvgTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, activation_layers_idx=[2,4])
 
-    def get_kpi(self):
-        # kpi is for 4 bits on average
-        return KPI(weights_memory=17920 * 4 / 8, activation_memory=5408 * 4 / 8)
+    def get_resource_utilization(self):
+        # resource utilization is for 4 bits on average
+        return ResourceUtilization(weights_memory=17920 * 4 / 8, activation_memory=5408 * 4 / 8)
 
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs())
@@ -149,35 +149,36 @@ class MixedPrecisionActivationSearchKPI4BitsAvgTest(MixedPrecisionActivationBase
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # kpi is 4 bit average
+        # resource utilization is 4 bit average
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:]
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
 
-        # Note that since we're using default max aggregation for activation KPI, then there is no guarantee that the
-        # activation bitwidth for each layer would be 4-bit, this assertion tests the expected result for this specific
+        # Note that since we're using default max aggregation for activation resource utilization,
+        # then there is no guarantee that the activation bitwidth for each layer would be 4-bit,
+        # this assertion tests the expected result for this specific
         # test with its current setup (therefore, we don't check the input layer's bitwidth)
         self.unit_test.assertTrue((activation_bits == [4, 4]))
 
-        # Verify final KPI
+        # Verify final resource utilization
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.total_memory ==
-            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory,
+            quantization_info.final_resource_utilization.total_memory ==
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory,
             "Running weights and activation mixed-precision, "
             "final total memory should be equal to sum of weights and activation memory.")
 
 
-class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBaseTest):
+class MixedPrecisionActivationSearch2BitsAvgTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, activation_layers_idx=[2, 4])
 
-    def get_kpi(self):
-        # kpi is for 2 bits on average
-        return KPI(weights_memory=17920.0 * 2 / 8, activation_memory=5408.0 * 2 / 8)
+    def get_resource_utilization(self):
+        # resource utilization is for 2 bits on average
+        return ResourceUtilization(weights_memory=17920.0 * 2 / 8, activation_memory=5408.0 * 2 / 8)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # kpi is minimal
-        # Note that since we're using default max aggregation for activation KPI, then there is no guarantee that the
+        # resource utilization is minimal
+        # Note that since we're using default max aggregation for activation resource utilization, then there is no guarantee that the
         # activation bitwidth for each layer would be 2-bit, this assertion tests the expected result for this specific
         # test with its current setup (therefore, we don't check the input layer's bitwidth)
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:]
@@ -190,10 +191,10 @@ class MixedPrecisionActivationSearchKPI2BitsAvgTest(MixedPrecisionActivationBase
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=4)
 
-        # Verify final KPI
+        # Verify final resource utilization
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.total_memory ==
-            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory,
+            quantization_info.final_resource_utilization.total_memory ==
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory,
             "Running weights and activation mixed-precision, "
             "final total memory should be equal to sum of weights and activation memory.")
 
@@ -202,8 +203,8 @@ class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, activation_layers_idx=[1, 3])
 
-    def get_kpi(self):
-        return KPI(np.inf, np.inf)
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf, np.inf)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -215,7 +216,7 @@ class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # kpi is infinity -> should give best model - 8bits
+        # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8]))
@@ -225,9 +226,8 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
     def __init__(self, unit_test):
         super().__init__(unit_test, activation_layers_idx=[1])
 
-    def get_kpi(self):
-        # return KPI(np.inf, np.inf)
-        return KPI(48.0 * 4 / 8, 768.0 * 4 / 8)
+    def get_resource_utilization(self):
+        return ResourceUtilization(48.0 * 4 / 8, 768.0 * 4 / 8)
 
     def get_tpc(self):
         eight_bits = generate_test_op_qc(**generate_test_attr_configs())
@@ -250,8 +250,8 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # kpi is 4 bit average
-        # Note that since we're using default max aggregation for activation KPI, then there is no guarantee that the
+        # resource utilization is 4 bit average
+        # Note that since we're using default max aggregation for activation resource utilization, then there is no guarantee that the
         # activation bitwidth for each layer would be 4-bit, this assertion tests the expected result for this specific
         # test with its current setup (therefore, we don't check the relu layer's bitwidth)
         holder_layer = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[0]
@@ -270,13 +270,13 @@ class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
         model = keras.Model(inputs=inputs, outputs=[c0, c1])
         return model
 
-    def get_kpi(self):
-        # kpi is infinity -> should give best model - 8bits on all layers for both weights and activations
-        return KPI(np.inf, np.inf)
+    def get_resource_utilization(self):
+        # resource utilization is infinity -> should give best model - 8bits on all layers for both weights and activations
+        return ResourceUtilization(np.inf, np.inf)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # kpi is infinity -> should give best model - 8bits
+        # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
@@ -311,13 +311,13 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
                                                 name="mixed_precision_activation_weights_disabled_test")
 
-    def get_kpi(self):
-        # kpi is infinity -> should give best model - 8bits on all layers for both weights and activations
-        return KPI(np.inf, np.inf)
+    def get_resource_utilization(self):
+        # resource utilization is infinity -> should give best model - 8bits on all layers for both weights and activations
+        return ResourceUtilization(np.inf, np.inf)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # kpi is infinity -> should give best model - 8bits
+        # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
@@ -328,11 +328,11 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=256)
 
-        # Verify final KPI
+        # Verify final ResourceUtilization
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.activation_memory + quantization_info.final_kpi.weights_memory ==
-            quantization_info.final_kpi.total_memory,
-            "Running activation mixed-precision with unconstrained weights and total KPI, "
+            quantization_info.final_resource_utilization.activation_memory + quantization_info.final_resource_utilization.weights_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running activation mixed-precision with unconstrained weights and total resource utilization, "
             "final total memory should be equal to the sum of activation and weights memory.")
 
 
@@ -359,13 +359,13 @@ class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBa
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
                                                 name="mixed_precision_activation_weights_disabled_test")
 
-    def get_kpi(self):
-        # kpi is infinity -> should give best model - 8bits on all layers for both weights and activations
-        return KPI(np.inf, np.inf)
+    def get_resource_utilization(self):
+        # resource utilization is infinity -> should give best model - 8bits on all layers for both weights and activations
+        return ResourceUtilization(np.inf, np.inf)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # kpi is infinity -> should give best model - 8bits
+        # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
@@ -381,8 +381,8 @@ class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, activation_layers_idx=[1, 2, 3])
 
-    def get_kpi(self):
-        return KPI(np.inf, np.inf)
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf, np.inf)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -393,7 +393,7 @@ class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # kpi is infinity -> should give best model - 8bits
+        # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [h.activation_holder_quantizer.get_config()['num_bits'] for h in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
@@ -411,8 +411,8 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
         self.num_of_inputs = 4
         self.val_batch_size = 2
 
-    def get_kpi(self):
-        return KPI(np.inf, np.inf)
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf, np.inf)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, 3] for _ in range(self.num_of_inputs)]
@@ -440,7 +440,7 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
-        # kpi is infinity -> should give best model - 8bits
+        # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
         self.unit_test.assertTrue((activation_bits == [8, 8, 8, 8, 8, 8, 8, 8, 8]))
@@ -452,12 +452,12 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
                                  unique_tensor_values=256)
 
 
-class MixedPrecisionTotalKPISearchTest(MixedPrecisionActivationBaseTest):
+class MixedPrecisionTotalMemoryUtilizationSearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, activation_layers_idx=[2, 4])
 
-    def get_kpi(self):
-        return KPI(np.inf, np.inf, total_memory=(17920 + 5408) * 4 / 8)
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf, np.inf, total_memory=(17920 + 5408) * 4 / 8)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # verify chosen activation bitwidth config
@@ -471,22 +471,22 @@ class MixedPrecisionTotalKPISearchTest(MixedPrecisionActivationBaseTest):
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=16)
 
-        # Verify final KPI
+        # Verify final ResourceUtilization
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.total_memory ==
-            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory,
+            quantization_info.final_resource_utilization.total_memory ==
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory,
             "Running weights and activation mixed-precision, "
             "final total memory should be equal to sum of weights and activation memory.")
 
 
-class MixedPrecisionMultipleKPIsTightSearchTest(MixedPrecisionActivationBaseTest):
+class MixedPrecisionMultipleResourcesTightUtilizationSearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, activation_layers_idx=[2, 4])
 
-    def get_kpi(self):
+    def get_resource_utilization(self):
         weights = 17920 * 4 / 8
         activation = 5408 * 4 / 8
-        return KPI(weights, activation, total_memory=weights + activation)
+        return ResourceUtilization(weights, activation, total_memory=weights + activation)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # verify chosen activation bitwidth config
@@ -500,22 +500,22 @@ class MixedPrecisionMultipleKPIsTightSearchTest(MixedPrecisionActivationBaseTest
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=16)
 
-        # Verify final KPI
+        # Verify final ResourceUtilization
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.total_memory ==
-            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory,
+            quantization_info.final_resource_utilization.total_memory ==
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory,
             "Running weights and activation mixed-precision, "
             "final total memory should be equal to sum of weights and activation memory.")
 
 
-class MixedPrecisionReducedTotalKPISearchTest(MixedPrecisionActivationBaseTest):
+class MixedPrecisionReducedTotalMemorySearchTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, activation_layers_idx=[2, 4])
 
-    def get_kpi(self):
+    def get_resource_utilization(self):
         weights = 17920 * 4 / 8
         activation = 5408 * 4 / 8
-        return KPI(weights, activation, total_memory=(weights + activation) / 2)
+        return ResourceUtilization(weights, activation, total_memory=(weights + activation) / 2)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info: UserInformation = None):
         # verify chosen activation bitwidth config
@@ -529,9 +529,9 @@ class MixedPrecisionReducedTotalKPISearchTest(MixedPrecisionActivationBaseTest):
                                  activation_layers_idx=self.activation_layers_idx,
                                  unique_tensor_values=16)
 
-        # Verify final KPI
+        # Verify final ResourceUtilization
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.total_memory ==
-            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory,
+            quantization_info.final_resource_utilization.total_memory ==
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory,
             "Running weights and activation mixed-precision, "
             "final total memory should be equal to sum of weights and activation memory.")

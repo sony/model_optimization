@@ -22,7 +22,8 @@ import keras
 import unittest
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, SeparableConv2D
 
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
+    get_op_quantization_configs
 from model_compression_toolkit.core.keras.constants import DEPTHWISE_KERNEL, KERNEL
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.separableconv_decomposition import \
     POINTWISE_KERNEL
@@ -54,8 +55,8 @@ def basic_model():
     outputs = ReLU()(x_bn)
     model = keras.Model(inputs=inputs, outputs=outputs)
     return model, \
-           getattr(model.layers[1], KERNEL).numpy().flatten().shape[0], \
-           compute_output_size(model.layers[0].output_shape)
+        getattr(model.layers[1], KERNEL).numpy().flatten().shape[0], \
+        compute_output_size(model.layers[0].output_shape)
 
 
 def complex_model():
@@ -73,15 +74,14 @@ def complex_model():
     outputs = ReLU()(x)
     model = keras.Model(inputs=inputs, outputs=outputs)
     return model, \
-           getattr(model.layers[1], DEPTHWISE_KERNEL).numpy().flatten().shape[0] + \
-           getattr(model.layers[1], POINTWISE_KERNEL).numpy().flatten().shape[0] + \
-           getattr(model.layers[4], DEPTHWISE_KERNEL).numpy().flatten().shape[0] + \
-           getattr(model.layers[4], POINTWISE_KERNEL).numpy().flatten().shape[0], \
-           compute_output_size(model.layers[4].output_shape)
+        getattr(model.layers[1], DEPTHWISE_KERNEL).numpy().flatten().shape[0] + \
+        getattr(model.layers[1], POINTWISE_KERNEL).numpy().flatten().shape[0] + \
+        getattr(model.layers[4], DEPTHWISE_KERNEL).numpy().flatten().shape[0] + \
+        getattr(model.layers[4], POINTWISE_KERNEL).numpy().flatten().shape[0], \
+        compute_output_size(model.layers[4].output_shape)
 
 
 def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
-
     base_config = generate_test_op_qc(activation_n_bits=mp_bitwidth_candidates_list[0][1],
                                       **generate_test_attr_configs(default_cfg_nbits=mp_bitwidth_candidates_list[0][0],
                                                                    kernel_cfg_nbits=mp_bitwidth_candidates_list[0][0]))
@@ -91,57 +91,57 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
     tpc = get_tpc_with_activation_mp_keras(base_config=base_config,
                                            default_config=default_config,
                                            mp_bitwidth_candidates_list=mp_bitwidth_candidates_list,
-                                           name="kpi_data_test")
+                                           name="ru_data_test")
 
-    kpi_data = mct.core.keras_kpi_data(in_model=model,
-                                       representative_data_gen=random_datagen,
-                                       core_config=mct.core.CoreConfig(),
-                                       target_platform_capabilities=tpc)
+    ru_data = mct.core.keras_resource_utilization_data(in_model=model,
+                                                       representative_data_gen=random_datagen,
+                                                       core_config=mct.core.CoreConfig(),
+                                                       target_platform_capabilities=tpc)
 
-    return kpi_data
+    return ru_data
 
 
-class TestKPIData(unittest.TestCase):
+class TestResourceUtilizationData(unittest.TestCase):
 
-    def test_kpi_data_basic_all_bitwidth(self):
+    def test_ru_data_basic_all_bitwidth(self):
         model, sum_parameters, max_tensor = basic_model()
         mp_bitwidth_candidates_list = [(i, j) for i in [8, 4, 2] for j in [8, 4, 2]]
 
-        kpi_data = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
+        ru_data = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
 
-        self.verify_results(kpi_data, sum_parameters, max_tensor)
+        self.verify_results(ru_data, sum_parameters, max_tensor)
 
-    def test_kpi_data_basic_partial_bitwidth(self):
+    def test_ru_data_basic_partial_bitwidth(self):
         model, sum_parameters, max_tensor = basic_model()
         mp_bitwidth_candidates_list = [(i, j) for i in [4, 2] for j in [4, 2]]
 
-        kpi_data = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
+        ru_data = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
 
-        self.verify_results(kpi_data, sum_parameters, max_tensor)
+        self.verify_results(ru_data, sum_parameters, max_tensor)
 
-    def test_kpi_data_complex_all_bitwidth(self):
+    def test_ru_data_complex_all_bitwidth(self):
         model, sum_parameters, max_tensor = complex_model()
         mp_bitwidth_candidates_list = [(i, j) for i in [8, 4, 2] for j in [8, 4, 2]]
 
-        kpi_data = prep_test(model, mp_bitwidth_candidates_list, large_random_datagen())
+        ru_data = prep_test(model, mp_bitwidth_candidates_list, large_random_datagen())
 
-        self.verify_results(kpi_data, sum_parameters, max_tensor)
+        self.verify_results(ru_data, sum_parameters, max_tensor)
 
-    def test_kpi_data_complex_partial_bitwidth(self):
+    def test_ru_data_complex_partial_bitwidth(self):
         model, sum_parameters, max_tensor = basic_model()
         mp_bitwidth_candidates_list = [(i, j) for i in [4, 2] for j in [4, 2]]
 
-        kpi_data = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
+        ru_data = prep_test(model, mp_bitwidth_candidates_list, small_random_datagen)
 
-        self.verify_results(kpi_data, sum_parameters, max_tensor)
+        self.verify_results(ru_data, sum_parameters, max_tensor)
 
-    def verify_results(self, kpi, sum_parameters, max_tensor):
-        self.assertTrue(kpi.weights_memory == sum_parameters,
+    def verify_results(self, ru, sum_parameters, max_tensor):
+        self.assertTrue(ru.weights_memory == sum_parameters,
                         f"Expects weights_memory to be {sum_parameters} "
-                        f"but result is {kpi.weights_memory}")
-        self.assertTrue(kpi.activation_memory == max_tensor,
+                        f"but result is {ru.weights_memory}")
+        self.assertTrue(ru.activation_memory == max_tensor,
                         f"Expects activation_memory to be {max_tensor} "
-                        f"but result is {kpi.activation_memory}")
+                        f"but result is {ru.activation_memory}")
 
 
 if __name__ == '__main__':

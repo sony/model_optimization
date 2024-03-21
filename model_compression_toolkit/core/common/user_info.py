@@ -29,7 +29,7 @@ class UserInformation:
         self.input_scale = 1
         self.gptq_info_dict = dict()
         self.mixed_precision_cfg = None
-        self.final_kpi = None
+        self.final_resource_utilization = None
 
     def set_input_scale(self, scale_value: float):
         """

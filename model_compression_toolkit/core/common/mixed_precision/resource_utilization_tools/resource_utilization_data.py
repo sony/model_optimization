@@ -12,26 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable, Any
 import numpy as np
+from typing import Callable, Any
 
-from model_compression_toolkit.core import FrameworkInfo, KPI, CoreConfig
-from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
+from model_compression_toolkit.core import FrameworkInfo, ResourceUtilization, CoreConfig
+from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 
 
-def compute_kpi_data(in_model: Any,
-                     representative_data_gen: Callable,
-                     core_config: CoreConfig,
-                     tpc: TargetPlatformCapabilities,
-                     fw_info: FrameworkInfo,
-                     fw_impl: FrameworkImplementation) -> KPI:
+def compute_resource_utilization_data(in_model: Any,
+                                      representative_data_gen: Callable,
+                                      core_config: CoreConfig,
+                                      tpc: TargetPlatformCapabilities,
+                                      fw_info: FrameworkInfo,
+                                      fw_impl: FrameworkImplementation) -> ResourceUtilization:
     """
-    Compute KPI information that can be relevant for defining target KPI for mixed precision search.
+    Compute Resource Utilization information that can be relevant for defining target ResourceUtilization for mixed precision search.
     Calculates maximal activation tensor, sum of weights' parameters and total (sum of both).
 
     Args:
@@ -43,12 +43,12 @@ def compute_kpi_data(in_model: Any,
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
-    Returns: A KPI object with the results.
+    Returns: A ResourceUtilization object with the results.
 
     """
 
-    # We assume that the kpi_data API is used to compute the model KPI for mixed precision scenario,
-    # so we run graph preparation under the assumption of enabled mixed precision.
+    # We assume that the resource_utilization_data API is used to compute the model resource utilization for
+    # mixed precision scenario, so we run graph preparation under the assumption of enabled mixed precision.
     transformed_graph = graph_preparation_runner(in_model,
                                                  representative_data_gen,
                                                  core_config.quantization_config,
@@ -65,17 +65,17 @@ def compute_kpi_data(in_model: Any,
     activation_output_sizes = compute_activation_output_sizes(graph=transformed_graph)
     max_activation_tensor_size = 0 if len(activation_output_sizes) == 0 else max(activation_output_sizes)
 
-    # Compute total kpi - parameters sum + max activation tensor
+    # Compute total memory utilization - parameters sum + max activation tensor
     total_size = total_weights_params + max_activation_tensor_size
 
-    # Compute BOPS kpi - total count of bit-operations for all configurable layers with kernel
+    # Compute BOPS utilization - total count of bit-operations for all configurable layers with kernel
     bops_count = compute_total_bops(graph=transformed_graph, fw_info=fw_info, fw_impl=fw_impl)
     bops_count = np.inf if len(bops_count) == 0 else sum(bops_count)
 
-    return KPI(weights_memory=total_weights_params,
-               activation_memory=max_activation_tensor_size,
-               total_memory=total_size,
-               bops=bops_count)
+    return ResourceUtilization(weights_memory=total_weights_params,
+                               activation_memory=max_activation_tensor_size,
+                               total_memory=total_size,
+                               bops=bops_count)
 
 
 def compute_nodes_weights_params(graph: Graph, fw_info: FrameworkInfo) -> np.ndarray:

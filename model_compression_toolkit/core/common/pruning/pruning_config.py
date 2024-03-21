@@ -32,7 +32,7 @@ class ChannelsFilteringStrategy(Enum):
     """
     Enum for specifying the strategy used for filtering (pruning) channels:
 
-    GREEDY - Prune the least important channel groups up to allowed resources in the KPI (for now, only weights_memory is considered).
+    GREEDY - Prune the least important channel groups up to the allowed resources utilization limit (for now, only weights_memory is considered).
 
     """
     GREEDY = 0  # Greedy strategy for pruning channels based on importance metrics.

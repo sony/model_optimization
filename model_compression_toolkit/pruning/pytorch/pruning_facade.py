@@ -16,7 +16,7 @@
 from typing import Callable, Tuple
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import FOUND_TORCH, PYTORCH
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.pruner import Pruner
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig
 from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo
@@ -41,14 +41,14 @@ if FOUND_TORCH:
     DEFAULT_PYOTRCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
     def pytorch_pruning_experimental(model: Module,
-                                     target_kpi: KPI,
+                                     target_resource_utilization: ResourceUtilization,
                                      representative_data_gen: Callable,
                                      pruning_config: PruningConfig = PruningConfig(),
                                      target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYOTRCH_TPC) -> \
             Tuple[Module, PruningInfo]:
         """
-        Perform structured pruning on a Pytorch model to meet a specified target KPI.
-        This function prunes the provided model according to the target KPI by grouping and pruning
+        Perform structured pruning on a Pytorch model to meet a specified target resource utilization.
+        This function prunes the provided model according to the target resource utilization by grouping and pruning
         channels based on each layer's SIMD configuration in the Target Platform Capabilities (TPC).
         By default, the importance of each channel group is determined using the Label-Free Hessian
         (LFH) method, assessing each channel's sensitivity to the Hessian of the loss function.
@@ -60,7 +60,7 @@ if FOUND_TORCH:
 
         Args:
             model (Module): The PyTorch model to be pruned.
-            target_kpi (KPI): Key Performance Indicators specifying the pruning targets.
+            target_resource_utilization (ResourceUtilization): Key Performance Indicators specifying the pruning targets.
             representative_data_gen (Callable): A function to generate representative data for pruning analysis.
             pruning_config (PruningConfig): Configuration settings for the pruning process. Defaults to standard config.
             target_platform_capabilities (TargetPlatformCapabilities): Platform-specific constraints and capabilities.
@@ -88,12 +88,12 @@ if FOUND_TORCH:
             >>> import numpy as np
             >>> def repr_datagen(): yield [np.random.random((1, 3, 224, 224))]
 
-            Define a target KPI for pruning.
+            Define a target resource utilization for pruning.
             Here, we aim to reduce the memory footprint of weights by 50%, assuming the model weights
             are represented in float32 data type (thus, each parameter is represented using 4 bytes):
 
             >>> dense_nparams = sum(p.numel() for p in model.state_dict().values())
-            >>> target_kpi = mct.core.KPI(weights_memory=dense_nparams * 4 * 0.5)
+            >>> target_resource_utilization = mct.core.ResourceUtilization(weights_memory=dense_nparams * 4 * 0.5)
 
             Optionally, define a pruning configuration. num_score_approximations can be passed
             to configure the number of importance scores that will be calculated for each channel.
@@ -104,7 +104,7 @@ if FOUND_TORCH:
 
             Perform pruning:
 
-            >>> pruned_model, pruning_info = mct.pruning.pytorch_pruning_experimental(model=model, target_kpi=target_kpi, representative_data_gen=repr_datagen, pruning_config=pruning_config)
+            >>> pruned_model, pruning_info = mct.pruning.pytorch_pruning_experimental(model=model, target_resource_utilization=target_resource_utilization, representative_data_gen=repr_datagen, pruning_config=pruning_config)
 
         """
 
@@ -132,7 +132,7 @@ if FOUND_TORCH:
         pruner = Pruner(float_graph_with_compression_config,
                         DEFAULT_PYTORCH_INFO,
                         fw_impl,
-                        target_kpi,
+                        target_resource_utilization,
                         representative_data_gen,
                         pruning_config,
                         target_platform_capabilities)

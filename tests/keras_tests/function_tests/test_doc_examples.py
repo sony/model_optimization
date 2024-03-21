@@ -31,5 +31,5 @@ class TestKerasDocsExamples(unittest.TestCase):
     def test_keras_gptq_facade(self):
         doctest.testfile("quantization_facade.py", package=keras, verbose=True, raise_on_error=RAISE_ON_ERROR)
 
-    def test_keras_kpi_data_facade(self):
-        doctest.testfile("kpi_data_facade.py", package=core.keras, verbose=True, raise_on_error=RAISE_ON_ERROR)
+    def test_keras_resource_utilization_data_facade(self):
+        doctest.testfile("resource_utilization_data_facade.py", package=core.keras, verbose=True, raise_on_error=RAISE_ON_ERROR)

@@ -66,9 +66,9 @@ class Conv2DTransposetoConv2DPruningTest(PruningKerasFeatureTest):
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
-    def get_kpi(self):
+    def get_resource_utilization(self):
         # Remove only one group of channels only one parameter should be pruned
-        return mct.core.KPI(weights_memory=(self.dense_model_num_params - 1) * 4)
+        return mct.core.ResourceUtilization(weights_memory=(self.dense_model_num_params - 1) * 4)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         dense_convtrans_layers = get_layers_from_model_by_type(float_model, layers.Conv2DTranspose)

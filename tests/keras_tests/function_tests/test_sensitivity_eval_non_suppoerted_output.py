@@ -96,13 +96,13 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
         model = argmax_output_model((8, 8, 3))
         with self.assertRaises(Exception) as e:
             self.verify_test_for_model(model)
-        self.assertTrue("All graph outputs should support Hessian computation" in str(e.exception))
+        self.assertTrue("All graph outputs must support Hessian score computation" in str(e.exception))
 
     def test_not_supported_output_nms(self):
         model = nms_output_model((8, 8, 3))
         with self.assertRaises(Exception) as e:
             self.verify_test_for_model(model)
-        self.assertTrue("All graph outputs should support Hessian computation" in str(e.exception))
+        self.assertTrue("All graph outputs must support Hessian score computation" in str(e.exception))
 
 if __name__ == '__main__':
     unittest.main()

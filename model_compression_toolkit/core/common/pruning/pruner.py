@@ -18,7 +18,7 @@ from typing import Callable, List, Dict, Tuple
 
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.greedy_mask_calculator import GreedyMaskCalculator
 from model_compression_toolkit.core.common.pruning.importance_metrics.importance_metric_factory import \
     get_importance_metric
@@ -33,14 +33,14 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 
 class Pruner:
     """
-    Pruner class responsible for applying pruning to a computational graph to meet a target KPI.
+    Pruner class responsible for applying pruning to a computational graph to meet a target resource utilization.
     It identifies and prunes less significant channels based on importance scores, considering SIMD constraints.
     """
     def __init__(self,
                  float_graph: Graph,
                  fw_info: FrameworkInfo,
                  fw_impl: PruningFrameworkImplementation,
-                 target_kpi: KPI,
+                 target_resource_utilization: ResourceUtilization,
                  representative_data_gen: Callable,
                  pruning_config: PruningConfig,
                  target_platform_capabilities: TargetPlatformCapabilities):
@@ -49,7 +49,7 @@ class Pruner:
             float_graph (Graph): The floating-point representation of the model's computation graph.
             fw_info (FrameworkInfo): Contains metadata and helper functions for the framework.
             fw_impl (PruningFrameworkImplementation): Implementation of specific framework methods required for pruning.
-            target_kpi (KPI): The target KPIs to be achieved after pruning.
+            target_resource_utilization (ResourceUtilization): The target resource utilization to be achieved after pruning.
             representative_data_gen (Callable): Generator function for representative dataset used in pruning analysis.
             pruning_config (PruningConfig): Configuration object specifying how pruning should be performed.
             target_platform_capabilities (TargetPlatformCapabilities): Object encapsulating the capabilities of the target hardware platform.
@@ -57,7 +57,7 @@ class Pruner:
         self.float_graph = float_graph
         self.fw_info = fw_info
         self.fw_impl = fw_impl
-        self.target_kpi = target_kpi
+        self.target_resource_utilization = target_resource_utilization
         self.representative_data_gen = representative_data_gen
         self.pruning_config = pruning_config
         self.target_platform_capabilities = target_platform_capabilities
@@ -84,7 +84,7 @@ class Pruner:
             mask_calculator = GreedyMaskCalculator(entry_nodes,
                                                    self.fw_info,
                                                    self.simd_scores,
-                                                   self.target_kpi,
+                                                   self.target_resource_utilization,
                                                    self.float_graph,
                                                    self.fw_impl,
                                                    self.target_platform_capabilities,

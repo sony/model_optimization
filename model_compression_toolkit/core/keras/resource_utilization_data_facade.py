@@ -15,12 +15,11 @@
 
 from typing import Callable
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, CoreConfig
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_data import compute_kpi_data
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import compute_resource_utilization_data
 from model_compression_toolkit.constants import FOUND_TF
 
 if FOUND_TF:
@@ -33,13 +32,16 @@ if FOUND_TF:
 
     KERAS_DEFAULT_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
-    def keras_kpi_data(in_model: Model,
-                       representative_data_gen: Callable,
-                       core_config: CoreConfig = CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig()),
-                       target_platform_capabilities: TargetPlatformCapabilities = KERAS_DEFAULT_TPC) -> KPI:
+    def keras_resource_utilization_data(in_model: Model,
+                                        representative_data_gen: Callable,
+                                        core_config: CoreConfig = CoreConfig(
+                                            mixed_precision_config=MixedPrecisionQuantizationConfig()),
+                                        target_platform_capabilities: TargetPlatformCapabilities = KERAS_DEFAULT_TPC) -> ResourceUtilization:
         """
-        Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
-        Builds the computation graph from the given model and hw modeling, and uses it to compute the KPI data.
+        Computes resource utilization data that can be used to calculate the desired target resource utilization
+        for mixed-precision quantization.
+        Builds the computation graph from the given model and hw modeling, and uses it to compute the
+        resource utilization data.
 
         Args:
             in_model (Model): Keras model to quantize.
@@ -49,7 +51,7 @@ if FOUND_TF:
 
         Returns:
 
-            A KPI object with total weights parameters sum and max activation tensor.
+            A ResourceUtilization object with total weights parameters sum and max activation tensor.
 
         Examples:
 
@@ -63,28 +65,29 @@ if FOUND_TF:
             >>> import numpy as np
             >>> def repr_datagen(): yield [np.random.random((1, 224, 224, 3))]
 
-            Import MCT and call for KPI data calculation:
+            Import MCT and call for resource utilization data calculation:
 
             >>> import model_compression_toolkit as mct
-            >>> kpi_data = mct.core.keras_kpi_data(model, repr_datagen)
+            >>> ru_data = mct.core.keras_resource_utilization_data(model, repr_datagen)
 
         """
 
         if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-            Logger.critical("KPI data computation requires a MixedPrecisionQuantizationConfig object; provided config is of an incorrect type.")
+            Logger.critical("Resource utilization data computation requires a MixedPrecisionQuantizationConfig object; "
+                            "provided config is of an incorrect type.")
 
         fw_impl = KerasImplementation()
 
-        return compute_kpi_data(in_model,
-                                representative_data_gen,
-                                core_config,
-                                target_platform_capabilities,
-                                DEFAULT_KERAS_INFO,
-                                fw_impl)
+        return compute_resource_utilization_data(in_model,
+                                                 representative_data_gen,
+                                                 core_config,
+                                                 target_platform_capabilities,
+                                                 DEFAULT_KERAS_INFO,
+                                                 fw_impl)
 
 else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use this function.
-    def keras_kpi_data(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use keras_kpi_data. "
+    def keras_resource_utilization_data(*args, **kwargs):
+        Logger.critical("Tensorflow must be installed to use keras_resource_utilization_data. "
                         "The 'tensorflow' package is missing.")  # pragma: no cover

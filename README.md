@@ -117,7 +117,7 @@ This pruning technique is designed to compress models for specific hardware arch
 taking into account the target platform's Single Instruction, Multiple Data (SIMD) capabilities. 
 By pruning groups of channels (SIMD groups), our approach not only reduces model size 
 and complexity, but ensures that better utilization of channels is in line with the SIMD architecture 
-for a target KPI of weights memory footprint.
+for a target Resource Utilization of weights memory footprint.
 [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_pruning_experimental.html)
 [Pytorch API](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pruning/pytorch/pruning_facade.py#L43) 
 

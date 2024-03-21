@@ -20,12 +20,14 @@ import tensorflow as tf
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
+    get_op_quantization_configs, generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
+    ResourceUtilization
 from model_compression_toolkit.core.common.user_info import UserInformation
 from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
 from tests.keras_tests.utils import get_layers_from_model_by_type
@@ -81,13 +83,13 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
                                            input_scaling=True, activation_channel_equalization=True)
 
     def get_mixed_precision_config(self):
-        return mct.core.MixedPrecisionQuantizationConfig(target_kpi=self.get_kpi())
+        return mct.core.MixedPrecisionQuantizationConfig(target_resource_utilization=self.get_resource_utilization())
 
-    def get_kpi(self):
-        # Return some KPI (it does not really matter the value here as search_methods is not done,
+    def get_resource_utilization(self):
+        # Return some ResourceUtilization (it does not really matter the value here as search_methods is not done,
         # and the configuration is
         # set manually)
-        return KPI(1)
+        return ResourceUtilization(1)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         assert quantization_info.mixed_precision_cfg == [2, 1]
@@ -102,9 +104,9 @@ class MixedPercisionSearchTest(MixedPercisionBaseTest):
 
         self.distance_metric = distance_metric
 
-    def get_kpi(self):
-        # kpi is infinity -> should give best model - 8bits
-        return KPI(np.inf)
+    def get_resource_utilization(self):
+        # resource utilization is infinity -> should give best model - 8bits
+        return ResourceUtilization(np.inf)
 
     def get_mixed_precision_config(self):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
@@ -113,7 +115,7 @@ class MixedPercisionSearchTest(MixedPercisionBaseTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         assert (quantization_info.mixed_precision_cfg == [0,
-                                                          0]).all()  # kpi is infinity -> should give best model - 8bits
+                                                          0]).all()  # resource utilization is infinity -> should give best model - 8bits
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
@@ -121,11 +123,11 @@ class MixedPercisionSearchTest(MixedPercisionBaseTest):
             self.unit_test.assertTrue(
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
 
-        # Verify final KPI
+        # Verify final ResourceUtilization
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory ==
-            quantization_info.final_kpi.total_memory,
-            "Running weights mixed-precision with unconstrained KPI, "
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained ResourceUtilization, "
             "final weights and activation memory sum should be equal to total memory.")
 
 
@@ -182,15 +184,16 @@ class MixedPercisionSearchPartWeightsLayersTest(MixedPercisionBaseTest):
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
-    def get_kpi(self):
-        # kpi is infinity -> should give best model - 8bits
-        return KPI(np.inf)
+    def get_resource_utilization(self):
+        # resource utilization is infinity -> should give best model - 8bits
+        return ResourceUtilization(np.inf)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # We just needed to verify that the graph finalization is working without failing.
         # The actual quantization is not interesting for the sake of this test, so we just verify some
         # degenerated things to see that everything worked.
-        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg == [0])  # kpi is infinity -> should give best model - 8bits
+        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg == [
+            0])  # resource utilization is infinity -> should give best model - 8bits
 
         dense_layer = get_layers_from_model_by_type(quantized_model, layers.Dense)
         self.unit_test.assertTrue(len(dense_layer) == 1)
@@ -200,13 +203,13 @@ class MixedPercisionSearchPartWeightsLayersTest(MixedPercisionBaseTest):
                 np.unique(dense_layer.get_quantized_weights()['kernel'][:, i]).flatten().shape[0] <= 4)
 
 
-class MixedPercisionSearchKPI4BitsAvgTest(MixedPercisionBaseTest):
+class MixedPercisionSearch4BitsAvgTest(MixedPercisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_kpi(self):
-        # kpi is for 4 bits on average
-        return KPI(17920 * 4 / 8)
+    def get_resource_utilization(self):
+        # Resource Utilization is for 4 bits on average
+        return ResourceUtilization(17920 * 4 / 8)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
@@ -218,11 +221,11 @@ class MixedPercisionSearchKPI4BitsAvgTest(MixedPercisionBaseTest):
             self.unit_test.assertTrue(
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16)
 
-        # Verify final KPI
+        # Verify final ResourceUtilization
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory ==
-            quantization_info.final_kpi.total_memory,
-            "Running weights mixed-precision with unconstrained KPI, "
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained ResourceUtilization, "
             "final weights and activation memory sum should be equal to total memory.")
 
 
@@ -234,9 +237,9 @@ class MixedPercisionCombinedNMSTest(MixedPercisionBaseTest):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
                                                          use_hessian_based_scores=False)
 
-    def get_kpi(self):
-        # kpi is for 4 bits on average
-        return KPI(17920 * 4 / 8)
+    def get_resource_utilization(self):
+        # Resource Utilization is for 4 bits on average
+        return ResourceUtilization(17920 * 4 / 8)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -258,21 +261,21 @@ class MixedPercisionCombinedNMSTest(MixedPercisionBaseTest):
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16 or
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 16)
 
-        # Verify final KPI
+        # Verify final ResourceUtilization
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory ==
-            quantization_info.final_kpi.total_memory,
-            "Running weights mixed-precision with unconstrained KPI, "
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained ResourceUtilization, "
             "final weights and activation memory sum should be equal to total memory.")
 
 
-class MixedPercisionSearchKPI2BitsAvgTest(MixedPercisionBaseTest):
+class MixedPercisionSearch2BitsAvgTest(MixedPercisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_kpi(self):
-        # kpi is for 2 bits on average
-        return KPI(17920 * 2 / 8)
+    def get_resource_utilization(self):
+        # Resource Utilization is for 2 bits on average
+        return ResourceUtilization(17920 * 2 / 8)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
@@ -284,62 +287,62 @@ class MixedPercisionSearchKPI2BitsAvgTest(MixedPercisionBaseTest):
             self.unit_test.assertTrue(
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 4)
 
-        # Verify final KPI
+        # Verify final ResourceUtilization
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory ==
-            quantization_info.final_kpi.total_memory,
-            "Running weights mixed-precision with unconstrained KPI, "
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained ResourceUtilization, "
             "final weights and activation memory sum should be equal to total memory.")
 
 
-class MixedPercisionSearchActivationKPINonConfNodesTest(MixedPercisionBaseTest):
+class MixedPercisionSearchActivationNonConfNodesTest(MixedPercisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        # Total KPI for weights in 2 bit avg and non-configurable activation in 8 bit
-        self.target_total_kpi = KPI(weights_memory=17920 * 2 / 8, activation_memory=5408)
+        # Total ResourceUtilization for weights in 2 bit avg and non-configurable activation in 8 bit
+        self.target_total_ru = ResourceUtilization(weights_memory=17920 * 2 / 8, activation_memory=5408)
 
-    def get_kpi(self):
-        return self.target_total_kpi
+    def get_resource_utilization(self):
+        return self.target_total_ru
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # No need to verify quantization configuration here since this test is similar to other tests we have,
-        # we're only interested in the KPI
-        self.unit_test.assertTrue(quantization_info.final_kpi.activation_memory <=
-                                  self.target_total_kpi.activation_memory)
+        # we're only interested in the ResourceUtilization
+        self.unit_test.assertTrue(quantization_info.final_resource_utilization.activation_memory <=
+                                  self.target_total_ru.activation_memory)
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory ==
-            quantization_info.final_kpi.total_memory,
-            "Running weights mixed-precision with unconstrained KPI, "
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained Resource Utilization, "
             "final weights and activation memory sum should be equal to total memory.")
 
 
-class MixedPercisionSearchTotalKPINonConfNodesTest(MixedPercisionBaseTest):
+class MixedPercisionSearchTotalMemoryNonConfNodesTest(MixedPercisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        # Total KPI for weights in 2 bit avg and non-configurable activation in 8 bit
-        self.target_total_kpi = KPI(total_memory=17920 * 2 / 8 + 5408)
+        # Total ResourceUtilization for weights in 2 bit avg and non-configurable activation in 8 bit
+        self.target_total_ru = ResourceUtilization(total_memory=17920 * 2 / 8 + 5408)
 
-    def get_kpi(self):
-        return self.target_total_kpi
+    def get_resource_utilization(self):
+        return self.target_total_ru
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # No need to verify quantization configuration here since this test is similar to other tests we have,
-        # we're only interested in the KPI
-        self.unit_test.assertTrue(quantization_info.final_kpi.total_memory <= self.target_total_kpi.total_memory)
+        # we're only interested in the ResourceUtilization
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory ==
-            quantization_info.final_kpi.total_memory,
-            "Running weights mixed-precision with unconstrained KPI, "
+            quantization_info.final_resource_utilization.total_memory <= self.target_total_ru.total_memory)
+        self.unit_test.assertTrue(
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained ResourceUtilization, "
             "final weights and activation memory sum should be equal to total memory.")
-
 
 
 class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_kpi(self):
-        return KPI(np.inf)
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -351,13 +354,13 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantization_info.mixed_precision_cfg) == 1)
-        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg[0] == 0) # Assert model is quantized using 16 bits as KPI is inf
-
+        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg[
+                                      0] == 0)  # Assert model is quantized using 16 bits as ResourceUtilization is inf
 
     def get_tpc(self):
         base_config = generate_test_op_qc(activation_n_bits=16,
-                                         **generate_test_attr_configs(default_cfg_nbits=16,
-                                                                      kernel_cfg_nbits=16))
+                                          **generate_test_attr_configs(default_cfg_nbits=16,
+                                                                       kernel_cfg_nbits=16))
 
         default_config = base_config.clone_and_edit(attr_weights_configs_mapping={})
 
@@ -399,14 +402,14 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
                                              mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)],
                                              name="mp_weights_only_test")
 
-    def get_kpi(self):
-        # kpi is infinity -> should give best model - 8bits
-        return KPI(np.inf)
+    def get_resource_utilization(self):
+        # resource utilization is infinity -> should give best model - 8bits
+        return ResourceUtilization(np.inf)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         assert (quantization_info.mixed_precision_cfg == [0,
-                                                          0]).all()  # kpi is infinity -> should give best model - 8bits
+                                                          0]).all()  # resource utilization is infinity -> should give best model - 8bits
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
@@ -424,14 +427,14 @@ class MixedPercisionSearchLastLayerDistanceTest(MixedPercisionBaseTest):
                                                          distance_weighting_method=MpDistanceWeighting.LAST_LAYER,
                                                          use_hessian_based_scores=False)
 
-    def get_kpi(self):
-        # kpi is infinity -> should give best model - 8bits
-        return KPI(np.inf)
+    def get_resource_utilization(self):
+        # resource utilization is infinity -> should give best model - 8bits
+        return ResourceUtilization(np.inf)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
         assert (quantization_info.mixed_precision_cfg == [0,
-                                                          0]).all()  # kpi is infinity -> should give best model - 8bits
+                                                          0]).all()  # resource utilization is infinity -> should give best model - 8bits
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
@@ -439,9 +442,9 @@ class MixedPercisionSearchLastLayerDistanceTest(MixedPercisionBaseTest):
             self.unit_test.assertTrue(
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
 
-        # Verify final KPI
+        # Verify final Resource Utilization
         self.unit_test.assertTrue(
-            quantization_info.final_kpi.weights_memory + quantization_info.final_kpi.activation_memory ==
-            quantization_info.final_kpi.total_memory,
-            "Running weights mixed-precision with unconstrained KPI, "
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained Resource Utilization, "
             "final weights and activation memory sum should be equal to total memory.")

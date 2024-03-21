@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core import KPI, MixedPrecisionQuantizationConfig
+from model_compression_toolkit.core import ResourceUtilization, MixedPrecisionQuantizationConfig
 from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add
 
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
@@ -55,8 +55,8 @@ class BaseMixedPrecisionBopsTest(BaseKerasFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Verify that some layers got bit-width smaller than 8 bits (so checking candidate index is not 0)
         self.unit_test.assertTrue(any(i > 0 for i in quantization_info.mixed_precision_cfg))
-        # Verify final BOPs KPI
-        self.unit_test.assertTrue(quantization_info.final_kpi.bops <= self.get_kpi().bops)
+        # Verify final BOPs utilization
+        self.unit_test.assertTrue(quantization_info.final_resource_utilization.bops <= self.get_resource_utilization().bops)
 
 
 class MixedPrecisionBopsBasicTest(BaseMixedPrecisionBopsTest):
@@ -74,8 +74,8 @@ class MixedPrecisionBopsBasicTest(BaseMixedPrecisionBopsTest):
         outputs = Conv2D(3, 4)(x)
         return keras.Model(inputs=inputs, outputs=outputs)
 
-    def get_kpi(self):
-        return KPI(bops=1000000)  # should require some quantization to all layers
+    def get_resource_utilization(self):
+        return ResourceUtilization(bops=1000000)  # should require some quantization to all layers
 
 
 class MixedPrecisionBopsAllWeightsLayersTest(BaseMixedPrecisionBopsTest):
@@ -99,62 +99,62 @@ class MixedPrecisionBopsAllWeightsLayersTest(BaseMixedPrecisionBopsTest):
         outputs = Dense(5)(x)
         return keras.Model(inputs=inputs, outputs=outputs)
 
-    def get_kpi(self):
-        return KPI(bops=1252512)  # should require some quantization to all layers
+    def get_resource_utilization(self):
+        return ResourceUtilization(bops=1252512)  # should require some quantization to all layers
 
 
 class MixedPrecisionWeightsOnlyBopsTest(MixedPrecisionBopsAllWeightsLayersTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, mixed_precision_candidates_list=[(8, 8), (4, 8), (2, 8)])
 
-    def get_kpi(self):
-        return KPI(bops=5010100)  # should require some quantization to all layers
+    def get_resource_utilization(self):
+        return ResourceUtilization(bops=5010100)  # should require some quantization to all layers
 
 
 class MixedPrecisionActivationOnlyBopsTest(MixedPrecisionBopsAllWeightsLayersTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, mixed_precision_candidates_list=[(8, 8), (8, 4), (8, 2)])
 
-    def get_kpi(self):
-        return KPI(bops=5010100)  # should require some quantization to all layers
+    def get_resource_utilization(self):
+        return ResourceUtilization(bops=5010100)  # should require some quantization to all layers
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Verify that some layers got bit-width smaller than 8 bits (so checking candidate index is not 0)
         self.unit_test.assertTrue(any(i > 0 for i in quantization_info.mixed_precision_cfg))
-        # Verify final BOPs KPI
-        self.unit_test.assertTrue(quantization_info.final_kpi.bops <= self.get_kpi().bops)
+        # Verify final BOPs utilization
+        self.unit_test.assertTrue(quantization_info.final_resource_utilization.bops <= self.get_resource_utilization().bops)
 
 
-class MixedPrecisionBopsAndWeightsKPITest(MixedPrecisionBopsAllWeightsLayersTest):
+class MixedPrecisionBopsAndWeightsUtilizationTest(MixedPrecisionBopsAllWeightsLayersTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_kpi(self):
-        return KPI(weights_memory=170, bops=1300000)  # should require some quantization to all layers
+    def get_resource_utilization(self):
+        return ResourceUtilization(weights_memory=170, bops=1300000)  # should require some quantization to all layers
 
 
-class MixedPrecisionBopsAndActivationKPITest(MixedPrecisionBopsAllWeightsLayersTest):
+class MixedPrecisionBopsAndActivationUtilizationTest(MixedPrecisionBopsAllWeightsLayersTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_kpi(self):
-        return KPI(activation_memory=460, bops=1300000)  # should require some quantization to all layers
+    def get_resource_utilization(self):
+        return ResourceUtilization(activation_memory=460, bops=1300000)  # should require some quantization to all layers
 
 
-class MixedPrecisionBopsAndTotalKPITest(MixedPrecisionBopsAllWeightsLayersTest):
+class MixedPrecisionBopsAndTotalUtilizationTest(MixedPrecisionBopsAllWeightsLayersTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_kpi(self):
-        return KPI(total_memory=650, bops=1300000)  # should require some quantization to all layers
+    def get_resource_utilization(self):
+        return ResourceUtilization(total_memory=650, bops=1300000)  # should require some quantization to all layers
 
 
-class MixedPrecisionBopsWeightsActivationKPITest(MixedPrecisionBopsAllWeightsLayersTest):
+class MixedPrecisionBopsWeightsActivationUtilizationTest(MixedPrecisionBopsAllWeightsLayersTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
-    def get_kpi(self):
-        return KPI(weights_memory=200, activation_memory=500, bops=1300000)  # should require some quantization to all layers
+    def get_resource_utilization(self):
+        return ResourceUtilization(weights_memory=200, activation_memory=500, bops=1300000)  # should require some quantization to all layers
 
 
 class MixedPrecisionBopsMultipleOutEdgesTest(BaseMixedPrecisionBopsTest):
@@ -171,8 +171,8 @@ class MixedPrecisionBopsMultipleOutEdgesTest(BaseMixedPrecisionBopsTest):
         outputs = Add()([x, y])
         return keras.Model(inputs=inputs, outputs=outputs)
 
-    def get_kpi(self):
-        return KPI(bops=1)  # No layers with BOPs count
+    def get_resource_utilization(self):
+        return ResourceUtilization(bops=1)  # No layers with BOPs count
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # Verify that all layers got 8 bits (so checking candidate index is 0)
