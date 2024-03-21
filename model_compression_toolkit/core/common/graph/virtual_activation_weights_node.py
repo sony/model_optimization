@@ -113,7 +113,7 @@ class VirtualSplitActivationNode(VirtualSplitNode):
 class VirtualActivationWeightsNode(BaseNode):
     """
     A node that represents a composition of pair of sequential activation node and weights (kernel) node.
-    This structure is used for mixed-precision search with bit-operation cpnstraint.
+    This structure is used for mixed-precision search with bit-operation constraint.
     The node's candidates are the cartesian product of both nodes' candidates.
 
     Important: note that not like regular BaseNode or FunctionalNode, in VirtualActivationWeightsNode the activation
