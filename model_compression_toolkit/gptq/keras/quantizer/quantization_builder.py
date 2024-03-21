@@ -66,8 +66,7 @@ def quantization_builder(n: common.BaseNode,
     activation_quantizers = []
     if n.is_activation_quantization_enabled():
         if n.final_activation_quantization_cfg is None:
-            Logger.critical(f'Can not set quantizer for a node with no final activation quantization configuration')  #
-            # pragma: no cover
+            Logger.critical(f"Cannot set quantizer for a node without a final activation quantization configuration.")  # pragma: no cover
 
         quant_method = n.final_activation_quantization_cfg.activation_quantization_method
 

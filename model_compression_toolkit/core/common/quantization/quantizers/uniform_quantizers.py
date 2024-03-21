@@ -52,11 +52,13 @@ def power_of_two_quantizer(tensor_data: np.ndarray,
     """
     threshold = quantization_params.get(THRESHOLD)
     if threshold is None:
-        Logger.error(f"{THRESHOLD} parameter must be defined in 'quantization_params'")  # pragma: no cover
+        Logger.critical(f"'{THRESHOLD}' parameter must be defined in 'quantization_params'")  # pragma: no cover
+
     if not threshold_is_power_of_two(threshold, per_channel):
-        Logger.error(f"Expects {THRESHOLD} parameter to be a power of two, but got {threshold}")  # pragma: no cover
+        Logger.critical(f"Expected '{THRESHOLD}' parameter to be a power of two, but received {threshold}.")# pragma: no cover
+
     if (per_channel and (threshold <= 0).any()) or ((not per_channel) and threshold <= 0):
-        Logger.error(f"{THRESHOLD} parameter must positive")  # pragma: no cover
+        Logger.critical(f"'{THRESHOLD}' parameter must positive")  # pragma: no cover
 
 
     return quantize_tensor(tensor_data,
@@ -88,10 +90,10 @@ def symmetric_quantizer(tensor_data: np.ndarray,
     """
     threshold = quantization_params.get(THRESHOLD)
     if threshold is None:
-        Logger.error(f"{THRESHOLD} parameter must be defined in 'quantization_params'")  # pragma: no cover
+        Logger.critical(f"'{THRESHOLD}' parameter must be defined in 'quantization_params'")  # pragma: no cover
 
     if (per_channel and np.any(threshold <= 0)) or (not per_channel and threshold <= 0):
-        Logger.error(f"{THRESHOLD} parameter must positive")  # pragma: no cover
+        Logger.critical(f"'{THRESHOLD}' parameter must positive")  # pragma: no cover
 
     return quantize_tensor(tensor_data,
                            threshold,
@@ -122,6 +124,6 @@ def uniform_quantizer(tensor_data: np.ndarray,
     range_min = quantization_params.get(RANGE_MIN)
     range_max = quantization_params.get(RANGE_MAX)
     if range_min is None or range_max is None:
-        Logger.error("'quantization range' parameters must be defined in 'quantization_params'")  # pragma: no cover
+        Logger.critical("'quantization range' parameters must be defined in 'quantization_params'")  # pragma: no cover
 
     return uniform_quantize_tensor(tensor_data, range_min, range_max, n_bits)

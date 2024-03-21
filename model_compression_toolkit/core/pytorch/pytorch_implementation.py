@@ -301,7 +301,7 @@ class PytorchImplementation(FrameworkImplementation):
         if quant_config.softmax_shift:
             substitutions_list.append(pytorch_softmax_shift())
         if quant_config.input_scaling:
-            raise Exception('Input scaling is currently not supported for Pytorch.')
+            Logger.critical('Input scaling is currently not supported for Pytorch.')
         return substitutions_list
 
     def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:

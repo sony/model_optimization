@@ -23,6 +23,7 @@ from model_compression_toolkit.data_generation.common.model_info_exctractors imp
     ActivationExtractor
 from model_compression_toolkit.data_generation.pytorch.constants import OUTPUT
 from model_compression_toolkit.data_generation.common.constants import IMAGE_INPUT, NUM_INPUT_CHANNELS
+from model_compression_toolkit.logger import Logger
 
 
 class PytorchOriginalBNStatsHolder(OriginalBNStatsHolder):
@@ -125,7 +126,7 @@ class PytorchActivationExtractor(ActivationExtractor):
         self.layer_types_to_extract_inputs = tuple(layer_types_to_extract_inputs)
         self.last_layer_types_to_extract_inputs = tuple(last_layer_types_to_extract_inputs)
         self.num_layers = sum([1 if isinstance(layer, tuple(layer_types_to_extract_inputs)) else 0 for layer in model.modules()])
-        print(f'Number of layers = {self.num_layers}')
+        Logger.info(f'Number of layers = {self.num_layers}')
         self.hooks = {}  # Dictionary to store InputHook instances by layer name
         self.last_linear_layers_hooks = {}  # Dictionary to store InputHook instances by layer name
         self.hook_handles = []  # List to store hook handles

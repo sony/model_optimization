@@ -99,7 +99,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                     elif isinstance(layer.layer, (layers.Conv2D, layers.Dense, layers.Conv2DTranspose)):
                         weights_list.append(layer.get_quantized_weights()['kernel'])
                     else:
-                        Logger.error(f'KerasQuantizationWrapper should wrap only DepthwiseConv2D, Conv2D, Dense'
+                        Logger.critical(f'KerasQuantizationWrapper should wrap only DepthwiseConv2D, Conv2D, Dense'
                                      f' and Conv2DTranspose layers but wrapped layer is {layer.layer}')
 
                     if layer.layer.bias is not None:

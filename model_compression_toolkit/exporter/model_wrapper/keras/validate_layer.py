@@ -46,29 +46,29 @@ if FOUND_TF:
 
         valid_layer = isinstance(layer, Layer)
         if not valid_layer:
-            Logger.error(
+            Logger.critical(
                 f'Exportable layer must be a Keras layer, but layer {layer.name} is of type '
                 f'{type(layer)}') # pragma: no cover
 
         if isinstance(layer, KerasQuantizationWrapper):
             valid_weights_quantizers = isinstance(layer.weights_quantizers, dict)
             if not valid_weights_quantizers:
-                Logger.error(
+                Logger.critical(
                     f'KerasQuantizationWrapper must have a weights_quantizers but has a '
                     f'{type(layer.weights_quantizers)} object') # pragma: no cover
 
             if len(layer.weights_quantizers) == 0:
-                Logger.error(f'KerasQuantizationWrapper must have at least one weight quantizer, but found {len(layer.weights_quantizers)} quantizers. If layer is not quantized it should be a Keras layer.')
+                Logger.critical(f'KerasQuantizationWrapper must have at least one weight quantizer, but found {len(layer.weights_quantizers)} quantizers. If layer is not quantized it should be a Keras layer.')
 
             for _, weights_quantizer in layer.weights_quantizers.items():
                 if not isinstance(weights_quantizer, BaseInferableQuantizer):
-                    Logger.error(
+                    Logger.critical(
                         f'weights_quantizer must be a BaseInferableQuantizer object but has a '
                         f'{type(weights_quantizer)} object')  # pragma: no cover
 
         if isinstance(layer, KerasActivationQuantizationHolder):
             if not isinstance(layer.activation_holder_quantizer, BaseInferableQuantizer):
-                Logger.error(
+                Logger.critical(
                     f'activation quantizer in KerasActivationQuantizationHolder'
                     f' must be a BaseInferableQuantizer object but has a '
                     f'{type(layer.activation_holder_quantizer)} object')  # pragma: no cover
@@ -76,6 +76,5 @@ if FOUND_TF:
         return True
 else:
     def is_keras_layer_exportable(*args, **kwargs):  # pragma: no cover
-        Logger.error('Installing tensorflow is mandatory '
-                     'when using is_keras_layer_exportable. '
-                     'Could not find Tensorflow package.')
+        Logger.critical("Tensorflow must be installed to use is_keras_layer_exportable. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover

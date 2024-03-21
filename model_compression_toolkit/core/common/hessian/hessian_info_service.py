@@ -72,7 +72,7 @@ class HessianInfoService:
         """
         images = next(representative_dataset())
         if not isinstance(images, list):
-            Logger.error(f'Images expected to be a list but is of type {type(images)}')
+            Logger.critical(f'Expected images to be a list; found type: {type(images)}.')
 
         # Ensure each image is a single sample, if not, take the first sample
         return [image[0:1, ...] if image.shape[0] != 1 else image for image in images]
@@ -176,8 +176,7 @@ class HessianInfoService:
         """
         father_nodes = [n for n in self.graph.nodes if not n.reuse and n.reuse_group==trace_hessian_request.target_node.reuse_group]
         if len(father_nodes)!=1:
-            Logger.error(f"Each reused group has a single node in it which is not marked as"
-                         f" reused but found {len(father_nodes)}")
+            Logger.critical(f"Expected a single non-reused node in the reused group, but found {len(father_nodes)}.")
         reused_group_request = TraceHessianRequest(target_node=father_nodes[0],
                                                    granularity=trace_hessian_request.granularity,
                                                    mode=trace_hessian_request.mode)

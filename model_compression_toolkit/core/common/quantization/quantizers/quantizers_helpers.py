@@ -238,7 +238,7 @@ def get_tensor_max(tensor_data: np.ndarray,
 
     """
     if n_bits < 1:
-        Logger.error("n_bits must be positive")
+        Logger.critical(f"Parameter n_bits must be positive; however 'n_bits'={n_bits} was provided.")
     if is_uniform_quantization:
         expansion_factor = 1.0
     elif n_bits == 1:

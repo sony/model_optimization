@@ -146,7 +146,7 @@ if FOUND_TORCH:
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-                Logger.error("Given quantization config to mixed-precision facade is not of type "
+                Logger.critical("Given quantization config to mixed-precision facade is not of type "
                              "MixedPrecisionQuantizationConfig. Please use pytorch_post_training_quantization API,"
                              "or pass a valid mixed precision configuration.")
 
@@ -239,12 +239,10 @@ else:
     # If torch is not installed,
     # we raise an exception when trying to use these functions.
     def pytorch_quantization_aware_training_init_experimental(*args, **kwargs):
-        Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_quantization_aware_training_init_experimental. '
-                        'Could not find the torch package.')  # pragma: no cover
+        Logger.critical('PyTorch must be installed to use pytorch_quantization_aware_training_init_experimental. '
+                        "The 'torch' package is missing.")  # pragma: no cover
 
 
     def pytorch_quantization_aware_training_finalize_experimental(*args, **kwargs):
-        Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_quantization_aware_training_finalize_experimental. '
-                        'Could not find the torch package.')  # pragma: no cover
+        Logger.critical("PyTorch must be installed to use 'pytorch_quantization_aware_training_finalize_experimental'. "
+                        "The 'torch' package is missing.")  # pragma: no cover

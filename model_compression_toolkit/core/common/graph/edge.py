@@ -17,6 +17,7 @@
 from typing import Any, Dict
 
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
+from model_compression_toolkit.logger import Logger
 
 # Edge attributes:
 EDGE_SOURCE_INDEX = 'source_index'
@@ -108,4 +109,4 @@ def convert_to_edge(edge: Any) -> Edge:
     elif isinstance(edge, Edge):  # it's already an Edge and no change need to be done
         return edge
 
-    raise Exception('Edges list contains an object that is not a known edge format.')
+    Logger.critical('Edge conversion failed: unrecognized edge format encountered.')

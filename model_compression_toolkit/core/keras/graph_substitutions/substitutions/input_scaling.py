@@ -25,6 +25,7 @@ from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.constants import THRESHOLD
 from model_compression_toolkit.core.keras.constants import KERNEL
+from model_compression_toolkit.logger import Logger
 
 input_node = NodeOperationMatcher(InputLayer)
 zeropad_node = NodeOperationMatcher(ZeroPadding2D)
@@ -80,8 +81,8 @@ class BaseInputScaling(common.BaseSubstitution):
         linear_layer = nodes_list[-1]
 
         if not input_layer.is_all_activation_candidates_equal():
-            raise Exception("Input scaling is not supported for more than one activation quantization configuration "
-                            "candidate")
+            Logger.critical("Input scaling is not supported for nodes with more than one activation quantization configuration "
+                            "candidate.")
 
         # all candidates have same activation config, so taking the first candidate for calculations
         threshold = input_layer.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params.get(THRESHOLD)

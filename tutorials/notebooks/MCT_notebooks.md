@@ -100,6 +100,8 @@ These techniques are essential for further optimizing models and achieving super
   | [QAT on MNIST](pytorch/qat/example_pytorch_qat.py) | &#x2705; QAT |
 </details>
 
+</details>
+
 <details id="pytorch-pruning">
   <summary>Structured Pruning</summary>
 

@@ -139,8 +139,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         if isinstance(tpc_component, OperationsSetToLayers):
             self.op_sets_to_layers += tpc_component
         else:
-            Logger.error(f'Trying to append an unfamiliar TargetPlatformCapabilitiesComponent of type: '
-                         f'{type(tpc_component)}')  # pragma: no cover
+            Logger.critical(f"Attempt to append an unrecognized 'TargetPlatformCapabilitiesComponent' of type: '{type(tpc_component)}'. Ensure the component is compatible.")  # pragma: no cover
 
     def __enter__(self):
         """

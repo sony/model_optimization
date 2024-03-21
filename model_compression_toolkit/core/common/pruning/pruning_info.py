@@ -75,8 +75,8 @@ def unroll_simd_scores_to_per_channel_scores(simd_scores: Dict[BaseNode, np.ndar
         Dict[BaseNode, np.ndarray]: Expanded scores for each individual channel.
     """
     if simd_scores is None or simd_groups_indices is None:
-        Logger.error(f"Found to find scores and indices to create an unrolled scores for pruning info,"
-                     f"but scores is {simd_scores} and groups indices are {simd_groups_indices}")
+        Logger.critical(f"Failed to find scores and indices to create unrolled scores for pruning information."
+                        f" Scores: {simd_scores}, Group indices: {simd_groups_indices}.")
     _scores = {}
     for node, groups_indices in simd_groups_indices.items():
         node_scores = simd_scores[node]

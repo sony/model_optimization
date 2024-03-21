@@ -102,10 +102,10 @@ class Graph(nx.MultiDiGraph, GraphSearches):
                                                           for filtered_layer in tpc_filtered_layers])
             if n.is_custom:
                 if not is_node_in_tpc:
-                    Logger.error(f'MCT does not support optimizing Keras custom layers, but found layer of type {n.type}. '
-                                 f'Please add the custom layer to TPC or file a feature request or an issue if you believe this is an issue.')
+                    Logger.critical(f'MCT does not support optimizing Keras custom layers. Found a layer of type {n.type}. '
+                                 f' Please add the custom layer to Target Platform Capabilities (TPC), or file a feature request or an issue if you believe this should be supported.')
                 if any([qc.default_weight_attr_config.enable_weights_quantization for qc in n.get_qco(tpc).quantization_config_list]):
-                    Logger.error(f'MCT does not support optimizing Keras custom layers with weights quantization. Layer: {n.type}')
+                    Logger.critical(f'Layer identified: {n.type}. MCT does not support weight quantization for Keras custom layers.')
 
         self.tpc = tpc
 
@@ -231,7 +231,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         sc = self.node_to_in_stats_collector.get(n)
         if sc is None:
-            Logger.error(f'Input statistics collector of node {n.name} is None')  # pragma: no cover
+            Logger.critical(f'No input statistics collector found for node {n.name}.')  # pragma: no cover
         return sc
 
     def scale_stats_collector(self,
@@ -370,8 +370,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             input_nodes_output_index = [0] * len(input_nodes)
 
         if len(input_nodes_output_index) != len(input_nodes):
-            Logger.error('Graph.add_node_with_in_edges: input_nodes & input_nodes_output_index must be the same '
-                         'length')  # pragma: no cover
+            Logger.critical('The number of input nodes and their corresponding output indices must be equal. Found mismatched lengths.')  # pragma: no cover
 
         self.add_node(new_node)
         for sink_index, (in_node, source_index) in enumerate(zip(input_nodes, input_nodes_output_index)):
@@ -414,7 +413,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         if new_node is None:
-            Logger.error("Graph received a None value as a new input node.")
+            Logger.critical("Cannot replace input node with a None value; new input node is required.")
 
         graph_inputs = self.get_inputs()
         new_graph_inputs = copy(graph_inputs)
@@ -442,13 +441,13 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         if node_to_remove in output_nodes:  # If node is in the graph's outputs, the outputs should be updated
             if new_graph_outputs is None:
                 Logger.critical(
-                    f'{node_to_remove.name} is in graph outputs, but new outputs were not given.')  # pragma: no cover
+                    f"{node_to_remove.name} is among the graph outputs; however, it cannot be removed without providing a new output.")  # pragma: no cover
             self.set_outputs(new_graph_outputs)
 
         if node_to_remove in self.get_inputs():  # If node is in the graph's inputs, the inputs should be updated
             if new_graph_inputs is None:
                 Logger.critical(
-                    f'{node_to_remove.name} is in graph inputs, but new inputs were not given.')  # pragma: no cover
+                    f'{node_to_remove.name} s among the graph inputs; however, it cannot be removed without providing a new input.')  # pragma: no cover
             self.set_inputs(new_graph_inputs)
 
         # Make sure there are no connected edges left to the node before removing it.
@@ -828,14 +827,12 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         if not fw_impl.is_node_entry_node(entry_node):
-            Logger.error(f"Expected to find an entry node to create its pruning section,"
-                         f"but node {entry_node} is not an entry node.")
+            Logger.critical(f"Node {entry_node} is not a valid entry node for creating a pruning section")
 
         intermediate_nodes, exit_node = self._find_intermediate_and_exit_nodes(entry_node, fw_impl)
 
         if not fw_impl.is_node_exit_node(exit_node, entry_node, self.fw_info):
-            Logger.error(f"Expected to find exit node when creating a pruning section,"
-                         f"but node {exit_node} is not an exit node.")
+            Logger.critical(f"Node {exit_node} is not a valid exit node for the pruning section starting with {entry_node}.")
 
         return PruningSection(entry_node=entry_node,
                               intermediate_nodes=intermediate_nodes,
