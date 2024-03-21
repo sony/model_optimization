@@ -1,30 +1,11 @@
-# Tutorials
+# MCT Features
+This tutorial set introduces the various quantization tools offered by MCT. 
+The notebooks included here illustrate the setup and usage of both basic and advanced post-training quantization methods. 
+You'll learn how to refine PTQ (Post-Training Quantization) settings, export models, and explore advanced compression 
+techniques such as GPTQ (Gradient-Based Post-Training Quantization), Mixed precision quantization and more.
+These techniques are essential for further optimizing models and achieving superior performance in deployment scenarios.
 
-## Table of Contents
-- [Introduction](#introduction)
-- [Keras Tutorials](#keras-tutorials)
-  - [Post-Training Quantization](#keras-ptq)
-  - [Gradient-Based Post-Training Quantization](#keras-gptq)
-  - [Quantization-Aware Training](#keras-qat)
-  - [Structured Pruning](#keras-pruning)
-  - [Export Quantized Models](#keras-export)
-  - [Debug Tools](#keras-debug)
-- [Pytorch Tutorials](#pytorch-tutorials)
-  - [Quick-Start with Torchvision](#pytorch-quickstart-torchvision)
-  - [Post-Training Quantization](#pytorch-ptq)
-  - [Quantization-Aware Training](#pytorch-qat)
-  - [Structured Pruning](#pytorch-pruning)
-  - [Data Generation](#pytorch-data-generation)
-  - [Export Quantized Models](#pytorch-export)
-
-## Introduction
-Dive into the Model-Compression-Toolkit (MCT) with our collection of tutorials, covering a wide 
-range of compression techniques for Keras and Pytorch models. We provide
-both Python scripts and interactive Jupyter notebooks for an
-engaging and hands-on experience.
-
-
-## Keras Tutorials
+### Keras Tutorials
 
 <details id="keras-ptq">
   <summary>Post-Training Quantization (PTQ)</summary>
@@ -85,7 +66,7 @@ engaging and hands-on experience.
   
 </details>
 
-## Pytorch Tutorials
+### Pytorch Tutorials
 
 
 <details id="pytorch-quickstart-torchvision">
@@ -117,6 +98,7 @@ engaging and hands-on experience.
   | Tutorial                                                                          | Included Features      |
   |-----------------------------------------------------------------------------------|--------------|
   | [QAT on MNIST](pytorch/qat/example_pytorch_qat.py) | &#x2705; QAT |
+</details>
 
 </details>
 
@@ -148,4 +130,3 @@ engaging and hands-on experience.
   | [Exporter Usage](pytorch/export/example_pytorch_export.ipynb) | &#x2705; Export |
   
 </details>
-
