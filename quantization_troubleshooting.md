@@ -1,54 +1,63 @@
 # Quantization Troubleshooting for MCT
 
-**Compressing a model with MCT:**
-The Model Compression Toolkit (MCT) has many features and capabilities for compressing your neural network with a minimal impact on accuracy.
-However, sometimes the compressed model's accuracy decrease is too large.
-But don't despair, the lost accuracy may be recovered by adjusting the quantization configuration
-or quantization setup.
+**Utilizing MCT for Model Compression:**
 
-**Recover Accuracy: Troubleshooting:**
-The following list contains a set of operations that may recover lost accuracy do to compression with MCT.
-Some operations might be relevant to your model and others may not.
+The Model Compression Toolkit (MCT) offers numerous functionalities to compress neural networks with minimal accuracy lost.
+However, in some cases, the compressed model may experience a significant decrease in accuracy.
+Fear not, as this lost accuracy can often be reclaimed by adjusting the quantization configuration or setup.
 
-## PTQ Features
+**Restoring Accuracy - Troubleshooting Steps:**
 
-### Representative Dataset
+Outlined below are a series of steps aimed at recovering lost accuracy resulting from compression with MCT.
+Some steps may be applicable to your model, while others may not.
+
+*Note:*
+Throughout this document we refer the user to notebooks using the Keras framework. There are similar notebooks for PyTorch.
+All notebooks are available [here](https://github.com/sony/model_optimization/tree/main/tutorials/notebooks).
+
+___
+## Representative Dataset
 The representative dataset is used by the MCT to derive the threshold values of activation tensors in the model.
 
-#### Representative dataset size & diversity:
-If the representative dataset is too small, the thresholds will overfit and the accuracy will on the evaluation dataset will degrade.
+### 1. Representative dataset size & diversity:
+If the representative dataset is too small, the thresholds will overfit and the accuracy on the evaluation dataset will degrade.
 A similar overfitting may occur when the representative dataset isn't diverse enough (e.g. images from a single class, in a classification model).
-In this case, the distribution of the target dataset and the representative dataset will not match and accuracy will degrade.
+In this case, the distribution of the target dataset and the representative dataset will not match, which might cause an accuracy degradation.
 
 **Solution:**
-Increase the number of inputs in the representative dataset, or make sure the inputs are more diverse (e.g. include all the classes, in  a classification model).
+Increase the number of samples in the representative dataset, or make sure that the samples are more diverse (e.g. include samples from all the classes, in a classification model).
 
-#### Representative dataset mismatch:
+### 2. Representative dataset mismatch:
 Usually, the representative dataset is taken from the training set, and uses the same preprocess as the evaluation set.
 If that's not the case, accuracy degradation is expected.
 
 **Solution:**
-Make sure the representative dataset preprocess is the same, and its images are taken from the same domain.
+Ensure that the preprocessing of the representative dataset is identical to the validation dataset, and its images are taken from the same domain.
 
-
-### Quantization Process
+___
+## Quantization Process
 There are many buttons to push and knobs to tune in MCT in case the default values fail to deliver.
 The following are the usual suspects.
 
-#### Outlier Removal
-In some models, you may need to manually limit the activation thresholds using the `z_threshold` attribute in the `QuantizationConfig` in `CoreConfig`.
+### 1. Outlier Removal
+
+Outlier removal can become essential when quantizing activations,
+particularly in scenarios where certain layers produce output activation tensors with skewed value distributions.
+Such outliers can mess up the selection of quantization parameters and result in low accuracy in the quantized model.
+
+In these scenarios, manually limit the activation thresholds using the `z_threshold` attribute in the `QuantizationConfig` in `CoreConfig`.
 
 **Solution:**
-Set a value to the `z_threshold`. Typical value range is between 5.0 and 40.0:
+Set a value to the `z_threshold`. Typical value range is between 5.0 and 20.0:
 ```python
-core_config = mct.core.CoreConfig(mct.core.QuantizationConfig(z_threshold=17.0))
+core_config = mct.core.CoreConfig(mct.core.QuantizationConfig(z_threshold=8.0))
 quantizted_model, quantization_info = mct.ptq.keras_post_training_quantization(model, representative_dataset,
                                                                                core_config=core_config)
 ```
 
-#### Shift Negative Activation
+### 2. Shift Negative Activation
 Some activation functions are harder to quantize than others (e.g. the **swish**, **Leaky ReLU**, etc.).
-These activation layers have negative values that use only a small part of the dynamic range.
+The output of these activation layers contain negative values that only use a small part of the dynamic quantization range.
 In these cases, shifting negative values to positive values can improve quantization error (saving an extra 1bit).
 
 **Solution:** This exactly what the `shift_negative_activation_correction` flag does.
@@ -57,56 +66,147 @@ core_config = mct.core.CoreConfig(mct.core.QuantizationConfig(shift_negative_act
 quantizted_model, quantization_info = mct.ptq.keras_post_training_quantization(model, representative_dataset,
                                                                                core_config=core_config)
 ```
-*note:* after activating this flag, you have a few more tweaks to its operation that you can control with the
+*Note:* after activating this flag, you have a few more tweaks to its operation that you can control with the
 `shift_negative_ratio`, `shift_negative_threshold_recalculation` & `shift_negative_params_searc` flags.
-Read all about them in the [quantization config](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/common/quantization/quantization_config.py#L83) 
+Read all about them in the [quantization configuration](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/common/quantization/quantization_config.py#L83) class description. 
 
 
-### Bias Correction
+### 3. Bias Correction
 MCT applies bias correction by default to overcome induced bias shift caused by weights quantization.
 The applied correction is an estimation of the bias shift that is computed based on (among other things) the collected statistical data generated with the representative dataset.
 Therefore, the effect of the bias correction is sensitive to the distribution and size of the provided representative dataset.
 
-**Solution**: Verify the bias correction causes a degradation in accuracy by disabling it:
+**Solution**: Verify that the bias correction causes a degradation in accuracy by disabling it:
 ```python
 core_config = mct.core.CoreConfig(mct.core.QuantizationConfig(weights_bias_correction=False))
 quantizted_model, quantization_info = mct.ptq.keras_post_training_quantization(model, representative_dataset,
                                                                                core_config=core_config)
 ```
 If you can increase your representative dataset and its distribution, it may restore accuracy.
-If you don't have an option to increase or diversify your representative dataset, disable the bias correction.
+If you don't have an option to increase or diversify your representative dataset, disabling the bias correction is recommended.
 
+### 4. Threshold selection error method
+The quantization threshold, which determines how data gets quantized, involves an optimization process driven by predefined objective metrics.
+MCT defaults to employing the Mean-Squared Error (MSE) metric for threshold optimization,
+however, it offers a range of alternative error metrics to accommodate different network requirements.
 
-## Common Issues
+This flexibility becomes particularly crucial for activation quantization, where threshold selection spans the entire tensor and relies
+on statistical insights for optimization. We advise you to consider other error metrics if your model is suffering from significant
+accuracy degradation, especially if it contains unorthodox activation layers.
 
-### Unbalanced "concatenation"
+**Solution:**
+For example, set "no clipping" error method to activations:
+```python
+quant_config = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING)
+core_config = mct.core.CoreConfig(quantization_config=quant_config)
+quantized_model, quantization_info = mct.ptq.keras_post_training_quantization(..., core_config=core_config)
+```
+*Note:*
+Some error methods (specifically, the KL-Divergence method) may suffer from extended runtime periods.
+Opting for a different error metric could enhance threshold selection for one layer while potentially compromising another.
+Therefore, thorough investigation and consideration are necessary.
+
+___
+## Model Structure Quantization Issues
+
+### 1. Unbalanced "concatenation"
 The concatenation operation can be a sensitive element in quantized models.
 This is because it involves combining multiple tensors that may have significantly different value ranges, leading to potential inaccuracies in quantization.
 
 For example, the quantization of a tensor that contains values ranging in (-1, 1) together with a tensor that ranges in (-64, 64) is less accurate than the quantization of each tensor separately.
 
 **Solution**:
-You can identify problematic "concatenation" layers using the "network editor" API or by examining the quantization parameters of the input layers to the "concatenation" layer in the quantized model.
-If you discover a concatenation layer with inputs that have notably different threshold values, consider either removing this concatenation, replacing its application to a later point in the model, or balancing its input value ranges by additional an scaling operation.
+Identify problematic "concatenation" layers using the "network editor" API or by examining the quantization parameters of the input layers to the "concatenation" layer in the quantized model.
+If you discover a concatenation layer with inputs that have notably different threshold values, consider either removing this concatenation, replacing its application to a later point in the model,
+or balancing its input value ranges by adding a scaling operation.
 
 
-### Pytorch model - common torch.FX errors
-When implementing quantization on a PyTorch model, MCT's initial step involves converting the model into a graph representation using `torch.fx`.
-However, `torch.fx` comes with certain common limitations, with the primary one being its requirement for the computational graph to remain static.
+___
+## Advanced Quantization Methods
 
-Despite these limitations, some adjustments can be made to facilitate MCT quantization.
+In certain scenarios, even if we've been thorough in following the quantization process, the degradation in accuracy is still
+significant in the quantized model or its size surpassing the limitations of our deployment target (e.g., the IMX500).
 
-**Solution**: (assuming you have access to the model's code)
+MCT offers advanced features for mitigating these accuracy degradations, such as Mixed Precision and GPTQ.
 
-Check the `torch.fx` error, and search for an identical replacement:
+### Mixed Precision Quantization
 
-An `if` statement in a module's `forward` method might can be easily skipped.
-The `list()` Python method can be replaced with a concatenation operation [A, B, C].
+In mixed precision quantization, MCT will assign a different bit width to each weight in the model, depending on the weight's layer sensitivity
+and a resource constraint defined by the user, such as target model size.
+
+Check out the [mixed precision tutorial](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/keras/ptq/example_keras_mobilenet_mixed_precision.ipynb)
+for more information and an implementation example. Following are a few tips for improving the mixed precision quantization.
+
+#### 1. Using more samples in mixed precision quantization
+
+By default, MCT employs 32 samples from the provided representative dataset for the mixed precision search.
+Leveraging a larger dataset could enhance results, particularly when dealing with datasets exhibiting high variance.
+
+**Solution:** 
+Increase the number of samples (e.g. to 64 samples):
+```python
+mp_config = mct.core.MixedPrecisionQuantizationConfig(num_of_images=64)
+core_config = mct.core.CoreConfig(mixed_precision_config=mp_config)
+quantized_model, quantization_info = mct.ptq.keras_post_training_quantization(..., core_config=core_config)
+```
+Please refer to the relevant notebooks (Keras mixed precision notebook and PyTorch mixed precision notebook) for comprehensive guidance.
+
+*Note:*
+Expanding the sample size may lead to extended runtime during the mixed precision search process.
+
+#### 2. Mixed precision with model output loss objective
+
+In mixed precision optimization, the aim is to determine an optimal bit-width assignment for each quantized layer to maximize the accuracy of the resulting model.
+Traditionally, the mixed precision search relies on optimizing a loss function to achieve a high correlation with the actual model loss.
+However, in scenarios involving high compression rates and complex models, the default objective may prioritize reducing the precision of the last layer, potentially leading to compromised results.
+
+To overcome this challenge, MCT offers an API to adjust the mixed precision objective method.
+By emphasizing a loss function that places greater importance on enhancing the model's quantized output, users can mitigate the risk of detrimental precision reductions in the last layer.
+This feature is particularly suggested after an initial mixed precision run reveals a tendency towards reducing the bit-width of the last layer.
+
+**Solution:**
+```python
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
+
+mp_config = mct.core.MixedPrecisionQuantizationConfig(distance_weighting_method=MpDistanceWeighting.LAST_LAYER)
+core_config = mct.core.CoreConfig(mixed_precision_config=mp_config)
+quantized_model, quantization_info = mct.ptq.keras_post_training_quantization(..., core_config=core_config)
+```
+
+#### 3. Enabling Hessian-based mixed precision
+
+MCT offers a Hessian-based scoring mechanism to assess the importance of layers during the mixed precision search.
+This feature can notably enhance mixed precision outcomes for certain network architectures.
+
+**Solution:**
+```python
+mp_config = mct.core.MixedPrecisionQuantizationConfig(use_hessian_based_scores=True)
+core_config = mct.core.CoreConfig(mixed_precision_config=mp_config)
+quantized_model, quantization_info = mct.ptq.keras_post_training_quantization(..., core_config=core_config)
+```
+
+*Note:*
+Computing Hessian scores can be computationally intensive, potentially leading to extended mixed precision search runtime.
+Furthermore, these scoring methods may introduce unexpected noise into the mixed precision process, necessitating a deeper understanding of the underlying mechanisms and potential recalibration of program parameters.
 
 
+### GPTQ - Gradient-Based Post Training Quantization
+
+When PTQ (either with or without mixed precision) fails to deliver the required accuracy, GPTQ is potentially the remedy.
+In GPTQ, MCT will finetune the model's weights and quantization parameters for improved accuracy. The finetuning process
+will only use the label-less representative dataset.
+
+Check out the [GPTQ tutorial](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/keras/gptq/example_keras_mobilenet_gptq.ipynb) for more information and an implementation example.
+
+*Note #1*: The finetuning process will take **much** longer to finish than PTQ. As in any finetuning, some hyperparameters optimization may be required.
+
+*Note #2*: You can use mixed precision and GPTQ together.
+
+
+___
 ## Debugging Tools
 
-### Network Editor
+### 1. Network Editor
 
 To pinpoint the possible cause of accuracy degradation in your model, it may be necessary to isolate the quantization settings of specific layers.
 However, this cannot be accomplished using MCT's main API.
@@ -125,29 +225,22 @@ If the accuracy improves, then it is pointing to that layer for causing the issu
 
 *Note:* This is mainly a debugging tool and should not be used as an API for quantizing a model for deployment (may result in an unstable behavior).
 
+### 2. Debug mixed precision quantization
+MCT offers an API to provide a pre-configured mixed precision bit-width assignment for quantizing the model.
+This capability can be invaluable for identifying limitations in model quantization by setting specific layers to low bit-widths and examining the resulting model accuracy.
 
-## Advanced Quantization Methods
+**Solution:**
+To override the bit-width configuration, utilize the configuration_overwrite argument within the MixedPrecisionQuantizationConfig object.
+Ensure that the provided configuration follows a specific format: a list of integers representing the desired bit-width candidate index for each layer.
 
-Sometimes, we did everything right in the quantization process, but either the quantized model accuracy degradation is too high
-or the quantized model size is too large for our deployment target (e.g. the IMX500).
-MCT offers advanced features for handing these issues, such as mixed-precesion and GPTQ.
+For example, in a model with 3 layers offering multiple bit-width candidates for mixed precision quantization (8, 4, and 2),
+a configuration of [0, 1, 2] would quantize the first layer to 8 bits (the highest bit-width option), the second layer to 4 bits, and the third layer to 2 bits.
+```python
+mp_config = mct.core.MixedPrecisionQuantizationConfig(configuration_overwrite=[0, 1, 2])
+core_config = mct.core.CoreConfig(mixed_precision_config=mp_config)
+quantized_model, quantization_info = mct.ptq.keras_post_training_quantization(..., core_config=core_config)
+```
 
-### Mixed Precision Quantization
-
-In mixed precision quantization, MCT will assign a different number of bit widths to each weight in the model, depending on the weight's layer sensitivity
-and a constraint defined by the user, such as target model size.
-
-Check out the [mixed precision tutorial](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/keras/ptq/example_keras_mobilenet_mixed_precision.ipynb)
-for more information and an implementation example.
-
-### GPTQ - Gradient-Based Post Training Quantization
-
-When PTQ (either with or without mixed-precision) fails to deliver the required accuracy, GPTQ is potentially the remedy.
-In GPTQ, MCT will finetune the model's weights and quantization parameters for improved accuracy. The finetuning process
-will only use the label-less representative dataset.
-
-Check out the [GPTQ tutorial](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/keras/gptq/example_keras_mobilenet_gptq.ipynb) for more information and an implementation example.
-
-*Note #1*: The finetuning process will take longer to finish than PTQ. As in any finetuning, some hyperparameters optimization may be required.
-
-*Note #2*: You can use mixed-precision and GPTQ together.
+*Note:* This feature necessitates a proficient understanding of mixed precision execution. Users must ensure that:
+* The provided configuration adheres to the correct list format.
+* A target KPI is provided, to activate a mixed precision search.
