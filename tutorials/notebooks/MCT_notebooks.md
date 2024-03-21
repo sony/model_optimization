@@ -1,4 +1,9 @@
 # MCT Features
+This tutorial set introduces the various quantization tools offered by MCT. 
+The notebooks included here illustrate the setup and usage of both basic and advanced post-training quantization methods. 
+You'll learn how to refine PTQ (Post-Training Quantization) settings, export models, and explore advanced compression 
+techniques such as GPTQ (Gradient-Based Post-Training Quantization), Mixed precision quantization and more.
+These techniques are essential for further optimizing models and achieving superior performance in deployment scenarios.
 
 ### Keras Tutorials
 
