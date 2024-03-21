@@ -92,14 +92,6 @@ These techniques are essential for further optimizing models and achieving super
 
 
 
-<details id="pytorch-qat">
-  <summary>Quantization-Aware Training (QAT)</summary>
-  
-  | Tutorial                                                                          | Included Features      |
-  |-----------------------------------------------------------------------------------|--------------|
-  | [QAT on MNIST](pytorch/qat/example_pytorch_qat.py) | &#x2705; QAT |
-</details>
-
 </details>
 
 <details id="pytorch-pruning">

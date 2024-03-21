@@ -15,7 +15,7 @@ The notebooks in this section demonstrate how to configure and run simple and ad
 This includes fine-tuning PTQ (Post-Training Quantization) configurations, exporting models,
 and exploring advanced compression techniques. 
 These techniques are essential for further optimizing models and achieving superior performance in deployment scenarios.
-- [MCT notebooks](notebooks/MCT_notebooks.md)
+- [MCT Features notebooks](notebooks/MCT_notebooks.md)
 
 ## Quantization for Sony-IMX500 deployment
 
@@ -23,4 +23,4 @@ This section provides several guides on quantizing pre-trained models to meet sp
 [Sony-IMX500](https://developer.sony.com/imx500/) processing platform. 
 We will cover various tasks and demonstrate the necessary steps to achieve efficient quantization for optimal
 deployment performance.
-- [IMX500 notebooks](notebooks/IMX500_notebooks.md)
+- [MCT IMX500 notebooks](notebooks/IMX500_notebooks.md)
