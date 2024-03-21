@@ -66,7 +66,7 @@ class FolderImageLoader(object):
 
         self.folder = folder
         self.image_list = []
-        print(f"Starting Scanning Disk: {self.folder}")
+        Logger.info(f"Starting Scanning Disk: {self.folder}")
         for root, dirs, files in os.walk(self.folder):
             for file in files:
                 file_type = file.split('.')[-1].lower()
@@ -74,8 +74,8 @@ class FolderImageLoader(object):
                     self.image_list.append(os.path.join(root, file))
         self.n_files = len(self.image_list)
         if self.n_files == 0:
-            Logger.error(f"No files of type: {FILETYPES} are found!") # pragma: no cover
-        print(f"Finished Disk Scanning: Found {self.n_files} files")
+            Logger.critical(f"Expected files of type {FILETYPES}. No files of type {FILETYPES} were found.") # pragma: no cover
+        Logger.info(f"Finished Disk Scanning: Found {self.n_files} files")
         self.preprocessing = preprocessing
         self.batch_size = batch_size
 

@@ -75,8 +75,8 @@ if FOUND_TORCH:
         """
 
         if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-            Logger.error("Resource utilization data computation can't be executed without MixedPrecisionQuantizationConfig object."
-                         "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
+            Logger.critical("Resource utilization data computation requires a MixedPrecisionQuantizationConfig object. "
+                            "The provided 'mixed_precision_config' is not of this type.")
 
         fw_impl = PytorchImplementation()
 
@@ -90,6 +90,7 @@ if FOUND_TORCH:
 else:
     # If torch is not installed,
     # we raise an exception when trying to use this function.
-    def pytorch_resource_utilization_data(*args, **kwargs):
-        Logger.critical('Installing torch is mandatory when using pytorch_resource_utilization_data. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+    def pytorch_kpi_data(*args, **kwargs):
+        Logger.critical("PyTorch must be installed to use 'pytorch_resource_utilization_data'. "
+                        "The 'torch' package is missing.")  # pragma: no cover
+

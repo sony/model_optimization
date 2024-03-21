@@ -91,7 +91,7 @@ if FOUND_TF:
                     layer_weights_list[weight_keys.index(_weight_name(w.name))] = w
             # Verify all the weights in the list are ready. The "set_weights" method expects all the layer's weights
             if not all(w is not None for w in layer_weights_list):
-                Logger.error(f'Not all weights are set for layer {self.layer.name}')
+                Logger.critical(f"Not all weights are set for layer '{self.layer.name}'")
             assert all(w is not None for w in layer_weights_list)
             inferable_quantizers_wrapper.set_weights(layer_weights_list)
 
@@ -110,6 +110,5 @@ else:
                 layer: A keras layer.
                 weights_quantizers: A dictionary between a weight's name to its quantizer.
             """
-            Logger.critical('Installing tensorflow is mandatory '
-                            'when using KerasTrainableQuantizationWrapper. '
-                            'Could not find Tensorflow package.')  # pragma: no cover
+            Logger.critical("Tensorflow must be installed to use KerasTrainableQuantizationWrapper. "
+                            "The 'tensorflow' package is missing.")  # pragma: no cover

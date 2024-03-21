@@ -134,7 +134,7 @@ def insert_node_after_node(graph: Graph,
 
     last_nodes = graph.get_next_nodes(first_node)
     if len(last_nodes) != 1:
-        Logger.error('Can only insert if there is only one input')  # pragma: no cover
+        Logger.critical(f'Insertion requires exactly one successor node; {len(last_nodes)} successors found.')  # pragma: no cover
     last_node = last_nodes[0]
     insert_node_between_two_nodes(graph, node_to_insert, first_node, last_node)
 
@@ -156,7 +156,7 @@ def insert_node_before_node(graph: Graph,
     """
     first_nodes = graph.get_prev_nodes(last_node)
     if len(first_nodes) != 1:
-        Logger.error('Can only insert if there is only one input')  # pragma: no cover
+        Logger.critical('Insertion requires exactly one predecessor node; multiple or no predecessors found.')  # pragma: no cover
     first_node = first_nodes[0]
     insert_node_between_two_nodes(graph, node_to_insert, first_node, last_node)
 
@@ -235,7 +235,7 @@ def shift_negative_function(graph: Graph,
     min_to_correct, max_value2compare = graph.get_out_stats_collector(non_linear_node).get_min_max_values()
 
     if not non_linear_node.is_all_activation_candidates_equal():
-        Logger.error("Shift negative correction is not supported for more than one activation quantization "
+        Logger.critical("Shift negative correction is not supported for more than one activation quantization "
                      "configuration candidate")  # pragma: no cover
 
     # all candidates have same activation config, so taking the first candidate for calculations

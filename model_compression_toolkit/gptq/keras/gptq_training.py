@@ -96,9 +96,9 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         if not (len(self.compare_points) == len(trainable_weights) == len(self.flp_weights_list) == len(
                 self.fxp_weights_list)):
-            raise Exception(
-                "GPTQ: Mismatch between number of compare points, number of layers with trainable weights " +
-                "and number of float and quantized weights for loss")
+            Logger.critical("Mismatch in the number of comparison points, layers with trainable weights, "
+                            "and the number of float and quantized weights for loss calculation. "
+                            "Ensure all these elements align to proceed with GPTQ training.")
 
         flattened_trainable_weights = [w for layer_weights in trainable_weights for w in layer_weights]
         flattened_bias_weights = [w for layer_weights in bias_weights for w in layer_weights]
@@ -110,7 +110,8 @@ class KerasGPTQTrainer(GPTQTrainer):
             [len(optimizer_params_tuple[1]) for optimizer_params_tuple in self.optimizer_with_param]) > 0
 
         if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
-            Logger.error("Input scale mismatch between float and GPTQ networks")  # pragma: no cover
+            Logger.critical("Input scale mismatch detected between the float model and the GPTQ model. "
+                            "Confirm that the input scales for both models are correctly configured and aligned.")  # pragma: no cover
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
@@ -177,9 +178,9 @@ class KerasGPTQTrainer(GPTQTrainer):
         if len(activation_quantizers) == 1:
             return KerasActivationQuantizationHolder(activation_quantizers[0])
 
-        Logger.error(
-            f'KerasActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
-            f'were found for node {n}')
+        Logger.critical(f"'KerasActivationQuantizationHolder' is designed to support a single quantizer, "
+                        f"but {len(activation_quantizers)} quantizers were found for node '{n}'. "
+                        f"Ensure only one quantizer is configured for each node's activation.")
 
 
     def build_gptq_model(self) -> Tuple[Model, UserInformation]:
@@ -331,7 +332,8 @@ class KerasGPTQTrainer(GPTQTrainer):
                 if len(node) == 0 and isinstance(layer.layer, TensorFlowOpLayer):
                     node = graph.find_node_by_name('_'.join(layer.layer.name.split('_')[3:]))
                 if len(node) != 1:
-                    Logger.error(f"Can't update GPTQ graph due to missing layer named: {layer.layer.name}")
+                    Logger.critical(f"Unable to update the GPTQ graph because the layer named '{layer.layer.name}' could not be found. "
+                                    f"Verify that the layer names in the GPTQ model match those in the graph.")
                 node = node[0]
                 kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=node.type,
                                                                       fw_info=self.fw_info)

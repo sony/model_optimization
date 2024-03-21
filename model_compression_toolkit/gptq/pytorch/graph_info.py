@@ -48,7 +48,7 @@ def get_gptq_trainable_parameters(fxp_model: nn.Module,
 
             # collect trainable weights per quantizer
             if kernel_attribute not in layer.weights_quantizers:
-                Logger.error(f'{kernel_attribute} was not found in weight quantizers of layer {layer.layer}')
+                Logger.critical(f"'{kernel_attribute}' was not found in the weight quantizers of layer '{layer.layer}'.")
             quantizer_trainable_weights = layer.weights_quantizers[kernel_attribute].get_trainable_variables(VariableGroup.WEIGHTS)
             quantizer_trainable_threshold = layer.weights_quantizers[kernel_attribute].get_trainable_variables(VariableGroup.QPARAMS)
             trainable_aux_weights.extend(quantizer_trainable_weights)

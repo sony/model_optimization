@@ -89,6 +89,7 @@ if found_pytorch:
         TestGPTQModelBuilderWithActivationHolder as TestGPTQModelBuilderWithActivationHolderPytorch
     from tests.pytorch_tests.exporter_tests.test_runner import PytorchExporterTestsRunner
     from tests.data_generation_tests.pytorch.test_pytorch_data_generation_runner import PytorchDataGenerationTestRunner
+    from tests.pytorch_tests.graph_tests.test_fx_errors import TestGraphReading
 
 
 if __name__ == '__main__':
@@ -160,6 +161,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchTrainableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchExporterTestsRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchDataGenerationTestRunner))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphReading))
 
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)

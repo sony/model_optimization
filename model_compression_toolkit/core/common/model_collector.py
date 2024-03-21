@@ -158,9 +158,9 @@ class ModelCollector:
         for td, sc in zip(tensor_data, self.stats_containers_list):
             if isinstance(sc, (list, tuple)):
                 if not isinstance(td, (list, tuple)):
-                    Logger.exception('"tensor_data" must be a list or a tuple if the model tensor_list is a list or a tuple') # pragma: no cover
+                    Logger.critical('\'tensor_data\' must be a list or a tuple if \'stats_containers_list\' contains lists or tuples.') # pragma: no cover
                 if len(sc) != len(td):
-                    Logger.exception('"tensor_data" and the model tensor_list must be of the same length') # pragma: no cover
+                    Logger.critical('\'tensor_data\' and \'stats_containers_list\' must have matching lengths') # pragma: no cover
                 for tdi, sci in zip(td, sc):
                     sci.update_statistics(self.fw_impl.to_numpy(tdi))
             else:

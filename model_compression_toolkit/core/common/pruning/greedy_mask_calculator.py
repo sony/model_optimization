@@ -91,9 +91,8 @@ class GreedyMaskCalculator:
         # Iteratively unprune the graph while monitoring the memory footprint.
         current_memory = self.memory_calculator.get_pruned_graph_memory(masks=self.oc_pruning_mask.get_mask(),
                                                                         include_padded_channels=self.tpc.is_simd_padding)
-        if current_memory > self.target_resource_utilization.weights_memory:
-            Logger.error(f"Minimal required memory is {current_memory}, "
-                         f"but target resource utilization is {self.target_resource_utilization.weights_memory}")
+        if current_memory > self.target_kpi.weights_memory:
+            Logger.critical(f"Insufficient memory for the target resource utilization: current memory {current_memory}, target memory {self.target_kpi.weights_memory}.")
 
         # Greedily unprune groups (by setting their mask to 1) until the memory target is met
         # or all channels unpruned.

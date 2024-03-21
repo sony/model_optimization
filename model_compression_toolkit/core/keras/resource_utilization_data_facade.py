@@ -73,8 +73,8 @@ if FOUND_TF:
         """
 
         if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-            Logger.error("Resource utilization data computation can't be executed without MixedPrecisionQuantizationConfig object."
-                         "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
+            Logger.critical("Resource utilization data computation requires a MixedPrecisionQuantizationConfig object; "
+                            "provided config is of an incorrect type.")
 
         fw_impl = KerasImplementation()
 
@@ -88,7 +88,6 @@ if FOUND_TF:
 else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use this function.
-    def keras_resource_utilization_data(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_resource_utilization_data. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+    def keras_kpi_data(*args, **kwargs):
+        Logger.critical("Tensorflow must be installed to use keras_resource_utilization_data. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover

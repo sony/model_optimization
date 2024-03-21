@@ -36,7 +36,9 @@ def get_trainable_quantizer_weights_config(
          TrainableQuantizerWeightsConfig: an object that contains the quantizer configuration
     """
     if n.final_weights_quantization_cfg is None:
-        Logger.error(f'Node must have final_weights_quantization_cfg in order to build quantizer configuration')  # pragma: no cover
+        Logger.critical(
+            "The node requires a 'final_weights_quantization_cfg' configuration to build a "
+            "quantizer. Please ensure this configuration is set for the node.")# pragma: no cover
 
     final_node_cfg = n.final_weights_quantization_cfg
     final_attr_cfg = final_node_cfg.get_attr_config(attr_name)
@@ -65,7 +67,9 @@ def get_trainable_quantizer_activation_config(
          TrainableQuantizerActivationConfig - an object that contains the quantizer configuration
     """
     if n.final_activation_quantization_cfg is None:
-        Logger.error(f'Node must have final_activation_quantization_cfg in order to build quantizer configuration')  # pragma: no cover
+        Logger.critical(
+            "The node requires a 'final_activation_quantization_cfg' configuration to build a "
+            "quantizer. Please ensure this configuration is set for the node.")# pragma: no cover
 
     final_cfg = n.final_activation_quantization_cfg
     return TrainableQuantizerActivationConfig(final_cfg.activation_quantization_method,
@@ -93,17 +97,20 @@ def get_trainable_quantizer_quantization_candidates(n: BaseNode, attr: str = Non
     if attr is not None:
         # all candidates must have the same weights quantization method
         weights_quantization_methods = set([cfg.weights_quantization_cfg.get_attr_config(attr).weights_quantization_method
-                                            for cfg in n.candidates_quantization_cfg])
+             for cfg in n.candidates_quantization_cfg])
         if len(weights_quantization_methods) > 1:
-            Logger.error(f'Unsupported candidates_quantization_cfg with different weights quantization methods: '
-                         f'{weights_quantization_methods}')  # pragma: no cover
+            Logger.critical(f"Invalid 'candidates_quantization_cfg': Inconsistent weights "
+                            f"quantization methods detected: {weights_quantization_methods}. "
+                            f"Trainable quantizer requires all candidates to have the same weights "
+                            f"quantization method.")  # pragma: no cover
 
     # all candidates must have the same activation quantization method
     activation_quantization_methods = set([cfg.activation_quantization_cfg.activation_quantization_method
                                            for cfg in n.candidates_quantization_cfg])
     if len(activation_quantization_methods) > 1:
-        Logger.error(f'Unsupported candidates_quantization_cfg with different activation quantization methods: '
-                     f'{activation_quantization_methods}')  # pragma: no cover
+        Logger.critical(f"Invalid 'candidates_quantization_cfg': Inconsistent activation quantization "
+                        f"methods detected: {activation_quantization_methods}. "
+                        f"Trainable quantizer requires all candidates to have the same activation quantization method.")# pragma: no cover
 
     # get unique lists of candidates
     unique_weights_candidates = n.get_unique_weights_candidates(attr)

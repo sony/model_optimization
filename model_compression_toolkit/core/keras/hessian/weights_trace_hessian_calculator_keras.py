@@ -68,8 +68,8 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         """
         # Check if the target node's layer type is supported
         if not DEFAULT_KERAS_INFO.is_kernel_op(self.hessian_request.target_node.type):
-            Logger.error(
-                f"{self.hessian_request.target_node.type} is not supported for Hessian info w.r.t weights.")
+            Logger.critical(
+                f"{self.hessian_request.target_node.type} is not supported for Hessian-based scoring with respect to weights.")
 
         # Construct the Keras float model for inference
         model, _ = FloatKerasModelBuilder(graph=self.graph).build_model()
@@ -79,7 +79,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
         # Get the weight tensor for the target node
         if len(weight_attributes) != 1:
-            Logger.error(f"Hessian scores w.r.t weights is supported, for now, for a single-weight node. Found {len(weight_attributes)}")
+            Logger.critical(f"Hessian-based scoring with respect to weights is currently supported only for nodes with a single weight attribute. Found {len(weight_attributes)} attributes.")
 
         weight_tensor = getattr(model.get_layer(self.hessian_request.target_node.name), weight_attributes[0])
 
@@ -139,8 +139,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
             if final_approx.shape != (1,):
-                Logger.error(f"In HessianInfoGranularity.PER_TENSOR the score shape is expected"
-                             f"to be (1,) but is {final_approx.shape} ")
+                Logger.critical(f"For HessianInfoGranularity.PER_TENSOR, the expected score shape is (1,), but found {final_approx.shape}.")
         elif self.hessian_request.granularity == HessianInfoGranularity.PER_ELEMENT:
             # Reshaping the scores to the original weight shape
             final_approx = tf.reshape(final_approx, weight_tensor.shape)
@@ -195,4 +194,4 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         elif self.hessian_request.granularity == HessianInfoGranularity.PER_ELEMENT:
             return tf.size(weight_tensor).numpy()
         else:
-            Logger.error(f"Encountered an unexpected granularity {self.hessian_request.granularity} ")
+            Logger.critical(f"Unexpected granularity encountered: {self.hessian_request.granularity}.")

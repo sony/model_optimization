@@ -40,14 +40,13 @@ class TestKerasBaseWeightsQuantizer(BaseKerasTrainableInfrastructureTest):
     def run_test(self):
         with self.unit_test.assertRaises(Exception) as e:
             ZeroWeightsQuantizer(self.get_weights_quantization_config())
-        # TODO: In next MCTQ release, this test will fail due to KMEANS removal. Fix: "QuantizationMethod.SYMMETRIC: 3" -> "QuantizationMethod.SYMMETRIC: 2"
-        self.unit_test.assertEqual(f'Quantization method mismatch expected: [<QuantizationMethod.POWER_OF_TWO: 0>, '
-                                   f''f'<QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM',
+        self.unit_test.assertEqual(f'Quantization method mismatch. Expected methods: [<QuantizationMethod.POWER_OF_TWO: 0>, '
+                                   f''f'<QuantizationMethod.SYMMETRIC: 2>], received: QuantizationMethod.UNIFORM.',
                                    str(e.exception))
 
         with self.unit_test.assertRaises(Exception) as e:
             ZeroWeightsQuantizer(self.get_activation_quantization_config())
-        self.unit_test.assertEqual(f'Expect weight quantization got activation', str(e.exception))
+        self.unit_test.assertEqual(f'Expected weight quantization configuration; received activation quantization instead.', str(e.exception))
 
         weight_quantization_config = super(TestKerasBaseWeightsQuantizer, self).get_weights_quantization_config()
         quantizer = ZeroWeightsQuantizer(weight_quantization_config)
@@ -73,14 +72,13 @@ class TestKerasBaseActivationsQuantizer(BaseKerasTrainableInfrastructureTest):
     def run_test(self):
         with self.unit_test.assertRaises(Exception) as e:
             ZeroActivationsQuantizer(self.get_activation_quantization_config())
-        # TODO: In next MCTQ release, this test will fail due to KMEANS removal. Fix: "QuantizationMethod.SYMMETRIC: 3" -> "QuantizationMethod.SYMMETRIC: 2"
-        self.unit_test.assertEqual(f'Quantization method mismatch expected: [<QuantizationMethod.POWER_OF_TWO: 0>, '
-                                   f'<QuantizationMethod.SYMMETRIC: 3>] and got  QuantizationMethod.UNIFORM',
+        self.unit_test.assertEqual(f'Quantization method mismatch. Expected methods: [<QuantizationMethod.POWER_OF_TWO: 0>, '
+                                   f'<QuantizationMethod.SYMMETRIC: 2>], received: QuantizationMethod.UNIFORM.',
                                    str(e.exception))
 
         with self.unit_test.assertRaises(Exception) as e:
             ZeroActivationsQuantizer(self.get_weights_quantization_config())
-        self.unit_test.assertEqual(f'Expect activation quantization got weight', str(e.exception))
+        self.unit_test.assertEqual(f'Expected activation quantization configuration; received weight quantization instead.', str(e.exception))
 
         activation_quantization_config = super(TestKerasBaseActivationsQuantizer,
                                                self).get_activation_quantization_config()
@@ -107,6 +105,6 @@ class TestKerasQuantizerWithoutMarkDecorator(BaseKerasTrainableInfrastructureTes
         with self.unit_test.assertRaises(Exception) as e:
             test_quantizer = _TestQuantizer(self.get_weights_quantization_config())
         self.unit_test.assertEqual(
-            "A quantizer class that inherit from BaseTrainableQuantizer is not defined appropriately."
-            "Either it misses the @mark_quantizer decorator or the decorator is not used correctly.",
+            "Quantizer class inheriting from 'BaseTrainableQuantizer' is improperly defined. "
+            "Ensure it includes the '@mark_quantizer' decorator and is correctly applied.",
             str(e.exception))

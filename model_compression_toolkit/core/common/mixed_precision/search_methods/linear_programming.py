@@ -50,9 +50,9 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
     # Build a mapping from each layer's index (in the model) to a dictionary that maps the
     # bitwidth index to the observed sensitivity of the model when using that bitwidth for that layer.
 
-    if target_resource_utilization is None or search_manager is None:
-        Logger.critical("Can't run mixed precision search with given target_resource_utilization=None or search_manager=None."
-                        "Please provide a valid target_resource_utilization and check the mixed precision parameters values.")
+    if target_kpi is None or search_manager is None:
+        Logger.critical("Can't run mixed precision search with given target_kpi=None or search_manager=None."
+                        "Please provide a valid target_kpi and check the mixed precision parameters values.")
 
     layer_to_metrics_mapping = _build_layer_to_metrics_mapping(search_manager, target_resource_utilization)
 
@@ -155,9 +155,9 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
         lp_problem += lpSum(
             [v for v in layer_to_indicator_vars_mapping[layer].values()]) == 1
 
-    # Bound the feasible solution space with the desired resource utilization.
-    # Creates separate constraints for weights memory utilization and activation memory utilization.
-    if target_resource_utilization is not None:
+    # Bound the feasible solution space with the desired KPI.
+    # Creates separate constraints for weights KPI and activation KPI.
+    if target_kpi is not None:
         indicators = []
         for layer in layer_to_metrics_mapping.keys():
             for _, indicator in layer_to_indicator_vars_mapping[layer].items():
@@ -177,8 +177,8 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
                                            lp_problem=lp_problem,
                                            non_conf_ru_vector=non_conf_ru_vector)
     else:  # pragma: no cover
-        raise Logger.critical("Can't run mixed-precision search with given target_resource_utilization=None."
-                              "Please provide a valid target_resource_utilization.")
+        Logger.critical("Unable to execute mixed-precision search: 'target_resource_utilization' is None. "
+                        "A valid 'target_resource_utilization' is required.")
     return lp_problem
 
 
@@ -228,8 +228,8 @@ def _add_set_of_ru_constraints(search_manager: MixedPrecisionSearchManager,
         if isinstance(v, float):
             if v > target_resource_utilization_value:
                 Logger.critical(
-                    f"The model can't be quantized to satisfy target ru {target.value} with value "
-                    f"{target_resource_utilization_value}")  # pragma: no cover
+                    f"The model cannot be quantized to meet the specified target resource utilization {target.value} "
+                    f"with the value {target_resource_utilization_value}.")  # pragma: no cover
         else:
             lp_problem += v <= target_resource_utilization_value
 
