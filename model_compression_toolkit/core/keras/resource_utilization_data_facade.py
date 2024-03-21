@@ -88,6 +88,6 @@ if FOUND_TF:
 else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use this function.
-    def keras_kpi_data(*args, **kwargs):
+    def keras_resource_utilization_data(*args, **kwargs):
         Logger.critical("Tensorflow must be installed to use keras_resource_utilization_data. "
                         "The 'tensorflow' package is missing.")  # pragma: no cover

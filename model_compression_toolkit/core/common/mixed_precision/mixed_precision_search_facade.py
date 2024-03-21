@@ -79,7 +79,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     # target_resource_utilization have to be passed. If it was not passed, the facade is not supposed to get here by now.
     if target_resource_utilization is None:
-        Logger.critical("Target KPI is required for the bit-width search method's configuration.")  # pragma: no cover
+        Logger.critical("Target ResourceUtilization is required for the bit-width search method's configuration.")  # pragma: no cover
 
     # Set graph for MP search
     graph = copy.deepcopy(graph_to_search_cfg)  # Copy graph before searching

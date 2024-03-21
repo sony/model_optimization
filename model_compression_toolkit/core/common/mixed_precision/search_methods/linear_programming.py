@@ -25,6 +25,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_searc
 # Limit ILP solver runtime in seconds
 SOLVER_TIME_LIMIT = 60
 
+
 def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
                                   target_resource_utilization: ResourceUtilization = None) -> List[int]:
     """
@@ -50,9 +51,9 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
     # Build a mapping from each layer's index (in the model) to a dictionary that maps the
     # bitwidth index to the observed sensitivity of the model when using that bitwidth for that layer.
 
-    if target_kpi is None or search_manager is None:
-        Logger.critical("Can't run mixed precision search with given target_kpi=None or search_manager=None."
-                        "Please provide a valid target_kpi and check the mixed precision parameters values.")
+    if target_resource_utilization is None or search_manager is None:
+        Logger.critical("Invalid parameters: 'target_resource_utilization' and 'search_manager' must not be 'None' "
+                        "for mixed-precision search. Ensure valid inputs are provided.")
 
     layer_to_metrics_mapping = _build_layer_to_metrics_mapping(search_manager, target_resource_utilization)
 
@@ -155,9 +156,9 @@ def _formalize_problem(layer_to_indicator_vars_mapping: Dict[int, Dict[int, LpVa
         lp_problem += lpSum(
             [v for v in layer_to_indicator_vars_mapping[layer].values()]) == 1
 
-    # Bound the feasible solution space with the desired KPI.
-    # Creates separate constraints for weights KPI and activation KPI.
-    if target_kpi is not None:
+    # Bound the feasible solution space with the desired resource utilization values.
+    # Creates separate constraints for weights utilization and activation utilization.
+    if target_resource_utilization is not None:
         indicators = []
         for layer in layer_to_metrics_mapping.keys():
             for _, indicator in layer_to_indicator_vars_mapping[layer].items():
