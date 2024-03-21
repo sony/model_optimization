@@ -1,6 +1,12 @@
 # FAQ
 
-## 1. Quantized model size is the same as the original model size
+**Table of Contents:**
+1. [Why does the size of the quantized model remain the same as the original model size?](#1-why-does-the-size-of-the-quantized-model-remain-the-same-as-the-original-model-size)
+2. [Why does loading a quantized exported model from a file fail?](#2-why-does-loading-a-quantized-exported-model-from-a-file-fail)
+3. [Why am I getting a torch.fx error?](#3-why-am-i-getting-a-torchfx-error)
+
+
+## 1. Why does the size of the quantized model remain the same as the original model size?
 
 MCT performs a process known as *fake quantization*, wherein the model's weights and activations are still represented in a floating-point
 format but are quantized to represent a maximum of 2^N unique values (for N-bit cases).
@@ -12,7 +18,7 @@ Note that the IMX500 converter accepts the "fake quantization" model and support
 For more information and an implementation example, check out the [INT8 TFLite export tutorial](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/keras/export/example_keras_export.ipynb)
 
 
-## 2. Loading exported models
+## 2. Why does loading a quantized exported model from a file fail?
 
 The models MCT exports contain QuantizationWrappers and Quantizer objects that define and quantize the model at inference.
 These objects are custom layers and layer wrappers created by MCT (defined in an external repository: [MCTQ](https://github.com/sony/mct_quantizers)), 
@@ -35,7 +41,7 @@ PyTorch models can be exported as onnx models. An example of loading a saved onn
 Inference on the target platform (e.g. the IMX500) is not affected by this latency.
 
 
-## 3. Error parsing model with torch.fx
+## 3. Why am I getting a torch.fx error?
 
 When quantizing a PyTorch model, MCT's initial step involves converting the model into a graph representation using `torch.fx`.
 However, `torch.fx` comes with certain common limitations, with the primary one being its requirement for the computational graph to remain static.

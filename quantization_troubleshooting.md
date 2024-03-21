@@ -15,6 +15,14 @@ Some steps may be applicable to your model, while others may not.
 Throughout this document we refer the user to notebooks using the Keras framework. There are similar notebooks for PyTorch.
 All notebooks are available [here](https://github.com/sony/model_optimization/tree/main/tutorials/notebooks).
 
+**Table of Contents:**
+* [Representative Dataset](#representative-dataset)
+* [Quantization Process](#quantization-process)
+* [Model Structure Quantization Issues](#model-structure-quantization-issues)
+* [Advanced Quantization Methods](#advanced-quantization-methods)
+* [Debugging Tools](#debugging-tools)
+
+
 ___
 ## Representative Dataset
 The representative dataset is used by the MCT to derive the threshold values of activation tensors in the model.
