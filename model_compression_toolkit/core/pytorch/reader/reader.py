@@ -89,8 +89,8 @@ def fx_graph_module_generation(pytorch_model: torch.nn.Module,
     try:
         symbolic_traced = symbolic_trace(pytorch_model)
     except torch.fx.proxy.TraceError as e:
-        Logger.error(f'Error parsing model with torch.fx\n'
-                     f'fx error: {e}')
+        Logger.critical(f'Error parsing model with torch.fx\n'
+                        f'fx error: {e}')
     inputs = next(representative_data_gen())
     input_for_shape_infer = [to_tensor(i) for i in inputs]
     ShapeProp(symbolic_traced).propagate(*input_for_shape_infer)
