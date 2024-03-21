@@ -14,6 +14,8 @@
 # ==============================================================================
 from typing import Any
 
+from model_compression_toolkit.logger import Logger
+
 
 class ImmutableClass(object):
     """
@@ -36,7 +38,7 @@ class ImmutableClass(object):
 
         """
         if self._initialized:
-            raise Exception('Immutable class. Can\'t edit attributes')
+            Logger.critical("Immutable class. Can't edit attributes.")
         else:
             object.__setattr__(self,
                                *args,
@@ -49,5 +51,5 @@ class ImmutableClass(object):
 
         """
         if self._initialized:
-            raise Exception('reinitialized')  # Can not get finalized again.
+            Logger.critical('Object reinitialization error: object cannot be finalized again.')  # Can not get finalized again.
         self._initialized = True  # Finalize object.

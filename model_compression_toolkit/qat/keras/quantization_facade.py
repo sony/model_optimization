@@ -178,7 +178,7 @@ if FOUND_TF:
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-                Logger.error("Given quantization config to mixed-precision facade is not of type "
+                Logger.critical("Given quantization config to mixed-precision facade is not of type "
                              "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization API,"
                              "or pass a valid mixed precision configuration.")
 
@@ -291,12 +291,10 @@ else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
     def keras_quantization_aware_training_init_experimental(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_quantization_aware_training_init_experimental. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+        Logger.critical("Tensorflow must be installed to use keras_quantization_aware_training_init_experimental. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover
 
 
     def keras_quantization_aware_training_finalize_experimental(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_quantization_aware_training_finalize_experimental. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+        Logger.critical("Tensorflow must be installed to use keras_quantization_aware_training_finalize_experimental. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover

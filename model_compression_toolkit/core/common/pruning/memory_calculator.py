@@ -207,13 +207,13 @@ class MemoryCalculator:
         kernel_attr = self.fw_info.get_kernel_op_attributes(node.type)
         # Ensure only one kernel attribute exists for the given node.
         if len(kernel_attr) != 1:
-            Logger.error(f"Expected to found a single attribute but found {len(kernel_attr)} for node {node}")
+            Logger.critical(f"Expected a single attribute, but found {len(kernel_attr)} attributes for node '{node}'. Ensure the node configuration is correct.")
         kernel_attr = kernel_attr[0]
 
         # Retrieve and validate the axis index for the output channels.
         _, ic_axis = self.fw_info.kernel_channels_mapping.get(node.type)
         if ic_axis is None or int(ic_axis) != ic_axis:
-            Logger.error(f"Expected input channel axis to be an integer but is {ic_axis} for node {node}")
+            Logger.critical(f"Invalid input channel axis type for node '{node}': expected integer but got '{ic_axis}'.")
 
         # Get the number of output channels based on the kernel attribute and axis.
         num_ic = node.get_weights_by_keys(kernel_attr).shape[ic_axis]
@@ -295,7 +295,7 @@ class MemoryCalculator:
         for w_attr, w in node.weights.items():
             io_axis = [io_axis for attr, io_axis in attributes_and_oc_axis.items() if attr in w_attr]
             if len(io_axis) != 1:
-                Logger.error(f"Each weight should have exactly one corresponding IO axis, but is {io_axis} ")
+                Logger.critical(f"Each weight must correspond to exactly one IO (Input/Output) axis; however, the current configuration has '{io_axis}' axes.")
             out_axis, in_axis = io_axis[0]
 
             # Apply input and output masks to the weight tensor.
@@ -313,7 +313,7 @@ class MemoryCalculator:
             # Get the node channel axis from framework info
             channel_axis = self.fw_info.out_channel_axis_mapping.get(node.type)
             if channel_axis is None:
-                Logger.error("Channel axis is not defined")
+                Logger.critical(f"The channel axis is undefined. Please ensure the channel axis is explicitly defined for node {node.type} in the framework info.")
 
             # Check if node.output_shape is a list of lists.
             # In this case make sure all the out channels are the same value
@@ -322,7 +322,7 @@ class MemoryCalculator:
                 if all(len(sublist) > channel_axis and sublist[channel_axis] == compare_value for sublist in node.output_shape):
                     num_oc = compare_value
                 else:
-                    Logger.error("Number of out channels are not the same for all outputs of the node")
+                    Logger.critical("The number of output channels must be the same across all outputs of the node.")
             else:
                 num_oc = node.output_shape[channel_axis]
 
@@ -348,7 +348,7 @@ class MemoryCalculator:
         """
         mask = np.ones(w.shape[axis], dtype=bool) if mask is None else mask.astype(bool)
         if w.shape[axis] != len(mask):
-            Logger.error(f"Expected mask length {len(mask)}, found {w.shape[axis]}.")
+            Logger.critical(f"Expected a mask length of {len(mask)}, but got {w.shape[axis]}. Ensure the mask aligns with the tensor shape.")
         pruned_w = np.take(w, np.where(mask)[0], axis=axis)
         return pruned_w
 
@@ -370,7 +370,7 @@ class MemoryCalculator:
             The adjusted number of parameters considering padded channels.
         """
         if not (num_oc >= 1 and int(num_oc) == num_oc):
-            Logger.error(f"Expected number of output channels to be a non-negative integer but is {num_oc}")
+            Logger.critical(f"Expected the number of output channels to be a non-negative integer, but received '{num_oc}'.")
 
         nparams_per_oc = node_nparams / num_oc
         if int(nparams_per_oc) != nparams_per_oc:

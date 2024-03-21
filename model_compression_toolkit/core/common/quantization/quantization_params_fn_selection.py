@@ -47,9 +47,8 @@ def get_activation_quantization_params_fn(activation_quantization_method: Quanti
     elif activation_quantization_method == QuantizationMethod.LUT_POT_QUANTIZER:
         params_fn = lut_kmeans_histogram
     else:
-        Logger.error(
-            f'No params function for the configuration of '
-            f'quantization method {activation_quantization_method}')  # pragma: no cover
+        Logger.critical(
+            f"No parameter function found for the specified quantization method: {activation_quantization_method}")  # pragma: no cover
     return params_fn
 
 
@@ -74,7 +73,6 @@ def get_weights_quantization_params_fn(weights_quantization_method: Quantization
     elif weights_quantization_method == QuantizationMethod.LUT_SYM_QUANTIZER:
         params_fn = partial(lut_kmeans_tensor, is_symmetric=True)
     else:
-        Logger.error(
-            f'No params function for the configuration of '
-            f'quantization method {weights_quantization_method}')  # pragma: no cover
+        Logger.critical(
+            f"No parameter function found for the specified quantization method: {weights_quantization_method}")  # pragma: no cover
     return params_fn

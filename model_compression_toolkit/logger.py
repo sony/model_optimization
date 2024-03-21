@@ -19,7 +19,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-LOGGER_NAME = 'Constrained Model Optimization'
+LOGGER_NAME = 'Model Compression Toolkit'
 
 
 class Logger:
@@ -117,17 +117,6 @@ class Logger:
         raise Exception(msg)
 
     @staticmethod
-    def exception(msg: str):
-        """
-        Log a message at 'exception' severity and raise an exception.
-        Args:
-            msg: Message to log.
-
-        """
-        Logger.get_logger().exception(msg)
-        raise Exception(msg)
-
-    @staticmethod
     def debug(msg: str):
         """
         Log a message at 'debug' severity.
@@ -172,7 +161,6 @@ class Logger:
 
         """
         Logger.get_logger().error(msg)
-        raise Exception(msg)
 
 
 def set_log_folder(folder: str, level: int = logging.INFO):

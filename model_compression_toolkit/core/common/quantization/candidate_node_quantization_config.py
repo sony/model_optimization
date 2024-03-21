@@ -59,8 +59,10 @@ class CandidateNodeQuantizationConfig(BaseNodeQuantizationConfig):
             self.activation_quantization_cfg = activation_quantization_cfg
         else:
             if any(v is None for v in (qc, op_cfg, activation_quantization_fn, activation_quantization_params_fn)):
-                Logger.error("Missing some required arguments to initialize "
-                             "a node activation quantization configuration.")
+                Logger.critical(
+                    "Missing required arguments to initialize a node activation quantization configuration. "
+                    "Ensure QuantizationConfig, OpQuantizationConfig, activation quantization function, "
+                    "and parameters function are provided.")
             self.activation_quantization_cfg = (
                 NodeActivationQuantizationConfig(qc=qc,
                                                  op_cfg=op_cfg,
@@ -71,8 +73,9 @@ class CandidateNodeQuantizationConfig(BaseNodeQuantizationConfig):
             self.weights_quantization_cfg = weights_quantization_cfg
         else:
             if any(v is None for v in (qc, op_cfg, node_attrs_list)):
-                Logger.error("Missing some required arguments to initialize "
-                             "a node weights quantization configuration.")
+                Logger.critical("Missing required arguments to initialize a node weights quantization configuration. "
+                                "Ensure QuantizationConfig, OpQuantizationConfig, weights quantization function, "
+                                "parameters function, and weights attribute quantization config are provided.")
             self.weights_quantization_cfg = NodeWeightsQuantizationConfig(qc=qc, op_cfg=op_cfg,
                                                                           weights_channels_axis=weights_channels_axis,
                                                                           node_attrs_list=node_attrs_list)

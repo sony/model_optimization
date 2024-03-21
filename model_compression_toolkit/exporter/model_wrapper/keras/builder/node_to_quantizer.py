@@ -44,7 +44,7 @@ def get_inferable_quantizer_kwargs(node_qc: BaseNodeQuantizationConfig,
 
     if quantization_target == QuantizationTarget.Weights:
         if not isinstance(node_qc, NodeWeightsQuantizationConfig):
-            Logger.error(f"Non-compatible node quantization config was given for quantization target Weights.")  # pragma: no cover
+            Logger.critical(f"Non-compatible node quantization config was given for quantization target Weights.")  # pragma: no cover
 
         if attr_name is None:
             Logger.error(f"Attribute name was not specified for retrieving weights quantizer kwargs.")
@@ -84,7 +84,7 @@ def get_inferable_quantizer_kwargs(node_qc: BaseNodeQuantizationConfig,
 
     elif quantization_target == QuantizationTarget.Activation:
         if not isinstance(node_qc, NodeActivationQuantizationConfig):
-            Logger.error(f"Non-compatible node quantization config was given for quantization target Activation.")  # pragma: no cover
+            Logger.critical(f"Non-compatible node quantization config was given for quantization target Activation.")  # pragma: no cover
 
         quantization_method = node_qc.activation_quantization_method
 

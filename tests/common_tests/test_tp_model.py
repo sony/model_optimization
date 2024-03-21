@@ -45,7 +45,7 @@ class TargetPlatformModelingTest(unittest.TestCase):
             with model:
                 tp.OperatorsSet("opset")
             model.operator_set = []
-        self.assertEqual('Immutable class. Can\'t edit attributes', str(e.exception))
+        self.assertEqual('Immutable class. Can\'t edit attributes.', str(e.exception))
 
     def test_default_options_more_than_single_qc(self):
         test_qco = tp.QuantizationConfigOptions([TEST_QC, TEST_QC], base_config=TEST_QC)
@@ -88,7 +88,7 @@ class OpsetTest(unittest.TestCase):
             with hm:
                 tp.OperatorsSet("conv")
                 tp.OperatorsSet("conv")
-        self.assertEqual('OperatorsSet must have unique names', str(e.exception))
+        self.assertEqual('Operator Sets must have unique names.', str(e.exception))
 
 
 class QCOptionsTest(unittest.TestCase):
@@ -96,13 +96,13 @@ class QCOptionsTest(unittest.TestCase):
     def test_empty_qc_options(self):
         with self.assertRaises(AssertionError) as e:
             tp.QuantizationConfigOptions([])
-        self.assertEqual('Options list can not be empty', str(e.exception))
+        self.assertEqual('Options list can not be empty.', str(e.exception))
 
     def test_list_of_no_qc(self):
         with self.assertRaises(AssertionError) as e:
             tp.QuantizationConfigOptions([TEST_QC, 3])
         self.assertEqual(
-            'Options should be a list of QuantizationConfig objects, but found an object type: <class \'int\'>',
+            'Each option must be an instance of \'OpQuantizationConfig\', but found an object of type: <class \'int\'>.',
             str(e.exception))
 
     def test_clone_and_edit_options(self):
@@ -117,8 +117,7 @@ class QCOptionsTest(unittest.TestCase):
         with self.assertRaises(Exception) as e:
             tp.QuantizationConfigOptions([TEST_QC, TEST_QC])  # Should raise exception as base_config was not passed
         self.assertEqual(
-            'When quantization config options contains more than one configuration, a base_config must be passed for '
-            'non-mixed-precision optimization process',
+            'For multiple configurations, a \'base_config\' is required for non-mixed-precision optimization.',
             str(e.exception))
 
     def test_get_qco_for_none_tpc(self):

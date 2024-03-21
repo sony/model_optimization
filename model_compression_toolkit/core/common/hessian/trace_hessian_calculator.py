@@ -50,21 +50,19 @@ class TraceHessianCalculator(ABC):
 
         for output_node in graph.get_outputs():
             if not fw_impl.is_output_node_compatible_for_hessian_score_computation(output_node.node):
-                Logger.error(f"All graph outputs should support Hessian computation, but node {output_node.node} "
-                             f"was found with layer type {output_node.node.type}. "
-                             f"Try to run MCT without Hessian info computation.")
+                Logger.critical(f"All graph outputs must support Hessian score computation. Incompatible node: {output_node.node}, layer type: {output_node.node.type}. Consider disabling Hessian info computation.")
 
         self.input_images = fw_impl.to_tensor(input_images)
         self.num_iterations_for_approximation = num_iterations_for_approximation
 
         # Validate representative dataset has same inputs as graph
         if len(self.input_images)!=len(graph.get_inputs()):
-            Logger.error(f"Graph has {len(graph.get_inputs())} inputs, but provided representative dataset returns {len(self.input_images)} inputs")
+            Logger.critical(f"The graph requires {len(graph.get_inputs())} inputs, but the provided representative dataset contains {len(self.input_images)} inputs.")
 
         # Assert all inputs have a batch size of 1
         for image in self.input_images:
             if image.shape[0]!=1:
-                Logger.error(f"Hessian is calculated only for a single image (per input) but input shape is {image.shape}")
+                Logger.critical(f"Hessian calculations are restricted to a single-image per input. Found input with shape: {image.shape}.")
 
         self.fw_impl = fw_impl
         self.hessian_request = trace_hessian_request

@@ -184,7 +184,7 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
         if fw_info.is_kernel_op(node.type):
             kernel_attributes = fw_info.get_kernel_op_attributes(node.type)
             if kernel_attributes is None or len(kernel_attributes) == 0:
-                Logger.error(f"Expected to find attributes but found {kernel_attributes}")
+                Logger.critical(f"Expected to find kernel attributes but none were identified for node '{node.name}' of type {node.type}.")
 
             for attr in kernel_attributes:
                 attributes_with_axis[attr] = fw_info.kernel_channels_mapping.get(node.type)
@@ -273,7 +273,7 @@ def _prune_pytorch_edge_node(node: BaseNode,
         elif node.type == torch.nn.Linear:
             node.framework_attr[OUT_FEATURES] = int(np.sum(mask))
         else:
-            Logger.exception(f"{node.type} is currently not supported"
+            Logger.critical(f"{node.type} is currently not supported"
                              f"as an edge node in a pruning section")
 
     if is_exit_node:
@@ -282,7 +282,7 @@ def _prune_pytorch_edge_node(node: BaseNode,
         elif node.type == torch.nn.Linear:
             node.framework_attr[IN_FEATURES] = int(np.sum(mask))
         else:
-            Logger.exception(f"{node.type} is currently not supported"
+            Logger.critical(f"{node.type} is currently not supported"
                              f"as an edge node in a pruning section")
         # Adjust the input shape for the last node in the section.
         _edit_node_input_shape(node, mask_bool, fw_info)

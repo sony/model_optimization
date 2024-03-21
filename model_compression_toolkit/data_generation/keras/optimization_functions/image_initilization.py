@@ -21,6 +21,7 @@ from tensorflow.data import Dataset
 
 from model_compression_toolkit.data_generation.common.constants import NUM_INPUT_CHANNELS
 from model_compression_toolkit.data_generation.common.enums import DataInitType
+from model_compression_toolkit.logger import Logger
 
 
 # Define a function to generate a dataset of Gaussian noise images.
@@ -91,7 +92,7 @@ def get_random_gaussian_data(
     Returns:
         Tuple[int, Any]: A tuple containing the number of batches and a data loader iterator.
     """
-    print(f'Start generating random Gaussian data')
+    Logger.info(f'Start generating random Gaussian data')
     image_shape = size + (NUM_INPUT_CHANNELS,)
     dataset = generate_gaussian_noise_images(num_samples=n_images, image_shape=image_shape,
                                              mean=mean_factor, std=std_factor, batch_size=batch_size)

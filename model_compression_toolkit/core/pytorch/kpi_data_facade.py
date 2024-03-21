@@ -74,8 +74,7 @@ if FOUND_TORCH:
         """
 
         if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-            Logger.error("KPI data computation can't be executed without MixedPrecisionQuantizationConfig object."
-                         "Given quant_config is not of type MixedPrecisionQuantizationConfig.")
+            Logger.critical("KPI data computation requires a MixedPrecisionQuantizationConfig object. The provided 'mixed_precision_config' is not of this type.")
 
         fw_impl = PytorchImplementation()
 
@@ -90,5 +89,5 @@ else:
     # If torch is not installed,
     # we raise an exception when trying to use this function.
     def pytorch_kpi_data(*args, **kwargs):
-        Logger.critical('Installing torch is mandatory when using pytorch_kpi_data. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+        Logger.critical("PyTorch must be installed to use 'pytorch_kpi_data'. The 'torch' package is missing.")  # pragma: no cover
+

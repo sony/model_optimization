@@ -63,7 +63,7 @@ if FOUND_TORCH:
             weights = {}
             for weight, quantizer_vars, quantizer in layer.get_weights_vars():
                 if not isinstance(quantizer, BaseTrainableQuantizer):
-                    Logger.error(f"Expecting a GPTQ trainable quantizer, "  # pragma: no cover
+                    Logger.critical(f"Expecting a GPTQ trainable quantizer, "  # pragma: no cover
                                  f"but got {type(quantizer)} which is not callable.")
                 weights.update({weight: quantizer(training=False, inputs=quantizer_vars)})
 
@@ -87,6 +87,5 @@ if FOUND_TORCH:
 else:
     class BasePytorchGPTQTrainableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
-            Logger.critical('Installing Pytorch is mandatory '
-                            'when using BasePytorchGPTQTrainableQuantizer. '
-                            'Could not find torch package.')  # pragma: no cover
+            Logger.critical("PyTorch must be installed to use 'BasePytorchGPTQTrainableQuantizer'. "
+                            "The 'torch' package is missing.")  # pragma: no cover
