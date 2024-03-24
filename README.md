@@ -17,6 +17,7 @@ MCT is developed by researchers and engineers working at Sony Semiconductor Isra
 - [Getting Started](#getting-started)
 - [Supported features](#supported-features)
 - [Results](#results)
+- [Troubleshooting](#trouble-shooting)
 - [Contributions](#contributions)
 - [License](#license)
 
@@ -37,15 +38,16 @@ For installing the nightly version or installing from source, refer to the [inst
 
 ### Quick start & tutorials 
 
-For an example of how to use MCT with TensorFlow or PyTorch on various models and tasks,
-check out the [quick-start page](tutorials/quick_start/README.md) and
-the [results CSV](tutorials/quick_start/results/model_quantization_results.csv).
-
-In addition, a set of [notebooks](tutorials/notebooks) are provided for an easy start. For example:
-* [MobileNet with Tensorflow](tutorials/notebooks/keras/ptq/example_keras_mobilenet.py).
-* [MobileNetV2 with PyTorch](tutorials/notebooks/pytorch/ptq/example_pytorch_mobilenet_v2.py).
+Explore the Model Compression Toolkit (MCT) through our tutorials, 
+covering compression techniques for Keras and PyTorch models. Access interactive [notebooks](tutorials/README.md) 
+for hands-on learning. For example:
+* [Keras MobileNetV2 post training quantization](tutorials/notebooks/keras/ptq/example_keras_imagenet.ipynb)
+* [Post training quantization with PyTorch](tutorials/notebooks/pytorch/ptq/example_pytorch_quantization_mnist.ipynb)
 * [Data Generation for ResNet18 with PyTorch](tutorials/notebooks/pytorch/data_generation/example_pytorch_data_generation.ipynb).
 
+Additionally, for quick quantization of a variety of models from well-known collections,
+visit the [quick-start page](tutorials/quick_start/README.md) and the
+[results CSV](tutorials/quick_start/results/model_quantization_results.csv).
 
 ### Supported Versions
 
@@ -160,6 +162,12 @@ Results for applying pruning to reduce the parameters of the following models by
 | DenseNet121 [3] | 74.44                | 71.71                 |
 
 
+## Trouble Shooting
+
+If the accuracy degradation of the quantized model is too large for your application, check out the [Quantization Troubleshooting](https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md)
+for common pitfalls and some tools to improve quantization accuracy.
+
+Check out the [FAQ](https://github.com/sony/model_optimization/tree/main/FAQ.md) for common issues.
 
 
 ## Contributions
