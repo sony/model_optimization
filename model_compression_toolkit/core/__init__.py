@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core.common.data_loader import FolderImageLoader
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo, ChannelAxis
 from model_compression_toolkit.core.common import network_editors as network_editor
 from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig

@@ -19,7 +19,6 @@ import importlib
 import unittest
 
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
-from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 #  ----------------  Individual test suites
 from tests.common_tests.function_tests.test_histogram_collector import TestHistogramCollector
 from tests.common_tests.function_tests.test_resource_utilization_object import TestResourceUtilizationObject
@@ -97,7 +96,6 @@ if __name__ == '__main__':
     suiteList = []
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHistogramCollector))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCollectorsManipulations))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFolderLoader))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestThresholdSelection))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TargetPlatformModelingTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(OpsetTest))
