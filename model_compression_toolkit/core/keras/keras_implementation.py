@@ -82,7 +82,6 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.resi
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.input_scaling import InputScaling, \
     InputScalingWithPad 
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.concat_threshold_update import ConcatThresholdUpdate
-
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.multi_head_attention_decomposition import \
@@ -320,7 +319,11 @@ class KerasImplementation(FrameworkImplementation):
             substitutions_list.append(InputScaling())
             substitutions_list.append(InputScalingWithPad())
         if quant_config.concat_threshold_update:
+<<<<<<< HEAD
             substitutions_list.append(ConcatThresholdUpdate())
+=======
+            substitutions_list.append(threshold_updater())
+>>>>>>> 7315ddec (concat feature addition)
         return substitutions_list
 
 

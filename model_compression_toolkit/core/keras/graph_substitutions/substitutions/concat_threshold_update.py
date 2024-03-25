@@ -1,3 +1,4 @@
+
 # Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,6 +25,7 @@ from model_compression_toolkit.constants import THRESHOLD
 MATCHER = NodeOperationMatcher(Concatenate)
 
 class ConcatThresholdUpdate(common.BaseSubstitution):
+
     """
     Find concat layers and match their prior layers thresholds unless prior layer outputs to multiple layers.
     """
@@ -42,6 +44,7 @@ class ConcatThresholdUpdate(common.BaseSubstitution):
         previous layer outputs to multiple layers. No change in case of uniform quantization. 
         No change in case of multiple quantization candidates (mixed precision).
 
+
         Args:
             graph: Graph we apply the substitution on.
             node: Node refference to edit previous nodes thresholds.
@@ -56,4 +59,5 @@ class ConcatThresholdUpdate(common.BaseSubstitution):
             for prev_node in prev_nodes:
                 if len(graph.get_next_nodes(prev_node))==1 and prev_node.type != Concatenate:
                     prev_node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD] = concat_threshold
+
         return graph
