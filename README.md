@@ -17,6 +17,7 @@ MCT is developed by researchers and engineers working at Sony Semiconductor Isra
 - [Getting Started](#getting-started)
 - [Supported features](#supported-features)
 - [Results](#results)
+- [Troubleshooting](#trouble-shooting)
 - [Contributions](#contributions)
 - [License](#license)
 
@@ -37,15 +38,16 @@ For installing the nightly version or installing from source, refer to the [inst
 
 ### Quick start & tutorials 
 
-For an example of how to use MCT with TensorFlow or PyTorch on various models and tasks,
-check out the [quick-start page](tutorials/quick_start/README.md) and
-the [results CSV](tutorials/quick_start/results/model_quantization_results.csv).
-
-In addition, a set of [notebooks](tutorials/notebooks) are provided for an easy start. For example:
-* [MobileNet with Tensorflow](tutorials/notebooks/keras/ptq/example_keras_mobilenet.py).
-* [MobileNetV2 with PyTorch](tutorials/notebooks/pytorch/ptq/example_pytorch_mobilenet_v2.py).
+Explore the Model Compression Toolkit (MCT) through our tutorials, 
+covering compression techniques for Keras and PyTorch models. Access interactive [notebooks](tutorials/README.md) 
+for hands-on learning. For example:
+* [Keras MobileNetV2 post training quantization](tutorials/notebooks/keras/ptq/example_keras_imagenet.ipynb)
+* [Post training quantization with PyTorch](tutorials/notebooks/pytorch/ptq/example_pytorch_quantization_mnist.ipynb)
 * [Data Generation for ResNet18 with PyTorch](tutorials/notebooks/pytorch/data_generation/example_pytorch_data_generation.ipynb).
 
+Additionally, for quick quantization of a variety of models from well-known collections,
+visit the [quick-start page](tutorials/quick_start/README.md) and the
+[results CSV](tutorials/quick_start/results/model_quantization_results.csv).
 
 ### Supported Versions
 
@@ -58,11 +60,11 @@ Currently, MCT is being tested on various Python, Pytorch and TensorFlow version
 | Python 3.11 | | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_pytorch20.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_pytorch20.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_pytorch21.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_pytorch21.yml) |
 
 
-|             | TensorFlow 2.12                                                                                                                                                                                                                        | TensorFlow 2.13                                                                                                                                                                                                                        | TensorFlow 2.14                                                                                                                                                                                                                        |
-|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Python 3.9  | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras212.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras212.yml)   | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras213.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras213.yml)   | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras214.yml)   |
-| Python 3.10 | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras212.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras212.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras213.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras213.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras214.yml) |
-| Python 3.11 | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras212.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras212.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras213.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras213.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras214.yml) |
+|             | TensorFlow 2.12                                                                                                                                                                                                                        | TensorFlow 2.13                                                                                                                                                                                                                        | TensorFlow 2.14                                                                                                                                                                                                                        | TensorFlow 2.15                                                                                                                                                                                                        |
+|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Python 3.9  | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras212.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras212.yml)   | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras213.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras213.yml)   | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras214.yml)   | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras215.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python39_keras215.yml)   |
+| Python 3.10 | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras212.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras212.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras213.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras213.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras214.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras215.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras215.yml) |
+| Python 3.11 | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras212.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras212.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras213.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras213.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras214.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras215.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras215.yml) |
 
 
 ## Supported Features
@@ -117,7 +119,7 @@ This pruning technique is designed to compress models for specific hardware arch
 taking into account the target platform's Single Instruction, Multiple Data (SIMD) capabilities. 
 By pruning groups of channels (SIMD groups), our approach not only reduces model size 
 and complexity, but ensures that better utilization of channels is in line with the SIMD architecture 
-for a target KPI of weights memory footprint.
+for a target Resource Utilization of weights memory footprint.
 [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_pruning_experimental.html)
 [Pytorch API](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pruning/pytorch/pruning_facade.py#L43) 
 
@@ -160,6 +162,12 @@ Results for applying pruning to reduce the parameters of the following models by
 | DenseNet121 [3] | 74.44                | 71.71                 |
 
 
+## Trouble Shooting
+
+If the accuracy degradation of the quantized model is too large for your application, check out the [Quantization Troubleshooting](https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md)
+for common pitfalls and some tools to improve quantization accuracy.
+
+Check out the [FAQ](https://github.com/sony/model_optimization/tree/main/FAQ.md) for common issues.
 
 
 ## Contributions

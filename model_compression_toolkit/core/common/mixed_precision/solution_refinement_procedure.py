@@ -15,7 +15,7 @@
 
 from typing import List
 
-from model_compression_toolkit.core import KPI
+from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import \
     MixedPrecisionSearchManager
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
@@ -26,29 +26,29 @@ import numpy as np
 
 def greedy_solution_refinement_procedure(mp_solution: List[int],
                                          search_manager: MixedPrecisionSearchManager,
-                                         target_kpi: KPI) -> List[int]:
+                                         target_resource_utilization: ResourceUtilization) -> List[int]:
     """
     A greedy procedure to try and improve a mixed-precision solution that was found by a mixed-precision optimization
     algorithm.
     This procedure tries to increase the bit-width precision of configurable nodes that did not get the maximal
     candidate
     in the found solution.
-    It iteratively goes over all such nodes, computes the KPI values on a modified configuration (with the node's next
-    best candidate), filters out all configs that hold the KPI constraints and chooses one of them as an improvement
+    It iteratively goes over all such nodes, computes the resource utilization values on a modified configuration (with the node's next
+    best candidate), filters out all configs that hold the resource utilization constraints and chooses one of them as an improvement
     step
-    The choice is done in a greedy approach where we take the configuration that modifies the KPI the least.
+    The choice is done in a greedy approach where we take the configuration that modifies the resource utilization the least.
 
     Args:
         mp_solution: A mixed-precision configuration that was found by a mixed-precision optimization algorithm.
         search_manager: A MixedPrecisionSearchManager object.
-        target_kpi: The target KPIs for the mixed-precision search.
+        target_resource_utilization: The target resource utilization for the mixed-precision search.
 
     Returns: A new, possibly updated, mixed-precision bit-width configuration.
 
     """
-    # Refinement is not supported for BOPs KPI for now...
-    if target_kpi.bops < np.inf:
-        Logger.info(f'Target KPI constraint BOPs - Skipping MP greedy solution refinement')
+    # Refinement is not supported for BOPs utilization for now...
+    if target_resource_utilization.bops < np.inf:
+        Logger.info(f'Target resource utilization constraint BOPs - Skipping MP greedy solution refinement')
         return mp_solution
 
     new_solution = mp_solution.copy()
@@ -56,7 +56,7 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
 
     while changed:
         changed = False
-        nodes_kpis = {}
+        nodes_ru = {}
         nodes_next_candidate = {}
 
         for node_idx in range(len(mp_solution)):
@@ -72,36 +72,39 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
             kernel_attr = None if kernel_attr is None else kernel_attr[0]
             valid_candidates = _get_valid_candidates_indices(node_candidates, new_solution[node_idx], kernel_attr)
 
-            # Create a list of KPIs for the valid candidates.
-            updated_kpis = []
+            # Create a list of ru for the valid candidates.
+            updated_ru = []
             for valid_idx in valid_candidates:
-                node_updated_kpis = search_manager.compute_kpi_for_config(
+                node_updated_ru = search_manager.compute_resource_utilization_for_config(
                     config=search_manager.replace_config_in_index(new_solution, node_idx, valid_idx))
-                updated_kpis.append(node_updated_kpis)
+                updated_ru.append(node_updated_ru)
 
-            # filter out new configs that don't hold the KPI restrictions
-            node_filtered_kpis = [(node_idx, kpis) for node_idx, kpis in zip(valid_candidates, updated_kpis) if
-                                  target_kpi.holds_constraints(kpis)]
+            # filter out new configs that don't hold the resource utilization restrictions
+            node_filtered_ru = [(node_idx, ru) for node_idx, ru in zip(valid_candidates, updated_ru) if
+                                target_resource_utilization.holds_constraints(ru)]
 
-            if len(node_filtered_kpis) > 0:
-                sorted_by_kpi = sorted(node_filtered_kpis, key=lambda node_kpis: (node_kpis[1].total_memory,
-                                                                                  node_kpis[1].weights_memory,
-                                                                                  node_kpis[1].activation_memory))
-                nodes_kpis[node_idx] = sorted_by_kpi[0][1]
-                nodes_next_candidate[node_idx] = sorted_by_kpi[0][0]
+            if len(node_filtered_ru) > 0:
+                sorted_by_ru = sorted(node_filtered_ru, key=lambda node_ru: (node_ru[1].total_memory,
+                                                                             node_ru[1].weights_memory,
+                                                                             node_ru[1].activation_memory))
+                nodes_ru[node_idx] = sorted_by_ru[0][1]
+                nodes_next_candidate[node_idx] = sorted_by_ru[0][0]
 
-        if len(nodes_kpis) > 0:
-            # filter out new configs that don't hold the KPI restrictions
-            node_filtered_kpis = [(node_idx, kpis) for node_idx, kpis in nodes_kpis.items()]
-            sorted_by_kpi = sorted(node_filtered_kpis, key=lambda node_kpis: (node_kpis[1].total_memory,
-                                                                              node_kpis[1].weights_memory,
-                                                                              node_kpis[1].activation_memory))
+        if len(nodes_ru) > 0:
+            # filter out new configs that don't hold the ru restrictions
+            node_filtered_ru = [(node_idx, ru) for node_idx, ru in nodes_ru.items()]
+            sorted_by_ru = sorted(node_filtered_ru, key=lambda node_ru: (node_ru[1].total_memory,
+                                                                         node_ru[1].weights_memory,
+                                                                         node_ru[1].activation_memory))
 
-            node_idx_to_upgrade = sorted_by_kpi[0][0]
+            node_idx_to_upgrade = sorted_by_ru[0][0]
             new_solution[node_idx_to_upgrade] = nodes_next_candidate[node_idx_to_upgrade]
             changed = True
 
-    Logger.info(f'Greedy MP algorithm changed configuration from: {mp_solution} to {new_solution}')
+    if any([mp_solution[i] != new_solution[i] for i in range(len(mp_solution))]):
+        Logger.info(f'Greedy MP algorithm changed configuration from (numbers represent indices of the '
+                    f'chosen bit-width candidate for each layer):\n{mp_solution}\nto\n{new_solution}')
+
     return new_solution
 
 

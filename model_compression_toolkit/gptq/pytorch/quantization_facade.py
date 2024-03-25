@@ -21,7 +21,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.keras.quantization_facade import GPTQ_MOMENTUM
 from model_compression_toolkit.gptq.runner import gptq_runner
@@ -94,7 +94,7 @@ if FOUND_TORCH:
 
     def pytorch_gradient_post_training_quantization(model: Module,
                                                     representative_data_gen: Callable,
-                                                    target_kpi: KPI = None,
+                                                    target_resource_utilization: ResourceUtilization = None,
                                                     core_config: CoreConfig = CoreConfig(),
                                                     gptq_config: GradientPTQConfig = None,
                                                     gptq_representative_data_gen: Callable = None,
@@ -118,7 +118,7 @@ if FOUND_TORCH:
         Args:
             model (Module): Pytorch model to quantize.
             representative_data_gen (Callable): Dataset used for calibration.
-            target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+            target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
@@ -159,9 +159,9 @@ if FOUND_TORCH:
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-                Logger.error("Given quantization config to mixed-precision facade is not of type "
-                             "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization "
-                             "API, or pass a valid mixed precision configuration.")  # pragma: no cover
+                Logger.critical("Given quantization config for mixed-precision is not of type 'MixedPrecisionQuantizationConfig'. "
+                                "Ensure usage of the correct API for 'keras_post_training_quantization' "
+                                "or provide a valid mixed-precision configuration.")  # pragma: no cover
 
         tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
 
@@ -176,7 +176,7 @@ if FOUND_TORCH:
                                                                      fw_info=DEFAULT_PYTORCH_INFO,
                                                                      fw_impl=fw_impl,
                                                                      tpc=target_platform_capabilities,
-                                                                     target_kpi=target_kpi,
+                                                                     target_resource_utilization=target_resource_utilization,
                                                                      tb_w=tb_w)
 
         # ---------------------- #
@@ -202,12 +202,10 @@ else:
     # If torch is not installed,
     # we raise an exception when trying to use these functions.
     def get_pytorch_gptq_config(*args, **kwargs):
-        Logger.critical('Installing Pytorch is mandatory '
-                        'when using get_pytorch_gptq_config. '
-                        'Could not find torch package.')  # pragma: no cover
+        Logger.critical("PyTorch must be installed to use 'get_pytorch_gptq_config'. "
+                        "The 'torch' package is missing.")  # pragma: no cover
 
 
     def pytorch_gradient_post_training_quantization(*args, **kwargs):
-        Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_gradient_post_training_quantization. '
-                        'Could not find the torch package.')  # pragma: no cover
+        Logger.critical("PyTorch must be installed to use 'pytorch_gradient_post_training_quantization'. "
+                        "The 'torch' package is missing.")  # pragma: no cover

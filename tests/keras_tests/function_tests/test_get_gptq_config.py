@@ -126,8 +126,7 @@ class TestGetGPTQConfig(unittest.TestCase):
         for i, gptq_config in enumerate(self.gptqv2_configurations):
             keras_gradient_post_training_quantization(in_model=build_model(SHAPE[1:]),
                                                       representative_data_gen=random_datagen_experimental,
-                                                      core_config=self.cc,
-                                                      gptq_config=gptq_config,
+                                                      gptq_config=gptq_config, core_config=self.cc,
                                                       target_platform_capabilities=self.pot_weights_tpc)
 
         tf.config.run_functions_eagerly(False)
@@ -140,8 +139,7 @@ class TestGetGPTQConfig(unittest.TestCase):
         for i, gptq_config in enumerate(self.gptqv2_configurations):
             keras_gradient_post_training_quantization(in_model=build_model(SHAPE[1:]),
                                                       representative_data_gen=random_datagen_experimental,
-                                                      core_config=self.cc,
-                                                      gptq_config=gptq_config,
+                                                      gptq_config=gptq_config, core_config=self.cc,
                                                       target_platform_capabilities=self.symmetric_weights_tpc)
 
         tf.config.run_functions_eagerly(False)

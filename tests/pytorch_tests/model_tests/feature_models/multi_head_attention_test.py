@@ -113,4 +113,4 @@ class MHALayerNetFeatureTest(MHALayerNetTest):
                                                                                    representative_data_gen,
                                                                                    core_config=core_config,
                                                                                    target_platform_capabilities=tpc)
-            self.unit_test.assertEqual('Add BIAS_KV feature is Not Implemented', str(e.exception))
+            self.unit_test.assertEqual('Add Bias to Key/Value (BIAS_KV) feature is not implemented.', str(e.exception))

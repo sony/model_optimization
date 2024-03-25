@@ -30,14 +30,19 @@ class CoreConfig:
 
         Args:
             quantization_config (QuantizationConfig): Config for quantization.
-            mixed_precision_config (MixedPrecisionQuantizationConfig): Config for mixed precision quantization (optional, default=None).
+            mixed_precision_config (MixedPrecisionQuantizationConfig): Config for mixed precision quantization.
+            If None, a default MixedPrecisionQuantizationConfig is used.
             debug_config (DebugConfig): Config for debugging and editing the network quantization process.
         """
         self.quantization_config = quantization_config
-        self.mixed_precision_config = mixed_precision_config
         self.debug_config = debug_config
+
+        if mixed_precision_config is None:
+            self.mixed_precision_config = MixedPrecisionQuantizationConfig()
+        else:
+            self.mixed_precision_config = mixed_precision_config
 
     @property
     def mixed_precision_enable(self):
-        return self.mixed_precision_config is not None
+        return self.mixed_precision_config is not None and self.mixed_precision_config.mixed_precision_enable
 

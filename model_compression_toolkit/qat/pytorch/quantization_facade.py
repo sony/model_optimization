@@ -23,7 +23,7 @@ from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
@@ -75,10 +75,9 @@ if FOUND_TORCH:
 
     def pytorch_quantization_aware_training_init_experimental(in_model: Module,
                                                               representative_data_gen: Callable,
-                                                              target_kpi: KPI = None,
+                                                              target_resource_utilization: ResourceUtilization = None,
                                                               core_config: CoreConfig = CoreConfig(),
                                                               qat_config: QATConfig = QATConfig(),
-                                                              fw_info: FrameworkInfo = DEFAULT_PYTORCH_INFO,
                                                               target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
         """
          Prepare a trained Pytorch model for quantization aware training. First the model quantization is optimized
@@ -92,16 +91,15 @@ if FOUND_TORCH:
          a mixed-precision configuration, and set a bit-width for each layer. The model is built with fake_quant
          nodes for quantizing activation. Weights are kept as float and are quantized online while training by the
          quantization wrapper's weight quantizer.
-         In order to limit the maximal model's size, a target KPI need to be passed after weights_memory
+         In order to limit the maximal model's size, a target resource utilization need to be passed after weights_memory
          is set (in bytes).
 
          Args:
              in_model (Model): Pytorch model to quantize.
              representative_data_gen (Callable): Dataset used for initial calibration.
-             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+             target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
              qat_config (QATConfig): QAT configuration
-             fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.).  `Default Pytorch info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/pytorch/default_framework_info.py>`_
              target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Pytorch model according to.
 
          Returns:
@@ -133,7 +131,7 @@ if FOUND_TORCH:
 
              >>> config = mct.core.CoreConfig()
 
-             Pass the model, the representative dataset generator, the configuration and the target KPI to get a
+             Pass the model, the representative dataset generator, the configuration and the target resource utilization to get a
              quantized model. Now the model contains quantizer wrappers for fine tunning the weights:
 
              >>> quantized_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model, repr_datagen, core_config=config)
@@ -148,11 +146,11 @@ if FOUND_TORCH:
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-                Logger.error("Given quantization config to mixed-precision facade is not of type "
+                Logger.critical("Given quantization config to mixed-precision facade is not of type "
                              "MixedPrecisionQuantizationConfig. Please use pytorch_post_training_quantization API,"
                              "or pass a valid mixed precision configuration.")
 
-        tb_w = init_tensorboard_writer(fw_info)
+        tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
         fw_impl = PytorchImplementation()
 
         # Ignore trace hessian service as we do not use it here
@@ -162,15 +160,15 @@ if FOUND_TORCH:
                                                fw_info=DEFAULT_PYTORCH_INFO,
                                                fw_impl=fw_impl,
                                                tpc=target_platform_capabilities,
-                                               target_kpi=target_kpi,
+                                               target_resource_utilization=target_resource_utilization,
                                                tb_w=tb_w)
 
-        tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
+        tg = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
 
         _qat_wrapper = partial(qat_wrapper, qat_config=qat_config)
 
         qat_model, user_info = PyTorchModelBuilder(graph=tg,
-                                                   fw_info=fw_info,
+                                                   fw_info=DEFAULT_PYTORCH_INFO,
                                                    wrapper=_qat_wrapper,
                                                    get_activation_quantizer_holder_fn=partial(
                                                        get_activation_quantizer_holder,
@@ -215,7 +213,7 @@ if FOUND_TORCH:
 
              >>> config = mct.core.CoreConfig()
 
-             Pass the model, the representative dataset generator, the configuration and the target KPI to get a
+             Pass the model, the representative dataset generator, the configuration and the target resource utilization to get a
              quantized model:
 
              >>> quantized_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model, repr_datagen, core_config=config)
@@ -241,12 +239,10 @@ else:
     # If torch is not installed,
     # we raise an exception when trying to use these functions.
     def pytorch_quantization_aware_training_init_experimental(*args, **kwargs):
-        Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_quantization_aware_training_init_experimental. '
-                        'Could not find the torch package.')  # pragma: no cover
+        Logger.critical('PyTorch must be installed to use pytorch_quantization_aware_training_init_experimental. '
+                        "The 'torch' package is missing.")  # pragma: no cover
 
 
     def pytorch_quantization_aware_training_finalize_experimental(*args, **kwargs):
-        Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_quantization_aware_training_finalize_experimental. '
-                        'Could not find the torch package.')  # pragma: no cover
+        Logger.critical("PyTorch must be installed to use 'pytorch_quantization_aware_training_finalize_experimental'. "
+                        "The 'torch' package is missing.")  # pragma: no cover

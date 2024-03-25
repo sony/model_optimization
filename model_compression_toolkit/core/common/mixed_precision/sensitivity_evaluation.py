@@ -17,11 +17,11 @@ import copy
 import numpy as np
 from typing import Callable, Any, List, Tuple
 
-from model_compression_toolkit.constants import AXIS, HESSIAN_OUTPUT_ALPHA
+from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-
+from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, \
@@ -78,8 +78,7 @@ class SensitivityEvaluation:
         self.disable_activation_for_metric = disable_activation_for_metric
         if self.quant_config.use_hessian_based_scores:
             if not isinstance(hessian_info_service, HessianInfoService):
-                Logger.error(f"When using hessian based approximations for sensitivity evaluation, "
-                             f" an HessianInfoService object must be provided but is {hessian_info_service}")
+                Logger.critical(f"When using Hessian-based approximations for sensitivity evaluation, a valid HessianInfoService object is required; found {type(hessian_info_service)}.")
             self.hessian_info_service = hessian_info_service
 
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names(self.fw_info)
@@ -90,10 +89,10 @@ class SensitivityEvaluation:
                                                       fw_impl.count_node_for_mixed_precision_interest_points,
                                                       quant_config.num_interest_points_factor)
 
-        self.ips_distance_fns, self.ips_batch_axis = self._init_metric_points_lists(self.interest_points)
+        self.ips_distance_fns, self.ips_axis = self._init_metric_points_lists(self.interest_points)
 
         self.output_points = get_output_nodes_for_metric(graph)
-        self.out_ps_distance_fns, self.out_ps_batch_axis = self._init_metric_points_lists(self.output_points)
+        self.out_ps_distance_fns, self.out_ps_axis = self._init_metric_points_lists(self.output_points)
 
         # Setting lists with relative position of the interest points
         # and output points in the list of all mp model activation tensors
@@ -133,26 +132,27 @@ class SensitivityEvaluation:
         """
         Initiates required lists for future use when computing the sensitivity metric.
         Each point on which the metric is computed uses a dedicated distance function based on its type.
-        In addition, all distance functions preform batch computation, so the batch axis is needed for each node.
+        In addition, all distance functions preform batch computation. Axis is needed only for KL Divergence computation.
 
         Args:
             points: The set of nodes in the graph for which we need to initiate the lists.
 
-        Returns: A lists with distance functions and a list  batch axis for each node.
+        Returns: A lists with distance functions and an axis list for each node.
 
         """
         distance_fns_list = []
-        batch_axis_list = []
+        axis_list = []
         for n in points:
-
             axis = n.framework_attr.get(AXIS) if not isinstance(n, FunctionalNode) else n.op_call_kwargs.get(AXIS)
-            distance_fns_list.append(self.fw_impl.get_node_distance_fn(
+            distance_fn = self.fw_impl.get_node_distance_fn(
                 layer_class=n.layer_class,
                 framework_attrs=n.framework_attr,
                 compute_distance_fn=self.quant_config.compute_distance_fn,
-                axis=axis))
-            batch_axis_list.append(axis)
-        return distance_fns_list, batch_axis_list
+                axis=axis)
+            distance_fns_list.append(distance_fn)
+            # Axis is needed only for KL Divergence calculation, otherwise we use per-tensor computation
+            axis_list.append(axis if distance_fn==compute_kl_divergence else None)
+        return distance_fns_list, axis_list
 
     def compute_metric(self,
                        mp_model_configuration: List[int],
@@ -319,8 +319,7 @@ class SensitivityEvaluation:
         node_name = sorted_configurable_nodes_names[node_idx_to_configure]
         layers_to_config = self.conf_node2layers.get(node_name, None)
         if layers_to_config is None:
-            Logger.error(
-                f"Couldn't find matching layers in the MP model for node {node_name}.")  # pragma: no cover
+            Logger.critical(f"Matching layers for node {node_name} not found in the mixed precision model configuration.")  # pragma: no cover
 
         for current_layer in layers_to_config:
             self.set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])
@@ -329,7 +328,7 @@ class SensitivityEvaluation:
                                  baseline_tensors: List[Any],
                                  mp_tensors: List[Any],
                                  points_distance_fns: List[Callable],
-                                 points_batch_axis: List[int]):
+                                 points_axis: List[int]):
         """
         Compute the distance on the given set of points outputs between the MP model and the baseline model
         for each image in the batch that was inferred.
@@ -339,7 +338,7 @@ class SensitivityEvaluation:
             mp_tensors: MP model's output tensors pf the given points.
             points_distance_fns: A list with distance function to compute the distance between each given
                 point's output tensors.
-            points_batch_axis: A list with the matching batch axis of each given point's output tensors.
+            points_axis: A list with the matching axis of each given point's output tensors.
 
         Returns:
             A distance vector that maps each node's index in the given nodes list to the distance between this node's output
@@ -347,7 +346,7 @@ class SensitivityEvaluation:
         """
 
         distance_v = [fn(x, y, batch=True, axis=axis) for fn, x, y, axis
-                      in zip(points_distance_fns, baseline_tensors, mp_tensors, points_batch_axis)]
+                      in zip(points_distance_fns, baseline_tensors, mp_tensors, points_axis)]
 
         return np.asarray(distance_v)
 
@@ -373,11 +372,11 @@ class SensitivityEvaluation:
             ips_distance = self._compute_points_distance([baseline_tensors[i] for i in self.ips_act_indices],
                                                          [mp_tensors[i] for i in self.ips_act_indices],
                                                          self.ips_distance_fns,
-                                                         self.ips_batch_axis)
+                                                         self.ips_axis)
             outputs_distance = self._compute_points_distance([baseline_tensors[i] for i in self.out_ps_act_indices],
                                                              [mp_tensors[i] for i in self.out_ps_act_indices],
                                                              self.out_ps_distance_fns,
-                                                             self.out_ps_batch_axis)
+                                                             self.out_ps_axis)
 
             # Extending the dimensions for the concatenation at the end in case we need to
             ips_distance = ips_distance if len(ips_distance.shape) > 1 else ips_distance[:, None]

@@ -56,7 +56,8 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         mm = tensor_min, tensor_max
     else:
-        error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.UNIFORM, quant_error_method, p, norm=False)
+        axis = -1 if per_channel else None
+        error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.UNIFORM, quant_error_method, p, axis=axis, norm=False)
         mm = qparams_uniform_selection_tensor_search(error_function,
                                                      tensor_data,
                                                      tensor_min,

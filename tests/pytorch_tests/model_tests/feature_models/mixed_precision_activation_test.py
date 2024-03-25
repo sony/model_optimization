@@ -15,7 +15,7 @@
 import torch
 import numpy as np
 
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, KPI, CoreConfig, \
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, ResourceUtilization, CoreConfig, \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
@@ -70,8 +70,8 @@ class MixedPercisionActivationSearch8Bit(MixedPercisionActivationBaseTest):
         super().__init__(unit_test)
         self.expected_config = [0, 0, 0, 0]
 
-    def get_kpi(self):
-        return KPI(np.inf, np.inf)
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf, np.inf)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.verify_config(quantization_info.mixed_precision_cfg, self.expected_config)
@@ -82,8 +82,8 @@ class MixedPercisionActivationSearch2Bit(MixedPercisionActivationBaseTest):
         super().__init__(unit_test)
         self.expected_config = [2, 8, 2, 2]
 
-    def get_kpi(self):
-        return KPI(96, 768)
+    def get_resource_utilization(self):
+        return ResourceUtilization(96, 768)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.verify_config(quantization_info.mixed_precision_cfg, self.expected_config)
@@ -94,8 +94,8 @@ class MixedPercisionActivationSearch4Bit(MixedPercisionActivationBaseTest):
         super().__init__(unit_test)
         self.expected_config = [1, 4, 1, 1]
 
-    def get_kpi(self):
-        return KPI(192, 1536)
+    def get_resource_utilization(self):
+        return ResourceUtilization(192, 1536)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.verify_config(quantization_info.mixed_precision_cfg, self.expected_config)
@@ -106,8 +106,8 @@ class MixedPercisionActivationSearch4BitFunctional(MixedPercisionActivationBaseT
         super().__init__(unit_test)
         self.expected_config = [1, 4, 4, 1]
 
-    def get_kpi(self):
-        return KPI(81, 1536)
+    def get_resource_utilization(self):
+        return ResourceUtilization(81, 1536)
 
     def create_feature_network(self, input_shape):
         return MixedPrecisionFunctionalNet(input_shape)
@@ -123,10 +123,10 @@ class MixedPercisionActivationMultipleInputs(MixedPercisionActivationBaseTest):
         self.num_calibration_iter = 3
         self.val_batch_size = 2
 
-    def get_kpi(self):
-        return KPI(np.inf, np.inf)
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf, np.inf)
 
-    def get_mixed_precision_v2_config(self):
+    def get_mixed_precision_config(self):
         return MixedPrecisionQuantizationConfig(num_of_images=4)
 
     def create_feature_network(self, input_shape):

@@ -67,7 +67,8 @@ class BasePytorchTest(BaseFeatureNetworkTest):
         base_quant_config = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
                                                         mct.core.QuantizationErrorMethod.NOCLIPPING, False, True)
         base_core_config = mct.core.CoreConfig(quantization_config=base_quant_config,
-                                          debug_config=self.get_debug_config())
+                                               mixed_precision_config=self.get_mixed_precision_config(),
+                                               debug_config=self.get_debug_config())
         return {
             'no_quantization': base_core_config,
             'all_32bit': base_core_config,
@@ -145,7 +146,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
 
             ptq_model, quantization_info = mct.ptq.pytorch_post_training_quantization(in_module=model_float,
                                                                                       representative_data_gen=representative_data_gen_experimental,
-                                                                                      target_kpi=self.get_kpi(),
+                                                                                      target_resource_utilization=self.get_resource_utilization(),
                                                                                       core_config=core_config,
                                                                                       target_platform_capabilities=tpc)
 

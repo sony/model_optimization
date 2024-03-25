@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_keras_tpc
@@ -51,7 +51,7 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
                                            relu_bound_to_power_of_2=True, weights_bias_correction=True,
                                            input_scaling=True, activation_channel_equalization=True)
 
-    def get_mixed_precision_v2_config(self):
+    def get_mixed_precision_config(self):
         return MixedPrecisionQuantizationConfig()
 
     def create_networks(self):
@@ -63,8 +63,8 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
         model = keras.Model(inputs=inputs, outputs=x)
         return model
 
-    def get_kpi(self):
-        return KPI(np.inf)
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         if isinstance(float_model.layers[1], layers.Conv2D):

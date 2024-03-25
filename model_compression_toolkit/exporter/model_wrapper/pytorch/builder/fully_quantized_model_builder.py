@@ -60,7 +60,7 @@ if FOUND_TORCH:
         # quantization, which in this case has an empty list).
         if len(activation_quantizers) == 1:
             return PytorchActivationQuantizationHolder(activation_quantizers[0])
-        Logger.error(
+        Logger.critical(
             f'PytorchActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
             f'were found for node {node}')
 
@@ -74,16 +74,23 @@ if FOUND_TORCH:
         Returns:
             Fully quantized PyTorch model.
         """
-        return PyTorchModelBuilder(graph=graph,
-                                   wrapper=lambda n, m:
-                                   fully_quantized_wrapper(n, m,
-                                                           fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation()),
-                                   get_activation_quantizer_holder_fn=lambda n:
-                                   get_activation_quantizer_holder(n,
-                                                                   fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation())).build_model()
+        exportable_model, user_info = PyTorchModelBuilder(graph=graph,
+                                                          wrapper=lambda n, m:
+                                                          fully_quantized_wrapper(n, m,
+                                                                                  fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation()),
+                                                          get_activation_quantizer_holder_fn=lambda n:
+                                                          get_activation_quantizer_holder(n,
+                                                                                          fw_impl=C.pytorch.pytorch_implementation.PytorchImplementation())).build_model()
+
+        Logger.info("Please run your accuracy evaluation on the exported quantized model to verify it's accuracy.\n"
+                    "Checkout the FAQ and Troubleshooting pages for resolving common issues and improving the quantized model accuracy:\n"
+                    "FAQ: https://github.com/sony/model_optimization/tree/main/FAQ.md"
+                    "Quantization Troubleshooting: https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md")
+
+        return exportable_model, user_info
+
 
 else:
-    def get_exportable_pytorch_model(*args, **kwargs):  # pragma: no cover
-        Logger.error('Installing torch is mandatory '
-                     'when using get_exportable_pytorch_model. '
-                     'Could not find PyTorch package.')
+    def get_exportable_pytorch_model(*args, **kwargs):
+        Logger.critical("PyTorch must be installed to use 'get_exportable_pytorch_model'. "
+                        "The 'torch' package is missing.")  # pragma: no cover

@@ -47,7 +47,7 @@ def is_node_an_input_layer(node: BaseNode) -> bool:
     elif isinstance(node, KerasNode):
         return isinstance(node.layer, InputLayer)
     else:
-        Logger.error('Node to check has to be either a graph node or a keras node')  # pragma: no cover
+        Logger.critical('Node must be a graph node or a Keras node for input layer check.')  # pragma: no cover
 
 
 def is_node_a_model(node: BaseNode) -> bool:
@@ -64,5 +64,5 @@ def is_node_a_model(node: BaseNode) -> bool:
     elif isinstance(node, KerasNode):
         return isinstance(node.layer, Functional) or isinstance(node.layer, Sequential)
     else:
-        Logger.error('Node to check has to be either a graph node or a keras node')  # pragma: no cover
+        Logger.critical('Node must be a graph node or a Keras node.')  # pragma: no cover
 

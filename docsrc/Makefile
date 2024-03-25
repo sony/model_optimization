@@ -6,11 +6,13 @@ github:
 	@cp -a ../docs/html/. ../docs
 	@rm -rf ../docs/html/
 	@rm -rf ../docs/doctrees/
+	@find ../docs -type f -exec sed -i 's|_images/|images/|g' {} +
+	@find ../docs -type f -exec sed -i 's|_static/|static/|g' {} +
+	@rm -rf ../docs/images
+	@rm -rf ../docs/static
+	@mv ../docs/_images/ ../docs/images
+	@mv ../docs/_static/ ../docs/static
 
-# rm -rf ../docs/images/
-# rm -rf ../docs/statis/
-# mv ../docs/_images/ ../docs/images
-# mv ../docs/_static/ ../docs/static
 
 
 # You can set these variables from the command line, and also

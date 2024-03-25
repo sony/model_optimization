@@ -65,7 +65,7 @@ if FOUND_TF:
         if len(activation_quantizers) == 1:
             return KerasActivationQuantizationHolder(activation_quantizers[0])
 
-        Logger.error(
+        Logger.critical(
             f'ActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
             f'were found for node {node}')
 
@@ -89,9 +89,13 @@ if FOUND_TF:
                                                         get_activation_quantizer_holder(n,
                                                                                         fw_impl=C.keras.keras_implementation.KerasImplementation())).build_model()
         exportable_model.trainable = False
+
+        Logger.info("Please run your accuracy evaluation on the exported quantized model to verify it's accuracy.\n"
+                    "Checkout the FAQ and Troubleshooting pages for resolving common issues and improving the quantized model accuracy:\n"
+                    "FAQ: https://github.com/sony/model_optimization/tree/main/FAQ.md"
+                    "Quantization Troubleshooting: https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md")
         return exportable_model, user_info
 else:
     def get_exportable_keras_model(*args, **kwargs):  # pragma: no cover
-        Logger.error('Installing tensorflow is mandatory '
-                     'when using get_exportable_keras_model. '
-                     'Could not find Tensorflow package.')
+        Logger.critical("Tensorflow must be installed to use get_exportable_keras_model. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover

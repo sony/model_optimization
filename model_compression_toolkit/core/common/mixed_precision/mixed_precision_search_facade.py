@@ -21,8 +21,8 @@ from typing import List, Callable, Dict
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import HessianInfoService
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_functions_mapping import kpi_functions_mapping
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_functions_mapping import ru_functions_mapping
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
 from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
@@ -47,7 +47,7 @@ search_methods = {
 def search_bit_width(graph_to_search_cfg: Graph,
                      fw_info: FrameworkInfo,
                      fw_impl: FrameworkImplementation,
-                     target_kpi: KPI,
+                     target_resource_utilization: ResourceUtilization,
                      mp_config: MixedPrecisionQuantizationConfig,
                      representative_data_gen: Callable,
                      search_method: BitWidthSearchMethod = BitWidthSearchMethod.INTEGER_PROGRAMMING,
@@ -56,15 +56,15 @@ def search_bit_width(graph_to_search_cfg: Graph,
     Search for an MP configuration for a given graph. Given a search_method method (by default, it's linear
     programming), we use the sensitivity_evaluator object that provides a function to compute an
     evaluation for the expected sensitivity for a bit-width configuration.
-    Then, and after computing the KPI for each node in the graph for each bit-width in the search space,
-    we search for the optimal solution, given some target_kpi, the solution should fit.
-    target_kpi have to be passed. If it was not passed, the facade is not supposed to get here by now.
+    Then, and after computing the resource utilization for each node in the graph for each bit-width in the search space,
+    we search for the optimal solution, given some target_resource_utilization, the solution should fit.
+    target_resource_utilization have to be passed. If it was not passed, the facade is not supposed to get here by now.
 
     Args:
         graph_to_search_cfg: Graph to search a MP configuration for.
         fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
         fw_impl: FrameworkImplementation object with specific framework methods implementation.
-        target_kpi: Target KPI to bound our feasible solution space s.t the configuration does not violate it.
+        target_resource_utilization: Target Resource Utilization to bound our feasible solution space s.t the configuration does not violate it.
         mp_config: Mixed-precision quantization configuration.
         representative_data_gen: Dataset to use for retrieving images for the models inputs.
         search_method: BitWidthSearchMethod to define which searching method to use.
@@ -77,25 +77,25 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     """
 
-    # target_kpi have to be passed. If it was not passed, the facade is not supposed to get here by now.
-    if target_kpi is None:
-        Logger.critical('Target KPI have to be passed for search_methods bit-width configuration')  # pragma: no cover
+    # target_resource_utilization have to be passed. If it was not passed, the facade is not supposed to get here by now.
+    if target_resource_utilization is None:
+        Logger.critical("Target ResourceUtilization is required for the bit-width search method's configuration.")  # pragma: no cover
 
     # Set graph for MP search
     graph = copy.deepcopy(graph_to_search_cfg)  # Copy graph before searching
-    if target_kpi.bops < np.inf:
-        # Since Bit-operations count target KPI is set, we need to reconstruct the graph for the MP search
+    if target_resource_utilization.bops < np.inf:
+        # Since Bit-operations count target resource utilization is set, we need to reconstruct the graph for the MP search
         graph = substitute(graph, fw_impl.get_substitutions_virtual_weights_activation_coupling())
 
     # If we only run weights compression with MP than no need to consider activation quantization when computing the
     # MP metric (it adds noise to the computation)
-    disable_activation_for_metric = (target_kpi.weights_memory < np.inf and
-                                    (target_kpi.activation_memory == np.inf and
-                                     target_kpi.total_memory == np.inf and
-                                     target_kpi.bops == np.inf)) or graph_to_search_cfg.is_single_activation_cfg()
+    disable_activation_for_metric = (target_resource_utilization.weights_memory < np.inf and
+                                    (target_resource_utilization.activation_memory == np.inf and
+                                     target_resource_utilization.total_memory == np.inf and
+                                     target_resource_utilization.bops == np.inf)) or graph_to_search_cfg.is_single_activation_cfg()
 
     # Set Sensitivity Evaluator for MP search. It should always work with the original MP graph,
-    # even if a virtual graph was created (and is used only for BOPS KPI computation purposes)
+    # even if a virtual graph was created (and is used only for BOPS utilization computation purposes)
     se = fw_impl.get_sensitivity_evaluator(
         graph_to_search_cfg,
         mp_config,
@@ -104,16 +104,17 @@ def search_bit_width(graph_to_search_cfg: Graph,
         disable_activation_for_metric=disable_activation_for_metric,
         hessian_info_service=hessian_info_service)
 
-    # Each pair of (KPI method, KPI aggregation) should match to a specific provided kpi target
-    kpi_functions = kpi_functions_mapping
+    # Each pair of (resource utilization method, resource utilization aggregation) should match to a specific
+    # provided target resource utilization
+    ru_functions = ru_functions_mapping
 
     # Instantiate a manager object
     search_manager = MixedPrecisionSearchManager(graph,
                                                  fw_info,
                                                  fw_impl,
                                                  se,
-                                                 kpi_functions,
-                                                 target_kpi,
+                                                 ru_functions,
+                                                 target_resource_utilization,
                                                  original_graph=graph_to_search_cfg)
 
     if search_method in search_methods:  # Get a specific search function
@@ -123,9 +124,9 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     # Search for the desired mixed-precision configuration
     result_bit_cfg = search_method_fn(search_manager,
-                                      target_kpi)
+                                      target_resource_utilization)
 
     if mp_config.refine_mp_solution:
-        result_bit_cfg = greedy_solution_refinement_procedure(result_bit_cfg, search_manager, target_kpi)
+        result_bit_cfg = greedy_solution_refinement_procedure(result_bit_cfg, search_manager, target_resource_utilization)
 
     return result_bit_cfg

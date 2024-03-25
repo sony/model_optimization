@@ -20,14 +20,20 @@ from model_compression_toolkit.constants import PRUNING_NUM_SCORE_APPROXIMATIONS
 
 class ImportanceMetric(Enum):
     """
-    Enum for specifying the metric used to determine the importance of channels when pruning.
+    Enum for specifying the metric used to determine the importance of channels when pruning:
+
+    LFH - Label-Free Hessian uses hessian info for measuring each channel's sensitivity.
+
     """
     LFH = 0  # Score based on the Hessian matrix w.r.t. layers weights, to determine channel importance without labels.
 
 
 class ChannelsFilteringStrategy(Enum):
     """
-    Enum for specifying the strategy used for filtering (pruning) channels.
+    Enum for specifying the strategy used for filtering (pruning) channels:
+
+    GREEDY - Prune the least important channel groups up to the allowed resources utilization limit (for now, only weights_memory is considered).
+
     """
     GREEDY = 0  # Greedy strategy for pruning channels based on importance metrics.
 

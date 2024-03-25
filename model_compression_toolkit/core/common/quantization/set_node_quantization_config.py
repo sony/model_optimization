@@ -71,7 +71,7 @@ def set_quantization_configs_to_node(node: BaseNode,
         quant_config: Quantization configuration to generate the node's configurations from.
         fw_info: Information needed for quantization about the specific framework.
         tpc: TargetPlatformCapabilities to get default OpQuantizationConfig.
-        mixed_precision_enable: is mixed precision enabled
+        mixed_precision_enable: is mixed precision enabled.
     """
     node_qc_options = node.get_qco(tpc)
 
@@ -112,7 +112,7 @@ def create_node_activation_qc(qc: QuantizationConfig,
 
     activation_quantization_fn = fw_info.activation_quantizer_mapping.get(op_cfg.activation_quantization_method)
     if activation_quantization_fn is None:
-        Logger.critical('Unknown quantization method for activations')  # pragma: no cover
+        Logger.critical('Unknown activation quantization method specified.')  # pragma: no cover
 
     activation_quantization_params_fn = get_activation_quantization_params_fn(op_cfg.activation_quantization_method)
 
@@ -149,7 +149,7 @@ def _create_node_single_candidate_qc(qc: QuantizationConfig,
     # get parameters for activation quantization
     activation_quantization_fn = fw_info.activation_quantizer_mapping.get(op_cfg.activation_quantization_method)
     if activation_quantization_fn is None:
-        Logger.critical('Unknown quantization method for activations')  # pragma: no cover
+        Logger.critical('Unknown activation quantization method specified.')  # pragma: no cover
 
     activation_quantization_params_fn = get_activation_quantization_params_fn(op_cfg.activation_quantization_method)
 

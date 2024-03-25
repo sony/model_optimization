@@ -19,7 +19,7 @@ from typing import List, Dict, Tuple
 
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.memory_calculator import MemoryCalculator
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import PruningFrameworkImplementation
 from model_compression_toolkit.logger import Logger
@@ -73,7 +73,7 @@ class PerChannelMask:
             mask_indicator: The new value to set in the mask (either PRUNED or REMAINED).
         """
         if mask_indicator not in [MaskIndicator.PRUNED, MaskIndicator.REMAINED]:
-            Logger.error("Mask value must be either MaskIndicator.PRUNED or MaskIndicator.REMAINED")
+            Logger.critical("Mask value must be either 'MaskIndicator.PRUNED' or 'MaskIndicator.REMAINED'")
         self._mask[node][channel_idx] = mask_indicator.value
 
     def has_pruned_channel(self) -> bool:

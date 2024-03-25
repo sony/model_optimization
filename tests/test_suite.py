@@ -19,10 +19,9 @@ import importlib
 import unittest
 
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
-from tests.common_tests.function_tests.test_folder_image_loader import TestFolderLoader
 #  ----------------  Individual test suites
 from tests.common_tests.function_tests.test_histogram_collector import TestHistogramCollector
-from tests.common_tests.function_tests.test_kpi_object import TestKPIObject
+from tests.common_tests.function_tests.test_resource_utilization_object import TestResourceUtilizationObject
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
@@ -62,7 +61,7 @@ if found_tf:
         TestSensitivityEvalWithNonSupportedOutputNodes
     from tests.keras_tests.function_tests.test_set_layer_to_bitwidth import TestKerasSetLayerToBitwidth
     from tests.keras_tests.function_tests.test_export_keras_fully_quantized_model import TestKerasFakeQuantExporter
-    from tests.keras_tests.function_tests.test_kpi_data import TestKPIData
+    from tests.keras_tests.function_tests.test_resource_utilization_data import TestResourceUtilizationData
     from tests.keras_tests.exporter_tests.test_runner import ExporterTestsRunner
     from tests.keras_tests.function_tests.test_get_gptq_config import TestGetGPTQConfig
     from tests.keras_tests.function_tests.test_gptq_loss_functions import TestGPTQLossFunctions
@@ -89,6 +88,7 @@ if found_pytorch:
         TestGPTQModelBuilderWithActivationHolder as TestGPTQModelBuilderWithActivationHolderPytorch
     from tests.pytorch_tests.exporter_tests.test_runner import PytorchExporterTestsRunner
     from tests.data_generation_tests.pytorch.test_pytorch_data_generation_runner import PytorchDataGenerationTestRunner
+    from tests.pytorch_tests.graph_tests.test_fx_errors import TestGraphReading
 
 
 if __name__ == '__main__':
@@ -96,14 +96,13 @@ if __name__ == '__main__':
     suiteList = []
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestHistogramCollector))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCollectorsManipulations))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFolderLoader))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestThresholdSelection))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TargetPlatformModelingTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(OpsetTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(QCOptionsTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FusingTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCommonDocsExamples))
-    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKPIObject))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestResourceUtilizationObject))
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
@@ -135,7 +134,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasSetLayerToBitwidth))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityEvalWithNonSupportedOutputNodes))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasFakeQuantExporter))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKPIData))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestResourceUtilizationData))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestFileLogger))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGetGPTQConfig))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQLossFunctions))
@@ -160,6 +159,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchTrainableInfrastructureTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchExporterTestsRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchDataGenerationTestRunner))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphReading))
 
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)

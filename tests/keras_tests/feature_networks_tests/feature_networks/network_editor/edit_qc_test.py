@@ -43,7 +43,10 @@ layers = keras.layers
 
 
 def prepare_graph_for_first_network_editor(in_model, representative_data_gen, core_config, fw_info, fw_impl,
-                                           tpc, target_kpi=None, tb_w=None):
+                                           tpc, target_resource_utilization=None, tb_w=None):
+
+    if target_resource_utilization is not None:
+        core_config.mixed_precision_enable.set_mixed_precision_enable()
 
     transformed_graph = graph_preparation_runner(in_model,
                                                  representative_data_gen,
@@ -82,15 +85,19 @@ def prepare_graph_for_first_network_editor(in_model, representative_data_gen, co
 
 
 def prepare_graph_for_second_network_editor(in_model, representative_data_gen, core_config, fw_info, fw_impl,
-                                            tpc, target_kpi=None, tb_w=None):
+                                            tpc, target_resource_utilization=None, tb_w=None):
     transformed_graph = prepare_graph_for_first_network_editor(in_model=in_model,
                                                                representative_data_gen=representative_data_gen,
                                                                core_config=core_config,
                                                                fw_info=fw_info,
                                                                fw_impl=fw_impl,
                                                                tpc=tpc,
-                                                               target_kpi=target_kpi,
+                                                               target_resource_utilization=target_resource_utilization,
                                                                tb_w=tb_w)
+
+    if target_resource_utilization is not None:
+        core_config.mixed_precision_enable.set_mixed_precision_enable()
+
     ######################################
     # Calculate quantization params
     ######################################
@@ -133,14 +140,14 @@ def prepare_graph_for_second_network_editor(in_model, representative_data_gen, c
     ######################################
     # Finalize bit widths
     ######################################
-    if target_kpi is not None:
+    if target_resource_utilization is not None:
         assert core_config.mixed_precision_enable
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
             bit_widths_config = search_bit_width(tg_with_bias,
                                                  fw_info,
                                                  fw_impl,
-                                                 target_kpi,
+                                                 target_resource_utilization,
                                                  core_config.mixed_precision_config,
                                                  representative_data_gen)
         else:
@@ -189,7 +196,7 @@ class BaseChangeQuantConfigAttrTest(BaseKerasFeatureNetworkTest):
                                                 core_config=core_config,
                                                 fw_info=self.get_fw_info(),
                                                 fw_impl=self.get_fw_impl(),
-                                                target_kpi=self.get_kpi(),
+                                                target_resource_utilization=self.get_resource_utilization(),
                                                 tpc=self.get_tpc())
 
             filtered_nodes = ptq_graph.filter(self.edit_filter)
@@ -277,7 +284,7 @@ class BaseChangeQuantizationMethodQCAttrTest(BaseKerasFeatureNetworkTest):
                                                 core_config=core_config,
                                                 fw_info=self.get_fw_info(),
                                                 fw_impl=self.get_fw_impl(),
-                                                target_kpi=self.get_kpi(),
+                                                target_resource_utilization=self.get_resource_utilization(),
                                                 tpc=self.get_tpc())
 
             filtered_nodes = ptq_graph.filter(self.edit_filter)

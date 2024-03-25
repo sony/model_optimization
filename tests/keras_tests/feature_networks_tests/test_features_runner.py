@@ -18,9 +18,11 @@ import unittest
 
 import numpy as np
 import tensorflow as tf
+from sklearn.metrics.pairwise import distance_metrics
 from tensorflow.keras.layers import PReLU, ELU
 
 from model_compression_toolkit.core import QuantizationErrorMethod
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq import RoundingType
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
@@ -53,16 +55,16 @@ from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer imp
     LUTActivationQuantizerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_bops_test import \
     MixedPrecisionBopsBasicTest, MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, \
-    MixedPrecisionActivationOnlyBopsTest, MixedPrecisionBopsAndWeightsKPITest, MixedPrecisionBopsAndActivationKPITest, \
-    MixedPrecisionBopsAndTotalKPITest, MixedPrecisionBopsWeightsActivationKPITest, \
+    MixedPrecisionActivationOnlyBopsTest, MixedPrecisionBopsAndWeightsUtilizationTest, MixedPrecisionBopsAndActivationUtilizationTest, \
+    MixedPrecisionBopsAndTotalUtilizationTest, MixedPrecisionBopsWeightsActivationUtilizationTest, \
     MixedPrecisionBopsMultipleOutEdgesTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_tests import \
-    MixedPrecisionActivationSearchTest, MixedPrecisionActivationSearchKPI4BitsAvgTest, \
-    MixedPrecisionActivationSearchKPI2BitsAvgTest, MixedPrecisionActivationDepthwiseTest, \
+    MixedPrecisionActivationSearchTest, MixedPrecisionActivationSearch4BitsAvgTest, \
+    MixedPrecisionActivationSearch2BitsAvgTest, MixedPrecisionActivationDepthwiseTest, \
     MixedPrecisionActivationSplitLayerTest, MixedPrecisionActivationOnlyWeightsDisabledTest, \
     MixedPrecisionActivationOnlyTest, MixedPrecisionActivationDepthwise4BitTest, MixedPrecisionActivationAddLayerTest, \
-    MixedPrecisionActivationMultipleInputsTest, MixedPrecisionTotalKPISearchTest, \
-    MixedPrecisionMultipleKPIsTightSearchTest, MixedPrecisionReducedTotalKPISearchTest
+    MixedPrecisionActivationMultipleInputsTest, MixedPrecisionTotalMemoryUtilizationSearchTest, \
+    MixedPrecisionMultipleResourcesTightUtilizationSearchTest, MixedPrecisionReducedTotalMemorySearchTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multi_head_attention_test import MultiHeadAttentionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multi_inputs_to_node_test import MultiInputsToNodeTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multiple_inputs_model_test import MultipleInputsModelTest
@@ -123,9 +125,9 @@ from tests.keras_tests.feature_networks_tests.feature_networks.uniform_range_sel
     UniformRangeSelectionActivationTest, UniformRangeSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
     MixedPercisionSearchTest, MixedPercisionDepthwiseTest, \
-    MixedPercisionSearchKPI4BitsAvgTest, MixedPercisionSearchKPI2BitsAvgTest, MixedPrecisionActivationDisabled, \
-    MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationKPINonConfNodesTest, \
-    MixedPercisionSearchTotalKPINonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
+    MixedPercisionSearch4BitsAvgTest, MixedPercisionSearch2BitsAvgTest, MixedPrecisionActivationDisabled, \
+    MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationNonConfNodesTest, \
+    MixedPercisionSearchTotalMemoryNonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
 from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substitution_test import MatmulToDenseSubstitutionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest, ConstRepresentationMatMulTest
@@ -193,17 +195,18 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_reuse_separable(self):
         ReusedSeparableTest(self).run_test()
 
-    def test_mixed_precision_search_kpi_2bits_avg(self):
-        MixedPercisionSearchKPI2BitsAvgTest(self).run_test()
+    def test_mixed_precision_search_2bits_avg(self):
+        MixedPercisionSearch2BitsAvgTest(self).run_test()
 
-    def test_mixed_precision_search_kpi_4bits_avg(self):
-        MixedPercisionSearchKPI4BitsAvgTest(self).run_test()
+    def test_mixed_precision_search_4bits_avg(self):
+        MixedPercisionSearch4BitsAvgTest(self).run_test()
 
-    def test_mixed_precision_search_kpi_4bits_avg_nms(self):
+    def test_mixed_precision_search_4bits_avg_nms(self):
         MixedPercisionCombinedNMSTest(self).run_test()
 
     def test_mixed_precision_search(self):
-        MixedPercisionSearchTest(self).run_test()
+        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
+        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
 
     def test_mixed_precision_for_part_weights_layers(self):
         MixedPercisionSearchPartWeightsLayersTest(self).run_test()
@@ -218,10 +221,10 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPercisionSearchLastLayerDistanceTest(self).run_test()
 
     def test_mixed_precision_search_activation_non_conf_nodes(self):
-        MixedPercisionSearchActivationKPINonConfNodesTest(self).run_test()
+        MixedPercisionSearchActivationNonConfNodesTest(self).run_test()
 
     def test_mixed_precision_search_total_non_conf_nodes(self):
-        MixedPercisionSearchTotalKPINonConfNodesTest(self).run_test()
+        MixedPercisionSearchTotalMemoryNonConfNodesTest(self).run_test()
 
     def test_mixed_precision_activation_search(self):
         MixedPrecisionActivationSearchTest(self).run_test()
@@ -232,11 +235,11 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_mixed_precision_activation_only_weights_disabled(self):
         MixedPrecisionActivationOnlyWeightsDisabledTest(self).run_test()
 
-    def test_mixed_precision_activation_search_kpi_4bits_avg(self):
-        MixedPrecisionActivationSearchKPI4BitsAvgTest(self).run_test()
+    def test_mixed_precision_activation_search_4bits_avg(self):
+        MixedPrecisionActivationSearch4BitsAvgTest(self).run_test()
 
-    def test_mixed_precision_activation_search_kpi_2bits_avg(self):
-        MixedPrecisionActivationSearchKPI2BitsAvgTest(self).run_test()
+    def test_mixed_precision_activation_search_2bits_avg(self):
+        MixedPrecisionActivationSearch2BitsAvgTest(self).run_test()
 
     def test_mixed_precision_activation_dw(self):
         MixedPrecisionActivationDepthwiseTest(self).run_test()
@@ -253,24 +256,24 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_mixed_precision_activation_multiple_inputs(self):
         MixedPrecisionActivationMultipleInputsTest(self).run_test()
 
-    def test_mixed_precision_total_kpi(self):
-        MixedPrecisionTotalKPISearchTest(self).run_test()
+    def test_mixed_precision_total_memory_utilization(self):
+        MixedPrecisionTotalMemoryUtilizationSearchTest(self).run_test()
 
-    def test_mixed_precision_multiple_kpis_tight(self):
-        MixedPrecisionMultipleKPIsTightSearchTest(self).run_test()
+    def test_mixed_precision_multiple_resources_tight_utilization(self):
+        MixedPrecisionMultipleResourcesTightUtilizationSearchTest(self).run_test()
 
-    def test_mixed_precision_reduced_total_kpi(self):
-        MixedPrecisionReducedTotalKPISearchTest(self).run_test()
+    def test_mixed_precision_reduced_total_memory(self):
+        MixedPrecisionReducedTotalMemorySearchTest(self).run_test()
 
-    def test_mixed_precision_bops_kpi(self):
+    def test_mixed_precision_bops_utilization(self):
         MixedPrecisionBopsBasicTest(self).run_test()
         MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
         MixedPrecisionWeightsOnlyBopsTest(self).run_test()
         MixedPrecisionActivationOnlyBopsTest(self).run_test()
-        MixedPrecisionBopsAndWeightsKPITest(self).run_test()
-        MixedPrecisionBopsAndActivationKPITest(self).run_test()
-        MixedPrecisionBopsAndTotalKPITest(self).run_test()
-        MixedPrecisionBopsWeightsActivationKPITest(self).run_test()
+        MixedPrecisionBopsAndWeightsUtilizationTest(self).run_test()
+        MixedPrecisionBopsAndActivationUtilizationTest(self).run_test()
+        MixedPrecisionBopsAndTotalUtilizationTest(self).run_test()
+        MixedPrecisionBopsWeightsActivationUtilizationTest(self).run_test()
         MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
     def test_name_filter(self):
@@ -550,6 +553,7 @@ class FeatureNetworkTest(unittest.TestCase):
             ConstRepresentationTest(self, func, c, use_kwrags=True, is_list_input=True).run_test()
 
         ConstRepresentationMultiInputTest(self).run_test()
+
     def test_second_moment(self):
         DepthwiseConv2DSecondMomentTest(self).run_test()
         # DepthwiseConv2DWithMultiplierSecondMomentTest(self).run_test()
@@ -731,7 +735,7 @@ class FeatureNetworkTest(unittest.TestCase):
         QuantizationAwareTrainingQuantizersTest(self).run_test()
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QATWrappersMixedPrecisionCfgTest(self).run_test()
-        QATWrappersMixedPrecisionCfgTest(self,kpi_weights=17920 * 4 / 8, kpi_activation=5408 * 4 / 8, expected_mp_cfg=[0, 4, 1, 1]).run_test()
+        QATWrappersMixedPrecisionCfgTest(self, ru_weights=17920 * 4 / 8, ru_activation=5408 * 4 / 8, expected_mp_cfg=[0, 4, 1, 1]).run_test()
 
     def test_bn_attributes_quantization(self):
         BNAttributesQuantization(self, quantize_linear=False).run_test()

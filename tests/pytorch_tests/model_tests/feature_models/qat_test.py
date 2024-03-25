@@ -261,13 +261,12 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
     def run_test(self):
         self._gen_fixed_input()
         model_float = self.create_networks()
-        config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig())
-        kpi = mct.core.KPI() # inf memory
+        config = mct.core.CoreConfig()
+        ru = mct.core.ResourceUtilization()  # inf memory
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model_float,
                                                                                                            self.representative_data_gen_experimental,
-                                                                                                           kpi,
+                                                                                                           ru,
                                                                                                            core_config=config,
-                                                                                                           fw_info=self.get_fw_info(),
                                                                                                            target_platform_capabilities=self.get_tpc())
 
         self.compare(qat_ready_model,
@@ -288,7 +287,7 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
 
 
 
-class QuantizationAwareTrainingMixedPrecisionKpiCfgTest(QuantizationAwareTrainingTest):
+class QuantizationAwareTrainingMixedPrecisionRUCfgTest(QuantizationAwareTrainingTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -307,13 +306,12 @@ class QuantizationAwareTrainingMixedPrecisionKpiCfgTest(QuantizationAwareTrainin
     def run_test(self):
         self._gen_fixed_input()
         model_float = self.create_networks()
-        config = mct.core.CoreConfig(mixed_precision_config=MixedPrecisionQuantizationConfig())
-        kpi = mct.core.KPI(weights_memory=50, activation_memory=40)
+        config = mct.core.CoreConfig()
+        ru = mct.core.ResourceUtilization(weights_memory=50, activation_memory=40)
         qat_ready_model, quantization_info = mct.qat.pytorch_quantization_aware_training_init_experimental(model_float,
                                                                                                            self.representative_data_gen_experimental,
-                                                                                                           kpi,
+                                                                                                           ru,
                                                                                                            core_config=config,
-                                                                                                           fw_info=self.get_fw_info(),
                                                                                                            target_platform_capabilities=self.get_tpc())
 
         self.compare(qat_ready_model,

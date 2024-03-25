@@ -49,12 +49,12 @@ class PruningPytorchFeatureTest(BasePytorchFeatureNetworkTest):
         tp = generate_test_tp_model({'simd_size': self.simd})
         return generate_pytorch_tpc(name="simd_test", tp_model=tp)
 
-    def get_kpi(self, dense_model_num_params, model):
+    def get_resource_utilization(self, dense_model_num_params, model):
         if not self.use_bn and torch.nn.BatchNorm2d in [type(m) for m in model.modules()]:
             # substract the 4 bn params if the bn is not used. This is because Back2Framework will create a model without bn
             dense_model_num_params -= count_model_prunable_params(model.bn)
         # Remove only one group of channels only one parameter should be pruned
-        return mct.core.KPI(weights_memory=(dense_model_num_params-self.simd) * 4)
+        return mct.core.ResourceUtilization(weights_memory=(dense_model_num_params - self.simd) * 4)
 
     def run_test(self):
         feature_networks = self.create_networks()
@@ -64,7 +64,7 @@ class PruningPytorchFeatureTest(BasePytorchFeatureNetworkTest):
             # self.dense_model_num_params = sum(p.numel() for p in model_float.parameters())
             dense_model_num_params = count_model_prunable_params(model_float)
             pruned_model, pruning_info = mct.pruning.pytorch_pruning_experimental(model=model_float,
-                                                                                  target_kpi=self.get_kpi(dense_model_num_params, model_float),
+                                                                                  target_resource_utilization=self.get_resource_utilization(dense_model_num_params, model_float),
                                                                                   representative_data_gen=self.representative_data_gen_experimental,
                                                                                   pruning_config=self.get_pruning_config(),
                                                                                   target_platform_capabilities=self.get_tpc())

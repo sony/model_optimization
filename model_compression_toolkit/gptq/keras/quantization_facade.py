@@ -22,7 +22,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import CoreConfig
@@ -113,13 +113,11 @@ if FOUND_TF:
                                  regularization_factor=regularization_factor)
 
 
-    def keras_gradient_post_training_quantization(in_model: Model,
-                                                  representative_data_gen: Callable,
+    def keras_gradient_post_training_quantization(in_model: Model, representative_data_gen: Callable,
                                                   gptq_config: GradientPTQConfig,
                                                   gptq_representative_data_gen: Callable = None,
-                                                  target_kpi: KPI = None,
+                                                  target_resource_utilization: ResourceUtilization = None,
                                                   core_config: CoreConfig = CoreConfig(),
-                                                  fw_info: FrameworkInfo = DEFAULT_KERAS_INFO,
                                                   target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, UserInformation]:
         """
         Quantize a trained Keras model using post-training quantization. The model is quantized using a
@@ -131,7 +129,7 @@ if FOUND_TF:
         statistics. Then, if given a mixed precision config in the core_config, using an ILP solver we find
         a mixed-precision configuration, and set a bit-width for each layer. The model is then quantized
         (both coefficients and activations by default).
-        In order to limit the maximal model's size, a target KPI need to be passed after weights_memory
+        In order to limit the maximal model's size, a target resource utilization need to be passed after weights_memory
         is set (in bytes).
         Then, the quantized weights are optimized using gradient based post
         training quantization by comparing points between the float and quantized models, and minimizing the observed
@@ -142,9 +140,8 @@ if FOUND_TF:
             representative_data_gen (Callable): Dataset used for calibration.
             gptq_config (GradientPTQConfig): Configuration for using gptq (e.g. optimizer).
             gptq_representative_data_gen (Callable): Dataset used for GPTQ training. If None defaults to representative_data_gen
-            target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+            target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
             core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
-            fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). `Default Keras info <https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/keras/default_framework_info.py>`_
             target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
         Returns:
@@ -177,12 +174,12 @@ if FOUND_TF:
 
             >>> config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(num_of_images=1))
 
-            For mixed-precision set a target KPI object:
-            Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
+            For mixed-precision set a target resource utilization object:
+            Create a resource utilization object to limit our returned model's size. Note that this value affects only coefficients
             that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
             while the bias will not):
 
-            >>> kpi = mct.core.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+            >>> ru = mct.core.ResourceUtilization(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
             Create GPTQ config:
 
@@ -190,29 +187,28 @@ if FOUND_TF:
 
             Pass the model with the representative dataset generator to get a quantized model:
 
-            >>> quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(model, repr_datagen, gptq_config, target_kpi=kpi, core_config=config)
+            >>> quantized_model, quantization_info = mct.gptq.keras_gradient_post_training_quantization(model, repr_datagen, gptq_config, target_resource_utilization=ru, core_config=config)
 
         """
         KerasModelValidation(model=in_model,
-                             fw_info=fw_info).validate()
+                             fw_info=DEFAULT_KERAS_INFO).validate()
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-                Logger.error("Given quantization config to mixed-precision facade is not of type "
-                             "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization "
-                             "API, or pass a valid mixed precision configuration.")  # pragma: no cover
+                Logger.critical("Given quantization config for mixed-precision is not of type 'MixedPrecisionQuantizationConfig'. "
+                                "Ensure usage of the correct API for keras_post_training_quantization "
+                                "or provide a valid mixed-precision configuration.")  # pragma: no cover
 
-        tb_w = init_tensorboard_writer(fw_info)
+        tb_w = init_tensorboard_writer(DEFAULT_KERAS_INFO)
 
         fw_impl = GPTQKerasImplemantation()
 
         tg, bit_widths_config, hessian_info_service = core_runner(in_model=in_model,
                                                                   representative_data_gen=representative_data_gen,
                                                                   core_config=core_config,
-                                                                  fw_info=fw_info,
+                                                                  fw_info=DEFAULT_KERAS_INFO,
                                                                   fw_impl=fw_impl,
                                                                   tpc=target_platform_capabilities,
-                                                                  target_kpi=target_kpi,
                                                                   tb_w=tb_w)
 
         tg_gptq = gptq_runner(tg,
@@ -220,7 +216,7 @@ if FOUND_TF:
                               gptq_config,
                               representative_data_gen,
                               gptq_representative_data_gen if gptq_representative_data_gen else representative_data_gen,
-                              fw_info,
+                              DEFAULT_KERAS_INFO,
                               fw_impl,
                               tb_w,
                               hessian_info_service=hessian_info_service)
@@ -236,12 +232,10 @@ else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
     def get_keras_gptq_config(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory '
-                        'when using get_keras_gptq_config. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+        Logger.critical("Tensorflow must be installed to use get_keras_gptq_config. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover
 
 
     def keras_gradient_post_training_quantization(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_gradient_post_training_quantization. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+        Logger.critical("Tensorflow must be installed to use keras_gradient_post_training_quantization. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover

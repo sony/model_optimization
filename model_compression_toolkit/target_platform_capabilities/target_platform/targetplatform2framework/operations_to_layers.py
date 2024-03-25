@@ -20,6 +20,7 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
 from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorSetConcat, \
     OperatorsSetBase
+from model_compression_toolkit import DefaultDict
 
 
 class OperationsSetToLayers(TargetPlatformCapabilitiesComponent):
@@ -29,15 +30,14 @@ class OperationsSetToLayers(TargetPlatformCapabilitiesComponent):
     def __init__(self,
                  op_set_name: str,
                  layers: List[Any],
-                 attr_mapping: Dict[str, Any] = None):
+                 attr_mapping: Dict[str, DefaultDict] = None):
         """
 
         Args:
             op_set_name (str): Name of OperatorsSet to associate with layers.
             layers (List[Any]): List of layers/FilterLayerParams to associate with OperatorsSet.
-            attr_mapping (dict): A mapping between a general attribute name to a DefaultDict that maps a layer
-+                type to the layer's framework name of this attribute (the dictionary type is not specified to
-+                handle circular dependency).
+            attr_mapping (Dict[str, DefaultDict]): A mapping between a general attribute name to a DefaultDict that maps a layer type to the layer's framework name of this attribute.
+
         """
         self.layers = layers
         self.attr_mapping = attr_mapping
@@ -147,7 +147,7 @@ class OperationsToLayers:
             for layer in ops2layers.layers:
                 qco_by_opset_name = _current_tpc.get().tp_model.get_config_options_by_operators_set(ops2layers.name)
                 if layer in existing_layers:
-                    Logger.error(f'Found layer {layer.__name__} in more than one '
+                    Logger.critical(f'Found layer {layer.__name__} in more than one '
                                  f'OperatorsSet')  # pragma: no cover
                 else:
                     existing_layers.update({layer: qco_by_opset_name})

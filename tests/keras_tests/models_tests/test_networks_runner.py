@@ -111,7 +111,6 @@ class NetworkTest:
                 self.model_float,
                 representative_data_gen,
                 core_config=core_config,
-                fw_info=DEFAULT_KERAS_INFO,
                 gptq_config=arc,
                 target_platform_capabilities=tpc)
         else:

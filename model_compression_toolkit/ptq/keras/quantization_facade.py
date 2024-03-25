@@ -20,7 +20,7 @@ from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
@@ -42,7 +42,7 @@ if FOUND_TF:
 
     def keras_post_training_quantization(in_model: Model,
                                          representative_data_gen: Callable,
-                                         target_kpi: KPI = None,
+                                         target_resource_utilization: ResourceUtilization = None,
                                          core_config: CoreConfig = CoreConfig(),
                                          target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
         """
@@ -55,13 +55,13 @@ if FOUND_TF:
          statistics. Then, if given a mixed precision config in the core_config, using an ILP solver we find
          a mixed-precision configuration, and set a bit-width for each layer. The model is then quantized
          (both coefficients and activations by default).
-         In order to limit the maximal model's size, a target KPI need to be passed after weights_memory
+         In order to limit the maximal model's size, a target ResourceUtilization need to be passed after weights_memory
          is set (in bytes).
 
          Args:
              in_model (Model): Keras model to quantize.
              representative_data_gen (Callable): Dataset used for calibration.
-             target_kpi (KPI): KPI object to limit the search of the mixed-precision configuration as desired.
+             target_resource_utilization (ResourceUtilization): ResourceUtilization object to limit the search of the mixed-precision configuration as desired.
              core_config (CoreConfig): Configuration object containing parameters of how the model should be quantized, including mixed precision parameters.
              target_platform_capabilities (TargetPlatformCapabilities): TargetPlatformCapabilities to optimize the Keras model according to.
 
@@ -99,17 +99,17 @@ if FOUND_TF:
 
             >>> config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(num_of_images=1))
 
-            For mixed-precision set a target KPI object:
-            Create a KPI object to limit our returned model's size. Note that this value affects only coefficients
+            For mixed-precision set a target ResourceUtilization object:
+            Create a ResourceUtilization object to limit our returned model's size. Note that this value affects only coefficients
             that should be quantized (for example, the kernel of Conv2D in Keras will be affected by this value,
             while the bias will not):
 
-            >>> kpi = mct.core.KPI(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
+            >>> ru = mct.core.ResourceUtilization(model.count_params() * 0.75)  # About 0.75 of the model size when quantized with 8 bits.
 
-            Pass the model, the representative dataset generator, the configuration and the target KPI to get a
+            Pass the model, the representative dataset generator, the configuration and the target resource utilization to get a
             quantized model:
 
-            >>> quantized_model, quantization_info = mct.ptq.keras_post_training_quantization(model, repr_datagen, kpi, core_config=config)
+            >>> quantized_model, quantization_info = mct.ptq.keras_post_training_quantization(model, repr_datagen, ru, core_config=config)
 
             For more configuration options, please take a look at our `API documentation <https://sony.github.io/model_optimization/api/api_docs/modules/mixed_precision_quantization_config.html>`_.
 
@@ -122,7 +122,7 @@ if FOUND_TF:
 
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
-                Logger.error("Given quantization config to mixed-precision facade is not of type "
+                Logger.critical("Given quantization config to mixed-precision facade is not of type "
                                     "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization "
                                     "API, or pass a valid mixed precision configuration.")  # pragma: no cover
 
@@ -137,7 +137,7 @@ if FOUND_TF:
                                                fw_info=fw_info,
                                                fw_impl=fw_impl,
                                                tpc=target_platform_capabilities,
-                                               target_kpi=target_kpi,
+                                               target_resource_utilization=target_resource_utilization,
                                                tb_w=tb_w)
 
         tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
@@ -156,6 +156,5 @@ else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
     def keras_post_training_quantization(*args, **kwargs):
-        Logger.critical('Installing tensorflow is mandatory '
-                        'when using keras_post_training_quantization. '
-                        'Could not find Tensorflow package.')  # pragma: no cover
+        Logger.critical("Tensorflow must be installed to use keras_post_training_quantization. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover

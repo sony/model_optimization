@@ -58,7 +58,8 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
         threshold = get_init_threshold(min_threshold, tensor_max, per_channel)
     else:
         signed = True  # weights are always signed
-        error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.SYMMETRIC, quant_error_method, p, norm=False, n_bits=n_bits, signed=signed)
+        axis = -1 if per_channel else None
+        error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.SYMMETRIC, quant_error_method, p, axis=axis, norm=False, n_bits=n_bits, signed=signed)
         threshold = qparams_symmetric_selection_tensor_search(error_function,
                                                               tensor_data,
                                                               tensor_max,

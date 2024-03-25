@@ -25,8 +25,6 @@ from tensorboard.compat.proto.graph_pb2 import GraphDef
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
-    DEFAULT_MIXEDPRECISION_CONFIG
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
     ActivationFinalBitwidthConfigVisualizer
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
@@ -37,7 +35,7 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_set_bit_widths
-from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
 
 keras = tf.keras
@@ -111,7 +109,7 @@ class TestFileLogger(unittest.TestCase):
         # Hessian service assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP
         cfg = mct.core.DEFAULTCONFIG
         mp_cfg = mct.core.MixedPrecisionQuantizationConfig(compute_distance_fn=compute_mse,
-                                                           distance_weighting_method=get_average_weights,
+                                                           distance_weighting_method=MpDistanceWeighting.AVG,
                                                            use_hessian_based_scores=False)
 
         # compare max tensor size with plotted max tensor size
@@ -122,7 +120,7 @@ class TestFileLogger(unittest.TestCase):
                                           tpc=tpc,
                                           network_editor=[],
                                           quant_config=cfg,
-                                          target_kpi=mct.core.KPI(),
+                                          target_resource_utilization=mct.core.ResourceUtilization(),
                                           n_iter=1,
                                           analyze_similarity=True,
                                           mp_cfg=mp_cfg)
@@ -151,7 +149,7 @@ class TestFileLogger(unittest.TestCase):
         core_config = mct.core.CoreConfig(mixed_precision_config=mp_qc)
         quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model,
                                                                       rep_data,
-                                                                      target_kpi=mct.core.KPI(np.inf),
+                                                                      target_resource_utilization=mct.core.ResourceUtilization(np.inf),
                                                                       core_config=core_config,
                                                                       target_platform_capabilities=tpc)
 
@@ -164,7 +162,7 @@ class TestFileLogger(unittest.TestCase):
         self.model = MultipleOutputsNet()
         quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model,
                                                                       rep_data,
-                                                                      target_kpi=mct.core.KPI(np.inf),
+                                                                      target_resource_utilization=mct.core.ResourceUtilization(np.inf),
                                                                       core_config=core_config,
                                                                       target_platform_capabilities=tpc)
 

@@ -26,10 +26,10 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI, KPITarget
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_aggregation_methods import MpKpiAggregation
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_functions_mapping import kpi_functions_mapping
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi_methods import MpKpiMetric
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_aggregation_methods import MpRuAggregation
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_functions_mapping import ru_functions_mapping
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import MpRuMetric
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
@@ -47,7 +47,7 @@ def core_runner(in_model: Any,
                 fw_info: FrameworkInfo,
                 fw_impl: FrameworkImplementation,
                 tpc: TargetPlatformCapabilities,
-                target_kpi: KPI = None,
+                target_resource_utilization: ResourceUtilization = None,
                 tb_w: TensorboardWriter = None):
     """
     Quantize a trained model using post-training quantization.
@@ -67,7 +67,7 @@ def core_runner(in_model: Any,
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tpc: TargetPlatformCapabilities object that models the inference target platform and
                                               the attached framework operator's information.
-        target_kpi: KPI to constraint the search of the mixed-precision configuration for the model.
+        target_resource_utilization: ResourceUtilization to constraint the search of the mixed-precision configuration for the model.
         tb_w: TensorboardWriter object for logging
 
     Returns:
@@ -82,6 +82,13 @@ def core_runner(in_model: Any,
     if batch_data.shape[0] == 1:
         Logger.warning('representative_data_gen generates a batch size of 1 which can be slow for optimization:'
                        ' consider increasing the batch size')
+
+    # Checking whether to run mixed precision quantization
+    if target_resource_utilization is not None:
+        if core_config.mixed_precision_config is None:
+            Logger.critical("Provided an initialized target_resource_utilization, that means that mixed precision quantization is "
+                            "enabled, but the provided MixedPrecisionQuantizationConfig is None.")
+        core_config.mixed_precision_config.set_mixed_precision_enable()
 
     graph = graph_preparation_runner(in_model,
                                      representative_data_gen,
@@ -106,14 +113,13 @@ def core_runner(in_model: Any,
     ######################################
     # Finalize bit widths
     ######################################
-    if target_kpi is not None:
-        assert core_config.mixed_precision_enable
+    if core_config.mixed_precision_enable:
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
             bit_widths_config = search_bit_width(tg,
                                                  fw_info,
                                                  fw_impl,
-                                                 target_kpi,
+                                                 target_resource_utilization,
                                                  core_config.mixed_precision_config,
                                                  representative_data_gen,
                                                  hessian_info_service=hessian_info_service)
@@ -133,21 +139,24 @@ def core_runner(in_model: Any,
     # This is since some actions regard the final configuration and should be edited.
     edit_network_graph(tg, fw_info, core_config.debug_config.network_editor)
 
-    _set_final_kpi(graph=tg,
-                   final_bit_widths_config=bit_widths_config,
-                   kpi_functions_dict=kpi_functions_mapping,
-                   fw_info=fw_info,
-                   fw_impl=fw_impl)
+    _set_final_resource_utilization(graph=tg,
+                                    final_bit_widths_config=bit_widths_config,
+                                    ru_functions_dict=ru_functions_mapping,
+                                    fw_info=fw_info,
+                                    fw_impl=fw_impl)
 
-    if target_kpi is not None:
+    if core_config.mixed_precision_enable:
         # Retrieve lists of tuples (node, node's final weights/activation bitwidth)
         weights_conf_nodes_bitwidth = tg.get_final_weights_config(fw_info)
         activation_conf_nodes_bitwidth = tg.get_final_activation_config()
 
-        Logger.info(
-            f'Final weights bit-width configuration: {[node_b[1] for node_b in weights_conf_nodes_bitwidth]}')
-        Logger.info(
-            f'Final activation bit-width configuration: {[node_b[1] for node_b in activation_conf_nodes_bitwidth]}')
+        if len(weights_conf_nodes_bitwidth) > 0:
+            Logger.info(
+                f'Final weights bit-width configuration: {[node_b[1] for node_b in weights_conf_nodes_bitwidth]}')
+
+        if len(activation_conf_nodes_bitwidth) > 0:
+            Logger.info(
+                f'Final activation bit-width configuration: {[node_b[1] for node_b in activation_conf_nodes_bitwidth]}')
 
         if tb_w is not None:
             finalize_bitwidth_in_tb(tb_w, weights_conf_nodes_bitwidth, activation_conf_nodes_bitwidth)
@@ -155,49 +164,50 @@ def core_runner(in_model: Any,
     return tg, bit_widths_config, hessian_info_service
 
 
-def _set_final_kpi(graph: Graph,
-                   final_bit_widths_config: List[int],
-                   kpi_functions_dict: Dict[KPITarget, Tuple[MpKpiMetric, MpKpiAggregation]],
-                   fw_info: FrameworkInfo,
-                   fw_impl: FrameworkImplementation):
+def _set_final_resource_utilization(graph: Graph,
+                                    final_bit_widths_config: List[int],
+                                    ru_functions_dict: Dict[RUTarget, Tuple[MpRuMetric, MpRuAggregation]],
+                                    fw_info: FrameworkInfo,
+                                    fw_impl: FrameworkImplementation):
     """
-    Computing the KPIs of the model according to the final bit-width configuration,
+    Computing the resource utilization of the model according to the final bit-width configuration,
     and setting it (inplace) in the graph's UserInfo field.
 
     Args:
-        graph: Graph to compute the KPI for.
+        graph: Graph to compute the resource utilization for.
         final_bit_widths_config: The final bit-width configuration to quantize the model accordingly.
-        kpi_functions_dict: A mapping between a KPITarget and a pair of kpi method and kpi aggregation functions.
+        ru_functions_dict: A mapping between a RUTarget and a pair of resource utilization method and resource utilization aggregation functions.
         fw_info: A FrameworkInfo object.
         fw_impl: FrameworkImplementation object with specific framework methods implementation.
 
     """
 
-    final_kpis_dict = {}
-    for kpi_target, kpi_funcs in kpi_functions_dict.items():
-        kpi_method, kpi_aggr = kpi_funcs
-        if kpi_target == KPITarget.BOPS:
-            final_kpis_dict[kpi_target] = kpi_aggr(kpi_method(final_bit_widths_config, graph, fw_info, fw_impl, False), False)[0]
+    final_ru_dict = {}
+    for ru_target, ru_funcs in ru_functions_dict.items():
+        ru_method, ru_aggr = ru_funcs
+        if ru_target == RUTarget.BOPS:
+            final_ru_dict[ru_target] = \
+            ru_aggr(ru_method(final_bit_widths_config, graph, fw_info, fw_impl, False), False)[0]
         else:
-            non_conf_kpi = kpi_method([], graph, fw_info, fw_impl)
-            conf_kpi = kpi_method(final_bit_widths_config, graph, fw_info, fw_impl)
-            if len(final_bit_widths_config) > 0 and len(non_conf_kpi) > 0:
-                final_kpis_dict[kpi_target] = kpi_aggr(np.concatenate([conf_kpi, non_conf_kpi]), False)[0]
-            elif len(final_bit_widths_config) > 0 and len(non_conf_kpi) == 0:
-                final_kpis_dict[kpi_target] = kpi_aggr(conf_kpi, False)[0]
-            elif len(final_bit_widths_config) == 0 and len(non_conf_kpi) > 0:
+            non_conf_ru = ru_method([], graph, fw_info, fw_impl)
+            conf_ru = ru_method(final_bit_widths_config, graph, fw_info, fw_impl)
+            if len(final_bit_widths_config) > 0 and len(non_conf_ru) > 0:
+                final_ru_dict[ru_target] = ru_aggr(np.concatenate([conf_ru, non_conf_ru]), False)[0]
+            elif len(final_bit_widths_config) > 0 and len(non_conf_ru) == 0:
+                final_ru_dict[ru_target] = ru_aggr(conf_ru, False)[0]
+            elif len(final_bit_widths_config) == 0 and len(non_conf_ru) > 0:
                 # final_bit_widths_config == 0 ==> no configurable nodes,
-                # thus, KPI can be computed from non_conf_kpi alone
-                final_kpis_dict[kpi_target] = kpi_aggr(non_conf_kpi, False)[0]
+                # thus, ru can be computed from non_conf_ru alone
+                final_ru_dict[ru_target] = ru_aggr(non_conf_ru, False)[0]
             else:
                 # No relevant nodes have been quantized with affect on the given target - since we only consider
                 # in the model's final size the quantized layers size, this means that the final size for this target
                 # is zero.
-                Logger.warning(f"No relevant quantized layers for the KPI target {kpi_target} were found, the recorded"
-                               f"final KPI for this target would be 0.")
-                final_kpis_dict[kpi_target] = 0
+                Logger.warning(f"No relevant quantized layers for the ru target {ru_target} were found, the recorded"
+                               f"final ru for this target would be 0.")
+                final_ru_dict[ru_target] = 0
 
-    final_kpi = KPI()
-    final_kpi.set_kpi_by_target(final_kpis_dict)
-    graph.user_info.final_kpi = final_kpi
+    final_ru = ResourceUtilization()
+    final_ru.set_resource_utilization_by_target(final_ru_dict)
+    graph.user_info.final_resource_utilization = final_ru
     graph.user_info.mixed_precision_cfg = final_bit_widths_config

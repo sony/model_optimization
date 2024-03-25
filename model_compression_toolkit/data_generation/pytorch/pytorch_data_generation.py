@@ -129,7 +129,7 @@ if FOUND_TORCH:
     def pytorch_data_generation_experimental(
             model: Module,
             n_images: int,
-            output_image_size: Tuple,
+            output_image_size: int,
             data_generation_config: DataGenerationConfig) -> List[Tensor]:
         """
         Function to perform data generation using the provided model and data generation configuration.
@@ -137,11 +137,38 @@ if FOUND_TORCH:
         Args:
             model (Module): PyTorch model to generate data for.
             n_images (int): Number of images to generate.
-            output_image_size (Tuple): Size of the output images.
+            output_image_size (int): The hight and width size of the output images.
             data_generation_config (DataGenerationConfig): Configuration for data generation.
 
         Returns:
             List[Tensor]: Finalized list containing generated images.
+
+        Examples:
+
+            In this example, we'll walk through generating images using a simple PyTorch model and a data generation configuration. The process involves creating a model, setting up a data generation configuration, and finally generating images with specified parameters.
+
+            Start by importing the Model Compression Toolkit (MCT), PyTorch, and some modules from `torch.nn`:
+
+            >>> import model_compression_toolkit as mct
+            >>> import torch.nn as nn
+            >>> from torch.nn import Conv2d, BatchNorm2d, Flatten, Linear
+
+            Next, define a simple PyTorch model:
+
+            >>> model = nn.Sequential(nn.Conv2d(3, 2, 3), nn.BatchNorm2d(2), nn.Flatten(), nn.Linear(2*6*6, 10))
+
+            Configure the data generation process using `get_pytorch_data_generation_config`. This function allows customization of the data generation process. For simplicity, this example sets the number of iterations (`n_iter`) to 1 and the batch size (`data_gen_batch_size`) to 2.
+
+            >>> config = mct.data_generation.get_pytorch_data_generation_config(n_iter=1, data_gen_batch_size=2)
+
+            Finally, use the `pytorch_data_generation_experimental` function to generate images based on the model and data generation configuration.
+            Notice that this function is experimental and may change in future versions of MCT.
+            The `n_images` parameter specifies the number of images to generate, and `output_image_size` sets the size of the generated images.
+
+            >>> generated_images = mct.data_generation.pytorch_data_generation_experimental(model=model, n_images=4, output_image_size=8, data_generation_config=config)
+
+            The generated images can then be used for various purposes, such as data-free quantization.
+
         """
 
         Logger.warning(f"pytorch_data_generation_experimental is experimental "
@@ -171,9 +198,8 @@ if FOUND_TORCH:
 
         # Check if the scheduler type is valid
         if scheduler_get_fn is None or scheduler_step_fn is None:
-            Logger.exception(
-                f'Invalid scheduler_type {data_generation_config.scheduler_type}. Please choose one of '
-                f'{SchedulerType.get_values()}')
+            Logger.critical(f'Invalid output_loss_type {data_generation_config.scheduler_type}. '
+                            f'Please select one from {SchedulerType.get_values()}.')
 
         # Create a scheduler object with the specified number of iterations
         scheduler = scheduler_get_fn(data_generation_config.n_iter)
@@ -191,8 +217,8 @@ if FOUND_TORCH:
         # Create an orig_bn_stats_holder object to hold original BatchNorm statistics
         orig_bn_stats_holder = PytorchOriginalBNStatsHolder(model, data_generation_config.bn_layer_types)
         if orig_bn_stats_holder.get_num_bn_layers() == 0:
-            Logger.exception(
-                f'Data generation requires a model with at least one Batch Norm layer.')
+            Logger.critical(
+                f'Data generation requires a model with at least one BatchNorm layer.')
 
         # Create an ImagesOptimizationHandler object for handling optimization
         all_imgs_opt_handler = PytorchImagesOptimizationHandler(model=model,
@@ -328,12 +354,10 @@ else:
     # If torch is not installed,
     # we raise an exception when trying to use these functions.
     def get_pytorch_data_generation_config(*args, **kwargs):
-        Logger.critical('Installing Pytorch is mandatory '
-                        'when using get_pytorch_data_generation_config. '
-                        'Could not find torch package.')  # pragma: no cover
+        Logger.critical('PyTorch must be installed to use get_pytorch_data_generation_config. '
+                        "The 'torch' package is missing.")  # pragma: no cover
 
 
     def pytorch_data_generation_experimental(*args, **kwargs):
-        Logger.critical('Installing Pytorch is mandatory '
-                        'when using pytorch_data_generation_experimental. '
-                        'Could not find the torch package.')  # pragma: no cover
+        Logger.critical("PyTorch must be installed to use 'pytorch_data_generation_experimental'. "
+                        "The 'torch' package is missing.")  # pragma: no cover

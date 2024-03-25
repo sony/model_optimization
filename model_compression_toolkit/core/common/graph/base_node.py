@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import copy
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Tuple, List, Type
 
 import numpy as np
 
@@ -547,7 +547,7 @@ class BaseNode:
         """
 
         if tpc is None:
-            Logger.error(f'Can not retrieve QC options for None TPC')  # pragma: no cover
+            Logger.critical(f'Can not retrieve QC options for None TPC')  # pragma: no cover
 
         for fl, qco in tpc.filterlayer2qco.items():
             if self.is_match_filter_params(fl):
@@ -555,6 +555,19 @@ class BaseNode:
         if self.type in tpc.layer2qco:
             return tpc.layer2qco.get(self.type)
         return tpc.tp_model.default_qco
+
+    def is_match_type(self, _type: Type) -> bool:
+        """
+        Check if input type matches the node type, either in instance type or in type name. Checking the
+        name string is required because of function types changes that occurred in TF 2.15.
+
+        Args:
+            _type: other node type
+        Returns:
+            Whether _type matches the self node type
+
+        """
+        return _type == self.type or _type.__name__ == self.type.__name__
 
     def is_match_filter_params(self, layer_filter_params: LayerFilterParams) -> bool:
         """
@@ -572,7 +585,7 @@ class BaseNode:
             return False
 
         # Check the node has the same type as the layer in LayerFilterParams
-        if layer_filter_params.layer != self.type:
+        if not self.is_match_type(layer_filter_params.layer):
             return False
 
         # Get attributes from node to filter
@@ -604,10 +617,10 @@ class BaseNode:
             Logger.warning(f"More than one pruning SIMD option is available."
                            f" Min SIMD is used: {min(simd_list)}")
         if len(simd_list) == 0:
-            Logger.error(f"No SIMD option is available for {self}")
+            Logger.critical(f"No SIMD option is available for {self}")
         _simd = min(simd_list)
         if _simd <= 0 or int(_simd) != _simd:
-            Logger.error(f"SIMD is expected to be a non-positive integer but found: {_simd}")
+            Logger.critical(f"SIMD is expected to be a non-positive integer but found: {_simd}")
         return _simd
 
     def sort_node_candidates(self, fw_info):

@@ -26,23 +26,16 @@ class PruningInfo:
     and importance scores for each layer. This class acts as a container for accessing
     pruning-related metadata.
 
-    Attributes:
-        pruning_masks (Dict[BaseNode, np.ndarray]): Stores the pruning masks for each layer.
-            A pruning mask is an array where each element indicates whether the corresponding
-            channel or neuron has been pruned (0) or kept (1).
-        importance_scores (Dict[BaseNode, np.ndarray]): Stores the importance scores for each layer.
-            Importance scores quantify the significance of each channel in the layer.
     """
 
     def __init__(self,
                  pruning_masks: Dict[BaseNode, np.ndarray],
                  importance_scores: Dict[BaseNode, np.ndarray]):
         """
-        Initializes the PruningInfo with pruning masks and importance scores.
-
         Args:
-            pruning_masks (Dict[BaseNode, np.ndarray]): Pruning masks for each layer.
-            importance_scores (Dict[BaseNode, np.ndarray]): Importance scores for each layer.
+            pruning_masks (Dict[BaseNode, np.ndarray]): Stores the pruning masks for each layer. A pruning mask is an array where each element indicates whether the corresponding channel or neuron has been pruned (0) or kept (1).
+            importance_scores (Dict[BaseNode, np.ndarray]): Stores the importance scores for each layer. Importance scores quantify the significance of each channel in the layer.
+
         """
         self._pruning_masks = pruning_masks
         self._importance_scores = importance_scores
@@ -82,8 +75,8 @@ def unroll_simd_scores_to_per_channel_scores(simd_scores: Dict[BaseNode, np.ndar
         Dict[BaseNode, np.ndarray]: Expanded scores for each individual channel.
     """
     if simd_scores is None or simd_groups_indices is None:
-        Logger.error(f"Found to find scores and indices to create an unrolled scores for pruning info,"
-                     f"but scores is {simd_scores} and groups indices are {simd_groups_indices}")
+        Logger.critical(f"Failed to find scores and indices to create unrolled scores for pruning information."
+                        f" Scores: {simd_scores}, Group indices: {simd_groups_indices}.")
     _scores = {}
     for node, groups_indices in simd_groups_indices.items():
         node_scores = simd_scores[node]

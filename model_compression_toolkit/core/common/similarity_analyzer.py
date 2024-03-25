@@ -97,15 +97,15 @@ def compute_mse(float_tensor: np.ndarray,
         norm: whether to normalize the error function result.
         norm_eps: epsilon value for error normalization stability.
         batch: Whether to run batch similarity analysis or not.
-        axis: Axis along which the operator has been computed (not used in this function).
+        axis: Axis along which the operator has been computed.
 
     Returns:
         The MSE distance between the two tensors.
     """
     validate_before_compute_similarity(float_tensor, fxp_tensor)
 
-    float_flat = flatten_tensor(float_tensor, batch)
-    fxp_flat = flatten_tensor(fxp_tensor, batch)
+    float_flat = flatten_tensor(float_tensor, batch, axis)
+    fxp_flat = flatten_tensor(fxp_tensor, batch, axis)
 
     error = ((float_flat - fxp_flat) ** 2).mean(axis=-1)
     if norm:
@@ -129,7 +129,7 @@ def compute_mae(float_tensor: np.ndarray,
         norm: whether to normalize the error function result.
         norm_eps: epsilon value for error normalization stability.
         batch: Whether to run batch similarity analysis or not.
-        axis: Axis along which the operator has been computed (not used in this function).
+        axis: Axis along which the operator has been computed.
 
     Returns:
         The mean average distance between the two tensors.
@@ -137,8 +137,8 @@ def compute_mae(float_tensor: np.ndarray,
 
     validate_before_compute_similarity(float_tensor, fxp_tensor)
 
-    float_flat = flatten_tensor(float_tensor, batch)
-    fxp_flat = flatten_tensor(fxp_tensor, batch)
+    float_flat = flatten_tensor(float_tensor, batch, axis)
+    fxp_flat = flatten_tensor(fxp_tensor, batch, axis)
 
     error = np.abs(float_flat - fxp_flat).mean(axis=-1)
     if norm:
@@ -158,7 +158,7 @@ def compute_cs(float_tensor: np.ndarray, fxp_tensor: np.ndarray, eps: float = 1e
         fxp_tensor: Second tensor to compare.
         eps: Small value to avoid zero division.
         batch: Whether to run batch similarity analysis or not.
-        axis: Axis along which the operator has been computed (not used in this function).
+        axis: Axis along which the operator has been computed.
 
     Returns:
         The cosine similarity between two tensors.
@@ -168,8 +168,8 @@ def compute_cs(float_tensor: np.ndarray, fxp_tensor: np.ndarray, eps: float = 1e
     if np.all(fxp_tensor == 0) and np.all(float_tensor == 0):
         return 1.0
 
-    float_flat = flatten_tensor(float_tensor, batch)
-    fxp_flat = flatten_tensor(fxp_tensor, batch)
+    float_flat = flatten_tensor(float_tensor, batch, axis)
+    fxp_flat = flatten_tensor(fxp_tensor, batch, axis)
 
     float_norm = _similarity_tensor_norm(float_flat)
     fxp_norm = _similarity_tensor_norm(fxp_flat)
@@ -200,15 +200,15 @@ def compute_lp_norm(float_tensor: np.ndarray,
         norm: whether to normalize the error function result.
         norm_eps: epsilon value for error normalization stability.
         batch: Whether to run batch similarity analysis or not.
-        axis: Axis along which the operator has been computed (not used in this function).
+        axis: Axis along which the operator has been computed.
 
     Returns:
         The Lp-norm distance between the two tensors.
     """
     validate_before_compute_similarity(float_tensor, fxp_tensor)
 
-    float_flat = flatten_tensor(float_tensor, batch)
-    fxp_flat = flatten_tensor(fxp_tensor, batch)
+    float_flat = flatten_tensor(float_tensor, batch, axis)
+    fxp_flat = flatten_tensor(fxp_tensor, batch, axis)
 
     error = (np.abs(float_flat - fxp_flat) ** p).mean(axis=-1)
     if norm:

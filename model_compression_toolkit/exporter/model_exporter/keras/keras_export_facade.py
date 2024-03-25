@@ -42,21 +42,17 @@ if FOUND_TF:
                            serialization_format: KerasExportSerializationFormat = KerasExportSerializationFormat.KERAS,
                            quantization_format : QuantizationFormat = QuantizationFormat.MCTQ) -> Dict[str, type]:
         """
-        Export a Keras quantized model to a h5 or tflite model.
+        Export a Keras quantized model to a .keras or .tflite format model (according to serialization_format).
         The model will be saved to the path in save_model_path.
-        keras_export_model supports the combination of QuantizationFormat.FAKELY_QUANT (where weights
-        and activations are float fakely-quantized values) and KerasExportSerializationFormat.KERAS_H5 (where the model
-        will be saved to h5 model) or the combination of KerasExportSerializationFormat.TFLITE (where the model will be
-        saved to tflite model) with QuantizationFormat.FAKELY_QUANT or QuantizationFormat.INT8 (where weights and
-        activations are represented using 8bits integers).
+        Models that are exported to .keras format can use quantization_format of QuantizationFormat.MCTQ or QuantizationFormat.FAKELY_QUANT.
+        Models that are exported to .tflite format can use quantization_format of QuantizationFormat.INT8 or QuantizationFormat.FAKELY_QUANT.
 
         Args:
             model: Model to export.
             save_model_path: Path to save the model.
             is_layer_exportable_fn: Callable to check whether a layer can be exported or not.
-            serialization_format: Format to export the model according to (by default
-            KerasExportSerializationFormat.KERAS_H5).
-            quantization_format: Format of how quantizers are exported (fakely-quant, int8, MCTQ quantizers).
+            serialization_format: Format to export the model according to (KerasExportSerializationFormat.KERAS, by default).
+            quantization_format: Format of how quantizers are exported (MCTQ quantizers, by default).
 
         Returns:
             Custom objects dictionary needed to load the model.
@@ -105,6 +101,5 @@ if FOUND_TF:
         return exporter.get_custom_objects()
 else:
     def keras_export_model(*args, **kwargs):
-        Logger.error('Installing tensorflow is mandatory '
-                     'when using keras_export_model. '
-                     'Could not find some or all of TensorFlow packages.')  # pragma: no cover
+        Logger.critical("Tensorflow must be installed to use keras_export_model. "
+                        "The 'tensorflow' package is missing.")  # pragma: no cover

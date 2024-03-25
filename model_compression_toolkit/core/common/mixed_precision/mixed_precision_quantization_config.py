@@ -15,19 +15,18 @@
 
 from typing import List, Callable
 
-from model_compression_toolkit.core.common.mixed_precision.distance_weighting import get_average_weights
-from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 
 
 class MixedPrecisionQuantizationConfig:
 
     def __init__(self,
                  compute_distance_fn: Callable = None,
-                 distance_weighting_method: Callable = get_average_weights,
+                 distance_weighting_method: MpDistanceWeighting = MpDistanceWeighting.AVG,
                  num_of_images: int = 32,
                  configuration_overwrite: List[int] = None,
                  num_interest_points_factor: float = 1.0,
-                 use_hessian_based_scores: bool = True,
+                 use_hessian_based_scores: bool = False,
                  norm_scores: bool = True,
                  refine_mp_solution: bool = True,
                  metric_normalization_threshold: float = 1e10):
@@ -35,8 +34,8 @@ class MixedPrecisionQuantizationConfig:
         Class with mixed precision parameters to quantize the input model.
 
         Args:
-            compute_distance_fn (Callable): Function to compute a distance between two tensors.
-            distance_weighting_method (Callable): Function to use when weighting the distances among different layers when computing the sensitivity metric.
+            compute_distance_fn (Callable): Function to compute a distance between two tensors. If None, using pre-defined distance methods based on the layer type for each layer.
+            distance_weighting_method (MpDistanceWeighting): MpDistanceWeighting enum value that provides a function to use when weighting the distances among different layers when computing the sensitivity metric.
             num_of_images (int): Number of images to use to evaluate the sensitivity of a mixed-precision model comparing to the float model.
             configuration_overwrite (List[int]): A list of integers that enables overwrite of mixed precision with a predefined one.
             num_interest_points_factor (float): A multiplication factor between zero and one (represents percentage) to reduce the number of interest points used to calculate the distance metric.
@@ -64,7 +63,21 @@ class MixedPrecisionQuantizationConfig:
 
         self.metric_normalization_threshold = metric_normalization_threshold
 
+        self._mixed_precision_enable = False
 
-# Default quantization configuration the library use.
-DEFAULT_MIXEDPRECISION_CONFIG = MixedPrecisionQuantizationConfig(compute_distance_fn=compute_mse,
-                                                                 distance_weighting_method=get_average_weights)
+    def set_mixed_precision_enable(self):
+        """
+        Set a flag in mixed precision config indicating that mixed precision is enabled.
+        """
+
+        self._mixed_precision_enable = True
+
+    @property
+    def mixed_precision_enable(self):
+        """
+        A property that indicates whether mixed precision quantization is enabled.
+
+        Returns: True if mixed precision quantization is enabled
+
+        """
+        return self._mixed_precision_enable

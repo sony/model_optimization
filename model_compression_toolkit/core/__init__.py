@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core.common.data_loader import FolderImageLoader
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo, ChannelAxis
 from model_compression_toolkit.core.common import network_editors as network_editor
 from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
@@ -21,7 +20,9 @@ from model_compression_toolkit.core.common.quantization import quantization_conf
 from model_compression_toolkit.core.common.mixed_precision import mixed_precision_quantization_config
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, QuantizationErrorMethod, DEFAULTCONFIG
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.core.keras.kpi_data_facade import keras_kpi_data
-from model_compression_toolkit.core.pytorch.kpi_data_facade import pytorch_kpi_data
+from model_compression_toolkit.core.keras.resource_utilization_data_facade import keras_resource_utilization_data
+from model_compression_toolkit.core.pytorch.resource_utilization_data_facade import pytorch_resource_utilization_data
+from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
+

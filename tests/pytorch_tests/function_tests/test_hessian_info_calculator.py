@@ -379,5 +379,5 @@ class ActivationHessianOutputExceptionTest(BaseHessianTraceBasicModelTest):
                                                          target_node=graph.get_outputs()[0].node)
             _ = hessian_service.fetch_hessian(request, required_size=1)
 
-        self.unit_test.assertTrue("Trying to compute activation Hessian approximation with respect to the model output"
+        self.unit_test.assertTrue("Activation Hessian approximation cannot be computed for model outputs"
                                   in str(e.exception))

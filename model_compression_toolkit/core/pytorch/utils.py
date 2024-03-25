@@ -16,6 +16,7 @@ import torch
 import numpy as np
 from typing import Union
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
+from model_compression_toolkit.logger import Logger
 
 
 def set_model(model: torch.nn.Module, train_mode: bool = False):
@@ -58,7 +59,7 @@ def to_torch_tensor(tensor):
     elif isinstance(tensor, (int, float)):
         return torch.from_numpy(np.array(tensor).astype(np.float32)).to(working_device)
     else:
-        raise Exception(f'Conversion of type {type(tensor)} to {type(torch.Tensor)} is not supported')
+        Logger.critical(f'Unsupported type for conversion to Torch.tensor: {type(tensor)}.')
 
 
 def torch_tensor_to_numpy(tensor: Union[torch.Tensor, list, tuple]) -> Union[np.ndarray, list, tuple]:
@@ -79,4 +80,4 @@ def torch_tensor_to_numpy(tensor: Union[torch.Tensor, list, tuple]) -> Union[np.
     elif isinstance(tensor, torch.Tensor):
         return tensor.cpu().detach().contiguous().numpy()
     else:
-        raise Exception(f'Conversion of type {type(tensor)} to {type(np.ndarray)} is not supported')
+        Logger.critical(f'Unsupported type for conversion to Numpy array: {type(tensor)}.')

@@ -18,7 +18,7 @@ from typing import List, Dict, Tuple
 
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi import KPI
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.mask.per_channel_mask import PerChannelMask, MaskIndicator
 from model_compression_toolkit.core.common.pruning.memory_calculator import MemoryCalculator
 from model_compression_toolkit.core.common.pruning.pruning_framework_implementation import PruningFrameworkImplementation
@@ -79,7 +79,7 @@ class PerSIMDGroupMask:
             mask_indicator: The new value to set in the mask (either PRUNED or REMAINED).
         """
         if mask_indicator not in [MaskIndicator.PRUNED, MaskIndicator.REMAINED]:
-            Logger.error("Mask value must be either MaskIndicator.PRUNED or MaskIndicator.REMAINED")
+            Logger.critical("Mask value must be either 'MaskIndicator.PRUNED' or 'MaskIndicator.REMAINED'")
 
         # Update the SIMD group mask and corresponding per-channel mask
         self._mask_simd[node][group_index] = mask_indicator.value

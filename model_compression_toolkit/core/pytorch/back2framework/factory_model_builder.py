@@ -38,9 +38,9 @@ def get_pytorch_model_builder(mode: ModelBuilderMode) -> type:
     """
 
     if not isinstance(mode, ModelBuilderMode):
-        Logger.error(f'get_pytorch_model_builder expects a mode of type ModelBuilderMode, but {type(mode)} was passed.')
+        Logger.critical(f"Expected a ModelBuilderMode type for 'mode' parameter; received {type(mode)} instead.")
     if mode is None:
-        Logger.error(f'get_pytorch_model_builder received a mode which is None')
+        Logger.critical(f"Received 'mode' parameter is None.")
     if mode not in pytorch_model_builders.keys():
-        Logger.error(f'mode {mode} is not in pytorch model builders factory')
+        Logger.critical(f"'mode' parameter {mode} is not supported by the PyTorch model builders factory.")
     return pytorch_model_builders.get(mode)

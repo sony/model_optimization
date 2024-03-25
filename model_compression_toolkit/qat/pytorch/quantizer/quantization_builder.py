@@ -49,7 +49,7 @@ def get_activation_quantizer_holder(n: common.BaseNode,
     # quantization, which in this case has an empty list).
     if len(activation_quantizers) == 1:
         return PytorchActivationQuantizationHolder(activation_quantizers[0])
-    Logger.error(f'ActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers were found for node {n}')
+    Logger.critical(f'ActivationQuantizationHolder supports only a single quantizer, but ({len(activation_quantizers)}) quantizers were found for node {n}.')
 
 
 def quantization_builder(n: common.BaseNode,

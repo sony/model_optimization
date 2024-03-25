@@ -64,7 +64,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
 
             if self.hessian_request.target_node in model_output_nodes:
-                Logger.exception("Trying to compute activation Hessian approximation with respect to the model output. "
+                Logger.critical("Trying to compute activation Hessian approximation with respect to the model output. "
                                  "This operation is not supported. "
                                  "Remove the output node from the set of node targets in the Hessian request.")
 
@@ -83,7 +83,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                     outputs = model(*self.input_images)
 
                 if len(outputs) != len(grad_model_outputs):
-                    Logger.error(
+                    Logger.critical(
                         f"Model for computing activation Hessian approximation expects {len(grad_model_outputs)} "
                         f"outputs, but got {len(outputs)} output tensors.")
 
@@ -166,4 +166,4 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             return trace_approx_by_node.numpy().tolist()
 
         else:
-            Logger.error(f"{self.hessian_request.granularity} is not supported for Keras activation hessian's trace approx calculator")
+            Logger.critical(f"{self.hessian_request.granularity} is not supported for Keras activation hessian\'s trace approximation calculator.")

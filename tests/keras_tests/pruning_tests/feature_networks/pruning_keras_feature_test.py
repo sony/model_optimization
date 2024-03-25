@@ -42,7 +42,7 @@ class PruningKerasFeatureTest(BaseKerasFeatureNetworkTest):
         for model_float in feature_networks:
             self.dense_model_num_params=sum([l.count_params() for l in model_float.layers])
             pruned_model, pruning_info = mct.pruning.keras_pruning_experimental(model=model_float,
-                                                                                target_kpi=self.get_kpi(),
+                                                                                target_resource_utilization=self.get_resource_utilization(),
                                                                                 representative_data_gen=self.representative_data_gen_experimental,
                                                                                 pruning_config=self.get_pruning_config(),
                                                                                 target_platform_capabilities=self.get_tpc())
