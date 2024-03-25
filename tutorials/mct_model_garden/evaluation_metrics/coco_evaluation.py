@@ -220,7 +220,7 @@ def load_and_preprocess_image(image_path: str, preprocess: Callable) -> np.ndarr
 
 
 class CocoDataset:
-    def __init__(self, dataset_folder: str, annotation_file: str, preprocess: Callable) -> Tuple:
+    def __init__(self, dataset_folder: str, annotation_file: str, preprocess: Callable):
         """
         A dataset class for handling COCO dataset images and annotations.
 
@@ -252,17 +252,17 @@ class CocoDataset:
     def __len__(self):
         return self.total_images
 
-    def __getitem__(self, item):
+    def __getitem__(self, item_index):
         """
         Returns the preprocessed image and its corresponding annotations.
 
         Args:
-            item: Index of the item to retrieve.
+            item_index: Index of the item to retrieve.
 
         Returns:
             Tuple containing the preprocessed image and its annotations.
         """
-        image_info = self.coco_annotations['images'][item]
+        image_info = self.coco_annotations['images'][item_index]
         image_id = image_info['id']
         image = load_and_preprocess_image(os.path.join(self.dataset_folder, image_info['file_name']), self.preprocess)
         annotations = self.annotations_by_image.get(image_id, [])
