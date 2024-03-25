@@ -35,6 +35,7 @@ from tests.pytorch_tests.model_tests.feature_models.relu_replacement_test import
     ReluReplacementTest, ReluReplacementWithAddBiasTest
 from tests.pytorch_tests.model_tests.feature_models.remove_assert_test import AssertNetTest
 from tests.pytorch_tests.model_tests.feature_models.remove_broken_node_test import BrokenNetTest
+from tests.pytorch_tests.model_tests.feature_models.concat_threshold_test import ConcatUpdateTest
 from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSameNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest, BNForwardFoldingNetTest
 from tests.pytorch_tests.model_tests.feature_models.linear_collapsing_test import TwoConv2DCollapsingTest, \
@@ -89,6 +90,7 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
+
 
     def test_single_layer_replacement(self):
         """
@@ -569,12 +571,20 @@ class FeatureModelsTestRunner(unittest.TestCase):
         QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionKpiCfgTest(self).run_test()
 
+
     def test_bn_attributes_quantization(self):
         """
         This test checks the quantization of BatchNorm layer attributes.
         """
         BNAttributesQuantization(self, quantize_linear=False).run_test()
         BNAttributesQuantization(self, quantize_linear=True).run_test()
+
+    def test_concat_threshold_update(self):
+        """
+        This test checks that the "broken" node (node without output) is being
+        removed from the graph during quantization.
+        """
+        ConcatUpdateTest(self).run_test()
 
 
 if __name__ == '__main__':

@@ -73,6 +73,8 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.vi
     VirtualActivationWeightsComposition
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.concat_threshold_update import \
+    threshold_updater
 from model_compression_toolkit.core.pytorch.hessian.activation_trace_hessian_calculator_pytorch import \
     ActivationTraceHessianCalculatorPytorch
 from model_compression_toolkit.core.pytorch.hessian.weights_trace_hessian_calculator_pytorch import \
@@ -302,6 +304,8 @@ class PytorchImplementation(FrameworkImplementation):
             substitutions_list.append(pytorch_softmax_shift())
         if quant_config.input_scaling:
             raise Exception('Input scaling is currently not supported for Pytorch.')
+        if quant_config.concat_threshold_update:
+            substitutions_list.append(threshold_updater())
         return substitutions_list
 
     def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
