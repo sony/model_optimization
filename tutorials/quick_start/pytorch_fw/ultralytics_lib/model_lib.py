@@ -32,7 +32,7 @@ from tutorials.quick_start.common.constants import MODEL_NAME, BATCH_SIZE, COCO_
     MODULE_REPLACER
 from tutorials.quick_start.common.results import DatasetInfo
 from tutorials.mct_model_garden.models_keras.yolov8.yolov8_preprocess import yolov8_preprocess_chw_transpose
-from model_compression_toolkit.core import FolderImageLoader
+from tutorials.quick_start.common.data_loader import FolderImageLoader
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PytorchModel
 
 
