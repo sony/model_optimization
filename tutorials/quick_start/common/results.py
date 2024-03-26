@@ -18,7 +18,7 @@ from os import path
 from typing import List, Union
 
 from model_compression_toolkit.core.common.user_info import UserInformation
-from common.constants import MODEL_NAME, MODEL_LIBRARY, VALIDATION_DATASET_FOLDER
+from tutorials.quick_start.common.constants import MODEL_NAME, MODEL_LIBRARY, VALIDATION_DATASET_FOLDER
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from tutorials.quick_start.common.tpc_info import TPCInfo

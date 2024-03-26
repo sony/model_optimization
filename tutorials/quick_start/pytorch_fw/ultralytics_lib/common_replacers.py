@@ -22,7 +22,7 @@ from typing import Any
 
 import torch
 
-from common.model_lib import ModuleReplacer
+from tutorials.quick_start.common.model_lib import ModuleReplacer
 from ultralytics import YOLO
 from ultralytics.nn.modules import C2f
 from ultralytics.cfg import get_cfg
