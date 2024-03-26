@@ -188,6 +188,9 @@ def nodes_builder(model: GraphModule,
 
             # remove torch.fx.node.Node from inputs to graph_node_type
             op_call_args = [arg for arg in op_call_args if not isinstance(arg, Node)]
+            # convert torch.fx.immutable_collections.immutable_list to tuple
+            op_call_args = [tuple(arg) if isinstance(arg, torch.fx.immutable_collections.immutable_list) else arg
+                            for arg in op_call_args]
 
             kwargs = {FUNCTIONAL_OP: node_type,
                       OP_CALL_ARGS: op_call_args,
