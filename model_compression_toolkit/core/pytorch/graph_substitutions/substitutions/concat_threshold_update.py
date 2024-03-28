@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ from model_compression_toolkit.constants import THRESHOLD
 
 MATCHER = NodeOperationMatcher(cat) 
 
-class threshold_updater(common.BaseSubstitution):
+class concat_threshold_updater(common.BaseSubstitution):
     """
     Find concat layers and match their prior layers thresholds unless prior layer outputs to multiple layers.
     """
@@ -53,14 +53,15 @@ class threshold_updater(common.BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
- 
+    
+
         prev_nodes = graph.get_prev_nodes(node)
-        concat_threshold = node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params.get(THRESHOLD)
-
-        for prev_node in prev_nodes:
-            if len(graph.get_next_nodes(prev_node))==1:
-                prev_node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD] = concat_threshold
-
+        if len(node.candidates_quantization_cfg) == 1 and THRESHOLD in node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params:
+            concat_threshold = node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD]
+            prev_nodes = graph.get_prev_nodes(node)
+            for prev_node in prev_nodes:
+                if len(graph.get_next_nodes(prev_node))==1 and prev_node.type != cat:
+                    prev_node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD] = concat_threshold
         return graph
 
 

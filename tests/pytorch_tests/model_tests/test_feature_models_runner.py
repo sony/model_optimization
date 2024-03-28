@@ -582,10 +582,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         BNAttributesQuantization(self, quantize_linear=True).run_test()
 
     def test_concat_threshold_update(self):
-        """
-        This test checks that the "broken" node (node without output) is being
-        removed from the graph during quantization.
-        """
         ConcatUpdateTest(self).run_test()
 
 
