@@ -266,8 +266,8 @@ def dist2bbox(points: tf.Tensor, distance: tf.Tensor) -> tf.Tensor:
     """
     d0, d1, d2, d3 = tf.unstack(distance, 4, -1)
     a0, a1 = tf.unstack(points, 2, -1)
-    x1 = layers.ReLU()(tf.math.add(a0, -d0)) # Adding a relu in order to force unsigned output (which is expected in this case)
-    y1 = layers.ReLU()(tf.math.add(a1, -d1))
+    x1 = layers.ReLU()(tf.math.subtract(a0, d0))  # Adding a relu in order to force unsigned output (which is expected in this case)
+    y1 = layers.ReLU()(tf.math.subtract(a1, d1))
     x2 = layers.ReLU()(tf.math.add(a0, d2))
     y2 = layers.ReLU()(tf.math.add(a1, d3))
     return tf.stack([y1, x1, y2, x2], -1)
