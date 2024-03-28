@@ -298,10 +298,12 @@ class DataLoader:
         self.shuffle = shuffle
         self.count = 0
         self.inds = list(range(len(dataset)))
+
+    def __iter__(self):
+        self.count = 0
         if self.shuffle:
             random.shuffle(self.inds)
 
-    def __iter__(self):
         return self
 
     def __next__(self):
