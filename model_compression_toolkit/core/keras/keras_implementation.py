@@ -80,7 +80,9 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.line
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.residual_collapsing import \
     keras_residual_collapsing
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.input_scaling import InputScaling, \
-    InputScalingWithPad
+    InputScalingWithPad 
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.concat_threshold_update import threshold_updater
+
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remove_relu_upper_bound import \
@@ -319,6 +321,8 @@ class KerasImplementation(FrameworkImplementation):
         if quant_config.input_scaling:
             substitutions_list.append(InputScaling())
             substitutions_list.append(InputScalingWithPad())
+        if quant_config.concat_threshold_update:
+            substitutions_list.append(threshold_updater())
         return substitutions_list
 
     def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
