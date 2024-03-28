@@ -270,7 +270,7 @@ class CocoDataset:
             annotations[0]['orig_img_dims'] = (image_info['height'], image_info['width'])
         return image, annotations
 
-    def sample(self):
+    def sample(self, batch_size):
         """
         Samples a batch of images and their corresponding annotations from the dataset.
 
@@ -281,7 +281,7 @@ class CocoDataset:
         batch_annotations = []
 
         # Sample random image indexes
-        random_idx = random.sample(range(self.total_images), self.batch_size)
+        random_idx = random.sample(range(self.total_images), batch_size)
 
         # Get the corresponding items from dataset
         for idx in random_idx:
@@ -291,40 +291,34 @@ class CocoDataset:
         return np.array(batch_images), batch_annotations
 
 
-def coco_dataset_loader(dataset: CocoDataset, batch_size: int = 1) -> Tuple:
-    """
-    Generator function for loading and preprocessing images and their annotations from a COCO-style dataset.
+class DataLoader:
+    def __init__(self, dataset: List[Tuple], batch_size: int, shuffle: bool = False):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.count = 0
+        self.inds = list(range(len(dataset)))
+        if self.shuffle:
+            random.shuffle(self.inds)
 
-    Args:
-        dataset (CocoDataset): CocoDataset object.
-        batch_size (int): The desired batch size.
+    def __iter__(self):
+        return self
 
-    Yields:
-        Tuple[numpy.ndarray, list]: A tuple containing a batch of images (as a NumPy array) and a list of annotations
-        for each image in the batch.
-    """
-    batch_images = []
-    batch_annotations = []
+    def __next__(self):
+        if self.count >= len(self.dataset):
+            raise StopIteration
 
-    for image_count, item in enumerate(dataset):
-        image, annotations = item
+        batch_images = []
+        batch_annotations = []
 
-        # Add the image and annotations to the current batch
-        batch_images.append(image)
-        batch_annotations.append(annotations)
+        while len(batch_images) < self.batch_size and self.count < len(self.dataset):
+            index = self.inds[self.count]
+            image, annotations = self.dataset[index]
+            batch_images.append(image)
+            batch_annotations.append(annotations)
+            self.count += 1
 
-        # Check if the current batch is of the desired batch size
-        if len(batch_images) == batch_size:
-            # Yield the current batch
-            yield np.array(batch_images), batch_annotations
-
-            # Reset the batch lists for the next batch
-            batch_images = []
-            batch_annotations = []
-
-    # After processing all images, yield any remaining images in the last batch
-    if len(batch_images) > 0 and (dataset.total_images == image_count + 1):
-        yield np.array(batch_images), batch_annotations
+        return np.array(batch_images), batch_annotations
 
 
 def coco_dataset_generator(dataset_folder: str, annotation_file: str, preprocess: Callable, batch_size: int = 1) -> Tuple:
@@ -408,9 +402,8 @@ def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotat
     # Load COCO evaluation set
     coco_dataset = CocoDataset(dataset_folder=dataset_folder,
                                                   annotation_file=annotation_file,
-                                                  preprocess=preprocess,
-                                                  batch_size=batch_size)
-    coco_loader = coco_dataset_loader(coco_dataset, batch_size)
+                                                  preprocess=preprocess)
+    coco_loader = DataLoader(coco_dataset, batch_size)
 
     # Initialize the evaluation metric object
     coco_metric = CocoEval(annotation_file, output_resize)
