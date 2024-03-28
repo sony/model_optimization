@@ -301,7 +301,7 @@ class KerasImplementation(FrameworkImplementation):
         """
         return keras_op2d_add_const_collapsing()
 
-    def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig) \
+    def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig, mp_config: MixedPrecisionQuantizationConfig) \
             -> List[common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used after we collect statistics.
@@ -319,11 +319,7 @@ class KerasImplementation(FrameworkImplementation):
             substitutions_list.append(InputScaling())
             substitutions_list.append(InputScalingWithPad())
         if quant_config.concat_threshold_update:
-<<<<<<< HEAD
             substitutions_list.append(ConcatThresholdUpdate())
-=======
-            substitutions_list.append(threshold_updater())
->>>>>>> 7315ddec (concat feature addition)
         return substitutions_list
 
 

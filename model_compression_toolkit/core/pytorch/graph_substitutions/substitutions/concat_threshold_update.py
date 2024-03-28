@@ -1,4 +1,3 @@
-
 # Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +28,6 @@ from model_compression_toolkit.constants import THRESHOLD
 MATCHER = NodeOperationMatcher(concat) 
 
 class ConcatThresholdUpdate(common.BaseSubstitution):
-
     """
     Find concat layers and match their prior layers thresholds unless prior layer outputs to multiple layers.
     """
