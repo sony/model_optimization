@@ -55,7 +55,6 @@ class concat_threshold_updater(common.BaseSubstitution):
         """
     
 
-        prev_nodes = graph.get_prev_nodes(node)
         if len(node.candidates_quantization_cfg) == 1 and THRESHOLD in node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params:
             concat_threshold = node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD]
             prev_nodes = graph.get_prev_nodes(node)

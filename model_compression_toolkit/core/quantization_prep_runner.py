@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
-from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
+from model_compression_toolkit.core.common.quantization.core_config import CoreConfig, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
 from model_compression_toolkit.core.common.statistics_correction.statistics_correction import \
@@ -96,7 +96,7 @@ def quantization_preparation_runner(graph: Graph,
     # Graph substitution (post statistics collection)
     ######################################
     transformed_graph = substitute(graph,
-                                   fw_impl.get_substitutions_post_statistics_collection(core_config.quantization_config))
+                                   fw_impl.get_substitutions_post_statistics_collection(core_config.quantization_config, MixedPrecisionQuantizationConfig))
 
     ######################################
     # Shift Negative Activations
