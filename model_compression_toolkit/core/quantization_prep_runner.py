@@ -96,7 +96,7 @@ def quantization_preparation_runner(graph: Graph,
     # Graph substitution (post statistics collection)
     ######################################
     transformed_graph = substitute(graph,
-                                   fw_impl.get_substitutions_post_statistics_collection(core_config.quantization_config, MixedPrecisionQuantizationConfig))
+                                   fw_impl.get_substitutions_post_statistics_collection(core_config.quantization_config))
 
     ######################################
     # Shift Negative Activations

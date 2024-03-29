@@ -304,7 +304,7 @@ class KerasImplementation(FrameworkImplementation):
         """
         return keras_op2d_add_const_collapsing()
 
-    def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig, mp_config: MixedPrecisionQuantizationConfig) \
+    def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig) \
             -> List[common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used after we collect statistics.
