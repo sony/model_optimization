@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> e17e1eb3 (pr fixes)
 # Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,7 +52,6 @@ class ConcatThresholdUpdate(common.BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
-
 
         if len(node.candidates_quantization_cfg) == 1 and THRESHOLD in node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params:
             concat_threshold = node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD]
