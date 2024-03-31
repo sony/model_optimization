@@ -209,6 +209,7 @@ if FOUND_TF:
                                                                   fw_info=DEFAULT_KERAS_INFO,
                                                                   fw_impl=fw_impl,
                                                                   tpc=target_platform_capabilities,
+                                                                  target_resource_utilization=target_resource_utilization,
                                                                   tb_w=tb_w)
 
         tg_gptq = gptq_runner(tg,
