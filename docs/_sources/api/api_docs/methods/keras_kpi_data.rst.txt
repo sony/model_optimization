@@ -1,10 +1,10 @@
 :orphan:
 
-.. _ug-keras_kpi_data:
+.. _ug-keras_resource_utilization_data:
 
 
-=======================================
-Get KPI information for Keras Models
-=======================================
+=======================================================
+Get Resource Utilization information for Keras Models
+=======================================================
 
-.. autofunction:: model_compression_toolkit.keras_kpi_data
+.. autofunction:: model_compression_toolkit.core.keras_resource_utilization_data
