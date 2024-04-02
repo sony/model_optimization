@@ -57,7 +57,8 @@ def clip_boxes(boxes: np.ndarray, h: int, w: int) -> np.ndarray:
     return boxes
 
 
-def scale_boxes(boxes: np.ndarray, h_image: int, w_image: int, h_model: int, w_model: int, preserve_aspect_ratio: bool) -> np.ndarray:
+def scale_boxes(boxes: np.ndarray, h_image: int, w_image: int, h_model: int, w_model: int,
+                preserve_aspect_ratio: bool) -> np.ndarray:
     """
     Scale and offset bounding boxes based on model output size and original image size.
 
@@ -94,7 +95,6 @@ def scale_boxes(boxes: np.ndarray, h_image: int, w_image: int, h_model: int, w_m
     return boxes
 
 
-
 def format_results(outputs: List, img_ids: List, orig_img_dims: List, output_resize: Dict) -> List[Dict]:
     """
     Format model outputs into a list of detection dictionaries.
@@ -116,11 +116,12 @@ def format_results(outputs: List, img_ids: List, orig_img_dims: List, output_res
     # Process model outputs and convert to detection format
     for idx, output in enumerate(outputs):
         image_id = img_ids[idx]
-        scores = output[1].numpy().squeeze() # Extract scores
+        scores = output[1].numpy().squeeze()  # Extract scores
         labels = (coco80_to_coco91(
-            output[2].numpy())).squeeze() # Convert COCO 80-class indices to COCO 91-class indices
-        boxes = output[0].numpy().squeeze() # Extract bounding boxes
-        boxes = scale_boxes(boxes, orig_img_dims[idx][0], orig_img_dims[idx][1], h_model, w_model, preserve_aspect_ratio)
+            output[2].numpy())).squeeze()  # Convert COCO 80-class indices to COCO 91-class indices
+        boxes = output[0].numpy().squeeze()  # Extract bounding boxes
+        boxes = scale_boxes(boxes, orig_img_dims[idx][0], orig_img_dims[idx][1], h_model, w_model,
+                            preserve_aspect_ratio)
 
         for score, label, box in zip(scores, labels, boxes):
             detection = {
@@ -132,6 +133,7 @@ def format_results(outputs: List, img_ids: List, orig_img_dims: List, output_res
             detections.append(detection)
 
     return detections
+
 
 # COCO evaluation class
 class CocoEval:
@@ -202,6 +204,7 @@ class CocoEval:
         """
         self.all_detections = []
 
+
 def load_and_preprocess_image(image_path: str, preprocess: Callable) -> np.ndarray:
     """
     Load and preprocess an image from a given file path.
@@ -217,7 +220,9 @@ def load_and_preprocess_image(image_path: str, preprocess: Callable) -> np.ndarr
     image = preprocess(image)
     return image
 
-def coco_dataset_generator(dataset_folder: str, annotation_file: str, preprocess: Callable, batch_size: int = 1) -> Tuple:
+
+def coco_dataset_generator(dataset_folder: str, annotation_file: str, preprocess: Callable,
+                           batch_size: int = 1) -> Tuple:
     """
     Generator function for loading and preprocessing images and their annotations from a COCO-style dataset.
 
@@ -277,9 +282,25 @@ def coco_dataset_generator(dataset_folder: str, annotation_file: str, preprocess
             yield np.array(batch_images), batch_annotations
 
 
-def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotation_file: str, batch_size: int,
-                  output_resize: tuple) -> dict:
+def model_predict(model: Any,
+                  inputs: np.ndarray) -> Tuple[List, List, List, List]:
+    """
+    Perform inference using the provided model on the given inputs.
 
+    This function serves as the default method for inference if no specific model inference function is provided.
+
+    Args:
+        model (Any): The model used for inference.
+        inputs (np.ndarray): Input data to perform inference on.
+
+    Returns:
+        Tuple[List, List, List, List]: Tuple containing lists of predictions.
+    """
+    return model(inputs)
+
+
+def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotation_file: str, batch_size: int,
+                  output_resize: tuple, model_inference: Callable = model_predict) -> dict:
     """
     Evaluate a model on the COCO dataset.
 
@@ -290,6 +311,7 @@ def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotat
     - annotation_file (str): Path to the COCO annotation file.
     - batch_size (int): Batch size for evaluation.
     - output_resize (tuple): Tuple representing the output size after resizing.
+    - model_inference (Callable): Model inference function. model_predict will be used by default.
 
     Returns:
     - dict: Evaluation results.
@@ -301,7 +323,6 @@ def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotat
                                          preprocess=preprocess,
                                          batch_size=batch_size)
 
-
     # Initialize the evaluation metric object
     coco_metric = CocoEval(annotation_file, output_resize)
 
@@ -309,7 +330,7 @@ def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotat
     for batch_idx, (images, targets) in enumerate(val_dataset):
 
         # Run inference on the batch
-        outputs = model(images)
+        outputs = model_inference(model, images)
 
         # Add the model outputs to metric object (a dictionary of outputs after postprocess: boxes, scores & classes)
         coco_metric.add_batch_detections(outputs, targets)
