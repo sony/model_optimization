@@ -42,7 +42,7 @@ jobs:
           rm -rf model_compression_toolkit
       - name: Install TF
         run: |
-          pip install tensorflow
+          pip install tensorflow==2.15.*
       - name: Run Commom Tests
         run: |
           python -m unittest discover tests/common_tests --verbose
