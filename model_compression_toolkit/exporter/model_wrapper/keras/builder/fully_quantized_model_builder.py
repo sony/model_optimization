@@ -92,7 +92,7 @@ if FOUND_TF:
 
         Logger.info("Please run your accuracy evaluation on the exported quantized model to verify it's accuracy.\n"
                     "Checkout the FAQ and Troubleshooting pages for resolving common issues and improving the quantized model accuracy:\n"
-                    "FAQ: https://github.com/sony/model_optimization/tree/main/FAQ.md"
+                    "FAQ: https://github.com/sony/model_optimization/tree/main/FAQ.md\n"
                     "Quantization Troubleshooting: https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md")
         return exportable_model, user_info
 else:

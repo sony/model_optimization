@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Model Compression Toolkit User Guide &#8212; MCT Documentation: ver 1.11.0</title>
+    <title>Model Compression Toolkit User Guide &#8212; MCT Documentation: ver 2.0.0</title>
     <link rel="stylesheet" type="text/css" href="static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="static/css/custom.css" />
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="guidelines/visualization.html" title="Visualization within TensorBoard"
              accesskey="N">next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">MCT Documentation: ver 1.11.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">MCT Documentation: ver 2.0.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Model Compression Toolkit User Guide</a></li> 
       </ul>
     </div>  
@@ -51,7 +51,6 @@
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h2>
 <p>Model Compression Toolkit (MCT) is an open source project for neural networks optimization that enables users to compress and quantize models.
 This project enables researchers, developers and engineers an easily way to optimized and quantized state-of-the-art neural network.</p>
-<p>Currently, MCT supports hardware-friendly post training quantization (HPTQ) with Tensorflow 2 [1].</p>
 <p>MCT project is developed by researchers and engineers working in Sony Semiconductor Israel.</p>
 </section>
 <section id="install">
@@ -71,8 +70,7 @@ This project enables researchers, developers and engineers an easily way to opti
 </pre></div>
 </div>
 <p>For using with Tensorflow please install the packages:
-<a class="reference external" href="https://www.tensorflow.org/install">tensorflow</a>
-<a class="reference external" href="https://www.tensorflow.org/model_optimization/guide/install">tensorflow-model-optimization</a></p>
+<a class="reference external" href="https://www.tensorflow.org/install">tensorflow</a></p>
 <p>For using with Pytorch please install the package:
 <a class="reference external" href="https://pytorch.org/">torch</a></p>
 </section>
@@ -80,20 +78,21 @@ This project enables researchers, developers and engineers an easily way to opti
 <h2>Supported Features<a class="headerlink" href="#supported-features" title="Permalink to this heading">¶</a></h2>
 <p>Keras:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental"><span class="std std-ref">Post Training Quantization</span></a> [1]</p></li>
-<li><p><a class="reference internal" href="api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental"><span class="std std-ref">Gradient based post training using knowledge distillation</span></a></p></li>
-<li><p><a class="reference internal" href="api/api_docs/methods/keras_post_training_quantization_mixed_precision.html#ug-keras-post-training-quantization-mixed-precision"><span class="std std-ref">Mixed-precision post training quantization</span></a></p></li>
-<li><p><a class="reference internal" href="api/experimental_api_docs/methods/keras_quantization_aware_training_init.html#ug-keras-quantization-aware-training-init"><span class="std std-ref">Init model for Quantization Aware Training</span></a> (Experimental)</p></li>
-<li><p><a class="reference internal" href="api/experimental_api_docs/methods/keras_quantization_aware_training_finalize.html#ug-keras-quantization-aware-training-finalize"><span class="std std-ref">Finalize model after Quantization Aware Training</span></a> (Experimental)</p></li>
-<li><p><a class="reference internal" href="api/experimental_api_docs/methods/keras_pruning_experimental.html#ug-keras-pruning-experimental"><span class="std std-ref">Structured Pruning</span></a> (Experimental)</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/keras_post_training_quantization.html#ug-keras-post-training-quantization"><span class="std std-ref">Post Training Quantization</span></a> [1]</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/keras_gradient_post_training_quantization.html#ug-keras-gradient-post-training-quantization"><span class="std std-ref">Gradient based post training using knowledge distillation</span></a> [2]</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/keras_quantization_aware_training_init_experimental.html#ug-keras-quantization-aware-training-init-experimental"><span class="std std-ref">Init model for Quantization Aware Training</span></a> (Experimental)</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/keras_quantization_aware_training_finalize_experimental.html#ug-keras-quantization-aware-training-finalize-experimental"><span class="std std-ref">Finalize model after Quantization Aware Training</span></a> (Experimental)</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/keras_pruning_experimental.html#ug-keras-pruning-experimental"><span class="std std-ref">Structured pruning</span></a> (Experimental)</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/keras_data_generation_experimental.html#ug-keras-data-generation-experimental"><span class="std std-ref">Data generation</span></a> (Experimental)</p></li>
 </ul>
 <p>Pytorch:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental"><span class="std std-ref">Post Training Quantization</span></a> [1]</p></li>
-<li><p><a class="reference internal" href="api/experimental_api_docs/methods/pytorch_gradient_post_training_quantization_experimental.html#ug-pytorch-gradient-post-training-quantization-experimental"><span class="std std-ref">Gradient based post training using knowledge distillation</span></a></p></li>
-<li><p><a class="reference internal" href="api/api_docs/methods/pytorch_post_training_quantization_mixed_precision.html#ug-pytorch-post-training-quantization-mixed-precision"><span class="std std-ref">Mixed-precision post training quantization</span></a></p></li>
-<li><p><a class="reference internal" href="api/experimental_api_docs/methods/pytorch_quantization_aware_training_init.html#ug-pytorch-quantization-aware-training-init"><span class="std std-ref">Init model for Quantization Aware Training</span></a> (Experimental)</p></li>
-<li><p><a class="reference internal" href="api/experimental_api_docs/methods/pytorch_quantization_aware_training_finalize.html#ug-pytorch-quantization-aware-training-finalize"><span class="std std-ref">Finalize model after Quantization Aware Training</span></a> (Experimental)</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/pytorch_post_training_quantization.html#ug-pytorch-post-training-quantization"><span class="std std-ref">Post Training Quantization</span></a> [1]</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/pytorch_gradient_post_training_quantization.html#ug-pytorch-gradient-post-training-quantization"><span class="std std-ref">Gradient based post training using knowledge distillation</span></a> [2]</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/pytorch_quantization_aware_training_init_experimental.html#ug-pytorch-quantization-aware-training-init-experimental"><span class="std std-ref">Init model for Quantization Aware Training</span></a> (Experimental)</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/pytorch_quantization_aware_training_finalize_experimental.html#ug-pytorch-quantization-aware-training-finalize-experimental"><span class="std std-ref">Finalize model after Quantization Aware Training</span></a> (Experimental)</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/pytorch_pruning_experimental.html#ug-pytorch-pruning-experimental"><span class="std std-ref">Structured pruning</span></a> (Experimental)</p></li>
+<li><p><a class="reference internal" href="api/api_docs/methods/pytorch_data_generation_experimental.html#ug-pytorch-data-generation-experimental"><span class="std std-ref">Data generation</span></a> (Experimental)</p></li>
 </ul>
 <p>Visualization:</p>
 <div class="toctree-wrapper compound">
@@ -106,20 +105,15 @@ This project enables researchers, developers and engineers an easily way to opti
 </section>
 <section id="quickstart">
 <h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this heading">¶</a></h2>
-<p>Take a look of how you can start using MCT in just a few minutes</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="guidelines/quickstart_keras.html">Quick start tutorial for Keras Post Training Quantization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guidelines/quickstart_pytorch.html">Quick start tutorial for Pytorch Post Training Quantization</a></li>
-</ul>
-</div>
+<p>Take a look of how you can start using MCT in just a few minutes!</p>
+<p>Visit our <a class="reference external" href="https://github.com/sony/model_optimization/tree/main/tutorials/notebooks">notebooks</a> and <a class="reference external" href="https://github.com/sony/model_optimization/tree/main/tutorials/quick_start">MCT quick start.</a></p>
 </section>
 <section id="api-documentation">
 <h2>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this heading">¶</a></h2>
 <p>Please visit the MCT API documentation here</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api/experimental_api_docs/index.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/api_docs/index.html">API Documentation</a></li>
 </ul>
 </div>
 </section>
@@ -132,6 +126,7 @@ This project enables researchers, developers and engineers an easily way to opti
 <section id="references">
 <h2>References<a class="headerlink" href="#references" title="Permalink to this heading">¶</a></h2>
 <p>[1] Habi, H.V., Peretz, R., Cohen, E., Dikstein, L., Dror, O., Diamant, I., Jennings, R.H. and Netzer, A., 2021. <a class="reference external" href="https://arxiv.org/abs/2109.09113">HPTQ: Hardware-Friendly Post Training Quantization. arXiv preprint.</a></p>
+<p>[2] Gordon, O., Habi, H.V., and Netzer, A., 2023. <a class="reference external" href="https://arxiv.org/abs/2309.11531">EPTQ: Enhanced Post-Training Quantization via Label-Free Hessian. arXiv preprint.</a></p>
 </section>
 </section>
 
@@ -186,7 +181,7 @@ This project enables researchers, developers and engineers an easily way to opti
         <li class="right" >
           <a href="guidelines/visualization.html" title="Visualization within TensorBoard"
              >next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">MCT Documentation: ver 1.11.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="#">MCT Documentation: ver 2.0.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Model Compression Toolkit User Guide</a></li> 
       </ul>
     </div>

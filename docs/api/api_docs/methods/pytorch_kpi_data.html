@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Get KPI information for PyTorch Models &#8212; MCT Documentation: ver 1.11.0</title>
+    <title>Get Resource Utilization information for PyTorch Models &#8212; MCT Documentation: ver 2.0.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,8 +31,8 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Get KPI information for PyTorch Models</a></li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.0.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Get Resource Utilization information for PyTorch Models</a></li> 
       </ul>
     </div>  
 
@@ -41,25 +41,24 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="get-kpi-information-for-pytorch-models">
-<span id="ug-pytorch-kpi-data"></span><h1>Get KPI information for PyTorch Models<a class="headerlink" href="#get-kpi-information-for-pytorch-models" title="Permalink to this heading">¶</a></h1>
+  <section id="get-resource-utilization-information-for-pytorch-models">
+<span id="ug-pytorch-resource-utilization-data"></span><h1>Get Resource Utilization information for PyTorch Models<a class="headerlink" href="#get-resource-utilization-information-for-pytorch-models" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="model_compression_toolkit.pytorch_kpi_data">
-<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.</span></span><span class="sig-name descname"><span class="pre">pytorch_kpi_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">representative_data_gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_MIXEDPRECISION_CONFIG</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fw_info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_PYTORCH_INFO</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PYTORCH_DEFAULT_TPC</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.pytorch_kpi_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes KPI data that can be used to calculate the desired target KPI for mixed-precision quantization.
-Builds the computation graph from the given model and target platform capabilities, and uses it to compute the KPI data.</p>
+<dt class="sig sig-object py" id="model_compression_toolkit.core.pytorch_resource_utilization_data">
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.core.</span></span><span class="sig-name descname"><span class="pre">pytorch_resource_utilization_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">representative_data_gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">CoreConfig()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PYTORCH_DEFAULT_TPC</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.core.pytorch_resource_utilization_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes resource utilization data that can be used to calculate the desired target resource utilization for mixed-precision quantization.
+Builds the computation graph from the given model and target platform capabilities, and uses it to compute the resource utilization data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>in_model</strong> (<em>Model</em>) – PyTorch model to quantize.</p></li>
 <li><p><strong>representative_data_gen</strong> (<em>Callable</em>) – Dataset used for calibration.</p></li>
-<li><p><strong>quant_config</strong> (<a class="reference internal" href="../modules/mixed_precision_quantization_config.html#model_compression_toolkit.MixedPrecisionQuantizationConfig" title="model_compression_toolkit.MixedPrecisionQuantizationConfig"><em>MixedPrecisionQuantizationConfig</em></a>) – MixedPrecisionQuantizationConfig containing parameters of how the model should be quantized.</p></li>
-<li><p><strong>fw_info</strong> (<a class="reference internal" href="../../experimental_api_docs/classes/FrameworkInfo.html#model_compression_toolkit.FrameworkInfo" title="model_compression_toolkit.FrameworkInfo"><em>FrameworkInfo</em></a>) – Information needed for quantization about the specific framework (e.g., kernel channels indices, groups of layers by how they should be quantized, etc.). <a class="reference external" href="https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/core/pytorch/default_framework_info.py">Default PyTorch info</a></p></li>
-<li><p><strong>target_platform_capabilities</strong> (<a class="reference internal" href="../../experimental_api_docs/modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a>) – TargetPlatformCapabilities to optimize the Keras model according to.</p></li>
+<li><p><strong>core_config</strong> (<a class="reference internal" href="../modules/core_config.html#model_compression_toolkit.core.CoreConfig" title="model_compression_toolkit.core.CoreConfig"><em>CoreConfig</em></a>) – CoreConfig containing parameters for quantization and mixed precision</p></li>
+<li><p><strong>target_platform_capabilities</strong> (<a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a>) – TargetPlatformCapabilities to optimize the PyTorch model according to.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A KPI object with total weights parameters sum, max activation tensor and total kpi.</p>
+<dd class="field-even"><p>A ResourceUtilization object with total weights parameters sum and max activation tensor.</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
@@ -68,23 +67,19 @@ Builds the computation graph from the given model and target platform capabiliti
 <span class="gp">&gt;&gt;&gt; </span><span class="n">module</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">mobilenet_v2</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Create a random dataset generator, for required number of calibration iterations (num_calibration_batches):
-In this example a random dataset of 10 batches each containing 4 images is used.</p>
+<p>Create a random dataset generator:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">num_calibration_batches</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">repr_datagen</span><span class="p">():</span>
-<span class="gp">&gt;&gt;&gt; </span>    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_calibration_batches</span><span class="p">):</span>
-<span class="gp">&gt;&gt;&gt; </span>        <span class="k">yield</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">))]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">repr_datagen</span><span class="p">():</span> <span class="k">yield</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">))]</span>
 </pre></div>
 </div>
-<p>Import mct and call for KPI data calculation:</p>
+<p>Import mct and call for resource utilization data calculation:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">kpi_data</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">pytorch_kpi_data</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">repr_datagen</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ru_data</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">pytorch_resource_utilization_data</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">repr_datagen</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="../../experimental_api_docs/modules/mixed_precision_quantization_config.html#model_compression_toolkit.KPI" title="model_compression_toolkit.core.common.mixed_precision.kpi_tools.kpi.KPI"><code class="xref py py-class docutils literal notranslate"><span class="pre">KPI</span></code></a></p>
+<dd class="field-odd"><p><a class="reference internal" href="../classes/ResourceUtilization.html#model_compression_toolkit.core.ResourceUtilization" title="model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization.ResourceUtilization"><code class="xref py py-class docutils literal notranslate"><span class="pre">ResourceUtilization</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -118,8 +113,8 @@ In this example a random dataset of 10 batches each containing 4 images is used.
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 1.11.0</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">Get KPI information for PyTorch Models</a></li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.0.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Get Resource Utilization information for PyTorch Models</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">

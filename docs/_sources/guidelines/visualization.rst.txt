@@ -7,7 +7,7 @@ Visualization within TensorBoard
 =================================
 
 One may log various graphs and data collected in different phases of the model quantization and display them within the Tensorboard UI.
-To use it, all you have to do is to set a logger path. Setting a path is done by calling :ref:`set_log_folder<ug-set_logger_path>`.
+To use it, all you have to do is to set a logger path. Setting a path is done by calling :ref:`set_log_folder<ug-set_log_folder>`.
 
 .. code-block:: python
 
