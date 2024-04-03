@@ -103,7 +103,7 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
         with custom quantizers.
         """
 
-        for n, m in self.model.named_children():
+        for n, m in self.model.named_modules():
             if isinstance(m, PytorchActivationQuantizationHolder):
                 assert isinstance(m.activation_holder_quantizer, pytorch_quantizers.BasePyTorchInferableQuantizer)
                 m.activation_holder_quantizer.enable_custom_impl()
