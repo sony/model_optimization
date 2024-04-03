@@ -291,7 +291,8 @@ def nanodet_generate_anchors(batch_size, featmap_sizes, strides):
     return np.concatenate(anchors_list, axis=1, dtype=float)
 
 def nanodet_plus_head(n, feat_channels=128, num_classes=80):
-    feat_out = num_classes + 32
+    regr = 32  # regression target before DFL (4 coordinates X 8 bins)
+    feat_out = num_classes + regr
     h = n
     for idx in range(4):
         h[idx] = depthwise_conv_module(n[idx], out_channels=feat_channels, stride=1, name_prefix='head.cls_convs.' + str(idx) + '.0')
@@ -300,6 +301,7 @@ def nanodet_plus_head(n, feat_channels=128, num_classes=80):
     return h
 
 def nanodet_box_decoding(h, res, num_classes=80):
+    regr = 32  # regression target before DFL (4 coordinates X 8 bins)
     strides = [8, 16, 32, 64]
     batch_size = 1
     featmap_sizes = [(np.ceil(res / stride), np.ceil(res / stride)) for stride in strides]
@@ -310,7 +312,7 @@ def nanodet_box_decoding(h, res, num_classes=80):
     h_bbox = []
     for idx in range(4):
         # Split to 80 classes and 4 * 8 bounding boxes regression
-        cls, regr = tf.split(h[idx], [num_classes, 32],-1)
+        cls, regr = tf.split(h[idx], [num_classes, regr],-1)
         ndet = cls.shape[1] * cls.shape[2]
 
         # Distributed Focal loss integral
