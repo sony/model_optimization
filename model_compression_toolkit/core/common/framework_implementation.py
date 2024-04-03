@@ -250,15 +250,6 @@ class FrameworkImplementation(ABC):
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_residual_collapsing_substitution method.')  # pragma: no cover
 
-    @abstractmethod
-    def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
-        """
-
-        Returns: A list of the framework substitutions used before we build a quantized model.
-
-        """
-        raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s get_substitutions_pre_build method.')  # pragma: no cover
 
     @abstractmethod
     def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig) -> List[

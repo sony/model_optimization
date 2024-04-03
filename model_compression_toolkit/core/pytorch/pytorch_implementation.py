@@ -308,11 +308,6 @@ class PytorchImplementation(FrameworkImplementation):
             substitutions_list.append(ConcatThresholdUpdate())
         return substitutions_list
 
-    def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
-        """
-        Returns: A list of the framework substitutions used before we build a quantized module.
-        """
-        return []
 
     def get_substitutions_virtual_weights_activation_coupling(self) -> List[common.BaseSubstitution]:
         """

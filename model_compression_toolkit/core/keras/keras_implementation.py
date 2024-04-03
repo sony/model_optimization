@@ -85,8 +85,6 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.conc
 
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
-from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remove_relu_upper_bound import \
-    RemoveReLUUpperBound
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.multi_head_attention_decomposition import \
     MultiHeadAttentionDecomposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.scale_equalization import \
@@ -325,14 +323,6 @@ class KerasImplementation(FrameworkImplementation):
             substitutions_list.append(ConcatThresholdUpdate())
         return substitutions_list
 
-    def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
-        """
-
-        Returns: A list of the framework substitutions used before we build a quantized model.
-
-        """
-
-        return [RemoveReLUUpperBound()]
 
     def get_substitutions_virtual_weights_activation_coupling(self) -> List[common.BaseSubstitution]:
         """
