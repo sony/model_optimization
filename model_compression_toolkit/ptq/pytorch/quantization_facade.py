@@ -25,7 +25,6 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
-from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 
 

@@ -146,7 +146,8 @@ class TestFileLogger(unittest.TestCase):
 
         mp_qc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
                                                           use_hessian_based_scores=False)
-        core_config = mct.core.CoreConfig(mixed_precision_config=mp_qc)
+        core_config = mct.core.CoreConfig(mixed_precision_config=mp_qc,
+                                          debug_config=mct.core.DebugConfig(analyze_similarity=True))
         quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model,
                                                                       rep_data,
                                                                       target_resource_utilization=mct.core.ResourceUtilization(np.inf),

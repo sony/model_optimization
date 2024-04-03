@@ -26,7 +26,6 @@ from tests.common_tests.function_tests.test_threshold_selection import TestThres
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
 
-
 found_tf = importlib.util.find_spec("tensorflow") is not None
 found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util.find_spec(
     "torchvision") is not None
@@ -89,7 +88,8 @@ if found_pytorch:
     from tests.pytorch_tests.exporter_tests.test_runner import PytorchExporterTestsRunner
     from tests.data_generation_tests.pytorch.test_pytorch_data_generation_runner import PytorchDataGenerationTestRunner
     from tests.pytorch_tests.graph_tests.test_fx_errors import TestGraphReading
-
+    from tests.pytorch_tests.pruning_tests.feature_networks.test_pruning_feature_networks import PruningFeatureNetworksTest
+    from tests.pytorch_tests.exporter_tests.test_exporting_qat_models import TestExportingQATModelTorchscript
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
@@ -160,6 +160,8 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchExporterTestsRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchDataGenerationTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphReading))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PruningFeatureNetworksTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestExportingQATModelTorchscript))
 
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)

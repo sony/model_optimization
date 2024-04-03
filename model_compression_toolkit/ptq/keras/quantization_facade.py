@@ -24,7 +24,6 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
-from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 
