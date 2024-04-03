@@ -10,9 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 80
     env:
-      COVERAGE_THRESHOlD: 80
+      COVERAGE_THRESHOlD: 96
     steps:
       - uses: actions/checkout@v2
       - name: Install Python 3
@@ -27,10 +26,20 @@ jobs:
       - name: Prepare TF env
         run: pip install tensorflow==2.13.*
       - name: Run tensorflow testsuite
-        run: coverage run --parallel-mode -m --omit "./tests*,*__init__.py" unittest tests/test_suite.py -v
+        run: coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" unittest tests/test_suite.py -v
       - name: Prepare Torch env
         run: pip uninstall tensorflow -y && pip install torch==2.0.* torchvision onnx onnxruntime onnxruntime-extensions
       - name: Run torch testsuite
-        run: coverage run --parallel-mode -m --omit "./tests*,*__init__.py" unittest tests/test_suite.py -v
-      - name: Run Coverage
-        run: coverage combine && coverage report -i --skip-covered --fail-under $COVERAGE_THRESHOlD
+        run: coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" unittest tests/test_suite.py -v
+      - name: Combine Multiple Coverage Files
+        run: coverage combine
+      - name: Run Coverage HTML
+        run: coverage html -i --directory ./coverage_report_html
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report
+          path: |
+            coverage_report_html
+      - name: Coverage Report
+        run: coverage report -i --skip-covered --sort cover --fail-under $COVERAGE_THRESHOlD
