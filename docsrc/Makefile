@@ -2,6 +2,8 @@
 #
 
 github:
+	@rm -rf ../docs/
+	@mkdir ../docs
 	@make html
 	@cp -a ../docs/html/. ../docs
 	@rm -rf ../docs/html/

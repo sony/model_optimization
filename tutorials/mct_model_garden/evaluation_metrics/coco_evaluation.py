@@ -328,6 +328,7 @@ class DataLoader:
 
 def coco_dataset_generator(dataset_folder: str, annotation_file: str, preprocess: Callable,
                            batch_size: int = 1) -> Tuple:
+
     """
     Generator function for loading and preprocessing images and their annotations from a COCO-style dataset.
 
@@ -426,7 +427,7 @@ def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotat
     coco_dataset = CocoDataset(dataset_folder=dataset_folder,
                                annotation_file=annotation_file,
                                preprocess=preprocess)
-    coco_loader = DataLoader(coco_dataset, batch_size, shuffle=True)
+    coco_loader = DataLoader(coco_dataset, batch_size)
 
     # Initialize the evaluation metric object
     coco_metric = CocoEval(annotation_file, output_resize)

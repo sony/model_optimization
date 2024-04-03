@@ -11,9 +11,6 @@ Overview
 Model Compression Toolkit (MCT) is an open source project for neural networks optimization that enables users to compress and quantize models.
 This project enables researchers, developers and engineers an easily way to optimized and quantized state-of-the-art neural network.
 
-Currently, MCT supports hardware-friendly post training quantization (HPTQ) with Tensorflow 2 [1].
-
-
 MCT project is developed by researchers and engineers working in Sony Semiconductor Israel.
 
 Install
@@ -41,7 +38,7 @@ A nightly version is also available (unstable):
 
 For using with Tensorflow please install the packages:
 `tensorflow <https://www.tensorflow.org/install>`_
-`tensorflow-model-optimization <https://www.tensorflow.org/model_optimization/guide/install>`_
+
 
 For using with Pytorch please install the package:
 `torch <https://pytorch.org/>`_
@@ -52,21 +49,21 @@ Supported Features
 
 Keras:
 
-* :ref:`Post Training Quantization<ug-keras_post_training_quantization_experimental>` [1]
-* :ref:`Gradient based post training using knowledge distillation<ug-keras_gradient_post_training_quantization_experimental>`
-* :ref:`Mixed-precision post training quantization<ug-keras_post_training_quantization_mixed_precision>`
-* :ref:`Init model for Quantization Aware Training<ug-keras_quantization_aware_training_init>` (Experimental)
-* :ref:`Finalize model after Quantization Aware Training<ug-keras_quantization_aware_training_finalize>` (Experimental)
-* :ref:`Structured Pruning<ug-keras_pruning_experimental>` (Experimental)
+* :ref:`Post Training Quantization<ug-keras_post_training_quantization>` [1]
+* :ref:`Gradient based post training using knowledge distillation<ug-keras_gradient_post_training_quantization>` [2]
+* :ref:`Init model for Quantization Aware Training<ug-keras_quantization_aware_training_init_experimental>` (Experimental)
+* :ref:`Finalize model after Quantization Aware Training<ug-keras_quantization_aware_training_finalize_experimental>` (Experimental)
+* :ref:`Structured pruning<ug-keras_pruning_experimental>` (Experimental)
+* :ref:`Data generation<ug-keras_data_generation_experimental>` (Experimental)
 
 Pytorch:
 
-* :ref:`Post Training Quantization<ug-pytorch_post_training_quantization_experimental>` [1]
-* :ref:`Gradient based post training using knowledge distillation<ug-pytorch_gradient_post_training_quantization_experimental>`
-* :ref:`Mixed-precision post training quantization<ug-pytorch_post_training_quantization_mixed_precision>`
-* :ref:`Init model for Quantization Aware Training<ug-pytorch_quantization_aware_training_init>` (Experimental)
-* :ref:`Finalize model after Quantization Aware Training<ug-pytorch_quantization_aware_training_finalize>` (Experimental)
-
+* :ref:`Post Training Quantization<ug-pytorch_post_training_quantization>` [1]
+* :ref:`Gradient based post training using knowledge distillation<ug-pytorch_gradient_post_training_quantization>` [2]
+* :ref:`Init model for Quantization Aware Training<ug-pytorch_quantization_aware_training_init_experimental>` (Experimental)
+* :ref:`Finalize model after Quantization Aware Training<ug-pytorch_quantization_aware_training_finalize_experimental>` (Experimental)
+* :ref:`Structured pruning<ug-pytorch_pruning_experimental>` (Experimental)
+* :ref:`Data generation<ug-pytorch_data_generation_experimental>` (Experimental)
 
 
 Visualization:
@@ -80,17 +77,9 @@ Visualization:
 
 Quickstart
 ====================================
-Take a look of how you can start using MCT in just a few minutes
+Take a look of how you can start using MCT in just a few minutes!
 
-.. toctree::
-    :titlesonly:
-    :maxdepth: 1
-
-    Quick start tutorial for Keras Post Training Quantization<../guidelines/quickstart_keras>
-    Quick start tutorial for Pytorch Post Training Quantization<../guidelines/quickstart_pytorch>
-
-
-
+Visit our `notebooks <https://github.com/sony/model_optimization/tree/main/tutorials/notebooks>`_ and `MCT quick start. <https://github.com/sony/model_optimization/tree/main/tutorials/quick_start>`_
 
 
 API Documentation
@@ -101,7 +90,7 @@ Please visit the MCT API documentation here
     :titlesonly:
     :maxdepth: 1
 
-    API Documentation<../api/experimental_api_docs/index>
+    API Documentation<../api/api_docs/index>
 
 Technical Constraints
 =========================
@@ -113,3 +102,4 @@ References
 
 [1] Habi, H.V., Peretz, R., Cohen, E., Dikstein, L., Dror, O., Diamant, I., Jennings, R.H. and Netzer, A., 2021. `HPTQ: Hardware-Friendly Post Training Quantization. arXiv preprint. <https://arxiv.org/abs/2109.09113>`_
 
+[2] Gordon, O., Habi, H.V., and Netzer, A., 2023. `EPTQ: Enhanced Post-Training Quantization via Label-Free Hessian. arXiv preprint. <https://arxiv.org/abs/2309.11531>`_
