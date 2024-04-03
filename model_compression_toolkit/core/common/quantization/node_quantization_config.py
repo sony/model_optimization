@@ -204,7 +204,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
 
         """
         if not isinstance(other, NodeActivationQuantizationConfig):
-            return False  # pragma: no cover
+            return False
 
         return self.activation_quantization_fn == other.activation_quantization_fn and \
                self.activation_quantization_params_fn == other.activation_quantization_params_fn and \
@@ -358,7 +358,7 @@ class WeightsAttrQuantizationConfig:
 
         """
         if not isinstance(other, WeightsAttrQuantizationConfig):
-            return False  # pragma: no cover
+            return False
 
         return self.weights_quantization_fn == other.weights_quantization_fn and \
                self.weights_quantization_params_fn == other.weights_quantization_params_fn and \
@@ -413,7 +413,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                 # this is a positional attribute, so it needs to be handled separately.
                 # we assume that a positional attribute is quantized with the default configuration provided in the TPC.
                 if op_cfg.default_weight_attr_config.enable_weights_quantization:
-                    Logger.critical(f"Quantizing constant weights is not supported.")  # pragma: no cover
+                    Logger.critical(f"Quantizing constant weights is not supported.")
                 self.pos_attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
                                                                                          weights_attr_cfg=op_cfg.default_weight_attr_config,
                                                                                          weights_channels_axis=weights_channels_axis)
@@ -422,7 +422,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                 # therefore, we need to look for the attribute in the op_cfg that is contained in the node attribute's name.
                 attrs_included_in_name = {k: v for k, v in op_cfg.attr_weights_configs_mapping.items() if k in attr}
                 if len(attrs_included_in_name) > 1:
-                    Logger.error(f"Found multiple attribute in TPC OpConfig that are contained "  # pragma: no cover
+                    Logger.error(f"Found multiple attribute in TPC OpConfig that are contained "
                                  f"in the attribute name '{attr}'."
                                  f"Please fix the TPC attribute names mapping such that each operator's attribute would "
                                  f"have a unique matching name.")
@@ -449,7 +449,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
 
         """
         if attr_name is None:
-            Logger.error("Got 'None' attribute name for retrieving weights attribute quantization configuration.") # pragma: no cover
+            Logger.error("Got 'None' attribute name for retrieving weights attribute quantization configuration.")
 
         if isinstance(attr_name, int):
             # this is a positional attribute
@@ -460,13 +460,13 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
             if len(attrs_with_name) == 1:
                 attr_cfg = [v for v in attrs_with_name.values()][0]
             elif len(attrs_with_name) > 1:
-                Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "  # pragma: no cover
+                Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
                                f"{list(attrs_with_name.keys())}. Looking for an attributes with the exact name.")
                 # If no attribute with the exact name then an error would be thrown
                 attr_cfg = self.attributes_config_mapping.get(attr_name)
 
         if attr_cfg is None:
-            Logger.error(f"Weight attribute '{attr_name}' config could not be found.")  # pragma: no cover
+            Logger.error(f"Weight attribute '{attr_name}' config could not be found.")
 
         return attr_cfg
 
@@ -517,7 +517,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         """
         attrs_with_name = {k: v for k, v in self.attributes_config_mapping.items() if attr_name in k}
         if len(attrs_with_name) > 1:
-            Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "  # pragma: no cover
+            Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
                            f"{list(attrs_with_name.keys())}.")
         return attrs_with_name
 
@@ -545,10 +545,10 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                 if hasattr(attr_cfg, parameter_name):
                     setattr(attr_cfg, parameter_name, parameter_value)
                 else:
-                    Logger.warning(f"Parameter {parameter_name} could not be found in the node quantization config of "  # pragma: no cover
+                    Logger.warning(f"Parameter {parameter_name} could not be found in the node quantization config of "
                                    f"weights attribute {attr_name} and was not updated!")
             else:
-                Logger.error(f"Weights attribute {attr_name} could not be found to set parameter {parameter_name}.")  # pragma: no cover
+                Logger.error(f"Weights attribute {attr_name} could not be found to set parameter {parameter_name}.")
 
     def __eq__(self, other: Any) -> bool:
         """
@@ -561,7 +561,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
 
         """
         if not isinstance(other, NodeWeightsQuantizationConfig):
-            return False  # pragma: no cover
+            return False
 
         return self.min_threshold == other.min_threshold and \
             self.simd_size == other.simd_size and \
