@@ -23,7 +23,7 @@ from model_compression_toolkit.constants import THRESHOLD
 
 MATCHER = NodeOperationMatcher(Concatenate)
 
-class concat_threshold_updater(common.BaseSubstitution):
+class ConcatThresholdUpdate(common.BaseSubstitution):
     """
     Find concat layers and match their prior layers thresholds unless prior layer outputs to multiple layers.
     """
@@ -39,7 +39,8 @@ class concat_threshold_updater(common.BaseSubstitution):
                    node: BaseNode) -> Graph:
         """
         Update previous layers thresholds to match concatinations quantization thresholds. No change if
-        previous layer outputs to multiple layers.
+        previous layer outputs to multiple layers. No change in case of uniform quantization. 
+        No change in case of multiple quantization candidates (mixed precision).
 
         Args:
             graph: Graph we apply the substitution on.

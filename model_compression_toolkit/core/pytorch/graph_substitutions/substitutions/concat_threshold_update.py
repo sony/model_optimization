@@ -15,19 +15,19 @@
 
 from typing import List
 
-from torch import cat
+from torch import concat
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph
-from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher, WalkMatcher
+from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.constants import THRESHOLD
 
 
 
-MATCHER = NodeOperationMatcher(cat) 
+MATCHER = NodeOperationMatcher(concat) 
 
-class concat_threshold_updater(common.BaseSubstitution):
+class ConcatThresholdUpdate(common.BaseSubstitution):
     """
     Find concat layers and match their prior layers thresholds unless prior layer outputs to multiple layers.
     """
@@ -44,7 +44,9 @@ class concat_threshold_updater(common.BaseSubstitution):
                    node: BaseNode) -> Graph:
         """
         Update previous layers thresholds to match concatinations quantization thresholds. No change if
-        previous layer outputs to multiple layers.
+        previous layer outputs to multiple layers. No change in case of uniform quantization. 
+        No change in case of multiple quantization candidates (mixed precision).
+
 
         Args:
             graph: Graph we apply the substitution on.
@@ -59,7 +61,7 @@ class concat_threshold_updater(common.BaseSubstitution):
             concat_threshold = node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD]
             prev_nodes = graph.get_prev_nodes(node)
             for prev_node in prev_nodes:
-                if len(graph.get_next_nodes(prev_node))==1 and prev_node.type != cat:
+                if len(graph.get_next_nodes(prev_node))==1 and prev_node.type != concat:
                     prev_node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD] = concat_threshold
         return graph
 

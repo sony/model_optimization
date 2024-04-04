@@ -81,7 +81,7 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.resi
     keras_residual_collapsing
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.input_scaling import InputScaling, \
     InputScalingWithPad 
-from model_compression_toolkit.core.keras.graph_substitutions.substitutions.concat_threshold_update import concat_threshold_updater
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.concat_threshold_update import ConcatThresholdUpdate
 
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
@@ -322,7 +322,7 @@ class KerasImplementation(FrameworkImplementation):
             substitutions_list.append(InputScaling())
             substitutions_list.append(InputScalingWithPad())
         if quant_config.concat_threshold_update:
-            substitutions_list.append(concat_threshold_updater())
+            substitutions_list.append(ConcatThresholdUpdate())
         return substitutions_list
 
     def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
