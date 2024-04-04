@@ -48,7 +48,6 @@ class ConcatThresholdUpdate(common.BaseSubstitution):
         No change in case of multiple quantization candidates (mixed precision).
 
 
-
         Args:
             graph: Graph we apply the substitution on.
             node: Node refference to edit previous nodes thresholds.

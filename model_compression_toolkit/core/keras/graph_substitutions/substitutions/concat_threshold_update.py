@@ -23,9 +23,13 @@ from model_compression_toolkit.constants import THRESHOLD
 
 MATCHER = NodeOperationMatcher(Concatenate)
 
+<<<<<<< HEAD
 
 class ConcatThresholdUpdate(common.BaseSubstitution):
 
+=======
+class ConcatThresholdUpdate(common.BaseSubstitution):
+>>>>>>> 4fd42497 (pr updates)
     """
     Find concat layers and match their prior layers thresholds unless prior layer outputs to multiple layers.
     """
