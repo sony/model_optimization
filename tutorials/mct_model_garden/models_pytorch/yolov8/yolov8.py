@@ -26,14 +26,17 @@ import contextlib
 import math
 import re
 from copy import deepcopy
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 
+import numpy as np
 import torch
 import torch.nn as nn
 import yaml
 from torch import Tensor
 
 from huggingface_hub import PyTorchModelHubMixin
+
+from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from sony_custom_layers.pytorch.object_detection.nms import multiclass_nms
 
 
@@ -414,6 +417,32 @@ class DetectionModelPyTorch(nn.Module, PyTorchModelHubMixin):
 
         # Call the original save_pretrained method
         super().save_pretrained(save_directory, **kwargs)
+
+
+def model_predict(model: Any,
+                  inputs: np.ndarray) -> List:
+    """
+    Perform inference using the provided PyTorch model on the given inputs.
+
+    This function handles moving the inputs to the appropriate torch device and data type,
+    and detaches and moves the outputs to the CPU.
+
+    Args:
+        model (Any): The PyTorch model used for inference.
+        inputs (np.ndarray): Input data to perform inference on.
+
+    Returns:
+        List: List containing tensors of predictions.
+    """
+    device = get_working_device()
+    inputs = torch.from_numpy(inputs).to(device=device, dtype=torch.float)
+
+    # Run Pytorch inference on the batch
+    outputs = model(inputs)
+
+    # Detach outputs and move to cpu
+    outputs = outputs.cpu().detach()
+    return outputs
 
 
 class PostProcessWrapper(nn.Module):
