@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 
 from typing import Callable
 
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
+from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
@@ -140,15 +142,20 @@ if FOUND_TF:
                                                target_resource_utilization=target_resource_utilization,
                                                tb_w=tb_w)
 
-        tg = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
+        float_graph = copy.deepcopy(tg)
+
+        graph_with_stats_correction = ptq_runner(tg, representative_data_gen, core_config, fw_info, fw_impl, tb_w)
+        quantized_graph = quantize_graph_weights(graph_with_stats_correction)
 
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen,
-                                        tb_w, tg,
+                                        tb_w,
+                                        float_graph,
+                                        quantized_graph,
                                         fw_impl,
                                         fw_info)
 
-        return get_exportable_keras_model(tg)
+        return get_exportable_keras_model(graph_with_stats_correction)
 
 
 

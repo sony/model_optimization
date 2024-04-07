@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+
 from typing import Callable
 
 from model_compression_toolkit.core import common
@@ -27,6 +29,7 @@ from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
+from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
 
 
 if FOUND_TORCH:
@@ -112,16 +115,20 @@ if FOUND_TORCH:
                                                target_resource_utilization=target_resource_utilization,
                                                tb_w=tb_w)
 
-        tg = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
+        float_graph = copy.deepcopy(tg)
+
+        graph_with_stats_correction = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
+        quantized_graph = quantize_graph_weights(graph_with_stats_correction)
 
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen,
                                         tb_w,
-                                        tg,
+                                        float_graph,
+                                        quantized_graph,
                                         fw_impl,
                                         DEFAULT_PYTORCH_INFO)
 
-        return get_exportable_pytorch_model(tg)
+        return get_exportable_pytorch_model(graph_with_stats_correction)
 
 
 else:

@@ -52,7 +52,7 @@ class WeightsFinalBitwidthConfigVisualizer:
         self.final_weights_nodes_config = final_weights_nodes_config
         self.node_reps_names = [get_kernel_layer_represent_name(node_cfg[0]) for node_cfg in self.final_weights_nodes_config]
         self.node_final_bitwidth = [node_cfg[1] for node_cfg in self.final_weights_nodes_config]
-        self.bitwidth_colors_map = {2: 'tomato', 4: 'royalblue', 8: 'limegreen'}
+        self.bitwidth_colors_map = {2: 'tomato', 4: 'royalblue', 8: 'limegreen', 16.0: 'royalblue'}
         self.configs_colors = [self.bitwidth_colors_map[b] for b in self.node_final_bitwidth]
         self.bar_width = 2
         self.gap = self.bar_width + 3
@@ -97,7 +97,7 @@ class ActivationFinalBitwidthConfigVisualizer:
         self.final_activation_nodes_config = final_activation_nodes_config
         self.node_final_bitwidth = [node_cfg[1] for node_cfg in self.final_activation_nodes_config]
         self.bar_width = 1
-        self.vis_comp_rates = {4.0: 'tomato', 8.0: 'orange', 12.0: 'limegreen'}
+        self.vis_comp_rates = {4.0: 'tomato', 8.0: 'orange', 12.0: 'limegreen', 16.0: 'royalblue'}
 
     def plot_config_bitwidth(self) -> Figure:
         """
