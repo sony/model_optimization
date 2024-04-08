@@ -36,6 +36,7 @@ if FOUND_TF:
     from model_compression_toolkit.exporter.model_wrapper import get_exportable_keras_model
 
     from model_compression_toolkit import get_target_platform_capabilities
+    from mct_quantizers.keras.metadata import add_metadata
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
@@ -147,8 +148,10 @@ if FOUND_TF:
                                         fw_impl,
                                         fw_info)
 
-        return get_exportable_keras_model(tg)
-
+        exportable_model, user_info = get_exportable_keras_model(tg)
+        if target_platform_capabilities.add_metadata:
+            exportable_model = add_metadata(exportable_model, target_platform_capabilities.versions_dict)
+        return exportable_model, user_info
 
 
 else:

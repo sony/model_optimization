@@ -100,7 +100,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                         weights_list.append(layer.get_quantized_weights()['kernel'])
                     else:
                         Logger.critical(f'KerasQuantizationWrapper should wrap only DepthwiseConv2D, Conv2D, Dense'
-                                     f' and Conv2DTranspose layers but wrapped layer is {layer.layer}')
+                                        f' and Conv2DTranspose layers but wrapped layer is {layer.layer}')
 
                     if layer.layer.bias is not None:
                         weights_list.append(layer.layer.bias)
@@ -120,6 +120,10 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
                     return new_layer
 
             return layer
+
+        # Delete metadata layer is exists
+        if hasattr(self.model, 'metadata_layer'):
+            delattr(self.model, 'metadata_layer')
 
         # clone each layer in the model and apply _unwrap_quantize_wrapper to layers wrapped with a QuantizeWrapper.
         self.exported_model = tf.keras.models.clone_model(self.model,

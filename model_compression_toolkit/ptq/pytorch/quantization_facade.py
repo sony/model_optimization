@@ -35,6 +35,7 @@ if FOUND_TORCH:
     from torch.nn import Module
     from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_exportable_pytorch_model
     from model_compression_toolkit import get_target_platform_capabilities
+    from mct_quantizers.pytorch.metadata import add_metadata
 
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
@@ -93,9 +94,9 @@ if FOUND_TORCH:
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.critical("Given quantization config to mixed-precision facade is not of type "
-                             "MixedPrecisionQuantizationConfig. Please use "
-                             "pytorch_post_training_quantization API, or pass a valid mixed precision "
-                             "configuration.")  # pragma: no cover
+                                "MixedPrecisionQuantizationConfig. Please use "
+                                "pytorch_post_training_quantization API, or pass a valid mixed precision "
+                                "configuration.")  # pragma: no cover
 
         tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
 
@@ -120,7 +121,10 @@ if FOUND_TORCH:
                                         fw_impl,
                                         DEFAULT_PYTORCH_INFO)
 
-        return get_exportable_pytorch_model(tg)
+        exportable_model, user_info = get_exportable_pytorch_model(tg)
+        if target_platform_capabilities.add_metadata:
+            exportable_model = add_metadata(exportable_model, target_platform_capabilities.versions_dict)
+        return exportable_model, user_info
 
 
 else:

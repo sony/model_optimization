@@ -45,6 +45,7 @@ if FOUND_TORCH:
     from torch.nn import Module
     from torch.optim import Adam, Optimizer
     from model_compression_toolkit import get_target_platform_capabilities
+    from mct_quantizers.pytorch.metadata import add_metadata
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
     def get_pytorch_gptq_config(n_epochs: int,
@@ -194,7 +195,10 @@ if FOUND_TORCH:
         if core_config.debug_config.analyze_similarity:
             analyzer_model_quantization(representative_data_gen, tb_w, graph_gptq, fw_impl, DEFAULT_PYTORCH_INFO)
 
-        return get_exportable_pytorch_model(graph_gptq)
+        exportable_model, user_info = get_exportable_pytorch_model(graph_gptq)
+        if target_platform_capabilities.add_metadata:
+            exportable_model = add_metadata(exportable_model, target_platform_capabilities.versions_dict)
+        return exportable_model, user_info
 
 
 else:
