@@ -288,8 +288,10 @@ class PytorchGPTQTrainer(GPTQTrainer):
                     layer.weights_quantizers[kernel_attribute].update_layer_quantization_params(layer)
                 for weight_attr, weight in weights.items():
                     node.set_weights_by_keys(weight_attr, self.fw_impl.to_numpy(weight))
-                for config_attr, config_value in weight_quant_config.items():
-                    node.final_weights_quantization_cfg.set_quant_config_attr(config_attr, config_value)
+                for config_parameter_name, config_parameter_value in weight_quant_config.items():
+                    node.final_weights_quantization_cfg.set_quant_config_attr(config_parameter_name,
+                                                                              config_parameter_value,
+                                                                              attr_name=kernel_attribute)
                 for config_attr, config_value in activation_quant_config.items():
                     node.final_activation_quantization_cfg.set_quant_config_attr(config_attr, config_value)
                 if self.gptq_config.train_bias and hasattr(layer.layer, BIAS):
