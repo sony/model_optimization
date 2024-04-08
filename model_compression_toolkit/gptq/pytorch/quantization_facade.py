@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+
 from typing import Callable
 from model_compression_toolkit.core import common
 from model_compression_toolkit.constants import FOUND_TORCH
@@ -177,6 +179,7 @@ if FOUND_TORCH:
                                                                      tpc=target_platform_capabilities,
                                                                      target_resource_utilization=target_resource_utilization,
                                                                      tb_w=tb_w)
+        float_graph = copy.deepcopy(graph)
 
         # ---------------------- #
         # GPTQ Runner
@@ -192,7 +195,12 @@ if FOUND_TORCH:
                                  hessian_info_service=hessian_info_service)
 
         if core_config.debug_config.analyze_similarity:
-            analyzer_model_quantization(representative_data_gen, tb_w, graph_gptq, fw_impl, DEFAULT_PYTORCH_INFO)
+            analyzer_model_quantization(representative_data_gen,
+                                        tb_w,
+                                        float_graph,
+                                        graph_gptq,
+                                        fw_impl,
+                                        DEFAULT_PYTORCH_INFO)
 
         return get_exportable_pytorch_model(graph_gptq)
 
