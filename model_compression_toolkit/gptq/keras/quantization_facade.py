@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 
 from typing import Callable, Tuple
 from packaging import version
 
+from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
 from model_compression_toolkit.logger import Logger
@@ -210,6 +212,8 @@ if FOUND_TF:
                                                                   target_resource_utilization=target_resource_utilization,
                                                                   tb_w=tb_w)
 
+        float_graph = copy.deepcopy(tg)
+
         tg_gptq = gptq_runner(tg,
                               core_config,
                               gptq_config,
@@ -223,7 +227,12 @@ if FOUND_TF:
         del hessian_info_service
 
         if core_config.debug_config.analyze_similarity:
-            analyzer_model_quantization(representative_data_gen, tb_w, tg_gptq, fw_impl, fw_info)
+            analyzer_model_quantization(representative_data_gen,
+                                        tb_w,
+                                        float_graph,
+                                        tg_gptq,
+                                        fw_impl,
+                                        DEFAULT_KERAS_INFO)
 
         return get_exportable_keras_model(tg_gptq)
 

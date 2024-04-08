@@ -146,7 +146,10 @@ def compute_mae(float_tensor: np.ndarray,
     return error
 
 
-def compute_cs(float_tensor: np.ndarray, fxp_tensor: np.ndarray, eps: float = 1e-8, batch: bool = False,
+def compute_cs(float_tensor: np.ndarray,
+               fxp_tensor: np.ndarray,
+               eps: float = 1e-8,
+               batch: bool = False,
                axis: int = None) -> float:
     """
     Compute the similarity between two tensor using cosine similarity.
