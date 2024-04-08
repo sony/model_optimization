@@ -15,7 +15,7 @@
 
 from typing import List
 
-from torch import concat
+import torch
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph
@@ -25,7 +25,7 @@ from model_compression_toolkit.constants import THRESHOLD
 
 
 
-MATCHER = NodeOperationMatcher(concat) 
+MATCHER = NodeOperationMatcher(torch.cat) 
 
 class ConcatThresholdUpdate(common.BaseSubstitution):
     """
@@ -60,7 +60,7 @@ class ConcatThresholdUpdate(common.BaseSubstitution):
             concat_threshold = node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD]
             prev_nodes = graph.get_prev_nodes(node)
             for prev_node in prev_nodes:
-                if len(graph.get_next_nodes(prev_node))==1 and prev_node.type != concat:
+                if len(graph.get_next_nodes(prev_node))==1 and prev_node.type != torch.cat:
                     prev_node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD] = concat_threshold
 
         return graph

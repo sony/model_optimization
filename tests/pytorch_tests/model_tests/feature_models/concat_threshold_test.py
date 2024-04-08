@@ -22,17 +22,14 @@ this checks that thresold prior to concat have been updated correctly.
 """
 
 class ConcatNet(torch.nn.Module):
-    '''
-    create dummy concat network
-    '''
     def __init__(self):
         super(ConcatNet, self).__init__()
-        self.conv1 = torch.nn.Conv2d(in_channels=3, out_channels=3, kernel_size=4)
-        self.conv2 = torch.nn.Conv2d(in_channels=3, out_channels=3, kernel_size=4)
+        self.conv1 = torch.nn.Conv2d(in_channels=3, out_channels=3, kernel_size=4, bias=False)
+        self.conv2 = torch.nn.Conv2d(in_channels=3, out_channels=3, kernel_size=4, bias=False)
 
     def forward(self, x):
-        pre_concat_1 = self.conv1(x)
-        pre_concat_2 = self.conv2(x)
+        pre_concat_1 = self.conv1(x) 
+        pre_concat_2 = self.conv2(x) 
         outputs = torch.cat((pre_concat_1, 8*pre_concat_2), dim=1)
         return outputs
 
@@ -47,9 +44,6 @@ class ConcatUpdateTest(BasePytorchFeatureNetworkTest):
 
     def get_quantization_config(self):
         return QuantizationConfig(concat_threshold_update=True)
-
-    def create_inputs_shape(self):
-        return [[self.val_batch_size, 3, 32, 32], [self.val_batch_size, 3, 32, 32]]
 
     def create_networks(self):
         return ConcatNet()
