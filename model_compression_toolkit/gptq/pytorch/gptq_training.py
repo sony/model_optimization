@@ -284,6 +284,8 @@ class PytorchGPTQTrainer(GPTQTrainer):
                 node = node[0]
                 kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=node.type,
                                                                       fw_info=self.fw_info)
+                # TODO: only kernel attributes are currently trained in GPTQ, so only the kernel weights need to be updated.
+                #  To enable GPTQ for other attributes, this code needs to be modified.
                 weights, weight_quant_config, activation_quant_config = \
                     layer.weights_quantizers[kernel_attribute].update_layer_quantization_params(layer)
                 for weight_attr, weight in weights.items():
