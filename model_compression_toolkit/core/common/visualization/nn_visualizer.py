@@ -25,6 +25,8 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.similarity_analyzer import compute_cs
+from model_compression_toolkit.logger import Logger
+
 
 def _get_compare_points(input_graph: Graph) -> Tuple[List[BaseNode], List[str]]:
     """
@@ -78,15 +80,15 @@ class NNVisualizer:
         self.compare_points, self.compare_points_name = _get_compare_points(self.graph_quantized)
         self.compare_points_float, self.compare_points_name_float = _get_compare_points(self.graph_float)
 
-        assert len(self.compare_points) == len(
-            self.compare_points_float), (f"Number of compare points in float and quantized models must be equal but "
-                                         f"num of quantized compare points: {len(self.compare_points)} and "
-                                         f"num of float compare points: {len(self.compare_points_float)}")
-        assert len(self.compare_points_name) == len(
-            self.compare_points_name_float), (f"Number of compare points in float and quantized models must be equal "
-                                              f"but num of quantized compare points: {len(self.compare_points_name)}"
-                                              f" and num of float compare points: "
-                                              f"{len(self.compare_points_name_float)}")
+        if len(self.compare_points) != len(self.compare_points_float):
+            Logger.critical(f"Number of compare points in float and quantized models must be equal but "
+                            f"num of quantized compare points: {len(self.compare_points)} and "
+                            f"num of float compare points: {len(self.compare_points_float)}")
+        if len(self.compare_points_name) != len(self.compare_points_name_float):
+            Logger.critical(f"Number of compare points in float and quantized models must be equal "
+                            f"but num of quantized compare points: {len(self.compare_points_name)}"
+                            f" and num of float compare points: "
+                            f"{len(self.compare_points_name_float)}")
 
         self.quantized_model, _ = self.fw_impl.model_builder(self.graph_quantized,
                                                              mode=ModelBuilderMode.QUANTIZED,

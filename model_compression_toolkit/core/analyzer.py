@@ -54,11 +54,11 @@ def analyzer_model_quantization(representative_data_gen: Callable,
                               fw_impl=fw_impl,
                               fw_info=fw_info)
         if not visual.has_compare_points():
-            Logger.warning(f'No comparing points were found to plot analyze similarity.')
+            Logger.error(f'No comparing points were found to plot analyze similarity.')
         else:
             visualized_samples = 0
             for _data in representative_data_gen():
-                batch_size=_data[0].shape[0]
+                batch_size = _data[0].shape[0]
                 for sample_index in range(batch_size):
                     if visualized_samples >= NUM_SAMPLES_DISTANCE_TENSORBOARD:
                         break
@@ -69,5 +69,5 @@ def analyzer_model_quantization(representative_data_gen: Callable,
                     tb_w.add_figure(figure, f'similarity_distance_sample_{visualized_samples}')
                     visualized_samples += 1
             if visualized_samples < NUM_SAMPLES_DISTANCE_TENSORBOARD:
-                Logger.warning(f'Not enough batches in representative dataset to generate {NUM_SAMPLES_DISTANCE_TENSORBOARD} figures')
+                Logger.error(f'Not enough batches in representative dataset to generate {NUM_SAMPLES_DISTANCE_TENSORBOARD} figures')
         tb_w.close()

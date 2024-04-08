@@ -93,14 +93,16 @@ if FOUND_TORCH:
 
         """
 
+        fw_info = DEFAULT_PYTORCH_INFO
+
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.critical("Given quantization config to mixed-precision facade is not of type "
-                             "MixedPrecisionQuantizationConfig. Please use "
-                             "pytorch_post_training_quantization API, or pass a valid mixed precision "
-                             "configuration.")  # pragma: no cover
+                                "MixedPrecisionQuantizationConfig. Please use "
+                                "pytorch_post_training_quantization API, or pass a valid mixed precision "
+                                "configuration.")  # pragma: no cover
 
-        tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
+        tb_w = init_tensorboard_writer(fw_info)
 
         fw_impl = PytorchImplementation()
 
@@ -108,24 +110,34 @@ if FOUND_TORCH:
         tg, bit_widths_config, _ = core_runner(in_model=in_module,
                                                representative_data_gen=representative_data_gen,
                                                core_config=core_config,
-                                               fw_info=DEFAULT_PYTORCH_INFO,
+                                               fw_info=fw_info,
                                                fw_impl=fw_impl,
                                                tpc=target_platform_capabilities,
                                                target_resource_utilization=target_resource_utilization,
                                                tb_w=tb_w)
 
-        float_graph = copy.deepcopy(tg)
+        # At this point, tg is a graph that went through substitutions (such as BN folding) and is
+        # ready for quantization (namely, it holds quantization params, etc.) but the weights are
+        # not quantized yet. For this reason, we use it to create a graph that acts as a "float" graph
+        # for things like similarity analyzer (because the quantized and float graph should have the same
+        # architecture to find the appropriate compare points for similarity computation).
+        similarity_baseline_graph = copy.deepcopy(tg)
 
-        graph_with_stats_correction = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
-        quantized_graph = quantize_graph_weights(graph_with_stats_correction)
+        graph_with_stats_correction = ptq_runner(tg,
+                                                 representative_data_gen,
+                                                 core_config,
+                                                 fw_info,
+                                                 fw_impl,
+                                                 tb_w)
 
         if core_config.debug_config.analyze_similarity:
+            quantized_graph = quantize_graph_weights(graph_with_stats_correction)
             analyzer_model_quantization(representative_data_gen,
                                         tb_w,
-                                        float_graph,
+                                        similarity_baseline_graph,
                                         quantized_graph,
                                         fw_impl,
-                                        DEFAULT_PYTORCH_INFO)
+                                        fw_info)
 
         return get_exportable_pytorch_model(graph_with_stats_correction)
 
