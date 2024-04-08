@@ -41,6 +41,7 @@ class QuantizationErrorMethod(Enum):
     MAE = 2
     KL = 4
     LP = 5
+    HMSE = 6
 
 
 class QuantizationConfig:
