@@ -220,8 +220,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                self.shift_negative_activation_correction == other.shift_negative_activation_correction and \
                self.z_threshold == other.z_threshold and \
                self.shift_negative_ratio == other.shift_negative_ratio and \
-               self.shift_negative_threshold_recalculation == other.shift_negative_threshold_recalculation and \
-               self.concat_threshold_update == other.concat_threshold_update
+               self.shift_negative_threshold_recalculation == other.shift_negative_threshold_recalculation 
 
     def __hash__(self):
         return hash((self.activation_quantization_fn,
@@ -237,8 +236,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                      self.shift_negative_activation_correction,
                      self.z_threshold,
                      self.shift_negative_ratio,
-                     self.shift_negative_threshold_recalculation,
-                     self.concat_threshold_update))
+                     self.shift_negative_threshold_recalculation))
 
 
 class WeightsAttrQuantizationConfig:
