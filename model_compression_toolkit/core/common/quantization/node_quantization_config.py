@@ -106,6 +106,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
         self.z_threshold = qc.z_threshold
         self.shift_negative_ratio = qc.shift_negative_ratio
         self.shift_negative_threshold_recalculation = qc.shift_negative_threshold_recalculation
+        self.concat_threshold_update = qc.concat_threshold_update
 
     def quantize_node_output(self,
                              tensors: Any) -> Any:
@@ -219,7 +220,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                self.shift_negative_activation_correction == other.shift_negative_activation_correction and \
                self.z_threshold == other.z_threshold and \
                self.shift_negative_ratio == other.shift_negative_ratio and \
-               self.shift_negative_threshold_recalculation == other.shift_negative_threshold_recalculation
+               self.shift_negative_threshold_recalculation == other.shift_negative_threshold_recalculation 
 
     def __hash__(self):
         return hash((self.activation_quantization_fn,
