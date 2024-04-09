@@ -14,7 +14,6 @@
 # ==============================================================================
 
 from typing import Dict
-from model_compression_toolkit import __version__ as mct_version
 from model_compression_toolkit.constants import MCT_VERSION, TPC_VERSION
 
 
@@ -24,5 +23,7 @@ def get_versions_dict(tpc) -> Dict:
     Returns: A dictionary with TPC and MCT versions.
 
     """
+    # imported inside to avoid circular import error
+    from model_compression_toolkit import __version__ as mct_version
     tpc_version = f'{tpc.name}.{tpc.version}'
     return {MCT_VERSION: mct_version, TPC_VERSION: tpc_version}
