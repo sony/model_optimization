@@ -26,6 +26,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
+from model_compression_toolkit.metadata import get_versions_dict
 
 
 if FOUND_TORCH:
@@ -122,8 +123,8 @@ if FOUND_TORCH:
                                         DEFAULT_PYTORCH_INFO)
 
         exportable_model, user_info = get_exportable_pytorch_model(tg)
-        if target_platform_capabilities.add_metadata:
-            exportable_model = add_metadata(exportable_model, target_platform_capabilities.versions_dict)
+        if target_platform_capabilities.tp_model.add_metadata:
+            exportable_model = add_metadata(exportable_model, get_versions_dict(target_platform_capabilities))
         return exportable_model, user_info
 
 

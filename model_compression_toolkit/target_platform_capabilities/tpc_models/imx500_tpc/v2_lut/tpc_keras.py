@@ -59,7 +59,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
-    keras_tpc = tp.TargetPlatformCapabilities(tp_model, name=name, version=TPC_VERSION, add_metadata=True)
+    keras_tpc = tp.TargetPlatformCapabilities(tp_model, name=name, version=TPC_VERSION)
 
     no_quant_list = [Reshape,
                      tf.reshape,

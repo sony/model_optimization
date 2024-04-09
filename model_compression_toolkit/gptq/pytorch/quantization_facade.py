@@ -29,6 +29,7 @@ from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
+from model_compression_toolkit.metadata import get_versions_dict
 
 LR_DEFAULT = 1e-4
 LR_REST_DEFAULT = 1e-4
@@ -196,8 +197,8 @@ if FOUND_TORCH:
             analyzer_model_quantization(representative_data_gen, tb_w, graph_gptq, fw_impl, DEFAULT_PYTORCH_INFO)
 
         exportable_model, user_info = get_exportable_pytorch_model(graph_gptq)
-        if target_platform_capabilities.add_metadata:
-            exportable_model = add_metadata(exportable_model, target_platform_capabilities.versions_dict)
+        if target_platform_capabilities.tp_model.add_metadata:
+            exportable_model = add_metadata(exportable_model, get_versions_dict(target_platform_capabilities))
         return exportable_model, user_info
 
 

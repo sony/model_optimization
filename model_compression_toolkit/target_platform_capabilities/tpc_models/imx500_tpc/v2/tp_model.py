@@ -32,6 +32,7 @@ def get_tp_model() -> TargetPlatformModel:
     NOTE: in order to generate a target platform model with different configurations but with the same Operators Sets
     (for tests, experiments, etc.), use this method implementation as a test-case, i.e., override the
     'get_op_quantization_configs' method and use its output to call 'generate_tp_model' with your configurations.
+    This version enables metadata by default
 
     Returns: A TargetPlatformModel object.
 
@@ -153,18 +154,18 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
-    generated_tpc = tp.TargetPlatformModel(default_configuration_options, name=name)
+    generated_tpm = tp.TargetPlatformModel(default_configuration_options, add_metadata=True, name=name)
 
     # To start defining the model's components (such as operator sets, and fusing patterns),
     # use 'with' the TargetPlatformModel instance, and create them as below:
-    with generated_tpc:
+    with generated_tpm:
         # Create an OperatorsSet to represent a set of operations.
         # Each OperatorsSet has a unique label.
         # If a quantization configuration options is passed, these options will
         # be used for operations that will be attached to this set's label.
         # Otherwise, it will be a configure-less set (used in fusing):
 
-        generated_tpc.set_simd_padding(is_simd_padding=True)
+        generated_tpm.set_simd_padding(is_simd_padding=True)
 
         # May suit for operations like: Dropout, Reshape, etc.
         default_qco = tp.get_default_quantization_config_options()
@@ -206,4 +207,4 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         tp.Fusing([fc, activations_after_fc_to_fuse])
         tp.Fusing([any_binary, any_relu])
 
-    return generated_tpc
+    return generated_tpm

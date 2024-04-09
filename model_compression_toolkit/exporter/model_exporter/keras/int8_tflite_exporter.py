@@ -166,8 +166,9 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
 
             return layer_to_substitue
 
-        # Delete metadata layer is exists
+        # Delete metadata layer if exists
         if hasattr(self.model, 'metadata_layer'):
+            Logger.info('Metadata is not exported to TFLite models')
             delattr(self.model, 'metadata_layer')
 
         # Transform the model to a new model that can be converted to int8 models.

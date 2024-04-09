@@ -60,15 +60,18 @@ class TargetPlatformModel(ImmutableClass):
 
     def __init__(self,
                  default_qco: QuantizationConfigOptions,
+                 add_metadata: bool = False,
                  name="default_tp_model"):
         """
 
         Args:
             default_qco (QuantizationConfigOptions): Default QuantizationConfigOptions to use for operators that their QuantizationConfigOptions are not defined in the model.
+            add_metadata (bool): Whether to add metadata to the model or not.
             name (str): Name of the model.
         """
 
         super().__init__()
+        self.add_metadata = add_metadata
         self.name = name
         self.operator_set = []
         assert isinstance(default_qco, QuantizationConfigOptions)

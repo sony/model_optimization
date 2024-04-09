@@ -102,7 +102,7 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
                               dynamic_axes={'input': {0: 'batch_size'},
                                             'output': {0: 'batch_size'}})
             onnx_model = onnx.load_from_string(onnx_bytes.getvalue())
-            onnx_model = add_onnx_metadata(onnx_model, self.model.metadata)  # TODO: get tpc version from tpc
+            onnx_model = add_onnx_metadata(onnx_model, self.model.metadata)
             onnx.save_model(onnx_model, self.save_model_path)
         else:
             torch.onnx.export(self.model,

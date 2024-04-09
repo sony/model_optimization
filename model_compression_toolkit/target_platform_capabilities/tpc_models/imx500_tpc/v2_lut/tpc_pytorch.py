@@ -53,8 +53,7 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
 
     pytorch_tpc = tp.TargetPlatformCapabilities(tp_model,
                                                 name=name,
-                                                version=TPC_VERSION,
-                                                add_metadata=True)
+                                                version=TPC_VERSION)
 
     # we provide attributes mapping that maps each layer type in the operations set
     # that has weights attributes with provided quantization config (in the tp model) to

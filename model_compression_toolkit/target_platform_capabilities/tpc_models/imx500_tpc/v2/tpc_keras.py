@@ -42,6 +42,7 @@ tp = mct.target_platform
 def get_keras_tpc() -> tp.TargetPlatformCapabilities:
     """
     get a Keras TargetPlatformCapabilities object with default operation sets to layers mapping.
+
     Returns: a Keras TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
     imx500_tpc_tp_model = get_tp_model()
@@ -59,7 +60,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
-    keras_tpc = tp.TargetPlatformCapabilities(tp_model, name=name, version=TPC_VERSION, add_metadata=True)
+    keras_tpc = tp.TargetPlatformCapabilities(tp_model, name=name, version=TPC_VERSION)
 
     no_quant_list = [Reshape,
                      tf.reshape,

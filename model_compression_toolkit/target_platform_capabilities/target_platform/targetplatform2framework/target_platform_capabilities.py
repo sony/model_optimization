@@ -39,15 +39,13 @@ class TargetPlatformCapabilities(ImmutableClass):
     def __init__(self,
                  tp_model: TargetPlatformModel,
                  name: str = "base",
-                 version: str = None,
-                 add_metadata: bool = False):
+                 version: str = None):
         """
 
         Args:
             tp_model (TargetPlatformModel): Modeled hardware to attach framework information to.
             name (str): Name of the TargetPlatformCapabilities.
             version (str): TPC version.
-            add_metadata (bool): Whether to add metadata to the model or not.
         """
 
         super().__init__()
@@ -60,7 +58,6 @@ class TargetPlatformCapabilities(ImmutableClass):
         self.__tp_model_opsets_not_used = [s.name for s in tp_model.operator_set]
         self.remove_fusing_names_from_not_used_list()
         self.version = version
-        self.add_metadata = add_metadata
 
     def get_layers_by_opset_name(self, opset_name: str) -> List[Any]:
         """
@@ -245,15 +242,3 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         """
         return self.tp_model.is_simd_padding
-
-    @property
-    def versions_dict(self) -> Dict:
-        """
-
-        Returns: A dictionary with TPC and MCT versions.
-
-        """
-        # import defined here to avoid circular imports
-        from model_compression_toolkit import __version__ as mct_version
-        tpc_version = f'{self.name}.{self.version}'
-        return {MCT_VERSION: mct_version, TPC_VERSION: tpc_version}
