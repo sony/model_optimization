@@ -36,6 +36,7 @@ from tests.pytorch_tests.model_tests.feature_models.relu_replacement_test import
     ReluReplacementTest, ReluReplacementWithAddBiasTest
 from tests.pytorch_tests.model_tests.feature_models.remove_assert_test import AssertNetTest
 from tests.pytorch_tests.model_tests.feature_models.remove_broken_node_test import BrokenNetTest
+from tests.pytorch_tests.model_tests.feature_models.concat_threshold_test import ConcatUpdateTest
 from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSameNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest, BNForwardFoldingNetTest
 from tests.pytorch_tests.model_tests.feature_models.linear_collapsing_test import TwoConv2DCollapsingTest, \
@@ -571,12 +572,16 @@ class FeatureModelsTestRunner(unittest.TestCase):
         QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionRUCfgTest(self).run_test()
 
+
     def test_bn_attributes_quantization(self):
         """
         This test checks the quantization of BatchNorm layer attributes.
         """
         BNAttributesQuantization(self, quantize_linear=False).run_test()
         BNAttributesQuantization(self, quantize_linear=True).run_test()
+    
+    def test_concat_threshold_update(self):
+        ConcatUpdateTest(self).run_test()
 
 
 if __name__ == '__main__':
