@@ -15,13 +15,13 @@
 
 
 from tensorflow.keras.layers import Concatenate
+import tensorflow as tf
 
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.constants import THRESHOLD
 
-MATCHER = NodeOperationMatcher(Concatenate)
 
 
 class ConcatThresholdUpdate(common.BaseSubstitution):
@@ -35,7 +35,9 @@ class ConcatThresholdUpdate(common.BaseSubstitution):
         """
         Initialize a threshold_updater object.
         """
-        super().__init__(matcher_instance=MATCHER)
+        concatination_node = NodeOperationMatcher(Concatenate) | \
+            NodeOperationMatcher(tf.concat) 
+        super().__init__(matcher_instance=concatination_node)
 
     def substitute(self,
                    graph: Graph,
@@ -58,7 +60,7 @@ class ConcatThresholdUpdate(common.BaseSubstitution):
             concat_threshold = node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD]
             prev_nodes = graph.get_prev_nodes(node)
             for prev_node in prev_nodes:
-                if len(graph.get_next_nodes(prev_node))==1 and prev_node.type != Concatenate:
+                if len(graph.get_next_nodes(prev_node))==1 and prev_node.type != Concatenate and prev_node.type != tf.concat:
                     prev_node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD] = concat_threshold
 
         return graph

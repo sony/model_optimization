@@ -24,9 +24,6 @@ from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.constants import THRESHOLD
 
 
-
-MATCHER = NodeOperationMatcher(torch.cat) 
-
 class ConcatThresholdUpdate(common.BaseSubstitution):
     """
     Find concat layers and match their prior layers thresholds unless prior layer outputs to multiple layers.
@@ -37,7 +34,9 @@ class ConcatThresholdUpdate(common.BaseSubstitution):
         """
         Initialize a threshold_updater object.
         """
-        super().__init__(matcher_instance=MATCHER)
+        concatination_node = NodeOperationMatcher(torch.cat) | \
+            NodeOperationMatcher(torch.concat) 
+        super().__init__(matcher_instance=concatination_node)
 
     def substitute(self,
                    graph: Graph,
@@ -60,7 +59,7 @@ class ConcatThresholdUpdate(common.BaseSubstitution):
             concat_threshold = node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD]
             prev_nodes = graph.get_prev_nodes(node)
             for prev_node in prev_nodes:
-                if len(graph.get_next_nodes(prev_node))==1 and prev_node.type != torch.cat:
+                if len(graph.get_next_nodes(prev_node))==1 and prev_node.type != torch.cat and prev_node.type != torch.concat:
                     prev_node.candidates_quantization_cfg[0].activation_quantization_cfg.activation_quantization_params[THRESHOLD] = concat_threshold
 
         return graph
