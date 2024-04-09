@@ -28,11 +28,8 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
-<<<<<<< HEAD
-from model_compression_toolkit.metadata import get_versions_dict
-=======
 from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
->>>>>>> origin/main
+from model_compression_toolkit.metadata import get_versions_dict
 
 
 if FOUND_TORCH:
