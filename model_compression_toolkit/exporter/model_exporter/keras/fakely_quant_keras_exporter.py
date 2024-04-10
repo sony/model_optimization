@@ -123,7 +123,7 @@ class FakelyQuantKerasExporter(BaseKerasExporter):
 
         # Delete metadata layer if exists
         if hasattr(self.model, 'metadata_layer'):
-            Logger.info('Metadata is not exported to FakelyQuant models')
+            Logger.info('Metadata is not exported to FakelyQuant models.')
             delattr(self.model, 'metadata_layer')
 
         # clone each layer in the model and apply _unwrap_quantize_wrapper to layers wrapped with a QuantizeWrapper.

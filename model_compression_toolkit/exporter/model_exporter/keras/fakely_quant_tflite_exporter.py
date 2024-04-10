@@ -58,7 +58,7 @@ class FakelyQuantTFLiteExporter(FakelyQuantKerasExporter):
         """
         # Delete metadata layer if exists
         if hasattr(self.model, 'metadata_layer'):
-            Logger.info('Metadata is not exported to TFLite models')
+            Logger.info('Metadata is not exported to TFLite models.')
             delattr(self.model, 'metadata_layer')
 
         # Use Keras exporter to quantize model's weights before converting it to TFLite.
