@@ -36,8 +36,7 @@ def get_regularization(gptq_config: GradientPTQConfig, representative_data_gen: 
     if gptq_config.rounding_type == RoundingType.SoftQuantizer:
         # dry run on the representative dataset to count number of batches
         num_batches = 0
-        rd = representative_data_gen()
-        for _ in tqdm(rd, "GPTQ initialization"):
+        for _ in tqdm(representative_data_gen(), "GPTQ initialization"):
             num_batches += 1
 
         return SoftQuantizerRegularization(total_gradient_steps=num_batches * gptq_config.n_epochs)
