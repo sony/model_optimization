@@ -90,7 +90,7 @@ if FOUND_TF:
                                                                                         fw_impl=C.keras.keras_implementation.KerasImplementation())).build_model()
         exportable_model.trainable = False
 
-        Logger.info("Please run your accuracy evaluation on the exported quantized model to verify it's accuracy.\n"
+        Logger.info("\nPlease run your accuracy evaluation on the exported quantized model to verify it's accuracy.\n"
                     "Checkout the FAQ and Troubleshooting pages for resolving common issues and improving the quantized model accuracy:\n"
                     "FAQ: https://github.com/sony/model_optimization/tree/main/FAQ.md\n"
                     "Quantization Troubleshooting: https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md")
