@@ -374,15 +374,16 @@ def _compute_hessian_for_hmse(node, hessian_info_service):
                                    granularity=HessianInfoGranularity.PER_ELEMENT,
                                    target_node=node)
     _scores_for_node = hessian_info_service.fetch_hessian(_request,
-                                                          required_size=NUM_QPARAM_HESSIAN_SAMPLES)
+                                                          required_size=1)
 
     return _scores_for_node
 
 
 def _hmse_error_function_wrapper(float_tensor, fxp_tensor, axis, norm, hessian_scores):
-    h_r = reshape_tensor_for_per_channel_search(hessian_scores, 0)
-    return compute_mse(float_tensor, fxp_tensor, axis, norm, weights=h_r)
+    if axis is not None:
+        hessian_scores = reshape_tensor_for_per_channel_search(hessian_scores, 0)
 
+    return compute_mse(float_tensor, fxp_tensor, axis, norm, weights=hessian_scores)
 
 
 def get_threshold_selection_tensor_error_function(quantization_method: QuantizationMethod,
