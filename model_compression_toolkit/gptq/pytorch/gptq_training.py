@@ -248,22 +248,24 @@ class PytorchGPTQTrainer(GPTQTrainer):
             data_function: A callable function that give a batch of samples.
             n_epochs: Number of update iterations of representative dataset.
         """
-        for _ in tqdm(range(n_epochs)):
-            for data in tqdm(data_function()):
-                input_data = [d * self.input_scale for d in data]
-                input_tensor = to_torch_tensor(input_data)
-                y_float = self.float_model(input_tensor)  # running float model
-                loss_value, grads = self.compute_gradients(y_float, input_tensor)
-                # Run one step of gradient descent by updating the value of the variables to minimize the loss.
-                for (optimizer, _) in self.optimizer_with_param:
-                    optimizer.step()
-                    optimizer.zero_grad()
-                if self.gptq_config.log_function is not None:
-                    self.gptq_config.log_function(loss_value.item(),
-                                                  torch_tensor_to_numpy(grads),
-                                                  torch_tensor_to_numpy(self.optimizer_with_param[0][-1]))
-                self.loss_list.append(loss_value.item())
-                Logger.debug(f'last loss value: {self.loss_list[-1]}')
+        with tqdm(range(n_epochs), "Running GPTQ optimization") as epochs_pbar:
+            for _ in epochs_pbar:
+                with tqdm(data_function(), position=1, leave=False) as data_pbar:
+                    for data in data_pbar:
+                        input_data = [d * self.input_scale for d in data]
+                        input_tensor = to_torch_tensor(input_data)
+                        y_float = self.float_model(input_tensor)  # running float model
+                        loss_value, grads = self.compute_gradients(y_float, input_tensor)
+                        # Run one step of gradient descent by updating the value of the variables to minimize the loss.
+                        for (optimizer, _) in self.optimizer_with_param:
+                            optimizer.step()
+                            optimizer.zero_grad()
+                        if self.gptq_config.log_function is not None:
+                            self.gptq_config.log_function(loss_value.item(),
+                                                          torch_tensor_to_numpy(grads),
+                                                          torch_tensor_to_numpy(self.optimizer_with_param[0][-1]))
+                        self.loss_list.append(loss_value.item())
+                        Logger.debug(f'last loss value: {self.loss_list[-1]}')
 
     def update_graph(self) -> Graph:
         """

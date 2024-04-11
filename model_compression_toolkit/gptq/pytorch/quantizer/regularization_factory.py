@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from tqdm import tqdm
 from typing import Callable
 
 from model_compression_toolkit.gptq import RoundingType, GradientPTQConfig, GradientPTQConfig
@@ -35,7 +36,7 @@ def get_regularization(gptq_config: GradientPTQConfig, representative_data_gen: 
     if gptq_config.rounding_type == RoundingType.SoftQuantizer:
         # dry run on the representative dataset to count number of batches
         num_batches = 0
-        for _ in representative_data_gen():
+        for _ in tqdm(representative_data_gen(), "GPTQ initialization"):
             num_batches += 1
 
         return SoftQuantizerRegularization(total_gradient_steps=num_batches * gptq_config.n_epochs)
