@@ -31,7 +31,9 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
                                   channel_axis: int = 1,
                                   n_iter: int = 10,
                                   min_threshold: float = MIN_THRESHOLD,
-                                  quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
+                                  quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE,
+                                  node=None,
+                                  hessian_info_service=None) -> dict:
     """
     Compute the power of two threshold based on the provided QuantizationErrorMethod to quantize the tensor.
     Different search is applied, depends on the value of the selected QuantizationErrorMethod.
@@ -57,8 +59,9 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
         signed = True  # weights are always signed
         axis = -1 if per_channel else None
         error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.POWER_OF_TWO,
-                                                                       quant_error_method, p, axis=axis, norm=False, n_bits=n_bits,
-                                                                       signed=signed)
+                                                                       quant_error_method, p, axis=axis, norm=False,
+                                                                       n_bits=n_bits, signed=signed, node=node,
+                                                                       hessian_info_service=hessian_info_service)
         threshold = qparams_selection_tensor_search(error_function,
                                                     tensor_data,
                                                     n_bits,
