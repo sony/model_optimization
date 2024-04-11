@@ -31,7 +31,9 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
                              channel_axis: int = 1,
                              n_iter: int = 10,
                              min_threshold: float = MIN_THRESHOLD,
-                             quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
+                             quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE,
+                             node=None,
+                             hessian_info_service=None) -> dict:
     """
     Compute the optimal quantization range based on the provided QuantizationErrorMethod
     to uniformly quantize the tensor.
@@ -57,7 +59,9 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
         mm = tensor_min, tensor_max
     else:
         axis = -1 if per_channel else None
-        error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.UNIFORM, quant_error_method, p, axis=axis, norm=False)
+        error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.UNIFORM, quant_error_method,
+                                                                       p, axis=axis, norm=False, node=node,
+                                                                       hessian_info_service=hessian_info_service)
         mm = qparams_uniform_selection_tensor_search(error_function,
                                                      tensor_data,
                                                      tensor_min,
