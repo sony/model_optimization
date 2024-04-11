@@ -31,6 +31,7 @@ from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.metadata import get_versions_dict
 
 LR_DEFAULT = 0.15
 LR_REST_DEFAULT = 1e-4
@@ -48,6 +49,7 @@ if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.exporter.model_wrapper import get_exportable_keras_model
     from model_compression_toolkit import get_target_platform_capabilities
+    from mct_quantizers.keras.metadata import add_metadata
 
     # As from TF2.9 optimizers package is changed
     if version.parse(tf.__version__) < version.parse("2.9"):
@@ -234,7 +236,10 @@ if FOUND_TF:
                                         fw_impl,
                                         DEFAULT_KERAS_INFO)
 
-        return get_exportable_keras_model(tg_gptq)
+        exportable_model, user_info = get_exportable_keras_model(tg_gptq)
+        if target_platform_capabilities.tp_model.add_metadata:
+            exportable_model = add_metadata(exportable_model, get_versions_dict(target_platform_capabilities))
+        return exportable_model, user_info
 
 else:
     # If tensorflow is not installed,
