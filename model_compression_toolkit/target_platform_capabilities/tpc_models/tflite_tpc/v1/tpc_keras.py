@@ -21,9 +21,11 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, Dense, Reshape, ZeroPadding2D, AveragePooling2D, Activation, DepthwiseConv2D, \
         MaxPooling2D, ReLU, Add, Softmax, Concatenate, Multiply, Maximum, Minimum, BatchNormalization
+    if version.parse(tf.__version__) >= version.parse("2.12"):
+        from keras.src.layers import Identity
 else:
     from keras.layers import Conv2D, Dense, Reshape, ZeroPadding2D, AveragePooling2D, Activation, DepthwiseConv2D, \
-        MaxPooling2D, ReLU, Add, Softmax, Concatenate, Multiply, Maximum, Minimum, BatchNormalization
+        MaxPooling2D, ReLU, Add, Softmax, Concatenate, Multiply, Maximum, Minimum, BatchNormalization, Identity
 
 from tensorflow.python.keras.layers.core import SlicingOpLambda
 from tensorflow.python.ops.image_ops_impl import ResizeMethod
@@ -62,31 +64,37 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                               version=TPC_VERSION)
 
     with keras_tpc:
-        tp.OperationsSetToLayers("NoQuantization", [AveragePooling2D,
-                                                    tf.nn.avg_pool2d,
-                                                    Concatenate,
-                                                    tf.concat,
-                                                    MaxPooling2D,
-                                                    Multiply,
-                                                    tf.multiply,
-                                                    Reshape,
-                                                    tf.reshape,
-                                                    tp.LayerFilterParams(tf.image.resize,
-                                                                         method=ResizeMethod.BILINEAR),
-                                                    tf.nn.space_to_depth,
-                                                    ZeroPadding2D,
-                                                    tf.unstack,
-                                                    tf.gather,
-                                                    tf.compat.v1.batch_to_space_nd,
-                                                    tf.space_to_batch_nd,
-                                                    tf.transpose,
-                                                    tf.maximum,
-                                                    Maximum,
-                                                    tf.minimum,
-                                                    Minimum,
-                                                    tf.pad,
-                                                    tf.slice,
-                                                    SlicingOpLambda])
+        no_quant_list = [tf.identity,
+                         AveragePooling2D,
+                         tf.nn.avg_pool2d,
+                         Concatenate,
+                         tf.concat,
+                         MaxPooling2D,
+                         Multiply,
+                         tf.multiply,
+                         Reshape,
+                         tf.reshape,
+                         tp.LayerFilterParams(tf.image.resize,
+                                              method=ResizeMethod.BILINEAR),
+                         tf.nn.space_to_depth,
+                         ZeroPadding2D,
+                         tf.unstack,
+                         tf.gather,
+                         tf.compat.v1.batch_to_space_nd,
+                         tf.space_to_batch_nd,
+                         tf.transpose,
+                         tf.maximum,
+                         Maximum,
+                         tf.minimum,
+                         Minimum,
+                         tf.pad,
+                         tf.slice,
+                         SlicingOpLambda]
+
+        if version.parse(tf.__version__) >= version.parse("2.12"):
+            no_quant_list.append(Identity)
+
+        tp.OperationsSetToLayers("NoQuantization", no_quant_list)
 
         tp.OperationsSetToLayers("FullyConnected", [Dense],
                                  # we provide attributes mapping that maps each layer type in the operations set

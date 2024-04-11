@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import torch
-from torch.nn import AvgPool2d, MaxPool2d
+from torch.nn import AvgPool2d, MaxPool2d, Identity
 from torch.nn.functional import avg_pool2d, max_pool2d, interpolate
 
 from model_compression_toolkit.defaultdict import DefaultDict
@@ -51,7 +51,8 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                 version=TPC_VERSION)
 
     with pytorch_tpc:
-        tp.OperationsSetToLayers("NoQuantization", [AvgPool2d,
+        tp.OperationsSetToLayers("NoQuantization", [Identity,
+                                                    AvgPool2d,
                                                     avg_pool2d,
                                                     torch.cat,
                                                     torch.concat,
