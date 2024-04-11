@@ -208,7 +208,8 @@ if FOUND_TF:
                                                                   fw_impl=fw_impl,
                                                                   tpc=target_platform_capabilities,
                                                                   target_resource_utilization=target_resource_utilization,
-                                                                  tb_w=tb_w)
+                                                                  tb_w=tb_w,
+                                                                  running_gptq=True)
 
         tg_gptq = gptq_runner(tg,
                               core_config,

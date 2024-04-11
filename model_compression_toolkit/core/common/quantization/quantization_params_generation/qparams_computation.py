@@ -29,7 +29,6 @@ from model_compression_toolkit.logger import Logger
 def calculate_quantization_params(graph: Graph,
                                   nodes: List[BaseNode] = [],
                                   specific_nodes: bool = False,
-                                  running_gptq: bool = False,
                                   hessian_info_service = None):
     """
     For a graph, go over its nodes, compute quantization params (for both weights and activations according

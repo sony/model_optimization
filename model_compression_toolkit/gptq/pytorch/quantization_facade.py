@@ -176,7 +176,8 @@ if FOUND_TORCH:
                                                                      fw_impl=fw_impl,
                                                                      tpc=target_platform_capabilities,
                                                                      target_resource_utilization=target_resource_utilization,
-                                                                     tb_w=tb_w)
+                                                                     tb_w=tb_w,
+                                                                     running_gptq=True)
 
         # ---------------------- #
         # GPTQ Runner

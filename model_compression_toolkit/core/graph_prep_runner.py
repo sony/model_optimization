@@ -39,7 +39,8 @@ def graph_preparation_runner(in_model: Any,
                              fw_impl: FrameworkImplementation,
                              tpc: TargetPlatformCapabilities,
                              tb_w: TensorboardWriter = None,
-                             mixed_precision_enable: bool = False) -> Graph:
+                             mixed_precision_enable: bool = False,
+                             running_gptq: bool = False) -> Graph:
     """
     Runs all required preparations in order to build a quantization graph from the given model,
     quantization configuration and target platform specifications.
@@ -79,7 +80,8 @@ def graph_preparation_runner(in_model: Any,
                                             fw_info,
                                             tb_w,
                                             fw_impl,
-                                            mixed_precision_enable=mixed_precision_enable)
+                                            mixed_precision_enable=mixed_precision_enable,
+                                            running_gptq=running_gptq)
 
     return transformed_graph
 
@@ -90,7 +92,8 @@ def get_finalized_graph(initial_graph: Graph,
                         fw_info: FrameworkInfo = None,
                         tb_w: TensorboardWriter = None,
                         fw_impl: FrameworkImplementation = None,
-                        mixed_precision_enable: bool = False) -> Graph:
+                        mixed_precision_enable: bool = False,
+                        running_gptq: bool = False) -> Graph:
     """
     Applies all edit operation (edit, substitutions, etc.) on the model's graph, to prepare it for the quantization
     process. All future graph substitutions and operations that change the graph should be added to this method.
@@ -142,7 +145,8 @@ def get_finalized_graph(initial_graph: Graph,
     ######################################
     transformed_graph = set_quantization_configuration_to_graph(graph=transformed_graph,
                                                                 quant_config=quant_config,
-                                                                mixed_precision_enable=mixed_precision_enable)
+                                                                mixed_precision_enable=mixed_precision_enable,
+                                                                running_gptq=running_gptq)
 
     ######################################
     # Layer fusing

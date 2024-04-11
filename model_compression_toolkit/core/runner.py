@@ -98,7 +98,8 @@ def core_runner(in_model: Any,
                                      fw_impl,
                                      tpc,
                                      tb_w,
-                                     mixed_precision_enable=core_config.mixed_precision_enable)
+                                     mixed_precision_enable=core_config.mixed_precision_enable,
+                                     running_gptq=running_gptq)
 
     hessian_info_service = HessianInfoService(graph=graph,
                                               representative_dataset=representative_data_gen,
@@ -109,7 +110,6 @@ def core_runner(in_model: Any,
                                          core_config=core_config,
                                          fw_info=fw_info,
                                          fw_impl=fw_impl,
-                                         running_gptq=running_gptq,
                                          hessian_info_service=hessian_info_service,
                                          tb_w=tb_w)
 

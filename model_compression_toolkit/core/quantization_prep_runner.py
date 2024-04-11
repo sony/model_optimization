@@ -40,7 +40,6 @@ def quantization_preparation_runner(graph: Graph,
                                     core_config: CoreConfig,
                                     fw_info: FrameworkInfo,
                                     fw_impl: FrameworkImplementation,
-                                    running_gptq: bool = False,
                                     hessian_info_service = None,
                                     tb_w: TensorboardWriter = None) -> Graph:
     """
@@ -91,7 +90,7 @@ def quantization_preparation_runner(graph: Graph,
     # Calculate quantization params
     ######################################
 
-    calculate_quantization_params(graph, running_gptq=running_gptq, hessian_info_service=hessian_info_service)
+    calculate_quantization_params(graph, hessian_info_service=hessian_info_service)
 
     if tb_w is not None:
         tb_w.add_graph(graph, 'thresholds_selection')
