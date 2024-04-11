@@ -48,6 +48,7 @@ def core_runner(in_model: Any,
                 fw_impl: FrameworkImplementation,
                 tpc: TargetPlatformCapabilities,
                 target_resource_utilization: ResourceUtilization = None,
+                running_gptq: bool = False,
                 tb_w: TensorboardWriter = None):
     """
     Quantize a trained model using post-training quantization.
@@ -108,6 +109,8 @@ def core_runner(in_model: Any,
                                          core_config=core_config,
                                          fw_info=fw_info,
                                          fw_impl=fw_impl,
+                                         running_gptq=running_gptq,
+                                         hessian_info_service=hessian_info_service,
                                          tb_w=tb_w)
 
     ######################################

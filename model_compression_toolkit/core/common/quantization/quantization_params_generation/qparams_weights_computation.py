@@ -27,10 +27,13 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 dummy_channel_mapping = DefaultDict(default_value=(None, None))
 
 
+# TODO: this is no longer just a function for the kernel qparams, the name of the argument should change to "weights_attr"
 def get_weights_qparams(kernel: np.ndarray,
                         weights_quant_config: NodeWeightsQuantizationConfig,
                         attr_quant_config: WeightsAttrQuantizationConfig,
-                        output_channels_axis: int) -> Dict[Any, Any]:
+                        output_channels_axis: int,
+                        node = None,
+                        hessian_info_service = None) -> Dict[Any, Any]:
     """
     Compute thresholds to quantize a kernel according to a NodeWeightsQuantizationConfig
     instance.
@@ -51,7 +54,9 @@ def get_weights_qparams(kernel: np.ndarray,
                                                                           per_channel=attr_quant_config.weights_per_channel_threshold and output_channels_axis is not None,
                                                                           channel_axis=output_channels_axis,
                                                                           min_threshold=weights_quant_config.min_threshold,
-                                                                          quant_error_method=attr_quant_config.weights_error_method)
+                                                                          quant_error_method=attr_quant_config.weights_error_method,
+                                                                          node=node,
+                                                                          hessian_info_service=hessian_info_service)
     else:
         weights_params = {}
 

@@ -25,7 +25,9 @@ from model_compression_toolkit.logger import Logger
 
 def calculate_quantization_params(graph: Graph,
                                   nodes: List[BaseNode] = [],
-                                  specific_nodes: bool = False):
+                                  specific_nodes: bool = False,
+                                  running_gptq: bool = False,
+                                  hessian_info_service = None):
     """
     For a graph, go over its nodes, compute quantization params (for both weights and activations according
     to the given framework info), and create and attach a NodeQuantizationConfig to each node (containing the
@@ -42,7 +44,7 @@ def calculate_quantization_params(graph: Graph,
 
     """
 
-    Logger.info(f"Running quantization parameters search. "
+    Logger.info(f"\nRunning quantization parameters search. "
                 f"This process might take some time, "
                 f"depending on the model size and the selected quantization methods.\n")
 
@@ -63,7 +65,9 @@ def calculate_quantization_params(graph: Graph,
                     weights_params = get_weights_qparams(n.get_weights_by_keys(attr),
                                                          candidate_qc.weights_quantization_cfg,
                                                          attr_cfg,
-                                                         output_channels_axis)
+                                                         output_channels_axis,
+                                                         node=n,
+                                                         hessian_info_service=hessian_info_service)
                     attr_cfg.set_weights_quantization_param(weights_params)
 
             if n.is_activation_quantization_enabled():

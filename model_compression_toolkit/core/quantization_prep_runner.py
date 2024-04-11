@@ -18,6 +18,7 @@ from typing import Callable
 
 from tqdm import tqdm
 
+from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.base_graph import Graph
@@ -31,6 +32,7 @@ from model_compression_toolkit.core.common.statistics_correction.statistics_corr
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
+from model_compression_toolkit.logger import Logger
 
 
 def quantization_preparation_runner(graph: Graph,
@@ -38,6 +40,8 @@ def quantization_preparation_runner(graph: Graph,
                                     core_config: CoreConfig,
                                     fw_info: FrameworkInfo,
                                     fw_impl: FrameworkImplementation,
+                                    running_gptq: bool = False,
+                                    hessian_info_service = None,
                                     tb_w: TensorboardWriter = None) -> Graph:
     """
     Prepares a trained model for post-training quantization.
@@ -86,7 +90,8 @@ def quantization_preparation_runner(graph: Graph,
     ######################################
     # Calculate quantization params
     ######################################
-    calculate_quantization_params(graph)
+
+    calculate_quantization_params(graph, running_gptq=running_gptq, hessian_info_service=hessian_info_service)
 
     if tb_w is not None:
         tb_w.add_graph(graph, 'thresholds_selection')

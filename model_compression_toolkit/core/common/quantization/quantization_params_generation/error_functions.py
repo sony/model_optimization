@@ -16,10 +16,13 @@ from copy import deepcopy
 from typing import Tuple, Callable
 import numpy as np
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoGranularity, \
+    HessianInfoService
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.constants import FLOAT_32
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import uniform_quantize_tensor
+from model_compression_toolkit.constants import FLOAT_32, NUM_QPARAM_HESSIAN_SAMPLES
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import uniform_quantize_tensor, \
+    reshape_tensor_for_per_channel_search
 
 
 def _mse_error_histogram(q_bins: np.ndarray,
@@ -366,13 +369,31 @@ def _get_sliced_histogram(bins: np.ndarray,
     return bins_subset, counts_subset
 
 
+def _compute_hessian_for_hmse(node, hessian_info_service):
+    _request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
+                                   granularity=HessianInfoGranularity.PER_ELEMENT,
+                                   target_node=node)
+    _scores_for_node = hessian_info_service.fetch_hessian(_request,
+                                                          required_size=NUM_QPARAM_HESSIAN_SAMPLES)
+
+    return _scores_for_node
+
+
+def _hmse_error_function_wrapper(float_tensor, fxp_tensor, axis, norm, hessian_scores):
+    h_r = reshape_tensor_for_per_channel_search(hessian_scores, 0)
+    return compute_mse(float_tensor, fxp_tensor, axis, norm, weights=h_r)
+
+
+
 def get_threshold_selection_tensor_error_function(quantization_method: QuantizationMethod,
                                                   quant_error_method: qc.QuantizationErrorMethod,
                                                   p: int,
                                                   axis: int = None,
                                                   norm: bool = False,
                                                   n_bits: int = 8,
-                                                  signed: bool = True) -> Callable:
+                                                  signed: bool = True,
+                                                  node = None,
+                                                  hessian_info_service: HessianInfoService = None) -> Callable:
     """
     Returns the error function compatible to the provided threshold method,
     to be used in the threshold optimization search for tensor quantization.
@@ -387,6 +408,13 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
 
     Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
     """
+
+    if quant_error_method == qc.QuantizationErrorMethod.HMSE:
+        node_hessian_scores = _compute_hessian_for_hmse(node, hessian_info_service)
+        node_hessian_scores = np.sqrt(np.mean(node_hessian_scores, axis=0))
+
+        return lambda x, y, threshold: _hmse_error_function_wrapper(x, y, norm=norm, axis=axis,
+                                                                    hessian_scores=node_hessian_scores)
 
     quant_method_error_function_mapping = {
         qc.QuantizationErrorMethod.MSE: lambda x, y, threshold: compute_mse(x, y, norm=norm, axis=axis),

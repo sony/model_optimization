@@ -87,7 +87,8 @@ def compute_mse(float_tensor: np.ndarray,
                 norm: bool = False,
                 norm_eps: float = 1e-8,
                 batch: bool = False,
-                axis: int = None) -> float:
+                axis: int = None,
+                weights: np.ndarray = None) -> float:
     """
     Compute the mean square error between two numpy arrays.
 
@@ -107,7 +108,11 @@ def compute_mse(float_tensor: np.ndarray,
     float_flat = flatten_tensor(float_tensor, batch, axis)
     fxp_flat = flatten_tensor(fxp_tensor, batch, axis)
 
-    error = ((float_flat - fxp_flat) ** 2).mean(axis=-1)
+    if weights is not None:
+        w_flat = flatten_tensor(weights, batch, axis)
+        error = ((w_flat * (float_flat - fxp_flat)) ** 2).mean(axis=-1)
+    else:
+        error = ((float_flat - fxp_flat) ** 2).mean(axis=-1)
     if norm:
         error /= ((float_flat ** 2).mean(axis=-1) + norm_eps)
 
