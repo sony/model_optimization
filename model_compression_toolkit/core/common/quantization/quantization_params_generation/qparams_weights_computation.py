@@ -27,8 +27,7 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 dummy_channel_mapping = DefaultDict(default_value=(None, None))
 
 
-# TODO: this is no longer just a function for the kernel qparams, the name of the argument should change to "weights_attr"
-def get_weights_qparams(kernel: np.ndarray,
+def get_weights_qparams(weights_attr_values: np.ndarray,
                         weights_quant_config: NodeWeightsQuantizationConfig,
                         attr_quant_config: WeightsAttrQuantizationConfig,
                         output_channels_axis: int,
@@ -39,7 +38,7 @@ def get_weights_qparams(kernel: np.ndarray,
     instance.
 
     Args:
-        kernel: Kernel to compute the quantization thresholds to.
+        weights_attr_values: Weights attribute parameter to compute the quantization thresholds for.
         weights_quant_config: Weights quantization configuration to define how the thresholds are computed.
         attr_quant_config: A specific weights attribute quantization configuration to get its params.
         output_channels_axis: Index of the kernel output channels dimension.
@@ -48,7 +47,7 @@ def get_weights_qparams(kernel: np.ndarray,
         A dictionary with the quantization threshold of the kernel.
     """
     if attr_quant_config.weights_quantization_params_fn is not None:
-        weights_params = attr_quant_config.weights_quantization_params_fn(kernel,
+        weights_params = attr_quant_config.weights_quantization_params_fn(weights_attr_values,
                                                                           p=attr_quant_config.l_p_value,
                                                                           n_bits=attr_quant_config.weights_n_bits,
                                                                           per_channel=attr_quant_config.weights_per_channel_threshold and output_channels_axis is not None,

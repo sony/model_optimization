@@ -374,7 +374,7 @@ def _compute_hessian_for_hmse(node, hessian_info_service):
                                    granularity=HessianInfoGranularity.PER_ELEMENT,
                                    target_node=node)
     _scores_for_node = hessian_info_service.fetch_hessian(_request,
-                                                          required_size=1)
+                                                          required_size=NUM_QPARAM_HESSIAN_SAMPLES)
 
     return _scores_for_node
 

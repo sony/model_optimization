@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+
 from tqdm import tqdm
 from typing import List
 
+from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
@@ -62,9 +65,19 @@ def calculate_quantization_params(graph: Graph,
                         output_channels_axis = channels_axis[0]
                     else:
                         output_channels_axis = None
+
+                    mod_attr_cfg = attr_cfg
+                    if attr_cfg.weights_error_method == QuantizationErrorMethod.HMSE and \
+                            attr != n.get_kernel_attribute_name(graph.fw_info):
+                        Logger.warning(f"The HMSE error method for parameters selection is only supported for kernel "
+                                       f"weights attributes. Running parameters selection for attribute '{attr}' "
+                                       f"in node '{n.name}' with the default MSE error method instead.")
+                        mod_attr_cfg = copy.deepcopy(attr_cfg)
+                        mod_attr_cfg.weights_error_method = QuantizationErrorMethod.MSE
+
                     weights_params = get_weights_qparams(n.get_weights_by_keys(attr),
                                                          candidate_qc.weights_quantization_cfg,
-                                                         attr_cfg,
+                                                         mod_attr_cfg,
                                                          output_channels_axis,
                                                          node=n,
                                                          hessian_info_service=hessian_info_service)
