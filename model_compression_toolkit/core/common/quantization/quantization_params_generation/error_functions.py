@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from copy import deepcopy
-from typing import Tuple, Callable
+from typing import Tuple, Callable, List
 import numpy as np
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoGranularity, \
