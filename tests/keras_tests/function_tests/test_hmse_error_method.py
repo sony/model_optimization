@@ -39,6 +39,7 @@ def model_gen():
     x = layers.Conv2D(2, 3, padding='same')(inputs)
     x = layers.BatchNormalization()(x)
     x = layers.Activation('relu')(x)
+    x = layers.Dense(8)(x)
     return tf.keras.models.Model(inputs=inputs, outputs=x)
 
 
@@ -84,22 +85,26 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
             mi.infer([np.random.randn(1, 8, 8, 3)])
 
     def _verify_params_calculation_execution(self, param_name):
-        conv_node = [n for n in self.graph.nodes if n.type == layers.Conv2D]
-        self.assertTrue(len(conv_node) == 1, "Expecting exactly 1 Conv node in test model.")
-        conv_node = conv_node[0]
+        def _run_node_verification(node_type):
+            node = [n for n in self.graph.nodes if n.type == node_type]
+            self.assertTrue(len(node) == 1, f"Expecting exactly 1 {node_type} node in test model.")
+            node = node[0]
 
-        kernel_attr_qparams = (
-            conv_node.candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(KERNEL))
-        self.assertTrue(kernel_attr_qparams.weights_quantization_params.get(param_name) is not None,
-                        f"Expecting Conv layer parameters {param_name} to be initialized.")
+            kernel_attr_qparams = (
+                node.candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(KERNEL))
+            self.assertTrue(kernel_attr_qparams.weights_quantization_params.get(param_name) is not None,
+                            f"Expecting {node_type} node parameters {param_name} to be initialized.")
 
-        expected_hessian_request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
-                                                       granularity=HessianInfoGranularity.PER_ELEMENT,
-                                                       target_node=conv_node)
+            expected_hessian_request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
+                                                           granularity=HessianInfoGranularity.PER_ELEMENT,
+                                                           target_node=node)
 
-        self.assertTrue(self.his.count_saved_info_of_request(expected_hessian_request) > 0,
-                        f"No Hessian-based scores were computed for node {conv_node}, "
-                        "but expected parameters selection to run with HMSE.")
+            self.assertTrue(self.his.count_saved_info_of_request(expected_hessian_request) > 0,
+                            f"No Hessian-based scores were computed for node {node}, "
+                            "but expected parameters selection to run with HMSE.")
+
+        _run_node_verification(layers.Conv2D)
+        _run_node_verification(layers.Dense)
 
     def test_pot_threshold_selection_hmse_per_channel(self):
 
