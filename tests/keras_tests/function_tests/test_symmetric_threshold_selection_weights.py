@@ -54,9 +54,10 @@ def representative_dataset():
     yield [np.random.randn(1, 16, 16, 4).astype(np.float32)]
 
 
-def get_tpc():
-    tp = generate_test_tp_model({
-        'weights_quantization_method': mct.target_platform.QuantizationMethod.SYMMETRIC})
+def get_tpc(per_channel):
+    tp = generate_test_tp_model(edit_params_dict={
+        'weights_quantization_method': mct.target_platform.QuantizationMethod.SYMMETRIC,
+        'weights_per_channel_threshold': per_channel})
     tpc = generate_keras_tpc(name="symmetric_threshold_selection_test", tp_model=tp)
 
     return tpc
@@ -99,7 +100,8 @@ class TestSymmetricThresholdSelectionWeights(unittest.TestCase):
 
         in_model = create_network()
         graph = prepare_graph_with_quantization_parameters(in_model, KerasImplementation(), DEFAULT_KERAS_INFO,
-                                                           representative_dataset, lambda name, _tp: get_tpc(),
+                                                           representative_dataset,
+                                                           lambda name, _tp: get_tpc(per_channel),
                                                            qc=qc, input_shape=(1, 16, 16, 4))
 
         nodes_list = list(graph.nodes)
