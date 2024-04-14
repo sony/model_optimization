@@ -392,17 +392,36 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
 
     Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
     """
+    if quant_error_method == qc.QuantizationErrorMethod.KL:
+        if axis is None:
+            # per-tensor
+            if quantization_method == QuantizationMethod.UNIFORM:
+                return lambda x, y, threshold: _kl_error_function_wrapper(x, range_min=threshold[0],
+                                                                          range_max=threshold[1],
+                                                                          n_bits=n_bits,
+                                                                          per_channel=False)
+            else:
+                return lambda x, y, threshold: _kl_error_function_wrapper(x, range_min=0 if not signed else -threshold,
+                                                                          range_max=threshold,
+                                                                          n_bits=n_bits,
+                                                                          per_channel=False)
+        else:
+            # per-channel
+            if quantization_method == QuantizationMethod.UNIFORM:
+                return lambda x, y, threshold: _kl_error_function_wrapper(x, range_min=threshold[:, 0],
+                                                                          range_max=threshold[:, 1],
+                                                                          n_bits=n_bits,
+                                                                          per_channel=True)
+            else:
+                return lambda x, y, threshold: _kl_error_function_wrapper(x, range_min=0 if not signed else -threshold,
+                                                                          range_max=threshold,
+                                                                          n_bits=n_bits,
+                                                                          per_channel=True)
 
     quant_method_error_function_mapping = {
         qc.QuantizationErrorMethod.MSE: lambda x, y, threshold: compute_mse(x, y, norm=norm, axis=axis),
         qc.QuantizationErrorMethod.MAE: lambda x, y, threshold: compute_mae(x, y, norm=norm, axis=axis),
         qc.QuantizationErrorMethod.LP: lambda x, y, threshold: compute_lp_norm(x, y, p=p, norm=norm, axis=axis),
-        qc.QuantizationErrorMethod.KL:
-            lambda x, y, threshold: _kl_error_function_wrapper(x, range_min=threshold[:, 0], range_max=threshold[:, 1],
-                                                               n_bits=n_bits, per_channel=axis is not None)
-            if quantization_method == QuantizationMethod.UNIFORM
-            else _kl_error_function_wrapper(x, range_min=0 if not signed else -threshold, range_max=threshold,
-                                            n_bits=n_bits, per_channel=axis is not None)
     }
 
     return quant_method_error_function_mapping[quant_error_method]
