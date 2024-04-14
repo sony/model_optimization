@@ -111,6 +111,7 @@ def gptq_runner(tg: Graph,
     #############################################
     # Gradient Based Post Training Quantization
     #############################################
+    Logger.info("Running GPTQ optimization.")
     tg_gptq = _apply_gptq(gptq_config,
                           gptq_representative_data_gen,
                           tb_w,

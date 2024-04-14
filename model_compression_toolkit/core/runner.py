@@ -110,8 +110,8 @@ def core_runner(in_model: Any,
                                          core_config=core_config,
                                          fw_info=fw_info,
                                          fw_impl=fw_impl,
-                                         hessian_info_service=hessian_info_service,
-                                         tb_w=tb_w)
+                                         tb_w=tb_w,
+                                         hessian_info_service=hessian_info_service)
 
     ######################################
     # Finalize bit widths

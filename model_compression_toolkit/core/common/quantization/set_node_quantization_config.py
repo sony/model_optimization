@@ -45,7 +45,8 @@ def set_quantization_configuration_to_graph(graph: Graph,
     Args:
         graph: Graph for which to add quantization info to each node.
         quant_config: Quantization configuration containing parameters for how the graph should be quantized.
-        mixed_precision_enable: is mixed precision enabled
+        mixed_precision_enable: is mixed precision enabled.
+        running_gptq: Whether or not a GPTQ optimization is planned to run after the PTQ process.
 
     Returns:
         The graph with quantization configurations attached to each node in it.

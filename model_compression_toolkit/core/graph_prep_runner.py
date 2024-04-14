@@ -60,6 +60,7 @@ def graph_preparation_runner(in_model: Any,
             the attached framework operator's information.
         tb_w: TensorboardWriter object for logging.
         mixed_precision_enable: is mixed precision enabled.
+        running_gptq: Whether or not a GPTQ optimization is planned to run after the PTQ process.
 
     Returns:
         An internal graph representation of the input model.
@@ -108,6 +109,7 @@ def get_finalized_graph(initial_graph: Graph,
         tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
         fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
         mixed_precision_enable: is mixed precision enabled.
+        running_gptq: Whether or not a GPTQ optimization is planned to run after the PTQ process.
 
     Returns: Graph object that represents the model, after applying all required modifications to it.
     """

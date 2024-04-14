@@ -99,6 +99,7 @@ def compute_mse(float_tensor: np.ndarray,
         norm_eps: epsilon value for error normalization stability.
         batch: Whether to run batch similarity analysis or not.
         axis: Axis along which the operator has been computed.
+        weights: Weights tensor to use for computing Weighted-MSE error computation.
 
     Returns:
         The MSE distance between the two tensors.
@@ -113,6 +114,7 @@ def compute_mse(float_tensor: np.ndarray,
         error = ((w_flat * (float_flat - fxp_flat)) ** 2).mean(axis=-1)
     else:
         error = ((float_flat - fxp_flat) ** 2).mean(axis=-1)
+
     if norm:
         error /= ((float_flat ** 2).mean(axis=-1) + norm_eps)
 

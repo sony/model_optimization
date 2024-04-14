@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import copy
-from typing import Dict, Any, Tuple, List, Type
+from typing import Dict, Any, Tuple, List, Type, Union
 
 import numpy as np
 
@@ -387,9 +387,9 @@ class BaseNode:
                 return True
         return False
 
-    def get_kernel_attribute_name(self, fw_info):
+    def get_kernel_attribute_name(self, fw_info) -> Union[str, None]:
         """
-        Return the node's kernel attributes if exists, otherwise returns None.
+        Return the node's kernel attribute name if exists, otherwise returns None.
 
         Args:
             fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).

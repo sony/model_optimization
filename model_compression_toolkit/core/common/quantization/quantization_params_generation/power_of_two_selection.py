@@ -47,6 +47,8 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
         n_iter: Number of iterations to search for the optimal threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small (not used for this method).
         quant_error_method: an error function to optimize the parameters' selection accordingly.
+        node: The node for which the quantization error is computed (used only with HMSE error method).
+        hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
 
     Returns:
         Power of two threshold to quantize the tensor in a power of 2 manner.

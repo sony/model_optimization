@@ -19,6 +19,7 @@ from typing import List
 
 from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_weights_computation import \
@@ -29,7 +30,7 @@ from model_compression_toolkit.logger import Logger
 def calculate_quantization_params(graph: Graph,
                                   nodes: List[BaseNode] = [],
                                   specific_nodes: bool = False,
-                                  hessian_info_service = None):
+                                  hessian_info_service: HessianInfoService = None):
     """
     For a graph, go over its nodes, compute quantization params (for both weights and activations according
     to the given framework info), and create and attach a NodeQuantizationConfig to each node (containing the
@@ -43,6 +44,7 @@ def calculate_quantization_params(graph: Graph,
         graph: Graph to compute its nodes' thresholds.
         nodes: List of nodes to compute their thresholds instead of computing it for all nodes in the graph.
         specific_nodes: Flag to compute thresholds for only specific nodes.
+        hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
 
     """
 

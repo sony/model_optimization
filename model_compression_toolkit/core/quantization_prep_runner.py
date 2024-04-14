@@ -22,6 +22,7 @@ from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.base_graph import Graph
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.network_editors.edit_network import edit_network_graph
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
@@ -32,7 +33,6 @@ from model_compression_toolkit.core.common.statistics_correction.statistics_corr
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
-from model_compression_toolkit.logger import Logger
 
 
 def quantization_preparation_runner(graph: Graph,
@@ -40,8 +40,8 @@ def quantization_preparation_runner(graph: Graph,
                                     core_config: CoreConfig,
                                     fw_info: FrameworkInfo,
                                     fw_impl: FrameworkImplementation,
-                                    hessian_info_service = None,
-                                    tb_w: TensorboardWriter = None) -> Graph:
+                                    tb_w: TensorboardWriter = None,
+                                    hessian_info_service: HessianInfoService = None,) -> Graph:
     """
     Prepares a trained model for post-training quantization.
     First, the model graph is optimized using several transformations (e.g. folding BatchNormalization to preceding layers).
@@ -58,6 +58,7 @@ def quantization_preparation_runner(graph: Graph,
             groups of layers by how they should be quantized, etc.).
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         tb_w: TensorboardWriter object for logging
+        hessian_info_service: HessianInfoService object for retrieving Hessian-based scores.
 
     Returns:
         Graph object that represents the model, contains thresholds, and ready for quantization.

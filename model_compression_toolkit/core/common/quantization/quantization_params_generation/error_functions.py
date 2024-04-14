@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from copy import deepcopy
-from typing import Tuple, Callable
+from typing import Tuple, Callable, List
 import numpy as np
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoGranularity, \
@@ -369,7 +369,17 @@ def _get_sliced_histogram(bins: np.ndarray,
     return bins_subset, counts_subset
 
 
-def _compute_hessian_for_hmse(node, hessian_info_service):
+def _compute_hessian_for_hmse(node, hessian_info_service: HessianInfoService) -> List[np.ndarray]:
+    """
+    Compute and retrieve Hessian-based scores for using during HMSE error computation.
+
+    Args:
+        node: The node to compute Hessian-based scores for.
+        hessian_info_service: HessianInfoService object for retrieving Hessian-based scores.
+
+    Returns: A list with computed Hessian-based scores tensors for the given node.
+
+    """
     _request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
                                    granularity=HessianInfoGranularity.PER_ELEMENT,
                                    target_node=node)
@@ -379,7 +389,24 @@ def _compute_hessian_for_hmse(node, hessian_info_service):
     return _scores_for_node
 
 
-def _hmse_error_function_wrapper(float_tensor, fxp_tensor, axis, norm, hessian_scores):
+def _hmse_error_function_wrapper(float_tensor: np.ndarray,
+                                 fxp_tensor: np.ndarray,
+                                 axis: int,
+                                 norm: bool,
+                                 hessian_scores: np.ndarray):
+    """
+    This function wraps the HMSE error method to enable using it during parameters selection.
+
+    Args:
+        float_tensor: Float tensor.
+        fxp_tensor: Quantized tensor.
+        axis: Axis along which the operation has been performed. If not None, then per-channel computation is expected.
+        norm: Indicates whether to normalize the result of the error function.
+        hessian_scores: A tensor with Hessian-based scores to use for Hessian-based MSE (HMSE) error computation.
+
+    Returns: The HMSE error between the float and fixed-point tensors.
+
+    """
     if axis is not None:
         hessian_scores = reshape_tensor_for_per_channel_search(hessian_scores, 0)
 
@@ -393,7 +420,7 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
                                                   norm: bool = False,
                                                   n_bits: int = 8,
                                                   signed: bool = True,
-                                                  node = None,
+                                                  node=None,
                                                   hessian_info_service: HessianInfoService = None) -> Callable:
     """
     Returns the error function compatible to the provided threshold method,
@@ -406,6 +433,8 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
         norm: Indicates whether to normalize the result of the error function.
         n_bits: Number of bits used to quantize the tensor.
         signed: Indicates whether the input is signed.
+        node: The node for which the quantization error is computed (used only with HMSE error method).
+        hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
 
     Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
     """

@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict, Any, Tuple
+from typing import Dict, Any
 
 import numpy as np
 
-from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
@@ -31,8 +31,8 @@ def get_weights_qparams(weights_attr_values: np.ndarray,
                         weights_quant_config: NodeWeightsQuantizationConfig,
                         attr_quant_config: WeightsAttrQuantizationConfig,
                         output_channels_axis: int,
-                        node = None,
-                        hessian_info_service = None) -> Dict[Any, Any]:
+                        node=None,
+                        hessian_info_service: HessianInfoService = None) -> Dict[Any, Any]:
     """
     Compute thresholds to quantize a kernel according to a NodeWeightsQuantizationConfig
     instance.
@@ -42,6 +42,8 @@ def get_weights_qparams(weights_attr_values: np.ndarray,
         weights_quant_config: Weights quantization configuration to define how the thresholds are computed.
         attr_quant_config: A specific weights attribute quantization configuration to get its params.
         output_channels_axis: Index of the kernel output channels dimension.
+        node: The node for which the quantization error is computed (used only with HMSE error method).
+        hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
 
     Returns:
         A dictionary with the quantization threshold of the kernel.
