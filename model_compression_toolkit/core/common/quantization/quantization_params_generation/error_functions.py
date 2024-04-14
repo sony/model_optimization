@@ -89,8 +89,8 @@ def _lp_error_histogram(q_bins: np.ndarray,
 
 
 def _kl_error_function(x: np.ndarray,
-                       range_min: float,
-                       range_max: float,
+                       range_min: np.ndarray,
+                       range_max: np.ndarray,
                        n_bins: int = 2048,
                        n_bits: int = 8) -> np.float32:
     """
@@ -148,7 +148,8 @@ def _kl_error_function_wrapper(x: np.ndarray,
                                range_min: np.ndarray,
                                range_max: np.ndarray,
                                n_bins: int = 2048,
-                               n_bits: int = 8) -> np.ndarray:
+                               n_bits: int = 8,
+                               per_channel: int = False) -> np.ndarray:
     """
     Computes the error function between a tensor and its quantized version for each channel.
     The error is based on the KL-divergence between the distributions.
@@ -161,6 +162,7 @@ def _kl_error_function_wrapper(x: np.ndarray,
         range_max: Array specifying the maximum bound of the quantization range for each channel.
         n_bins: Number of bins for the float histogram.
         n_bits: Number of bits used for quantization.
+        per_channel: Whether quantization is done per-channel.
 
     Returns:
         An array containing the KL-divergence between the float and quantized histograms of the tensor for each channel.
@@ -168,8 +170,11 @@ def _kl_error_function_wrapper(x: np.ndarray,
     """
 
     error_list = []
-    for j in range(x.shape[0]):  # iterate all channels of the tensor.
-        error_list.append(_kl_error_function(x[j], range_min[j], range_max[j], n_bins=n_bins, n_bits=n_bits))
+    if per_channel:
+        for j in range(x.shape[0]):  # iterate all channels of the tensor.
+            error_list.append(_kl_error_function(x[j], range_min[j], range_max[j], n_bins=n_bins, n_bits=n_bits))
+    else:
+        error_list.append(_kl_error_function(x, range_min, range_max, n_bins=n_bins, n_bits=n_bits))
     return np.asarray(error_list)
 
 
@@ -177,8 +182,8 @@ def _kl_error_histogram(q_bins: np.ndarray,
                         q_count: np.ndarray,
                         bins: np.ndarray,
                         counts: np.ndarray,
-                        range_min: float,
-                        range_max: float) -> np.float32:
+                        range_min: np.ndarray,
+                        range_max: np.ndarray) -> np.float32:
     """
     Compute the error function between a histogram to its quantized version.
     The error is computed based on the KL-divergence the distributions have.
@@ -241,8 +246,8 @@ def _kl_error_histogram(q_bins: np.ndarray,
 
 
 def _get_bins_indices_from_range(bins: np.ndarray,
-                                 range_min: float,
-                                 range_max: float) -> Tuple[int, int]:
+                                 range_min: np.ndarray,
+                                 range_max: np.ndarray) -> Tuple[int, int]:
     """
     For bins and a threshold, compute the first and last bins in between the threshold
     ranges.
@@ -262,7 +267,7 @@ def _get_bins_indices_from_range(bins: np.ndarray,
     return first_bin_idx, last_bin_idx
 
 
-def _is_range_valid(bins: np.ndarray, range_min: float, range_max: float) -> bool:
+def _is_range_valid(bins: np.ndarray, range_min: np.ndarray, range_max: np.ndarray) -> bool:
     """
     Check whether there are some bins from a numpy array of bins that are in between
     a threshold range or not.
@@ -387,15 +392,36 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
 
     Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
     """
+    if quant_error_method == qc.QuantizationErrorMethod.KL:
+        if axis is None:
+            # per-tensor
+            if quantization_method == QuantizationMethod.UNIFORM:
+                return lambda x, y, threshold: _kl_error_function_wrapper(x, range_min=threshold[0],
+                                                                          range_max=threshold[1],
+                                                                          n_bits=n_bits,
+                                                                          per_channel=False)
+            else:
+                return lambda x, y, threshold: _kl_error_function_wrapper(x, range_min=0 if not signed else -threshold,
+                                                                          range_max=threshold,
+                                                                          n_bits=n_bits,
+                                                                          per_channel=False)
+        else:
+            # per-channel
+            if quantization_method == QuantizationMethod.UNIFORM:
+                return lambda x, y, threshold: _kl_error_function_wrapper(x, range_min=threshold[:, 0],
+                                                                          range_max=threshold[:, 1],
+                                                                          n_bits=n_bits,
+                                                                          per_channel=True)
+            else:
+                return lambda x, y, threshold: _kl_error_function_wrapper(x, range_min=0 if not signed else -threshold,
+                                                                          range_max=threshold,
+                                                                          n_bits=n_bits,
+                                                                          per_channel=True)
 
     quant_method_error_function_mapping = {
         qc.QuantizationErrorMethod.MSE: lambda x, y, threshold: compute_mse(x, y, norm=norm, axis=axis),
         qc.QuantizationErrorMethod.MAE: lambda x, y, threshold: compute_mae(x, y, norm=norm, axis=axis),
         qc.QuantizationErrorMethod.LP: lambda x, y, threshold: compute_lp_norm(x, y, p=p, norm=norm, axis=axis),
-        qc.QuantizationErrorMethod.KL:
-            lambda x, y, threshold: _kl_error_function_wrapper(x, range_min=threshold[:,0], range_max=threshold[:,1],
-                                                       n_bits=n_bits) if quantization_method == QuantizationMethod.UNIFORM
-            else _kl_error_function_wrapper(x, range_min=0 if not signed else -threshold, range_max=threshold, n_bits=n_bits)
     }
 
     return quant_method_error_function_mapping[quant_error_method]
