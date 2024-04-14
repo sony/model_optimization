@@ -57,7 +57,7 @@ def get_tpc(quant_method, per_channel):
 
 
 class TestParamSelectionWithHMSE(unittest.TestCase):
-    def _setup_with_args(self, quant_method, per_channel):
+    def _setup_with_args(self, quant_method, per_channel, running_gptq=True):
         self.qc = QuantizationConfig(weights_error_method=mct.core.QuantizationErrorMethod.HMSE)
         self.float_model = model_gen()
         self.keras_impl = KerasImplementation()
@@ -69,7 +69,7 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                                 representative_dataset,
                                                 lambda name, _tp: get_tpc(quant_method, per_channel),
                                                 qc=self.qc,
-                                                running_gptq=True  # to enable HMSE in params calculation
+                                                running_gptq=running_gptq  # to enable HMSE in params calculation if needed
                                                 )
 
         self.his = HessianInfoService(graph=self.graph,
@@ -141,6 +141,44 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.UNIFORM, per_channel=False)
         calculate_quantization_params(self.graph, hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(RANGE_MAX)
+
+    def test_threshold_selection_hmse_no_gptq_throw(self):
+        self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.SYMMETRIC, per_channel=True,
+                              running_gptq=False)
+
+        def _verify_node_default_mse_error(node_type):
+            node = [n for n in self.graph.nodes if n.type == node_type]
+            self.assertTrue(len(node) == 1, f"Expecting exactly 1 {node_type} node in test model.")
+            node = node[0]
+
+            kernel_attr_error_method = (
+                node.candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(KERNEL).weights_error_method)
+            self.assertTrue(kernel_attr_error_method == mct.core.QuantizationErrorMethod.MSE,
+                            f"Expecting {node_type} node quantization parameter error method to be the default "
+                            f"MSE when not running with GPTQ, but is set to {kernel_attr_error_method}.")
+
+        # verifying that the nodes quantization params error method is changed to the default MSE
+        _verify_node_default_mse_error(layers.Conv2D)
+        _verify_node_default_mse_error(layers.Dense)
+
+        calculate_quantization_params(self.graph, hessian_info_service=self.his, num_hessian_samples=1)
+
+        def _verify_node_no_hessian_computed(node_type):
+            node = [n for n in self.graph.nodes if n.type == node_type]
+            self.assertTrue(len(node) == 1, f"Expecting exactly 1 {node_type} node in test model.")
+            node = node[0]
+
+            expected_hessian_request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
+                                                           granularity=HessianInfoGranularity.PER_ELEMENT,
+                                                           target_node=node)
+
+            self.assertTrue(self.his.count_saved_info_of_request(expected_hessian_request) > 0,
+                            f"Hessian-based scores were computed for node {node}, "
+                            "but expected parameters selection to run with MSE without computing Hessians.")
+
+            # verifying that no Hessian scores were computed
+            _verify_node_no_hessian_computed(layers.Conv2D)
+            _verify_node_no_hessian_computed(layers.Dense)
 
 
 if __name__ == '__main__':
