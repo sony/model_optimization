@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 
 from typing import Callable, Tuple
 from packaging import version
 
+from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
 from model_compression_toolkit.logger import Logger
@@ -29,6 +31,7 @@ from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.metadata import get_versions_dict
 
 LR_DEFAULT = 0.15
 LR_REST_DEFAULT = 1e-4
@@ -46,6 +49,7 @@ if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.exporter.model_wrapper import get_exportable_keras_model
     from model_compression_toolkit import get_target_platform_capabilities
+    from mct_quantizers.keras.metadata import add_metadata
 
     # As from TF2.9 optimizers package is changed
     if version.parse(tf.__version__) < version.parse("2.9"):
@@ -211,6 +215,8 @@ if FOUND_TF:
                                                                   tb_w=tb_w,
                                                                   running_gptq=True)
 
+        float_graph = copy.deepcopy(tg)
+
         tg_gptq = gptq_runner(tg,
                               core_config,
                               gptq_config,
@@ -224,9 +230,17 @@ if FOUND_TF:
         del hessian_info_service
 
         if core_config.debug_config.analyze_similarity:
-            analyzer_model_quantization(representative_data_gen, tb_w, tg_gptq, fw_impl, fw_info)
+            analyzer_model_quantization(representative_data_gen,
+                                        tb_w,
+                                        float_graph,
+                                        tg_gptq,
+                                        fw_impl,
+                                        DEFAULT_KERAS_INFO)
 
-        return get_exportable_keras_model(tg_gptq)
+        exportable_model, user_info = get_exportable_keras_model(tg_gptq)
+        if target_platform_capabilities.tp_model.add_metadata:
+            exportable_model = add_metadata(exportable_model, get_versions_dict(target_platform_capabilities))
+        return exportable_model, user_info
 
 else:
     # If tensorflow is not installed,

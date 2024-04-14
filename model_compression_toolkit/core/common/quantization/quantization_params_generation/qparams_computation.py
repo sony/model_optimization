@@ -53,7 +53,7 @@ def calculate_quantization_params(graph: Graph,
     # Create a list of nodes to compute their thresholds
     nodes_list: List[BaseNode] = nodes if specific_nodes else graph.nodes()
 
-    for n in tqdm(nodes_list, "Calculating quantization params"):  # iterate only nodes that we should compute their thresholds
+    for n in tqdm(nodes_list, "Calculating quantization parameters"):  # iterate only nodes that we should compute their thresholds
         for candidate_qc in n.candidates_quantization_cfg:
             for attr in n.get_node_weights_attributes():
                 if n.is_weights_quantization_enabled(attr):

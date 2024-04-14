@@ -41,24 +41,24 @@ class BaseNodeQuantizationConfig(object):
     Base class for node quantization configuration
     """
 
-    def set_quant_config_attr(self, parameter_name: str, parameter_value: Any,
+    def set_quant_config_attr(self, config_parameter_name: str, config_parameter_value: Any,
                               *args: List[Any], **kwargs: Dict[str, Any]):
         """
         Changes a BaseNodeQuantizationConfig's parameter.
         Note that arg and kwargs are only to allow clean override in the child classes.
 
         Args:
-            parameter_name: parameter name to change.
-            parameter_value: parameter value to change.
+            config_parameter_name: parameter name to change.
+            config_parameter_value: parameter value to change.
             args: A list of additional arguments.
             kwargs: A dictionary with additional key arguments.
 
         """
 
-        if hasattr(self, parameter_name):
-            setattr(self, parameter_name, parameter_value)
+        if hasattr(self, config_parameter_name):
+            setattr(self, config_parameter_name, config_parameter_value)
         else:
-            Logger.warning(f"Parameter {parameter_name} could not be found in the node quantization config and "
+            Logger.warning(f"Parameter {config_parameter_name} could not be found in the node quantization config and "
                            f"was not updated!")
 
     def __repr__(self) -> str:
@@ -106,6 +106,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
         self.z_threshold = qc.z_threshold
         self.shift_negative_ratio = qc.shift_negative_ratio
         self.shift_negative_threshold_recalculation = qc.shift_negative_threshold_recalculation
+        self.concat_threshold_update = qc.concat_threshold_update
 
     def quantize_node_output(self,
                              tensors: Any) -> Any:
@@ -219,7 +220,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
                self.shift_negative_activation_correction == other.shift_negative_activation_correction and \
                self.z_threshold == other.z_threshold and \
                self.shift_negative_ratio == other.shift_negative_ratio and \
-               self.shift_negative_threshold_recalculation == other.shift_negative_threshold_recalculation
+               self.shift_negative_threshold_recalculation == other.shift_negative_threshold_recalculation 
 
     def __hash__(self):
         return hash((self.activation_quantization_fn,
@@ -521,7 +522,7 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
                            f"{list(attrs_with_name.keys())}.")
         return attrs_with_name
 
-    def set_quant_config_attr(self, parameter_name: str, parameter_value: Any, attr_name: str = None,
+    def set_quant_config_attr(self, config_parameter_name: str, config_parameter_value: Any, attr_name: str = None,
                               *args: List[Any], **kwargs: Dict[str, Any]):
         """
         This method overrides the parent class set_quant_config_attr to enable setting a specific weights
@@ -529,26 +530,27 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
 
         Args:
             attr_name: attribute name to change.
-            parameter_name: parameter name to change.
-            parameter_value: parameter value to change.
+            config_parameter_name: parameter name to change.
+            config_parameter_value: parameter value to change.
             args: A list of additional arguments.
             kwargs: A dictionary with additional key arguments.
 
         """
 
         if attr_name is None:
-            super(NodeWeightsQuantizationConfig, self).set_quant_config_attr(parameter_name, parameter_value,
+            super(NodeWeightsQuantizationConfig, self).set_quant_config_attr(config_parameter_name,
+                                                                             config_parameter_value,
                                                                              *args, **kwargs)
         else:
             if self.has_attribute_config(attr_name):
                 attr_cfg = self.get_attr_config(attr_name)
-                if hasattr(attr_cfg, parameter_name):
-                    setattr(attr_cfg, parameter_name, parameter_value)
+                if hasattr(attr_cfg, config_parameter_name):
+                    setattr(attr_cfg, config_parameter_name, config_parameter_value)
                 else:
-                    Logger.warning(f"Parameter {parameter_name} could not be found in the node quantization config of "
+                    Logger.warning(f"Parameter {config_parameter_name} could not be found in the node quantization config of "
                                    f"weights attribute {attr_name} and was not updated!")
             else:
-                Logger.error(f"Weights attribute {attr_name} could not be found to set parameter {parameter_name}.")
+                Logger.error(f"Weights attribute {attr_name} could not be found to set parameter {config_parameter_name}.")
 
     def __eq__(self, other: Any) -> bool:
         """

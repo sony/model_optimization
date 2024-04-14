@@ -80,7 +80,8 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.line
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.residual_collapsing import \
     keras_residual_collapsing
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.input_scaling import InputScaling, \
-    InputScalingWithPad
+    InputScalingWithPad 
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.concat_threshold_update import ConcatThresholdUpdate
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.multi_head_attention_decomposition import \
@@ -300,8 +301,8 @@ class KerasImplementation(FrameworkImplementation):
         """
         return keras_op2d_add_const_collapsing()
 
-    def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig) \
-            -> List[common.BaseSubstitution]:
+    def get_substitutions_post_statistics_collection(self, 
+                                                     quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used after we collect statistics.
 
@@ -317,6 +318,8 @@ class KerasImplementation(FrameworkImplementation):
         if quant_config.input_scaling:
             substitutions_list.append(InputScaling())
             substitutions_list.append(InputScalingWithPad())
+        if quant_config.concat_threshold_update:
+            substitutions_list.append(ConcatThresholdUpdate())
         return substitutions_list
 
 

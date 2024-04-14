@@ -129,18 +129,20 @@ from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_pre
     MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationNonConfNodesTest, \
     MixedPercisionSearchTotalMemoryNonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
 from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substitution_test import MatmulToDenseSubstitutionTest
+from tests.keras_tests.feature_networks_tests.feature_networks.metadata_test import MetadataTest
 from tests.keras_tests.feature_networks_tests.feature_networks.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest, ConstRepresentationMatMulTest
+from tests.keras_tests.feature_networks_tests.feature_networks.concatination_threshold_update import ConcatThresholdtest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
 
 layers = tf.keras.layers
 
 
 class FeatureNetworkTest(unittest.TestCase):
-
+    
     def test_per_tensor_weight_quantization(self):
         PerTensorWeightQuantizationTest(self).run_test()
-
+    
     def test_single_relu_replacement(self):
         SingleReluReplacementTest(self).run_test()
 
@@ -740,6 +742,12 @@ class FeatureNetworkTest(unittest.TestCase):
         BNAttributesQuantization(self, quantize_linear=False).run_test()
         BNAttributesQuantization(self, quantize_linear=True).run_test()
 
+    def concat_threshold_test(self):
+        ConcatThresholdtest(self).run_test()
 
+    def test_metadata(self):
+        MetadataTest(self).run_test()
+
+    
 if __name__ == '__main__':
     unittest.main()

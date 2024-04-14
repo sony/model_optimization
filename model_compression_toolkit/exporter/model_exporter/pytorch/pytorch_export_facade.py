@@ -40,7 +40,7 @@ if FOUND_TORCH:
                              repr_dataset: Callable,
                              is_layer_exportable_fn: Callable = is_pytorch_layer_exportable,
                              serialization_format: PytorchExportSerializationFormat = PytorchExportSerializationFormat.ONNX,
-                             quantization_format : QuantizationFormat = QuantizationFormat.MCTQ,
+                             quantization_format: QuantizationFormat = QuantizationFormat.MCTQ,
                              onnx_opset_version=DEFAULT_ONNX_OPSET_VERSION) -> None:
         """
         Export a PyTorch quantized model to a torchscript or onnx model.

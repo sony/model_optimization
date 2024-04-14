@@ -24,6 +24,10 @@ FOUND_ONNX = importlib.util.find_spec("onnx") is not None
 FOUND_ONNXRUNTIME = importlib.util.find_spec("onnxruntime") is not None
 FOUND_SONY_CUSTOM_LAYERS = importlib.util.find_spec('sony_custom_layers') is not None
 
+# Metadata fields
+MCT_VERSION = 'mct_version'
+TPC_VERSION = 'tpc_version'
+
 WEIGHTS_SIGNED = True
 # Minimal threshold to use for quantization ranges:
 MIN_THRESHOLD = (2 ** -16)
@@ -94,7 +98,7 @@ DEC_RANGE_BOTTOM = 0.97
 DEC_RANGE_UPPER = 1.03
 
 # TODO: change to 16 and verify accuracy
-NUM_QPARAM_HESSIAN_SAMPLES = 16
+NUM_QPARAM_HESSIAN_SAMPLES = 1
 
 # Resource utilization computation parameters
 BITS_TO_BYTES = 8.0
