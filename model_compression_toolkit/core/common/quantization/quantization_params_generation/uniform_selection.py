@@ -15,7 +15,7 @@
 import numpy as np
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
-from model_compression_toolkit.constants import MIN_THRESHOLD, RANGE_MIN, RANGE_MAX
+from model_compression_toolkit.constants import MIN_THRESHOLD, RANGE_MIN, RANGE_MAX, NUM_QPARAM_HESSIAN_SAMPLES
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_search import \
     qparams_uniform_selection_tensor_search, qparams_uniform_selection_histogram_search
@@ -34,7 +34,8 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
                              min_threshold: float = MIN_THRESHOLD,
                              quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE,
                              node=None,
-                             hessian_info_service: HessianInfoService = None) -> dict:
+                             hessian_info_service: HessianInfoService = None,
+                             num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> dict:
     """
     Compute the optimal quantization range based on the provided QuantizationErrorMethod
     to uniformly quantize the tensor.
@@ -51,6 +52,7 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
         quant_error_method: an error function to optimize the range parameters' selection accordingly.
         node: The node for which the quantization error is computed (used only with HMSE error method).
         hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
+        num_hessian_samples: Number of samples to approximate Hessian-based scores on (used only with HMSE error method).
 
     Returns:
         Optimal quantization range to quantize the tensor uniformly.
@@ -64,7 +66,8 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
         axis = -1 if per_channel else None
         error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.UNIFORM, quant_error_method,
                                                                        p, axis=axis, norm=False, node=node,
-                                                                       hessian_info_service=hessian_info_service)
+                                                                       hessian_info_service=hessian_info_service,
+                                                                       num_hessian_samples=num_hessian_samples)
         mm = qparams_uniform_selection_tensor_search(error_function,
                                                      tensor_data,
                                                      tensor_min,

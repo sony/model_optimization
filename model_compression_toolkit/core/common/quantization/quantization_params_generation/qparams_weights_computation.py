@@ -16,6 +16,7 @@ from typing import Dict, Any
 
 import numpy as np
 
+from model_compression_toolkit.constants import NUM_QPARAM_HESSIAN_SAMPLES
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -32,7 +33,8 @@ def get_weights_qparams(weights_attr_values: np.ndarray,
                         attr_quant_config: WeightsAttrQuantizationConfig,
                         output_channels_axis: int,
                         node=None,
-                        hessian_info_service: HessianInfoService = None) -> Dict[Any, Any]:
+                        hessian_info_service: HessianInfoService = None,
+                        num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> Dict[Any, Any]:
     """
     Compute thresholds to quantize a kernel according to a NodeWeightsQuantizationConfig
     instance.
@@ -44,6 +46,7 @@ def get_weights_qparams(weights_attr_values: np.ndarray,
         output_channels_axis: Index of the kernel output channels dimension.
         node: The node for which the quantization error is computed (used only with HMSE error method).
         hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
+        num_hessian_samples: Number of samples to approximate Hessian-based scores on (used only with HMSE error method).
 
     Returns:
         A dictionary with the quantization threshold of the kernel.
@@ -57,7 +60,8 @@ def get_weights_qparams(weights_attr_values: np.ndarray,
                                                                           min_threshold=weights_quant_config.min_threshold,
                                                                           quant_error_method=attr_quant_config.weights_error_method,
                                                                           node=node,
-                                                                          hessian_info_service=hessian_info_service)
+                                                                          hessian_info_service=hessian_info_service,
+                                                                          num_hessian_samples=num_hessian_samples)
     else:
         weights_params = {}
 

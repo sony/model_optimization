@@ -374,13 +374,15 @@ def _get_sliced_histogram(bins: np.ndarray,
     return bins_subset, counts_subset
 
 
-def _compute_hessian_for_hmse(node, hessian_info_service: HessianInfoService) -> List[np.ndarray]:
+def _compute_hessian_for_hmse(node, hessian_info_service: HessianInfoService,
+                              num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> List[np.ndarray]:
     """
     Compute and retrieve Hessian-based scores for using during HMSE error computation.
 
     Args:
         node: The node to compute Hessian-based scores for.
         hessian_info_service: HessianInfoService object for retrieving Hessian-based scores.
+        num_hessian_samples: Number of samples to approximate Hessian-based scores on.
 
     Returns: A list with computed Hessian-based scores tensors for the given node.
 
@@ -389,7 +391,7 @@ def _compute_hessian_for_hmse(node, hessian_info_service: HessianInfoService) ->
                                    granularity=HessianInfoGranularity.PER_ELEMENT,
                                    target_node=node)
     _scores_for_node = hessian_info_service.fetch_hessian(_request,
-                                                          required_size=NUM_QPARAM_HESSIAN_SAMPLES)
+                                                          required_size=num_hessian_samples)
 
     return _scores_for_node
 
@@ -426,7 +428,8 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
                                                   n_bits: int = 8,
                                                   signed: bool = True,
                                                   node=None,
-                                                  hessian_info_service: HessianInfoService = None) -> Callable:
+                                                  hessian_info_service: HessianInfoService = None,
+                                                  num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> Callable:
     """
     Returns the error function compatible to the provided threshold method,
     to be used in the threshold optimization search for tensor quantization.
@@ -440,12 +443,13 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
         signed: Indicates whether the input is signed.
         node: The node for which the quantization error is computed (used only with HMSE error method).
         hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
+        num_hessian_samples: Number of samples to approximate Hessian-based scores on (used only with HMSE error method).
 
     Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
     """
 
     if quant_error_method == qc.QuantizationErrorMethod.HMSE:
-        node_hessian_scores = _compute_hessian_for_hmse(node, hessian_info_service)
+        node_hessian_scores = _compute_hessian_for_hmse(node, hessian_info_service, num_hessian_samples)
         node_hessian_scores = np.sqrt(np.mean(node_hessian_scores, axis=0))
 
         return lambda x, y, threshold: _hmse_error_function_wrapper(x, y, norm=norm, axis=axis,

@@ -18,7 +18,6 @@ from typing import Callable
 
 from tqdm import tqdm
 
-from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.base_graph import Graph

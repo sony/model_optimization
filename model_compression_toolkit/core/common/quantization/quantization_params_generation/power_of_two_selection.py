@@ -15,7 +15,8 @@
 import numpy as np
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
-from model_compression_toolkit.constants import MIN_THRESHOLD, THRESHOLD
+from model_compression_toolkit.constants import MIN_THRESHOLD, THRESHOLD, NUM_QPARAM_HESSIAN_SAMPLES
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_search import \
     qparams_selection_tensor_search, qparams_selection_histogram_search
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import max_power_of_two, get_tensor_max
@@ -33,7 +34,9 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
                                   min_threshold: float = MIN_THRESHOLD,
                                   quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE,
                                   node=None,
-                                  hessian_info_service=None) -> dict:
+                                  hessian_info_service: HessianInfoService = None,
+                                  num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES,
+                                  ) -> dict:
     """
     Compute the power of two threshold based on the provided QuantizationErrorMethod to quantize the tensor.
     Different search is applied, depends on the value of the selected QuantizationErrorMethod.
@@ -49,6 +52,7 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
         quant_error_method: an error function to optimize the parameters' selection accordingly.
         node: The node for which the quantization error is computed (used only with HMSE error method).
         hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
+        num_hessian_samples: Number of samples to approximate Hessian-based scores on (used only with HMSE error method).
 
     Returns:
         Power of two threshold to quantize the tensor in a power of 2 manner.
@@ -63,7 +67,8 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
         error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.POWER_OF_TWO,
                                                                        quant_error_method, p, axis=axis, norm=False,
                                                                        n_bits=n_bits, signed=signed, node=node,
-                                                                       hessian_info_service=hessian_info_service)
+                                                                       hessian_info_service=hessian_info_service,
+                                                                       num_hessian_samples=num_hessian_samples)
         threshold = qparams_selection_tensor_search(error_function,
                                                     tensor_data,
                                                     n_bits,

@@ -17,6 +17,7 @@ import copy
 from tqdm import tqdm
 from typing import List
 
+from model_compression_toolkit.constants import NUM_QPARAM_HESSIAN_SAMPLES
 from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.hessian import HessianInfoService
@@ -30,7 +31,8 @@ from model_compression_toolkit.logger import Logger
 def calculate_quantization_params(graph: Graph,
                                   nodes: List[BaseNode] = [],
                                   specific_nodes: bool = False,
-                                  hessian_info_service: HessianInfoService = None):
+                                  hessian_info_service: HessianInfoService = None,
+                                  num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES):
     """
     For a graph, go over its nodes, compute quantization params (for both weights and activations according
     to the given framework info), and create and attach a NodeQuantizationConfig to each node (containing the
@@ -45,6 +47,7 @@ def calculate_quantization_params(graph: Graph,
         nodes: List of nodes to compute their thresholds instead of computing it for all nodes in the graph.
         specific_nodes: Flag to compute thresholds for only specific nodes.
         hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
+        num_hessian_samples: Number of samples to approximate Hessian-based scores on (used only with HMSE error method).
 
     """
 
@@ -81,7 +84,8 @@ def calculate_quantization_params(graph: Graph,
                                                          mod_attr_cfg,
                                                          output_channels_axis,
                                                          node=n,
-                                                         hessian_info_service=hessian_info_service)
+                                                         hessian_info_service=hessian_info_service,
+                                                         num_hessian_samples=num_hessian_samples)
                     attr_cfg.set_weights_quantization_param(weights_params)
 
             if n.is_activation_quantization_enabled():
