@@ -19,6 +19,7 @@ from sklearn.cluster import KMeans
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.constants import LUT_VALUES, MIN_THRESHOLD, SCALE_PER_CHANNEL, \
     LUT_VALUES_BITWIDTH, THRESHOLD
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import \
     max_power_of_two, int_quantization_with_threshold
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import \
@@ -37,7 +38,9 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
                       n_iter: int = 10,
                       min_threshold: float = MIN_THRESHOLD,
                       quant_error_method: qc.QuantizationErrorMethod = None,
-                      is_symmetric=False) -> dict:
+                      is_symmetric=False,
+                      node=None,
+                      hessian_info_service: HessianInfoService = None) -> dict:
     """
     The quantizer first finds the closest max value per channel of tensor_data.
     Now, we divide tensor_data with the threshold vector per channel. In addition, we scale the result to the range
@@ -53,7 +56,9 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
         n_iter: Number of iterations to search_methods for the optimal threshold.
         min_threshold: Minimal threshold to chose when the computed one is smaller.
         quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
-        is_symmetric (bool): Whether to apply symmetric weight quantization (default is False, meaning power of 2 quantization)
+        is_symmetric (bool): Whether to apply symmetric weight quantization (default is False, meaning power of 2 quantization).
+        node: The node for which the quantization error is computed (used only with HMSE error method).
+        hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
 
     Returns:
         A dictionary containing the cluster assignments according to the k-means algorithm,
