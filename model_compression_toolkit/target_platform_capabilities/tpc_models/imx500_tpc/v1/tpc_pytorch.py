@@ -18,7 +18,7 @@ import operator
 import torch
 from torch import add, sub, mul, div, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, chunk, unbind, topk, \
     gather, equal, transpose, permute, argmax, squeeze
-from torch.nn import Conv2d, Linear, ConvTranspose2d, Identity
+from torch.nn import Conv2d, Linear, BatchNorm2d, ConvTranspose2d
 from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, LeakyReLU
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, leaky_relu
@@ -64,8 +64,7 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                    BIAS_ATTR: DefaultDict(default_value=BIAS)}
 
     with pytorch_tpc:
-        tp.OperationsSetToLayers("NoQuantization", [Identity,
-                                                    Dropout,
+        tp.OperationsSetToLayers("NoQuantization", [Dropout,
                                                     Flatten,
                                                     dropout,
                                                     flatten,
@@ -73,6 +72,7 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     operator.getitem,
                                                     reshape,
                                                     unsqueeze,
+                                                    BatchNorm2d,
                                                     chunk,
                                                     unbind,
                                                     torch.Tensor.size,

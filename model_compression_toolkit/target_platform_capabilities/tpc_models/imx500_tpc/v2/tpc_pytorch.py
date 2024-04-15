@@ -19,7 +19,7 @@ import torch
 from torch import add, sub, mul, div, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, chunk, unbind, topk, \
     gather, equal, transpose, permute, argmax, squeeze
 from torch.nn import Conv2d, Linear, ConvTranspose2d
-from torch.nn import Dropout, Flatten, Hardtanh
+from torch.nn import Dropout, Flatten, Hardtanh, Identity
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, LeakyReLU
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, leaky_relu
 
@@ -65,7 +65,8 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                    BIAS_ATTR: DefaultDict(default_value=BIAS)}
 
     with pytorch_tpc:
-        tp.OperationsSetToLayers("NoQuantization", [Dropout,
+        tp.OperationsSetToLayers("NoQuantization", [Identity,
+                                                    Dropout,
                                                     Flatten,
                                                     dropout,
                                                     flatten,
