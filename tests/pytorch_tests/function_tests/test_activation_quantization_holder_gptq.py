@@ -73,7 +73,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         # the last module should be an activation quantization holder
         self.assertTrue(isinstance(last_module, PytorchActivationQuantizationHolder))
         # check that 4 activation quantization holders where generated
-        self.assertTrue(len(activation_quantization_holders_in_model) == 3)
+        self.assertTrue(len(activation_quantization_holders_in_model) == 4)
         for a in activation_quantization_holders_in_model:
             self.assertTrue(isinstance(a.activation_holder_quantizer, ActivationPOTInferableQuantizer))
         for name, module in gptq_model.named_modules():
@@ -102,7 +102,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         # the last module should be an activation quantization holder
         self.assertTrue(isinstance(last_module, PytorchActivationQuantizationHolder))
         # check that 4 activation quantization holders where generated
-        self.assertTrue(len(activation_quantization_holders_in_model) == 3)
+        self.assertTrue(len(activation_quantization_holders_in_model) == 4)
         for a in activation_quantization_holders_in_model:
             self.assertTrue(isinstance(a.activation_holder_quantizer, ActivationPOTInferableQuantizer))
         for name, module in gptq_model.named_modules():
