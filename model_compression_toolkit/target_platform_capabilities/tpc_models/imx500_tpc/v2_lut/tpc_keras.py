@@ -26,11 +26,11 @@ if FOUND_SONY_CUSTOM_LAYERS:
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
-        Conv2DTranspose
+        Conv2DTranspose, Identity
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
-        Conv2DTranspose
+        Conv2DTranspose, Identity
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v2_lut.tp_model import get_tp_model
 import model_compression_toolkit as mct
@@ -61,7 +61,9 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
 
     keras_tpc = tp.TargetPlatformCapabilities(tp_model, name=name, version=TPC_VERSION)
 
-    no_quant_list = [Reshape,
+    no_quant_list = [Identity,
+                     tf.identity,
+                     Reshape,
                      tf.reshape,
                      Permute,
                      tf.transpose,
