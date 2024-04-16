@@ -38,6 +38,7 @@ def argmax_output_model(input_shape):
     model = keras.Model(inputs=inputs, outputs=outputs)
     return model
 
+
 def nms_output_model(input_shape):
     inputs = layers.Input(shape=input_shape)
     x = layers.Conv2D(1, 3, padding='same')(inputs)
@@ -49,7 +50,7 @@ def nms_output_model(input_shape):
     y = tf.concat([x, x], -1)
     y = tf.concat([y, y], -1)
     scores = tf.concat([x, y], -1) # shape = (batch, detections, classes)
-    boxes, _ = tf.split(x, (4,12), -1)
+    boxes, _ = tf.split(x, (4, 12), -1)
     boxes = tf.expand_dims(boxes, 2) # shape = (batch, detections, 1, box coordinates)
 
     # NMS layer
@@ -103,6 +104,7 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
         with self.assertRaises(Exception) as e:
             self.verify_test_for_model(model)
         self.assertTrue("All graph outputs must support Hessian score computation" in str(e.exception))
+
 
 if __name__ == '__main__':
     unittest.main()

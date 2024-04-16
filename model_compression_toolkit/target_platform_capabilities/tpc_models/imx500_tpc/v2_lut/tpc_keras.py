@@ -122,7 +122,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
         tp.OperationsSetToLayers("Add", [tf.add, Add])
         tp.OperationsSetToLayers("Sub", [tf.subtract, Subtract])
         tp.OperationsSetToLayers("Mul", [tf.math.multiply, Multiply])
-        tp.OperationsSetToLayers("Div", [tf.math.divide])
+        tp.OperationsSetToLayers("Div", [tf.math.divide, tf.math.truediv])
         tp.OperationsSetToLayers("PReLU", [PReLU])
         tp.OperationsSetToLayers("Swish", [tf.nn.swish, tp.LayerFilterParams(Activation, activation="swish")])
         tp.OperationsSetToLayers("Sigmoid", [tf.nn.sigmoid, tp.LayerFilterParams(Activation, activation="sigmoid")])

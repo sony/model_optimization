@@ -29,7 +29,7 @@ if FOUND_TORCH:
 
     def fully_quantized_wrapper(node: common.BaseNode,
                                 module: torch.nn.Module,
-                                fw_impl) -> Union[torch.nn.Module,PytorchQuantizationWrapper]:
+                                fw_impl) -> Union[torch.nn.Module, PytorchQuantizationWrapper]:
         """
         A function which takes a computational graph node and a pytorch module and
         perform the quantization wrapping
@@ -37,12 +37,15 @@ if FOUND_TORCH:
         Args:
             node: A node of mct graph.
             module: A Pytorch module
+            fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         Returns: Wrapped layer
 
         """
-        weight_quantizers, _ = fw_impl.get_inferable_quantizers(node)
+        weight_quantizers, _, weights_values = fw_impl.get_inferable_quantizers(node)
         if len(weight_quantizers) > 0:
-            return PytorchQuantizationWrapper(module, weight_quantizers)
+            if weights_values is not None:
+                weights_values = {k: fw_impl.to_tensor(v) for k, v in weights_values.items()}
+            return PytorchQuantizationWrapper(module, weight_quantizers, weights_values)
         return module
 
     def get_activation_quantizer_holder(node: BaseNode, fw_impl) -> Callable:
@@ -51,10 +54,11 @@ if FOUND_TORCH:
         If the layer is not supposed to be wrapped with an activation quantizer - return None.
         Args:
             node: Node to attach a PytorchActivationQuantizationHolder to its output.
+            fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         Returns:
             A PytorchActivationQuantizationHolder module for the node's activation quantization.
         """
-        _, activation_quantizers = fw_impl.get_inferable_quantizers(node)
+        _, activation_quantizers, _ = fw_impl.get_inferable_quantizers(node)
         # Holder by definition uses a single quantizer for the activation quantization
         # thus we make sure this is the only possible case (unless it's a node we no activation
         # quantization, which in this case has an empty list).

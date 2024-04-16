@@ -223,7 +223,7 @@ def compute_kl_divergence(float_tensor: np.ndarray, fxp_tensor: np.ndarray, batc
                           axis: int = None) -> float:
     """
     Compute the similarity between two tensor using KL-divergence.
-    The returned values is between 0 to 1: the smaller returned value,
+    The returned values is between 0 and 1: the smaller returned value,
     the greater similarity there is between the two tensors.
 
     Args:
@@ -245,6 +245,6 @@ def compute_kl_divergence(float_tensor: np.ndarray, fxp_tensor: np.ndarray, batc
     non_zero_fxp_tensor[non_zero_fxp_tensor == 0] = EPS
 
     prob_distance = np.where(float_flat != 0, float_flat * np.log(float_flat / non_zero_fxp_tensor), 0)
-    # The sum is part of the KL-Divergance function.
+    # The sum is part of the KL-Divergence function.
     # The mean is to aggregate the distance between each output probability vectors.
     return np.mean(np.sum(prob_distance, axis=-1), axis=-1)

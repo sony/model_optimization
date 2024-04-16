@@ -33,19 +33,21 @@ def get_tp_model() -> TargetPlatformModel:
     NOTE: in order to generate a target platform model with different configurations but with the same Operators Sets
     (for tests, experiments, etc.), use this method implementation as a test-case, i.e., override the
     'get_op_quantization_configs' method and use its output to call 'generate_tp_model' with your configurations.
-    This version enables metadata by default
+    This version enables metadata by default.
 
     Returns: A TargetPlatformModel object.
 
     """
-    base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
+    base_config, mixed_precision_cfg_list, default_config, const_config = get_op_quantization_configs()
     return generate_tp_model(default_config=default_config,
                              base_config=base_config,
                              mixed_precision_cfg_list=mixed_precision_cfg_list,
+                             const_config=const_config,
                              name='imx500_lut_tp_model')
 
 
-def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig], OpQuantizationConfig]:
+def get_op_quantization_configs() -> \
+        Tuple[OpQuantizationConfig, List[OpQuantizationConfig], OpQuantizationConfig, OpQuantizationConfig]:
     """
     Creates a default configuration object for 8-bit quantization, to be used to set a default TargetPlatformModel.
     In addition, creates a default configuration objects list (with 8, 4 and 2 bit quantization) to be used as
@@ -64,6 +66,14 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         lut_values_bitwidth=None)
 
     # We define a quantization config to quantize the kernel (for layers where there is a kernel attribute).
+    const_config = AttributeQuantizationConfig(
+        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        weights_n_bits=8,
+        weights_per_channel_threshold=False,
+        enable_weights_quantization=True,
+        lut_values_bitwidth=None)
+
+    # define a quantization config to quantize the kernel (for layers where there is a kernel attribute).
     kernel_base_config = AttributeQuantizationConfig(
         weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
         weights_n_bits=8,
@@ -82,6 +92,19 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
     # Create a quantization config.
     # A quantization configuration defines how an operator
     # should be quantized on the modeled hardware:
+
+    # We define a default config for operation positional weights.
+    # This is the default config that should be used for layers and functional with constant inputs.
+    const_default = tp.OpQuantizationConfig(
+        default_weight_attr_config=const_config,
+        attr_weights_configs_mapping={},
+        activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+        activation_n_bits=8,
+        enable_activation_quantization=True,
+        quantization_preserving=False,
+        fixed_scale=None,
+        fixed_zero_point=None,
+        simd_size=32)
 
     # We define a default config for operation without kernel attribute.
     # This is the default config that should be used for non-linear operations.
@@ -123,12 +146,13 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         simd_size=linear_eight_bits.simd_size * 4)
     mixed_precision_cfg_list = [linear_eight_bits, four_bits_lut, two_bits_lut]
 
-    return linear_eight_bits, mixed_precision_cfg_list, eight_bits_default
+    return linear_eight_bits, mixed_precision_cfg_list, eight_bits_default, const_default
 
 
 def generate_tp_model(default_config: OpQuantizationConfig,
                       base_config: OpQuantizationConfig,
                       mixed_precision_cfg_list: List[OpQuantizationConfig],
+                      const_config: OpQuantizationConfig,
                       name: str) -> TargetPlatformModel:
     """
     Generates TargetPlatformModel with default defined Operators Sets, based on the given base configuration and
@@ -149,6 +173,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
     default_configuration_options = tp.QuantizationConfigOptions([default_config])
+
+    const_configuration_options = tp.QuantizationConfigOptions([const_config])
 
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
@@ -181,10 +207,10 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # Define operations sets without quantization configuration
         # options (useful for creating fusing patterns, for example):
         any_relu = tp.OperatorsSet("AnyReLU")
-        add = tp.OperatorsSet("Add")
-        sub = tp.OperatorsSet("Sub")
-        mul = tp.OperatorsSet("Mul")
-        div = tp.OperatorsSet("Div")
+        add = tp.OperatorsSet("Add", const_configuration_options)
+        sub = tp.OperatorsSet("Sub", const_configuration_options)
+        mul = tp.OperatorsSet("Mul", const_configuration_options)
+        div = tp.OperatorsSet("Div", const_configuration_options)
         prelu = tp.OperatorsSet("PReLU")
         swish = tp.OperatorsSet("Swish")
         sigmoid = tp.OperatorsSet("Sigmoid")

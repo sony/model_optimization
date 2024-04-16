@@ -396,8 +396,8 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: True if the node should be considered an interest point, False otherwise.
         """
 
-        if node.type in [Conv2d, Linear, ConvTranspose2d, Sigmoid, sigmoid, Softmax, softmax, operator.add, add, cat,
-                         operator.concat]:
+        if any([node.is_match_type(_type) for _type in [Conv2d, Linear, ConvTranspose2d, Sigmoid, sigmoid, Softmax,
+                                                        softmax, operator.add, add, cat, operator.concat]]):
             return True
         return False
 
@@ -462,12 +462,12 @@ class PytorchImplementation(FrameworkImplementation):
         kernel_shape = node.get_weights_by_keys(fw_info.get_kernel_op_attributes(node.type)[0]).shape
         output_channel_axis, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
 
-        if node.type is Conv2d or node.type is ConvTranspose2d:
+        if node.is_match_type(Conv2d) or node.is_match_type(ConvTranspose2d):
             # (C_out * W_out * H_out) * C_in * (W_kernel * H_kernel)
             return np.prod([x for x in output_shape if x is not None]) * \
                    kernel_shape[input_channel_axis] * \
                    (kernel_shape[0] * kernel_shape[1])
-        elif node.type is Linear:
+        elif node.is_match_type(Linear):
             # IN * OUT
             return kernel_shape[0] * kernel_shape[1]
         else:
@@ -550,7 +550,7 @@ class PytorchImplementation(FrameworkImplementation):
         Returns:
             weight_quantizers: A dictionary between a weight's name to its quantizer.
             activation_quantizers: A list of activations quantization, one for each layer output.
-
+            weight_values: A dictionary between a weight's name to its value. Relevant for positional weights only.
         """
 
         return get_inferable_quantizers(node,

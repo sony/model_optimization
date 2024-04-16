@@ -89,6 +89,7 @@ from tests.pytorch_tests.model_tests.feature_models.metadata_test import Metadat
 from tests.pytorch_tests.model_tests.feature_models.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from tests.pytorch_tests.model_tests.feature_models.const_quantization_test import ConstQuantizationTest
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
@@ -223,6 +224,14 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         ResidualCollapsingTest1(self).run_test()
         ResidualCollapsingTest2(self).run_test()
+
+    def test_const_quantization(self):
+        c = (np.ones((32,)) + np.random.random((32,))).astype(np.float32)
+        for func in [torch.add, torch.sub, torch.mul, torch.div]:
+            ConstQuantizationTest(self, func, c).run_test()
+            ConstQuantizationTest(self, func, c, input_reverse_order=True).run_test()
+            ConstQuantizationTest(self, func, 2.45).run_test()
+            ConstQuantizationTest(self, func, 5, input_reverse_order=True).run_test()
 
     def test_const_representation(self):
         c = (np.ones((32,)) + np.random.random((32,))).astype(np.float32)
