@@ -88,9 +88,15 @@ from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test impo
 from tests.pytorch_tests.model_tests.feature_models.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import RemoveIdentityTest
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
+    def test_remove_identity(self):
+        """
+        This test checks that identity layers are removed from the model.
+        """
+        RemoveIdentityTest(self).run_test()
 
     def test_single_layer_replacement(self):
         """
