@@ -387,20 +387,6 @@ class BaseNode:
                 return True
         return False
 
-    def get_kernel_attribute_name(self, fw_info) -> Union[str, None]:
-        """
-        Return the node's kernel attribute name if exists, otherwise returns None.
-
-        Args:
-            fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize).
-
-        Returns: The node's kenrel attribute name or None if no kernel attribute for this node.
-        """
-        attrs = fw_info.get_kernel_op_attributes(self.type)
-        if len(attrs) > 0:
-            return attrs[0]
-        return None
-
     def has_any_weight_attr_to_quantize(self) -> bool:
         """
         Checks whether the node has any weights attribute that is supposed to be quantized, based on its provided

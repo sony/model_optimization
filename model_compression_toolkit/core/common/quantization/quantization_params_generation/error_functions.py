@@ -374,7 +374,8 @@ def _get_sliced_histogram(bins: np.ndarray,
     return bins_subset, counts_subset
 
 
-def _compute_hessian_for_hmse(node, hessian_info_service: HessianInfoService,
+def _compute_hessian_for_hmse(node,
+                              hessian_info_service: HessianInfoService,
                               num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> List[np.ndarray]:
     """
     Compute and retrieve Hessian-based scores for using during HMSE error computation.

@@ -18,6 +18,8 @@ from typing import Any
 import numpy as np
 
 from model_compression_toolkit.constants import EPS
+from model_compression_toolkit.logger import Logger
+
 
 #########################
 #  Helpful functions
@@ -111,6 +113,9 @@ def compute_mse(float_tensor: np.ndarray,
 
     if weights is not None:
         w_flat = flatten_tensor(weights, batch, axis)
+        if w_flat.shape != float_flat.shape:
+            Logger.critical(f"Shape mismatch: The shape of the weights tensor {weights.shape} does not match the shape "
+                            f"of the input tensors {float_flat.shape} for Weighted-MSE computation.")  # pragma: no cover
         error = ((w_flat * (float_flat - fxp_flat)) ** 2).mean(axis=-1)
     else:
         error = ((float_flat - fxp_flat) ** 2).mean(axis=-1)

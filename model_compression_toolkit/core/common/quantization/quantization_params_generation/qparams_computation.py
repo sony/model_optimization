@@ -72,12 +72,15 @@ def calculate_quantization_params(graph: Graph,
 
                     mod_attr_cfg = attr_cfg
 
-                    kernel_attr_name = n.get_kernel_attribute_name(graph.fw_info)
-                    if (attr_cfg.weights_error_method == QuantizationErrorMethod.HMSE and
-                            (kernel_attr_name is None or kernel_attr_name not in attr)):
-                        Logger.warning(f"The HMSE error method for parameters selection is only supported for kernel "
-                                       f"weights attributes. Running parameters selection for attribute '{attr}' "
-                                       f"in node '{n.name}' with the default MSE error method instead.")
+                    if attr_cfg.weights_error_method == QuantizationErrorMethod.HMSE:
+                        kernel_attr_name = graph.fw_info.get_kernel_op_attributes(n.type)
+                        if len(kernel_attr_name) > 0:
+                            kernel_attr_name = kernel_attr_name[0]
+
+                        if kernel_attr_name is None or len(kernel_attr_name) == 0 or kernel_attr_name not in attr:
+                            Logger.warning(f"The HMSE error method for parameters selection is only supported for "
+                                           f"kernel weights attributes. Running parameters selection for attribute "
+                                           f"'{attr}' in node '{n.name}' with the default MSE error method instead.")
                         mod_attr_cfg = copy.deepcopy(attr_cfg)
                         mod_attr_cfg.weights_error_method = QuantizationErrorMethod.MSE
 
