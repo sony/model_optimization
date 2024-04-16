@@ -252,12 +252,17 @@ class TestGetPytorchTPC(unittest.TestCase):
 
     def test_get_pytorch_supported_version(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)  # Latest
-        self.assertTrue(tpc.version == 'v1')
+        self.assertTrue(tpc.version == 'v2')
+
         tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v1')
         self.assertTrue(tpc.version == 'v1')
+        tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v2')
+        self.assertTrue(tpc.version == 'v2')
 
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v1")
         self.assertTrue(tpc.version == 'v1')
+        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v2")
+        self.assertTrue(tpc.version == 'v2')
 
         tpc = mct.get_target_platform_capabilities(PYTORCH, TFLITE_TP_MODEL, "v1")
         self.assertTrue(tpc.version == 'v1')

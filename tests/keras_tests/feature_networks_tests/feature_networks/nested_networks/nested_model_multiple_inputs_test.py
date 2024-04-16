@@ -28,6 +28,7 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 
 import numpy as np
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from mct_quantizers.keras.metadata import MetadataLayer
 
 keras = tf.keras
 layers = keras.layers
@@ -73,7 +74,7 @@ class NestedModelMultipleInputsTest(BaseKerasFeatureNetworkTest):
                 self.unit_test.assertFalse(isinstance(l.layer, Functional) or isinstance(l.layer, Sequential))
             else:
                 self.unit_test.assertFalse(isinstance(l, Functional) or isinstance(l, Sequential))
-        num_layers = 8
+        num_layers = 8 + int(isinstance(quantized_model.layers[-1], MetadataLayer))
         num_fq_layers = 7
         self.unit_test.assertTrue(len(quantized_model.layers) == (num_layers+num_fq_layers))
         y = float_model.predict(input_x)
