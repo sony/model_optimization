@@ -19,6 +19,7 @@ import tensorflow as tf
 
 import model_compression_toolkit as mct
 from sony_custom_layers.keras.object_detection.ssd_post_process import SSDPostProcess
+from mct_quantizers.keras.metadata import MetadataLayer
 
 keras = tf.keras
 layers = keras.layers
@@ -56,7 +57,8 @@ class TestSonySsdPostProcessLayer(unittest.TestCase):
                                                               target_resource_utilization=mct.core.ResourceUtilization(weights_memory=6000))
 
         # verify the custom layer is in the quantized model
-        self.assertTrue(isinstance(q_model.layers[-1], SSDPostProcess), 'Custom layer should be in the quantized model')
+        last_model_layer_index = -2 if isinstance(q_model.layers[-1], MetadataLayer) else -1
+        self.assertTrue(isinstance(q_model.layers[last_model_layer_index], SSDPostProcess), 'Custom layer should be in the quantized model')
         # verify mixed-precision
         self.assertTrue(any([q_model.layers[2].weights_quantizers['kernel'].num_bits < 8,
                              q_model.layers[4].weights_quantizers['kernel'].num_bits < 8]))

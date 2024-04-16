@@ -265,7 +265,7 @@ class TestGetKerasTPC(unittest.TestCase):
 
     def test_get_keras_supported_version(self):
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)  # Latest
-        self.assertTrue(tpc.version == 'v1')
+        self.assertTrue(tpc.version == 'v2')
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1_pot')
         self.assertTrue(tpc.version == 'v1_pot')
@@ -273,12 +273,20 @@ class TestGetKerasTPC(unittest.TestCase):
         self.assertTrue(tpc.version == 'v1_lut')
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1')
         self.assertTrue(tpc.version == 'v1')
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v2_lut')
+        self.assertTrue(tpc.version == 'v2_lut')
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v2')
+        self.assertTrue(tpc.version == 'v2')
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1")
         self.assertTrue(tpc.version == 'v1')
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v2")
+        self.assertTrue(tpc.version == 'v2')
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1_lut")
         self.assertTrue(tpc.version == 'v1_lut')
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v2_lut")
+        self.assertTrue(tpc.version == 'v2_lut')
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1_pot")
         self.assertTrue(tpc.version == 'v1_pot')
