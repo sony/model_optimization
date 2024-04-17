@@ -28,7 +28,7 @@ class OutputInTheMiddleNet(torch.nn.Module):
 
     def forward(self, x):
         x1 = self.conv1(x)
-        x2 = self.identity(x1)
+        x2 = torch.relu(x1)
         x3 = self.conv2(x2)
         x4 = torch.relu(x3)
         return x, x1, x2, x3, x4
