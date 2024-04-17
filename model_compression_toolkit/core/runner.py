@@ -48,6 +48,7 @@ def core_runner(in_model: Any,
                 fw_impl: FrameworkImplementation,
                 tpc: TargetPlatformCapabilities,
                 target_resource_utilization: ResourceUtilization = None,
+                running_gptq: bool = False,
                 tb_w: TensorboardWriter = None):
     """
     Quantize a trained model using post-training quantization.
@@ -97,7 +98,8 @@ def core_runner(in_model: Any,
                                      fw_impl,
                                      tpc,
                                      tb_w,
-                                     mixed_precision_enable=core_config.mixed_precision_enable)
+                                     mixed_precision_enable=core_config.mixed_precision_enable,
+                                     running_gptq=running_gptq)
 
     hessian_info_service = HessianInfoService(graph=graph,
                                               representative_dataset=representative_data_gen,
@@ -108,7 +110,8 @@ def core_runner(in_model: Any,
                                          core_config=core_config,
                                          fw_info=fw_info,
                                          fw_impl=fw_impl,
-                                         tb_w=tb_w)
+                                         tb_w=tb_w,
+                                         hessian_info_service=hessian_info_service)
 
     ######################################
     # Finalize bit widths
