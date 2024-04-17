@@ -91,6 +91,7 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
     tpc = get_tpc_with_activation_mp_keras(base_config=base_config,
                                            default_config=default_config,
                                            mp_bitwidth_candidates_list=mp_bitwidth_candidates_list,
+                                           const_config=default_config,
                                            name="ru_data_test")
 
     ru_data = mct.core.keras_resource_utilization_data(in_model=model,

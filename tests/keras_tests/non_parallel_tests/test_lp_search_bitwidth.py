@@ -203,7 +203,7 @@ class TestLpSearchBitwidth(unittest.TestCase):
 class TestSearchBitwidthConfiguration(unittest.TestCase):
 
     def run_search_bitwidth_config_test(self, core_config):
-        base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
+        base_config, mixed_precision_cfg_list, default_config, const_config = get_op_quantization_configs()
         base_config = base_config.clone_and_edit(enable_activation_quantization=False)
 
         tpc = get_weights_only_mp_tpc_keras(base_config=base_config,
@@ -212,6 +212,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
                                                 (c.attr_weights_configs_mapping[KERNEL_ATTR].weights_n_bits,
                                                  c.activation_n_bits) for c
                                                 in mixed_precision_cfg_list],
+                                            const_config=const_config,
                                             name="bitwidth_cfg_test")
 
         fw_info = DEFAULT_KERAS_INFO

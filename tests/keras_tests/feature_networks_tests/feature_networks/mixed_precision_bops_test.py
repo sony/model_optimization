@@ -39,11 +39,12 @@ class BaseMixedPrecisionBopsTest(BaseKerasFeatureNetworkTest):
         self.mixed_precision_candidates_list = mixed_precision_candidates_list
 
     def get_tpc(self):
-        base_config, _, default_config = get_op_quantization_configs()
+        base_config, _, default_config, const_config = get_op_quantization_configs()
 
         return get_tpc_with_activation_mp_keras(base_config=base_config,
                                                 default_config=default_config,
                                                 mp_bitwidth_candidates_list=self.mixed_precision_candidates_list,
+                                                const_config=const_config,
                                                 name="mp_bopts_test")
 
     def get_mixed_precision_config(self):

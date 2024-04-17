@@ -40,11 +40,11 @@ def prepare_graph_with_configs(in_model,
                                qc=DEFAULTCONFIG,
                                mixed_precision_enabled=False):
     # TPC
-    base_config, op_cfg_list, default_config = get_op_quantization_configs()
+    base_config, op_cfg_list, default_config, const_config = get_op_quantization_configs()
 
     # To override the default TP in the test - pass a TPC generator function that includes a generation of the TP
     # and doesn't use the TP that is passed from outside.
-    _tp = generate_tp_model(default_config, base_config, op_cfg_list, "function_test")
+    _tp = generate_tp_model(default_config, base_config, op_cfg_list, const_config, "function_test")
     tpc = get_tpc_func("function_test", _tp)
 
     # Read Model

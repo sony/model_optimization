@@ -95,7 +95,7 @@ def representative_dataset():
     yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]
 
 
-def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_config, default_config):
+def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_config, default_config, const_config):
     fw_info = DEFAULT_KERAS_INFO
     qc = mct.core.QuantizationConfig()
 
@@ -104,6 +104,7 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
     tpc = get_tpc_with_activation_mp_keras(base_config=base_config,
                                            default_config=default_config,
                                            mp_bitwidth_candidates_list=mixed_precision_candidates_list,
+                                           const_config=const_config,
                                            name="activation_weights_composition_test")
 
     graph.set_fw_info(fw_info)
@@ -152,10 +153,10 @@ class TestActivationWeightsComposition(unittest.TestCase):
         in_model = two_conv_model()
         keras_impl = KerasImplementation()
 
-        base_config, _, default_config = get_op_quantization_configs()
+        base_config, _, default_config, const_config = get_op_quantization_configs()
         graph = prepare_graph(in_model, keras_impl,
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
-                              default_config=default_config)
+                              default_config=default_config, const_config=const_config)
 
         # Nodes composition substitution
         v_graph = substitute(copy.deepcopy(graph), [VirtualActivationWeightsComposition()])
@@ -178,10 +179,10 @@ class TestActivationWeightsComposition(unittest.TestCase):
         in_model = two_conv_model()
         keras_impl = KerasImplementation()
 
-        base_config, _, default_config = get_op_quantization_configs()
+        base_config, _, default_config, const_config = get_op_quantization_configs()
         graph = prepare_graph(in_model, keras_impl,
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
-                              default_config=default_config)
+                              default_config=default_config, const_config=const_config)
 
         # Nodes split and composition substitution
         split_graph = substitute(graph, [WeightsActivationSplit()])
@@ -193,11 +194,11 @@ class TestActivationWeightsComposition(unittest.TestCase):
         in_model = two_conv_model()
         keras_impl = KerasImplementation()
 
-        base_config, _, default_config = get_op_quantization_configs()
+        base_config, _, default_config, const_config = get_op_quantization_configs()
         base_config = base_config.clone_and_edit(enable_activation_quantization=False)
         graph = prepare_graph(in_model, keras_impl,
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
-                              default_config=default_config)
+                              default_config=default_config, const_config=const_config)
 
         # Nodes split and composition substitution
         split_graph = substitute(graph, [WeightsActivationSplit()])
@@ -214,7 +215,7 @@ class TestActivationWeightsComposition(unittest.TestCase):
 
         graph = prepare_graph(in_model, keras_impl,
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
-                              default_config=default_config)
+                              default_config=default_config, const_config=default_config)
 
         # Nodes split and composition substitution
         split_graph = substitute(graph, [WeightsActivationSplit()])
@@ -226,11 +227,12 @@ class TestActivationWeightsComposition(unittest.TestCase):
         in_model = multiple_weights_nodes_model()
         keras_impl = KerasImplementation()
 
-        base_config, _, default_config = get_op_quantization_configs()
+        base_config, _, default_config, const_config = get_op_quantization_configs()
         graph = prepare_graph(in_model, keras_impl,
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(),
                               base_config=base_config,
-                              default_config=default_config)
+                              default_config=default_config,
+                              const_config=const_config)
 
         # Nodes split and composition substitution
         split_graph = substitute(graph, [WeightsActivationSplit()])
@@ -264,10 +266,10 @@ class TestActivationWeightsComposition(unittest.TestCase):
         in_model = multiple_outputs_activation_model()
         keras_impl = KerasImplementation()
 
-        base_config, _, default_config = get_op_quantization_configs()
+        base_config, _, default_config, const_config = get_op_quantization_configs()
         graph = prepare_graph(in_model, keras_impl,
                               mixed_precision_candidates_list=_get_base_mp_nbits_candidates(), base_config=base_config,
-                              default_config=default_config)
+                              default_config=default_config, const_config=const_config)
 
         # Nodes composition substitution
         v_graph = substitute(graph, [VirtualActivationWeightsComposition()])

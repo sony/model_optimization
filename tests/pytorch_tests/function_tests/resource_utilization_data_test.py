@@ -102,6 +102,7 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
                                                                    kernel_cfg_nbits=mp_bitwidth_candidates_list[0][0]))
 
     default_config = base_config.clone_and_edit(attr_weights_configs_mapping={})
+    const_config = default_config.clone_and_edit()
 
     tpc_dict = get_mp_activation_pytorch_tpc_dict(
         tpc_model=generate_tp_model_with_activation_mp(
@@ -109,7 +110,8 @@ def prep_test(model, mp_bitwidth_candidates_list, random_datagen):
             default_config=default_config,
             mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
                                          (4, 8), (4, 4), (4, 2),
-                                         (2, 8), (2, 4), (2, 2)]),
+                                         (2, 8), (2, 4), (2, 2)],
+            const_config=const_config),
         test_name='ru_data_test',
         tpc_name='ru_data_test')
 

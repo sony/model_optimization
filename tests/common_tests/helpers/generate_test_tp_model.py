@@ -30,7 +30,7 @@ BIAS_CONFIG = 'bias_config'
 
 
 def generate_test_tp_model(edit_params_dict, name=""):
-    base_config, op_cfg_list, default_config = get_op_quantization_configs()
+    base_config, op_cfg_list, default_config, const_config = get_op_quantization_configs()
 
     # separate weights attribute parameters from the requested param to edit
     weights_params_names = [name for name in tp.AttributeQuantizationConfig.__init__.__code__.co_varnames if name != 'self']
@@ -45,6 +45,9 @@ def generate_test_tp_model(edit_params_dict, name=""):
         attr_weights_configs_mapping[KERNEL_ATTR].clone_and_edit(**weights_params)
     updated_config = base_config.clone_and_edit(attr_weights_configs_mapping=attr_weights_configs_mapping,
                                                 **rest_params)
+    default_weights_config = const_config.default_weight_attr_config.clone_and_edit(**weights_params)
+    updated_const_config = const_config.clone_and_edit(default_weight_attr_config=default_weights_config,
+                                                       **rest_params)
 
     # For the default config, we only update the non-weights attributes argument, since the behaviour for the weights
     # quantization is supposed to remain the default defined behavior
@@ -57,10 +60,12 @@ def generate_test_tp_model(edit_params_dict, name=""):
     return generate_tp_model(default_config=updated_default_config,
                              base_config=updated_config,
                              mixed_precision_cfg_list=op_cfg_list,
+                             const_config=updated_const_config,
                              name=name)
 
 
-def generate_mixed_precision_test_tp_model(base_cfg, default_config, mp_bitwidth_candidates_list, name=""):
+def generate_mixed_precision_test_tp_model(base_cfg, default_config, mp_bitwidth_candidates_list,
+                                           const_config, name=""):
     mp_op_cfg_list = []
     for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
         candidate_cfg = base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: weights_n_bits}},
@@ -71,10 +76,12 @@ def generate_mixed_precision_test_tp_model(base_cfg, default_config, mp_bitwidth
     return generate_tp_model(default_config=default_config,
                              base_config=base_cfg,
                              mixed_precision_cfg_list=mp_op_cfg_list,
+                             const_config=const_config,
                              name=name)
 
 
-def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_candidates_list, name="activation_mp_model"):
+def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_candidates_list,
+                                         const_config, name="activation_mp_model"):
     mp_op_cfg_list = []
     for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
 
@@ -90,6 +97,7 @@ def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_c
     base_tp_model = generate_tp_model(default_config=default_config,
                                       base_config=base_cfg,
                                       mixed_precision_cfg_list=mp_op_cfg_list,
+                                      const_config=const_config,
                                       name=name)
 
     mixed_precision_configuration_options = tp.QuantizationConfigOptions(mp_op_cfg_list,

@@ -139,7 +139,7 @@ class MixedPercisionSearchPartWeightsLayersTest(MixedPercisionBaseTest):
         # Building a TPC that gives Conv layers mixed precision candidates and Dense layers a fixed candidate.
         # Both layers that have weights to quantized, so we want to verify that finalizing the model is successful.
         # Note that this is important that the quantization config options would include also activation quantization.
-        cfg, mixed_precision_cfg_list, _ = get_op_quantization_configs()
+        cfg, mixed_precision_cfg_list, _, _ = get_op_quantization_configs()
 
         two_bit_cfg = mixed_precision_cfg_list[2]
 
@@ -367,6 +367,7 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
         return get_weights_only_mp_tpc_keras(base_config=base_config,
                                              default_config=default_config,
                                              mp_bitwidth_candidates_list=[(8, 16), (2, 16), (4, 16), (16, 16)],
+                                             const_config=default_config,
                                              name="mp_dw_test")
 
     def get_quantization_config(self):
@@ -394,12 +395,13 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1)
 
     def get_tpc(self):
-        base_config, _, default_config = get_op_quantization_configs()
+        base_config, _, default_config, const_config = get_op_quantization_configs()
         activation_disabled_config = base_config.clone_and_edit(enable_activation_quantization=False)
 
         return get_weights_only_mp_tpc_keras(base_config=activation_disabled_config,
                                              default_config=default_config,
                                              mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)],
+                                             const_config=const_config,
                                              name="mp_weights_only_test")
 
     def get_resource_utilization(self):

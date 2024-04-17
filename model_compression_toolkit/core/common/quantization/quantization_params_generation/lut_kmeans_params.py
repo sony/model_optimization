@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+from typing import Dict
 import numpy as np
 from sklearn.cluster import KMeans
 
@@ -37,7 +38,7 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
                       n_iter: int = 10,
                       min_threshold: float = MIN_THRESHOLD,
                       quant_error_method: qc.QuantizationErrorMethod = None,
-                      is_symmetric=False) -> dict:
+                      is_symmetric: bool = False) -> Dict:
     """
     The quantizer first finds the closest max value per channel of tensor_data.
     Now, we divide tensor_data with the threshold vector per channel. In addition, we scale the result to the range
@@ -94,7 +95,7 @@ def lut_kmeans_histogram(bins: np.ndarray,
                          constrained: bool = True,
                          n_iter: int = 20,
                          min_threshold: float = MIN_THRESHOLD,
-                         quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
+                         quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> Dict:
     """
     Finds quantization cluster points for non-uniform activation quantization.
     The quantizer first finds the closest power-of-two number to the max value of the given histogram,

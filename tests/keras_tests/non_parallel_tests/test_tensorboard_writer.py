@@ -97,13 +97,14 @@ class TestFileLogger(unittest.TestCase):
 
     def plot_tensor_sizes(self):
         model = SingleOutputNet()
-        base_config, _, default_config = get_op_quantization_configs()
+        base_config, _, default_config, const_config = get_op_quantization_configs()
         tpc_model = generate_tp_model_with_activation_mp(
             base_cfg=base_config,
             default_config=default_config,
             mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
                                          (4, 8), (4, 4), (4, 2),
-                                         (2, 8), (2, 4), (2, 2)])
+                                         (2, 8), (2, 4), (2, 2)],
+            const_config=const_config)
         tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
 
         # Hessian service assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP

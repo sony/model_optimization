@@ -67,6 +67,7 @@ class TestKerasSetLayerToBitwidth(unittest.TestCase):
             base_config=base_config,
             default_config=default_config,
             mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)],
+            const_config=default_config,
             name='set_layer_test_tpc')
 
         # In this test we need a dedicated TPC so we just override the TPC generator function that needed to be passed
@@ -102,6 +103,7 @@ class TestKerasSetLayerToBitwidth(unittest.TestCase):
             base_config=base_config,
             default_config=default_config,
             mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2)],
+            const_config=default_config,
             name='set_layer_test_tpc')
 
         # In this test we need a dedicated TPC so we just override the TPC generator function that needed to be passed

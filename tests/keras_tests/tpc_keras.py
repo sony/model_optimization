@@ -76,17 +76,19 @@ def get_weights_quantization_disabled_keras_tpc(name):
     return generate_keras_tpc(name=name, tp_model=tp)
 
 
-def get_weights_only_mp_tpc_keras(base_config, default_config, mp_bitwidth_candidates_list, name):
+def get_weights_only_mp_tpc_keras(base_config, default_config, mp_bitwidth_candidates_list, const_config, name):
     mp_tp_model = generate_mixed_precision_test_tp_model(base_cfg=base_config,
                                                          default_config=default_config,
-                                                         mp_bitwidth_candidates_list=mp_bitwidth_candidates_list)
+                                                         mp_bitwidth_candidates_list=mp_bitwidth_candidates_list,
+                                                         const_config=const_config)
     return generate_keras_tpc(name=name, tp_model=mp_tp_model)
 
 
-def get_tpc_with_activation_mp_keras(base_config, default_config, mp_bitwidth_candidates_list, name):
+def get_tpc_with_activation_mp_keras(base_config, default_config, mp_bitwidth_candidates_list, const_config, name):
     mp_tp_model = generate_tp_model_with_activation_mp(base_cfg=base_config,
                                                        default_config=default_config,
-                                                       mp_bitwidth_candidates_list=mp_bitwidth_candidates_list)
+                                                       mp_bitwidth_candidates_list=mp_bitwidth_candidates_list,
+                                                       const_config=const_config)
 
     op_sets_to_layer_add = {
         "Input": [InputLayer],
