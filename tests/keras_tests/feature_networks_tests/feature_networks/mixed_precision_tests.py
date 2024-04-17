@@ -55,7 +55,6 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
         return get_tpc_with_activation_mp_keras(base_config=eight_bits,
                                                 default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
-                                                const_config=default_config,
                                                 name="mixed_precision_activation_test")
 
     def get_quantization_config(self):
@@ -147,7 +146,6 @@ class MixedPrecisionActivationSearch4BitsAvgTest(MixedPrecisionActivationBaseTes
         return get_tpc_with_activation_mp_keras(base_config=eight_bits,
                                                 default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
-                                                const_config=default_config,
                                                 name="mixed_precision_4bit_test")
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -241,7 +239,6 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
         return get_tpc_with_activation_mp_keras(base_config=eight_bits,
                                                 default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
-                                                const_config=default_config,
                                                 name="mixed_precision_depthwise_4bit_test")
 
     def create_networks(self):
@@ -313,7 +310,6 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
         return get_tpc_with_activation_mp_keras(base_config=eight_bits,
                                                 default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
-                                                const_config=default_config,
                                                 name="mixed_precision_activation_weights_disabled_test")
 
     def get_resource_utilization(self):
@@ -362,7 +358,6 @@ class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBa
         return get_tpc_with_activation_mp_keras(base_config=eight_bits,
                                                 default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
-                                                const_config=default_config,
                                                 name="mixed_precision_activation_weights_disabled_test")
 
     def get_resource_utilization(self):

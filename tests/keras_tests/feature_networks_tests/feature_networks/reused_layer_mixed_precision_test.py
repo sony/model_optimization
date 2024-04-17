@@ -44,7 +44,6 @@ class ReusedLayerMixedPrecisionTest(BaseKerasFeatureNetworkTest):
         return get_weights_only_mp_tpc_keras(base_config=base_config,
                                              default_config=default_config,
                                              mp_bitwidth_candidates_list=[(2, 16), (4, 16), (16, 16)],
-                                             const_config=default_config,
                                              name="reused_layer_mp_test")
 
     def get_quantization_config(self):

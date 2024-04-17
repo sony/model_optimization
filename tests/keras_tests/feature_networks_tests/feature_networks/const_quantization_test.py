@@ -20,6 +20,7 @@ from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_m
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from mct_quantizers import KerasQuantizationWrapper
 
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
@@ -74,9 +75,8 @@ class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
         cs = cosine_similarity(y, y_hat)
         self.unit_test.assertTrue(np.isclose(cs, 1, atol=0.001), msg=f'fail cosine similarity check:{cs}')
+        self.unit_test.assertTrue(isinstance(quantized_model.layers[2], KerasQuantizationWrapper),
+                                  msg='TFOpLambda should be quantized')
         const_index = 0 if self.input_reverse_order else 1
-        if not hasattr(quantized_model.layers[2], 'weight_values'):
-            a=1
         self.unit_test.assertTrue((quantized_model.layers[2].weight_values[const_index] == self.const).all(),
-                                  msg='fail const similarity check')
-
+                                  msg='Constant value should not change')

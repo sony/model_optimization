@@ -46,7 +46,7 @@ class BaseLayerFusingTest(BasePytorchTest):
         return fusion_types
 
     def get_tpc(self):
-        base_config, mixed_precision_cfg_list, default_config, const_config = get_op_quantization_configs()
+        base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
         default_configuration_options = tp.QuantizationConfigOptions([default_config])
         generated_tp = tp.TargetPlatformModel(default_configuration_options, name='layer_fusing_test')
         mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,

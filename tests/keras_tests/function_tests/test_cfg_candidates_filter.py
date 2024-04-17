@@ -38,12 +38,11 @@ def get_full_bitwidth_candidates():
             (2, 8), (2, 4), (2, 2)]
 
 
-def prepare_graph(in_model, base_config, default_config, bitwidth_candidates, const_config):
+def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
     tpc = get_tpc_with_activation_mp_keras(base_config=base_config,
                                            mp_bitwidth_candidates_list=bitwidth_candidates,
                                            name="candidates_filter_test",
-                                           default_config=default_config,
-                                           const_config=const_config)
+                                           default_config=default_config)
 
     fw_info = DEFAULT_KERAS_INFO
     keras_impl = KerasImplementation()
@@ -90,8 +89,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         graph = prepare_graph(in_model,
                               base_config=base_config,
                               bitwidth_candidates=get_full_bitwidth_candidates(),
-                              default_config=default_config,
-                              const_config=default_config)
+                              default_config=default_config)
 
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
@@ -120,8 +118,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         graph = prepare_graph(in_model,
                               base_config=base_config,
                               bitwidth_candidates=get_full_bitwidth_candidates(),
-                              default_config=default_config,
-                              const_config=default_config)
+                              default_config=default_config)
 
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
@@ -150,8 +147,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         graph = prepare_graph(in_model,
                               base_config=base_config,
                               bitwidth_candidates=get_full_bitwidth_candidates(),
-                              default_config=default_config,
-                              const_config=default_config)
+                              default_config=default_config)
 
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)
@@ -175,8 +171,7 @@ class TestCfgCandidatesFilter(unittest.TestCase):
         graph = prepare_graph(in_model,
                               base_config=base_config,
                               bitwidth_candidates=[(8, 8), (4, 8), (2, 8)],
-                              default_config=default_config,
-                              const_config=default_config)
+                              default_config=default_config)
 
         # Filtering nodes; candidates
         filtered_graph = filter_nodes_candidates(graph)

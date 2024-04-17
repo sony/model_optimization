@@ -71,13 +71,12 @@ class TestSetLayerToBitwidthWeights(BasePytorchTest):
             yield self.generate_inputs(input_shapes)
 
     def run_test(self, seed=0, **kwargs):
-        base_config, _, default_config, const_config = get_op_quantization_configs()
+        base_config, _, default_config = get_op_quantization_configs()
         tpc = get_pytorch_test_tpc_dict(
             tp_model=generate_mixed_precision_test_tp_model(
                 base_cfg=base_config,
                 default_config=default_config,
-                mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)],
-                const_config=const_config),
+                mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)]),
             test_name='set_layer_bit_tests',
             ftp_name='set_layer_bit_tests')['set_layer_bit_tests']
 
@@ -122,13 +121,12 @@ class TestSetLayerToBitwidthActivation(BasePytorchTest):
             yield self.generate_inputs(input_shapes)
 
     def run_test(self, seed=0, **kwargs):
-        base_config, _, default_config, const_config = get_op_quantization_configs()
+        base_config, _, default_config = get_op_quantization_configs()
         tpc = get_pytorch_test_tpc_dict(
             tp_model=generate_mixed_precision_test_tp_model(
                 base_cfg=base_config,
                 default_config=default_config,
-                mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2)],
-                const_config=const_config),
+                mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2)]),
             test_name='set_layer_bit_tests',
             ftp_name='set_layer_bit_tests')['set_layer_bit_tests']
 

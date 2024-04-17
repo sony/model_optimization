@@ -108,7 +108,7 @@ class MixedPercisionSearchPartWeightsLayers(MixedPercisionBaseTest):
         # Building a TPC that gives Conv layers mixed precision candidates and Dense layers a fixed candidate.
         # Both layers that have weights to quantized, so we want to verify that finalizing the model is successful.
         # Note that this is important that the quantization config options would include also activation quantization.
-        cfg, mixed_precision_cfg_list, _, _ = get_op_quantization_configs()
+        cfg, mixed_precision_cfg_list, _ = get_op_quantization_configs()
 
         two_bit_cfg = mixed_precision_cfg_list[2]
 
@@ -205,13 +205,12 @@ class MixedPercisionActivationDisabledTest(MixedPercisionBaseTest):
         super().__init__(unit_test)
 
     def get_fw_hw_model(self):
-        base_config, _, default_config, const_config = get_op_quantization_configs()
+        base_config, _, default_config = get_op_quantization_configs()
         return get_pytorch_test_tpc_dict(
             tp_model=generate_mixed_precision_test_tp_model(
                 base_cfg=base_config.clone_and_edit(enable_activation_quantization=False),
                 default_config=default_config,
-                mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)],
-                const_config=const_config),
+                mp_bitwidth_candidates_list=[(8, 8), (4, 8), (2, 8)]),
             test_name='mixed_precision_model',
             ftp_name='mixed_precision_pytorch_test')
 

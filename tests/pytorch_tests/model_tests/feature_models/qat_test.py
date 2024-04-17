@@ -247,15 +247,14 @@ class QuantizationAwareTrainingMixedPrecisionCfgTest(QuantizationAwareTrainingTe
         super().__init__(unit_test)
 
     def get_tpc(self):
-        base_config, _, default_config, const_config = get_op_quantization_configs()
+        base_config, _, default_config = get_op_quantization_configs()
         return get_mp_activation_pytorch_tpc_dict(
             tpc_model=generate_tp_model_with_activation_mp(
                 base_cfg=base_config,
                 default_config=default_config,
                 mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
                                              (4, 8), (4, 4), (4, 2),
-                                             (2, 8), (2, 4), (2, 2)],
-                const_config=const_config),
+                                             (2, 8), (2, 4), (2, 2)]),
             test_name='qat_test',
             tpc_name='qat_test_tpc')['qat_test']
 
@@ -293,15 +292,14 @@ class QuantizationAwareTrainingMixedPrecisionRUCfgTest(QuantizationAwareTraining
         super().__init__(unit_test)
 
     def get_tpc(self):
-        base_config, _, default_config, const_config = get_op_quantization_configs()
+        base_config, _, default_config = get_op_quantization_configs()
         return get_mp_activation_pytorch_tpc_dict(
             tpc_model=generate_tp_model_with_activation_mp(
                 base_cfg=base_config,
                 default_config=default_config,
                 mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
                                              (4, 8), (4, 4), (4, 2),
-                                             (2, 8), (2, 4), (2, 2)],
-                const_config=const_config),
+                                             (2, 8), (2, 4), (2, 2)]),
             test_name='qat_test',
             tpc_name='qat_test_tpc')['qat_test']
 
