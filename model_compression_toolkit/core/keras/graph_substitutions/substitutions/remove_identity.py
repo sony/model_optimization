@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.substitutions.remove_identity import 
 
 class RemoveIdentity(common.BaseSubstitution):
     """
-    Remove `torch.nn.Identity` layers from the graph.
+    Remove Identity layers from the graph.
     """
 
     def __init__(self):
@@ -36,7 +36,7 @@ class RemoveIdentity(common.BaseSubstitution):
                    graph: Graph,
                    node: BaseNode) -> Graph:
         """
-        The method to perform the substitution of the `torch.nn.Identity` node by
+        The method to perform the substitution of the identity keras node by
         reconnecting its input directly to its output, effectively removing the node
         from the graph.
 

@@ -5,7 +5,7 @@ from model_compression_toolkit.core.common.graph.base_node import BaseNode
 def remove_identity_node(graph: Graph,
                          node: BaseNode) -> Graph:
     """
-    The method to perform the substitution of the `torch.nn.Identity` node by
+    The method to perform the substitution of the identity node by
     reconnecting its input directly to its output, effectively removing the node
     from the graph.
 
