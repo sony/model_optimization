@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from torch import reshape
 import torch
 
-from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.core.common.substitutions.remove_identity import remove_identity_node
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
-from model_compression_toolkit.core.pytorch.constants import BATCH_DIM_VALUE
 
 
 class RemoveIdentity(common.BaseSubstitution):
@@ -47,20 +45,6 @@ class RemoveIdentity(common.BaseSubstitution):
         Returns:
             Graph: The updated graph after removing the identity node.
         """
+        return remove_identity_node(graph, node)
 
-        # Retrieve the predecessor nodes of the identity node.
-        prev_identity_nodes = graph.get_prev_nodes(node)
-        # Ensure there is exactly one predecessor; otherwise, do nothing.
-        if len(prev_identity_nodes) != 1:
-            return graph
-
-        # Reconnect the output edges of the identity node to its predecessor,
-        # effectively bypassing the identity node.
-        graph.reconnect_out_edges(current_node=node, new_node=prev_identity_nodes[0])
-        # Remove the edge from the predecessor to the identity node.
-        graph.remove_edge(prev_identity_nodes[0], node)
-        # Remove the identity node from the graph.
-        graph.remove_node(node_to_remove=node)
-
-        return graph
 
