@@ -58,6 +58,7 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.co
     FunctionalConvSubstitution
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.remove_identity import RemoveIdentity
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.reshape_with_static_shapes import \
     ReshapeWithStaticShapes
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.residual_collapsing import \
@@ -238,7 +239,8 @@ class PytorchImplementation(FrameworkImplementation):
                 PermuteCallMethod(),
                 FunctionalConvSubstitution(fw_info),
                 FunctionalBatchNorm(),
-                FunctionalLayerNorm()]
+                FunctionalLayerNorm(),
+                RemoveIdentity()]
 
     def get_substitutions_pre_statistics_collection(self,
                                                     quant_config: QuantizationConfig

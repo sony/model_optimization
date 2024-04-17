@@ -38,13 +38,12 @@ class ReLUBoundToPOTNet(torch.nn.Module):
         self.conv3 = Conv2d(3, 3, kernel_size=1, stride=1)
         self.conv4 = Conv2d(3, 3, kernel_size=1, stride=1)
         self.relu2 = ReLU()
-        self.identity = torch.nn.Identity()
 
     def forward(self, inp):
         x = self.conv1(inp)
         x = self.relu1(x)
         x = self.conv2(x)
-        x = self.identity(x)
+        x = relu(x)
         x = self.conv3(x)
         x = relu6(x)
         x = self.conv4(x)
