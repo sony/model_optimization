@@ -15,7 +15,8 @@
 import numpy as np
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
-from model_compression_toolkit.constants import MIN_THRESHOLD, RANGE_MIN, RANGE_MAX
+from model_compression_toolkit.constants import MIN_THRESHOLD, RANGE_MIN, RANGE_MAX, NUM_QPARAM_HESSIAN_SAMPLES
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_search import \
     qparams_uniform_selection_tensor_search, qparams_uniform_selection_histogram_search
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import \
@@ -31,7 +32,10 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
                              channel_axis: int = 1,
                              n_iter: int = 10,
                              min_threshold: float = MIN_THRESHOLD,
-                             quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
+                             quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE,
+                             node=None,
+                             hessian_info_service: HessianInfoService = None,
+                             num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> dict:
     """
     Compute the optimal quantization range based on the provided QuantizationErrorMethod
     to uniformly quantize the tensor.
@@ -46,6 +50,9 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
         n_iter: Number of iterations to search for the optimal threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small (not used for this method).
         quant_error_method: an error function to optimize the range parameters' selection accordingly.
+        node: The node for which the quantization error is computed (used only with HMSE error method).
+        hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
+        num_hessian_samples: Number of samples to approximate Hessian-based scores on (used only with HMSE error method).
 
     Returns:
         Optimal quantization range to quantize the tensor uniformly.
@@ -57,7 +64,10 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
         mm = tensor_min, tensor_max
     else:
         axis = -1 if per_channel else None
-        error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.UNIFORM, quant_error_method, p, axis=axis, norm=False)
+        error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.UNIFORM, quant_error_method,
+                                                                       p, axis=axis, norm=False, node=node,
+                                                                       hessian_info_service=hessian_info_service,
+                                                                       num_hessian_samples=num_hessian_samples)
         mm = qparams_uniform_selection_tensor_search(error_function,
                                                      tensor_data,
                                                      tensor_min,

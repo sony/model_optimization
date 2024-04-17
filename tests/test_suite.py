@@ -72,7 +72,7 @@ if found_tf:
     from tests.keras_tests.pruning_tests.test_memory_calculator import TestParameterCounter
     from tests.keras_tests.pruning_tests.test_pretrained_models import PruningPretrainedModelsTest
     from tests.keras_tests.pruning_tests.feature_networks.test_pruning_feature_networks import PruningFeatureNetworksTest
-
+    from tests.keras_tests.function_tests.test_hmse_error_method import TestParamSelectionWithHMSE
 
 if found_pytorch:
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -142,6 +142,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(keras_gptq_soft_quantizer_test))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasDataGenerationTestRunner))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestParamSelectionWithHMSE))
 
     if found_pytorch:
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQModelBuilderWithActivationHolderPytorch))

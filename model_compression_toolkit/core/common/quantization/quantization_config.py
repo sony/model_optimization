@@ -26,13 +26,15 @@ class QuantizationErrorMethod(Enum):
 
     NOCLIPPING - Use min/max values as thresholds.
 
-    MSE - Use min square error for minimizing quantization noise.
+    MSE - Use mean square error for minimizing quantization noise.
 
-    MAE - Use min absolute error for minimizing quantization noise.
+    MAE - Use mean absolute error for minimizing quantization noise.
 
     KL - Use KL-divergence to make signals distributions to be similar as possible.
 
     Lp - Use Lp-norm to minimizing quantization noise.
+
+    HMSE - Use Hessian-based mean squared error for minimizing quantization noise. This method is using Hessian scores to factorize more valuable parameters when computing the error induced by quantization.
 
     """
 
@@ -41,6 +43,7 @@ class QuantizationErrorMethod(Enum):
     MAE = 2
     KL = 4
     LP = 5
+    HMSE = 6
 
 
 class QuantizationConfig:

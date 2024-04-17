@@ -13,13 +13,16 @@
 # limitations under the License.
 # ==============================================================================
 from copy import deepcopy
-from typing import Tuple, Callable
+from typing import Tuple, Callable, List
 import numpy as np
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
+from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoGranularity, \
+    HessianInfoService
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.constants import FLOAT_32
-from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import uniform_quantize_tensor
+from model_compression_toolkit.constants import FLOAT_32, NUM_QPARAM_HESSIAN_SAMPLES
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import uniform_quantize_tensor, \
+    reshape_tensor_for_per_channel_search
 
 
 def _mse_error_histogram(q_bins: np.ndarray,
@@ -371,13 +374,63 @@ def _get_sliced_histogram(bins: np.ndarray,
     return bins_subset, counts_subset
 
 
+def _compute_hessian_for_hmse(node,
+                              hessian_info_service: HessianInfoService,
+                              num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> List[np.ndarray]:
+    """
+    Compute and retrieve Hessian-based scores for using during HMSE error computation.
+
+    Args:
+        node: The node to compute Hessian-based scores for.
+        hessian_info_service: HessianInfoService object for retrieving Hessian-based scores.
+        num_hessian_samples: Number of samples to approximate Hessian-based scores on.
+
+    Returns: A list with computed Hessian-based scores tensors for the given node.
+
+    """
+    _request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
+                                   granularity=HessianInfoGranularity.PER_ELEMENT,
+                                   target_node=node)
+    _scores_for_node = hessian_info_service.fetch_hessian(_request,
+                                                          required_size=num_hessian_samples)
+
+    return _scores_for_node
+
+
+def _hmse_error_function_wrapper(float_tensor: np.ndarray,
+                                 fxp_tensor: np.ndarray,
+                                 axis: int,
+                                 norm: bool,
+                                 hessian_scores: np.ndarray):
+    """
+    This function wraps the HMSE error method to enable using it during parameters selection.
+
+    Args:
+        float_tensor: Float tensor.
+        fxp_tensor: Quantized tensor.
+        axis: Axis along which the operation has been performed. If not None, then per-channel computation is expected.
+        norm: Indicates whether to normalize the result of the error function.
+        hessian_scores: A tensor with Hessian-based scores to use for Hessian-based MSE (HMSE) error computation.
+
+    Returns: The HMSE error between the float and fixed-point tensors.
+
+    """
+    if axis is not None:
+        hessian_scores = reshape_tensor_for_per_channel_search(hessian_scores, 0)
+
+    return compute_mse(float_tensor, fxp_tensor, axis, norm, weights=hessian_scores)
+
+
 def get_threshold_selection_tensor_error_function(quantization_method: QuantizationMethod,
                                                   quant_error_method: qc.QuantizationErrorMethod,
                                                   p: int,
                                                   axis: int = None,
                                                   norm: bool = False,
                                                   n_bits: int = 8,
-                                                  signed: bool = True) -> Callable:
+                                                  signed: bool = True,
+                                                  node=None,
+                                                  hessian_info_service: HessianInfoService = None,
+                                                  num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> Callable:
     """
     Returns the error function compatible to the provided threshold method,
     to be used in the threshold optimization search for tensor quantization.
@@ -389,6 +442,9 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
         norm: Indicates whether to normalize the result of the error function.
         n_bits: Number of bits used to quantize the tensor.
         signed: Indicates whether the input is signed.
+        node: The node for which the quantization error is computed (used only with HMSE error method).
+        hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
+        num_hessian_samples: Number of samples to approximate Hessian-based scores on (used only with HMSE error method).
 
     Returns: a Callable method that calculates the error between a tensor and a quantized tensor.
     """
@@ -417,6 +473,13 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
                                                                           range_max=threshold,
                                                                           n_bits=n_bits,
                                                                           per_channel=True)
+
+    if quant_error_method == qc.QuantizationErrorMethod.HMSE:
+        node_hessian_scores = _compute_hessian_for_hmse(node, hessian_info_service, num_hessian_samples)
+        node_hessian_scores = np.sqrt(np.mean(node_hessian_scores, axis=0))
+
+        return lambda x, y, threshold: _hmse_error_function_wrapper(x, y, norm=norm, axis=axis,
+                                                                    hessian_scores=node_hessian_scores)
 
     quant_method_error_function_mapping = {
         qc.QuantizationErrorMethod.MSE: lambda x, y, threshold: compute_mse(x, y, norm=norm, axis=axis),
