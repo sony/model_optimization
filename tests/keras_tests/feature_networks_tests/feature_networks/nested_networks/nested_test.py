@@ -25,6 +25,7 @@ else:
 import model_compression_toolkit as mct
 import tensorflow as tf
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
+from mct_quantizers.keras.metadata import MetadataLayer
 
 
 import numpy as np
@@ -88,6 +89,7 @@ class NestedTest(BaseKerasFeatureNetworkTest):
             num_layers = 8
         else:
             num_layers = 5
+        num_layers = num_layers + int(isinstance(quantized_model.layers[-1], MetadataLayer))
         self.unit_test.assertTrue(len(quantized_model.layers) == num_layers)
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)

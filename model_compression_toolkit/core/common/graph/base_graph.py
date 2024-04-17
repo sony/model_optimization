@@ -103,9 +103,10 @@ class Graph(nx.MultiDiGraph, GraphSearches):
             if n.is_custom:
                 if not is_node_in_tpc:
                     Logger.critical(f'MCT does not support optimizing Keras custom layers. Found a layer of type {n.type}. '
-                                 f' Please add the custom layer to Target Platform Capabilities (TPC), or file a feature request or an issue if you believe this should be supported.')
+                                    ' Please add the custom layer to Target Platform Capabilities (TPC), or file a feature '
+                                    'request or an issue if you believe this should be supported.')  # pragma: no cover
                 if any([qc.default_weight_attr_config.enable_weights_quantization for qc in n.get_qco(tpc).quantization_config_list]):
-                    Logger.critical(f'Layer identified: {n.type}. MCT does not support weight quantization for Keras custom layers.')
+                    Logger.critical(f'Layer identified: {n.type}. MCT does not support weight quantization for Keras custom layers.')  # pragma: no cover
 
         self.tpc = tpc
 

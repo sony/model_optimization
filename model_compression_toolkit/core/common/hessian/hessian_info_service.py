@@ -17,7 +17,6 @@ from functools import partial
 from typing import Callable, List
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest
 from model_compression_toolkit.logger import Logger
 
@@ -38,7 +37,7 @@ class HessianInfoService:
     """
 
     def __init__(self,
-                 graph: Graph,
+                 graph,
                  representative_dataset: Callable,
                  fw_impl,
                  num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS
@@ -151,7 +150,7 @@ class HessianInfoService:
         if required_size==0:
             return []
 
-        Logger.info(f"Ensuring {required_size} Hessian-trace approximation for node {trace_hessian_request.target_node}.")
+        Logger.info(f"\nEnsuring {required_size} Hessian-trace approximation for node {trace_hessian_request.target_node}.")
 
         # Replace request of a reused target node with a request of the 'reuse group'.
         if trace_hessian_request.target_node.reuse_group:

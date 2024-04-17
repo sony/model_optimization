@@ -68,7 +68,8 @@ class TestQuantizationConfigurations(unittest.TestCase):
             tp = generate_test_tp_model({
                 'weights_quantization_method': quantize_method,
                 'weights_n_bits': 8,
-                'activation_n_bits': 16})
+                'activation_n_bits': 16,
+                'weights_per_channel_threshold': per_channel})
             tpc = generate_keras_tpc(name="quant_config_weights_test", tp_model=tp)
 
             qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,

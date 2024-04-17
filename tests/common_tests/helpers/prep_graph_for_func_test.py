@@ -38,7 +38,8 @@ def prepare_graph_with_configs(in_model,
                                representative_dataset,
                                get_tpc_func,
                                qc=DEFAULTCONFIG,
-                               mixed_precision_enabled=False):
+                               mixed_precision_enabled=False,
+                               running_gptq=False):
     # TPC
     base_config, op_cfg_list, default_config = get_op_quantization_configs()
 
@@ -54,7 +55,8 @@ def prepare_graph_with_configs(in_model,
                                      fw_info=fw_info,
                                      fw_impl=fw_impl,
                                      tpc=tpc,
-                                     mixed_precision_enable=mixed_precision_enabled)
+                                     mixed_precision_enable=mixed_precision_enabled,
+                                     running_gptq=running_gptq)
 
     return graph
 

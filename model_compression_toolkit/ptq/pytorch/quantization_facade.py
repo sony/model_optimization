@@ -29,6 +29,7 @@ from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
+from model_compression_toolkit.metadata import get_versions_dict
 
 
 if FOUND_TORCH:
@@ -38,6 +39,7 @@ if FOUND_TORCH:
     from torch.nn import Module
     from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_exportable_pytorch_model
     from model_compression_toolkit import get_target_platform_capabilities
+    from mct_quantizers.pytorch.metadata import add_metadata
 
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
@@ -139,7 +141,10 @@ if FOUND_TORCH:
                                         fw_impl,
                                         fw_info)
 
-        return get_exportable_pytorch_model(graph_with_stats_correction)
+        exportable_model, user_info = get_exportable_pytorch_model(graph_with_stats_correction)
+        if target_platform_capabilities.tp_model.add_metadata:
+            exportable_model = add_metadata(exportable_model, get_versions_dict(target_platform_capabilities))
+        return exportable_model, user_info
 
 
 else:

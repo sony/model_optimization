@@ -39,9 +39,8 @@ class TestUnsupportedCustomLayer(unittest.TestCase):
         x = CustomIdentity()(inputs)
         model = keras.Model(inputs=inputs, outputs=x)
 
-        expected_error = f'MCT does not support optimizing Keras custom layers, but found layer of type <class ' \
-                         f'\'test_unsupported_custom_layer.CustomIdentity\'>. Please add the custom layer to TPC ' \
-                         f'or file a feature request or an issue if you believe this is an issue.'
+        expected_error = f"MCT does not support optimizing Keras custom layers. Found a layer of type <class 'test_unsupported_custom_layer.CustomIdentity'>. " \
+                         f" Please add the custom layer to Target Platform Capabilities (TPC), or file a feature request or an issue if you believe this should be supported."
 
         def rep_dataset():
             yield [np.random.randn(1, 3, 3, 3)]

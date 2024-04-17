@@ -28,6 +28,7 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
+from model_compression_toolkit.metadata import get_versions_dict
 
 if FOUND_TF:
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -38,6 +39,7 @@ if FOUND_TF:
     from model_compression_toolkit.exporter.model_wrapper import get_exportable_keras_model
 
     from model_compression_toolkit import get_target_platform_capabilities
+    from mct_quantizers.keras.metadata import add_metadata
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
 
@@ -164,8 +166,10 @@ if FOUND_TF:
                                         fw_impl,
                                         fw_info)
 
-        return get_exportable_keras_model(graph_with_stats_correction)
-
+        exportable_model, user_info = get_exportable_keras_model(graph_with_stats_correction)
+        if target_platform_capabilities.tp_model.add_metadata:
+            exportable_model = add_metadata(exportable_model, get_versions_dict(target_platform_capabilities))
+        return exportable_model, user_info
 
 
 else:
