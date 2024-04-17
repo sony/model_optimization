@@ -99,6 +99,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.qat.qat_test impo
     QuantizationAwareTrainingQuantizerHolderTest
 from tests.keras_tests.feature_networks_tests.feature_networks.relu_replacement_test import ReluReplacementTest, \
     SingleReluReplacementTest, ReluReplacementWithAddBiasTest
+from tests.keras_tests.feature_networks_tests.feature_networks.remove_identity_test import RemoveIdentityTest
 from tests.keras_tests.feature_networks_tests.feature_networks.residual_collapsing_test import ResidualCollapsingTest1, \
     ResidualCollapsingTest2
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_layer_mixed_precision_test import \
@@ -139,7 +140,10 @@ layers = tf.keras.layers
 
 
 class FeatureNetworkTest(unittest.TestCase):
-    
+
+    def test_remove_identity(self):
+        RemoveIdentityTest(self).run_test()
+
     def test_per_tensor_weight_quantization(self):
         PerTensorWeightQuantizationTest(self).run_test()
     

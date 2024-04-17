@@ -22,6 +22,7 @@ from tensorflow.keras.models import Model
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoService
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remove_identity import RemoveIdentity
 from model_compression_toolkit.core.keras.hessian.activation_trace_hessian_calculator_keras import \
     ActivationTraceHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.weights_trace_hessian_calculator_keras import WeightsTraceHessianCalculatorKeras
@@ -246,7 +247,8 @@ class KerasImplementation(FrameworkImplementation):
                 MatmulToDenseSubstitution(),
                 MultiHeadAttentionDecomposition(),
                 ActivationDecomposition(),
-                DwconvToConv()]
+                DwconvToConv(),
+                RemoveIdentity()]
 
     def get_substitutions_pre_statistics_collection(self, quant_config: QuantizationConfig) -> \
             List[common.BaseSubstitution]:
