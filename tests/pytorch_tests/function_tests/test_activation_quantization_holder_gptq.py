@@ -72,8 +72,8 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         activation_quantization_holders_in_model = [m[1] for m in gptq_model.named_modules() if isinstance(m[1], PytorchActivationQuantizationHolder)]
         # the last module should be an activation quantization holder
         self.assertTrue(isinstance(last_module, PytorchActivationQuantizationHolder))
-        # check that 3 activation quantization holders where generated
-        self.assertTrue(len(activation_quantization_holders_in_model) == 3)
+        # check that 4 activation quantization holders where generated
+        self.assertTrue(len(activation_quantization_holders_in_model) == 4)
         for a in activation_quantization_holders_in_model:
             self.assertTrue(isinstance(a.activation_holder_quantizer, ActivationPOTInferableQuantizer))
         for name, module in gptq_model.named_modules():
@@ -101,8 +101,8 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         last_module = list(gptq_model.named_modules())[-1][1]
         # the last module should be an activation quantization holder
         self.assertTrue(isinstance(last_module, PytorchActivationQuantizationHolder))
-        # check that 3 activation quantization holders where generated
-        self.assertTrue(len(activation_quantization_holders_in_model) == 3)
+        # check that 4 activation quantization holders where generated
+        self.assertTrue(len(activation_quantization_holders_in_model) == 4)
         for a in activation_quantization_holders_in_model:
             self.assertTrue(isinstance(a.activation_holder_quantizer, ActivationPOTInferableQuantizer))
         for name, module in gptq_model.named_modules():
