@@ -12,29 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import torch
 
-from model_compression_toolkit.core.common.substitutions.remove_identity import remove_identity_node
+import keras
+import tensorflow as tf
+
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
+from model_compression_toolkit.core.common.substitutions.remove_identity import remove_identity_node
 
 
 class RemoveIdentity(common.BaseSubstitution):
     """
-    Remove `torch.nn.Identity` layers from the graph.
+    Remove Identity layers from the graph.
     """
 
     def __init__(self):
-        nodes = NodeOperationMatcher(torch.nn.Identity)
+        nodes = NodeOperationMatcher(keras.layers.Identity) | NodeOperationMatcher(tf.identity)
         super().__init__(matcher_instance=nodes)
 
     def substitute(self,
                    graph: Graph,
                    node: BaseNode) -> Graph:
         """
-        The method to perform the substitution of the `torch.nn.Identity` node by
+        The method to perform the substitution of the identity keras node by
         reconnecting its input directly to its output, effectively removing the node
         from the graph.
 
@@ -46,5 +48,4 @@ class RemoveIdentity(common.BaseSubstitution):
             Graph: The updated graph after removing the identity node.
         """
         return remove_identity_node(graph, node)
-
 
