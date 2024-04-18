@@ -62,7 +62,7 @@ def _get_mean_std_outputs(node: BaseNode,
     """
     mean_output, std_output = None, None
 
-    if node.type == BatchNorm2d:
+    if node.is_match_type(BatchNorm2d):
         mean_output = node.get_weights_by_keys(BETA)
         if node.get_weights_by_keys(GAMMA) is None:
             std_output = 1.0
@@ -72,7 +72,7 @@ def _get_mean_std_outputs(node: BaseNode,
             mean_output = 0.0
     else:
         next_node_list = graph.get_next_nodes(node)
-        bn_nodes = [bn_node for bn_node in next_node_list if bn_node.type == BatchNorm2d]
+        bn_nodes = [bn_node for bn_node in next_node_list if bn_node.is_match_type(BatchNorm2d)]
         if len(bn_nodes) != 0:
             bn_node = bn_nodes[0]
             moving_variance = bn_node.get_weights_by_keys(MOVING_VARIANCE)

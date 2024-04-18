@@ -51,8 +51,9 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
         # sets all combinations of 2, 4, 8 bits for weights and activations
         mixed_precision_candidates_list = get_base_mp_nbits_candidates()
 
+        default_config = eight_bits.clone_and_edit(attr_weights_configs_mapping={})
         return get_tpc_with_activation_mp_keras(base_config=eight_bits,
-                                                default_config=eight_bits.clone_and_edit(attr_weights_configs_mapping={}),
+                                                default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
                                                 name="mixed_precision_activation_test")
 

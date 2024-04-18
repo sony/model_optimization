@@ -41,7 +41,7 @@ layers = keras.layers
 
 REUSED_IDENTIFIER = '_reused_'
 
-is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray))
+is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray, float))
 is_tensor = lambda x: isinstance(x, KerasTensor)
 
 
@@ -61,18 +61,36 @@ def get_kwargs2index(tfoplambda_layer: TFOpLambda) -> Dict[str, int]:
     """
     Positional weights are saved according to their index in the node's call arguments, so
     need to know the function arguments' names in case the weights are in the kwargs.
+
+    Note: the kwargs2index dictionary is initialized manually (and not with tf_inspect) so
+    it will only include the arguments that may contain constants. For example, we don't
+    want the transpose_a attribute of tf.matmul to be saved as a constant.
+
+    Every operation we add support to, needs to be added here.
+
     Args:
         tfoplambda_layer: TFOpLambda layer.
 
     Returns:
         A dictionary with argument number and index: {arg_name: arg_index}.
     """
-    if tfoplambda_layer.function in [tf.add, tf.subtract, tf.divide, tf.truediv, tf.multiply, tf.pow,
-                                     tf.matmul, tf.image.crop_and_resize, tf.image.combined_non_max_suppression] or \
-            tfoplambda_layer.symbol in ['__operators__.add', 'math.add', 'math.multiply', 'linalg.matmul', 'concat']:
-        return {arg_name: i for i, arg_name in enumerate(tf_inspect.getfullargspec(tfoplambda_layer.function).args)}
-    else:
-        return {}
+    kwargs2index = {tf.add: {'x': 0, 'y': 1},
+                    tf.subtract: {'x': 0, 'y': 1},
+                    tf.divide: {'x': 0, 'y': 1},
+                    tf.truediv: {'x': 0, 'y': 1},
+                    tf.multiply: {'x': 0, 'y': 1},
+                    tf.pow: {'x': 0, 'y': 1},
+                    tf.matmul: {'a': 0, 'b': 1}}.get(tfoplambda_layer.function)
+    if not kwargs2index:
+        # In TF 2.15 the function attribute is different and doesn't match the original
+        # operation object we use. Therefore, we extract kwargs2index with the symbol.
+        kwargs2index = {'__operators__.add': {'x': 0, 'y': 1},
+                        'math.add': {'x': 0, 'y': 1},
+                        'math.multiply': {'x': 0, 'y': 1},
+                        'linalg.matmul': {'a': 0, 'b': 1},
+                        'concat': {'values': 0}}.get(tfoplambda_layer.symbol, {})
+
+    return kwargs2index
 
 
 def build_node(node: KerasNode,
@@ -154,8 +172,9 @@ def build_node(node: KerasNode,
             if is_const(v) or (keras_layer.function in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv, tf.pow,
                                                         tf.matmul] and
                                isinstance(v, (tuple, list))):
-                weights.update({kwarg2index[k]: to_numpy(v, is_single_tensor=True)})
-                weight_keys.append(k)
+                if k in kwarg2index:
+                    weights.update({kwarg2index[k]: to_numpy(v, is_single_tensor=True)})
+                    weight_keys.append(k)
         # remove weights and KerasTensors and weights from op_call_kwargs
         op_call_kwargs = {k: v for k, v in op_call_kwargs.items()
                           if not (kwarg2index.get(k) in weights or is_tensor(v))}

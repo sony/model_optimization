@@ -33,26 +33,31 @@ from model_compression_toolkit.core.pytorch.pytorch_device_config import get_wor
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from mct_quantizers.common.constants import ACTIVATION_HOLDER_QUANTIZER
+from mct_quantizers import PytorchQuantizationWrapper
 
 
 def _build_input_tensors_list(node: BaseNode,
                               graph: Graph,
                               inputs: Tuple[Any],
-                              node_to_output_tensors_dict: Dict[BaseNode, List]) -> List[List]:
+                              node_to_output_tensors_dict: Dict[BaseNode, List],
+                              is_op_quantize_wrapper: bool) -> List[List]:
     """
-    Given a node, build a list of input tensors the node gets. The list is built
-    based on the node's incoming edges and previous nodes' output tensors.
+    Given a node, build a list of input tensors the node gets. The list is built based on the
+    node's incoming edges, previous nodes' output tensors and the node's positional weights.
+    Positional weights aren't used if the node's op is PytorchQuantizationWrapper, since it's
+    positional weights are already in the wrapper.
 
     Args:
         node: Node to build its input tensors list.
         graph: Graph the node is in.
-        inputs: list of input tensors to model
+        inputs: list of input tensors to model.
         node_to_output_tensors_dict: A dictionary from a node to its output tensors.
+        is_op_quantize_wrapper: Whether the func_op is a PytorchQuantizationWrapper or not.
 
     Returns:
         A list of the node's input tensors.
     """
-    if node.type == DummyPlaceHolder:
+    if node.is_match_type(DummyPlaceHolder):
         input_tensors = [inputs[graph.get_inputs().index(node)]]
     else:
         input_tensors = []
@@ -62,7 +67,8 @@ def _build_input_tensors_list(node: BaseNode,
             _input_tensors = node_to_output_tensors_dict[ie.source_node]
             input_tensors.append(_input_tensors)
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
-        input_tensors = node.insert_positional_weights_to_input_list(input_tensors)
+        if not is_op_quantize_wrapper:
+            input_tensors = node.insert_positional_weights_to_input_list(input_tensors)
         # convert inputs from positional weights (numpy arrays) to tensors. Must handle each element in the
         # list separately, because in FX the tensors are FX objects and fail to_torch_tensor
         input_tensors = [to_torch_tensor(t) if isinstance(t, np.ndarray) else t
@@ -70,22 +76,27 @@ def _build_input_tensors_list(node: BaseNode,
     return input_tensors
 
 
-def _merge_inputs(_node, input_tensors: List, op_call_args: List) -> List:
+def _merge_inputs(_node: BaseNode, input_tensors: List, op_call_args: List,
+                  is_op_quantize_wrapper: bool) -> List:
     """
-    Merge input tensors list with op_call_args, according to correct order
+    Merge input tensors list with op_call_args, according to correct order.
 
     Args:
-        _node: The node the inputs are for
+        _node: The node the inputs are for.
         input_tensors: activation input tensors to node.
-        op_call_args: framework node call args
+        op_call_args: framework node call args.
+        is_op_quantize_wrapper: Whether the func_op is a PytorchQuantizationWrapper or not.
     Returns:
-        Combined list of input_tensors and op_call_args
+        Combined list of input_tensors and op_call_args.
     """
     if isinstance(_node, FunctionalNode) and _node.tensor_input_indices:
-        assert len(_node.tensor_input_indices) == len(input_tensors), 'Mismatch between input tensors and indices'
         _input_list = op_call_args.copy()
-        for i, t in zip(_node.tensor_input_indices, input_tensors):
-            _input_list.insert(i, t)
+        if is_op_quantize_wrapper:
+            _input_list = input_tensors + _input_list
+        else:
+            assert len(_node.tensor_input_indices) == len(input_tensors), 'Mismatch between input tensors and indices'
+            for i, t in zip(_node.tensor_input_indices, input_tensors):
+                _input_list.insert(i, t)
     else:
         _input_list = input_tensors + op_call_args
 
@@ -118,7 +129,8 @@ def _run_operation(n: BaseNode,
     if isinstance(n, FunctionalNode) and n.inputs_as_list:
         out_tensors_of_n_float = op_func(input_tensors, *op_call_args, **functional_kwargs)
     else:
-        out_tensors_of_n_float = op_func(*_merge_inputs(n, input_tensors, op_call_args), **functional_kwargs)
+        merged_inputs = _merge_inputs(n, input_tensors, op_call_args, isinstance(op_func, PytorchQuantizationWrapper))
+        out_tensors_of_n_float = op_func(*merged_inputs, **functional_kwargs)
 
     # Add a fake quant node if the node has an activation threshold.
     out_tensors_of_n = out_tensors_of_n_float
@@ -279,12 +291,12 @@ class PytorchModel(torch.nn.Module):
         node_to_output_tensors_dict_float = dict()
         configurable_nodes = self.graph.get_configurable_sorted_nodes_names(DEFAULT_PYTORCH_INFO)
         for node in self.node_sort:
+            op_func = self._get_op_func(node, configurable_nodes)
             input_tensors = _build_input_tensors_list(node,
                                                       self.graph,
                                                       args,
-                                                      node_to_output_tensors_dict)
-
-            op_func = self._get_op_func(node, configurable_nodes)
+                                                      node_to_output_tensors_dict,
+                                                      isinstance(op_func, PytorchQuantizationWrapper))
             use_activation_quantization, activation_quantization_fn = self._get_activation_quantization_fn(node)
 
             # Run node operation and fetch outputs
@@ -326,15 +338,16 @@ class PytorchModel(torch.nn.Module):
         """
         return getattr(self, node.name)
 
-    def _get_activation_quantization_fn(self, node) -> Tuple[bool, bool, Callable]:
+    def _get_activation_quantization_fn(self, node) -> Tuple[bool, Callable]:
         """
         Get activation quantization parameters for this node.
 
         Args:
             node: Node from which to extract the activation quantization parameters.
 
-        Returns: Flag to indicate if we quantize activations, flag to indicate if we quantize activations
-        using a quantization holder and a quantization function to use for the node's activations.
+        Returns:
+            Flag to indicate if we quantize activations using a quantization holder and a quantization
+            function to use for the node's activations.
         """
         activation_quantization_holder = self.node_to_activation_quantization_holder.get(node.name)
         use_activation_quantization = node.is_activation_quantization_enabled()

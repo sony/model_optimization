@@ -134,6 +134,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.metadata_test imp
 from tests.keras_tests.feature_networks_tests.feature_networks.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest, ConstRepresentationMatMulTest
 from tests.keras_tests.feature_networks_tests.feature_networks.concatination_threshold_update import ConcatThresholdtest
+from tests.keras_tests.feature_networks_tests.feature_networks.const_quantization_test import ConstQuantizationTest, \
+    AdvancedConstQuantizationTest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
 
 layers = tf.keras.layers
@@ -537,13 +539,25 @@ class FeatureNetworkTest(unittest.TestCase):
         SixConv2DCollapsingTest(self).run_test()
         Op2DAddConstCollapsingTest(self).run_test()
 
+    def test_const_quantization(self):
+        c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32)
+        for func in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv]:
+            ConstQuantizationTest(self, func, c).run_test()
+            ConstQuantizationTest(self, func, c, input_reverse_order=True).run_test()
+            ConstQuantizationTest(self, func, c, input_reverse_order=True, use_kwargs=True).run_test()
+            ConstQuantizationTest(self, func, c, use_kwargs=True).run_test()
+            ConstQuantizationTest(self, func, 2.45).run_test()
+            ConstQuantizationTest(self, func, 5.1, input_reverse_order=True).run_test()
+
+        AdvancedConstQuantizationTest(self).run_test()
+
     def test_const_representation(self):
         c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32)
         for func in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv, tf.pow]:
             ConstRepresentationTest(self, func, c).run_test()
             ConstRepresentationTest(self, func, c, input_reverse_order=True).run_test()
-            ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwrags=True).run_test()
-            ConstRepresentationTest(self, func, c, use_kwrags=True).run_test()
+            ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwargs=True).run_test()
+            ConstRepresentationTest(self, func, c, use_kwargs=True).run_test()
             ConstRepresentationTest(self, func, 2.45).run_test()
             ConstRepresentationTest(self, func, 5.1, input_reverse_order=True).run_test()
 
@@ -554,8 +568,8 @@ class FeatureNetworkTest(unittest.TestCase):
         for func in [layers.Add(), layers.Multiply(), layers.Subtract()]:
             ConstRepresentationTest(self, func, c, is_list_input=True).run_test()
             ConstRepresentationTest(self, func, c, input_reverse_order=True, is_list_input=True).run_test()
-            ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwrags=True, is_list_input=True).run_test()
-            ConstRepresentationTest(self, func, c, use_kwrags=True, is_list_input=True).run_test()
+            ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwargs=True, is_list_input=True).run_test()
+            ConstRepresentationTest(self, func, c, use_kwargs=True, is_list_input=True).run_test()
 
         ConstRepresentationMultiInputTest(self).run_test()
 

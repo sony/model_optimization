@@ -39,6 +39,7 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler
 from model_compression_toolkit.core.keras.reader.connectivity_handler import OutTensor
+from mct_quantizers import KerasQuantizationWrapper
 
 # In tf2.3 fake quant node is implemented as TensorFlowOpLayer, while in tf2.4 as TFOpLambda.
 FQ_NODE_OP_V2_3 = 'FakeQuantWithMinMaxVars'
@@ -270,7 +271,9 @@ class KerasModelBuilder(BaseModelBuilder):
                                                                            out_tensors_of_n_float)
         else:
             input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
-            input_tensors = n.insert_positional_weights_to_input_list(input_tensors)
+            if not isinstance(op_func, KerasQuantizationWrapper):
+                # The KerasQuantizationWrapper will insert the quantized positional weights internally.
+                input_tensors = n.insert_positional_weights_to_input_list(input_tensors)
             # Build a functional node using its args
             if isinstance(n, FunctionalNode):
                 if n.inputs_as_list:  # If the first argument should be a list of tensors:

@@ -76,9 +76,9 @@ class PruningPytorchImplementation(PytorchImplementation, PruningFrameworkImplem
         pruned_parameters = {}
         mask_bool = output_mask.astype(bool)
         node.weights = pruned_parameters
-        if node.type == torch.nn.BatchNorm2d:
+        if node.is_match_type(torch.nn.BatchNorm2d):
             node.framework_attr[NUM_FEATURES] = int(np.sum(input_mask))
-        elif node.type == torch.nn.PReLU:
+        elif node.is_match_type(torch.nn.PReLU):
             if node.framework_attr[NUM_PARAMETERS] > 1:
                 node.framework_attr[NUM_PARAMETERS] = int(np.sum(input_mask))
             else:
@@ -227,9 +227,9 @@ def _is_pytorch_node_pruning_section_edge(node: BaseNode) -> bool:
     """
 
     # Check if the node is a Conv2D or Conv2DTranspose layer with groups set to 1.
-    if node.type in [torch.nn.Conv2d, torch.nn.ConvTranspose2d]:
+    if node.is_match_type(torch.nn.Conv2d) or node.is_match_type(torch.nn.ConvTranspose2d):
         return node.framework_attr[GROUPS] == 1
-    return node.type == torch.nn.Linear
+    return node.is_match_type(torch.nn.Linear)
 
 
 def _prune_pytorch_edge_node(node: BaseNode,
@@ -268,18 +268,18 @@ def _prune_pytorch_edge_node(node: BaseNode,
     if not is_exit_node:
         # Update 'out_channels' or 'out_features' attributes for entry nodes
         # Conv2d,ConvTranspose2d / Linear layers.
-        if node.type in [torch.nn.Conv2d, torch.nn.ConvTranspose2d]:
+        if node.is_match_type(torch.nn.Conv2d) or node.is_match_type(torch.nn.ConvTranspose2d):
             node.framework_attr[OUT_CHANNELS] = int(np.sum(mask))
-        elif node.type == torch.nn.Linear:
+        elif node.is_match_type(torch.nn.Linear):
             node.framework_attr[OUT_FEATURES] = int(np.sum(mask))
         else:
             Logger.critical(f"{node.type} is currently not supported"
                              f"as an edge node in a pruning section")
 
     if is_exit_node:
-        if node.type in [torch.nn.Conv2d, torch.nn.ConvTranspose2d]:
+        if node.is_match_type(torch.nn.Conv2d) or node.is_match_type(torch.nn.ConvTranspose2d):
             node.framework_attr[IN_CHANNELS] = int(np.sum(mask))
-        elif node.type == torch.nn.Linear:
+        elif node.is_match_type(torch.nn.Linear):
             node.framework_attr[IN_FEATURES] = int(np.sum(mask))
         else:
             Logger.critical(f"{node.type} is currently not supported"

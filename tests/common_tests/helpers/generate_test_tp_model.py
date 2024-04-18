@@ -74,7 +74,8 @@ def generate_mixed_precision_test_tp_model(base_cfg, default_config, mp_bitwidth
                              name=name)
 
 
-def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_candidates_list, name="activation_mp_model"):
+def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_candidates_list,
+                                         name="activation_mp_model"):
     mp_op_cfg_list = []
     for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
 

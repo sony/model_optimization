@@ -42,8 +42,12 @@ if FOUND_TF:
         """
         weights_quantizers, _ = fw_impl.get_inferable_quantizers(node)
         if len(weights_quantizers) > 0:
+            # for positional weights we need to extract the weight's value.
+            weights_values = {attr: node.get_weights_by_keys(attr)
+                              for attr in weights_quantizers if isinstance(attr, int)}
             return KerasQuantizationWrapper(layer,
-                                            weights_quantizers)
+                                            weights_quantizers,
+                                            weights_values)
         return layer
 
 

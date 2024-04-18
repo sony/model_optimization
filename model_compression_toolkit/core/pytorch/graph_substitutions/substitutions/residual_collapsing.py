@@ -46,7 +46,7 @@ def residual_collapsing_fn(first_node: BaseNode,
     Returns:
         The modified layer node's weights: kernel
     """
-    if first_node.type == Conv2d:
+    if first_node.is_match_type(Conv2d):
         # Get nodes attributes
         kernel = first_node.get_weights_by_keys(kernel_str)
         (Cout, Cin, kH, kW) = kernel.shape

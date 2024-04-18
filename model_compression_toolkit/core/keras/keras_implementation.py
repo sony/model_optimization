@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from functools import partial
-from typing import List, Any, Tuple, Callable, Dict
+from typing import List, Any, Tuple, Callable, Dict, Union
 
 import numpy as np
 import tensorflow as tf
@@ -412,12 +412,13 @@ class KerasImplementation(FrameworkImplementation):
         Returns: True if the node should be considered an interest point, False otherwise.
         """
 
-        if node.type == Activation:
+        if node.is_match_type(Activation):
             node_type_name = node.framework_attr[keras_constants.ACTIVATION]
             if node_type_name in [keras_constants.SOFTMAX, keras_constants.SIGMOID]:
                 return True
-        elif node.type in [tf.nn.softmax, tf.keras.layers.Softmax, tf.nn.sigmoid, Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense, Concatenate,
-                           tf.concat, Add, tf.add]:
+        elif any([node.is_match_type(_type) for _type in [tf.nn.softmax, tf.keras.layers.Softmax, tf.nn.sigmoid, Conv2D,
+                                                          DepthwiseConv2D, Conv2DTranspose, Dense, Concatenate, tf.concat,
+                                                          Add, tf.add]]):
             return True
 
         return False
@@ -529,18 +530,18 @@ class KerasImplementation(FrameworkImplementation):
         kernel_shape = node.get_weights_by_keys(fw_info.get_kernel_op_attributes(node.type)[0]).shape
         output_channel_axis, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
 
-        if node.type is Conv2D or node.type is Conv2DTranspose:
+        if node.is_match_type(Conv2D) or node.is_match_type(Conv2DTranspose):
             # (C_out * W_out * H_out) * C_in * (W_kernel * H_kernel)
             return np.prod([x for x in output_shape if x is not None]) * \
                    kernel_shape[input_channel_axis] * \
                    (kernel_shape[0] * kernel_shape[1])
-        elif node.type is DepthwiseConv2D:
+        elif node.is_match_type(DepthwiseConv2D):
             # Depth * (W_out * H_out) * C_in * (W_kernel * H_kernel)
             return node.framework_attr.get(DEPTH_MULTIPLIER) * \
                    np.prod([x for x in output_shape if x is not None]) / output_shape[output_channel_axis] * \
                    kernel_shape[input_channel_axis] * \
                    (kernel_shape[0] * kernel_shape[1])
-        elif node.type is Dense:
+        elif node.is_match_type(Dense):
             # IN * OUT
             return kernel_shape[0] * kernel_shape[1]
         else:
@@ -593,10 +594,9 @@ class KerasImplementation(FrameworkImplementation):
         Returns:
             weight_quantizers: A dictionary between a weight's name to its quantizer.
             activation_quantizers: A list of activations quantization, one for each layer output.
-
         """
 
-        def _weight_name(w: str) -> str:
+        def _weight_name(w: Union[str, int]) -> Union[str, int]:
             """
             Extracts the weight name from the full TensorFlow variable name.
 
@@ -609,7 +609,7 @@ class KerasImplementation(FrameworkImplementation):
               Extracted weight name.
             """
 
-            return w.split(':')[0].split('/')[-1]
+            return w.split(':')[0].split('/')[-1] if isinstance(w, str) else w
 
         attribute_names = [_weight_name(wn) for wn in node.get_node_weights_attributes()
                            if node.is_weights_quantization_enabled(wn)]

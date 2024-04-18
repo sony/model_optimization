@@ -32,7 +32,7 @@ def get_tp_model() -> TargetPlatformModel:
     NOTE: in order to generate a target platform model with different configurations but with the same Operators Sets
     (for tests, experiments, etc.), use this method implementation as a test-case, i.e., override the
     'get_op_quantization_configs' method and use its output to call 'generate_tp_model' with your configurations.
-    This version enables metadata by default
+    This version enables metadata by default.
 
     Returns: A TargetPlatformModel object.
 
@@ -44,7 +44,8 @@ def get_tp_model() -> TargetPlatformModel:
                              name='imx500_tp_model')
 
 
-def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig], OpQuantizationConfig]:
+def get_op_quantization_configs() -> \
+        Tuple[OpQuantizationConfig, List[OpQuantizationConfig], OpQuantizationConfig]:
     """
     Creates a default configuration object for 8-bit quantization, to be used to set a default TargetPlatformModel.
     In addition, creates a default configuration objects list (with 8, 4 and 2 bit quantization) to be used as
@@ -151,6 +152,19 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # this configuration will be used for the operation quantization:
     default_configuration_options = tp.QuantizationConfigOptions([default_config])
 
+    # Create a QuantizationConfigOptions for quantizing constants in functional ops.
+    # Constant configuration is similar to the default eight bit configuration except for PoT
+    # quantization method for the constant.
+    # Since the constants are not named attributes of the layer, we use the default_weight_attr_config to
+    # define the desired quantization properties for them.
+    const_config = default_config.clone_and_edit(
+        default_weight_attr_config=default_config.default_weight_attr_config.clone_and_edit(
+            enable_weights_quantization=True))
+    if not (const_config.default_weight_attr_config.weights_quantization_method == tp.QuantizationMethod.POWER_OF_TWO and
+            const_config.default_weight_attr_config.weights_per_channel_threshold is False):
+        mct.logger.Logger.error('Constant quantization config should be per-tensor PoT.')
+    const_configuration_options = tp.QuantizationConfigOptions([const_config])
+
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
@@ -184,10 +198,10 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # Define operations sets without quantization configuration
         # options (useful for creating fusing patterns, for example):
         any_relu = tp.OperatorsSet("AnyReLU")
-        add = tp.OperatorsSet("Add")
-        sub = tp.OperatorsSet("Sub")
-        mul = tp.OperatorsSet("Mul")
-        div = tp.OperatorsSet("Div")
+        add = tp.OperatorsSet("Add", const_configuration_options)
+        sub = tp.OperatorsSet("Sub", const_configuration_options)
+        mul = tp.OperatorsSet("Mul", const_configuration_options)
+        div = tp.OperatorsSet("Div", const_configuration_options)
         prelu = tp.OperatorsSet("PReLU")
         swish = tp.OperatorsSet("Swish")
         sigmoid = tp.OperatorsSet("Sigmoid")

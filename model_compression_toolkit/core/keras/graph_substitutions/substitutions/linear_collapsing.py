@@ -58,7 +58,7 @@ def conv2d_collapsing_fn(first_node: BaseNode,
     Returns:
         The modified layer node's weights: kernel, bias
     """
-    if first_node.type == Conv2D and second_node.type == Conv2D:
+    if first_node.is_match_type(Conv2D) and second_node.is_match_type(Conv2D):
         # Get nodes attributes
         kernel1 = first_node.get_weights_by_keys(kernel_str)
         kernel2 = second_node.get_weights_by_keys(kernel_str)

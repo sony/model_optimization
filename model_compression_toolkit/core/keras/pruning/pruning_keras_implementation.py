@@ -209,10 +209,9 @@ def _is_keras_node_pruning_section_edge(node: BaseNode) -> bool:
     """
 
     # Check if the node is a Conv2D or Conv2DTranspose layer with groups set to 1.
-    if node.type in [keras.layers.Conv2D, keras.layers.Conv2DTranspose]:
+    if node.is_match_type(keras.layers.Conv2D) or node.is_match_type(keras.layers.Conv2DTranspose):
         return node.framework_attr[GROUPS] == 1
-    return node.type == keras.layers.Dense
-
+    return node.is_match_type(keras.layers.Dense)
 
 
 def _prune_keras_edge_node(node: BaseNode,
@@ -250,9 +249,9 @@ def _prune_keras_edge_node(node: BaseNode,
 
     if not is_exit_node:
         # Update 'filters' or 'units' attributes for entry node Conv2D/Conv2DTranspose layers.
-        if node.type in [keras.layers.Conv2D, keras.layers.Conv2DTranspose]:
+        if node.is_match_type(keras.layers.Conv2D) or node.is_match_type(keras.layers.Conv2DTranspose):
             node.framework_attr[FILTERS] = int(np.sum(mask))
-        elif node.type == keras.layers.Dense:
+        elif node.is_match_type(keras.layers.Dense):
             node.framework_attr[UNITS] = int(np.sum(mask))
 
     if is_exit_node:

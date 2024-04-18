@@ -29,7 +29,7 @@ if FOUND_TORCH:
 
     def fully_quantized_wrapper(node: common.BaseNode,
                                 module: torch.nn.Module,
-                                fw_impl) -> Union[torch.nn.Module,PytorchQuantizationWrapper]:
+                                fw_impl) -> Union[torch.nn.Module, PytorchQuantizationWrapper]:
         """
         A function which takes a computational graph node and a pytorch module and
         perform the quantization wrapping
@@ -37,13 +37,18 @@ if FOUND_TORCH:
         Args:
             node: A node of mct graph.
             module: A Pytorch module
+            fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         Returns: Wrapped layer
 
         """
         weight_quantizers, _ = fw_impl.get_inferable_quantizers(node)
         if len(weight_quantizers) > 0:
-            return PytorchQuantizationWrapper(module, weight_quantizers)
+            # for positional weights we need to extract the weight's value.
+            weights_values = {attr: fw_impl.to_tensor(node.get_weights_by_keys(attr))
+                              for attr in weight_quantizers if isinstance(attr, int)}
+            return PytorchQuantizationWrapper(module, weight_quantizers, weights_values)
         return module
+
 
     def get_activation_quantizer_holder(node: BaseNode, fw_impl) -> Callable:
         """
@@ -51,6 +56,7 @@ if FOUND_TORCH:
         If the layer is not supposed to be wrapped with an activation quantizer - return None.
         Args:
             node: Node to attach a PytorchActivationQuantizationHolder to its output.
+            fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         Returns:
             A PytorchActivationQuantizationHolder module for the node's activation quantization.
         """
@@ -63,6 +69,7 @@ if FOUND_TORCH:
         Logger.critical(
             f'PytorchActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
             f'were found for node {node}')
+
 
     def get_exportable_pytorch_model(graph: Graph):
         """
