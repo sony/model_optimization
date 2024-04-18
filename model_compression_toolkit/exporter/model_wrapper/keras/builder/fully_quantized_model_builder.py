@@ -40,8 +40,11 @@ if FOUND_TF:
         Returns: Wrapped layer with weights quantizers and activation quantizers
 
         """
-        weights_quantizers, _, weights_values = fw_impl.get_inferable_quantizers(node)
+        weights_quantizers, _ = fw_impl.get_inferable_quantizers(node)
         if len(weights_quantizers) > 0:
+            # for positional weights we need to extract the weight's value.
+            weights_values = {attr: node.get_weights_by_keys(attr)
+                              for attr in weights_quantizers if isinstance(attr, int)}
             return KerasQuantizationWrapper(layer,
                                             weights_quantizers,
                                             weights_values)
@@ -58,7 +61,7 @@ if FOUND_TF:
         Returns:
             A ActivationQuantizationHolder layer for the node activation quantization.
         """
-        _, activation_quantizers, _ = fw_impl.get_inferable_quantizers(node)
+        _, activation_quantizers = fw_impl.get_inferable_quantizers(node)
 
         # Holder by definition uses a single quantizer for the activation quantization
         # thus we make sure this is the only possible case (unless it's a node with no activation

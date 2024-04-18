@@ -56,7 +56,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
 
     # We define a default quantization config for all non-specified weights attributes.
     default_weight_attr_config = AttributeQuantizationConfig(
-        weights_quantization_method=tp.QuantizationMethod.SYMMETRIC,
+        weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
         weights_n_bits=8,
         weights_per_channel_threshold=False,
         enable_weights_quantization=False,

@@ -61,6 +61,13 @@ def get_kwargs2index(tfoplambda_layer: TFOpLambda) -> Dict[str, int]:
     """
     Positional weights are saved according to their index in the node's call arguments, so
     need to know the function arguments' names in case the weights are in the kwargs.
+
+    Note: the kwargs2index dictionary is initialized manually (and not with tf_inspect) so
+    it will only include the arguments that may contain constants. For example, we don't
+    want the transpose_a attribute of tf.matmul to be saved as a constant.
+
+    Every operation we add support to, needs to be added here.
+
     Args:
         tfoplambda_layer: TFOpLambda layer.
 
@@ -75,13 +82,13 @@ def get_kwargs2index(tfoplambda_layer: TFOpLambda) -> Dict[str, int]:
                     tf.pow: {'x': 0, 'y': 1},
                     tf.matmul: {'a': 0, 'b': 1}}.get(tfoplambda_layer.function)
     if not kwargs2index:
+        # In TF 2.15 the function attribute is different and doesn't match the original
+        # operation object we use. Therefore, we extract kwargs2index with the symbol.
         kwargs2index = {'__operators__.add': {'x': 0, 'y': 1},
                         'math.add': {'x': 0, 'y': 1},
                         'math.multiply': {'x': 0, 'y': 1},
                         'linalg.matmul': {'a': 0, 'b': 1},
-                        'concat': {'values': 0}}.get(tfoplambda_layer.symbol)
-    if not kwargs2index:
-        kwargs2index = {}
+                        'concat': {'values': 0}}.get(tfoplambda_layer.symbol, {})
 
     return kwargs2index
 

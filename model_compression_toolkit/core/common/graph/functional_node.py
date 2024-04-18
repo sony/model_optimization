@@ -76,7 +76,9 @@ class FunctionalNode(BaseNode):
     def is_match_type(self, _type: Type) -> bool:
         """
         Check if input type matches the node type, either in instance type or in type name. Checking the
-        name string is required because of function types changes that occurred in TF 2.15.
+        name string is required because of function types changes that occurred in TF 2.15, because it
+        changes the "function" attribute object (e.g. a different tf.add function that will fail the
+        equal operation).
 
         Args:
             _type: other node type

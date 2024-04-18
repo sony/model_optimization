@@ -41,12 +41,14 @@ if FOUND_TORCH:
         Returns: Wrapped layer
 
         """
-        weight_quantizers, _, weights_values = fw_impl.get_inferable_quantizers(node)
+        weight_quantizers, _ = fw_impl.get_inferable_quantizers(node)
         if len(weight_quantizers) > 0:
-            if weights_values is not None:
-                weights_values = {k: fw_impl.to_tensor(v) for k, v in weights_values.items()}
+            # for positional weights we need to extract the weight's value.
+            weights_values = {attr: fw_impl.to_tensor(node.get_weights_by_keys(attr))
+                              for attr in weight_quantizers if isinstance(attr, int)}
             return PytorchQuantizationWrapper(module, weight_quantizers, weights_values)
         return module
+
 
     def get_activation_quantizer_holder(node: BaseNode, fw_impl) -> Callable:
         """
@@ -58,7 +60,7 @@ if FOUND_TORCH:
         Returns:
             A PytorchActivationQuantizationHolder module for the node's activation quantization.
         """
-        _, activation_quantizers, _ = fw_impl.get_inferable_quantizers(node)
+        _, activation_quantizers = fw_impl.get_inferable_quantizers(node)
         # Holder by definition uses a single quantizer for the activation quantization
         # thus we make sure this is the only possible case (unless it's a node we no activation
         # quantization, which in this case has an empty list).
@@ -67,6 +69,7 @@ if FOUND_TORCH:
         Logger.critical(
             f'PytorchActivationQuantizationHolder supports a single quantizer but {len(activation_quantizers)} quantizers '
             f'were found for node {node}')
+
 
     def get_exportable_pytorch_model(graph: Graph):
         """

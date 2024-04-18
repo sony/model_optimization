@@ -552,7 +552,6 @@ class PytorchImplementation(FrameworkImplementation):
         Returns:
             weight_quantizers: A dictionary between a weight's name to its quantizer.
             activation_quantizers: A list of activations quantization, one for each layer output.
-            weight_values: A dictionary between a weight's name to its value. Relevant for positional weights only.
         """
 
         return get_inferable_quantizers(node,

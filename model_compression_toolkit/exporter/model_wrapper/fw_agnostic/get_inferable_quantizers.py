@@ -19,7 +19,7 @@ from model_compression_toolkit.core.common import BaseNode
 def get_inferable_quantizers(node: BaseNode,
                              get_weights_quantizer_for_node: Callable,
                              get_activations_quantizer_for_node: Callable,
-                             attributes_names: List[str] = []) -> Tuple[Dict, List, Dict]:
+                             attributes_names: List[str] = []) -> Tuple[Dict, List]:
     """
     Create quantizers to wrap a layer for its corresponding node.
 
@@ -32,25 +32,18 @@ def get_inferable_quantizers(node: BaseNode,
     Returns:
         weight_quantizers: A dictionary between a weight's name to its quantizer.
         activation_quantizers: A list of activations quantization, one for each layer output.
-        weight_values: A dictionary between a weight's name to its value. Relevant for positional weights only.
     """
 
     weight_quantizers = {}
     activation_quantizers = []
-    weight_values = None
 
     for attr in attributes_names:
         if node.is_weights_quantization_enabled(attr):
             weight_quantizer = get_weights_quantizer_for_node(node, attr)
             weight_quantizers[attr] = weight_quantizer
-            if isinstance(attr, int):  # for positional weights we need to extract the weight's value.
-                if weight_values is None:
-                    weight_values = {attr: node.get_weights_by_keys(attr)}
-                else:
-                    weight_values[attr] = node.get_weights_by_keys(attr)
 
     if node.is_activation_quantization_enabled():
         num_of_outputs = len(node.output_shape) if isinstance(node.output_shape, list) else 1
         activation_quantizers = [get_activations_quantizer_for_node(node)] * num_of_outputs
 
-    return weight_quantizers, activation_quantizers, weight_values
+    return weight_quantizers, activation_quantizers

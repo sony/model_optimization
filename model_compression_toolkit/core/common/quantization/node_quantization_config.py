@@ -410,7 +410,6 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         for attr in node_attrs_list:
             if isinstance(attr, int):
                 # this is a positional attribute, so it needs to be handled separately.
-                # we assume that a positional attribute is quantized with the default configuration provided in the TPC.
                 self.pos_attributes_config_mapping[attr] = WeightsAttrQuantizationConfig(qc=qc,
                                                                                          weights_attr_cfg=op_cfg.default_weight_attr_config,
                                                                                          weights_channels_axis=weights_channels_axis)
