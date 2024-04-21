@@ -28,6 +28,7 @@ class RemoveIdentityNet(torch.nn.Module):
         x = self.conv1(x)
         x = self.identity(x)
         x = self.bn1(x)
+        x = self.identity(x)
         return x
 
 

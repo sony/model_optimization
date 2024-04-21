@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core.common.graph.base_graph import Graph
+from model_compression_toolkit.core.common.graph.base_graph import Graph, OutTensor
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 
 
@@ -33,9 +33,15 @@ def remove_identity_node(graph: Graph,
     """
     # Retrieve the predecessor nodes of the identity node.
     prev_identity_nodes = graph.get_prev_nodes(node)
+
     # Ensure there is exactly one predecessor; otherwise, do nothing.
     if len(prev_identity_nodes) != 1:
         return graph
+
+    graph_outputs = graph.get_outputs()
+    for i, g_out in enumerate(graph_outputs):
+        if g_out.node == node:
+            graph_outputs[i] = OutTensor(node=prev_identity_nodes[0], node_out_index=g_out.node_out_index)
 
     # Reconnect the output edges of the identity node to its predecessor,
     # effectively bypassing the identity node.
@@ -43,6 +49,8 @@ def remove_identity_node(graph: Graph,
     # Remove the edge from the predecessor to the identity node.
     graph.remove_edge(prev_identity_nodes[0], node)
     # Remove the identity node from the graph.
-    graph.remove_node(node_to_remove=node)
+    graph.remove_node(node_to_remove=node,
+                      new_graph_outputs=graph_outputs
+                      )
 
     return graph
