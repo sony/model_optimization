@@ -25,7 +25,8 @@ class RemoveIdentityTest(BaseKerasFeatureNetworkTest):
         x = keras.layers.Conv2D(3, 3)(inputs)
         x = keras.layers.Identity()(x)
         x = tf.identity(x)
-        outputs = keras.layers.BatchNormalization()(x)
+        x = keras.layers.BatchNormalization()(x)
+        outputs = tf.identity(x)
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
