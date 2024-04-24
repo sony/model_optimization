@@ -20,7 +20,7 @@ def activation_lut_kmean_quantizer(activation_n_bits: int,
     Returns:
         A fake LUT quantization node.
     """
-
+    quantization_params.update({'num_bits': activation_n_bits})
     lut_fake_quant = PytorchLUTFakeQuant(quantization_params=quantization_params)
     return lambda x: lut_fake_quant(x)
 
@@ -45,6 +45,7 @@ class PytorchLUTFakeQuant(torch.nn.Module):
         self.activation_is_signed = self.quantization_params.get(SIGNED)
         self.lut_values = to_torch_tensor(self.quantization_params.get(LUT_VALUES))
         self.threshold = self.quantization_params.get(THRESHOLD)
+        self.num_bits = self.quantization_params.get('num_bits')
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -76,7 +77,7 @@ class PytorchLUTFakeQuant(torch.nn.Module):
         Returns: Quantized tensor.
         """
 
-        tensor = self.int_quantization_with_threshold(tensor_data, LUT_VALUES_BITWIDTH)
+        tensor = self.int_quantization_with_threshold(tensor_data, self.num_bits)
         tensor = tensor.unsqueeze(-1)
 
         expanded_lut_values = self.lut_values.reshape([*[1 for _ in range(len(tensor.shape) - 1)], -1])
