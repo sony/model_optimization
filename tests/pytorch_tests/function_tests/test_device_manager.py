@@ -18,7 +18,7 @@ from model_compression_toolkit.core.pytorch.pytorch_device_config import DeviceM
 import torch
 
 
-class TestIsValidDevice(unittest.TestCase):
+class TestDeviceManager(unittest.TestCase):
     def test_is_valid_device_cpu(self):
         device_name = "cpu"
         is_valid, message = DeviceManager.is_valid_device(device_name)
