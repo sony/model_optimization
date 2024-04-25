@@ -414,7 +414,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         if new_node is None:
-            Logger.critical("Cannot replace input node with a None value; new input node is required.")
+            Logger.critical("Cannot replace input node with a None value; new input node is required.")  # pragma: no cover
 
         graph_inputs = self.get_inputs()
         new_graph_inputs = copy(graph_inputs)
