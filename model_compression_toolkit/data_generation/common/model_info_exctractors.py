@@ -35,8 +35,7 @@ class OriginalBNStatsHolder:
         """
         self.bn_params = self.get_bn_params(model, bn_layer_types)
         if self.get_num_bn_layers() == 0:
-            Logger.critical(
-                f'Data generation requires a model with at least one BatchNorm layer.')
+            Logger.critical(f'Data generation requires a model with at least one BatchNorm layer.') # pragma: no cover
 
     def get_bn_layer_names(self) -> List[str]:
         """
@@ -105,7 +104,7 @@ class OriginalBNStatsHolder:
         Returns:
             dict: Dictionary mapping batch normalization layer names to their parameters.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
 
 
 class ActivationExtractor:
@@ -123,7 +122,7 @@ class ActivationExtractor:
             model (Any): The model.
             layer_types_to_extract_inputs (List): Tuple or list of layer types.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
 
     @abstractmethod
     def get_layer_input_activation(self, layer_name: str) -> Any:
@@ -136,7 +135,7 @@ class ActivationExtractor:
         Returns:
             Any: Input activation tensor of the layer.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
 
     @abstractmethod
     def get_output_layer_input_activation(self) -> List:
@@ -146,7 +145,7 @@ class ActivationExtractor:
         Returns:
             Any: Input activation tensors of all the output layers that are Linear or Conv2d.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
 
     @abstractmethod
     def get_last_linear_layers_weights(self) -> List:
@@ -156,7 +155,7 @@ class ActivationExtractor:
         Returns:
             List: Weight tensors of all the last linear layers.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
 
     def get_num_extractor_layers(self) -> int:
         """
@@ -175,21 +174,21 @@ class ActivationExtractor:
         Returns:
             List: A list of layer names for which to extract input activations.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
 
     @abstractmethod
     def clear(self):
         """
         Clear the stored activation tensors.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
 
     @abstractmethod
     def remove(self):
         """
         Remove the hooks from the model.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
 
     @abstractmethod
     def run_model(self, inputs: Any) -> Any:
@@ -202,4 +201,4 @@ class ActivationExtractor:
         Returns:
             Any: Output tensor.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
