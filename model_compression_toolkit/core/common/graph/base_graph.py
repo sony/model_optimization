@@ -828,12 +828,12 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         if not fw_impl.is_node_entry_node(entry_node):
-            Logger.critical(f"Node {entry_node} is not a valid entry node for creating a pruning section")
+            Logger.critical(f"Node {entry_node} is not a valid entry node for creating a pruning section")  # pragma: no cover
 
         intermediate_nodes, exit_node = self._find_intermediate_and_exit_nodes(entry_node, fw_impl)
 
         if not fw_impl.is_node_exit_node(exit_node, entry_node, self.fw_info):
-            Logger.critical(f"Node {exit_node} is not a valid exit node for the pruning section starting with {entry_node}.")
+            Logger.critical(f"Node {exit_node} is not a valid exit node for the pruning section starting with {entry_node}.")   # pragma: no cover
 
         return PruningSection(entry_node=entry_node,
                               intermediate_nodes=intermediate_nodes,

@@ -51,13 +51,11 @@ from model_compression_toolkit.core.keras.statistics_correction.apply_second_mom
 from packaging import version
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
-    from keras.src.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, \
-        Concatenate, Add
-    from keras.src.layers.core import TFOpLambda
+    from keras.src.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add   # pragma: no cover
+    from keras.src.layers.core import TFOpLambda   # pragma: no cover
 else:
-    from keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, \
-        Concatenate, Add
-    from keras.layers.core import TFOpLambda
+    from keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add   # pragma: no cover
+    from keras.layers.core import TFOpLambda   # pragma: no cover
 
 from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import common
@@ -489,7 +487,7 @@ class KerasImplementation(FrameworkImplementation):
                                                       fw_impl=self,
                                                       num_iterations_for_approximation=num_iterations_for_approximation)
         else:
-            Logger.critical(f"Unsupported Hessian mode for Keras: {trace_hessian_request.mode}.")
+            Logger.critical(f"Unsupported Hessian mode for Keras: {trace_hessian_request.mode}.")   # pragma: no cover
 
     def is_output_node_compatible_for_hessian_score_computation(self,
                                                                 node: BaseNode) -> Any:
