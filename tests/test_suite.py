@@ -31,6 +31,7 @@ found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util
     "torchvision") is not None
 
 if found_tf:
+    from tests.keras_tests.function_tests.test_custom_layer import TestCustomLayer
     from tests.keras_tests.function_tests.test_hessian_info_calculator import TestHessianInfoCalculatorWeights, \
         TestHessianInfoCalculatorActivation
     from tests.keras_tests.function_tests.test_hessian_service import TestHessianService
@@ -108,6 +109,7 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCustomLayer))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestParameterCounter))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PruningPretrainedModelsTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PruningFeatureNetworksTest))
