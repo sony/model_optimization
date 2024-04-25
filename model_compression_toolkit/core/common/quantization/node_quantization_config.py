@@ -62,7 +62,6 @@ class BaseNodeQuantizationConfig(object):
                            f"was not updated!")
 
     def __repr__(self) -> str:
-        # pragma: no cover
         """
         Returns: String to display a NodeQuantizationConfig object.
         """
