@@ -76,7 +76,7 @@ class GPTQTrainer(ABC):
         if self.gptq_config.use_hessian_based_weights:
             if not isinstance(hessian_info_service, HessianInfoService):
                 Logger.critical(f"When using Hessian-based approximations for sensitivity evaluation, "
-                                f"an 'HessianInfoService' object must be provided, but received: {hessian_info_service}.")
+                                f"an 'HessianInfoService' object must be provided, but received: {hessian_info_service}.")   # pragma: no cover
             self.hessian_service = hessian_info_service
 
     def get_optimizer_with_param(self,
@@ -238,12 +238,12 @@ class GPTQTrainer(ABC):
             trace_approx: Trace approximation to validate.
         """
         if not isinstance(trace_approx, list):
-            Logger.critical(f"Trace approximation was expected to be a list but is of type: {type(trace_approx)}.")
+            Logger.critical(f"Trace approximation was expected to be a list but is of type: {type(trace_approx)}.")   # pragma: no cover
         if len(trace_approx) != 1:
             Logger.critical(f"Trace approximation was expected to have a length of 1 "
                             f"(for computations with granularity set to 'HessianInfoGranularity.PER_TENSOR') "
                             f"but has a length of {len(trace_approx)}."
-            )
+            )   # pragma: no cover
 
 
     @abstractmethod
