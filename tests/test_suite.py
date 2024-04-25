@@ -76,6 +76,7 @@ if found_tf:
     from tests.keras_tests.function_tests.test_hmse_error_method import TestParamSelectionWithHMSE
 
 if found_pytorch:
+    from tests.pytorch_tests.function_tests.test_activation_quantization_functions import TestActivationQuantizationFunctions
     from tests.pytorch_tests.function_tests.test_device_manager import TestDeviceManager
     from tests.pytorch_tests.function_tests.test_lut_fake_quant import TestPytorchActivationLutQuantizer
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
@@ -149,6 +150,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestParamSelectionWithHMSE))
 
     if found_pytorch:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationQuantizationFunctions))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestDeviceManager))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchActivationLutQuantizer))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQModelBuilderWithActivationHolderPytorch))
