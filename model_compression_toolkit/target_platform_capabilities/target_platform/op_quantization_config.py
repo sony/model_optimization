@@ -300,7 +300,7 @@ class QuantizationConfigOptions(object):
         qc_options = copy.deepcopy(self)
 
         # create a list of unique qc options to update
-        cfgs_to_update = qc_options.quantization_config_list
+        cfgs_to_update = [cfg for cfg in qc_options.quantization_config_list]
         if not any(qc_options.base_config is cfg for cfg in cfgs_to_update):
             cfgs_to_update.append(qc_options.base_config)
 
