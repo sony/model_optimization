@@ -15,7 +15,7 @@
 
 import unittest
 import numpy as np
-import tensorflow as tf
+from keras.src.optimizers import Adam
 
 from model_compression_toolkit.data_generation.keras.optimization_functions.scheduler_step_functions import \
     CustomReduceLROnPlateau
@@ -23,8 +23,8 @@ from model_compression_toolkit.data_generation.keras.optimization_functions.sche
 
 class TestCustomReduceLROnPlateau(unittest.TestCase):
     def setUp(self):
-        self.lr = tf.Variable(0.1, dtype=tf.float32)
-        self.scheduler = CustomReduceLROnPlateau(optim_lr=self.lr)
+        self.opt_lr = Adam(learning_rate=0.1)
+        self.scheduler = CustomReduceLROnPlateau(optim_lr=self.opt_lr)
 
     def test_initialization(self):
         self.assertEqual(self.scheduler.factor, 0.5)
@@ -50,27 +50,27 @@ class TestCustomReduceLROnPlateau(unittest.TestCase):
         self.assertFalse(self.scheduler.in_cooldown())
 
     def test_learning_rate_reduction(self):
-        self.lr.assign(0.1)
+        self.opt_lr.learning_rate = 0.1
         self.scheduler._reset()
         self.scheduler.on_epoch_end(0.1)  # No improvement
         for _ in range(self.scheduler.patience):
             self.scheduler.on_epoch_end(0.1)
-        self.assertLess(float(self.lr.numpy()), 0.1)
+        self.assertLess(float(self.opt_lr.learning_rate.numpy()), 0.1)
         self.assertEqual(self.scheduler.cooldown_counter, self.scheduler.cooldown)
 
     def test_minimum_learning_rate(self):
-        self.lr.assign(0.1)
+        self.opt_lr.learning_rate = 0.1
         self.scheduler._reset()
         for _ in range(100):
             self.scheduler.on_epoch_end(0.1)
-        self.assertGreaterEqual(float(self.lr.numpy()), self.scheduler.min_lr)
+        self.assertGreaterEqual(float(self.opt_lr.learning_rate.numpy()), self.scheduler.min_lr)
 
     def test_immediate_improvement(self):
         initial_lr = 0.1
-        self.lr.assign(initial_lr)
+        self.opt_lr.learning_rate = initial_lr
         self.scheduler._reset()
         self.scheduler.on_epoch_end(0.05)  # Immediate improvement
-        self.assertAlmostEqual(float(self.lr.numpy()), initial_lr, places=7)
+        self.assertAlmostEqual(float(self.opt_lr.learning_rate.numpy()), initial_lr, places=7)
 
 
 if __name__ == '__main__':
