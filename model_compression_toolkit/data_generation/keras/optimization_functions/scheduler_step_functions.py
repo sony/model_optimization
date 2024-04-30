@@ -82,7 +82,7 @@ class CustomReduceLROnPlateau:
             This method should be called at the end of each epoch during training.
         """
         logs = logs or {}
-        logs['lr'] = float(self.optim_lr.learning_rate.numpy())
+        logs['lr'] = float(self.optim_lr.numpy())
         current = float(loss)
 
         if self.in_cooldown():
@@ -96,12 +96,12 @@ class CustomReduceLROnPlateau:
             self.wait += 1
             if self.wait >= self.patience:
 
-                old_lr = float(self.optim_lr.learning_rate.numpy())
+                old_lr = float(self.optim_lr.numpy())
                 if old_lr > self.min_lr and self.reduce_lr:
                     new_lr = old_lr * self.factor
 
                     new_lr = max(new_lr, self.min_lr)
-                    self.optim_lr.learning_rate.assign(new_lr)
+                    self.optim_lr.assign(new_lr)
                     self.cooldown_counter = self.cooldown
                     self.wait = 0
 

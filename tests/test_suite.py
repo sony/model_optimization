@@ -74,6 +74,8 @@ if found_tf:
     from tests.keras_tests.pruning_tests.test_pretrained_models import PruningPretrainedModelsTest
     from tests.keras_tests.pruning_tests.feature_networks.test_pruning_feature_networks import PruningFeatureNetworksTest
     from tests.keras_tests.function_tests.test_hmse_error_method import TestParamSelectionWithHMSE
+    from tests.data_generation_tests.keras.test_scheduler_step import TestCustomReduceLROnPlateau
+
 
 if found_pytorch:
     from tests.pytorch_tests.function_tests.test_activation_quantization_functions import TestActivationQuantizationFunctions
@@ -110,6 +112,7 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCustomReduceLROnPlateau))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCustomLayer))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestParameterCounter))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PruningPretrainedModelsTest))
