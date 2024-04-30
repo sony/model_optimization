@@ -299,7 +299,12 @@ class QuantizationConfigOptions(object):
         """
         qc_options = copy.deepcopy(self)
 
-        for qc in qc_options.quantization_config_list:
+        # create a list of unique qc options to update
+        cfgs_to_update = qc_options.quantization_config_list
+        if not any(qc_options.base_config is cfg for cfg in cfgs_to_update):
+            cfgs_to_update.append(qc_options.base_config)
+
+        for qc in cfgs_to_update:
             if layer_attrs_mapping is None:
                 qc.attr_weights_configs_mapping = {}
             else:
