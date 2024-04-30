@@ -26,7 +26,7 @@ class NodeMatcherStub:
     def apply(self, input):
         return self.response
 
-class TestBaseEdgeMatcher(unittest.TestCase):
+class TestEdgeMatcher(unittest.TestCase):
     def test_init(self):
         sm = NodeMatcherStub(True)
         tm = NodeMatcherStub(False)
@@ -67,8 +67,7 @@ class TestBaseEdgeMatcher(unittest.TestCase):
         result = bem.logic_not()
         self.assertIsInstance(result, EdgeNotMatcher)
 
-class TestEdgeAndMatcher(unittest.TestCase):
-    def test_apply(self):
+    def test_edge_and_matcher_apply(self):
         sm = NodeMatcherStub(True)
         tm = NodeMatcherStub(False)
         bem1 = BaseEdgeMatcher(sm, tm)
@@ -76,8 +75,7 @@ class TestEdgeAndMatcher(unittest.TestCase):
         eam = EdgeAndMatcher(bem1, bem2)
         self.assertFalse(eam.apply((1, 1)))
 
-class TestEdgeOrMatcher(unittest.TestCase):
-    def test_apply(self):
+    def test_edge_or_matcher_apply(self):
         sm = NodeMatcherStub(True)
         tm = NodeMatcherStub(True)
         bem1 = BaseEdgeMatcher(sm, tm)
@@ -89,16 +87,14 @@ class TestEdgeOrMatcher(unittest.TestCase):
         eom = EdgeOrMatcher(bem1, bem2)
         self.assertTrue(eom.apply((1, 1)))
 
-class TestEdgeNotMatcher(unittest.TestCase):
-    def test_apply(self):
+    def test_edge_not_matcher_apply(self):
         sm = NodeMatcherStub(True)
         tm = NodeMatcherStub(False)
         bem = BaseEdgeMatcher(sm, tm)
         enm = EdgeNotMatcher(bem)
         self.assertTrue(enm.apply((1, 1)))
 
-class TestEdgeAnyMatcher(unittest.TestCase):
-    def test_apply(self):
+    def test_edge_any_matcher_apply(self):
         eam = EdgeAnyMatcher(None, None)
         self.assertTrue(eam.apply((1, 1)))
 

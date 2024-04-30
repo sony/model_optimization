@@ -19,6 +19,7 @@ import importlib
 import unittest
 
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
+from tests.common_tests.function_tests.test_edge_matcher import TestEdgeMatcher
 #  ----------------  Individual test suites
 from tests.common_tests.function_tests.test_histogram_collector import TestHistogramCollector
 from tests.common_tests.function_tests.test_resource_utilization_object import TestResourceUtilizationObject
@@ -110,6 +111,7 @@ if __name__ == '__main__':
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FusingTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCommonDocsExamples))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestResourceUtilizationObject))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestEdgeMatcher))
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
