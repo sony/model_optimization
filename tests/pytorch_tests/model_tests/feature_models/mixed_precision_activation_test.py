@@ -68,10 +68,10 @@ class MixedPercisionActivationBaseTest(BasePytorchTest):
 class MixedPercisionActivationSearch8Bit(MixedPercisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [0, 0, 0, 0]
+        self.expected_config = [1, 0, 0, 0]
 
     def get_resource_utilization(self):
-        return ResourceUtilization(np.inf, np.inf)
+        return ResourceUtilization(np.inf, 3000)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         self.verify_config(quantization_info.mixed_precision_cfg, self.expected_config)
@@ -119,12 +119,26 @@ class MixedPercisionActivationSearch4BitFunctional(MixedPercisionActivationBaseT
 class MixedPercisionActivationMultipleInputs(MixedPercisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [0 for _ in range(8)]
+        self.expected_config = [0 for _ in range(8)] + [1]
         self.num_calibration_iter = 3
         self.val_batch_size = 2
 
     def get_resource_utilization(self):
-        return ResourceUtilization(np.inf, np.inf)
+        return ResourceUtilization(np.inf, 431)
+
+    def get_tpc(self):
+        base_config, _, default_config = get_op_quantization_configs()
+        return get_mp_activation_pytorch_tpc_dict(
+            tpc_model=generate_tp_model_with_activation_mp(
+                base_cfg=base_config,
+                default_config=default_config,
+                mp_bitwidth_candidates_list=[(8, 8), (8, 4), (8, 2),
+                                             (4, 8), (4, 4), (4, 2),
+                                             (2, 8), (2, 4), (2, 2)],
+            custom_opsets=['Concat']),
+            custom_opsets_to_layer={'Concat': [torch.concat]},
+            test_name='mixed_precision_activation_model',
+            tpc_name='mixed_precision_activation_pytorch_test')
 
     def get_mixed_precision_config(self):
         return MixedPrecisionQuantizationConfig(num_of_images=4)

@@ -61,9 +61,6 @@ class MixedPercisionBaseTest(BasePytorchTest):
         raise NotImplementedError
 
     def compare_results(self, quantization_info, quantized_models, float_model, expected_bitwidth_idx):
-        # quantized with the highest precision since ResourceUtilization==inf
-        self.unit_test.assertTrue((quantization_info.mixed_precision_cfg ==
-                                   [expected_bitwidth_idx, expected_bitwidth_idx]).all())
         # verify that quantization occurred
         quantized_model = quantized_models['mixed_precision_model']
         conv_layers = list(filter(lambda _layer: type(_layer) == Conv2d, list(quantized_model.children())))
@@ -85,7 +82,7 @@ class MixedPercisionSearch8Bit(MixedPercisionBaseTest):
         self.distance_metric = distance_metric
 
     def get_resource_utilization(self):
-        return ResourceUtilization(np.inf)
+        return ResourceUtilization(380)
 
     def get_core_configs(self):
         qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
@@ -162,14 +159,14 @@ class MixedPercisionSearchPartWeightsLayers(MixedPercisionBaseTest):
         return ConvLinearModel(input_shape)
 
     def get_resource_utilization(self):
-        return ResourceUtilization(np.inf)
+        return ResourceUtilization(560)
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         # We just needed to verify that the graph finalization is working without failing.
         # The actual quantization is not interesting for the sake of this test, so we just verify some
         # degenerated things to see that everything worked.
         self.unit_test.assertTrue(
-            quantization_info.mixed_precision_cfg == [0])  # resource utilization is infinity -> should give best model - 8bits
+            quantization_info.mixed_precision_cfg == [1])  # resource utilization should give mixed precision
 
         quantized_model = quantized_models['mixed_precision_model']
         linear_layer = quantized_model.linear

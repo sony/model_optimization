@@ -20,6 +20,8 @@ import numpy as np
 
 from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.hessian.hessian_info_service import HessianInfoService
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import \
+    requires_mixed_precision
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.quantization_prep_runner import quantization_preparation_runner
 from model_compression_toolkit.logger import Logger
@@ -89,7 +91,16 @@ def core_runner(in_model: Any,
         if core_config.mixed_precision_config is None:
             Logger.critical("Provided an initialized target_resource_utilization, that means that mixed precision quantization is "
                             "enabled, but the provided MixedPrecisionQuantizationConfig is None.")
-        core_config.mixed_precision_config.set_mixed_precision_enable()
+        # Determine whether to use mixed precision or single precision based on target_resource_utilization.
+        if requires_mixed_precision(in_model,
+                                    target_resource_utilization,
+                                    representative_data_gen,
+                                    core_config,
+                                    tpc,
+                                    fw_info,
+                                    fw_impl):
+            core_config.mixed_precision_config.set_mixed_precision_enable()
+            Logger.info('Mixed precision enabled.')
 
     graph = graph_preparation_runner(in_model,
                                      representative_data_gen,

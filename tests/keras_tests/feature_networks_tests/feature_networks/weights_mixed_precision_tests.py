@@ -404,7 +404,7 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
 
     def get_resource_utilization(self):
         # resource utilization is infinity -> should give best model - 8bits
-        return ResourceUtilization(np.inf)
+        return ResourceUtilization(800)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
