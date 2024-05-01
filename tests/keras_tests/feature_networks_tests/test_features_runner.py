@@ -212,8 +212,8 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPercisionCombinedNMSTest(self).run_test()
 
     def test_mixed_precision_search(self):
-        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
-        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
+        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG, expected_mp_config=[0, 1]).run_test()
+        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER, expected_mp_config=[1, 0]).run_test()
 
     def test_mixed_precision_for_part_weights_layers(self):
         MixedPercisionSearchPartWeightsLayersTest(self).run_test()

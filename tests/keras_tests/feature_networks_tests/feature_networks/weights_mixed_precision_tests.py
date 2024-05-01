@@ -99,14 +99,13 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
 
 
 class MixedPercisionSearchTest(MixedPercisionBaseTest):
-    def __init__(self, unit_test, distance_metric=MpDistanceWeighting.AVG):
+    def __init__(self, unit_test, distance_metric=MpDistanceWeighting.AVG, expected_mp_config=[0,0]):
         super().__init__(unit_test, val_batch_size=2)
-
+        self.expected_mp_config = expected_mp_config
         self.distance_metric = distance_metric
 
     def get_resource_utilization(self):
-        # resource utilization is infinity -> should give best model - 8bits
-        return ResourceUtilization(np.inf)
+        return ResourceUtilization(17919)
 
     def get_mixed_precision_config(self):
         return mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
@@ -114,8 +113,7 @@ class MixedPercisionSearchTest(MixedPercisionBaseTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        assert (quantization_info.mixed_precision_cfg == [0,
-                                                          0]).all()  # resource utilization is infinity -> should give best model - 8bits
+        assert (quantization_info.mixed_precision_cfg == self.expected_mp_config).all()
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
@@ -185,15 +183,13 @@ class MixedPercisionSearchPartWeightsLayersTest(MixedPercisionBaseTest):
         return model
 
     def get_resource_utilization(self):
-        # resource utilization is infinity -> should give best model - 8bits
-        return ResourceUtilization(np.inf)
+        return ResourceUtilization(1790)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # We just needed to verify that the graph finalization is working without failing.
         # The actual quantization is not interesting for the sake of this test, so we just verify some
         # degenerated things to see that everything worked.
-        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg == [
-            0])  # resource utilization is infinity -> should give best model - 8bits
+        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg == [1])
 
         dense_layer = get_layers_from_model_by_type(quantized_model, layers.Dense)
         self.unit_test.assertTrue(len(dense_layer) == 1)
@@ -342,7 +338,7 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
         super().__init__(unit_test)
 
     def get_resource_utilization(self):
-        return ResourceUtilization(np.inf)
+        return ResourceUtilization(95)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -354,8 +350,7 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(quantization_info.mixed_precision_cfg) == 1)
-        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg[
-                                      0] == 0)  # Assert model is quantized using 16 bits as ResourceUtilization is inf
+        self.unit_test.assertTrue(quantization_info.mixed_precision_cfg[0] == 1)
 
     def get_tpc(self):
         base_config = generate_test_op_qc(activation_n_bits=16,
@@ -404,12 +399,11 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
 
     def get_resource_utilization(self):
         # resource utilization is infinity -> should give best model - 8bits
-        return ResourceUtilization(800)
+        return ResourceUtilization(17919)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        assert (quantization_info.mixed_precision_cfg == [0,
-                                                          0]).all()  # resource utilization is infinity -> should give best model - 8bits
+        assert (quantization_info.mixed_precision_cfg == [0, 1]).all()
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
@@ -428,13 +422,11 @@ class MixedPercisionSearchLastLayerDistanceTest(MixedPercisionBaseTest):
                                                          use_hessian_based_scores=False)
 
     def get_resource_utilization(self):
-        # resource utilization is infinity -> should give best model - 8bits
-        return ResourceUtilization(np.inf)
+        return ResourceUtilization(17919)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        assert (quantization_info.mixed_precision_cfg == [0,
-                                                          0]).all()  # resource utilization is infinity -> should give best model - 8bits
+        assert (quantization_info.mixed_precision_cfg == [1, 0]).all()
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)

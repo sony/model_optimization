@@ -237,5 +237,6 @@ def requires_mixed_precision(in_model: Any,
 
     is_mixed_precision |= target_resource_utilization.weights_memory < total_weights_memory_bytes
     is_mixed_precision |= target_resource_utilization.activation_memory < max_activation_tensor_size_bytes
+    is_mixed_precision |= target_resource_utilization.total_memory < total_weights_memory_bytes + max_activation_tensor_size_bytes
     is_mixed_precision |= target_resource_utilization.bops < bops_count
     return is_mixed_precision
