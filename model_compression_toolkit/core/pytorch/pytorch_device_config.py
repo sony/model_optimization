@@ -79,19 +79,19 @@ class DeviceManager:
             if not torch.cuda.is_available():
                 return False, "CUDA is not available"
 
-            if device_name == CUDA: # pragma: no cover
+            if device_name == CUDA:
                 # 'cuda' without a specific index is valid if CUDA is available
-                return True, "Valid device" # pragma: no cover
+                return True, "Valid device"
 
-            try: # pragma: no cover
-                device_index = int(device_name.split(':')[1]) # pragma: no cover
-                if device_index >= torch.cuda.device_count(): # pragma: no cover
-                    return False, f"CUDA device index {device_index} out of range. Number of valid devices: {torch.cuda.device_count()}" # pragma: no cover
-            except Exception: # pragma: no cover
+            try:
+                device_index = int(device_name.split(':')[1])
+                if device_index >= torch.cuda.device_count():
+                    return False, f"CUDA device index {device_index} out of range. Number of valid devices: {torch.cuda.device_count()}"
+            except Exception:
                 # Handle cases where the device name is incorrectly formatted
-                return False, "Invalid CUDA device format. Use 'cuda' or 'cuda:x' where x is the device index." # pragma: no cover
+                return False, "Invalid CUDA device format. Use 'cuda' or 'cuda:x' where x is the device index."
 
-            return True, "Valid device" # pragma: no cover
+            return True, "Valid device"
 
         if CPU in device_name:
             return True, "Valid device"
