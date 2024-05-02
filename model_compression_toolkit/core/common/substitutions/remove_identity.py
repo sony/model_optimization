@@ -15,6 +15,7 @@
 
 from model_compression_toolkit.core.common.graph.base_graph import Graph, OutTensor
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
+from model_compression_toolkit.logger import Logger
 
 
 def remove_identity_node(graph: Graph,
@@ -36,6 +37,7 @@ def remove_identity_node(graph: Graph,
 
     # Ensure there is exactly one predecessor; otherwise, do nothing.
     if len(prev_identity_nodes) != 1:
+        Logger.warning(f"Identity node {node} have {len(prev_identity_nodes)} inputs, while expected to have one. Skipping remove identity substitution.") # pragma: no cover
         return graph  # pragma: no cover
 
     graph_outputs = graph.get_outputs()
