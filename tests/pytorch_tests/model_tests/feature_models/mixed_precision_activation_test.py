@@ -119,7 +119,7 @@ class MixedPercisionActivationSearch4BitFunctional(MixedPercisionActivationBaseT
 class MixedPercisionActivationMultipleInputs(MixedPercisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [0 for _ in range(8)] + [1]
+        self.expected_config = [0 for _ in range(8)] + [1] # expected config for this test.
         self.num_calibration_iter = 3
         self.val_batch_size = 2
 

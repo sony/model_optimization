@@ -35,7 +35,8 @@ def compute_resource_utilization_data(in_model: Any,
                                       mixed_precision_enable: bool = True) -> ResourceUtilization:
     """
     Compute Resource Utilization information that can be relevant for defining target ResourceUtilization for mixed precision search.
-    Calculates maximal activation tensor, sum of weights' parameters and total (sum of both).
+    Calculates maximal activation tensor size, the sum of the model's weight parameters and the total memory combining both weights
+    and maximal activation tensor size.
 
     Args:
         in_model:  Model to build graph from (the model that intended to be quantized).
@@ -46,9 +47,16 @@ def compute_resource_utilization_data(in_model: Any,
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         transformed_graph: An internal graph representation of the input model.
-        mixed_precision_enable: Flag to indicate whether mixed precision is enabled.
+        transformed_graph: An internal graph representation of the input model. Defaults to None.
+                            If no graph is provided, a graph will be automatically generated
+                            using the specified model.
+        mixed_precision_enable: Indicates if mixed precision is enabled, defaults to True.
+                                If disabled, computes resource utilization using base quantization
+                                configurations across all layers.
 
-    Returns: A ResourceUtilization object with the results.
+    Returns:
+        ResourceUtilization: An object encapsulating the calculated resource utilization computations.
+
 
     """
 
@@ -84,22 +92,21 @@ def compute_resource_utilization_data(in_model: Any,
                                bops=bops_count)
 
 
-def compute_nodes_weights_params(graph: Graph,
-                                 fw_info: FrameworkInfo) -> Tuple[bool, np.ndarray, np.ndarray]:
+def compute_nodes_weights_params(graph: Graph, fw_info: FrameworkInfo) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Computes an array of the respective weights memory in bytes and an array of the respective
-            number of weights parameters for each node.
+    Calculates the memory usage in bytes and the number of weight parameters for each node within a graph.
+    Memory calculations are based on the maximum bit-width used for quantization per node.
 
     Args:
-        graph: Finalized Graph object.
-        fw_info: FrameworkInfo object about the specific framework
-            (e.g., attributes of different layers' weights to quantize).
+        graph: A finalized Graph object, representing the model structure.
+        fw_info: FrameworkInfo object containing details about the specific framework's
+                 quantization attributes for different layers' weights.
 
-    Returns: An array of the graph's nodes weights memory in bytes and an array of the graph's
-            nodes number of weights parameters.
-
+    Returns:
+        A tuple containing two arrays:
+            - The first array represents the memory in bytes for each node's weights when quantized at the maximal bit-width.
+            - The second array represents the total number of weight parameters for each node.
     """
-
     weights_params = []
     weights_memory_bytes = []
     for n in graph.nodes:
@@ -110,12 +117,9 @@ def compute_nodes_weights_params(graph: Graph,
         kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
         if kernel_attr is not None and not n.reuse:
             kernel_candidates = n.get_all_weights_attr_candidates(kernel_attr)
-            weight_n_bit_candidates = [kc.weights_n_bits for kc in
-                                     kernel_candidates] if n.candidates_quantization_cfg is not None else []
-            max_weight_bits = max(weight_n_bit_candidates) if len(weight_n_bit_candidates) > 0 else 0
-
 
             if len(kernel_candidates) > 0 and any([c.enable_weights_quantization for c in kernel_candidates]):
+                max_weight_bits = max([kc.weights_n_bits for kc in kernel_candidates])
                 node_num_weights_params = 0
                 for attr in fw_info.get_kernel_op_attributes(n.type):
                     if attr is not None:
@@ -128,31 +132,33 @@ def compute_nodes_weights_params(graph: Graph,
 
     return np.array(weights_memory_bytes), np.array(weights_params)
 
-
-def compute_activation_output_sizes(graph: Graph) -> Tuple[bool, np.ndarray, np.ndarray]:
+def compute_activation_output_sizes(graph: Graph) -> Tuple[np.ndarray, np.ndarray]:
     """
     Computes an array of the respective output tensor size and an array of the output tensor size in bytes for
     each node.
 
     Args:
-        graph: Finalized Graph object.
+        graph: A finalized Graph object, representing the model structure.
 
-    Returns: An array of the graph's nodes activation output size in bytes and an array of the
-            graph's nodes activation output size.
+    Returns:
+    A tuple containing two arrays:
+        - The first array represents the size of each node's activation output tensor size in bytes,
+          calculated using the maximal bit-width for quantization.
+        - The second array represents the size of each node's activation output tensor size.
+
 
     """
 
     activation_outputs = []
     activation_outputs_bytes = []
-    # Go over all nodes that have configurable activation.
     for n in graph.nodes:
+        # Go over all nodes that have configurable activation.
         if n.has_activation_quantization_enabled_candidate():
-            activation_n_bit_candidates = [qc.activation_quantization_cfg.activation_n_bits for qc in n.candidates_quantization_cfg] if n.candidates_quantization_cfg is not None else []
-            max_activation_bits = max(activation_n_bit_candidates) if len(activation_n_bit_candidates) > 0 else 0
-
+            # Fetch maximum bits required for quantizing activations
+            max_activation_bits = max([qc.activation_quantization_cfg.activation_n_bits for qc in n.candidates_quantization_cfg])
             node_output_size = n.get_total_output_params()
             activation_outputs.append(node_output_size)
-            # multiply num params by num bits and divide by BITS_TO_BYTES to convert from bits to bytes
+            # Calculate activation size in bytes and append to list
             activation_outputs_bytes.append(node_output_size * max_activation_bits / BITS_TO_BYTES)
 
     return np.array(activation_outputs_bytes), np.array(activation_outputs)
@@ -198,9 +204,10 @@ def requires_mixed_precision(in_model: Any,
                             fw_info: FrameworkInfo,
                             fw_impl: FrameworkImplementation) -> bool:
     """
-    The function checks whether the model requires mixed precision. This is determined by whether the target memory usage
-    of the weights is less than the available memory, the target maximum size of an activation tensor is less than the
-    available memory, and the target number of BOPs is less than the available BOPs.
+    The function checks whether the model requires mixed precision to meet the requested target resource utilization.
+    This is determined by whether the target memory usage of the weights is less than the available memory,
+    the target maximum size of an activation tensor is less than the available memory,
+    and the target number of BOPs is less than the available BOPs.
     If any of these conditions are met, the function returns True. Otherwise, it returns False.
 
     Args:
