@@ -21,7 +21,7 @@ from unittest.mock import patch
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy
 
 
-class TestTensorConversions(unittest.TestCase):
+class TestTorchUtils(unittest.TestCase):
     def setUp(self):
         # Setup any common resources
         self.numpy_array = np.array([1.0, 2.0, 3.0])

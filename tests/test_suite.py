@@ -22,6 +22,8 @@ from tests.common_tests.function_tests.test_collectors_manipulation import TestC
 from tests.common_tests.function_tests.test_edge_matcher import TestEdgeMatcher
 #  ----------------  Individual test suites
 from tests.common_tests.function_tests.test_histogram_collector import TestHistogramCollector
+from tests.common_tests.function_tests.test_immutable_class import TestImmutableClass
+from tests.common_tests.function_tests.test_logger import TestLogger
 from tests.common_tests.function_tests.test_resource_utilization_object import TestResourceUtilizationObject
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
@@ -80,6 +82,7 @@ if found_tf:
 
 
 if found_pytorch:
+    from tests.pytorch_tests.function_tests.test_torch_utils import TestTorchUtils
     from tests.pytorch_tests.function_tests.test_activation_quantization_functions import TestActivationQuantizationFunctions
     from tests.pytorch_tests.function_tests.test_device_manager import TestDeviceManager
     from tests.pytorch_tests.function_tests.test_lut_fake_quant import TestPytorchActivationLutQuantizer
@@ -112,6 +115,8 @@ if __name__ == '__main__':
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCommonDocsExamples))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestResourceUtilizationObject))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestEdgeMatcher))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLogger))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestImmutableClass))
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
@@ -157,6 +162,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestParamSelectionWithHMSE))
 
     if found_pytorch:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestTorchUtils))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationQuantizationFunctions))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestDeviceManager))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestPytorchActivationLutQuantizer))
