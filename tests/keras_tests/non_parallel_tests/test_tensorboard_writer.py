@@ -37,6 +37,7 @@ from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_set_bit_widths
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
+from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
 keras = tf.keras
 layers = keras.layers
@@ -136,10 +137,19 @@ class TestFileLogger(unittest.TestCase):
             activation_conf_nodes_bitwidth)]])
         self.assertTrue(figure_max_tensor_size == max_tensor_size)
 
+    def get_tpc(self):
+        cand_list = [(4, 8), (4, 4), (4, 2),
+                     (8, 8), (8, 4), (8, 2),
+                     (2, 8), (2, 4), (2, 2)]
+        base_config, _, default_config = get_op_quantization_configs()
+        return get_tpc_with_activation_mp_keras(base_config=base_config,
+                                                default_config=default_config,
+                                                mp_bitwidth_candidates_list=cand_list,
+                                                name="mp_tensorboard_test")
+
     def test_steps_by_order(self):
         # Test Single Output Mixed Precision model Logger
         self.model = SingleOutputNet()
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
         def rep_data():
             yield [np.random.randn(1, 8, 8, 3)]
@@ -152,7 +162,7 @@ class TestFileLogger(unittest.TestCase):
                                                                       rep_data,
                                                                       target_resource_utilization=mct.core.ResourceUtilization(np.inf),
                                                                       core_config=core_config,
-                                                                      target_platform_capabilities=tpc)
+                                                                      target_platform_capabilities=self.get_tpc())
 
         self.tensorboard_initial_graph_num_of_nodes(num_event_files=1, event_to_test=0)
 
@@ -165,7 +175,7 @@ class TestFileLogger(unittest.TestCase):
                                                                       rep_data,
                                                                       target_resource_utilization=mct.core.ResourceUtilization(np.inf),
                                                                       core_config=core_config,
-                                                                      target_platform_capabilities=tpc)
+                                                                      target_platform_capabilities=self.get_tpc())
 
         # Test tensor size plotting
         self.plot_tensor_sizes()
