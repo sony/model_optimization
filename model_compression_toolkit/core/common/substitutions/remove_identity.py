@@ -36,7 +36,7 @@ def remove_identity_node(graph: Graph,
 
     # Ensure there is exactly one predecessor; otherwise, do nothing.
     if len(prev_identity_nodes) != 1:
-        return graph
+        return graph  # pragma: no cover
 
     graph_outputs = graph.get_outputs()
     for i, g_out in enumerate(graph_outputs):

@@ -4,9 +4,9 @@ import tensorflow as tf
 from packaging import version
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
-    from keras.src.layers import Activation, ReLU, BatchNormalization
+    from keras.src.layers import Activation, ReLU, BatchNormalization  # pragma: no cover
 else:
-    from keras.layers import Activation, ReLU, BatchNormalization
+    from keras.layers import Activation, ReLU, BatchNormalization  # pragma: no cover
 
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode

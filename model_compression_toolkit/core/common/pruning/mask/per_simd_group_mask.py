@@ -79,7 +79,7 @@ class PerSIMDGroupMask:
             mask_indicator: The new value to set in the mask (either PRUNED or REMAINED).
         """
         if mask_indicator not in [MaskIndicator.PRUNED, MaskIndicator.REMAINED]:
-            Logger.critical("Mask value must be either 'MaskIndicator.PRUNED' or 'MaskIndicator.REMAINED'")
+            Logger.critical("Mask value must be either 'MaskIndicator.PRUNED' or 'MaskIndicator.REMAINED'")  # pragma: no cover
 
         # Update the SIMD group mask and corresponding per-channel mask
         self._mask_simd[node][group_index] = mask_indicator.value

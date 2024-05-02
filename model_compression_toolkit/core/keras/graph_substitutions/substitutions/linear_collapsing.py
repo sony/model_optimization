@@ -104,7 +104,7 @@ def conv2d_collapsing_fn(first_node: BaseNode,
 
         return kernel_collapsed, bias_collapsed
     else:
-        Logger.critical(f"Layer collapsing unsupported for combination: {first_node.type} and {second_node.type}.")
+        Logger.critical(f"Layer collapsing unsupported for combination: {first_node.type} and {second_node.type}.")  # pragma: no cover
 
 
 def keras_linear_collapsing() -> Conv2DCollapsing:

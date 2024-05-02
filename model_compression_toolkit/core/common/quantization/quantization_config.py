@@ -124,7 +124,7 @@ class QuantizationConfig:
         self.concat_threshold_update = concat_threshold_update
 
     def __repr__(self):
-        return str(self.__dict__)
+        return str(self.__dict__)  # pragma: no cover
 
 
 # Default quantization configuration the library use.

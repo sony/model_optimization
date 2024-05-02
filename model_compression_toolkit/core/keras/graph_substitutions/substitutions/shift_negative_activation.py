@@ -22,10 +22,10 @@ import tensorflow as tf
 from tensorflow.python.keras.layers.core import TFOpLambda
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Activation, Conv2D, Dense, DepthwiseConv2D, ZeroPadding2D, Reshape, \
-        GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
+        GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU  # pragma: no cover
 else:
     from tensorflow.keras.layers import Activation, Conv2D, Dense, DepthwiseConv2D, ZeroPadding2D, Reshape, \
-        GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU
+        GlobalAveragePooling2D, Dropout, ReLU, PReLU, ELU  # pragma: no cover
 
 from model_compression_toolkit.core import CoreConfig, FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode, Graph
