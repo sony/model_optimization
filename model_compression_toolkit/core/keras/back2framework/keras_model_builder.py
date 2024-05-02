@@ -25,9 +25,9 @@ if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers.core import TFOpLambda
     from keras.src.engine.base_layer import TensorFlowOpLayer, Layer
 else:
-    from keras import Input
-    from keras.layers.core import TFOpLambda
-    from keras.engine.base_layer import TensorFlowOpLayer, Layer
+    from keras import Input   # pragma: no cover
+    from keras.layers.core import TFOpLambda   # pragma: no cover
+    from keras.engine.base_layer import TensorFlowOpLayer, Layer   # pragma: no cover
 
 from typing import Any, Dict, List, Tuple, Callable
 from tensorflow.python.util.object_identity import Reference as TFReference
