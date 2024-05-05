@@ -45,10 +45,20 @@ class BaseDataGenerationModel(torch.nn.Module):
         out = self.conv3(out)
         return out
 
+class NoBNDataGenerationModel(torch.nn.Module):
+    def __init__(self):
+        super(NoBNDataGenerationModel, self).__init__()
+        self.conv = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1)
+
+    def forward(self, x):
+        out = self.conv(x)
+        return out
+
 class BasePytorchDataGenerationTest:
 
     def __init__(self,
                  unit_test,
+                 model: torch.nn.Module=None,
                  n_images: int = 32,
                  output_image_size: int = 32,
                  n_iter: int = 10,
@@ -69,7 +79,10 @@ class BasePytorchDataGenerationTest:
                  bn_layer_types: List = [torch.nn.BatchNorm2d]
                  ):
         self.unit_test = unit_test
-        self.model = BaseDataGenerationModel()
+        self.model = model
+        if model is None:
+            self.model = BaseDataGenerationModel()
+
         self.n_images = n_images
         self.output_image_size = output_image_size
         self.n_iter = n_iter

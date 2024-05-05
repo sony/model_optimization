@@ -18,7 +18,8 @@ from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
 
 from model_compression_toolkit.data_generation.common.enums import SchedulerType, BatchNormAlignemntLossType, \
     DataInitType, BNLayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
-from tests.data_generation_tests.pytorch.base_pytorch_data_generation_test import BasePytorchDataGenerationTest
+from tests.data_generation_tests.pytorch.base_pytorch_data_generation_test import BasePytorchDataGenerationTest, \
+    NoBNDataGenerationModel
 
 
 class PytorchDataGenerationTestRunner(unittest.TestCase):
@@ -55,6 +56,9 @@ class PytorchDataGenerationTestRunner(unittest.TestCase):
         BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.NONE).run_test()
         BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.MIN_MAX_DIFF).run_test()
         BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.REGULARIZED_MIN_MAX_DIFF).run_test()
+
+    def test_pytorch_no_bn_layers(self):
+        BasePytorchDataGenerationTest(self, model=NoBNDataGenerationModel()).run_test()
 
 if __name__ == '__main__':
     unittest.main()
