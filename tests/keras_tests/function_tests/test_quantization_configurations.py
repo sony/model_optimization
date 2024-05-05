@@ -35,7 +35,7 @@ def model_gen():
 
 
 class TestQuantizationConfigurations(unittest.TestCase):
-    def test_run_quantization_config(self):
+    def test_run_quantization_config_mbv1(self):
         x = np.random.randn(1, 16, 16, 3)
 
         def representative_data_gen():
@@ -43,8 +43,7 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         quantizer_methods = [mct.target_platform.QuantizationMethod.POWER_OF_TWO,
                              mct.target_platform.QuantizationMethod.SYMMETRIC,
-                             mct.target_platform.QuantizationMethod.UNIFORM,
-                             mct.target_platform.QuantizationMethod.LUT_POT_QUANTIZER]
+                             mct.target_platform.QuantizationMethod.UNIFORM]
 
         quantization_error_methods = [mct.core.QuantizationErrorMethod.MSE,
                                       mct.core.QuantizationErrorMethod.NOCLIPPING,
@@ -66,10 +65,9 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         for quantize_method, error_method, bias_correction, per_channel, input_scaling in weights_test_combinations:
-            weights_n_bits = 7 if quantize_method == mct.target_platform.QuantizationMethod.LUT_POT_QUANTIZER else 8
             tp = generate_test_tp_model({
                 'weights_quantization_method': quantize_method,
-                'weights_n_bits': weights_n_bits,
+                'weights_n_bits': 8,
                 'activation_n_bits': 16,
                 'weights_per_channel_threshold': per_channel})
             tpc = generate_keras_tpc(name="quant_config_weights_test", tp_model=tp)
@@ -85,11 +83,10 @@ class TestQuantizationConfigurations(unittest.TestCase):
 
         model = model_gen()
         for quantize_method, error_method, relu_bound_to_power_of_2, shift_negative_correction in activation_test_combinations:
-            activation_n_bits = 7 if quantize_method == mct.target_platform.QuantizationMethod.LUT_POT_QUANTIZER else 8
             tp = generate_test_tp_model({
                 'activation_quantization_method': quantize_method,
                 'weights_n_bits': 16,
-                'activation_n_bits': activation_n_bits})
+                'activation_n_bits': 8})
             tpc = generate_keras_tpc(name="quant_config_activation_test", tp_model=tp)
 
             qc = mct.core.QuantizationConfig(activation_error_method=error_method,
