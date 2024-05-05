@@ -46,10 +46,8 @@ def compute_resource_utilization_data(in_model: Any,
                                               the attached framework operator's information.
         fw_info: Information needed for quantization about the specific framework.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-        transformed_graph: An internal graph representation of the input model.
         transformed_graph: An internal graph representation of the input model. Defaults to None.
-                            If no graph is provided, a graph will be automatically generated
-                            using the specified model.
+                            If no graph is provided, a graph will be constructed using the specified model.
         mixed_precision_enable: Indicates if mixed precision is enabled, defaults to True.
                                 If disabled, computes resource utilization using base quantization
                                 configurations across all layers.
