@@ -14,34 +14,37 @@
 # ==============================================================================
 
 import unittest
+from unittest.mock import patch
+
 from model_compression_toolkit.core.pytorch.pytorch_device_config import DeviceManager
 import torch
 
 
 class TestDeviceManager(unittest.TestCase):
-    def test_is_valid_device_cpu(self):
+    @patch('torch.cuda.is_available', return_value=False)
+    def test_is_valid_device_cpu(self, mock_cuda_available):
         device_name = "cpu"
         is_valid, message = DeviceManager.is_valid_device(device_name)
         self.assertTrue(is_valid)
         self.assertEqual(message, "Valid device")
 
-    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is not available")
-    def test_is_valid_device_cuda_available(self):
+    @patch('torch.cuda.is_available', return_value=True)
+    def test_is_valid_device_cuda_available(self, mock_cuda_available):
         device_name = "cuda"
         is_valid, message = DeviceManager.is_valid_device(device_name)
         self.assertTrue(is_valid)
         self.assertEqual(message, "Valid device")
 
-    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is not available")
-    def test_is_valid_device_cuda_invalid_index(self):
+    @patch('torch.cuda.is_available', return_value=True)
+    @patch('torch.cuda.device_count', return_value=1)
+    def test_is_valid_device_cuda_invalid_index(self, mock_device_count, mock_cuda_available):
         device_name = "cuda:100"
         is_valid, message = DeviceManager.is_valid_device(device_name)
         self.assertFalse(is_valid)
-        self.assertEqual(message,
-                         f"CUDA device index 100 out of range. Number of valid devices: {torch.cuda.device_count()}")
+        self.assertEqual(message, "CUDA device index 100 out of range. Number of valid devices: 1")
 
-    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is not available")
-    def test_is_valid_device_cuda_invalid_format(self):
+    @patch('torch.cuda.is_available', return_value=True)
+    def test_is_valid_device_cuda_invalid_format(self, mock_cuda_available):
         device_name = "cuda:invalid"
         is_valid, message = DeviceManager.is_valid_device(device_name)
         self.assertFalse(is_valid)
