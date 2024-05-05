@@ -63,7 +63,7 @@ def tf_tensor_to_numpy(tensor: Union[List, Tuple, np.ndarray, tf.Tensor, float],
         if is_single_tensor:
             return np.array(tensor)
         else:
-            return tuple([tf_tensor_to_numpy(t) for t in tensor])
+            return (tf_tensor_to_numpy(t) for t in tensor)
     elif isinstance(tensor, tf.Tensor):
         np_tensor = tensor.numpy()
         return np.array([np_tensor]) if np.isscalar(np_tensor) else np_tensor
