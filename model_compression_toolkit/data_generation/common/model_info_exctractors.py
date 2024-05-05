@@ -35,7 +35,7 @@ class OriginalBNStatsHolder:
         """
         self.bn_params = self.get_bn_params(model, bn_layer_types)
         if self.get_num_bn_layers() == 0:
-            Logger.critical(f'Data generation requires a model with at least one BatchNorm layer.') # pragma: no cover
+            Logger.critical(f'Data generation requires a model with at least one BatchNorm layer.')
 
     def get_bn_layer_names(self) -> List[str]:
         """
