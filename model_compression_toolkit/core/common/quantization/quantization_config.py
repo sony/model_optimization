@@ -124,6 +124,7 @@ class QuantizationConfig:
         self.concat_threshold_update = concat_threshold_update
 
     def __repr__(self):
+        # Used for debugging, thus no cover.
         return str(self.__dict__)  # pragma: no cover
 
 

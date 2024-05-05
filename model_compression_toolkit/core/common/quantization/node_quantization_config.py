@@ -65,6 +65,7 @@ class BaseNodeQuantizationConfig(object):
         """
         Returns: String to display a NodeQuantizationConfig object.
         """
+        # Used for debugging, thus no cover.
         return ''.join(f'{k}: {v}\n' for k, v in self.__dict__.items())  # pragma: no cover
 
 
