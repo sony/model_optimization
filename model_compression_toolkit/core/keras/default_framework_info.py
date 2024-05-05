@@ -20,7 +20,7 @@ from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import activa
 from packaging import version
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
-    from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU  # pragma: no cover
+    from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose, Softmax, ELU  # pragma: no cover
 
