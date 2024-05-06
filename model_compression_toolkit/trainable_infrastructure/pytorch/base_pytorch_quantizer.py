@@ -57,9 +57,7 @@ if FOUND_TORCH:
 
 else:
     class BasePytorchTrainableQuantizer(BaseTrainableQuantizer):
-        def __init__(self,
-                     quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
-            super().__init__(quantization_config)
+        def __init__(self, *args, **kwargs):
             Logger.critical("PyTorch must be installed to use 'BasePytorchTrainableQuantizer'. "
                             "The 'torch' package is missing.")  # pragma: no cover
 

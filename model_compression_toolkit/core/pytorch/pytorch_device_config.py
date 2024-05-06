@@ -87,13 +87,16 @@ class DeviceManager:
                 device_index = int(device_name.split(':')[1])
                 if device_index >= torch.cuda.device_count():
                     return False, f"CUDA device index {device_index} out of range. Number of valid devices: {torch.cuda.device_count()}"
-            except IndexError:
+            except Exception:
                 # Handle cases where the device name is incorrectly formatted
                 return False, "Invalid CUDA device format. Use 'cuda' or 'cuda:x' where x is the device index."
 
             return True, "Valid device"
 
-        return True, "Valid device"
+        if CPU in device_name:
+            return True, "Valid device"
+
+        return False, "Invalid device"
 
 
 

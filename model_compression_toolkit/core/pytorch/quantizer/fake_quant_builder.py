@@ -20,6 +20,18 @@ from model_compression_toolkit.core.common.quantization.quantizers.uniform_quant
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
 
 
+################################################################
+################################################################
+# TODO:
+#  These quantizer functions are for internal use. They are currently
+#  used in some features like MP for activation and SNC (where
+#  inference in the framework is needed).
+#  It may worth considering removing these functions and use
+#  activation inferable quantizers in those features like we do
+#  in GPTQ.
+################################################################
+################################################################
+
 def get_symmetric_quantization_range_and_scale(activation_is_signed: bool,
                                                activation_n_bits: int,
                                                activation_threshold: float):

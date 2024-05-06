@@ -82,9 +82,6 @@ if FOUND_TF:
 
 else:
     class BaseKerasTrainableQuantizer(BaseTrainableQuantizer):
-        def __init__(self,
-                     quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
-
-            super().__init__(quantization_config)
+        def __init__(self, *args, **kwargs):
             Logger.critical("Tensorflow must be installed to use BaseKerasTrainableQuantizer. "
                             "The 'tensorflow' package is missing.")  # pragma: no cover

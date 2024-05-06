@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import onnx
 import torch
 import torch.nn as nn
 import numpy as np
@@ -23,6 +24,8 @@ from model_compression_toolkit.target_platform_capabilities.constants import IMX
 from model_compression_toolkit.constants import PYTORCH
 from mct_quantizers import PytorchQuantizationWrapper
 from mct_quantizers.pytorch.metadata import add_metadata, get_metadata, add_onnx_metadata, get_onnx_metadata
+import tempfile
+import os
 
 tp = mct.target_platform
 
@@ -47,3 +50,14 @@ class MetadataTest(BasePytorchFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         self.unit_test.assertTrue(len(get_metadata(quantized_model)) > 0,
                                   msg='A model quantized with TPC IMX500.v2 should have a metadata.')
+
+        with tempfile.NamedTemporaryFile(delete=True) as tmp:
+            mct.exporter.pytorch_export_model(model=quantized_model,
+                                              save_model_path=tmp.name,
+                                              repr_dataset=self.representative_data_gen_experimental)
+
+            loaded_onnx_model = onnx.load(tmp.name)
+            metadata = get_onnx_metadata(loaded_onnx_model)
+            self.unit_test.assertTrue(len(metadata) > 0,
+                                      msg='A model quantized with TPC IMX500.v2 should have a metadata.')
+

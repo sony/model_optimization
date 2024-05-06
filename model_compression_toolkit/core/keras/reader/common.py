@@ -24,10 +24,10 @@ if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.engine.functional import Functional
     from keras.src.engine.sequential import Sequential
 else:
-    from keras.engine.input_layer import InputLayer
-    from keras.engine.node import Node as KerasNode
-    from keras.engine.functional import Functional
-    from keras.engine.sequential import Sequential
+    from keras.engine.input_layer import InputLayer # pragma: no cover
+    from keras.engine.node import Node as KerasNode # pragma: no cover
+    from keras.engine.functional import Functional # pragma: no cover
+    from keras.engine.sequential import Sequential # pragma: no cover
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.graph.base_node import BaseNode

@@ -76,7 +76,7 @@ class GPTQTrainer(ABC):
         if self.gptq_config.use_hessian_based_weights:
             if not isinstance(hessian_info_service, HessianInfoService):
                 Logger.critical(f"When using Hessian-based approximations for sensitivity evaluation, "
-                                f"an 'HessianInfoService' object must be provided, but received: {hessian_info_service}.")
+                                f"an 'HessianInfoService' object must be provided, but received: {hessian_info_service}.")   # pragma: no cover
             self.hessian_service = hessian_info_service
 
     def get_optimizer_with_param(self,
@@ -238,47 +238,12 @@ class GPTQTrainer(ABC):
             trace_approx: Trace approximation to validate.
         """
         if not isinstance(trace_approx, list):
-            Logger.critical(f"Trace approximation was expected to be a list but is of type: {type(trace_approx)}.")
+            Logger.critical(f"Trace approximation was expected to be a list but is of type: {type(trace_approx)}.")   # pragma: no cover
         if len(trace_approx) != 1:
             Logger.critical(f"Trace approximation was expected to have a length of 1 "
                             f"(for computations with granularity set to 'HessianInfoGranularity.PER_TENSOR') "
                             f"but has a length of {len(trace_approx)}."
-            )
-
-    @staticmethod
-    def _generate_images_batch(representative_data_gen: Callable, num_samples_for_loss: int) -> np.ndarray:
-        """
-        Construct batches of image samples for inference.
-
-        Args:
-            representative_data_gen: A callable method to retrieve images from Dataset.
-            num_samples_for_loss: Num of total images for evaluation.
-
-        Returns: A tensor of images batches
-        """
-        # First, select images to use for all measurements.
-        samples_count = 0  # Number of images we used so far to compute the distance matrix.
-        images = []
-        for inference_batch_input in representative_data_gen():
-            if samples_count >= num_samples_for_loss:
-                break
-            num_images = inference_batch_input[0].shape[0]
-
-            # If we sampled more images than we should,
-            # we take only a subset of these images and use only them.
-            if num_images > num_samples_for_loss - samples_count:
-                inference_batch_input = [x[:num_samples_for_loss - samples_count] for x in inference_batch_input]
-                assert num_samples_for_loss - samples_count == inference_batch_input[0].shape[0]
-                num_images = num_samples_for_loss - samples_count
-
-            images.append(inference_batch_input[0])
-            samples_count += num_images
-        else:
-            if samples_count < num_samples_for_loss:
-                Logger.warning(f'Not enough images in representative dataset to generate {num_samples_for_loss} data points, '
-                               f'only {samples_count} were generated')
-
-        return np.concatenate(images, axis=0)
+            )   # pragma: no cover
 
 
     @abstractmethod

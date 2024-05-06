@@ -769,7 +769,7 @@ class FeatureNetworkTest(unittest.TestCase):
         BNAttributesQuantization(self, quantize_linear=False).run_test()
         BNAttributesQuantization(self, quantize_linear=True).run_test()
 
-    def concat_threshold_test(self):
+    def test_concat_threshold(self):
         ConcatThresholdtest(self).run_test()
 
     def test_metadata(self):

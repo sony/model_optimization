@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 80
     env:
-      COVERAGE_THRESHOlD: 96
+      COVERAGE_THRESHOLD: 97
     steps:
       - uses: actions/checkout@v2
       - name: Install Python 3
@@ -43,4 +43,4 @@ jobs:
           path: |
             coverage_report_html
       - name: Coverage Report
-        run: coverage report -i --skip-covered --sort cover --fail-under $COVERAGE_THRESHOlD
+        run: coverage report -i --skip-covered --sort cover --fail-under $COVERAGE_THRESHOLD

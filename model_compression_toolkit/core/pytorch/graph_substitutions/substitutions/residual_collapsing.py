@@ -58,7 +58,7 @@ def residual_collapsing_fn(first_node: BaseNode,
             kernel[i, i, idxH, idxW] += 1
         return kernel
     else:
-        Logger.critical(f"Residual collapsing not supported for node type: {first_node.type}")
+        Logger.critical(f"Residual collapsing not supported for node type: {first_node.type}")  # pragma: no cover
 
 
 def pytorch_residual_collapsing() -> ResidualCollapsing:
