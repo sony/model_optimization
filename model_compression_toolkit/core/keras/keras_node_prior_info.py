@@ -6,7 +6,7 @@ from packaging import version
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Activation, ReLU, BatchNormalization
 else:
-    from keras.layers import Activation, ReLU, BatchNormalization
+    from keras.layers import Activation, ReLU, BatchNormalization  # pragma: no cover
 
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common import BaseNode
@@ -56,13 +56,13 @@ def _get_min_max_outputs(node: BaseNode,
     """
     min_output, max_output = None, None
 
-    if node.type == ReLU:
+    if node.is_match_type(ReLU):
         min_output = node.framework_attr[THRESHOLD] if node.framework_attr[NEGATIVE_SLOPE] == 0 else None
 
     elif fw_info.layers_has_min_max(node.type):
         min_output, max_output = fw_info.layer_min_max_mapping[node.type]
 
-    elif node.type == Activation and fw_info.activation_has_min_max(node.framework_attr[ACTIVATION]):
+    elif node.is_match_type(Activation) and fw_info.activation_has_min_max(node.framework_attr[ACTIVATION]):
         min_output, max_output = fw_info.activation_min_max_mapping[node.framework_attr[ACTIVATION]]
 
     return min_output, max_output
@@ -82,7 +82,7 @@ def _get_mean_std_outputs(node: BaseNode,
     """
     mean_output, std_output = None, None
 
-    if node.type == BatchNormalization:
+    if node.is_match_type(BatchNormalization):
         mean_output = node.get_weights_by_keys(BETA)
         if node.get_weights_by_keys(GAMMA) is None:
             std_output = 1.0
@@ -92,7 +92,7 @@ def _get_mean_std_outputs(node: BaseNode,
             mean_output = 0.0
     else:
         next_node_list = graph.get_next_nodes(node)
-        bn_nodes = [bn_node for bn_node in next_node_list if bn_node.type == BatchNormalization]
+        bn_nodes = [bn_node for bn_node in next_node_list if bn_node.is_match_type(BatchNormalization)]
         if len(bn_nodes) != 0:
             bn_node = bn_nodes[0]
             moving_variance = bn_node.get_weights_by_keys(MOVING_VARIANCE)

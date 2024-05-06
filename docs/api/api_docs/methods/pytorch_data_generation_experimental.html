@@ -1,0 +1,134 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Pytorch Data Generation &#8212; MCT Documentation: ver 2.0.0</title>
+    <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../static/documentation_options.js"></script>
+    <script src="../../../static/jquery.js"></script>
+    <script src="../../../static/underscore.js"></script>
+    <script src="../../../static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../static/doctools.js"></script>
+    <script src="../../../static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.0.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Pytorch Data Generation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="pytorch-data-generation">
+<span id="ug-pytorch-data-generation-experimental"></span><h1>Pytorch Data Generation<a class="headerlink" href="#pytorch-data-generation" title="Permalink to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_compression_toolkit.data_generation.pytorch_data_generation_experimental">
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.data_generation.</span></span><span class="sig-name descname"><span class="pre">pytorch_data_generation_experimental</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_images</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_image_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_generation_config</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.data_generation.pytorch_data_generation_experimental" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to perform data generation using the provided model and data generation configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>Module</em>) – PyTorch model to generate data for.</p></li>
+<li><p><strong>n_images</strong> (<em>int</em>) – Number of images to generate.</p></li>
+<li><p><strong>output_image_size</strong> (<em>int</em>) – The hight and width size of the output images.</p></li>
+<li><p><strong>data_generation_config</strong> (<a class="reference internal" href="../classes/DataGenerationConfig.html#model_compression_toolkit.data_generation.DataGenerationConfig" title="model_compression_toolkit.data_generation.DataGenerationConfig"><em>DataGenerationConfig</em></a>) – Configuration for data generation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Finalized list containing generated images.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Tensor]</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>In this example, we’ll walk through generating images using a simple PyTorch model and a data generation configuration. The process involves creating a model, setting up a data generation configuration, and finally generating images with specified parameters.</p>
+<p>Start by importing the Model Compression Toolkit (MCT), PyTorch, and some modules from <cite>torch.nn</cite>:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Conv2d</span><span class="p">,</span> <span class="n">BatchNorm2d</span><span class="p">,</span> <span class="n">Flatten</span><span class="p">,</span> <span class="n">Linear</span>
+</pre></div>
+</div>
+<p>Next, define a simple PyTorch model:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(),</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="mi">6</span><span class="o">*</span><span class="mi">6</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Configure the data generation process using <cite>get_pytorch_data_generation_config</cite>. This function allows customization of the data generation process. For simplicity, this example sets the number of iterations (<cite>n_iter</cite>) to 1 and the batch size (<cite>data_gen_batch_size</cite>) to 2.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">data_generation</span><span class="o">.</span><span class="n">get_pytorch_data_generation_config</span><span class="p">(</span><span class="n">n_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">data_gen_batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Finally, use the <cite>pytorch_data_generation_experimental</cite> function to generate images based on the model and data generation configuration.
+Notice that this function is experimental and may change in future versions of MCT.
+The <cite>n_images</cite> parameter specifies the number of images to generate, and <cite>output_image_size</cite> sets the size of the generated images.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">generated_images</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">data_generation</span><span class="o">.</span><span class="n">pytorch_data_generation_experimental</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">n_images</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">output_image_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">data_generation_config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The generated images can then be used for various purposes, such as data-free quantization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.0.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Pytorch Data Generation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Sony Semiconductor Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

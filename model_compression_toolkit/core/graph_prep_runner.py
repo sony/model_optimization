@@ -39,7 +39,8 @@ def graph_preparation_runner(in_model: Any,
                              fw_impl: FrameworkImplementation,
                              tpc: TargetPlatformCapabilities,
                              tb_w: TensorboardWriter = None,
-                             mixed_precision_enable: bool = False) -> Graph:
+                             mixed_precision_enable: bool = False,
+                             running_gptq: bool = False) -> Graph:
     """
     Runs all required preparations in order to build a quantization graph from the given model,
     quantization configuration and target platform specifications.
@@ -59,6 +60,7 @@ def graph_preparation_runner(in_model: Any,
             the attached framework operator's information.
         tb_w: TensorboardWriter object for logging.
         mixed_precision_enable: is mixed precision enabled.
+        running_gptq: Whether or not a GPTQ optimization is planned to run after the PTQ process.
 
     Returns:
         An internal graph representation of the input model.
@@ -79,7 +81,8 @@ def graph_preparation_runner(in_model: Any,
                                             fw_info,
                                             tb_w,
                                             fw_impl,
-                                            mixed_precision_enable=mixed_precision_enable)
+                                            mixed_precision_enable=mixed_precision_enable,
+                                            running_gptq=running_gptq)
 
     return transformed_graph
 
@@ -90,7 +93,8 @@ def get_finalized_graph(initial_graph: Graph,
                         fw_info: FrameworkInfo = None,
                         tb_w: TensorboardWriter = None,
                         fw_impl: FrameworkImplementation = None,
-                        mixed_precision_enable: bool = False) -> Graph:
+                        mixed_precision_enable: bool = False,
+                        running_gptq: bool = False) -> Graph:
     """
     Applies all edit operation (edit, substitutions, etc.) on the model's graph, to prepare it for the quantization
     process. All future graph substitutions and operations that change the graph should be added to this method.
@@ -105,6 +109,7 @@ def get_finalized_graph(initial_graph: Graph,
         tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
         fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
         mixed_precision_enable: is mixed precision enabled.
+        running_gptq: Whether or not a GPTQ optimization is planned to run after the PTQ process.
 
     Returns: Graph object that represents the model, after applying all required modifications to it.
     """
@@ -142,7 +147,8 @@ def get_finalized_graph(initial_graph: Graph,
     ######################################
     transformed_graph = set_quantization_configuration_to_graph(graph=transformed_graph,
                                                                 quant_config=quant_config,
-                                                                mixed_precision_enable=mixed_precision_enable)
+                                                                mixed_precision_enable=mixed_precision_enable,
+                                                                running_gptq=running_gptq)
 
     ######################################
     # Layer fusing

@@ -166,6 +166,11 @@ class INT8TFLiteExporter(FakelyQuantKerasExporter):
 
             return layer_to_substitue
 
+        # Delete metadata layer if exists
+        if hasattr(self.model, 'metadata_layer'):
+            Logger.info('Metadata is not exported to TFLite models.')
+            delattr(self.model, 'metadata_layer')
+
         # Transform the model to a new model that can be converted to int8 models.
         # For example: replace dense layers with point-wise layers (to support per-channel quantization)
         self.transformed_model = clone_model(self.model,

@@ -26,13 +26,15 @@ class QuantizationErrorMethod(Enum):
 
     NOCLIPPING - Use min/max values as thresholds.
 
-    MSE - Use min square error for minimizing quantization noise.
+    MSE - Use mean square error for minimizing quantization noise.
 
-    MAE - Use min absolute error for minimizing quantization noise.
+    MAE - Use mean absolute error for minimizing quantization noise.
 
     KL - Use KL-divergence to make signals distributions to be similar as possible.
 
     Lp - Use Lp-norm to minimizing quantization noise.
+
+    HMSE - Use Hessian-based mean squared error for minimizing quantization noise. This method is using Hessian scores to factorize more valuable parameters when computing the error induced by quantization.
 
     """
 
@@ -41,6 +43,7 @@ class QuantizationErrorMethod(Enum):
     MAE = 2
     KL = 4
     LP = 5
+    HMSE = 6
 
 
 class QuantizationConfig:
@@ -62,7 +65,8 @@ class QuantizationConfig:
                  residual_collapsing: bool = True,
                  shift_negative_ratio: float = 0.05,
                  shift_negative_threshold_recalculation: bool = False,
-                 shift_negative_params_search: bool = False):
+                 shift_negative_params_search: bool = False,
+                 concat_threshold_update: bool = False):
         """
         Class to wrap all different parameters the library quantize the input model according to.
 
@@ -117,9 +121,11 @@ class QuantizationConfig:
         self.shift_negative_ratio = shift_negative_ratio
         self.shift_negative_threshold_recalculation = shift_negative_threshold_recalculation
         self.shift_negative_params_search = shift_negative_params_search
+        self.concat_threshold_update = concat_threshold_update
 
     def __repr__(self):
-        return str(self.__dict__)
+        # Used for debugging, thus no cover.
+        return str(self.__dict__)  # pragma: no cover
 
 
 # Default quantization configuration the library use.

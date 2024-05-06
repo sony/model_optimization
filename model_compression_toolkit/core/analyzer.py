@@ -30,7 +30,8 @@ from model_compression_toolkit.logger import Logger
 
 def analyzer_model_quantization(representative_data_gen: Callable,
                                 tb_w: TensorboardWriter,
-                                tg: Graph,
+                                float_graph: Graph,
+                                quantized_graph: Graph,
                                 fw_impl: FrameworkImplementation,
                                 fw_info: FrameworkInfo):
     """
@@ -41,23 +42,32 @@ def analyzer_model_quantization(representative_data_gen: Callable,
     Args:
         representative_data_gen: Dataset used for calibration.
         tb_w: TensorBoardWriter object to log events.
-        tg: Graph of quantized model.
+        float_graph: Graph of float model.
+        quantized_graph: Graph of quantized model.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         fw_info: Information needed for quantization about the specific framework.
 
     """
     if tb_w is not None:
-        visual = NNVisualizer(tg,
+        visual = NNVisualizer(float_graph,
+                              quantized_graph,
                               fw_impl=fw_impl,
                               fw_info=fw_info)
-
-        for i, _data in enumerate(representative_data_gen()):
-            if i >= NUM_SAMPLES_DISTANCE_TENSORBOARD:
-                break
-            figure = visual.plot_distance_graph(_data,
-                                                distance_fn=compute_cs,
-                                                convert_to_range=lambda a: 1 - 2 * a)
-            tb_w.add_figure(figure, f'similarity_distance_sample_{i}')
+        if not visual.has_compare_points():
+            Logger.error(f'No comparing points were found to plot analyze similarity.')
         else:
-            Logger.warning(f'Not enough batches in representative dataset to generate {NUM_SAMPLES_DISTANCE_TENSORBOARD} figures')
+            visualized_samples = 0
+            for _data in representative_data_gen():
+                batch_size = _data[0].shape[0]
+                for sample_index in range(batch_size):
+                    if visualized_samples >= NUM_SAMPLES_DISTANCE_TENSORBOARD:
+                        break
+                    figure = visual.plot_distance_graph(_data,
+                                                        sample_index=sample_index,
+                                                        distance_fn=compute_cs,
+                                                        convert_to_range=lambda a: 1 - 2 * a)
+                    tb_w.add_figure(figure, f'similarity_distance_sample_{visualized_samples}')
+                    visualized_samples += 1
+            if visualized_samples < NUM_SAMPLES_DISTANCE_TENSORBOARD:
+                Logger.error(f'Not enough batches in representative dataset to generate {NUM_SAMPLES_DISTANCE_TENSORBOARD} figures')
         tb_w.close()

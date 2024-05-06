@@ -35,7 +35,7 @@ def model_gen():
 
 
 class TestQuantizationConfigurations(unittest.TestCase):
-    def test_run_quantization_config_mbv1(self):
+    def test_run_quantization_config(self):
         x = np.random.randn(1, 16, 16, 3)
 
         def representative_data_gen():
@@ -68,7 +68,8 @@ class TestQuantizationConfigurations(unittest.TestCase):
             tp = generate_test_tp_model({
                 'weights_quantization_method': quantize_method,
                 'weights_n_bits': 8,
-                'activation_n_bits': 16})
+                'activation_n_bits': 16,
+                'weights_per_channel_threshold': per_channel})
             tpc = generate_keras_tpc(name="quant_config_weights_test", tp_model=tp)
 
             qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING,

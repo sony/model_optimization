@@ -13,16 +13,20 @@
 # limitations under the License.
 # ==============================================================================
 from typing import Callable
+from io import BytesIO
 
 import torch.nn
+import onnx
 
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import BasePyTorchExporter
 from mct_quantizers import pytorch_quantizers
+from mct_quantizers.pytorch.metadata import add_onnx_metadata
 
 DEFAULT_ONNX_OPSET_VERSION=15
+
 
 class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
     """
@@ -58,7 +62,6 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
         self._use_onnx_custom_quantizer_ops = use_onnx_custom_quantizer_ops
         self._onnx_opset_version = onnx_opset_version
 
-
     def export(self) -> None:
         """
         Convert an exportable (fully-quantized) PyTorch model to a fakely-quant model
@@ -74,7 +77,7 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
         # If _use_onnx_custom_quantizer_ops is set to True, the quantizer forward function will use
         # the custom implementation when exporting the operator into onnx model. If not, it removes the
         # wraps and quantizes the ops in place (for weights, for activation torch quantization function is
-        # exported since it's used during forward.
+        # exported since it's used during forward).
         if self._use_onnx_custom_quantizer_ops:
             self._enable_onnx_custom_ops_export()
         else:
@@ -87,15 +90,30 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
 
         model_input = to_torch_tensor(next(self.repr_dataset())[0])
 
-        torch.onnx.export(self.model,
-                          model_input,
-                          self.save_model_path,
-                          opset_version=self._onnx_opset_version,
-                          verbose=False,
-                          input_names=['input'],
-                          output_names=['output'],
-                          dynamic_axes={'input': {0: 'batch_size'},
-                                        'output': {0: 'batch_size'}})
+        if hasattr(self.model, 'metadata'):
+            onnx_bytes = BytesIO()
+            torch.onnx.export(self.model,
+                              model_input,
+                              onnx_bytes,
+                              opset_version=self._onnx_opset_version,
+                              verbose=False,
+                              input_names=['input'],
+                              output_names=['output'],
+                              dynamic_axes={'input': {0: 'batch_size'},
+                                            'output': {0: 'batch_size'}})
+            onnx_model = onnx.load_from_string(onnx_bytes.getvalue())
+            onnx_model = add_onnx_metadata(onnx_model, self.model.metadata)
+            onnx.save_model(onnx_model, self.save_model_path)
+        else:
+            torch.onnx.export(self.model,
+                              model_input,
+                              self.save_model_path,
+                              opset_version=self._onnx_opset_version,
+                              verbose=False,
+                              input_names=['input'],
+                              output_names=['output'],
+                              dynamic_axes={'input': {0: 'batch_size'},
+                                            'output': {0: 'batch_size'}})
 
     def _enable_onnx_custom_ops_export(self):
         """
@@ -103,7 +121,7 @@ class FakelyQuantONNXPyTorchExporter(BasePyTorchExporter):
         with custom quantizers.
         """
 
-        for n, m in self.model.named_children():
+        for n, m in self.model.named_modules():
             if isinstance(m, PytorchActivationQuantizationHolder):
                 assert isinstance(m.activation_holder_quantizer, pytorch_quantizers.BasePyTorchInferableQuantizer)
                 m.activation_holder_quantizer.enable_custom_impl()

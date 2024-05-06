@@ -1,0 +1,157 @@
+
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Keras Structured Pruning &#8212; MCT Documentation: ver 2.0.0</title>
+    <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
+    <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../static/documentation_options.js"></script>
+    <script src="../../../static/jquery.js"></script>
+    <script src="../../../static/underscore.js"></script>
+    <script src="../../../static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../static/doctools.js"></script>
+    <script src="../../../static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.0.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Keras Structured Pruning</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="keras-structured-pruning">
+<span id="ug-keras-pruning-experimental"></span><h1>Keras Structured Pruning<a class="headerlink" href="#keras-structured-pruning" title="Permalink to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="model_compression_toolkit.pruning.keras_pruning_experimental">
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.pruning.</span></span><span class="sig-name descname"><span class="pre">keras_pruning_experimental</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_resource_utilization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">representative_data_gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pruning_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PruningConfig()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_platform_capabilities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_KERAS_TPC</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.pruning.keras_pruning_experimental" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform structured pruning on a Keras model to meet a specified target resource utilization.
+This function prunes the provided model according to the target resource utilization by grouping and pruning
+channels based on each layer’s SIMD configuration in the Target Platform Capabilities (TPC).
+By default, the importance of each channel group is determined using the Label-Free Hessian
+(LFH) method, assessing each channel’s sensitivity to the Hessian of the loss function.
+This pruning strategy considers groups of channels together for a more hardware-friendly
+architecture. The process involves analyzing the model with a representative dataset to
+identify groups of channels that can be removed with minimal impact on performance.</p>
+<p>Notice that the pruned model must be retrained to recover the compressed model’s performance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>Model</em>) – The original Keras model to be pruned.</p></li>
+<li><p><strong>target_resource_utilization</strong> (<a class="reference internal" href="../classes/ResourceUtilization.html#model_compression_toolkit.core.ResourceUtilization" title="model_compression_toolkit.core.ResourceUtilization"><em>ResourceUtilization</em></a>) – The target Key Performance Indicators to be achieved through pruning.</p></li>
+<li><p><strong>representative_data_gen</strong> (<em>Callable</em>) – A function to generate representative data for pruning analysis.</p></li>
+<li><p><strong>pruning_config</strong> (<a class="reference internal" href="../classes/PruningConfig.html#model_compression_toolkit.pruning.PruningConfig" title="model_compression_toolkit.pruning.PruningConfig"><em>PruningConfig</em></a>) – Configuration settings for the pruning process. Defaults to standard config.</p></li>
+<li><p><strong>target_platform_capabilities</strong> (<a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a>) – Platform-specific constraints and capabilities. Defaults to DEFAULT_KERAS_TPC.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the pruned Keras model and associated pruning information.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[Model, <a class="reference internal" href="../classes/PruningInfo.html#model_compression_toolkit.pruning.PruningInfo" title="model_compression_toolkit.pruning.PruningInfo">PruningInfo</a>]</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The pruned model should be fine-tuned or retrained to recover or improve its performance post-pruning.</p>
+</div>
+<p class="rubric">Examples</p>
+<p>Import MCT:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">model_compression_toolkit</span> <span class="k">as</span> <span class="nn">mct</span>
+</pre></div>
+</div>
+<p>Import a Keras model:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">tensorflow.keras.applications.resnet50</span> <span class="kn">import</span> <span class="n">ResNet50</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">ResNet50</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Create a random dataset generator:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">repr_datagen</span><span class="p">():</span> <span class="k">yield</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">3</span><span class="p">))]</span>
+</pre></div>
+</div>
+<p>Define a target resource utilization for pruning.
+Here, we aim to reduce the memory footprint of weights by 50%, assuming the model weights
+are represented in float32 data type (thus, each parameter is represented using 4 bytes):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">dense_nparams</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">l</span><span class="o">.</span><span class="n">count_params</span><span class="p">()</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">layers</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">target_resource_utilization</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">ResourceUtilization</span><span class="p">(</span><span class="n">weights_memory</span><span class="o">=</span><span class="n">dense_nparams</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Optionally, define a pruning configuration. num_score_approximations can be passed
+to configure the number of importance scores that will be calculated for each channel.
+A higher value for this parameter yields more precise score approximations but also
+extends the duration of the pruning process:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pruning_config</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">PruningConfig</span><span class="p">(</span><span class="n">num_score_approximations</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Perform pruning:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">pruned_model</span><span class="p">,</span> <span class="n">pruning_info</span> <span class="o">=</span> <span class="n">mct</span><span class="o">.</span><span class="n">pruning</span><span class="o">.</span><span class="n">keras_pruning_experimental</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">target_resource_utilization</span><span class="o">=</span><span class="n">target_resource_utilization</span><span class="p">,</span> <span class="n">representative_data_gen</span><span class="o">=</span><span class="n">repr_datagen</span><span class="p">,</span> <span class="n">pruning_config</span><span class="o">=</span><span class="n">pruning_config</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code>, <a class="reference internal" href="../classes/PruningInfo.html#model_compression_toolkit.pruning.PruningInfo" title="model_compression_toolkit.core.common.pruning.pruning_info.PruningInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">PruningInfo</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.0.0</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Keras Structured Pruning</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2022, Sony Semiconductor Israel.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.0.2.
+    </div>
+  </body>
+</html>

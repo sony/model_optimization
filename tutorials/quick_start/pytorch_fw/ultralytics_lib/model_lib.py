@@ -28,11 +28,11 @@ from tutorials.quick_start.pytorch_fw.ultralytics_lib.common_replacers import C2
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.detect_replacers import DetectionModelModuleReplacer
 from tutorials.quick_start.pytorch_fw.ultralytics_lib.common_replacers import prepare_model_for_ultralytics_val
 from tutorials.quick_start.common.model_lib import BaseModelLib
-from tutorials.quick_start.common.constants import MODEL_NAME, BATCH_SIZE, COCO_DATASET, VALIDATION_DATASET_FOLDER, \
+from tutorials.quick_start.common.constants import MODEL_NAME,. BATCH_SIZE, COCO_DATASET, VALIDATION_DATASET_FOLDER, \
     MODULE_REPLACER
 from tutorials.quick_start.common.results import DatasetInfo
 from tutorials.mct_model_garden.models_keras.yolov8.yolov8_preprocess import yolov8_preprocess_chw_transpose
-from tutorials.quick_start.common.data_loader import FolderImageLoader
+from tutorials.quick_start.common.utils import FolderImageLoader
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PytorchModel
 
 

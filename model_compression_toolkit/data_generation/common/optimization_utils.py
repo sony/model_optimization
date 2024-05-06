@@ -159,7 +159,7 @@ class ImagesOptimizationHandler:
         Returns:
             Tuple[Any, Any]: the averaged activation statistics on all the batches for the specified layer.
         """
-        raise NotImplemented
+        raise NotImplemented   # pragma: no cover
 
     def compute_bn_loss(self,
                         input_imgs: Any,
@@ -245,7 +245,7 @@ class ImagesOptimizationHandler:
             loss (Any): The loss value.
             i_ter (int): The current iteration.
         """
-        raise NotImplemented
+        raise NotImplemented   # pragma: no cover
 
     @abstractmethod
     def zero_grad(self, batch_index: int):
@@ -255,7 +255,7 @@ class ImagesOptimizationHandler:
         Args:
             batch_index (int): Index of the batch.
         """
-        raise NotImplemented
+        raise NotImplemented   # pragma: no cover
 
     @abstractmethod
     def get_finalized_images(self) -> list:
@@ -265,7 +265,7 @@ class ImagesOptimizationHandler:
         Returns:
             list: a list of the generated images.
         """
-        raise NotImplemented
+        raise NotImplemented   # pragma: no cover
 
 
 class BatchOptimizationHolder:
@@ -291,7 +291,7 @@ class BatchOptimizationHolder:
             scheduler (Any): scheduler responsible for adjusting the learning rate of the optimizer over time.
             initial_lr (float): the initial learning rate used by the optimizer.
         """
-        raise NotImplemented
+        raise NotImplemented   # pragma: no cover
 
     def get_images(self) -> Any:
         """Returns the stored images"""
@@ -344,7 +344,7 @@ class AllImagesStatsHolder:
         Returns:
             list: List of batches stats holders.
         """
-        raise NotImplemented
+        raise NotImplemented   # pragma: no cover
 
     def update_batch_stats(self,
                            batch_index: int,
@@ -442,7 +442,7 @@ class BatchStatsHolder:
         Returns:
             Any: the variance for the specified layer.
         """
-        raise NotImplemented
+        raise NotImplemented   # pragma: no cover
 
     def get_std(self, bn_layer_name: str) -> Any:
         """
@@ -454,7 +454,7 @@ class BatchStatsHolder:
         Returns:
             Any: the variance for the specified layer.
         """
-        raise NotImplemented
+        raise NotImplemented   # pragma: no cover
 
     def update_layer_stats(self,
                            bn_layer_name: str,
@@ -483,7 +483,7 @@ class BatchStatsHolder:
             activation_extractor (ActivationExtractor): the activation extractor object.
             to_differentiate (bool): a flag indicating whether to differentiate or not.
         """
-        raise NotImplemented
+        raise NotImplemented   # pragma: no cover
 
     def clear(self):
         """Clear the statistics."""

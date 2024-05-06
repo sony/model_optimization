@@ -18,6 +18,8 @@ from typing import Any
 import numpy as np
 
 from model_compression_toolkit.constants import EPS
+from model_compression_toolkit.logger import Logger
+
 
 #########################
 #  Helpful functions
@@ -87,7 +89,8 @@ def compute_mse(float_tensor: np.ndarray,
                 norm: bool = False,
                 norm_eps: float = 1e-8,
                 batch: bool = False,
-                axis: int = None) -> float:
+                axis: int = None,
+                weights: np.ndarray = None) -> float:
     """
     Compute the mean square error between two numpy arrays.
 
@@ -98,6 +101,7 @@ def compute_mse(float_tensor: np.ndarray,
         norm_eps: epsilon value for error normalization stability.
         batch: Whether to run batch similarity analysis or not.
         axis: Axis along which the operator has been computed.
+        weights: Weights tensor to use for computing Weighted-MSE error computation.
 
     Returns:
         The MSE distance between the two tensors.
@@ -107,7 +111,15 @@ def compute_mse(float_tensor: np.ndarray,
     float_flat = flatten_tensor(float_tensor, batch, axis)
     fxp_flat = flatten_tensor(fxp_tensor, batch, axis)
 
-    error = ((float_flat - fxp_flat) ** 2).mean(axis=-1)
+    if weights is not None:
+        w_flat = flatten_tensor(weights, batch, axis)
+        if w_flat.shape != float_flat.shape:
+            Logger.critical(f"Shape mismatch: The shape of the weights tensor {weights.shape} does not match the shape "
+                            f"of the input tensors {float_flat.shape} for Weighted-MSE computation.")  # pragma: no cover
+        error = ((w_flat * (float_flat - fxp_flat)) ** 2).mean(axis=-1)
+    else:
+        error = ((float_flat - fxp_flat) ** 2).mean(axis=-1)
+
     if norm:
         error /= ((float_flat ** 2).mean(axis=-1) + norm_eps)
 
@@ -146,7 +158,10 @@ def compute_mae(float_tensor: np.ndarray,
     return error
 
 
-def compute_cs(float_tensor: np.ndarray, fxp_tensor: np.ndarray, eps: float = 1e-8, batch: bool = False,
+def compute_cs(float_tensor: np.ndarray,
+               fxp_tensor: np.ndarray,
+               eps: float = 1e-8,
+               batch: bool = False,
                axis: int = None) -> float:
     """
     Compute the similarity between two tensor using cosine similarity.
@@ -220,7 +235,7 @@ def compute_kl_divergence(float_tensor: np.ndarray, fxp_tensor: np.ndarray, batc
                           axis: int = None) -> float:
     """
     Compute the similarity between two tensor using KL-divergence.
-    The returned values is between 0 to 1: the smaller returned value,
+    The returned values is between 0 and 1: the smaller returned value,
     the greater similarity there is between the two tensors.
 
     Args:
@@ -242,6 +257,6 @@ def compute_kl_divergence(float_tensor: np.ndarray, fxp_tensor: np.ndarray, batc
     non_zero_fxp_tensor[non_zero_fxp_tensor == 0] = EPS
 
     prob_distance = np.where(float_flat != 0, float_flat * np.log(float_flat / non_zero_fxp_tensor), 0)
-    # The sum is part of the KL-Divergance function.
+    # The sum is part of the KL-Divergence function.
     # The mean is to aggregate the distance between each output probability vectors.
     return np.mean(np.sum(prob_distance, axis=-1), axis=-1)

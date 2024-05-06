@@ -1,10 +1,10 @@
 :orphan:
 
-.. _ug-pytorch_kpi_data:
+.. _ug-pytorch_resource_utilization_data:
 
 
-=======================================
-Get KPI information for PyTorch Models
-=======================================
+============================================================
+Get Resource Utilization information for PyTorch Models
+============================================================
 
-.. autofunction:: model_compression_toolkit.pytorch_kpi_data
+.. autofunction:: model_compression_toolkit.core.pytorch_resource_utilization_data

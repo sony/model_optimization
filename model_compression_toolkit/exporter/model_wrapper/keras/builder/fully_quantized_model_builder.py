@@ -42,8 +42,12 @@ if FOUND_TF:
         """
         weights_quantizers, _ = fw_impl.get_inferable_quantizers(node)
         if len(weights_quantizers) > 0:
+            # for positional weights we need to extract the weight's value.
+            weights_values = {attr: node.get_weights_by_keys(attr)
+                              for attr in weights_quantizers if isinstance(attr, int)}
             return KerasQuantizationWrapper(layer,
-                                            weights_quantizers)
+                                            weights_quantizers,
+                                            weights_values)
         return layer
 
 
@@ -90,9 +94,9 @@ if FOUND_TF:
                                                                                         fw_impl=C.keras.keras_implementation.KerasImplementation())).build_model()
         exportable_model.trainable = False
 
-        Logger.info("Please run your accuracy evaluation on the exported quantized model to verify it's accuracy.\n"
+        Logger.info("\nPlease run your accuracy evaluation on the exported quantized model to verify it's accuracy.\n"
                     "Checkout the FAQ and Troubleshooting pages for resolving common issues and improving the quantized model accuracy:\n"
-                    "FAQ: https://github.com/sony/model_optimization/tree/main/FAQ.md"
+                    "FAQ: https://github.com/sony/model_optimization/tree/main/FAQ.md\n"
                     "Quantization Troubleshooting: https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md")
         return exportable_model, user_info
 else:

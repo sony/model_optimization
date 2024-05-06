@@ -40,10 +40,12 @@ def get_weights_quantization_disabled_pytorch_tpc(name):
     return get_pytorch_test_tpc_dict(tp, name, name)
 
 
-def get_mp_activation_pytorch_tpc_dict(tpc_model, test_name, tpc_name):
+def get_mp_activation_pytorch_tpc_dict(tpc_model, test_name, tpc_name, custom_opsets_to_layer={}):
     op_sets_to_layer_add = {
         "Input": [DummyPlaceHolder],
     }
+
+    op_sets_to_layer_add.update(custom_opsets_to_layer)
 
     # we assume a standard tp model with standard operator sets names,
     # otherwise - need to generate the tpc per test and not with this generic function

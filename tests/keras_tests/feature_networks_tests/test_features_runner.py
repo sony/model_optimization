@@ -53,6 +53,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.linear_collapsing
     ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest, Op2DAddConstCollapsingTest
 from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTWeightsQuantizerTest, \
     LUTActivationQuantizerTest
+from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision.requires_mixed_precision_test import \
+    RequiresMixedPrecision, RequiresMixedPrecisionWeights
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_bops_test import \
     MixedPrecisionBopsBasicTest, MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, \
     MixedPrecisionActivationOnlyBopsTest, MixedPrecisionBopsAndWeightsUtilizationTest, MixedPrecisionBopsAndActivationUtilizationTest, \
@@ -99,6 +101,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.qat.qat_test impo
     QuantizationAwareTrainingQuantizerHolderTest
 from tests.keras_tests.feature_networks_tests.feature_networks.relu_replacement_test import ReluReplacementTest, \
     SingleReluReplacementTest, ReluReplacementWithAddBiasTest
+from tests.keras_tests.feature_networks_tests.feature_networks.remove_identity_test import RemoveIdentityTest
 from tests.keras_tests.feature_networks_tests.feature_networks.residual_collapsing_test import ResidualCollapsingTest1, \
     ResidualCollapsingTest2
 from tests.keras_tests.feature_networks_tests.feature_networks.reused_layer_mixed_precision_test import \
@@ -129,8 +132,12 @@ from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_pre
     MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationNonConfNodesTest, \
     MixedPercisionSearchTotalMemoryNonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
 from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substitution_test import MatmulToDenseSubstitutionTest
+from tests.keras_tests.feature_networks_tests.feature_networks.metadata_test import MetadataTest
 from tests.keras_tests.feature_networks_tests.feature_networks.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest, ConstRepresentationMatMulTest
+from tests.keras_tests.feature_networks_tests.feature_networks.concatination_threshold_update import ConcatThresholdtest
+from tests.keras_tests.feature_networks_tests.feature_networks.const_quantization_test import ConstQuantizationTest, \
+    AdvancedConstQuantizationTest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
 
 layers = tf.keras.layers
@@ -138,9 +145,12 @@ layers = tf.keras.layers
 
 class FeatureNetworkTest(unittest.TestCase):
 
+    def test_remove_identity(self):
+        RemoveIdentityTest(self).run_test()
+
     def test_per_tensor_weight_quantization(self):
         PerTensorWeightQuantizationTest(self).run_test()
-
+    
     def test_single_relu_replacement(self):
         SingleReluReplacementTest(self).run_test()
 
@@ -204,8 +214,15 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPercisionCombinedNMSTest(self).run_test()
 
     def test_mixed_precision_search(self):
-        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
-        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
+        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG, expected_mp_config=[0, 1]).run_test()
+        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER, expected_mp_config=[1, 0]).run_test()
+
+    def test_requires_mixed_recision(self):
+        RequiresMixedPrecisionWeights(self, weights_memory=True).run_test()
+        RequiresMixedPrecision(self,activation_memory=True).run_test()
+        RequiresMixedPrecision(self, total_memory=True).run_test()
+        RequiresMixedPrecision(self, bops=True).run_test()
+        RequiresMixedPrecision(self).run_test()
 
     def test_mixed_precision_for_part_weights_layers(self):
         MixedPercisionSearchPartWeightsLayersTest(self).run_test()
@@ -531,13 +548,25 @@ class FeatureNetworkTest(unittest.TestCase):
         SixConv2DCollapsingTest(self).run_test()
         Op2DAddConstCollapsingTest(self).run_test()
 
+    def test_const_quantization(self):
+        c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32)
+        for func in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv]:
+            ConstQuantizationTest(self, func, c).run_test()
+            ConstQuantizationTest(self, func, c, input_reverse_order=True).run_test()
+            ConstQuantizationTest(self, func, c, input_reverse_order=True, use_kwargs=True).run_test()
+            ConstQuantizationTest(self, func, c, use_kwargs=True).run_test()
+            ConstQuantizationTest(self, func, 2.45).run_test()
+            ConstQuantizationTest(self, func, 5.1, input_reverse_order=True).run_test()
+
+        AdvancedConstQuantizationTest(self).run_test()
+
     def test_const_representation(self):
         c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32)
         for func in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv, tf.pow]:
             ConstRepresentationTest(self, func, c).run_test()
             ConstRepresentationTest(self, func, c, input_reverse_order=True).run_test()
-            ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwrags=True).run_test()
-            ConstRepresentationTest(self, func, c, use_kwrags=True).run_test()
+            ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwargs=True).run_test()
+            ConstRepresentationTest(self, func, c, use_kwargs=True).run_test()
             ConstRepresentationTest(self, func, 2.45).run_test()
             ConstRepresentationTest(self, func, 5.1, input_reverse_order=True).run_test()
 
@@ -548,8 +577,8 @@ class FeatureNetworkTest(unittest.TestCase):
         for func in [layers.Add(), layers.Multiply(), layers.Subtract()]:
             ConstRepresentationTest(self, func, c, is_list_input=True).run_test()
             ConstRepresentationTest(self, func, c, input_reverse_order=True, is_list_input=True).run_test()
-            ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwrags=True, is_list_input=True).run_test()
-            ConstRepresentationTest(self, func, c, use_kwrags=True, is_list_input=True).run_test()
+            ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwargs=True, is_list_input=True).run_test()
+            ConstRepresentationTest(self, func, c, use_kwargs=True, is_list_input=True).run_test()
 
         ConstRepresentationMultiInputTest(self).run_test()
 
@@ -740,6 +769,12 @@ class FeatureNetworkTest(unittest.TestCase):
         BNAttributesQuantization(self, quantize_linear=False).run_test()
         BNAttributesQuantization(self, quantize_linear=True).run_test()
 
+    def test_concat_threshold(self):
+        ConcatThresholdtest(self).run_test()
 
+    def test_metadata(self):
+        MetadataTest(self).run_test()
+
+    
 if __name__ == '__main__':
     unittest.main()

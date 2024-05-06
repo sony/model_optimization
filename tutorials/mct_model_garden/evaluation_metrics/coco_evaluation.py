@@ -19,6 +19,7 @@ import numpy as np
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from typing import List, Dict, Tuple, Callable, Any
+import random
 
 
 def coco80_to_coco91(x: np.ndarray) -> np.ndarray:
@@ -57,7 +58,8 @@ def clip_boxes(boxes: np.ndarray, h: int, w: int) -> np.ndarray:
     return boxes
 
 
-def scale_boxes(boxes: np.ndarray, h_image: int, w_image: int, h_model: int, w_model: int, preserve_aspect_ratio: bool) -> np.ndarray:
+def scale_boxes(boxes: np.ndarray, h_image: int, w_image: int, h_model: int, w_model: int,
+                preserve_aspect_ratio: bool) -> np.ndarray:
     """
     Scale and offset bounding boxes based on model output size and original image size.
 
@@ -94,7 +96,6 @@ def scale_boxes(boxes: np.ndarray, h_image: int, w_image: int, h_model: int, w_m
     return boxes
 
 
-
 def format_results(outputs: List, img_ids: List, orig_img_dims: List, output_resize: Dict) -> List[Dict]:
     """
     Format model outputs into a list of detection dictionaries.
@@ -116,11 +117,12 @@ def format_results(outputs: List, img_ids: List, orig_img_dims: List, output_res
     # Process model outputs and convert to detection format
     for idx, output in enumerate(outputs):
         image_id = img_ids[idx]
-        scores = output[1].numpy().squeeze() # Extract scores
+        scores = output[1].numpy().squeeze()  # Extract scores
         labels = (coco80_to_coco91(
-            output[2].numpy())).squeeze() # Convert COCO 80-class indices to COCO 91-class indices
-        boxes = output[0].numpy().squeeze() # Extract bounding boxes
-        boxes = scale_boxes(boxes, orig_img_dims[idx][0], orig_img_dims[idx][1], h_model, w_model, preserve_aspect_ratio)
+            output[2].numpy())).squeeze()  # Convert COCO 80-class indices to COCO 91-class indices
+        boxes = output[0].numpy().squeeze()  # Extract bounding boxes
+        boxes = scale_boxes(boxes, orig_img_dims[idx][0], orig_img_dims[idx][1], h_model, w_model,
+                            preserve_aspect_ratio)
 
         for score, label, box in zip(scores, labels, boxes):
             detection = {
@@ -132,6 +134,7 @@ def format_results(outputs: List, img_ids: List, orig_img_dims: List, output_res
             detections.append(detection)
 
     return detections
+
 
 # COCO evaluation class
 class CocoEval:
@@ -202,6 +205,7 @@ class CocoEval:
         """
         self.all_detections = []
 
+
 def load_and_preprocess_image(image_path: str, preprocess: Callable) -> np.ndarray:
     """
     Load and preprocess an image from a given file path.
@@ -217,7 +221,114 @@ def load_and_preprocess_image(image_path: str, preprocess: Callable) -> np.ndarr
     image = preprocess(image)
     return image
 
-def coco_dataset_generator(dataset_folder: str, annotation_file: str, preprocess: Callable, batch_size: int = 1) -> Tuple:
+
+class CocoDataset:
+    def __init__(self, dataset_folder: str, annotation_file: str, preprocess: Callable):
+        """
+        A dataset class for handling COCO dataset images and annotations.
+
+        Args:
+            dataset_folder (str): The path to the folder containing COCO dataset images.
+            annotation_file (str): The path to the COCO annotation file in JSON format.
+            preprocess (Callable): A function for preprocessing images.
+        """
+        self.dataset_folder = dataset_folder
+        self.preprocess = preprocess
+
+        # Load COCO annotations from a JSON file (e.g., 'annotations.json')
+        with open(annotation_file, 'r') as f:
+            self.coco_annotations = json.load(f)
+
+        # Initialize a dictionary to store annotations grouped by image ID
+        self.annotations_by_image = {}
+
+        # Iterate through the annotations and group them by image ID
+        for annotation in self.coco_annotations['annotations']:
+            image_id = annotation['image_id']
+            if image_id not in self.annotations_by_image:
+                self.annotations_by_image[image_id] = []
+            self.annotations_by_image[image_id].append(annotation)
+
+        # Initialize a list to collect images and annotations for the current batch
+        self.total_images = len(self.coco_annotations['images'])
+
+    def __len__(self):
+        return self.total_images
+
+    def __getitem__(self, item_index):
+        """
+        Returns the preprocessed image and its corresponding annotations.
+
+        Args:
+            item_index: Index of the item to retrieve.
+
+        Returns:
+            Tuple containing the preprocessed image and its annotations.
+        """
+        image_info = self.coco_annotations['images'][item_index]
+        image_id = image_info['id']
+        image = load_and_preprocess_image(os.path.join(self.dataset_folder, image_info['file_name']), self.preprocess)
+        annotations = self.annotations_by_image.get(image_id, [])
+        if len(annotations) > 0:
+            annotations[0]['orig_img_dims'] = (image_info['height'], image_info['width'])
+        return image, annotations
+
+    def sample(self, batch_size):
+        """
+        Samples a batch of images and their corresponding annotations from the dataset.
+
+        Returns:
+            Tuple containing a batch of preprocessed images and their annotations.
+        """
+        batch_images = []
+        batch_annotations = []
+
+        # Sample random image indexes
+        random_idx = random.sample(range(self.total_images), batch_size)
+
+        # Get the corresponding items from dataset
+        for idx in random_idx:
+            batch_images.append(self[idx][0])
+            batch_annotations.append(self[idx][1])
+
+        return np.array(batch_images), batch_annotations
+
+
+class DataLoader:
+    def __init__(self, dataset: List[Tuple], batch_size: int, shuffle: bool = False):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.count = 0
+        self.inds = list(range(len(dataset)))
+
+    def __iter__(self):
+        self.count = 0
+        if self.shuffle:
+            random.shuffle(self.inds)
+
+        return self
+
+    def __next__(self):
+        if self.count >= len(self.dataset):
+            raise StopIteration
+
+        batch_images = []
+        batch_annotations = []
+
+        while len(batch_images) < self.batch_size and self.count < len(self.dataset):
+            index = self.inds[self.count]
+            image, annotations = self.dataset[index]
+            batch_images.append(image)
+            batch_annotations.append(annotations)
+            self.count += 1
+
+        return np.array(batch_images), batch_annotations
+
+
+def coco_dataset_generator(dataset_folder: str, annotation_file: str, preprocess: Callable,
+                           batch_size: int = 1) -> Tuple:
+
     """
     Generator function for loading and preprocessing images and their annotations from a COCO-style dataset.
 
@@ -277,9 +388,25 @@ def coco_dataset_generator(dataset_folder: str, annotation_file: str, preprocess
             yield np.array(batch_images), batch_annotations
 
 
-def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotation_file: str, batch_size: int,
-                  output_resize: tuple) -> dict:
+def model_predict(model: Any,
+                  inputs: np.ndarray) -> Tuple[List, List, List, List]:
+    """
+    Perform inference using the provided model on the given inputs.
 
+    This function serves as the default method for inference if no specific model inference function is provided.
+
+    Args:
+        model (Any): The model used for inference.
+        inputs (np.ndarray): Input data to perform inference on.
+
+    Returns:
+        Tuple[List, List, List, List]: Tuple containing lists of predictions.
+    """
+    return model(inputs)
+
+
+def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotation_file: str, batch_size: int,
+                  output_resize: tuple, model_inference: Callable = model_predict) -> dict:
     """
     Evaluate a model on the COCO dataset.
 
@@ -290,26 +417,26 @@ def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotat
     - annotation_file (str): Path to the COCO annotation file.
     - batch_size (int): Batch size for evaluation.
     - output_resize (tuple): Tuple representing the output size after resizing.
+    - model_inference (Callable): Model inference function. model_predict will be used by default.
 
     Returns:
     - dict: Evaluation results.
 
     """
     # Load COCO evaluation set
-    val_dataset = coco_dataset_generator(dataset_folder=dataset_folder,
-                                         annotation_file=annotation_file,
-                                         preprocess=preprocess,
-                                         batch_size=batch_size)
-
+    coco_dataset = CocoDataset(dataset_folder=dataset_folder,
+                               annotation_file=annotation_file,
+                               preprocess=preprocess)
+    coco_loader = DataLoader(coco_dataset, batch_size)
 
     # Initialize the evaluation metric object
     coco_metric = CocoEval(annotation_file, output_resize)
 
     # Iterate and the evaluation set
-    for batch_idx, (images, targets) in enumerate(val_dataset):
+    for batch_idx, (images, targets) in enumerate(coco_loader):
 
         # Run inference on the batch
-        outputs = model(images)
+        outputs = model_inference(model, images)
 
         # Add the model outputs to metric object (a dictionary of outputs after postprocess: boxes, scores & classes)
         coco_metric.add_batch_detections(outputs, targets)

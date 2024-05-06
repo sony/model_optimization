@@ -15,6 +15,7 @@
 
 from typing import Any
 from model_compression_toolkit.core.common.matchers.node_matcher import BaseNodeMatcher
+from model_compression_toolkit.core.common.graph.base_node import BaseNode
 
 
 class NodeTypeFilter(BaseNodeMatcher):
@@ -30,7 +31,7 @@ class NodeTypeFilter(BaseNodeMatcher):
         """
         self.node_type = node_type
 
-    def apply(self, input_object: Any) -> bool:
+    def apply(self, input_object: BaseNode) -> bool:
         """
         Check if input_object is of the type that NodeTypeFilter contains.
 
@@ -38,9 +39,9 @@ class NodeTypeFilter(BaseNodeMatcher):
             input_object: Node object to check for its type.
 
         Returns:
-            True if the node if of the type that was passed during the initialization of NodeTypeFilter.
+            True if the node is of the type that was passed during the initialization of NodeTypeFilter.
         """
-        if input_object.type == self.node_type:
+        if input_object.is_match_type(self.node_type):
             return True
 
 

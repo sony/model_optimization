@@ -74,6 +74,6 @@ class TraceHessianCalculatorKeras(TraceHessianCalculator):
         concat_axis_dim = [o.shape[0] for o in _r_tensors]
         if not all(d == concat_axis_dim[0] for d in concat_axis_dim):
             Logger.critical(
-                "Unable to concatenate tensors for gradient calculation due to mismatched shapes along the first axis.")# pragma: no cover
+                "Unable to concatenate tensors for gradient calculation due to mismatched shapes along the first axis.") # pragma: no cover
 
         return tf.concat(_r_tensors, axis=1)

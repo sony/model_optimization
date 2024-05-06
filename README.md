@@ -76,8 +76,8 @@ You can customize data generation configurations to suit your specific needs. [G
 
 ### Quantization
 MCT supports different quantization methods:
-* Post-training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_post_training_quantization_experimental.html#ug-keras-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_post_training_quantization_experimental.html#ug-pytorch-post-training-quantization-experimental)
-* Gradient-based post-training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_gradient_post_training_quantization_experimental.html#ug-keras-gradient-post-training-quantization-experimental), [PyTorch API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/pytorch_gradient_post_training_quantization_experimental.html#ug-pytorch-gradient-post-training-quantization-experimental)
+* Post-training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/keras_post_training_quantization.html), [PyTorch API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/pytorch_post_training_quantization.html)
+* Gradient-based post-training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/keras_gradient_post_training_quantization.html), [PyTorch API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/pytorch_gradient_post_training_quantization.html)
 * Quantization-aware training (QAT) [*](#experimental-features)
 
 
@@ -120,8 +120,8 @@ taking into account the target platform's Single Instruction, Multiple Data (SIM
 By pruning groups of channels (SIMD groups), our approach not only reduces model size 
 and complexity, but ensures that better utilization of channels is in line with the SIMD architecture 
 for a target Resource Utilization of weights memory footprint.
-[Keras API](https://sony.github.io/model_optimization/docs/api/experimental_api_docs/methods/keras_pruning_experimental.html)
-[Pytorch API](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/pruning/pytorch/pruning_facade.py#L43) 
+[Keras API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/keras_pruning_experimental.html)
+[Pytorch API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/pytorch_pruning_experimental.html) 
 
 #### Experimental features 
 

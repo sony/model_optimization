@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import copy
-from typing import Dict, Any, Tuple, List, Type
+from typing import Dict, Any, Tuple, List, Type, Union
 
 import numpy as np
 
@@ -151,7 +151,21 @@ class BaseNode:
         """
         return self.reuse or self.reuse_group is not None
 
-    def get_weights_by_keys(self, name: str) -> np.ndarray:
+    def _get_weight_name(self, name: Union[str, int]) -> List[Union[str, int]]:
+        """
+        Get weight names that match argument name (either string weights or integer for
+        positional weights).
+        Args:
+            name: weight name
+
+        Returns:
+            A list of weight names that match input "name"
+
+        """
+        return [k for k in self.weights.keys()
+                if (isinstance(k, int) and name == k) or (isinstance(k, str) and name in k)]
+
+    def get_weights_by_keys(self, name: Union[str, int]) -> np.ndarray:
         """
         Get a node's weight by its name.
         Args:
@@ -163,7 +177,7 @@ class BaseNode:
         if name is None:
             return None
 
-        res = [k for k in self.weights.keys() if name in k]
+        res = self._get_weight_name(name)
         if len(res) == 1:  # Make sure there are no duplicates
             return self.weights[res[0]]
         else:
@@ -179,7 +193,7 @@ class BaseNode:
 
         """
 
-        res = [k for k in self.weights.keys() if name in k]
+        res = self._get_weight_name(name)
         if len(res) == 1:
             self.weights[res[0]] = tensor
         else:  # Add if not exist
@@ -552,14 +566,17 @@ class BaseNode:
         for fl, qco in tpc.filterlayer2qco.items():
             if self.is_match_filter_params(fl):
                 return qco
-        if self.type in tpc.layer2qco:
-            return tpc.layer2qco.get(self.type)
+        # Extract qco with is_match_type to overcome mismatch of function types in TF 2.15
+        matching_qcos = [_qco for _type, _qco in tpc.layer2qco.items() if self.is_match_type(_type)]
+        if matching_qcos:
+            if len(matching_qcos) > 1:
+                Logger.error('Found duplicate qco types!')
+            return matching_qcos[0]
         return tpc.tp_model.default_qco
 
     def is_match_type(self, _type: Type) -> bool:
         """
-        Check if input type matches the node type, either in instance type or in type name. Checking the
-        name string is required because of function types changes that occurred in TF 2.15.
+        Check if input type matches the node type, either in instance type or in type name.
 
         Args:
             _type: other node type
@@ -567,7 +584,7 @@ class BaseNode:
             Whether _type matches the self node type
 
         """
-        return _type == self.type or _type.__name__ == self.type.__name__
+        return _type == self.type
 
     def is_match_filter_params(self, layer_filter_params: LayerFilterParams) -> bool:
         """

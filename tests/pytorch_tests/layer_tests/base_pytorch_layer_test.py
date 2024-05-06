@@ -95,6 +95,8 @@ class OperationTestModel(torch.nn.Module):
 
 def is_node_fake_quant(node):
     return node.target == torch.fake_quantize_per_tensor_affine
+
+
 def has_nested_attr(obj, attr):
     """
     Check if an object `obj` has a nested attribute `attr`.

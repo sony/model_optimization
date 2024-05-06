@@ -48,9 +48,9 @@ class FunctionalConvSubstitution(common.BaseSubstitution):
             Graph after applying the substitution.
         """
         # Set new layer
-        if func_node.type == conv2d:
+        if func_node.is_match_type(conv2d):
             new_layer = Conv2d
-        elif func_node.type == conv_transpose2d:
+        elif func_node.is_match_type(conv_transpose2d):
             new_layer = ConvTranspose2d
         else:
             Logger.critical(f'Substitution filter mismatch. Layer {func_node.type}. Must be {type(Conv2d)} or {type(ConvTranspose2d)}.')  # pragma: no cover

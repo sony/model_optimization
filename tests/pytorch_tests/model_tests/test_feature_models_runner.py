@@ -36,6 +36,7 @@ from tests.pytorch_tests.model_tests.feature_models.relu_replacement_test import
     ReluReplacementTest, ReluReplacementWithAddBiasTest
 from tests.pytorch_tests.model_tests.feature_models.remove_assert_test import AssertNetTest
 from tests.pytorch_tests.model_tests.feature_models.remove_broken_node_test import BrokenNetTest
+from tests.pytorch_tests.model_tests.feature_models.concat_threshold_test import ConcatUpdateTest
 from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSameNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest, BNForwardFoldingNetTest
 from tests.pytorch_tests.model_tests.feature_models.linear_collapsing_test import TwoConv2DCollapsingTest, \
@@ -84,12 +85,21 @@ from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccurac
     GPTQLearnRateZeroTest
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
+from tests.pytorch_tests.model_tests.feature_models.metadata_test import MetadataTest
 from tests.pytorch_tests.model_tests.feature_models.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from tests.pytorch_tests.model_tests.feature_models.const_quantization_test import ConstQuantizationTest, \
+    AdvancedConstQuantizationTest
+from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import RemoveIdentityTest
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
+    def test_remove_identity(self):
+        """
+        This test checks that identity layers are removed from the model.
+        """
+        RemoveIdentityTest(self).run_test()
 
     def test_single_layer_replacement(self):
         """
@@ -221,6 +231,16 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         ResidualCollapsingTest1(self).run_test()
         ResidualCollapsingTest2(self).run_test()
+
+    def test_const_quantization(self):
+        c = (np.ones((32,)) + np.random.random((32,))).astype(np.float32)
+        for func in [torch.add, torch.sub, torch.mul, torch.div]:
+            ConstQuantizationTest(self, func, c).run_test()
+            ConstQuantizationTest(self, func, c, input_reverse_order=True).run_test()
+            ConstQuantizationTest(self, func, 2.45).run_test()
+            ConstQuantizationTest(self, func, 5, input_reverse_order=True).run_test()
+
+        AdvancedConstQuantizationTest(self).run_test()
 
     def test_const_representation(self):
         c = (np.ones((32,)) + np.random.random((32,))).astype(np.float32)
@@ -577,6 +597,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         BNAttributesQuantization(self, quantize_linear=False).run_test()
         BNAttributesQuantization(self, quantize_linear=True).run_test()
+    
+    def test_concat_threshold_update(self):
+        ConcatUpdateTest(self).run_test()
+
+    def test_metadata(self):
+        MetadataTest(self).run_test()
 
 
 if __name__ == '__main__':

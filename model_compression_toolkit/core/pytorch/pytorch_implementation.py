@@ -58,6 +58,7 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.co
     FunctionalConvSubstitution
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.remove_identity import RemoveIdentity
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.reshape_with_static_shapes import \
     ReshapeWithStaticShapes
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.residual_collapsing import \
@@ -73,6 +74,8 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.vi
     VirtualActivationWeightsComposition
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.weights_activation_split import \
     WeightsActivationSplit
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.concat_threshold_update import \
+    ConcatThresholdUpdate
 from model_compression_toolkit.core.pytorch.hessian.activation_trace_hessian_calculator_pytorch import \
     ActivationTraceHessianCalculatorPytorch
 from model_compression_toolkit.core.pytorch.hessian.weights_trace_hessian_calculator_pytorch import \
@@ -236,7 +239,8 @@ class PytorchImplementation(FrameworkImplementation):
                 PermuteCallMethod(),
                 FunctionalConvSubstitution(fw_info),
                 FunctionalBatchNorm(),
-                FunctionalLayerNorm()]
+                FunctionalLayerNorm(),
+                RemoveIdentity()]
 
     def get_substitutions_pre_statistics_collection(self,
                                                     quant_config: QuantizationConfig
@@ -302,13 +306,10 @@ class PytorchImplementation(FrameworkImplementation):
             substitutions_list.append(pytorch_softmax_shift())
         if quant_config.input_scaling:
             Logger.critical('Input scaling is currently not supported for Pytorch.')
+        if quant_config.concat_threshold_update:
+            substitutions_list.append(ConcatThresholdUpdate())
         return substitutions_list
 
-    def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
-        """
-        Returns: A list of the framework substitutions used before we build a quantized module.
-        """
-        return []
 
     def get_substitutions_virtual_weights_activation_coupling(self) -> List[common.BaseSubstitution]:
         """
@@ -397,8 +398,8 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: True if the node should be considered an interest point, False otherwise.
         """
 
-        if node.type in [Conv2d, Linear, ConvTranspose2d, Sigmoid, sigmoid, Softmax, softmax, operator.add, add, cat,
-                         operator.concat]:
+        if any([node.is_match_type(_type) for _type in [Conv2d, Linear, ConvTranspose2d, Sigmoid, sigmoid, Softmax,
+                                                        softmax, operator.add, add, cat, operator.concat]]):
             return True
         return False
 
@@ -463,12 +464,12 @@ class PytorchImplementation(FrameworkImplementation):
         kernel_shape = node.get_weights_by_keys(fw_info.get_kernel_op_attributes(node.type)[0]).shape
         output_channel_axis, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
 
-        if node.type is Conv2d or node.type is ConvTranspose2d:
+        if node.is_match_type(Conv2d) or node.is_match_type(ConvTranspose2d):
             # (C_out * W_out * H_out) * C_in * (W_kernel * H_kernel)
             return np.prod([x for x in output_shape if x is not None]) * \
                    kernel_shape[input_channel_axis] * \
                    (kernel_shape[0] * kernel_shape[1])
-        elif node.type is Linear:
+        elif node.is_match_type(Linear):
             # IN * OUT
             return kernel_shape[0] * kernel_shape[1]
         else:
@@ -551,7 +552,6 @@ class PytorchImplementation(FrameworkImplementation):
         Returns:
             weight_quantizers: A dictionary between a weight's name to its quantizer.
             activation_quantizers: A list of activations quantization, one for each layer output.
-
         """
 
         return get_inferable_quantizers(node,

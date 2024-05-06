@@ -98,14 +98,15 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         tpc_layers = tpc.op_sets_to_layers.get_layers()
         tpc_filtered_layers = [layer for layer in tpc_layers if isinstance(layer, LayerFilterParams)]
         for n in self.nodes:
-            is_node_in_tpc = n.type in tpc_layers or any([n.is_match_filter_params(filtered_layer)
-                                                          for filtered_layer in tpc_filtered_layers])
+            is_node_in_tpc = any([n.is_match_type(_type) for _type in tpc_layers]) or \
+                             any([n.is_match_filter_params(filtered_layer) for filtered_layer in tpc_filtered_layers])
             if n.is_custom:
                 if not is_node_in_tpc:
                     Logger.critical(f'MCT does not support optimizing Keras custom layers. Found a layer of type {n.type}. '
-                                 f' Please add the custom layer to Target Platform Capabilities (TPC), or file a feature request or an issue if you believe this should be supported.')
+                                    ' Please add the custom layer to Target Platform Capabilities (TPC), or file a feature '
+                                    'request or an issue if you believe this should be supported.')  # pragma: no cover
                 if any([qc.default_weight_attr_config.enable_weights_quantization for qc in n.get_qco(tpc).quantization_config_list]):
-                    Logger.critical(f'Layer identified: {n.type}. MCT does not support weight quantization for Keras custom layers.')
+                    Logger.critical(f'Layer identified: {n.type}. MCT does not support weight quantization for Keras custom layers.')  # pragma: no cover
 
         self.tpc = tpc
 
@@ -413,7 +414,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         if new_node is None:
-            Logger.critical("Cannot replace input node with a None value; new input node is required.")
+            Logger.critical("Cannot replace input node with a None value; new input node is required.")  # pragma: no cover
 
         graph_inputs = self.get_inputs()
         new_graph_inputs = copy(graph_inputs)
@@ -827,12 +828,12 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         """
         if not fw_impl.is_node_entry_node(entry_node):
-            Logger.critical(f"Node {entry_node} is not a valid entry node for creating a pruning section")
+            Logger.critical(f"Node {entry_node} is not a valid entry node for creating a pruning section")  # pragma: no cover
 
         intermediate_nodes, exit_node = self._find_intermediate_and_exit_nodes(entry_node, fw_impl)
 
         if not fw_impl.is_node_exit_node(exit_node, entry_node, self.fw_info):
-            Logger.critical(f"Node {exit_node} is not a valid exit node for the pruning section starting with {entry_node}.")
+            Logger.critical(f"Node {exit_node} is not a valid exit node for the pruning section starting with {entry_node}.")   # pragma: no cover
 
         return PruningSection(entry_node=entry_node,
                               intermediate_nodes=intermediate_nodes,
