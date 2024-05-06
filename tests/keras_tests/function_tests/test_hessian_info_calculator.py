@@ -237,7 +237,7 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
 
         # Two nodes representing the same reused layer
-        interest_points = [n for n in sorted_graph_nodes if n.type == Conv2D]
+        interest_points = [n for n in sorted_graph_nodes if n.is_match_type(Conv2D)]
         self.assertTrue(len(interest_points)==2, f"Expected to find 2 Conv2D nodes but found {len(interest_points)}")
 
         hessian_service = hessian_common.HessianInfoService(graph=graph,
@@ -419,7 +419,7 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
 
         # Two nodes representing the same reused layer
-        interest_points = [n for n in sorted_graph_nodes if n.type == Conv2D]
+        interest_points = [n for n in sorted_graph_nodes if n.is_match_type(Conv2D)]
         self.assertTrue(len(interest_points)==2, f"Expected to find 2 Conv2D nodes but found {len(interest_points)}")
 
         hessian_service = hessian_common.HessianInfoService(graph=graph,

@@ -1,3 +1,5 @@
+import copy
+
 import unittest
 import torch
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
@@ -23,11 +25,9 @@ class BasicModel(torch.nn.Module):
         super(BasicModel, self).__init__()
         self.conv1 = Conv2d(num_channels, num_channels, kernel_size=kernel_size, bias=False)
         self.conv2 = Conv2d(num_channels, num_channels, kernel_size=kernel_size, bias=False)
-        self.identity = torch.nn.Identity()
 
     def forward(self, inp):
         x = self.conv1(inp)
-        x = self.identity(x)
         x = self.conv2(x)
         return x
 
@@ -51,11 +51,9 @@ class ReuseModel(torch.nn.Module):
     def __init__(self, num_channels=3, kernel_size=1):
         super(ReuseModel, self).__init__()
         self.conv = Conv2d(num_channels, num_channels, kernel_size=kernel_size, bias=False)
-        self.identity = torch.nn.Identity()
 
     def forward(self, inp):
         x = self.conv(inp)
-        x = self.identity(x)
         x = self.conv(x)
         return x
 
@@ -73,7 +71,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         # the last module should be an activation quantization holder
         self.assertTrue(isinstance(last_module, PytorchActivationQuantizationHolder))
         # check that 4 activation quantization holders where generated
-        self.assertTrue(len(activation_quantization_holders_in_model) == 4)
+        self.assertTrue(len(activation_quantization_holders_in_model) == 3)
         for a in activation_quantization_holders_in_model:
             self.assertTrue(isinstance(a.activation_holder_quantizer, ActivationPOTInferableQuantizer))
         for name, module in gptq_model.named_modules():
@@ -102,7 +100,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         # the last module should be an activation quantization holder
         self.assertTrue(isinstance(last_module, PytorchActivationQuantizationHolder))
         # check that 4 activation quantization holders where generated
-        self.assertTrue(len(activation_quantization_holders_in_model) == 4)
+        self.assertTrue(len(activation_quantization_holders_in_model) == 3)
         for a in activation_quantization_holders_in_model:
             self.assertTrue(isinstance(a.activation_holder_quantizer, ActivationPOTInferableQuantizer))
         for name, module in gptq_model.named_modules():
@@ -115,13 +113,16 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
 
     def _get_gptq_model(self, input_shape, in_model):
         pytorch_impl = GPTQPytorchImplemantation()
+        qc = copy.deepcopy(mct.core.DEFAULTCONFIG)
+        qc.linear_collapsing = False
         graph = prepare_graph_with_quantization_parameters(in_model,
                                                            pytorch_impl,
                                                            DEFAULT_PYTORCH_INFO,
                                                            representative_dataset,
                                                            generate_pytorch_tpc,
                                                            [1] + input_shape,
-                                                           mixed_precision_enabled=False)
+                                                           mixed_precision_enabled=False,
+                                                           qc=qc)
         graph = set_bit_widths(mixed_precision_enable=False,
                                graph=graph)
         trainer = PytorchGPTQTrainer(graph,

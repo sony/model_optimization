@@ -92,7 +92,7 @@ class Pruner:
             mask_calculator.compute_mask()
             self.per_oc_mask = mask_calculator.get_mask()
         else:
-            Logger.critical("Only GREEDY ChannelsFilteringStrategy is currently supported.")
+            Logger.critical("Only GREEDY ChannelsFilteringStrategy is currently supported.")  # pragma: no cover
 
         Logger.info("Start pruning graph...")
         _pruned_graph = build_pruned_graph(self.float_graph,

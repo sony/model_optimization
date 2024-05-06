@@ -14,7 +14,7 @@ detection-head (mainly the box decoding part) that was optimized for model quant
 
 The code is organized as follows:
 - Classes definitions of Yolov8n building blocks: Conv, Bottleneck, C2f, SPPF, Upsample, Concaat, DFL and Detect
-- Detection Model definition: DetectionModelKeras
+- Detection Model definition: DetectionModelPyTorch
 - PostProcessWrapper Wrapping the Yolov8n model with PostProcess layer (Specifically, sony_custom_layers/multiclass_nms)
 - A getter function for getting a new instance of the model
 
@@ -26,14 +26,16 @@ import contextlib
 import math
 import re
 from copy import deepcopy
-from typing import Dict, List, Tuple
 
+from typing import Dict, List, Tuple, Any
+import numpy as np
 import torch
 import torch.nn as nn
 import yaml
 from torch import Tensor
 
 from huggingface_hub import PyTorchModelHubMixin
+from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from sony_custom_layers.pytorch.object_detection.nms import multiclass_nms
 
 
@@ -257,19 +259,20 @@ class Detect(nn.Module):
         box, cls = torch.cat([xi.view(shape[0], self.no, -1) for xi in x], 2).split(
             (self.reg_max * 4, self.nc), 1)
 
-        y_cls = cls.sigmoid()
+
+        y_cls = cls.sigmoid().transpose(1, 2)
 
         dfl = self.dfl(box)
-        # dfl = dfl * self.strides
+        dfl = dfl * self.strides
 
         # box decoding
-        # lt, rb = dfl.chunk(2, 1)
-        # y1 = self.relu1(self.anchors.unsqueeze(0)[:, 0, :] - lt[:, 0, :])
-        # x1 = self.relu2(self.anchors.unsqueeze(0)[:, 1, :] - lt[:, 1, :])
-        # y2 = self.relu3(self.anchors.unsqueeze(0)[:, 0, :] + rb[:, 0, :])
-        # x2 = self.relu4(self.anchors.unsqueeze(0)[:, 1, :] + rb[:, 1, :])
-        # y_bb = torch.stack((x1, y1, x2, y2), 1)
-        return dfl, y_cls
+        lt, rb = dfl.chunk(2, 1)
+        y1 = self.relu1(self.anchors.unsqueeze(0)[:, 0, :] - lt[:, 0, :])
+        x1 = self.relu2(self.anchors.unsqueeze(0)[:, 1, :] - lt[:, 1, :])
+        y2 = self.relu3(self.anchors.unsqueeze(0)[:, 0, :] + rb[:, 0, :])
+        x2 = self.relu4(self.anchors.unsqueeze(0)[:, 1, :] + rb[:, 1, :])
+        y_bb = torch.stack((x1, y1, x2, y2), 1).transpose(1, 2)
+        return y_bb, y_cls
 
     def bias_init(self):
         """Initialize Detect() biases, WARNING: requires stride availability."""
@@ -437,6 +440,64 @@ class DetectionModelPyTorch(nn.Module, PyTorchModelHubMixin):
         super().save_pretrained(save_directory, **kwargs)
 
 
+def model_predict(model: Any,
+                  inputs: np.ndarray) -> List:
+    """
+    Perform inference using the provided PyTorch model on the given inputs.
+
+    This function handles moving the inputs to the appropriate torch device and data type,
+    and detaches and moves the outputs to the CPU.
+
+    Args:
+        model (Any): The PyTorch model used for inference.
+        inputs (np.ndarray): Input data to perform inference on.
+
+    Returns:
+        List: List containing tensors of predictions.
+    """
+    device = get_working_device()
+    inputs = torch.from_numpy(inputs).to(device=device, dtype=torch.float)
+
+    # Run Pytorch inference on the batch
+    outputs = model(inputs)
+
+    # Detach outputs and move to cpu
+    outputs = outputs.cpu().detach()
+    return outputs
+
+
+class PostProcessWrapper(nn.Module):
+    def __init__(self,
+                 model: nn.Module,
+                 score_threshold: float = 0.001,
+                 iou_threshold: float = 0.7,
+                 max_detections: int = 300):
+        """
+        Wrapping PyTorch Module with multiclass_nms layer from sony_custom_layers.
+
+        Args:
+            model (nn.Module): Model instance.
+            score_threshold (float): Score threshold for non-maximum suppression.
+            iou_threshold (float): Intersection over union threshold for non-maximum suppression.
+            max_detections (float): The number of detections to return.
+        """
+        super(PostProcessWrapper, self).__init__()
+        self.model = model
+        self.score_threshold = score_threshold
+        self.iou_threshold = iou_threshold
+        self.max_detections = max_detections
+
+    def forward(self, images):
+        # model inference
+        outputs = self.model(images)
+
+        boxes = outputs[0]
+        scores = outputs[1]
+        nms = multiclass_nms(boxes=boxes, scores=scores, score_threshold=self.score_threshold,
+                             iou_threshold=self.iou_threshold, max_detections=self.max_detections)
+        return nms
+
+
 def yolov8_pytorch(model_yaml: str) -> (nn.Module, Dict):
     """
     Create PyTorch model of YOLOv8 detection.
@@ -452,3 +513,30 @@ def yolov8_pytorch(model_yaml: str) -> (nn.Module, Dict):
     cfg_dict = yaml_load(cfg, append_filename=True)  # model dict
     model = DetectionModelPyTorch(cfg_dict)  # model
     return model, cfg_dict
+
+
+def yolov8_pytorch_pp(model_yaml: str,
+                      score_threshold: float = 0.001,
+                      iou_threshold: float = 0.7,
+                      max_detections: int = 300) -> (nn.Module, Dict):
+    """
+    Create PyTorch model of YOLOv8 detection with PostProcess.
+
+    Args:
+        model_yaml (str): Name of the YOLOv8 model configuration file (YAML format).
+        score_threshold (float): Score threshold for non-maximum suppression.
+        iou_threshold (float): Intersection over union threshold for non-maximum suppression.
+        max_detections (float): The number of detections to return.
+
+    Returns:
+        model: YOLOv8_pp detection model.
+        cfg_dict: YOLOv8_pp detection model configuration dictionary.
+    """
+    cfg = model_yaml
+    cfg_dict = yaml_load(cfg, append_filename=True)  # model dict
+    model = DetectionModelPyTorch(cfg_dict)  # model
+    model_pp = PostProcessWrapper(model=model,
+                                  score_threshold=score_threshold,
+                                  iou_threshold=iou_threshold,
+                                  max_detections=max_detections)
+    return model_pp, cfg_dict

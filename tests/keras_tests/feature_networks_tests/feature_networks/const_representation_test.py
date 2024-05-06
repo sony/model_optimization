@@ -28,14 +28,14 @@ tp = mct.target_platform
 
 class ConstRepresentationTest(BaseKerasFeatureNetworkTest):
 
-    def __init__(self, unit_test, layer, const, is_list_input=False, input_reverse_order=False, use_kwrags=False,
+    def __init__(self, unit_test, layer, const, is_list_input=False, input_reverse_order=False, use_kwargs=False,
                  input_shape=(32, 32, 16)):
         super(ConstRepresentationTest, self).__init__(unit_test=unit_test, input_shape=input_shape)
         self.layer = layer
         self.const = const
         self.is_list_input = is_list_input
         self.input_reverse_order = input_reverse_order
-        self.use_kwrags = use_kwrags
+        self.use_kwargs = use_kwargs
 
     def generate_inputs(self):
         # need positive inputs so won't divide with zero or take root of negative number
@@ -58,12 +58,12 @@ class ConstRepresentationTest(BaseKerasFeatureNetworkTest):
                 x = self.layer([x, self.const])
         else:
             if self.input_reverse_order:
-                if self.use_kwrags:
+                if self.use_kwargs:
                     x = self.layer(x=self.const, y=x)
                 else:
                     x = self.layer(self.const, x)
             else:
-                if self.use_kwrags:
+                if self.use_kwargs:
                     x = self.layer(x=x, y=self.const)
                 else:
                     x = self.layer(x, self.const)

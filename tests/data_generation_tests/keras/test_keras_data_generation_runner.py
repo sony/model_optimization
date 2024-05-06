@@ -16,7 +16,8 @@ import unittest
 
 from model_compression_toolkit.data_generation.common.enums import SchedulerType, BatchNormAlignemntLossType, \
     DataInitType, BNLayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
-from tests.data_generation_tests.keras.base_keras_data_generation_test import BaseKerasDataGenerationTest
+from tests.data_generation_tests.keras.base_keras_data_generation_test import BaseKerasDataGenerationTest, \
+    NoBNDataGenerationModel
 
 
 class KerasDataGenerationTestRunner(unittest.TestCase):
@@ -53,3 +54,8 @@ class KerasDataGenerationTestRunner(unittest.TestCase):
         BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.NONE).run_test()
         BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.MIN_MAX_DIFF).run_test()
         BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.REGULARIZED_MIN_MAX_DIFF).run_test()
+
+    def test_keras_no_bn(self):
+        with self.assertRaises(Exception) as e:
+            BaseKerasDataGenerationTest(self, model=NoBNDataGenerationModel()).run_test()
+        self.assertEqual('Data generation requires a model with at least one BatchNorm layer.', str(e.exception))

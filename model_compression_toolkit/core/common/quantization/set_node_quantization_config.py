@@ -24,7 +24,8 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.quantization.candidate_node_quantization_config import \
     CandidateNodeQuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeActivationQuantizationConfig
-from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
+from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, \
+    QuantizationErrorMethod
 from model_compression_toolkit.core.common.quantization.quantization_params_fn_selection import \
     get_activation_quantization_params_fn, get_weights_quantization_params_fn
 from model_compression_toolkit.core.common.quantization.quantization_fn_selection import \
@@ -36,18 +37,30 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.op_q
 
 def set_quantization_configuration_to_graph(graph: Graph,
                                             quant_config: QuantizationConfig,
-                                            mixed_precision_enable: bool = False) -> Graph:
+                                            mixed_precision_enable: bool = False,
+                                            running_gptq: bool = False) -> Graph:
     """
     Add quantization configuration for each graph node.
 
     Args:
         graph: Graph for which to add quantization info to each node.
         quant_config: Quantization configuration containing parameters for how the graph should be quantized.
-        mixed_precision_enable: is mixed precision enabled
+        mixed_precision_enable: is mixed precision enabled.
+        running_gptq: Whether or not a GPTQ optimization is planned to run after the PTQ process.
 
     Returns:
         The graph with quantization configurations attached to each node in it.
     """
+
+    if quant_config.weights_error_method == QuantizationErrorMethod.HMSE:
+        if not running_gptq:
+            Logger.warning(f"The HMSE error method for parameters selection is only supported when running GPTQ "
+                           f"optimization due to long execution time that is not suitable for basic PTQ. "
+                           f"Using the default MSE error method instead.")
+            quant_config.weights_error_method = QuantizationErrorMethod.MSE
+        else:
+            Logger.warning("Using the HMSE error method for weights quantization parameters search. "
+                           "Note: This method may significantly increase runtime during the parameter search process.")
 
     for n in graph.nodes:
         set_quantization_configs_to_node(node=n,

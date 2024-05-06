@@ -62,11 +62,11 @@ def update_kernel_for_bn_folding_fn(conv_node: BaseNode,
     Returns:
         The modified convolution node's weight/kernel/
     """
-    if conv_node.type == ConvTranspose2d:
+    if conv_node.is_match_type(ConvTranspose2d):
         _scale = weights_scale[None, :, None, None]
     else:
         _scale = weights_scale[:, None, None, None]
-    if conv_node.type == ConvTranspose2d and conv_node.framework_attr[GROUPS] > 1:
+    if conv_node.is_match_type(ConvTranspose2d) and conv_node.framework_attr[GROUPS] > 1:
         # PyTorch ConvTranspose2d kernel with groups stacks groups on in_channels axis, so need to reshape the kernel
         # so the groups are stacked on the out_channels axis to match the scale vector (then reshape back to original
         # shape)
@@ -93,10 +93,10 @@ def update_weights_for_bn_forward_folding_fn(conv_node: BaseNode,
     Returns:
         The modified convolution node's weight/kernel/
     """
-    if conv_node.type == Conv2d and conv_node.framework_attr[GROUPS] > 1:
+    if conv_node.is_match_type(Conv2d) and conv_node.framework_attr[GROUPS] > 1:
         bias_update = (kernel * bias_factor[:, None, None, None]).flatten()
         _scale = weights_scale[:, None, None, None]
-    elif conv_node.type == ConvTranspose2d:
+    elif conv_node.is_match_type(ConvTranspose2d):
         bias_update = (kernel * bias_factor[:, None, None, None]).sum(axis=0).flatten()
         _scale = weights_scale[:, None, None, None]
     else:
@@ -125,8 +125,8 @@ def is_group_conv_fn(node: BaseNode) -> bool:
     Returns:
         True if the node is a group convolution, else False
     """
-    return node.type in [Conv2d, ConvTranspose2d] and \
-           node.framework_attr[GROUPS] not in [node.framework_attr[IN_CHANNELS], 1]
+    return (node.is_match_type(Conv2d) or node.is_match_type(ConvTranspose2d)) and \
+        node.framework_attr[GROUPS] not in [node.framework_attr[IN_CHANNELS], 1]
 
 
 def get_foldable_node_type_and_validity_fn(node: BaseNode) -> [bool, bool]:
@@ -140,8 +140,8 @@ def get_foldable_node_type_and_validity_fn(node: BaseNode) -> [bool, bool]:
         is_bn: True if the node is a batch norm, else False
         is_dw_valid: True if the node is a dw-convolution valid for folding or a batch-norm node, else False
     """
-    is_bn = node.type is BatchNorm2d
-    is_dw = node.type is Conv2d and node.framework_attr[GROUPS] == node.framework_attr[IN_CHANNELS]
+    is_bn = node.is_match_type(BatchNorm2d)
+    is_dw = node.is_match_type(Conv2d) and node.framework_attr[GROUPS] == node.framework_attr[IN_CHANNELS]
     is_dw_valid = is_dw and np.all(np.array(node.get_weights_by_keys(KERNEL).shape[2:]) == 1)
     return is_bn, is_dw_valid
 

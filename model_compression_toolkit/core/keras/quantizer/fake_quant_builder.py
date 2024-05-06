@@ -24,6 +24,17 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import THRESHOLD, SIGNED, RANGE_MIN, RANGE_MAX
 from model_compression_toolkit.core.common.quantization.quantizers.uniform_quantizers import threshold_is_power_of_two
 
+################################################################
+################################################################
+# TODO:
+#  These quantizer functions are for internal use. They are currently
+#  used in some features like MP for activation and SNC (where
+#  inference in the framework is needed).
+#  It may worth considering removing these functions and use
+#  activation inferable quantizers in those features like we do
+#  in GPTQ.
+################################################################
+################################################################
 
 def quantizer_min_max_calculator(threshold: np.ndarray,
                                  num_bits: int,

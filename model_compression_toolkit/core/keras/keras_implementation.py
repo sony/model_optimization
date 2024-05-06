@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from functools import partial
-from typing import List, Any, Tuple, Callable, Dict
+from typing import List, Any, Tuple, Callable, Dict, Union
 
 import numpy as np
 import tensorflow as tf
@@ -22,6 +22,7 @@ from tensorflow.keras.models import Model
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoService
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remove_identity import RemoveIdentity
 from model_compression_toolkit.core.keras.hessian.activation_trace_hessian_calculator_keras import \
     ActivationTraceHessianCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.weights_trace_hessian_calculator_keras import WeightsTraceHessianCalculatorKeras
@@ -50,13 +51,11 @@ from model_compression_toolkit.core.keras.statistics_correction.apply_second_mom
 from packaging import version
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
-    from keras.src.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, \
-        Concatenate, Add
+    from keras.src.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add
     from keras.src.layers.core import TFOpLambda
 else:
-    from keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, \
-        Concatenate, Add
-    from keras.layers.core import TFOpLambda
+    from keras.layers import Dense, Activation, Conv2D, DepthwiseConv2D, Conv2DTranspose, Concatenate, Add   # pragma: no cover
+    from keras.layers.core import TFOpLambda   # pragma: no cover
 
 from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, CoreConfig, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import common
@@ -80,11 +79,10 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.line
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.residual_collapsing import \
     keras_residual_collapsing
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.input_scaling import InputScaling, \
-    InputScalingWithPad
+    InputScalingWithPad 
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.concat_threshold_update import ConcatThresholdUpdate
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
-from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remove_relu_upper_bound import \
-    RemoveReLUUpperBound
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.multi_head_attention_decomposition import \
     MultiHeadAttentionDecomposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.scale_equalization import \
@@ -247,7 +245,8 @@ class KerasImplementation(FrameworkImplementation):
                 MatmulToDenseSubstitution(),
                 MultiHeadAttentionDecomposition(),
                 ActivationDecomposition(),
-                DwconvToConv()]
+                DwconvToConv(),
+                RemoveIdentity()]
 
     def get_substitutions_pre_statistics_collection(self, quant_config: QuantizationConfig) -> \
             List[common.BaseSubstitution]:
@@ -302,8 +301,8 @@ class KerasImplementation(FrameworkImplementation):
         """
         return keras_op2d_add_const_collapsing()
 
-    def get_substitutions_post_statistics_collection(self, quant_config: QuantizationConfig) \
-            -> List[common.BaseSubstitution]:
+    def get_substitutions_post_statistics_collection(self, 
+                                                     quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used after we collect statistics.
 
@@ -319,16 +318,10 @@ class KerasImplementation(FrameworkImplementation):
         if quant_config.input_scaling:
             substitutions_list.append(InputScaling())
             substitutions_list.append(InputScalingWithPad())
+        if quant_config.concat_threshold_update:
+            substitutions_list.append(ConcatThresholdUpdate())
         return substitutions_list
 
-    def get_substitutions_pre_build(self) -> List[common.BaseSubstitution]:
-        """
-
-        Returns: A list of the framework substitutions used before we build a quantized model.
-
-        """
-
-        return [RemoveReLUUpperBound()]
 
     def get_substitutions_virtual_weights_activation_coupling(self) -> List[common.BaseSubstitution]:
         """
@@ -417,12 +410,13 @@ class KerasImplementation(FrameworkImplementation):
         Returns: True if the node should be considered an interest point, False otherwise.
         """
 
-        if node.type == Activation:
+        if node.is_match_type(Activation):
             node_type_name = node.framework_attr[keras_constants.ACTIVATION]
             if node_type_name in [keras_constants.SOFTMAX, keras_constants.SIGMOID]:
                 return True
-        elif node.type in [tf.nn.softmax, tf.keras.layers.Softmax, tf.nn.sigmoid, Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense, Concatenate,
-                           tf.concat, Add, tf.add]:
+        elif any([node.is_match_type(_type) for _type in [tf.nn.softmax, tf.keras.layers.Softmax, tf.nn.sigmoid, Conv2D,
+                                                          DepthwiseConv2D, Conv2DTranspose, Dense, Concatenate, tf.concat,
+                                                          Add, tf.add]]):
             return True
 
         return False
@@ -493,7 +487,7 @@ class KerasImplementation(FrameworkImplementation):
                                                       fw_impl=self,
                                                       num_iterations_for_approximation=num_iterations_for_approximation)
         else:
-            Logger.critical(f"Unsupported Hessian mode for Keras: {trace_hessian_request.mode}.")
+            Logger.critical(f"Unsupported Hessian mode for Keras: {trace_hessian_request.mode}.")   # pragma: no cover
 
     def is_output_node_compatible_for_hessian_score_computation(self,
                                                                 node: BaseNode) -> Any:
@@ -534,18 +528,18 @@ class KerasImplementation(FrameworkImplementation):
         kernel_shape = node.get_weights_by_keys(fw_info.get_kernel_op_attributes(node.type)[0]).shape
         output_channel_axis, input_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
 
-        if node.type is Conv2D or node.type is Conv2DTranspose:
+        if node.is_match_type(Conv2D) or node.is_match_type(Conv2DTranspose):
             # (C_out * W_out * H_out) * C_in * (W_kernel * H_kernel)
             return np.prod([x for x in output_shape if x is not None]) * \
                    kernel_shape[input_channel_axis] * \
                    (kernel_shape[0] * kernel_shape[1])
-        elif node.type is DepthwiseConv2D:
+        elif node.is_match_type(DepthwiseConv2D):
             # Depth * (W_out * H_out) * C_in * (W_kernel * H_kernel)
             return node.framework_attr.get(DEPTH_MULTIPLIER) * \
                    np.prod([x for x in output_shape if x is not None]) / output_shape[output_channel_axis] * \
                    kernel_shape[input_channel_axis] * \
                    (kernel_shape[0] * kernel_shape[1])
-        elif node.type is Dense:
+        elif node.is_match_type(Dense):
             # IN * OUT
             return kernel_shape[0] * kernel_shape[1]
         else:
@@ -598,10 +592,9 @@ class KerasImplementation(FrameworkImplementation):
         Returns:
             weight_quantizers: A dictionary between a weight's name to its quantizer.
             activation_quantizers: A list of activations quantization, one for each layer output.
-
         """
 
-        def _weight_name(w: str) -> str:
+        def _weight_name(w: Union[str, int]) -> Union[str, int]:
             """
             Extracts the weight name from the full TensorFlow variable name.
 
@@ -614,7 +607,7 @@ class KerasImplementation(FrameworkImplementation):
               Extracted weight name.
             """
 
-            return w.split(':')[0].split('/')[-1]
+            return w.split(':')[0].split('/')[-1] if isinstance(w, str) else w
 
         attribute_names = [_weight_name(wn) for wn in node.get_node_weights_attributes()
                            if node.is_weights_quantization_enabled(wn)]

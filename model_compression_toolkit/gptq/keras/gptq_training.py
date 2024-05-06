@@ -301,21 +301,23 @@ class KerasGPTQTrainer(GPTQTrainer):
         Returns: None
 
         """
-        for _ in tqdm(range(n_epochs)):
-            for data in tqdm(data_function()):
-                input_data = [d * self.input_scale for d in data]
+        with tqdm(range(n_epochs), "Running GPTQ optimization") as epochs_pbar:
+            for _ in epochs_pbar:
+                with tqdm(data_function(), position=1, leave=False) as data_pbar:
+                    for data in data_pbar:
+                        input_data = [d * self.input_scale for d in data]
 
-                loss_value_step, grads = self.nano_training_step(input_data, in_compute_gradients,
-                                                                 in_optimizer_with_param, is_training)
-                # Run one step of gradient descent by updating
-                # the value of the variables to minimize the loss.
-                for i, (o, p) in enumerate(in_optimizer_with_param):
-                    o.apply_gradients(zip(grads[i], p))
-                if self.gptq_config.log_function is not None:
-                    self.gptq_config.log_function(loss_value_step, grads[0], in_optimizer_with_param[0][-1],
-                                                  self.compare_points)
-                self.loss_list.append(loss_value_step.numpy())
-                Logger.debug(f'last loss value: {self.loss_list[-1]}')
+                        loss_value_step, grads = self.nano_training_step(input_data, in_compute_gradients,
+                                                                         in_optimizer_with_param, is_training)
+                        # Run one step of gradient descent by updating
+                        # the value of the variables to minimize the loss.
+                        for i, (o, p) in enumerate(in_optimizer_with_param):
+                            o.apply_gradients(zip(grads[i], p))
+                        if self.gptq_config.log_function is not None:
+                            self.gptq_config.log_function(loss_value_step, grads[0], in_optimizer_with_param[0][-1],
+                                                          self.compare_points)
+                        self.loss_list.append(loss_value_step.numpy())
+                        Logger.debug(f'last loss value: {self.loss_list[-1]}')
 
     def update_graph(self):
         """
@@ -337,12 +339,16 @@ class KerasGPTQTrainer(GPTQTrainer):
                 node = node[0]
                 kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=node.type,
                                                                       fw_info=self.fw_info)
+                # TODO: only kernel attributes are currently trained in GPTQ, so only the kernel weights need to be updated.
+                #  To enable GPTQ for other attributes, this code needs to be modified.
                 weights, weight_quant_config, activation_quant_config = \
                     layer.weights_quantizers[kernel_attribute].update_layer_quantization_params(layer)
                 for weight_attr, weight in weights.items():
                     node.set_weights_by_keys(weight_attr, weight.numpy())
-                for config_attr, config_value in weight_quant_config.items():
-                    node.final_weights_quantization_cfg.set_quant_config_attr(config_attr, config_value)
+                for config_parameter_name, config_parameter_value in weight_quant_config.items():
+                    node.final_weights_quantization_cfg.set_quant_config_attr(config_parameter_name,
+                                                                              config_parameter_value,
+                                                                              attr_name=kernel_attribute)
                 for config_attr, config_value in activation_quant_config.items():
                     node.final_activation_quantization_cfg.set_quant_config_attr(config_attr, config_value)
                 if self.gptq_config.train_bias:

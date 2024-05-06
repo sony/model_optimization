@@ -43,10 +43,16 @@ def DataGenerationModel():
     x = Dense(30)(x)
     return keras.Model(inputs=inputs, outputs=x)
 
+def NoBNDataGenerationModel():
+    input_shape = (32, 32, 3)
+    inputs = Input(shape=input_shape)
+    x = Conv2D(3, 3)(inputs)
+    return keras.Model(inputs=inputs, outputs=x)
 
 class BaseKerasDataGenerationTest:
     def __init__(self,
                  unit_test,
+                 model: keras.Model = None,
                  n_images: int = 32,
                  output_image_size: int = (32, 32),
                  n_iter: int = 10,
@@ -66,7 +72,9 @@ class BaseKerasDataGenerationTest:
                  bn_layer_types: List = [BatchNormalization]
                  ):
         self.unit_test = unit_test
-        self.model = DataGenerationModel()
+        self.model = model
+        if model is None:
+            self.model = DataGenerationModel()
         self.n_images = n_images
         self.output_image_size = output_image_size
         self.n_iter = n_iter

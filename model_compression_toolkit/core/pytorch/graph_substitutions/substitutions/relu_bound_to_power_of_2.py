@@ -76,17 +76,17 @@ class ReLUBoundToPowerOfTwo(common.BaseSubstitution):
         second_op2d_node = nodes_list[2]
 
         # only act on bound relu with not POT max value and 0 min value
-        if non_linear_node.type == ReLU6:
+        if non_linear_node.is_match_type(ReLU6):
             scale_factor = 6.0 / self.threshold
             non_linear_node.layer_class = Hardtanh
             non_linear_node.framework_attr[INPLACE] = False
             non_linear_node.framework_attr[HARDTANH_MIN_VAL] = 0.0
             non_linear_node.framework_attr[HARDTANH_MAX_VAL] = self.threshold
-        elif non_linear_node.type == relu6:
+        elif non_linear_node.is_match_type(relu6):
             scale_factor = 6.0 / self.threshold
             non_linear_node.functional_op = hardtanh
             non_linear_node.functional_op.__defaults__ = (0.0, self.threshold, False)
-        elif non_linear_node.type == Hardtanh:
+        elif non_linear_node.is_match_type(Hardtanh):
             if (non_linear_node.framework_attr[HARDTANH_MIN_VAL] == 0.0) and not \
                     (np.log2(non_linear_node.framework_attr[HARDTANH_MAX_VAL]).astype(int) -
                      np.log2(non_linear_node.framework_attr[HARDTANH_MAX_VAL]) == 0):
@@ -94,7 +94,7 @@ class ReLUBoundToPowerOfTwo(common.BaseSubstitution):
                 non_linear_node.framework_attr[HARDTANH_MAX_VAL] = self.threshold
             else:
                 return graph
-        elif non_linear_node.type == hardtanh:
+        elif non_linear_node.is_match_type(hardtanh):
             if (non_linear_node.framework_attr[HARDTANH_MIN_VAL] == 0.0) and not \
                     (np.log2(non_linear_node.framework_attr[HARDTANH_MAX_VAL]).astype(int) -
                      np.log2(non_linear_node.framework_attr[HARDTANH_MAX_VAL]) == 0):

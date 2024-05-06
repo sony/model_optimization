@@ -1,5 +1,6 @@
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Tuple, Type
 
+from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 import numpy as np
 
@@ -71,3 +72,19 @@ class FunctionalNode(BaseNode):
         :return: the node's functional_op
         """
         return self.functional_op
+
+    def is_match_type(self, _type: Type) -> bool:
+        """
+        Check if input type matches the node type, either in instance type or in type name. Checking the
+        name string is required because of function types changes that occurred in TF 2.15, because it
+        changes the "function" attribute object (e.g. a different tf.add function that will fail the
+        equal operation).
+
+        Args:
+            _type: other node type
+        Returns:
+            Whether _type matches the self node type
+
+        """
+        names_match = _type.__name__ == self.type.__name__ if FOUND_TF else False
+        return super().is_match_type(_type) or names_match

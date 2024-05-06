@@ -17,7 +17,7 @@ import logging
 from tqdm import tqdm
 
 
-def classification_eval(model, data_loader, limit=None):
+def classification_eval(model, data_loader, limit=None, num_images_to_display=1000):
     logging.info(f'Start classification evaluation')
     correct = 0
     total = 0
@@ -26,7 +26,7 @@ def classification_eval(model, data_loader, limit=None):
     model.eval()
     # since we're not training, we don't need to calculate the gradients for our outputs
     with torch.no_grad():
-        for data in tqdm(data_loader, desc ="Classification evaluation"):
+        for data in tqdm(data_loader, desc="Classification evaluation"):
             images, labels = data
             # calculate outputs by running images through the network
             outputs = model(images.to(device))
@@ -34,6 +34,8 @@ def classification_eval(model, data_loader, limit=None):
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels.to(device)).sum().item()
+            if total % num_images_to_display == 0:
+                print(f'Num of images: {total}, Accuracy: {round(100 * correct / total, 2)} %')
             if limit and total >= int(limit):
                 break
 
@@ -43,7 +45,6 @@ def classification_eval(model, data_loader, limit=None):
 
 
 def get_representative_dataset(data_loader, n_iters, data_loader_key=0, transforms=None):
-
     class RepresentativeDataset(object):
         def __init__(self, in_data_loader):
             self.dl = in_data_loader

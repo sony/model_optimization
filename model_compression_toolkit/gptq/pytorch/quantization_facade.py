@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+
 from typing import Callable
 from model_compression_toolkit.core import common
 from model_compression_toolkit.constants import FOUND_TORCH
@@ -25,11 +27,11 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.keras.quantization_facade import GPTQ_MOMENTUM
 from model_compression_toolkit.gptq.runner import gptq_runner
-from model_compression_toolkit.core.exporter import export_model
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
+from model_compression_toolkit.metadata import get_versions_dict
 
 LR_DEFAULT = 1e-4
 LR_REST_DEFAULT = 1e-4
@@ -46,6 +48,7 @@ if FOUND_TORCH:
     from torch.nn import Module
     from torch.optim import Adam, Optimizer
     from model_compression_toolkit import get_target_platform_capabilities
+    from mct_quantizers.pytorch.metadata import add_metadata
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
     def get_pytorch_gptq_config(n_epochs: int,
@@ -177,7 +180,10 @@ if FOUND_TORCH:
                                                                      fw_impl=fw_impl,
                                                                      tpc=target_platform_capabilities,
                                                                      target_resource_utilization=target_resource_utilization,
-                                                                     tb_w=tb_w)
+                                                                     tb_w=tb_w,
+                                                                     running_gptq=True)
+
+        float_graph = copy.deepcopy(graph)
 
         # ---------------------- #
         # GPTQ Runner
@@ -193,9 +199,17 @@ if FOUND_TORCH:
                                  hessian_info_service=hessian_info_service)
 
         if core_config.debug_config.analyze_similarity:
-            analyzer_model_quantization(representative_data_gen, tb_w, graph_gptq, fw_impl, DEFAULT_PYTORCH_INFO)
+            analyzer_model_quantization(representative_data_gen,
+                                        tb_w,
+                                        float_graph,
+                                        graph_gptq,
+                                        fw_impl,
+                                        DEFAULT_PYTORCH_INFO)
 
-        return get_exportable_pytorch_model(graph_gptq)
+        exportable_model, user_info = get_exportable_pytorch_model(graph_gptq)
+        if target_platform_capabilities.tp_model.add_metadata:
+            exportable_model = add_metadata(exportable_model, get_versions_dict(target_platform_capabilities))
+        return exportable_model, user_info
 
 
 else:

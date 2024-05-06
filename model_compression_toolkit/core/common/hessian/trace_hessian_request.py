@@ -16,8 +16,6 @@ from typing import List
 
 from enum import Enum
 
-from model_compression_toolkit.core.common import BaseNode
-
 
 class HessianMode(Enum):
     """
@@ -54,7 +52,7 @@ class TraceHessianRequest:
     def __init__(self,
                  mode: HessianMode,
                  granularity: HessianInfoGranularity,
-                 target_node: BaseNode,
+                 target_node,
                  ):
         """
         Attributes:

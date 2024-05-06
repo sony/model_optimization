@@ -46,7 +46,7 @@ def residual_collapsing_fn(first_node: BaseNode,
     Returns:
         The modified layer node's weights: kernel
     """
-    if first_node.type == Conv2d:
+    if first_node.is_match_type(Conv2d):
         # Get nodes attributes
         kernel = first_node.get_weights_by_keys(kernel_str)
         (Cout, Cin, kH, kW) = kernel.shape
@@ -58,7 +58,7 @@ def residual_collapsing_fn(first_node: BaseNode,
             kernel[i, i, idxH, idxW] += 1
         return kernel
     else:
-        Logger.critical(f"Residual collapsing not supported for node type: {first_node.type}")
+        Logger.critical(f"Residual collapsing not supported for node type: {first_node.type}")  # pragma: no cover
 
 
 def pytorch_residual_collapsing() -> ResidualCollapsing:

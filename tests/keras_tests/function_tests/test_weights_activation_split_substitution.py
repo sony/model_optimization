@@ -147,7 +147,7 @@ class TestWeightsActivationSplit(unittest.TestCase):
 
         graph, split_graph = test_setup(in_model, keras_impl, mixed_precision_candidates_list=_get_base_mp_nbits_candidates())
         weights_node_types = [Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense]
-        original_weights_nodes = [n for n in graph.get_topo_sorted_nodes() if n.type in weights_node_types]
+        original_weights_nodes = [n for n in graph.get_topo_sorted_nodes() if any([n.is_match_type(_type) for _type in weights_node_types])]
 
         self.assertTrue(len(split_graph.nodes) == len(graph.nodes) + len(original_weights_nodes))
 

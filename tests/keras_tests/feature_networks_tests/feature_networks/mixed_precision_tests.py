@@ -51,8 +51,9 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
         # sets all combinations of 2, 4, 8 bits for weights and activations
         mixed_precision_candidates_list = get_base_mp_nbits_candidates()
 
+        default_config = eight_bits.clone_and_edit(attr_weights_configs_mapping={})
         return get_tpc_with_activation_mp_keras(base_config=eight_bits,
-                                                default_config=eight_bits.clone_and_edit(attr_weights_configs_mapping={}),
+                                                default_config=default_config,
                                                 mp_bitwidth_candidates_list=mixed_precision_candidates_list,
                                                 name="mixed_precision_activation_test")
 
@@ -382,7 +383,7 @@ class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
         super().__init__(unit_test, activation_layers_idx=[1, 2, 3])
 
     def get_resource_utilization(self):
-        return ResourceUtilization(np.inf, np.inf)
+        return ResourceUtilization(np.inf, 5407)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -396,7 +397,7 @@ class MixedPrecisionActivationAddLayerTest(MixedPrecisionActivationBaseTest):
         # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [h.activation_holder_quantizer.get_config()['num_bits'] for h in holder_layers]
-        self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
+        self.unit_test.assertTrue((activation_bits == [8, 4, 4]))
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[2],

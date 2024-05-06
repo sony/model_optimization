@@ -19,19 +19,23 @@ import importlib
 import unittest
 
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
+from tests.common_tests.function_tests.test_edge_matcher import TestEdgeMatcher
 #  ----------------  Individual test suites
 from tests.common_tests.function_tests.test_histogram_collector import TestHistogramCollector
+from tests.common_tests.function_tests.test_immutable_class import TestImmutableClass
+from tests.common_tests.function_tests.test_logger import TestLogger
 from tests.common_tests.function_tests.test_resource_utilization_object import TestResourceUtilizationObject
 from tests.common_tests.function_tests.test_threshold_selection import TestThresholdSelection
 from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
-
 
 found_tf = importlib.util.find_spec("tensorflow") is not None
 found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util.find_spec(
     "torchvision") is not None
 
 if found_tf:
+    from tests.keras_tests.function_tests.test_activation_quantization_functions import TestActivationQuantizationFunctions as TestActivationQuantizationFunctionsKeras
+    from tests.keras_tests.function_tests.test_custom_layer import TestCustomLayer
     from tests.keras_tests.function_tests.test_hessian_info_calculator import TestHessianInfoCalculatorWeights, \
         TestHessianInfoCalculatorActivation
     from tests.keras_tests.function_tests.test_hessian_service import TestHessianService
@@ -73,9 +77,14 @@ if found_tf:
     from tests.keras_tests.pruning_tests.test_memory_calculator import TestParameterCounter
     from tests.keras_tests.pruning_tests.test_pretrained_models import PruningPretrainedModelsTest
     from tests.keras_tests.pruning_tests.feature_networks.test_pruning_feature_networks import PruningFeatureNetworksTest
+    from tests.keras_tests.function_tests.test_hmse_error_method import TestParamSelectionWithHMSE
+    from tests.data_generation_tests.keras.test_scheduler_step import TestCustomReduceLROnPlateau
 
 
 if found_pytorch:
+    from tests.pytorch_tests.function_tests.test_activation_quantization_functions import TestActivationQuantizationFunctions as TestActivationQuantizationFunctionsPytorch
+    from tests.pytorch_tests.function_tests.test_torch_utils import TestTorchUtils
+    from tests.pytorch_tests.function_tests.test_device_manager import TestDeviceManager
     from tests.pytorch_tests.layer_tests.test_layers_runner import LayerTest as TorchLayerTest
     from tests.pytorch_tests.model_tests.test_feature_models_runner import FeatureModelsTestRunner
     # from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
@@ -89,7 +98,8 @@ if found_pytorch:
     from tests.pytorch_tests.exporter_tests.test_runner import PytorchExporterTestsRunner
     from tests.data_generation_tests.pytorch.test_pytorch_data_generation_runner import PytorchDataGenerationTestRunner
     from tests.pytorch_tests.graph_tests.test_fx_errors import TestGraphReading
-
+    from tests.pytorch_tests.pruning_tests.feature_networks.test_pruning_feature_networks import PruningFeatureNetworksTest
+    from tests.pytorch_tests.exporter_tests.test_exporting_qat_models import TestExportingQATModelTorchscript
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
@@ -103,9 +113,15 @@ if __name__ == '__main__':
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FusingTest))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCommonDocsExamples))
     suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestResourceUtilizationObject))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestEdgeMatcher))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLogger))
+    suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestImmutableClass))
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationQuantizationFunctionsKeras))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCustomReduceLROnPlateau))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCustomLayer))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestParameterCounter))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PruningPretrainedModelsTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PruningFeatureNetworksTest))
@@ -142,8 +158,12 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(keras_gptq_soft_quantizer_test))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasDataGenerationTestRunner))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestParamSelectionWithHMSE))
 
     if found_pytorch:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationQuantizationFunctionsPytorch))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestTorchUtils))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestDeviceManager))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGPTQModelBuilderWithActivationHolderPytorch))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TorchLayerTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureModelsTestRunner))
@@ -160,6 +180,8 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchExporterTestsRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PytorchDataGenerationTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphReading))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PruningFeatureNetworksTest))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestExportingQATModelTorchscript))
 
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)

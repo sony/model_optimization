@@ -19,7 +19,7 @@ import tensorflow as tf
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.engine.base_layer import Layer
 else:
-    from keras.engine.base_layer import Layer
+    from keras.engine.base_layer import Layer  # pragma: no cover
 
 from keras.models import Model
 from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantizationHolder, QuantizationTarget
