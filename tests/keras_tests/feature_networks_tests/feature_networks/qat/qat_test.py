@@ -283,7 +283,7 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
 
 
 class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
-    def __init__(self, unit_test, ru_weights=np.inf, ru_activation=np.inf, expected_mp_cfg=[0, 0, 0, 0]):
+    def __init__(self, unit_test, ru_weights=17919, ru_activation=5407, expected_mp_cfg=[0, 4, 0, 0]):
         self.ru_weights = ru_weights
         self.ru_activation = ru_activation
         self.expected_mp_cfg = expected_mp_cfg
@@ -303,7 +303,6 @@ class QATWrappersMixedPrecisionCfgTest(MixedPrecisionActivationBaseTest):
 
     def compare(self, qat_ready_model, quantization_info):
 
-        # check that MP search returns 8 bits configuration for all layers
         self.unit_test.assertTrue(all(quantization_info.mixed_precision_cfg == self.expected_mp_cfg))
 
         # check that quantizer gets multiple bits configuration
