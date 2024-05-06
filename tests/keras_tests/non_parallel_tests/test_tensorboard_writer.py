@@ -150,7 +150,7 @@ class TestFileLogger(unittest.TestCase):
                                           debug_config=mct.core.DebugConfig(analyze_similarity=True))
         quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model,
                                                                       rep_data,
-                                                                      target_resource_utilization=mct.core.ResourceUtilization(np.inf),
+                                                                      target_resource_utilization=mct.core.ResourceUtilization(73),
                                                                       core_config=core_config,
                                                                       target_platform_capabilities=tpc)
 
@@ -163,7 +163,7 @@ class TestFileLogger(unittest.TestCase):
         self.model = MultipleOutputsNet()
         quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model,
                                                                       rep_data,
-                                                                      target_resource_utilization=mct.core.ResourceUtilization(np.inf),
+                                                                      target_resource_utilization=mct.core.ResourceUtilization(73),
                                                                       core_config=core_config,
                                                                       target_platform_capabilities=tpc)
 

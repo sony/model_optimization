@@ -74,7 +74,7 @@ def generate_mixed_precision_test_tp_model(base_cfg, default_config, mp_bitwidth
                              name=name)
 
 
-def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_candidates_list,
+def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_candidates_list, custom_opsets=[],
                                          name="activation_mp_model"):
     mp_op_cfg_list = []
     for weights_n_bits, activation_n_bits in mp_bitwidth_candidates_list:
@@ -99,6 +99,8 @@ def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_c
     operator_sets_dict = {op_set.name: mixed_precision_configuration_options for op_set in base_tp_model.operator_set
                           if op_set.name is not "NoQuantization"}
     operator_sets_dict["Input"] = mixed_precision_configuration_options
+    for c_ops in custom_opsets:
+        operator_sets_dict[c_ops] = mixed_precision_configuration_options
 
     return generate_custom_test_tp_model(name=name,
                                          base_cfg=base_cfg,

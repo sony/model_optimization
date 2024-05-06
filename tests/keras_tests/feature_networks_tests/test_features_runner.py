@@ -53,6 +53,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.linear_collapsing
     ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest, Op2DAddConstCollapsingTest
 from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTWeightsQuantizerTest, \
     LUTActivationQuantizerTest
+from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision.requires_mixed_precision_test import \
+    RequiresMixedPrecision, RequiresMixedPrecisionWeights
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_bops_test import \
     MixedPrecisionBopsBasicTest, MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, \
     MixedPrecisionActivationOnlyBopsTest, MixedPrecisionBopsAndWeightsUtilizationTest, MixedPrecisionBopsAndActivationUtilizationTest, \
@@ -212,8 +214,15 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPercisionCombinedNMSTest(self).run_test()
 
     def test_mixed_precision_search(self):
-        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
-        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
+        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG, expected_mp_config=[0, 1]).run_test()
+        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER, expected_mp_config=[1, 0]).run_test()
+
+    def test_requires_mixed_recision(self):
+        RequiresMixedPrecisionWeights(self, weights_memory=True).run_test()
+        RequiresMixedPrecision(self,activation_memory=True).run_test()
+        RequiresMixedPrecision(self, total_memory=True).run_test()
+        RequiresMixedPrecision(self, bops=True).run_test()
+        RequiresMixedPrecision(self).run_test()
 
     def test_mixed_precision_for_part_weights_layers(self):
         MixedPercisionSearchPartWeightsLayersTest(self).run_test()
