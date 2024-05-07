@@ -10,7 +10,7 @@ deployment performance.
         <th rowspan="2">Model Name</th>
         <th rowspan="2">Dataset Name</th>
         <th colspan="2">Float</th>
-        <th colspan="2">Quantized - W8A8</th>
+        <th colspan="2">Quantized</th>
     </tr>
     <tr>
         <th>Performance</th>
