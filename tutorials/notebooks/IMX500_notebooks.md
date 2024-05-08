@@ -14,7 +14,7 @@ deployment performance.
     <!-- Classification Models (ImageNet) -->
     <tr>
         <td rowspan="2">Classification</td>
-        <td> <a href="keras/ptq/example_keras_imagenet.ipynb">mobilenet_v2</a></td>
+        <td> <a href="keras/ptq/example_keras_imagenet.ipynb">MobilenetV2</a></td>
         <td>Keras</td>
         <td>ImageNet</td>
     </tr>
@@ -26,12 +26,12 @@ deployment performance.
     <!-- Object Detection Models (COCO) -->
     <tr>
         <td rowspan="4">Object Detection</td>
-        <td> <a href="keras/ptq/keras_yolov8n_for_imx500.ipynb">yolov8n</a></td>
+        <td> <a href="keras/ptq/keras_yolov8n_for_imx500.ipynb">YOLOv8n</a></td>
         <td>Keras</td>
         <td>COCO</td>
     </tr>
     <tr>
-        <td> <a href="pytorch/ptq/keras_yolov8n_for_imx500.ipynb">yolov8n</a></td>
+        <td> <a href="pytorch/ptq/keras_yolov8n_for_imx500.ipynb">YOLOv8n</a></td>
         <td>PyTorch</td>
         <td>COCO</td>
     </tr>
@@ -53,13 +53,13 @@ deployment performance.
     </tr>
     <tr>
         <td >Instance Segmentation</td>
-        <td>yolov8n-seg</td>
+        <td>YOLOv8n-seg</td>
         <td>PyTorch</td>
         <td>COCO</td>
     </tr>
     <tr>
         <td>Pose Estimation</td>
-        <td>yolov8n-pose</td>
+        <td>YOLOv8n-pose</td>
         <td>PyTorch</td>
         <td>COCO</td>
     </tr>
