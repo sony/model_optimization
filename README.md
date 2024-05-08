@@ -45,9 +45,6 @@ for hands-on learning. For example:
 * [Post training quantization with PyTorch](tutorials/notebooks/pytorch/ptq/example_pytorch_quantization_mnist.ipynb)
 * [Data Generation for ResNet18 with PyTorch](tutorials/notebooks/pytorch/data_generation/example_pytorch_data_generation.ipynb).
 
-Additionally, for quick quantization of a variety of models from well-known collections,
-visit the [quick-start page](tutorials/quick_start/README.md) and the
-[results CSV](tutorials/quick_start/results/model_quantization_results.csv).
 
 ### Supported Versions
 

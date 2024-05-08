@@ -17,7 +17,7 @@ The Hessian information is approximated in a label-free manner, thus, does not r
 
 ## GPTQ Usage
 
-For detailed examples and tutorials on using GPTQ in MCT with TensorFlow or PyTorch across various models and tasks, please refer to the [tutorials package](../../tutorials). You will find comprehensive explanations, notebook examples, and a [quick-start guide](../../tutorials/quick_start/README.md) for straightforward execution.
+For detailed examples and tutorials on using GPTQ in MCT with TensorFlow or PyTorch across various models and tasks, please refer to the [tutorials package](../../tutorials). You will find comprehensive explanations and notebook examples for straightforward execution.
 
 ## References
 
