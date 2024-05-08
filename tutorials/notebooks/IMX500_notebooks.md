@@ -49,7 +49,7 @@ deployment performance.
         <td>Semantic Segmentation</td>
         <td> <a href="keras/ptq/keras_deeplabv3plus_for_imx500.ipynb">Deeplabv3plus</a></td>
         <td>Keras</td>
-        <td>COCO</td>
+        <td>PASCAL VOC</td>
     </tr>
     <tr>
         <td >Instance Segmentation</td>
