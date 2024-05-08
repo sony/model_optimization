@@ -69,16 +69,6 @@ These techniques are essential for further optimizing models and achieving super
 ### Pytorch Tutorials
 
 
-<details id="pytorch-quickstart-torchvision">
-  <summary>Quick-Start with Torchvision</summary>
-  
-  | Tutorial                                                                                                        |
-  |-----------------------------------------------------------------------------------------------------------------|
-  | [Quick Start - Torchvision Pretrained Model](pytorch/example_quick_start_torchvision.ipynb) |
-
-</details>
-
-
 <details id="pytorch-ptq">
   <summary>Post-Training Quantization (PTQ)</summary>
   
