@@ -11,3 +11,4 @@ matplotlib
 scipy
 protobuf
 mct-quantizers==1.5
+onnx
