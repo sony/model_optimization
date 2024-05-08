@@ -19,37 +19,42 @@ deployment performance.
         <td>ImageNet</td>
     </tr>
     <tr>
-        <td>MobileVit</td>
+        <td> <a href="pytorch/ptq/pytorch_mobilevit_xs_for_imx500.ipynb">MobileVit</a></td>
         <td>PyTorch</td>
         <td>ImageNet</td>
     </tr>
     <!-- Object Detection Models (COCO) -->
     <tr>
-        <td rowspan="3">Object Detection</td>
+        <td rowspan="4">Object Detection</td>
         <td> <a href="keras/ptq/keras_yolov8n_for_imx500.ipynb">yolov8n</a></td>
         <td>Keras</td>
         <td>COCO</td>
     </tr>
     <tr>
-        <td>Nanodet</td>
+        <td> <a href="pytorch/ptq/keras_yolov8n_for_imx500.ipynb">yolov8n</a></td>
+        <td>PyTorch</td>
+        <td>COCO</td>
+    </tr>
+    <tr>
+        <td> <a href="keras/ptq/example_keras_nanodet_plus.ipynb">NanoDet-Plus-m-416</a></td>
         <td>Keras</td>
         <td>COCO</td>
     </tr>
     <tr>
-        <td>Efficientdet-lite0</td>
+        <td> <a href="keras/ptq/example_keras_effdet_lite0.ipynb">EfficientDet-lite0</a></td>
         <td>Keras</td>
         <td>COCO</td>
     </tr>
     <tr>
         <td>Semantic Segmentation</td>
-        <td>deeplabv3-plus</td>
+        <td> <a href="keras/ptq/keras_deeplabv3plus_for_imx500.ipynb">Deeplabv3plus</a></td>
         <td>Keras</td>
         <td>COCO</td>
     </tr>
     <tr>
         <td >Instance Segmentation</td>
         <td>yolov8n-seg</td>
-        <td>Keras</td>
+        <td>PyTorch</td>
         <td>COCO</td>
     </tr>
     <tr>
