@@ -134,6 +134,5 @@ if FOUND_ONNX:
 
 else:
     def FakelyQuantONNXPyTorchExporter(*args, **kwargs):
-            Logger.critical('Installing onnx is mandatory '
-                            'when using FakelyQuantONNXPyTorchExporter. '
-                            'Could not find onnx package.')  # pragma: no cover
+        Logger.critical("ONNX must be installed to use 'FakelyQuantONNXPyTorchExporter'. "
+                        "The 'onnx' package is missing.")  # pragma: no cover
