@@ -33,4 +33,6 @@ jobs:
           twine upload --repository pypi dist/* --verbose -u __token__ -p ${{ secrets.PYPI_API_KEY }}
       - name: Post publish import test
         run: |
-          pip install mct-nightly
+          pip install mct-nightly tensorflow torch
+          version=$(python -c 'import model_compression_toolkit; print(model_compression_toolkit.__version__)')
+          echo $version
