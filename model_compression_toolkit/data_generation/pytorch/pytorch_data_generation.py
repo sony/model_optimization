@@ -17,7 +17,7 @@ from typing import Callable, Any, Tuple, List
 
 from tqdm import tqdm
 
-from model_compression_toolkit.constants import FOUND_TORCH
+from model_compression_toolkit.constants import FOUND_TORCH, FOUND_TORCHVISION
 from model_compression_toolkit.core.pytorch.utils import set_model
 from model_compression_toolkit.data_generation.common.constants import DEFAULT_N_ITER, DEFAULT_DATA_GEN_BS
 from model_compression_toolkit.data_generation.common.data_generation import get_data_generation_classes
@@ -44,7 +44,7 @@ from model_compression_toolkit.data_generation.pytorch.optimization_functions.sc
 from model_compression_toolkit.data_generation.pytorch.optimization_utils import PytorchImagesOptimizationHandler
 from model_compression_toolkit.logger import Logger
 
-if FOUND_TORCH:
+if FOUND_TORCH and FOUND_TORCHVISION:
     # Importing necessary libraries
     import torch
     from torch import Tensor
@@ -354,10 +354,9 @@ else:
     # If torch is not installed,
     # we raise an exception when trying to use these functions.
     def get_pytorch_data_generation_config(*args, **kwargs):
-        Logger.critical('PyTorch must be installed to use get_pytorch_data_generation_config. '
-                        "The 'torch' package is missing.")  # pragma: no cover
-
+        msg = f"torch and torchvision must be installed to use get_pytorch_data_generation_config. " + ("" if FOUND_TORCH else "'torch' package is missing. ") + ("" if FOUND_TORCHVISION else "'torchvision' package is missing. ") # pragma: no cover
+        Logger.critical(msg)  # pragma: no cover
 
     def pytorch_data_generation_experimental(*args, **kwargs):
-        Logger.critical("PyTorch must be installed to use 'pytorch_data_generation_experimental'. "
-                        "The 'torch' package is missing.")  # pragma: no cover
+        msg = f"torch and torchvision must be installed to use pytorch_data_generation_experimental. " + ("" if FOUND_TORCH else "'torch' package is missing. ") + ("" if FOUND_TORCHVISION else "'torchvision' package is missing. ") # pragma: no cover
+        Logger.critical(msg)  # pragma: no cover
