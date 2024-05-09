@@ -23,8 +23,8 @@ from torchvision.models.mobilenetv2 import mobilenet_v2
 import mct_quantizers
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import FOUND_ONNX, FOUND_ONNXRUNTIME
-from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import \
-    DEFAULT_ONNX_OPSET_VERSION
+from model_compression_toolkit.exporter.model_exporter.pytorch.pytorch_export_facade import DEFAULT_ONNX_OPSET_VERSION
+
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     generate_pytorch_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
