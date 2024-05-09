@@ -12,7 +12,7 @@ These techniques are essential for further optimizing models and achieving super
   
   | Tutorial                     | Included Features                                                                                   |
   |------------------------------|-----------------------------------------------------------------------------------------------------|
-  | [MobileNetV2](keras/example_keras_imagenet.ipynb)  | &#x2705; PTQ                                                                                        |
+  | [MobileNetV2](keras/example_keras_mobilenetv2_for_imx500.ipynb)  | &#x2705; PTQ                                                                                        |
   | [Mixed-Precision MobileNetV2](keras/example_keras_mobilenet_mixed_precision.ipynb) | &#x2705; PTQ <br/> &#x2705; Mixed-Precision                                                         |
   | [Nanodet-Plus](keras/example_keras_nanodet_plus.ipynb)          | &#x2705; PTQ                                                                                        |
   | [YoloV8-nano](keras/example_keras_yolov8n.ipynb)            | &#x2705; PTQ                                                                                        |
@@ -72,11 +72,11 @@ These techniques are essential for further optimizing models and achieving super
 <details id="pytorch-ptq">
   <summary>Post-Training Quantization (PTQ)</summary>
   
-  | Tutorial                                                                                                                           | Included Features                                                                                   |
-  |------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
+  | Tutorial                                                                                                      | Included Features                                                                                   |
+  |---------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
   | [Training & Quantizing Model on MNIST](pytorch/example_pytorch_quantization_mnist.ipynb)                      | &#x2705; PTQ                                                                                        |
   | [Mixed-Precision MobileNetV2 on Cifar100](pytorch/example_pytorch_mobilenetv2_cifar100_mixed_precision.ipynb) | &#x2705; PTQ <br/> &#x2705; Mixed-Precision                                                         |
-  | [SSDLite MobileNetV3 Quantization](pytorch/example_pytorch_ssdlite_mobilenetv3.ipynb)                                  | &#x2705; PTQ                                                                                        |
+  | [SSDLite MobileNetV3 Quantization](pytorch/example_pytorch_ssdlite_mobilenetv3_ptq.ipynb)                     | &#x2705; PTQ                                                                                        |
 
 </details>
 
