@@ -41,7 +41,7 @@ For installing the nightly version or installing from source, refer to the [inst
 Explore the Model Compression Toolkit (MCT) through our tutorials, 
 covering compression techniques for Keras and PyTorch models. Access interactive [notebooks](tutorials/README.md) 
 for hands-on learning. For example:
-* [Keras MobileNetV2 post training quantization](tutorials/notebooks/imx500_notebooks/imx500_notebooks/keras/example_keras_mobilenetv2_for_imx500.ipynb)
+* [Keras MobileNetV2 post training quantization](tutorials/notebooks/imx500_notebooks/keras/example_keras_mobilenetv2_for_imx500.ipynb)
 * [Post training quantization with PyTorch](tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_ptq_mnist.ipynb)
 * [Data Generation for ResNet18 with PyTorch](tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_data_generation.ipynb).
 
