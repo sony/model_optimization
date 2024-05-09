@@ -43,7 +43,7 @@ if FOUND_ONNX:
                      save_model_path: str,
                      repr_dataset: Callable,
                      onnx_opset_version: int,
-                     use_onnx_custom_quantizer_ops: bool = False,):
+                     use_onnx_custom_quantizer_ops: bool = False):
             """
 
             Args:
