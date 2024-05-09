@@ -14,4 +14,4 @@ You can export your quantized model in the following quantization formats:
 
 ## Usage Examples
 
-Try our notebooks to export [Keras](../../tutorials/notebooks/keras/export/example_keras_export.ipynb) or [Pytorch](../../tutorials/notebooks/pytorch/export/example_pytorch_export.ipynb) models using different formats.
+Try our notebooks to export [Keras](../../tutorials/notebooks/mct_features_notebooks/keras/example_keras_export.ipynb) or [Pytorch](../../tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_export.ipynb) models using different formats.

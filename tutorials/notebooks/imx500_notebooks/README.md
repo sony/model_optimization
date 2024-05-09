@@ -14,19 +14,19 @@ deployment performance.
     <!-- Classification Models (ImageNet) -->
     <tr>
         <td rowspan="2">Classification</td>
-        <td> <a href="keras/ptq/example_keras_imagenet.ipynb">MobilenetV2</a></td>
+        <td> <a href="keras/example_keras_mobilenetv2_for_imx500.ipynb">MobilenetV2</a></td>
         <td>Keras</td>
         <td>ImageNet</td>
     </tr>
     <tr>
-        <td> <a href="pytorch/ptq/pytorch_mobilevit_xs_for_imx500.ipynb">MobileVit</a></td>
+        <td> <a href="pytorch/pytorch_mobilevit_xs_for_imx500.ipynb">MobileVit</a></td>
         <td>PyTorch</td>
         <td>ImageNet</td>
     </tr>
     <!-- Object Detection Models (COCO) -->
     <tr>
         <td rowspan="4">Object Detection</td>
-        <td> <a href="keras/ptq/keras_yolov8n_for_imx500.ipynb">YOLOv8n</a></td>
+        <td> <a href="keras/keras_yolov8n_for_imx500.ipynb">YOLOv8n</a></td>
         <td>Keras</td>
         <td>COCO</td>
     </tr>
@@ -36,18 +36,18 @@ deployment performance.
         <td>COCO</td>
     </tr>
     <tr>
-        <td> <a href="keras/ptq/example_keras_nanodet_plus.ipynb">NanoDet-Plus-m-416</a></td>
+        <td> <a href="keras/example_keras_nanodet_plus_for_imx500.ipynb">NanoDet-Plus-m-416</a></td>
         <td>Keras</td>
         <td>COCO</td>
     </tr>
     <tr>
-        <td> <a href="keras/ptq/example_keras_effdet_lite0.ipynb">EfficientDet-lite0</a></td>
+        <td> <a href="keras/example_keras_effdet_lite0_for_imx500.ipynb">EfficientDet-lite0</a></td>
         <td>Keras</td>
         <td>COCO</td>
     </tr>
     <tr>
         <td>Semantic Segmentation</td>
-        <td> <a href="keras/ptq/keras_deeplabv3plus_for_imx500.ipynb">Deeplabv3plus</a></td>
+        <td> <a href="keras/keras_deeplabv3plus_for_imx500.ipynb">Deeplabv3plus</a></td>
         <td>Keras</td>
         <td>PASCAL VOC</td>
     </tr>
