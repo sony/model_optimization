@@ -40,6 +40,7 @@ class TestDocsLinks(unittest.TestCase):
     def test_readme_and_rst_files(self):
         mct_folder = getcwd()
         print("MCT folder:", mct_folder)
+        are_links_ok = True
         for filepath, _, filenames in walk(mct_folder):
             for filename in filenames:
 
@@ -59,14 +60,18 @@ class TestDocsLinks(unittest.TestCase):
                                     # A link starting with '#' is a local reference to a headline in the current file --> ignore
                                     pass
                                 elif 'http://' in _link or 'https://' in _link:
-                                    self.assertTrue(self.check_link(_link),
-                                                    msg=f'Broken link: {_link} in {join(filepath, filename)}')
-                                    print("Link ok:", _link)
+                                    if self.check_link(_link):
+                                        print("Link ok:", _link)
+                                    else:
+                                        are_links_ok = False
+                                        print(f'Broken link: {_link} in {join(filepath, filename)}')
                                 else:
                                     _link = _link.split('#')[0]
-                                    self.assertTrue(isdir(join(filepath, _link)) or isfile(join(filepath, _link)),
-                                                    msg=f'Broken link: {_link} in {join(filepath, filename)}')
-                                    print("Link ok:", _link)
+                                    if isdir(join(filepath, _link)) or isfile(join(filepath, _link)):
+                                        print("Link ok:", _link)
+                                    else:
+                                        are_links_ok = False
+                                        print(f'Broken link: {_link} in {join(filepath, filename)}')
 
                 elif filename.endswith(".rst"):
                     # doc source file detected. go over lines in search of links.
@@ -82,10 +87,15 @@ class TestDocsLinks(unittest.TestCase):
                                     # This link is checked when generating the docs
                                     pass
                                 elif 'http://' in _link or 'https://' in _link:
-                                    self.assertTrue(self.check_link(_link),
-                                                    msg=f'Broken link: {_link} in {join(filepath, filename)}')
-                                    print("Link ok:", _link)
+                                    if self.check_link(_link):
+                                        print("Link ok:", _link)
+                                    else:
+                                        are_links_ok = False
+                                        print(f'Broken link: {_link} in {join(filepath, filename)}')
                                 else:
-                                    self.assertTrue(isfile(join(filepath, _link.replace('../', '') + '.rst')),
-                                                    msg=f'Broken link: {_link} in {join(filepath, filename)}')
-                                    print("Link ok:", _link)
+                                    if isfile(join(filepath, _link.replace('../', '') + '.rst')):
+                                        print("Link ok:", _link)
+                                    else:
+                                        are_links_ok = False
+                                        print(f'Broken link: {_link} in {join(filepath, filename)}')
+        self.assertTrue(are_links_ok, msg='Found broken links!')
