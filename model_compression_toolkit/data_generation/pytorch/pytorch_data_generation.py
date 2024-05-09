@@ -354,9 +354,9 @@ else:
     # If torch is not installed,
     # we raise an exception when trying to use these functions.
     def get_pytorch_data_generation_config(*args, **kwargs):
-        msg = f"torch and torchvision must be installed to use get_pytorch_data_generation_config. " + ("" if FOUND_TORCH else "'torch' package is missing. ") + ("" if FOUND_TORCHVISION else "'torchvision' package is missing. ") # pragma: no cover
+        msg = f"PyTorch and torchvision must be installed to use get_pytorch_data_generation_config. " + ("" if FOUND_TORCH else "The 'torch' package is missing. ") + ("" if FOUND_TORCHVISION else "The 'torchvision' package is missing. ") # pragma: no cover
         Logger.critical(msg)  # pragma: no cover
 
     def pytorch_data_generation_experimental(*args, **kwargs):
-        msg = f"torch and torchvision must be installed to use pytorch_data_generation_experimental. " + ("" if FOUND_TORCH else "'torch' package is missing. ") + ("" if FOUND_TORCHVISION else "'torchvision' package is missing. ") # pragma: no cover
+        msg = f"PyTorch and torchvision must be installed to use pytorch_data_generation_experimental. " + ("" if FOUND_TORCH else "The 'torch' package is missing. ") + ("" if FOUND_TORCHVISION else "The 'torchvision' package is missing. ") # pragma: no cover
         Logger.critical(msg)  # pragma: no cover
