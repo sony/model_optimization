@@ -75,6 +75,13 @@ Visualization:
     Visualize a model and other data within the TensorBoard UI. <../guidelines/visualization>
 
 
+Quickstart
+====================================
+Take a look of how you can start using MCT in just a few minutes!
+
+Visit our `notebooks <https://github.com/sony/model_optimization/tree/main/tutorials/notebooks>`_
+
+
 API Documentation
 ==================
 Please visit the MCT API documentation here
