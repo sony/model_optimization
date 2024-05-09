@@ -145,8 +145,6 @@ In the following table we present the ImageNet validation results for these mode
 | ResNet-18 [3]             | 69.86           | 69.63           |69.53|
 | SqueezeNet 1.1 [3]        | 58.128          | 57.678          ||
 
-For more results, please refer to [quick start](https://github.com/sony/model_optimization/tree/main/tutorials/quick_start).
-
 
 #### Pruning Results
 
