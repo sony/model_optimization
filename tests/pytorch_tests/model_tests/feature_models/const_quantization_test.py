@@ -59,7 +59,7 @@ class ConstQuantizationTest(BasePytorchFeatureNetworkTest):
         return [np.random.random(in_shape)+1 for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v2")
+        return mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v3")
 
     def create_networks(self):
         if self.input_reverse_order:
@@ -116,7 +116,7 @@ class AdvancedConstQuantizationTest(BasePytorchFeatureNetworkTest):
         return [np.random.random(in_shape)+1 for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v2")
+        return mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v3")
 
     def create_networks(self):
         return AdvancedConstQuantizationNet(self.const)

@@ -45,7 +45,7 @@ class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
         return [1 + np.random.random(in_shape) for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v2")
+        return mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v3")
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -100,7 +100,7 @@ class AdvancedConstQuantizationTest(BaseKerasFeatureNetworkTest):
         return [1 + np.random.random(in_shape) for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v2")
+        return mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v3")
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
