@@ -36,7 +36,7 @@ quantized_model = mct.keras_load_quantized_model('my_model.keras')
 
 #### PyTorch
 
-PyTorch models can be exported as onnx models. An example of loading a saved onnx model can be found [here](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/pytorch/export/example_pytorch_export.ipynb).
+PyTorch models can be exported as onnx models. An example of loading a saved onnx model can be found [here](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_export.ipynb).
 
 *Note:* Running inference on an ONNX model in the `onnxruntime` package has a high latency.
 Inference on the target platform (e.g. the IMX500) is not affected by this latency.
