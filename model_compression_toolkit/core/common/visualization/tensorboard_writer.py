@@ -75,7 +75,7 @@ def get_node_properties(node_dict_to_log: dict,
         for output_shape in output_shapes:  # create protobuf for each output shape
             proto_dims_list = []
             for dim in output_shape:
-                proto_dims_list.append(TensorShapeProto.Dim(size=dim))
+                proto_dims_list.append(TensorShapeProto.Dim(size=dim))  # dim is expected to be an integer
             tshape_proto = TensorShapeProto(dim=proto_dims_list)
             tshape_protos.append(tshape_proto)
         node_properties['_output_shapes'] = AttrValue(list=AttrValue.ListValue(shape=tshape_protos))
@@ -263,7 +263,13 @@ class TensorboardWriter(object):
 
             # For nodes with an "empty" output shape.
             output_shape = (None,) if n.output_shape == () else n.output_shape
-
+            if 'CombinedNonMaxSuppression' in str(output_shape):
+                # output_shapes is expected to be a list of tuples where each tuple is an output shape.
+                # For NMS layers, we need to align the node's output shapes before creating the node's properties.
+                output_shape = [output_shape.nmsed_boxes,
+                                output_shape.nmsed_scores,
+                                output_shape.nmsed_classes,
+                                output_shape.valid_detections]
             dims = []
             if isinstance(output_shape, list):
                 for o in output_shape:

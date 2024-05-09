@@ -47,6 +47,42 @@ def random_datagen():
     return [np.random.random((1, 8, 8, 3))]
 
 
+def CombinedNMSNet():
+    inputs = layers.Input(shape=(8, 8, 3))
+    x = layers.Conv2D(32, (3, 3), activation='relu', padding='same')(inputs)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.Flatten()(x)
+
+    # Assuming num_boxes is a fixed number, add a reshape here to fit the expected NMS input
+    num_boxes = 10  # Example: assuming you are predicting 10 boxes per image
+    bbox_output = layers.Dense(num_boxes * 4)(x)  # For bounding box coordinates
+    bbox_output = layers.Reshape((num_boxes, 1, 4))(bbox_output)  # Add class dimension
+
+    score_output = layers.Dense(num_boxes)(x)  # For the objectness score of each box
+    score_output = layers.Reshape((num_boxes, 1))(score_output)  # Add class dimension
+
+    model = keras.Model(inputs=inputs, outputs=[bbox_output, score_output])
+
+    # Now pass these outputs to NMS
+    boxes, scores = model.output
+    outputs = tf.image.combined_non_max_suppression(
+        boxes=boxes,
+        scores=scores,
+        max_output_size_per_class=5,
+        max_total_size=5,
+        iou_threshold=0.5,
+        score_threshold=0.5,
+        pad_per_class=False,
+        clip_boxes=False
+    )
+
+    final_model = keras.Model(inputs=inputs, outputs=outputs, name='test_nms')
+    return final_model
+
+
+
+
 def SingleOutputNet():
     inputs = layers.Input(shape=(8, 8, 3))
     x = layers.Dense(2)(inputs)
@@ -186,6 +222,15 @@ class TestFileLogger(unittest.TestCase):
         # Disable Logger
         Logger.LOG_PATH = None
 
+
+class TestLoggerWithNMS(unittest.TestCase):
+
+    def test_logging_with_nms_layer(self):
+        Logger.set_log_file('/tmp/')
+        self.model = CombinedNMSNet()
+        quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model, random_datagen)
+        # Disable Logger
+        Logger.LOG_PATH = None
 
 if __name__ == '__main__':
     unittest.main()
