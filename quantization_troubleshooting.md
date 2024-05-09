@@ -142,7 +142,7 @@ MCT offers advanced features for mitigating these accuracy degradations, such as
 In mixed precision quantization, MCT will assign a different bit width to each weight in the model, depending on the weight's layer sensitivity
 and a resource constraint defined by the user, such as target model size.
 
-Check out the [mixed precision tutorial](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/keras/ptq/example_keras_mobilenet_mixed_precision.ipynb)
+Check out the [mixed precision tutorial](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_mobilenet_mixed_precision.ipynb)
 for more information and an implementation example. Following are a few tips for improving the mixed precision quantization.
 
 #### 1. Using more samples in mixed precision quantization
@@ -204,7 +204,7 @@ When PTQ (either with or without mixed precision) fails to deliver the required 
 In GPTQ, MCT will finetune the model's weights and quantization parameters for improved accuracy. The finetuning process
 will only use the label-less representative dataset.
 
-Check out the [GPTQ tutorial](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/keras/gptq/example_keras_mobilenet_gptq.ipynb) for more information and an implementation example.
+Check out the [GPTQ tutorial](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_mobilenet_gptq.ipynb) for more information and an implementation example.
 
 *Note #1*: The finetuning process will take **much** longer to finish than PTQ. As in any finetuning, some hyperparameters optimization may be required.
 
@@ -226,7 +226,7 @@ To address this issue and manipulate individual layers within the network, you c
 
 Using the network editor API (mct.core.network_editor) you can define a set of "rules" to apply on the network, using provided filters.
 
-Please refer to our [tutorial](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/keras/debug_tools/example_keras_network_editor.ipynb) for more details.
+Please refer to our [tutorial](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_network_editor.ipynb) for more details.
 
 A use-case example to understand if a certain layer causes accuracy degradation - set the output quantization bits of the layer's type to 16 bits (instead of the default 8 bits defined in the TPC).
 If the accuracy improves, then it is pointing to that layer for causing the issue.
