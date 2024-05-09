@@ -20,8 +20,8 @@ import onnxruntime
 from onnx import numpy_helper
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import \
-    DEFAULT_ONNX_OPSET_VERSION
+from model_compression_toolkit.exporter.model_exporter.pytorch.pytorch_export_facade import DEFAULT_ONNX_OPSET_VERSION
+
 from tests.pytorch_tests.exporter_tests.base_pytorch_export_test import BasePytorchExportTest
 
 
