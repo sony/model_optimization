@@ -14,20 +14,20 @@
 # ==============================================================================
 from typing import Callable
 
-from model_compression_toolkit.constants import FOUND_TORCH
+from model_compression_toolkit.constants import FOUND_TORCH, FOUND_ONNX
 from model_compression_toolkit.exporter.model_exporter.fw_agonstic.quantization_format import QuantizationFormat
 from model_compression_toolkit.exporter.model_exporter.pytorch.export_serialization_format import \
     PytorchExportSerializationFormat
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+
+
+DEFAULT_ONNX_OPSET_VERSION = 15
 
 
 if FOUND_TORCH:
     import torch.nn
-    from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import \
-    FakelyQuantONNXPyTorchExporter, DEFAULT_ONNX_OPSET_VERSION
-    from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_torchscript_pytorch_exporter import \
-        FakelyQuantTorchScriptPyTorchExporter
+    from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_onnx_pytorch_exporter import FakelyQuantONNXPyTorchExporter
+    from model_compression_toolkit.exporter.model_exporter.pytorch.fakely_quant_torchscript_pytorch_exporter import FakelyQuantTorchScriptPyTorchExporter
     from model_compression_toolkit.exporter.model_wrapper.pytorch.validate_layer import is_pytorch_layer_exportable
 
     supported_serialization_quantization_export_dict = {
