@@ -101,3 +101,39 @@ class ConstRepresentationMultiInputTest(ConstRepresentationTest):
 
     def create_networks(self):
         return ConstRepresentationMultiInputNet()
+
+
+class ConstRepresentationCodeNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv2d = nn.Conv2d(16, 16, 3, 2, padding=1)
+        # self.bn = torch.nn.BatchNorm2d(16)
+
+    def forward(self, x):
+        input_hw = x.shape[2:]
+        y = self.conv2d(x)
+        y = torch.nn.functional.interpolate(y, size=input_hw)
+
+        # TODO: Enable this code when PyTorch model reader is fixed for this case. Also, move this to model reader tests.
+        # y = torch.nn.functional.batch_norm(y[:, :, 0, :], self.bn.running_mean, self.bn.running_var,
+        #                                    momentum=0.2, eps=1e-6, bias=self.bn.bias)
+        # y = torch.unsqueeze(y, 2)
+        return torch.add(x, y)
+
+
+class ConstRepresentationCodeTest(ConstRepresentationTest):
+    """
+    This test checks the code representation code in the model reader and builder, not specifically
+    with constants in the graph.
+    """
+    def create_networks(self):
+        return ConstRepresentationCodeNet()
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        in_torch_tensor = to_torch_tensor(input_x[0])
+        set_model(float_model)
+        y = float_model(in_torch_tensor)
+        y_hat = quantized_model(in_torch_tensor)
+        self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
+        cs = cosine_similarity(torch_tensor_to_numpy(y), torch_tensor_to_numpy(y_hat))
+        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')

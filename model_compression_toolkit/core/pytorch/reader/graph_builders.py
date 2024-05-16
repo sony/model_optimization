@@ -53,6 +53,25 @@ def extract_holder_weights(constant_name, node_target, model, weights, to_numpy)
     return weights
 
 
+def get_node_args_spec(node: Node) -> List[str]:
+    """
+    Return a list of the node's function args & kwargs, so we can insert the kwarg as arg
+    Args:
+        node: Torch.fx.Node to extract target from, which the function the Node executes.
+
+    Returns: A list of args and kwargs names.
+
+    """
+    if node.target in [torch.nn.functional.conv1d, torch.nn.functional.conv2d, torch.nn.functional.conv3d]:
+        return ['input', 'weight', 'bias', 'stride', 'padding', 'dilation', 'groups']
+    elif node.target in [torch.nn.functional.conv_transpose1d, torch.nn.functional.conv_transpose2d,
+                         torch.nn.functional.conv_transpose3d]:
+        return ['input', 'weight', 'bias', 'stride', 'padding', 'output_padding', 'groups', 'dilation']
+    elif node.target in [torch.nn.functional.linear]:
+        return ['input', 'weight', 'bias']
+    return inspect.getfullargspec(node.target).args
+
+
 def nodes_builder(model: GraphModule,
                   module_dict: Dict,
                   to_numpy: Callable) -> Tuple[List, List, List, Dict]:
@@ -163,10 +182,15 @@ def nodes_builder(model: GraphModule,
                 framework_attr_filtered[k] = v
         framework_attr = framework_attr_filtered
 
-        # filter Nodes from node kwargs, we replace these attributes with nx graph nodes
+        # filter Nodes from node kwargs, we replace these attributes with nx graph nodes. The Node kwargs
+        # are saved in _args_from_kwargs so the index of the kwargs can be inserted to the call args so
+        # the tensor indices can be extracted.
         node_kwargs = {}
+        _args_from_kwargs = {}
         for k, v in node.kwargs.items():
-            if not isinstance(v, torch.fx.node.Node):
+            if isinstance(v, torch.fx.node.Node):
+                _args_from_kwargs[k] = v
+            else:
                 node_kwargs[k] = v
 
         # initiate graph nodes
@@ -178,11 +202,22 @@ def nodes_builder(model: GraphModule,
                                                  node.args[0].op == PLACEHOLDER and node.args[0].meta[TYPE] in (list, tuple))
             tensor_input_index = []
             op_call_args = list(node.args)
+            for arg_name, arg_val in _args_from_kwargs.items():
+                _args = get_node_args_spec(node)
+                if arg_name in _args:
+                    arg_index = _args.index(arg_name)
+                    # TODO: This code verifies the kwargs with Node values that are used as args are in the correct order.
+                    # (i.e. check that the kwarg with Node is the first of the kwargs)
+                    if len(op_call_args) != arg_index:
+                        Logger.warning("A kwarg with value of Node should be the first after the arguments. "
+                                       "This might fail the model builder later...")
+                    op_call_args.insert(arg_index, arg_val)
+
             if inputs_as_list:
                 op_call_args.pop(0)
             else:
                 for in_node in node.all_input_nodes:
-                    for i, arg in enumerate(node.args):
+                    for i, arg in enumerate(op_call_args):
                         if arg == in_node:
                             tensor_input_index.append(i)
 
