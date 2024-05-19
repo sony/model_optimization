@@ -42,7 +42,8 @@ class BaseNode:
                  reuse_group: str = None,
                  quantization_attr: Dict[str, Any] = None,
                  has_activation: bool = True,
-                 is_custom: bool = False
+                 is_custom: bool = False,
+                 has_positional_weights: bool = False
                  ):
         """
         Init a Node object.
@@ -61,6 +62,7 @@ class BaseNode:
             quantization_attr: Attributes the node holds regarding how it should be quantized.
             has_activation: Whether the node has activations that we might want to quantize.
             is_custom: Whether the node is custom layer or not.
+            has_positional_weights: Whether the node has positional weights
         """
         self.name = name
         self.framework_attr = framework_attr
@@ -77,6 +79,7 @@ class BaseNode:
         self.prior_info = None
         self.has_activation = has_activation
         self.is_custom = is_custom
+        self.has_positional_weights = has_positional_weights
 
     @property
     def type(self):
@@ -95,6 +98,15 @@ class BaseNode:
 
         """
         return self.has_activation
+
+    def get_has_positional_weights(self):
+        """
+        Returns has_positional_weights attribute.
+
+        Returns: Whether the node has positional weights.
+
+        """
+        return self.has_positional_weights
 
     def is_activation_quantization_enabled(self) -> bool:
         """

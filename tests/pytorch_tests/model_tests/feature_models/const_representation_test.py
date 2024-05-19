@@ -62,8 +62,8 @@ class ConstRepresentationTest(BasePytorchFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      False, False, True)
+                                           mct.core.QuantizationErrorMethod.NOCLIPPING,
+                                           False, False, True)
 
     def create_networks(self):
         if self.input_reverse_order:
@@ -89,7 +89,8 @@ class ConstRepresentationMultiInputNet(nn.Module):
         self.const3 = to_torch_tensor(np.random.random((1, 5, 32, 32)))
 
     def forward(self, x):
-        x1 = sum([self.const1, x, self.const2])  # not really a 3-input add operation, but just in case torch will support it
+        x1 = sum(
+            [self.const1, x, self.const2])  # not really a 3-input add operation, but just in case torch will support it
         x = torch.cat([x1, self.const3, x], dim=1)
         return x
 
@@ -101,3 +102,24 @@ class ConstRepresentationMultiInputTest(ConstRepresentationTest):
 
     def create_networks(self):
         return ConstRepresentationMultiInputNet()
+
+
+class ConstRepresentationLinearLayerNet(nn.Module):
+    def __init__(self, layer, const):
+        super().__init__()
+        self.layer = layer
+        self.const = to_torch_tensor(const) if isinstance(const, np.ndarray) else const
+
+    def forward(self, x):
+        x1 = self.layer(self.const)
+        x2 = x + self.const
+        return x1 + x2
+
+
+class ConstRepresentationLinearLayerTest(ConstRepresentationTest):
+
+    def __init__(self, unit_test, func, const):
+        super().__init__(unit_test=unit_test, func=func, const=const, input_reverse_order=False)
+
+    def create_networks(self):
+        return ConstRepresentationLinearLayerNet(self.func, self.const)

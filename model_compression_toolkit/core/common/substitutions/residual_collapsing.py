@@ -67,7 +67,8 @@ class ResidualCollapsing(common.BaseSubstitution):
             return graph
 
         # Check if convolution and residual satisfy the collapsing conditions, otherwise skip substitution
-        if len(graph.get_next_nodes(first_node)) > 1 or len(graph.get_prev_nodes(second_node)) != 2:
+        if (len(graph.get_next_nodes(first_node)) > 1 or len(graph.get_prev_nodes(first_node)) < 1 or
+                len(graph.get_prev_nodes(second_node)) != 2):
             return graph
 
         # Check if Add is residual connection, otherwise skip substitution
