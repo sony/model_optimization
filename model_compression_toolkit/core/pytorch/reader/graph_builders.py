@@ -55,9 +55,12 @@ def extract_holder_weights(constant_name, node_target, model, weights, to_numpy)
 
 def get_node_args_spec(node: Node) -> List[str]:
     """
-    Return a list of the node's function args & kwargs, so we can insert the kwarg as arg
+    This function builds a list of all layer operation arguments. It flattens and combines both the args
+    list and the kwargs dictionary for a single list, so that the kwargs may be treated as arguments. This
+    is important because the graph builder expects all incoming tensors to be in the args list.
     Args:
-        node: Torch.fx.Node to extract target from, which the function the Node executes.
+        node: Torch.fx.Node to extract Node's target from. The target is the Node's framework
+              function (e.g. torch.nn.functional.interpolate).
 
     Returns: A list of args and kwargs names.
 
@@ -182,9 +185,9 @@ def nodes_builder(model: GraphModule,
                 framework_attr_filtered[k] = v
         framework_attr = framework_attr_filtered
 
-        # filter Nodes from node kwargs, we replace these attributes with nx graph nodes. The Node kwargs
-        # are saved in _args_from_kwargs so the index of the kwargs can be inserted to the call args so
-        # the tensor indices can be extracted.
+        # filter Nodes from node kwargs, we replace these attributes with nx graph nodes. The kwargs containing
+        # Nodes are saved to _args_from_kwargs, so they can be later converted to args.
+        # For example: interpolate(input_tensor, size=size_tensor) should be converted as interpolate(input_tensor, size_tensor).
         node_kwargs = {}
         _args_from_kwargs = {}
         for k, v in node.kwargs.items():
@@ -207,10 +210,12 @@ def nodes_builder(model: GraphModule,
                 if arg_name in _args:
                     arg_index = _args.index(arg_name)
                     # TODO: This code verifies the kwargs with Node values that are used as args are in the correct order.
-                    # (i.e. check that the kwarg with Node is the first of the kwargs)
+                    # (i.e. check that the kwarg with Node is the first of the kwargs).
+                    # Solving this requires a refactor to the GraphBuilder to be able to accepts incoming tensors in
+                    # kwargs, and not only in args, as it is implemented today.
                     if len(op_call_args) != arg_index:
-                        Logger.warning("A kwarg with value of Node should be the first after the arguments. "
-                                       "This might fail the model builder later...")
+                        Logger.warning("A kwarg contains a Node, but it does not appear immediately after the arguments. "
+                                       "This might cause issues when trying to rebuild the model from the graph.")
                     op_call_args.insert(arg_index, arg_val)
 
             if inputs_as_list:

@@ -107,26 +107,32 @@ class ConstRepresentationCodeNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv2d = nn.Conv2d(16, 16, 3, 2, padding=1)
-        # self.bn = torch.nn.BatchNorm2d(16)
+        self.tconv2d = nn.ConvTranspose2d(16, 16, 1)
+        self.linear = nn.Linear(16, 6)
 
     def forward(self, x):
         input_hw = x.shape[2:]
-        y = self.conv2d(x)
+        y = torch.nn.functional.conv2d(x, self.conv2d.weight, bias=self.conv2d.bias, stride=self.conv2d.stride,
+                                       padding=self.conv2d.padding, dilation=self.conv2d.dilation,
+                                       groups=self.conv2d.groups)
+        y = torch.nn.functional.conv_transpose2d(x, weight=self.tconv2d.weight, bias=self.tconv2d.bias)
         y = torch.nn.functional.interpolate(y, size=input_hw)
-
-        # TODO: Enable this code when PyTorch model reader is fixed for this case. Also, move this to model reader tests.
-        # y = torch.nn.functional.batch_norm(y[:, :, 0, :], self.bn.running_mean, self.bn.running_var,
-        #                                    momentum=0.2, eps=1e-6, bias=self.bn.bias)
-        # y = torch.unsqueeze(y, 2)
-        return torch.add(x, y)
+        x = torch.add(x, y)
+        x = torch.nn.functional.linear(x.mean(dim=(2, 3)), self.linear.weight, bias=self.linear.bias)
+        return x
 
 
 class ConstRepresentationCodeTest(ConstRepresentationTest):
     """
-    This test checks the code representation code in the model reader and builder, not specifically
-    with constants in the graph.
+    This test checks the const representation code in the model reader and builder, not specifically
+    with constants in the graph. Specifically, it the model is rebuilt correctly when containing a tensor
+    input to a function (interpolate) in the kwargs.
     """
+    def __init__(self, unit_test):
+        super().__init__(unit_test=unit_test, func=None, const=None)
+
     def create_networks(self):
+        m=ConstRepresentationCodeNet()
         return ConstRepresentationCodeNet()
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):

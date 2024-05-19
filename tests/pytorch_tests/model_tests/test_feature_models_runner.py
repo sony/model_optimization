@@ -252,7 +252,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
         ConstRepresentationMultiInputTest(self).run_test()
 
-        ConstRepresentationCodeTest(self, None, None).run_test()
+        ConstRepresentationCodeTest(self).run_test()
 
     def test_permute_substitution(self):
         """
