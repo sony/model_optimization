@@ -87,7 +87,7 @@ from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test impo
     UniformActivationTest
 from tests.pytorch_tests.model_tests.feature_models.metadata_test import MetadataTest
 from tests.pytorch_tests.model_tests.feature_models.const_representation_test import ConstRepresentationTest, \
-    ConstRepresentationMultiInputTest, ConstRepresentationGetIndexTest
+ConstRepresentationMultiInputTest, ConstRepresentationLinearLayerTest, ConstRepresentationGetIndexTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from tests.pytorch_tests.model_tests.feature_models.const_quantization_test import ConstQuantizationTest, \
     AdvancedConstQuantizationTest
@@ -257,6 +257,10 @@ class FeatureModelsTestRunner(unittest.TestCase):
                 ConstRepresentationGetIndexTest(self, func, c, indices).run_test()
 
         ConstRepresentationMultiInputTest(self).run_test()
+
+        c = (np.ones((1, 16, 32, 32)) + np.random.random((1, 16, 32, 32))).astype(np.float32)
+        ConstRepresentationLinearLayerTest(self, func=nn.Linear(32, 32), const=c).run_test()
+        ConstRepresentationLinearLayerTest(self, func=nn.Conv2d(16, 16, 1), const=c).run_test()
 
     def test_permute_substitution(self):
         """

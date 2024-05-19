@@ -96,6 +96,16 @@ class BaseNode:
         """
         return self.has_activation
 
+    @property
+    def has_positional_weights(self):
+        """
+        Returns has_positional_weights attribute.
+
+        Returns: Whether the node has positional weights.
+
+        """
+        return any(isinstance(key, int) for key in self.weights.keys())
+
     def is_activation_quantization_enabled(self) -> bool:
         """
 
