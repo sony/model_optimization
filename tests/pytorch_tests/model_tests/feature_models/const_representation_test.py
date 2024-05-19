@@ -104,6 +104,7 @@ class ConstRepresentationMultiInputTest(ConstRepresentationTest):
         return ConstRepresentationMultiInputNet()
 
 
+
 class ConstRepresentationLinearLayerNet(nn.Module):
     def __init__(self, layer, const):
         super().__init__()
@@ -123,3 +124,26 @@ class ConstRepresentationLinearLayerTest(ConstRepresentationTest):
 
     def create_networks(self):
         return ConstRepresentationLinearLayerNet(self.func, self.const)
+
+class ConstRepresentationGetIndexNet(nn.Module):
+    def __init__(self, layer, const, indices):
+        super().__init__()
+        self.layer = layer
+        self.const = to_torch_tensor(const) if isinstance(const, np.ndarray) else const
+        self.indices = indices
+
+    def forward(self, x):
+        const = self.const[self.indices]
+        return self.layer(x, const)
+
+
+class ConstRepresentationGetIndexTest(ConstRepresentationTest):
+
+    def __init__(self, unit_test, func, const, indices):
+        super().__init__(unit_test=unit_test, func=func, const=const, input_reverse_order=False)
+        self.func = func
+        self.const = const
+        self.indices = indices
+
+    def create_networks(self):
+        return ConstRepresentationGetIndexNet(self.func, self.const, self.indices)
