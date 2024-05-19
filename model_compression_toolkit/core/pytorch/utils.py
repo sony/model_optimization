@@ -39,12 +39,12 @@ def set_model(model: torch.nn.Module, train_mode: bool = False):
 
 
 def to_torch_tensor(tensor,
-                    torch_dtype=np.float32):
+                    numpy_type=np.float32):
     """
     Convert a Numpy array to a Torch tensor.
     Args:
         tensor: Numpy array.
-        torch_dtype: The desired data type for the Torch tensor. Default is np.float32.
+        numpy_type: The desired data type for the tensor. Default is np.float32.
 
     Returns:
         Torch tensor converted from the input Numpy array.
@@ -57,9 +57,9 @@ def to_torch_tensor(tensor,
     elif isinstance(tensor, tuple):
         return (to_torch_tensor(t) for t in tensor)
     elif isinstance(tensor, np.ndarray):
-        return torch.from_numpy(tensor.astype(torch_dtype)).to(working_device)
+        return torch.from_numpy(tensor.astype(numpy_type)).to(working_device)
     elif isinstance(tensor, (int, float)):
-        return torch.from_numpy(np.array(tensor).astype(torch_dtype)).to(working_device)
+        return torch.from_numpy(np.array(tensor).astype(numpy_type)).to(working_device)
     else:
         Logger.critical(f'Unsupported type for conversion to Torch.tensor: {type(tensor)}.')
 
