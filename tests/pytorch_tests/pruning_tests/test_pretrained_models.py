@@ -43,7 +43,7 @@ IMPORTANCE_METRIC_DICT.update({TestImportanceMetric.RANDOM: RandomImportanceMetr
 class PruningPretrainedModelsTest(unittest.TestCase):
     def representative_dataset(self, in_shape=(1,3, 224,224)):
         for _ in range(1):
-            yield [np.random.randn(*in_shape)]
+            yield [np.random.randn(*in_shape).astype(np.float32)]
 
     def test_rn50_pruning(self):
         # Load a pre-trained ResNet50 model
