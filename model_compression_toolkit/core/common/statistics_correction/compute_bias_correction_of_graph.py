@@ -49,6 +49,7 @@ def compute_bias_correction_of_graph(graph: Graph,
         if fw_info.is_kernel_op(n.type):
             kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
             if n.is_weights_quantization_enabled(kernel_attr):
+                # Bias correction is not applied to layers with constant inputs.
                 if n.has_positional_weights:
                     for candidate_qc in n.candidates_quantization_cfg:
                         candidate_qc.weights_quantization_cfg.weights_bias_correction = False

@@ -80,7 +80,6 @@ def nodes_builder(model: GraphModule,
         # extract node type and framework attributes
         framework_attr = dict(node.kwargs)
         node_has_activation = True
-        node_has_positional_weights = False
         if node.target in module_dict.keys():
             node_module = module_dict[node.target]
             node_type = type(node_module)
@@ -139,7 +138,6 @@ def nodes_builder(model: GraphModule,
                 if input_node in consts_dict:
                     used_consts.add(input_node)
                     weights.update({i: consts_dict[input_node]})
-                    node_has_positional_weights = True
 
                 tensor_meta = input_node.meta
                 if tensor_meta[TYPE] == torch.Tensor:
@@ -202,7 +200,7 @@ def nodes_builder(model: GraphModule,
                       TENSOR_INPUT_INDICES: tensor_input_index}
         else:
             graph_node_type = BaseNode
-            kwargs = {'has_positional_weights': node_has_positional_weights}
+            kwargs = {}
         graph_node = graph_node_type(name=node.name,
                                      framework_attr=framework_attr,
                                      input_shape=input_shape,
