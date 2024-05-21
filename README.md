@@ -110,7 +110,7 @@ The specifications of the algorithm are detailed in the paper: _"**EPTQ: Enhance
 More details on the how to use EPTQ via MCT can be found in the [EPTQ guidelines](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/gptq/README.md).
 
 
-### Structured Pruning [*]((https://github.com/sony/model_optimization?tab=readme-ov-file#experimental-features))
+### Structured Pruning [*](https://github.com/sony/model_optimization?tab=readme-ov-file#experimental-features)
 MCT introduces a structured and hardware-aware model pruning.
 This pruning technique is designed to compress models for specific hardware architectures, 
 taking into account the target platform's Single Instruction, Multiple Data (SIMD) capabilities. 
