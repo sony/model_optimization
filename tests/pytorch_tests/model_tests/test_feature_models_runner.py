@@ -261,6 +261,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         c = (np.ones((1, 16, 32, 32)) + np.random.random((1, 16, 32, 32))).astype(np.float32)
         ConstRepresentationLinearLayerTest(self, func=nn.Linear(32, 32), const=c).run_test()
         ConstRepresentationLinearLayerTest(self, func=nn.Conv2d(16, 16, 1), const=c).run_test()
+        ConstRepresentationLinearLayerTest(self, func=nn.ConvTranspose2d(16, 16, 1), const=c).run_test()
 
     def test_permute_substitution(self):
         """

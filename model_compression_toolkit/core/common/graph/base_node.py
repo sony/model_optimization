@@ -239,7 +239,9 @@ class BaseNode:
         for pos, weight in sorted((pos, weight) for pos, weight in self.weights.items()
                                   if isinstance(pos, int)):
             assert pos <= len(input_tensors), 'Positional weight index mismatch'
-            input_tensors.insert(pos, weight)
+            # Insert only positional weights that are not subject to quantization.
+            if not self.is_weights_quantization_enabled(pos):
+                input_tensors.insert(pos, weight)
 
         return input_tensors
 

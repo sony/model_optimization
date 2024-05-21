@@ -56,7 +56,7 @@ class ConstRepresentationTest(BasePytorchFeatureNetworkTest):
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 32,
                                      'activation_n_bits': 32,
-                                     'enable_weights_quantization': False,
+                                     'enable_weights_quantization': True,
                                      'enable_activation_quantization': False})
         return generate_pytorch_tpc(name="linear_collapsing_test", tp_model=tp)
 
@@ -104,7 +104,6 @@ class ConstRepresentationMultiInputTest(ConstRepresentationTest):
         return ConstRepresentationMultiInputNet()
 
 
-
 class ConstRepresentationLinearLayerNet(nn.Module):
     def __init__(self, layer, const):
         super().__init__()
@@ -124,6 +123,7 @@ class ConstRepresentationLinearLayerTest(ConstRepresentationTest):
 
     def create_networks(self):
         return ConstRepresentationLinearLayerNet(self.func, self.const)
+
 
 class ConstRepresentationGetIndexNet(nn.Module):
     def __init__(self, layer, const, indices):
