@@ -6,7 +6,7 @@ This project provides researchers, developers, and engineers tools for optimizin
 
 Specifically, this project aims to apply quantization to compress neural networks.
 
-<img src="docsrc/images/mct_block_diagram.svg" width="10000">
+<img src="https://github.com/sony/model_optimization/raw/main/docsrc/images/mct_block_diagram.svg" width="10000">
 
 MCT is developed by researchers and engineers working at Sony Semiconductor Israel.
 
