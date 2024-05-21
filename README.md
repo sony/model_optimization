@@ -33,7 +33,7 @@ To install the latest stable release of MCT, run the following command:
 pip install model-compression-toolkit
 ```
 
-For installing the nightly version or installing from source, refer to the [installation guide](INSTALLATION.md).
+For installing the nightly version or installing from source, refer to the [installation guide](https://github.com/sony/model_optimization/blob/main/INSTALLATION.md).
 
 
 ### Quick start & tutorials 
