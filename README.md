@@ -14,12 +14,12 @@ MCT is developed by researchers and engineers working at Sony Semiconductor Isra
 
 ## Table of Contents
 
-- [Getting Started](#getting-started)
-- [Supported features](#supported-features)
-- [Results](#results)
-- [Troubleshooting](#trouble-shooting)
-- [Contributions](#contributions)
-- [License](#license)
+- [Getting Started](https://github.com/sony/model_optimization?tab=readme-ov-file#getting-started)
+- [Supported features](https://github.com/sony/model_optimization?tab=readme-ov-file#supported-features)
+- [Results](https://github.com/sony/model_optimization?tab=readme-ov-file#results)
+- [Troubleshooting](https://github.com/sony/model_optimization?tab=readme-ov-file#trouble-shooting)
+- [Contributions](https://github.com/sony/model_optimization?tab=readme-ov-file#contributions)
+- [License](https://github.com/sony/model_optimization?tab=readme-ov-file#license)
 
 
 ## Getting Started
@@ -39,11 +39,11 @@ For installing the nightly version or installing from source, refer to the [inst
 ### Quick start & tutorials 
 
 Explore the Model Compression Toolkit (MCT) through our tutorials, 
-covering compression techniques for Keras and PyTorch models. Access interactive [notebooks](tutorials/README.md) 
+covering compression techniques for Keras and PyTorch models. Access interactive [notebooks](https://github.com/sony/model_optimization/blob/main/tutorials/README.md) 
 for hands-on learning. For example:
-* [Keras MobileNetV2 post training quantization](tutorials/notebooks/imx500_notebooks/keras/example_keras_mobilenetv2_for_imx500.ipynb)
-* [Post training quantization with PyTorch](tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_ptq_mnist.ipynb)
-* [Data Generation for ResNet18 with PyTorch](tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_data_generation.ipynb).
+* [Keras MobileNetV2 post training quantization](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/imx500_notebooks/keras/example_keras_mobilenetv2_for_imx500.ipynb)
+* [Post training quantization with PyTorch](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_ptq_mnist.ipynb)
+* [Data Generation for ResNet18 with PyTorch](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_data_generation.ipynb).
 
 
 ### Supported Versions
@@ -67,15 +67,15 @@ Currently, MCT is being tested on various Python, Pytorch and TensorFlow version
 ## Supported Features
 MCT offers a range of powerful features to optimize neural network models for efficient deployment. These supported features include:
 
-### Data Generation [*](#experimental-features)
+### Data Generation [*](https://github.com/sony/model_optimization?tab=readme-ov-file#experimental-features)
 MCT provides tools for generating synthetic images based on the statistics stored in a model's batch normalization layers. These generated images are valuable for various compression tasks where image data is required, such as quantization and pruning. 
-You can customize data generation configurations to suit your specific needs. [Go to the Data Generation page.](model_compression_toolkit/data_generation/README.md)
+You can customize data generation configurations to suit your specific needs. [Go to the Data Generation page.](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/data_generation/README.md)
 
 ### Quantization
 MCT supports different quantization methods:
 * Post-training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/keras_post_training_quantization.html), [PyTorch API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/pytorch_post_training_quantization.html)
 * Gradient-based post-training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/keras_gradient_post_training_quantization.html), [PyTorch API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/pytorch_gradient_post_training_quantization.html)
-* Quantization-aware training (QAT) [*](#experimental-features)
+* Quantization-aware training (QAT) [*](https://github.com/sony/model_optimization?tab=readme-ov-file#experimental-features)
 
 
 | Quantization Method                           | Complexity | Computational Cost          |
@@ -97,20 +97,20 @@ Main features:
 * <ins>Advanced quantization algorithms:</ins> To prevent a performance degradation some algorithms are applied such as: 
   * <ins>Shift negative correction:</ins> Symmetric activation quantization can hurt the model's performance when some layers output both negative and positive activations, but their range is asymmetric. For more details please visit [1].
   * <ins>Outliers filtering:</ins> Computing z-score for activation statistics to detect and remove outliers.
-* <ins>Clustering:</ins> Using non-uniform quantization grid to quantize the weights and activations to match their distributions.[*](#experimental-features)
+* <ins>Clustering:</ins> Using non-uniform quantization grid to quantize the weights and activations to match their distributions.[*](https://github.com/sony/model_optimization?tab=readme-ov-file#experimental-features)
 * <ins>Mixed-precision search:</ins> Assigning quantization bit-width per layer (for weights/activations), based on the layer's sensitivity to different bit-widths.
 * <ins>Visualization:</ins> You can use TensorBoard to observe useful information for troubleshooting the quantized model's performance (for example, the model in different phases of the quantization, collected statistics, similarity between layers of the float and quantized model and bit-width configuration for mixed-precision quantization). For more details, please read the [visualization documentation](https://sony.github.io/model_optimization/docs/guidelines/visualization.html).   
-* <ins>Target Platform Capabilities:</ins> The Target Platform Capabilities (TPC) describes the target platform (an edge device with dedicated hardware). For more details, please read the [TPC README](model_compression_toolkit/target_platform_capabilities/README.md).   
+* <ins>Target Platform Capabilities:</ins> The Target Platform Capabilities (TPC) describes the target platform (an edge device with dedicated hardware). For more details, please read the [TPC README](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/README.md).   
 
 ### Enhanced Post-Training Quantization (EPTQ)
 As part of the GPTQ we provide an advanced optimization algorithm called EPTQ.
 
 The specifications of the algorithm are detailed in the paper: _"**EPTQ: Enhanced Post-Training Quantization via Label-Free Hessian**"_ [4].
 
-More details on the how to use EPTQ via MCT can be found in the [EPTQ guidelines](model_compression_toolkit/gptq/README.md).
+More details on the how to use EPTQ via MCT can be found in the [EPTQ guidelines](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/gptq/README.md).
 
 
-### Structured Pruning [*](#experimental-features)
+### Structured Pruning [*]((https://github.com/sony/model_optimization?tab=readme-ov-file#experimental-features))
 MCT introduces a structured and hardware-aware model pruning.
 This pruning technique is designed to compress models for specific hardware architectures, 
 taking into account the target platform's Single Instruction, Multiple Data (SIMD) capabilities. 
@@ -132,7 +132,7 @@ For more details, we highly recommend visiting our project website where experim
 Graph of [MobileNetV2](https://keras.io/api/applications/mobilenet/) accuracy on ImageNet vs average bit-width of weights, using 
 single-precision quantization, mixed-precision quantization, and mixed-precision quantization with GPTQ.
 
-<img src="docsrc/images/mbv2_accuracy_graph.png">
+<img src="https://github.com/sony/model_optimization/raw/main/docsrc/images/mbv2_accuracy_graph.png">
 
 For more results, please see [1]
 
@@ -168,11 +168,11 @@ Check out the [FAQ](https://github.com/sony/model_optimization/tree/main/FAQ.md)
 ## Contributions
 MCT aims at keeping a more up-to-date fork and welcomes contributions from anyone.
 
-*You will find more information about contributions in the [Contribution guide](CONTRIBUTING.md).
+*You will find more information about contributions in the [Contribution guide](https://github.com/sony/model_optimization/blob/main/CONTRIBUTING.md).
 
 
 ## License
-[Apache License 2.0](LICENSE.md).
+[Apache License 2.0](https://github.com/sony/model_optimization/blob/main/LICENSE.md).
 
 ## References 
 
