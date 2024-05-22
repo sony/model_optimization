@@ -238,8 +238,12 @@ class BaseNode:
         """
         for pos, weight in sorted((pos, weight) for pos, weight in self.weights.items()
                                   if isinstance(pos, int)):
-            assert pos <= len(input_tensors), 'Positional weight index mismatch'
-            input_tensors.insert(pos, weight)
+            if pos > len(input_tensors):
+                Logger.critical("The positional weight index cannot exceed the number of input tensors to the node.")  # pragma: no cover
+            # Insert only positional weights that are not subject to quantization. If the positional weight is
+            # subject to quantization, the quantization wrapper inserts the positional weight into the node.
+            if not self.is_weights_quantization_enabled(pos):
+                input_tensors.insert(pos, weight)
 
         return input_tensors
 
