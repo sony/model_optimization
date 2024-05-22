@@ -146,8 +146,8 @@ class TestSensitivityMetricInterestPoints(unittest.TestCase):
                 axis = sn.op_call_kwargs.get(AXIS)
 
             distance_fn = KerasImplementation().get_mp_node_distance_fn(layer_class=sn.layer_class,
-                                                                     framework_attrs=sn.framework_attr,
-                                                                     axis=axis)
+                                                                        framework_attrs=sn.framework_attr,
+                                                                        axis=axis)
             self.assertEqual(distance_fn, compute_kl_divergence,
                              f"Softmax node should use KL Divergence for distance computation.")
 

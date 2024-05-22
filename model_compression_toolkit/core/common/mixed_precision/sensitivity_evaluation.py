@@ -89,12 +89,13 @@ class SensitivityEvaluation:
                                                       fw_impl.count_node_for_mixed_precision_interest_points,
                                                       quant_config.num_interest_points_factor)
 
-        self.ips_distance_fns, self.ips_axis = self._init_metric_points_lists(self.interest_points,
-                                                                              self.quant_config.use_hessian_based_scores is False)
+        # We use normalized MSE when not running hessian-based. For Hessian-based normalized MSE is not needed
+        # beacause hessian weights already do normalization.
+        use_normalized_mse = self.quant_config.use_hessian_based_scores is False
+        self.ips_distance_fns, self.ips_axis = self._init_metric_points_lists(self.interest_points, use_normalized_mse)
 
         self.output_points = get_output_nodes_for_metric(graph)
-        self.out_ps_distance_fns, self.out_ps_axis = self._init_metric_points_lists(self.output_points,
-                                                                                    self.quant_config.use_hessian_based_scores is False)
+        self.out_ps_distance_fns, self.out_ps_axis = self._init_metric_points_lists(self.output_points, use_normalized_mse)
 
         # Setting lists with relative position of the interest points
         # and output points in the list of all mp model activation tensors
