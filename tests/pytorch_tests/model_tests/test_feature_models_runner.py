@@ -243,25 +243,33 @@ class FeatureModelsTestRunner(unittest.TestCase):
     #     AdvancedConstQuantizationTest(self).run_test()
 
     def test_const_representation(self):
-        for const_dtype in [np.float32, np.int64, np.int32]:
-            c = (np.ones((32,)) + np.random.random((32,))).astype(const_dtype)
-            for func in [torch.add, torch.sub, torch.mul, torch.div]:
-                ConstRepresentationTest(self, func, c).run_test()
-                ConstRepresentationTest(self, func, c, input_reverse_order=True).run_test()
-                ConstRepresentationTest(self, func, 2.45).run_test()
-                ConstRepresentationTest(self, func, 5, input_reverse_order=True).run_test()
+        for enable_weights_quantization in [False, True]:
+            for const_dtype in [np.float32, np.int64, np.int32]:
+                c = (np.ones((32,)) + np.random.random((32,))).astype(const_dtype)
+                c_64 = (np.ones((64,)) + np.random.random((64,))).astype(const_dtype)
+                indices = np.random.randint(64, size=32)
+                for func in [torch.add, torch.sub, torch.mul, torch.div]:
+                    ConstRepresentationTest(self, func, c,
+                                            enable_weights_quantization=enable_weights_quantization).run_test()
+                    ConstRepresentationTest(self, func, c, input_reverse_order=True,
+                                            enable_weights_quantization=enable_weights_quantization).run_test()
+                    ConstRepresentationTest(self, func, 2.45,
+                                            enable_weights_quantization=enable_weights_quantization).run_test()
+                    ConstRepresentationTest(self, func, 5, input_reverse_order=True,
+                                            enable_weights_quantization=enable_weights_quantization).run_test()
+                    ConstRepresentationGetIndexTest(self, func, c_64, indices,
+                                                    enable_weights_quantization=enable_weights_quantization).run_test()
 
-            c = (np.ones((64,)) + np.random.random((64,))).astype(const_dtype)
-            indices = np.random.randint(64, size=32)
-            for func in [torch.add, torch.sub, torch.mul, torch.div]:
-                ConstRepresentationGetIndexTest(self, func, c, indices).run_test()
+            ConstRepresentationMultiInputTest(self, enable_weights_quantization=enable_weights_quantization).run_test()
 
-        ConstRepresentationMultiInputTest(self).run_test()
-
-        c = (np.ones((1, 16, 32, 32)) + np.random.random((1, 16, 32, 32))).astype(np.float32)
-        ConstRepresentationLinearLayerTest(self, func=nn.Linear(32, 32), const=c).run_test()
-        ConstRepresentationLinearLayerTest(self, func=nn.Conv2d(16, 16, 1), const=c).run_test()
-        ConstRepresentationLinearLayerTest(self, func=nn.ConvTranspose2d(16, 16, 1), const=c).run_test()
+            c_img = (np.ones((1, 16, 32, 32)) + np.random.random((1, 16, 32, 32))).astype(np.float32)
+            ConstRepresentationLinearLayerTest(self, func=nn.Linear(32, 32), const=c_img,
+                                               enable_weights_quantization=enable_weights_quantization).run_test()
+            ConstRepresentationLinearLayerTest(self, func=nn.Conv2d(16, 16, 1),
+                                               const=c_img,
+                                               enable_weights_quantization=enable_weights_quantization).run_test()
+            ConstRepresentationLinearLayerTest(self, func=nn.ConvTranspose2d(16, 16, 1),
+                                               const=c_img, enable_weights_quantization=enable_weights_quantization).run_test()
 
     def test_permute_substitution(self):
         """

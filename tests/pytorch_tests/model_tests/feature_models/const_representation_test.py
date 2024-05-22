@@ -47,16 +47,17 @@ class ConstRepresentationReverseOrderNet(nn.Module):
 
 class ConstRepresentationTest(BasePytorchFeatureNetworkTest):
 
-    def __init__(self, unit_test, func, const, input_reverse_order=False):
+    def __init__(self, unit_test, func, const, input_reverse_order=False, enable_weights_quantization=False):
         super().__init__(unit_test=unit_test, input_shape=(16, 32, 32))
         self.func = func
         self.const = const
         self.input_reverse_order = input_reverse_order
+        self.enable_weights_quantization = enable_weights_quantization
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 32,
                                      'activation_n_bits': 32,
-                                     'enable_weights_quantization': True,
+                                     'enable_weights_quantization': self.enable_weights_quantization,
                                      'enable_activation_quantization': False})
         return generate_pytorch_tpc(name="linear_collapsing_test", tp_model=tp)
 
@@ -97,8 +98,9 @@ class ConstRepresentationMultiInputNet(nn.Module):
 
 class ConstRepresentationMultiInputTest(ConstRepresentationTest):
 
-    def __init__(self, unit_test):
-        super().__init__(unit_test=unit_test, func=None, const=None, input_reverse_order=False)
+    def __init__(self, unit_test, enable_weights_quantization):
+        super().__init__(unit_test=unit_test, func=None, const=None, input_reverse_order=False,
+                         enable_weights_quantization=enable_weights_quantization)
 
     def create_networks(self):
         return ConstRepresentationMultiInputNet()
@@ -118,8 +120,9 @@ class ConstRepresentationLinearLayerNet(nn.Module):
 
 class ConstRepresentationLinearLayerTest(ConstRepresentationTest):
 
-    def __init__(self, unit_test, func, const):
-        super().__init__(unit_test=unit_test, func=func, const=const, input_reverse_order=False)
+    def __init__(self, unit_test, func, const, enable_weights_quantization):
+        super().__init__(unit_test=unit_test, func=func, const=const, input_reverse_order=False,
+                         enable_weights_quantization=enable_weights_quantization)
 
     def create_networks(self):
         return ConstRepresentationLinearLayerNet(self.func, self.const)
@@ -139,8 +142,9 @@ class ConstRepresentationGetIndexNet(nn.Module):
 
 class ConstRepresentationGetIndexTest(ConstRepresentationTest):
 
-    def __init__(self, unit_test, func, const, indices):
-        super().__init__(unit_test=unit_test, func=func, const=const, input_reverse_order=False)
+    def __init__(self, unit_test, func, const, indices, enable_weights_quantization):
+        super().__init__(unit_test=unit_test, func=func, const=const, input_reverse_order=False,
+                         enable_weights_quantization=enable_weights_quantization)
         self.func = func
         self.const = const
         self.indices = indices
