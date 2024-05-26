@@ -79,7 +79,7 @@ Quickstart
 ====================================
 Take a look of how you can start using MCT in just a few minutes!
 
-Visit our `notebooks <https://github.com/sony/model_optimization/tree/main/tutorials/notebooks>`_ and `MCT quick start. <https://github.com/sony/model_optimization/tree/main/tutorials/quick_start>`_
+Visit our `notebooks <https://github.com/sony/model_optimization/tree/main/tutorials/notebooks>`_
 
 
 API Documentation
