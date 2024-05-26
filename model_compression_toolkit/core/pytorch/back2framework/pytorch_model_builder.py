@@ -125,6 +125,13 @@ def _run_operation(n: BaseNode,
 
     op_call_args = n.op_call_args if isinstance(n, FunctionalNode) else []
     functional_kwargs = n.op_call_kwargs if isinstance(n, FunctionalNode) else {}
+    
+    special_functions = {
+        'reshape': torch.reshape
+    }
+    if op_func in special_functions.values() and isinstance(op_call_args, list):
+        op_call_args = [tuple(op_call_args)]
+
     if isinstance(n, FunctionalNode) and n.inputs_as_list:
         out_tensors_of_n_float = op_func(input_tensors, *op_call_args, **functional_kwargs)
     else:
