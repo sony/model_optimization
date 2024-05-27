@@ -108,12 +108,12 @@ class TensorflowCropFlipImagePipeline(BaseImagePipeline):
         # List of output image manipulation functions and their arguments.
         self.img_output_finalize_list = [(center_crop, {'output_size': output_image_size})]
 
-    def get_image_input_size(self) -> Tuple:
+    def get_image_input_size(self) -> Tuple[int, int]:
         """
         Get the size of the input image considering extra pixels.
 
         Returns:
-            Tuple: Size of the input image.
+            Tuple[int, int]: Size of the input image.
         """
         return tuple([o + e for (o, e) in zip(self.output_image_size, self.extra_pixels)])
 
@@ -172,12 +172,12 @@ class TensorflowIdentityImagePipeline(BaseImagePipeline):
         """
         super(TensorflowIdentityImagePipeline, self, ).__init__(output_image_size, extra_pixels)
 
-    def get_image_input_size(self) -> Tuple:
+    def get_image_input_size(self) -> Tuple[int, int]:
         """
         Get the size of the input image.
 
         Returns:
-            Tuple: Size of the input image.
+            Tuple[int, int]: Size of the input image.
         """
         return self.output_image_size
 

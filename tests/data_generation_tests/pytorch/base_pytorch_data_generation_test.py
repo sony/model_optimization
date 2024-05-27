@@ -63,7 +63,7 @@ class BasePytorchDataGenerationTest:
                  data_init_type: DataInitType = DataInitType.Diverse,
                  layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
                  image_granularity=ImageGranularity.AllImages,
-                 image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP_FLIP,
+                 image_pipeline_type: ImagePipelineType = ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
                  image_normalization_type: ImageNormalizationType = ImageNormalizationType.TORCHVISION,
                  extra_pixels: int = 0,
                  bn_layer_types: List = [torch.nn.BatchNorm2d]

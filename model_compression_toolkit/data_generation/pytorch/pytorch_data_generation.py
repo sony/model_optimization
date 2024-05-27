@@ -67,7 +67,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             data_init_type: DataInitType = DataInitType.Diverse,
             layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
             image_granularity=ImageGranularity.AllImages,
-            image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP,
+            image_pipeline_type: ImagePipelineType = ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
             image_normalization_type: ImageNormalizationType = ImageNormalizationType.TORCHVISION,
             extra_pixels: Union[int, Tuple[int, int]] = 0,
             bn_layer_types: List = DEFAULT_PYTORCH_BN_LAYER_TYPES,

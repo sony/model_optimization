@@ -61,15 +61,12 @@ class ImagePipelineType(EnumBaseClass):
     """
     An enum for choosing the image pipeline type for image manipulation:
 
-    RANDOM_CROP - Crop the images.
-
-    RANDOM_CROP_FLIP - Crop and flip the images.
+    SMOOTHING_AND_AUGMENTATION - Apply a smoothing filter, then crop and flip the images.
 
     IDENTITY - Do not apply any manipulation (identity transformation).
 
     """
-    RANDOM_CROP = 'random_crop'
-    RANDOM_CROP_FLIP = 'random_crop_flip'
+    SMOOTHING_AND_AUGMENTATION = 'smoothing_and_augmentation'
     IDENTITY = 'identity'
 
 

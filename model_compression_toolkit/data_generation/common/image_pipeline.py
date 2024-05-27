@@ -51,12 +51,12 @@ class BaseImagePipeline(ABC):
         else:
             Logger.critical(f"'extra_pixels' should be an int or tuple but type {type(extra_pixels)} was received.")
     @abstractmethod
-    def get_image_input_size(self) -> Tuple:
+    def get_image_input_size(self) -> Tuple[int, int]:
         """
         Get the size of the input image for the image pipeline.
 
         Returns:
-            int: The input image size.
+            Tuple[int, int]: The input image size.
         """
         raise NotImplemented
 
