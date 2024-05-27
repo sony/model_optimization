@@ -56,9 +56,6 @@ class TestXQuantReport(unittest.TestCase):
 
     def setUp(self):
         self.float_model = ModelToTest()
-        # from torchvision.models.mobilenetv2 import MobileNetV2
-        # self.float_model = MobileNetV2()
-
         self.core_config = mct.core.CoreConfig()
         self.repr_dataset = random_data_gen
         self.quantized_model, _ = mct.ptq.pytorch_post_training_quantization(in_module=self.float_model,
