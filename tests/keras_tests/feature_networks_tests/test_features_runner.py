@@ -25,6 +25,7 @@ from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq import RoundingType
+from model_compression_toolkit.target_platform_capabilities import constants as C
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
     ActivationDecompositionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_bound_to_power_of_2_test import \
@@ -133,6 +134,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_pre
     MixedPercisionSearchTotalMemoryNonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
 from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substitution_test import MatmulToDenseSubstitutionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.metadata_test import MetadataTest
+from tests.keras_tests.feature_networks_tests.feature_networks.tpc_test import TpcTest
 from tests.keras_tests.feature_networks_tests.feature_networks.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest, ConstRepresentationMatMulTest
 from tests.keras_tests.feature_networks_tests.feature_networks.concatination_threshold_update import ConcatThresholdtest
@@ -775,6 +777,15 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_metadata(self):
         MetadataTest(self).run_test()
 
-    
+    def test_keras_tpcs(self):
+        TpcTest(f'{C.IMX500_TP_MODEL}.v1', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v1_lut', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v1_pot', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v2', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v2_lut', self).run_test()
+        TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
+        TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
+
+
 if __name__ == '__main__':
     unittest.main()

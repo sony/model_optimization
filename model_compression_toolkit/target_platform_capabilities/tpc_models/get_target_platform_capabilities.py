@@ -55,5 +55,5 @@ def get_target_platform_capabilities(fw_name: str,
     if target_platform_version is None:
         target_platform_version = LATEST
     else:
-        assert target_platform_version in tpc_versions, f'TPC version {target_platform_version} is not supported for framework {fw_name}'
+        assert target_platform_version in tpc_versions, f'TPC version {target_platform_version} is not supported for framework {fw_name}.'
     return tpc_versions[target_platform_version]()

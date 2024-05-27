@@ -21,6 +21,7 @@ from torch import nn
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
+from model_compression_toolkit.target_platform_capabilities import constants as C
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_attributes_quantization_test import BNAttributesQuantization
 from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import LayerNormNetTest
@@ -86,6 +87,7 @@ from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccurac
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
 from tests.pytorch_tests.model_tests.feature_models.metadata_test import MetadataTest
+from tests.pytorch_tests.model_tests.feature_models.tpc_test import TpcTest
 from tests.pytorch_tests.model_tests.feature_models.const_representation_test import ConstRepresentationTest, \
 ConstRepresentationMultiInputTest, ConstRepresentationLinearLayerTest, ConstRepresentationGetIndexTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
@@ -622,6 +624,15 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_metadata(self):
         MetadataTest(self).run_test()
+
+    def test_torch_tpcs(self):
+        TpcTest(f'{C.IMX500_TP_MODEL}.v1', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v1_lut', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v1_pot', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v2', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v2_lut', self).run_test()
+        TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
+        TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
 
 
 if __name__ == '__main__':
