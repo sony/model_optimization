@@ -15,38 +15,45 @@
 
 from typing import Callable
 import model_compression_toolkit as mct
-import torch
 
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from xquant.common.collect_report_data import collect_report_data
 from xquant import XQuantConfig
+from xquant.common.constants import FOUND_TORCH
+from xquant.logger import Logger
 
-from xquant.pytorch.pytorch_report_utils import PytorchReportUtils
+if FOUND_TORCH:
+    from xquant.pytorch.pytorch_report_utils import PytorchReportUtils
+    from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+    import torch
 
+    def xquant_report_pytorch_experimental(float_model: torch.nn.Module,
+                                           quantized_model: torch.nn.Module,
+                                           repr_dataset: Callable,
+                                           validation_dataset: Callable,
+                                           core_config: mct.core.CoreConfig,
+                                           xquant_config: XQuantConfig = None):
 
-def xquant_report_pytorch_experimental(float_model: torch.nn.Module,
-                                       quantized_model: torch.nn.Module,
-                                       repr_dataset: Callable,
-                                       validation_dataset: Callable,
-                                       core_config: mct.core.CoreConfig,
-                                       xquant_config: XQuantConfig = None):
+        pytorch_report_utils = PytorchReportUtils()
+        _collected_data = collect_report_data(float_model,
+                                              quantized_model,
+                                              repr_dataset,
+                                              validation_dataset,
+                                              core_config,
+                                              pytorch_report_utils,
+                                              xquant_config)
 
-    pytorch_report_utils = PytorchReportUtils()
-    _collected_data = collect_report_data(float_model,
-                                          quantized_model,
-                                          repr_dataset,
-                                          validation_dataset,
-                                          core_config,
-                                          pytorch_report_utils,
-                                          xquant_config)
+        quant_graph = pytorch_report_utils.get_quant_graph_with_metrics(quantized_model=quantized_model,
+                                                                        collected_data=_collected_data,
+                                                                        xquant_config=xquant_config)
+        pytorch_report_utils.add_graph_to_tensorboard(graph=quant_graph,
+                                                      fw_info=DEFAULT_PYTORCH_INFO,
+                                                      report_dir=xquant_config.report_dir)
+        pytorch_report_utils.dump_report_to_json(report_dir=xquant_config.report_dir,
+                                                 collected_data=_collected_data)
 
-    quant_graph = pytorch_report_utils.get_quant_graph_with_metrics(quantized_model=quantized_model,
-                                                                    collected_data=_collected_data,
-                                                                    xquant_config=xquant_config)
-    pytorch_report_utils.add_graph_to_tensorboard(graph=quant_graph,
-                                                  fw_info=DEFAULT_PYTORCH_INFO,
-                                                  report_dir=xquant_config.report_dir)
-    pytorch_report_utils.dump_report_to_json(report_dir=xquant_config.report_dir,
-                                             collected_data=_collected_data)
+        return _collected_data
 
-    return _collected_data
+else:
+    def xquant_report_pytorch_experimental(*args, **kwargs):
+        Logger.critical("PyTorch must be installed to use 'xquant_report_pytorch_experimental'. "
+                        "The 'torch' package is missing.")  # pragma: no cover

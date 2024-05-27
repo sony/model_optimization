@@ -13,7 +13,14 @@
 #  limitations under the License.
 #  ==============================================================================
 #
+import importlib.util
 
+
+# Frameworks:
+TENSORFLOW = 'tensorflow'
+TORCH = 'torch'
+FOUND_TF = importlib.util.find_spec(TENSORFLOW) is not None
+FOUND_TORCH = importlib.util.find_spec(TORCH) is not None
 
 # Default metric names:
 CS_METRIC_NAME = 'cs'
