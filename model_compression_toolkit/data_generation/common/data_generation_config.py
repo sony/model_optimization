@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable, Any, List
+from typing import Any, List, Tuple, Union
 
 from model_compression_toolkit.data_generation.common.enums import SchedulerType, BatchNormAlignemntLossType, \
     DataInitType, BNLayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
@@ -36,7 +36,7 @@ class DataGenerationConfig:
                  layer_weighting_type: BNLayerWeightingType = None,
                  image_pipeline_type: ImagePipelineType = None,
                  image_normalization_type: ImageNormalizationType = None,
-                 extra_pixels: int = 0,
+                 extra_pixels: Union[int, Tuple[int, int]] = 0,
                  bn_layer_types: List = [],
                  last_layer_types: List = [],
                  clip_images: bool = True,
@@ -59,7 +59,7 @@ class DataGenerationConfig:
             layer_weighting_type (BNLayerWeightingType): Type of layer weighting. Defaults to None.
             image_pipeline_type (ImagePipelineType): Type of image pipeline. Defaults to None.
             image_normalization_type (ImageNormalizationType): Type of image normalization. Defaults to None.
-            extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
+            extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
             bn_layer_types (List): List of BatchNorm layer types. Defaults to [].
             last_layer_types (List): List of layer types. Defaults to [].
             clip_images (bool): Flag to enable image clipping. Defaults to True.

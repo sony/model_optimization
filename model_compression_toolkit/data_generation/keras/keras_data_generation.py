@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import time
-from typing import Callable, Tuple, List, Dict
+from typing import Callable, Tuple, List, Dict, Union
 from tqdm import tqdm
 
 from model_compression_toolkit.constants import FOUND_TF
@@ -63,7 +63,7 @@ if FOUND_TF:
             image_granularity: ImageGranularity = ImageGranularity.BatchWise,
             image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP_FLIP,
             image_normalization_type: ImageNormalizationType = ImageNormalizationType.KERAS_APPLICATIONS,
-            extra_pixels: int = 0,
+            extra_pixels: Union[int, Tuple[int, int]] = 0,
             bn_layer_types: List = [BatchNormalization],
             clip_images: bool = True,
             reflection: bool = True,
@@ -85,7 +85,7 @@ if FOUND_TF:
             image_granularity (ImageGranularity): The granularity of the images for optimization.
             image_pipeline_type (ImagePipelineType): The type of image pipeline to use.
             image_normalization_type (ImageNormalizationType): The type of image normalization to use.
-            extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
+            extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
             bn_layer_types (List): List of BatchNorm layer types to be considered for data generation.
             clip_images (bool): Whether to clip images during optimization.
             reflection (bool): Whether to use reflection during optimization.
@@ -100,6 +100,7 @@ if FOUND_TF:
             optimizer=optimizer,
             data_gen_batch_size=data_gen_batch_size,
             initial_lr=initial_lr,
+            output_loss_multiplier=output_loss_multiplier,
             scheduler_type=scheduler_type,
             bn_alignment_loss_type=bn_alignment_loss_type,
             output_loss_type=output_loss_type,
@@ -111,14 +112,13 @@ if FOUND_TF:
             extra_pixels=extra_pixels,
             bn_layer_types=bn_layer_types,
             clip_images=clip_images,
-            reflection=reflection,
-            output_loss_multiplier=output_loss_multiplier)
+            reflection=reflection)
 
 
     def keras_data_generation_experimental(
             model: tf.keras.Model,
             n_images: int,
-            output_image_size: Tuple,
+            output_image_size: Union[int, Tuple[int, int]],
             data_generation_config: DataGenerationConfig) -> tf.Tensor:
         """
         Function to perform data generation using the provided Keras model and data generation configuration.
@@ -126,7 +126,7 @@ if FOUND_TF:
         Args:
             model (Model): Keras model to generate data for.
             n_images (int): Number of images to generate.
-            output_image_size (Tuple): Size of the output images.
+            output_image_size (Union[int, Tuple[int, int]]): Size of the output images.
             data_generation_config (DataGenerationConfig): Configuration for data generation.
 
         Returns:

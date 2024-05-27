@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import time
-from typing import Callable, Any, Tuple, List
+from typing import Callable, Any, Tuple, List, Union
 
 from tqdm import tqdm
 
@@ -69,7 +69,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             image_granularity=ImageGranularity.AllImages,
             image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP,
             image_normalization_type: ImageNormalizationType = ImageNormalizationType.TORCHVISION,
-            extra_pixels: int = 0,
+            extra_pixels: Union[int, Tuple[int, int]] = 0,
             bn_layer_types: List = DEFAULT_PYTORCH_BN_LAYER_TYPES,
             last_layer_types: List = DEFAULT_PYTORCH_LAST_LAYER_TYPES,
             clip_images: bool = True,
@@ -92,7 +92,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             image_granularity (ImageGranularity): The granularity of the images for optimization.
             image_pipeline_type (ImagePipelineType): The type of image pipeline to use.
             image_normalization_type (ImageNormalizationType): The type of image normalization to use.
-            extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
+            extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
             bn_layer_types (List): List of BatchNorm layer types to be considered for data generation.
             last_layer_types (List): List of layer types to be considered for the output loss.
             clip_images (bool): Whether to clip images during optimization.
@@ -129,7 +129,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
     def pytorch_data_generation_experimental(
             model: Module,
             n_images: int,
-            output_image_size: int,
+            output_image_size: Union[int, Tuple[int, int]],
             data_generation_config: DataGenerationConfig) -> List[Tensor]:
         """
         Function to perform data generation using the provided model and data generation configuration.
@@ -137,7 +137,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
         Args:
             model (Module): PyTorch model to generate data for.
             n_images (int): Number of images to generate.
-            output_image_size (int): The hight and width size of the output images.
+            output_image_size (Union[int, Tuple[int, int]]: The hight and width size of the output images.
             data_generation_config (DataGenerationConfig): Configuration for data generation.
 
         Returns:

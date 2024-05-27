@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Tuple, Dict, Type, List
+from typing import Tuple, Dict, Type, List, Union
 
 import numpy as np
 import tensorflow as tf
@@ -89,14 +89,14 @@ def random_flip(image: tf.Tensor) -> tf.Tensor:
 
 class TensorflowCropFlipImagePipeline(BaseImagePipeline):
     def __init__(self,
-                 output_image_size: Tuple,
-                 extra_pixels: int):
+                 output_image_size: Union[int, Tuple[int, int]],
+                 extra_pixels: Union[int, Tuple[int, int]]):
         """
         Initialize the TensorflowCropFlipImagePipeline.
 
         Args:
-            output_image_size (Tuple): The output image size.
-            extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
+            output_image_size (Union[int, Tuple[int, int]]): The output image size.
+            extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
         """
         super(TensorflowCropFlipImagePipeline, self, ).__init__(output_image_size, extra_pixels)
 
@@ -107,7 +107,6 @@ class TensorflowCropFlipImagePipeline(BaseImagePipeline):
 
         # List of output image manipulation functions and their arguments.
         self.img_output_finalize_list = [(center_crop, {'output_size': output_image_size})]
-        self.extra_pixels = extra_pixels
 
     def get_image_input_size(self) -> Tuple:
         """
@@ -116,7 +115,7 @@ class TensorflowCropFlipImagePipeline(BaseImagePipeline):
         Returns:
             Tuple: Size of the input image.
         """
-        return tuple(np.array(self.output_image_size) + self.extra_pixels)
+        return tuple([o + e for (o, e) in zip(self.output_image_size, self.extra_pixels)])
 
     def image_input_manipulation(self,
                                  images: tf.Tensor) -> tf.Tensor:
@@ -161,28 +160,26 @@ class TensorflowCropFlipImagePipeline(BaseImagePipeline):
 
 class TensorflowIdentityImagePipeline(BaseImagePipeline):
 
-    def __init__(self, output_image_size: int,
-                 extra_pixels: int
+    def __init__(self, output_image_size: Union[int, Tuple[int, int]],
+                 extra_pixels: Union[int, Tuple[int, int]]
                  ):
         """
         Initialize the TensorflowIdentityImagePipeline.
 
         Args:
-            output_image_size (Tuple): The output image size.
-            extra_pixels (int): Extra pixels to add to the input image size. Defaults to 0.
+            output_image_size (Union[int, Tuple[int, int]]): The output image size.
+            extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
         """
         super(TensorflowIdentityImagePipeline, self, ).__init__(output_image_size, extra_pixels)
-        self.extra_pixels = extra_pixels
-        self.output_image_size = output_image_size
 
     def get_image_input_size(self) -> Tuple:
         """
-        Get the size of the input image considering extra pixels.
+        Get the size of the input image.
 
         Returns:
             Tuple: Size of the input image.
         """
-        return tuple(np.array(self.output_image_size) + self.extra_pixels)
+        return self.output_image_size
 
     def image_input_manipulation(self,
                                  images: tf.Tensor) -> tf.Tensor:

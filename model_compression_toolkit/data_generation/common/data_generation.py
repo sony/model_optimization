@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 # Import required modules and classes
-from typing import Any, Tuple, Dict, Callable, List
+from typing import Any, Tuple, Dict, Callable, List, Union
 
 from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig
 from model_compression_toolkit.data_generation.common.enums import ImagePipelineType, ImageNormalizationType, \
@@ -24,7 +24,7 @@ from model_compression_toolkit.logger import Logger
 
 def get_data_generation_classes(
         data_generation_config: DataGenerationConfig,
-        output_image_size: Tuple,
+        output_image_size: Union[int, Tuple[int, int]],
         n_images: int,
         image_pipeline_dict: Dict,
         image_normalization_dict: Dict,
@@ -38,7 +38,7 @@ def get_data_generation_classes(
 
     Args:
         data_generation_config (DataGenerationConfig): Configuration for data generation.
-        output_image_size (Tuple): The desired output image size.
+        output_image_size (Union[int, Tuple[int, int]]): The desired output image size.
         n_images (int): The number of random samples.
         image_pipeline_dict (Dict): Dictionary mapping ImagePipelineType to corresponding image pipeline classes.
         image_normalization_dict (Dict): Dictionary mapping ImageNormalizationType to corresponding
