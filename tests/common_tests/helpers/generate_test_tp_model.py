@@ -66,7 +66,10 @@ def generate_mixed_precision_test_tp_model(base_cfg, default_config, mp_bitwidth
         candidate_cfg = base_cfg.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: weights_n_bits}},
                                                 activation_n_bits=activation_n_bits)
 
-        mp_op_cfg_list.append(candidate_cfg)
+        if candidate_cfg == base_cfg:
+            mp_op_cfg_list.append(base_cfg)
+        else:
+            mp_op_cfg_list.append(candidate_cfg)
 
     return generate_tp_model(default_config=default_config,
                              base_config=base_cfg,
@@ -85,8 +88,10 @@ def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_c
                                                  **{k: v for k, v in base_cfg.attr_weights_configs_mapping.items() if
                                                     k != KERNEL_ATTR}},
                                                 activation_n_bits=activation_n_bits)
-
-        mp_op_cfg_list.append(candidate_cfg)
+        if candidate_cfg == base_cfg:
+            mp_op_cfg_list.append(base_cfg)
+        else:
+            mp_op_cfg_list.append(candidate_cfg)
 
     base_tp_model = generate_tp_model(default_config=default_config,
                                       base_config=base_cfg,
