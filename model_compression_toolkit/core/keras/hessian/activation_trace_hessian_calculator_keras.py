@@ -63,12 +63,12 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
             model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
 
-            if self.hessian_request.target_node in model_output_nodes:
+            if self.hessian_request.target_nodes in model_output_nodes:
                 Logger.critical("Trying to compute activation Hessian approximation with respect to the model output. "
                                  "This operation is not supported. "
                                  "Remove the output node from the set of node targets in the Hessian request.")
 
-            grad_model_outputs = [self.hessian_request.target_node] + model_output_nodes
+            grad_model_outputs = [self.hessian_request.target_nodes] + model_output_nodes
 
             # Building a model to run Hessian approximation on
             model, _ = FloatKerasModelBuilder(graph=self.graph, append2output=grad_model_outputs).build_model()

@@ -14,6 +14,8 @@
 # ==============================================================================
 from enum import Enum
 from typing import Callable, Any, Dict
+
+from model_compression_toolkit.constants import GPTQ_HESSIAN_NUM_SAMPLES
 from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
 
 
@@ -36,7 +38,7 @@ class GPTQHessianScoresConfig:
     """
 
     def __init__(self,
-                 hessians_num_samples: int = 16,
+                 hessians_num_samples: int = GPTQ_HESSIAN_NUM_SAMPLES,
                  norm_scores: bool = True,
                  log_norm: bool = True,
                  scale_log_norm: bool = False):

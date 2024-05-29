@@ -17,7 +17,7 @@ import copy
 import numpy as np
 from typing import Callable, Any, List, Tuple
 
-from model_compression_toolkit.constants import AXIS
+from model_compression_toolkit.constants import AXIS, ACT_HESSIAN_DEFAULT_BATCH_SIZE
 from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
@@ -233,47 +233,24 @@ class SensitivityEvaluation:
          to be used for the distance metric weighted average computation.
 
         """
-        # Dictionary to store the trace Hessian approximations for each interest point (target node)
-        compare_point_to_trace_hessian_approximations = {}
+        # Create a request for trace Hessian approximation with specific configurations
+        # (here we use per-tensor approximation of the Hessian's trace w.r.t the node's activations)
+        trace_hessian_request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
+                                                    granularity=HessianInfoGranularity.PER_TENSOR,
+                                                    target_nodes=self.interest_points)
 
-        # Iterate over each interest point to fetch the trace Hessian approximations
-        for target_node in self.interest_points:
-            # Create a request for trace Hessian approximation with specific configurations
-            # (here we use per-tensor approximation of the Hessian's trace w.r.t the node's activations)
-            trace_hessian_request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
-                                                        granularity=HessianInfoGranularity.PER_TENSOR,
-                                                        target_node=target_node)
+        # Fetch the trace Hessian approximations for the current interest point
+        nodes_approximations = self.hessian_info_service.fetch_hessian(trace_hessian_request=trace_hessian_request,
+                                                                       required_size=self.quant_config.num_of_images,
+                                                                       batch_size=ACT_HESSIAN_DEFAULT_BATCH_SIZE)
 
-            # Fetch the trace Hessian approximations for the current interest point
-            node_approximations = self.hessian_info_service.fetch_hessian(trace_hessian_request=trace_hessian_request,
-                                                                          required_size=self.quant_config.num_of_images)
-            # Store the fetched approximations in the dictionary
-            compare_point_to_trace_hessian_approximations[target_node] = node_approximations
-
-        # List to store the approximations for each image
-        approx_by_image = []
-        # Iterate over each image
-        for image_idx in range(self.quant_config.num_of_images):
-            # List to store approximations for the current image for each interest point
-            approx_by_image_per_interest_point = []
-            # Iterate over each interest point to gather approximations
-            for target_node in self.interest_points:
-                # Ensure the approximation for the current interest point and image is a list
-                assert isinstance(compare_point_to_trace_hessian_approximations[target_node][image_idx], list)
-                # Ensure the approximation list contains only one element (since, granularity is per-tensor)
-                assert len(compare_point_to_trace_hessian_approximations[target_node][image_idx]) == 1
-                # Append the single approximation value to the list for the current image
-                approx_by_image_per_interest_point.append(compare_point_to_trace_hessian_approximations[target_node][image_idx][0])
-
-            if self.quant_config.norm_scores:
-                approx_by_image_per_interest_point = \
-                    hessian_utils.normalize_scores(hessian_approximations=approx_by_image_per_interest_point)
-
-            # Append the approximations for the current image to the main list
-            approx_by_image.append(approx_by_image_per_interest_point)
+        # Store the approximations for each node for each image
+        approx_by_image = [[nodes_approximations[j][image_idx]
+                            for j, _ in enumerate(self.interest_points)]
+                           for image_idx in range(self.quant_config.num_of_images)]
 
         # Return the mean approximation value across all images for each interest point
-        return np.mean(approx_by_image, axis=0)
+        return np.mean(np.stack(approx_by_image), axis=0)
 
     def _configure_bitwidths_model(self,
                                    mp_model_configuration: List[int],

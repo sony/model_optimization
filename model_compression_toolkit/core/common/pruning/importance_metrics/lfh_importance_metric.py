@@ -129,7 +129,7 @@ class LFHImportanceMetric(BaseImportanceMetric):
         for node in entry_nodes:
             _request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
                                            granularity=HessianInfoGranularity.PER_OUTPUT_CHANNEL,
-                                           target_node=node)
+                                           target_nodes=[node])
             _scores_for_node = hessian_info_service.fetch_hessian(_request,
                                                                   required_size=self.pruning_config.num_score_approximations)
             nodes_scores.append(_scores_for_node)

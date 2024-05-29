@@ -15,6 +15,7 @@
 
 from typing import List, Callable
 
+from model_compression_toolkit.constants import MP_DEFAULT_NUM_SAMPLES
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 
 
@@ -23,7 +24,7 @@ class MixedPrecisionQuantizationConfig:
     def __init__(self,
                  compute_distance_fn: Callable = None,
                  distance_weighting_method: MpDistanceWeighting = MpDistanceWeighting.AVG,
-                 num_of_images: int = 32,
+                 num_of_images: int = MP_DEFAULT_NUM_SAMPLES,
                  configuration_overwrite: List[int] = None,
                  num_interest_points_factor: float = 1.0,
                  use_hessian_based_scores: bool = False,

@@ -87,17 +87,17 @@ def representative_dataset(input_shape, num_of_inputs=1):
 
 
 class TestHessianInfoCalculatorBase(unittest.TestCase):
-    def _fetch_scores(self, hessian_info, target_node, granularity, mode, num_scores=1):
+    def _fetch_scores(self, hessian_info, target_nodes, granularity, mode, num_scores=1):
         request = hessian_common.TraceHessianRequest(mode=mode,
                                                      granularity=granularity,
-                                                     target_node=target_node)
+                                                     target_nodes=target_nodes)
         info = hessian_info.fetch_hessian(request, num_scores)
         assert len(info) == num_scores, f"fetched {num_scores} score but {len(info)} scores were fetched"
         return np.mean(np.stack(info), axis=0)
 
     def _test_score_shape(self, hessian_service, interest_point, granularity, mode, expected_shape, num_scores=1):
         score = self._fetch_scores(hessian_info=hessian_service,
-                                   target_node=interest_point,  # linear op
+                                   target_nodes=interest_point,  # linear op
                                    granularity=granularity,
                                    mode=mode,
                                    num_scores=num_scores)
@@ -257,13 +257,13 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
                                                             f'should be equal')
 
         node1_count = hessian_service.count_saved_info_of_request(
-            hessian_common.TraceHessianRequest(target_node=interest_points[0],
+            hessian_common.TraceHessianRequest(target_nodes=interest_points[0],
                                                mode=hessian_common.HessianMode.WEIGHTS,
                                                granularity=hessian_common.HessianInfoGranularity.PER_TENSOR))
         self.assertTrue(node1_count == 1)
 
         node2_count = hessian_service.count_saved_info_of_request(
-            hessian_common.TraceHessianRequest(target_node=interest_points[1],
+            hessian_common.TraceHessianRequest(target_nodes=interest_points[1],
                                                mode=hessian_common.HessianMode.WEIGHTS,
                                                granularity=hessian_common.HessianInfoGranularity.PER_TENSOR))
         self.assertTrue(node2_count == 1)
@@ -440,13 +440,13 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
                                                               f'should be equal')
 
         node1_count = hessian_service.count_saved_info_of_request(
-            hessian_common.TraceHessianRequest(target_node=interest_points[0],
+            hessian_common.TraceHessianRequest(target_nodes=interest_points[0],
                                                mode=hessian_common.HessianMode.ACTIVATION,
                                                granularity=hessian_common.HessianInfoGranularity.PER_TENSOR))
         self.assertTrue(node1_count == 1)
 
         node2_count = hessian_service.count_saved_info_of_request(
-            hessian_common.TraceHessianRequest(target_node=interest_points[1],
+            hessian_common.TraceHessianRequest(target_nodes=interest_points[1],
                                                mode=hessian_common.HessianMode.ACTIVATION,
                                                granularity=hessian_common.HessianInfoGranularity.PER_TENSOR))
         self.assertTrue(node2_count == 1)
@@ -518,7 +518,7 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
         with self.assertRaises(Exception) as e:
             request = hessian_common.TraceHessianRequest(granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
                                                          mode=hessian_common.HessianMode.ACTIVATION,
-                                                         target_node=graph.get_outputs()[0].node)
+                                                         target_nodes=graph.get_outputs()[0].node)
             _ = hessian_service.fetch_hessian(request, required_size=1)
 
         self.assertTrue("Trying to compute activation Hessian approximation with respect to the model output"

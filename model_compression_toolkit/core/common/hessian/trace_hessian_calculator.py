@@ -56,13 +56,8 @@ class TraceHessianCalculator(ABC):
         self.num_iterations_for_approximation = num_iterations_for_approximation
 
         # Validate representative dataset has same inputs as graph
-        if len(self.input_images)!=len(graph.get_inputs()):
+        if len(self.input_images) != len(graph.get_inputs()):
             Logger.critical(f"The graph requires {len(graph.get_inputs())} inputs, but the provided representative dataset contains {len(self.input_images)} inputs.")
-
-        # Assert all inputs have a batch size of 1
-        for image in self.input_images:
-            if image.shape[0]!=1:
-                Logger.critical(f"Hessian calculations are restricted to a single-image per input. Found input with shape: {image.shape}.")
 
         self.fw_impl = fw_impl
         self.hessian_request = trace_hessian_request

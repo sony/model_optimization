@@ -49,7 +49,7 @@ class TestModel(nn.Module):
         return x
 
 
-def random_datagen_experimental():
+def random_datagen():
     for _ in range(20):
         yield [np.random.random((1, 3, 8, 8))]
 
@@ -69,20 +69,24 @@ class TestGetGPTQConfig(BasePytorchTest):
                                 weights_bias_correction=False)  # disable bias correction when working with GPTQ
         cc = CoreConfig(quantization_config=qc)
 
-        gptqv2_config = get_pytorch_gptq_config(n_epochs=1,
-                                                optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
-                                                regularization_factor=0.001)
-        gptqv2_config.rounding_type = self.rounding_type
-        gptqv2_config.train_bias = self.train_bias
+        gptq_config = get_pytorch_gptq_config(n_epochs=1,
+                                              optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
+                                              regularization_factor=0.001)
+
+        # Decreasing the default number of samples for GPTQ Hessian approximation to allow quick execution of the test
+        gptq_config.hessian_weights_config.hessians_num_samples = 2
+
+        gptq_config.rounding_type = self.rounding_type
+        gptq_config.train_bias = self.train_bias
 
         if self.rounding_type == RoundingType.SoftQuantizer:
-            gptqv2_config.gptq_quantizer_params_override = \
+            gptq_config.gptq_quantizer_params_override = \
                 {QUANT_PARAM_LEARNING_STR: self.quantization_parameters_learning}
         elif self.rounding_type == RoundingType.STE:
-            gptqv2_config.gptq_quantizer_params_override = \
+            gptq_config.gptq_quantizer_params_override = \
                 {MAX_LSB_STR: DefaultDict(default_value=1)}
         else:
-            gptqv2_config.gptq_quantizer_params_override = None
+            gptq_config.gptq_quantizer_params_override = None
 
         tp = generate_test_tp_model({'weights_quantization_method': self.quantization_method})
         symmetric_weights_tpc = generate_pytorch_tpc(name="gptq_config_test", tp_model=tp)
@@ -90,7 +94,7 @@ class TestGetGPTQConfig(BasePytorchTest):
         float_model = TestModel()
 
         quant_model, _ = pytorch_gradient_post_training_quantization(model=float_model,
-                                                                     representative_data_gen=random_datagen_experimental,
+                                                                     representative_data_gen=random_datagen,
                                                                      core_config=cc,
-                                                                     gptq_config=gptqv2_config,
+                                                                     gptq_config=gptq_config,
                                                                      target_platform_capabilities=symmetric_weights_tpc)

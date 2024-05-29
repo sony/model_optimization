@@ -67,24 +67,24 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
         """
         # Check if the target node's layer type is supported
-        if not DEFAULT_KERAS_INFO.is_kernel_op(self.hessian_request.target_node.type):
+        if not DEFAULT_KERAS_INFO.is_kernel_op(self.hessian_request.target_nodes.type):
             Logger.critical(
-                f"{self.hessian_request.target_node.type} is not supported for Hessian-based scoring with respect to weights.")
+                f"{self.hessian_request.target_nodes.type} is not supported for Hessian-based scoring with respect to weights.")
 
         # Construct the Keras float model for inference
         model, _ = FloatKerasModelBuilder(graph=self.graph).build_model()
 
         # Get the weight attributes for the target node type
-        weight_attributes = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.hessian_request.target_node.type)
+        weight_attributes = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.hessian_request.target_nodes.type)
 
         # Get the weight tensor for the target node
         if len(weight_attributes) != 1:
             Logger.critical(f"Hessian-based scoring with respect to weights is currently supported only for nodes with a single weight attribute. Found {len(weight_attributes)} attributes.")
 
-        weight_tensor = getattr(model.get_layer(self.hessian_request.target_node.name), weight_attributes[0])
+        weight_tensor = getattr(model.get_layer(self.hessian_request.target_nodes.name), weight_attributes[0])
 
         # Get the output channel index (needed for HessianInfoGranularity.PER_OUTPUT_CHANNEL case)
-        output_channel_axis, _ = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(self.hessian_request.target_node.type)
+        output_channel_axis, _ = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(self.hessian_request.target_nodes.type)
 
         # Get number of scores that should be calculated by the granularity.
         num_of_scores = self._get_num_scores_by_granularity(weight_tensor,

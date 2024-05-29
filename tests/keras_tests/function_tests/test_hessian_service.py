@@ -68,7 +68,7 @@ class TestHessianService(unittest.TestCase):
     def test_fetch_hessian(self):
         request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
                                       granularity=HessianInfoGranularity.PER_TENSOR,
-                                      target_node=list(self.graph.nodes)[1])
+                                      target_nodes=[list(self.graph.nodes)[1]])
         hessian = self.hessian_service.fetch_hessian(request, 2)
         self.assertEqual(len(hessian), 2)
 
@@ -76,7 +76,7 @@ class TestHessianService(unittest.TestCase):
         self.hessian_service._clear_saved_hessian_info()
         request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
                                       granularity=HessianInfoGranularity.PER_TENSOR,
-                                      target_node=list(self.graph.nodes)[1])
+                                      target_nodes=list(self.graph.nodes)[1])
         self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 0)
 
         self.hessian_service.fetch_hessian(request, 1)
@@ -89,7 +89,7 @@ class TestHessianService(unittest.TestCase):
         self.hessian_service._clear_saved_hessian_info()
         request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
                                       granularity=HessianInfoGranularity.PER_TENSOR,
-                                      target_node=list(self.graph.nodes)[1])
+                                      target_nodes=list(self.graph.nodes)[1])
         hessian = self.hessian_service.fetch_hessian(request, 2)
         self.assertEqual(len(hessian), 2)
         self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 2)
@@ -102,7 +102,7 @@ class TestHessianService(unittest.TestCase):
         self.hessian_service._clear_saved_hessian_info()
         request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
                                       granularity=HessianInfoGranularity.PER_TENSOR,
-                                      target_node=list(self.graph.nodes)[1])
+                                      target_nodes=list(self.graph.nodes)[1])
         self.hessian_service._populate_saved_info_to_size(request, 2)
         self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 2)
 
