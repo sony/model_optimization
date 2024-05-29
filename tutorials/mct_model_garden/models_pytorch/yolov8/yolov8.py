@@ -321,9 +321,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             args = [ch[f]]
         elif m is Concat:
             c2 = sum(ch[x] for x in f)
-        elif m in [Detect]:
-            args.append([ch[x] for x in f])
-        elif m in [Segment]:
+        elif m in [Segment, Detect]:
             args.append([ch[x] for x in f])
         else:
             c2 = ch[f]
@@ -350,70 +348,6 @@ def initialize_weights(model):
             m.momentum = 0.03
         elif t in [nn.Hardswish, nn.LeakyReLU, nn.ReLU, nn.ReLU6, nn.SiLU]:
             m.inplace = True
-
-
-class DetectionModelPyTorch(nn.Module, PyTorchModelHubMixin):
-    def __init__(self, cfg: dict, ch: int = 3):
-        """
-        YOLOv8 detection model.
-
-        Args:
-            cfg (dict): Model configuration in the form of a YAML string or a dictionary.
-            ch (int): Number of input channels.
-        """
-        super().__init__()
-        # Define model
-        self.yaml = cfg
-        ch = self.yaml['ch'] = self.yaml.get('ch', ch)  # input channels
-        self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch)  # model, savelist
-        self.names = {i: f"{i}" for i in range(self.yaml["nc"])}  # default names dict
-        self.inplace = self.yaml.get("inplace", True)
-
-        # Build strides
-        m = self.model[-1]  # Detect()
-        if isinstance(m, Detect):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
-            m.inplace = self.inplace
-            m.bias_init()  # only run once
-        else:
-            self.stride = torch.Tensor([32])
-
-        # Init weights, biases
-        initialize_weights(self)
-
-    def forward(self, x):
-        """
-        Perform a forward pass through the network.
-
-        Args:
-            x (torch.Tensor): The input tensor to the model.
-
-        Returns:
-            (torch.Tensor): The last output of the model.
-        """
-        y = []  # outputs
-        for m in self.model:
-            if m.f != -1:  # if not from previous layer
-                x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
-            x = m(x)  # run
-            y.append(x if m.i in self.save else None)  # save output
-        return x
-
-    def make_tensors_contiguous(self):
-        for name, param in self.named_parameters():
-            if not param.is_contiguous():
-                param.data = param.data.contiguous()
-
-        for name, buffer in self.named_buffers():
-            if not buffer.is_contiguous():
-                buffer.data = buffer.data.contiguous()
-
-    def save_pretrained(self, save_directory, **kwargs):
-        # Make tensors contiguous
-        self.make_tensors_contiguous()
-
-        # Call the original save_pretrained method
-        super().save_pretrained(save_directory, **kwargs)
-
 
 def model_predict(model: Any,
                   inputs: np.ndarray) -> List:
@@ -560,25 +494,29 @@ class Segment(Detect):
         return y_bb, y_cls, mc, p   
 
 
-
-class SegmentationModelPyTorch(nn.Module, PyTorchModelHubMixin):
+class ModelPyTorch(nn.Module, PyTorchModelHubMixin):
     """
-    YOLOv8 segmentation model.
+    Unified YOLOv8 model for both detection and segmentation.
 
     Args:
         cfg (dict): Model configuration in the form of a YAML string or a dictionary.
         ch (int): Number of input channels.
+        mode (str): Mode of operation ('detection' or 'segmentation').
     """
-    def __init__(self, cfg: dict, ch: int = 3):
+    def __init__(self, cfg: dict, ch: int = 3, mode: str = 'detection'):
         super().__init__()
         self.yaml = cfg
         ch = self.yaml['ch'] = self.yaml.get('ch', ch)
+        self.mode = mode
         self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch)
         self.names = {i: f"{i}" for i in range(self.yaml["nc"])}
         self.inplace = self.yaml.get("inplace", True)
 
         m = self.model[-1]
-        if isinstance(m, Segment):
+        if isinstance(m, Segment) and self.mode == 'segmentation':
+            m.inplace = self.inplace
+            m.bias_init()
+        elif isinstance(m, Detect) and self.mode == 'detection':
             m.inplace = self.inplace
             m.bias_init()
         else:
@@ -615,5 +553,3 @@ class SegmentationModelPyTorch(nn.Module, PyTorchModelHubMixin):
         self.make_tensors_contiguous()
         # Call the original save_pretrained method
         super().save_pretrained(save_directory, **kwargs)
-
-

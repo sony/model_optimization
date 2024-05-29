@@ -88,7 +88,6 @@ def combined_nms_seg(batch_boxes, batch_scores, batch_masks, iou_thres: float = 
         masks = masks[valid_detections]
 
         if len(detections) == 0:
-            # If no valid detections, append empty results with the correct shape and continue
             nms_results.append((np.array([]), np.array([]), np.array([]), np.array([[]])))
             continue
 
@@ -99,21 +98,24 @@ def combined_nms_seg(batch_boxes, batch_scores, batch_masks, iou_thres: float = 
 
         # Perform class-wise NMS
         unique_classes = np.unique(detections[:, 5])
-        final_indices = []
+        all_indices = []
 
         for cls in unique_classes:
             cls_indices = np.where(detections[:, 5] == cls)[0]
             cls_boxes = detections[cls_indices, :4]
             cls_scores = detections[cls_indices, 4]
-            cls_valid_indices = nms(cls_boxes, cls_scores, iou_thres=iou_thres, max_out_dets=max_out_dets)
-            final_indices.extend(cls_indices[cls_valid_indices])
+            cls_valid_indices = nms(cls_boxes, cls_scores, iou_thres=iou_thres, max_out_dets=len(cls_indices))  # Use all available for NMS
+            all_indices.extend(cls_indices[cls_valid_indices])
 
-        if len(final_indices) == 0:
-            # If no indices remain after NMS, append empty results with the correct shape and continue
+        if len(all_indices) == 0:
             nms_results.append((np.array([]), np.array([]), np.array([]), np.array([[]])))
             continue
 
-        final_indices = np.array(final_indices)
+        # Sort all indices by score and limit to max_out_dets
+        all_indices = np.array(all_indices)
+        all_indices = all_indices[np.argsort(-detections[all_indices, 4])]
+        final_indices = all_indices[:max_out_dets]
+
         final_detections = detections[final_indices]
         final_masks = masks[final_indices]
 

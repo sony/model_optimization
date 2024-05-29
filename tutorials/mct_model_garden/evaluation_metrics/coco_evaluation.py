@@ -540,7 +540,7 @@ def evaluate_seg_model(annotation_file, results_file):
     coco_eval.summarize()
 
 
-def evaluate_yolov8_segmentation(model, data_dir, data_type='val2017', img_ids_limit=800, output_file='results.json'):
+def evaluate_yolov8_segmentation(model, data_dir, data_type='val2017', img_ids_limit=800, output_file='results.json',iou_thresh=0.7, conf=0.001, max_dets=300,mask_thresh=0.55):
     """
     Evaluate YOLOv8 model for instance segmentation on COCO dataset.
 
@@ -575,7 +575,7 @@ def evaluate_yolov8_segmentation(model, data_dir, data_type='val2017', img_ids_l
         with torch.no_grad():
             output = model(input_tensor)
         #run post processing (nms)
-        boxes, scores, classes, masks = postprocess_yolov8_inst_seg(outputs=output)
+        boxes, scores, classes, masks = postprocess_yolov8_inst_seg(outputs=output , conf,iou_thresh, max_dets)
 
         if boxes.size == 0:  
             continue
@@ -585,7 +585,7 @@ def evaluate_yolov8_segmentation(model, data_dir, data_type='val2017', img_ids_l
         pp_masks = process_masks(masks, boxes, orig_img.shape, model_input_size)
 
         #convert output to coco readable
-        image_results = masks_to_coco_rle(pp_masks, boxes, img_id, orig_img.shape[0], orig_img.shape[1], scores, classes, 0.55)
+        image_results = masks_to_coco_rle(pp_masks, boxes, img_id, orig_img.shape[0], orig_img.shape[1], scores, classes, mask_thresh)
         results.extend(image_results)
 
     save_results_to_json(results, output_file)
