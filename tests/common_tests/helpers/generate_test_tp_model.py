@@ -67,6 +67,7 @@ def generate_mixed_precision_test_tp_model(base_cfg, default_config, mp_bitwidth
                                                 activation_n_bits=activation_n_bits)
 
         if candidate_cfg == base_cfg:
+            # the base config must be a reference of an instance in the cfg_list, so we put it and not the clone in the list.
             mp_op_cfg_list.append(base_cfg)
         else:
             mp_op_cfg_list.append(candidate_cfg)
@@ -89,6 +90,7 @@ def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_c
                                                     k != KERNEL_ATTR}},
                                                 activation_n_bits=activation_n_bits)
         if candidate_cfg == base_cfg:
+            # the base config must be a reference of an instance in the cfg_list, so we put it and not the clone in the list.
             mp_op_cfg_list.append(base_cfg)
         else:
             mp_op_cfg_list.append(candidate_cfg)

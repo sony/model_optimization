@@ -225,11 +225,11 @@ class QuantizationConfigOptions:
                 f"For multiple configurations, a 'base_config' is required for non-mixed-precision optimization."
             assert any([base_config is cfg for cfg in quantization_config_list]), \
                 f"'base_config' must be included in the quantization config options list."
-            # Enforce base_config to be a different instance from the one in quantization_config_list
+            # Enforce base_config to be a reference to an instance in quantization_config_list.
             self.base_config = base_config
         elif len(quantization_config_list) == 1:
             assert base_config is None or base_config == quantization_config_list[0], "'base_config' should be included in 'quantization_config_list'"
-            # Override base_config to be a different instance from the one in quantization_config_list
+            # Set base_config to be a reference to the first instance in quantization_config_list.
             self.base_config = quantization_config_list[0]
         else:
             raise AssertionError("'QuantizationConfigOptions' requires at least one 'OpQuantizationConfig'. The provided list is empty.")
