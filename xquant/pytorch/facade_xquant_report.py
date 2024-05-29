@@ -23,33 +23,36 @@ from xquant.logger import Logger
 
 if FOUND_TORCH:
     from xquant.pytorch.pytorch_report_utils import PytorchReportUtils
-    from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     import torch
 
     def xquant_report_pytorch_experimental(float_model: torch.nn.Module,
                                            quantized_model: torch.nn.Module,
                                            repr_dataset: Callable,
                                            validation_dataset: Callable,
-                                           core_config: mct.core.CoreConfig,
-                                           xquant_config: XQuantConfig = None):
+                                           # core_config: mct.core.CoreConfig,
+                                           xquant_config: XQuantConfig):
+        """
 
-        pytorch_report_utils = PytorchReportUtils()
-        _collected_data = collect_report_data(float_model,
-                                              quantized_model,
-                                              repr_dataset,
-                                              validation_dataset,
-                                              core_config,
-                                              pytorch_report_utils,
-                                              xquant_config)
+        Args:
+            float_model:
+            quantized_model:
+            repr_dataset:
+            validation_dataset:
+            core_config:
+            xquant_config:
 
-        quant_graph = pytorch_report_utils.get_quant_graph_with_metrics(quantized_model=quantized_model,
-                                                                        collected_data=_collected_data,
-                                                                        xquant_config=xquant_config)
-        pytorch_report_utils.add_graph_to_tensorboard(graph=quant_graph,
-                                                      fw_info=DEFAULT_PYTORCH_INFO,
-                                                      report_dir=xquant_config.report_dir)
-        pytorch_report_utils.dump_report_to_json(report_dir=xquant_config.report_dir,
-                                                 collected_data=_collected_data)
+        Returns:
+
+        """
+
+        pytorch_report_utils = PytorchReportUtils(xquant_config.report_dir)
+        _collected_data = collect_report_data(float_model=float_model,
+                                              quantized_model=quantized_model,
+                                              repr_dataset=repr_dataset,
+                                              validation_dataset=validation_dataset,
+                                              # core_config=core_config,
+                                              fw_report_utils=pytorch_report_utils,
+                                              xquant_config=xquant_config)
 
         return _collected_data
 

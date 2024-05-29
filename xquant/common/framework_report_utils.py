@@ -12,26 +12,68 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
-#
+
 import json
 import os
 from typing import Tuple, Any, Callable, Dict
 
-import model_compression_toolkit as mct
-from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 from xquant import XQuantConfig
 from xquant.common.constants import CS_METRIC_NAME, SQNR_METRIC_NAME, MSE_METRIC_NAME, REPORT_FILENAME
+from xquant.logger import Logger
 
-DEFAULT_METRICS_NAMES = [CS_METRIC_NAME, MSE_METRIC_NAME, SQNR_METRIC_NAME]
+DEFAULT_METRICS_NAMES = [CS_METRIC_NAME,
+                         MSE_METRIC_NAME,
+                         SQNR_METRIC_NAME]
 
 class FrameworkReportUtils:
+
+    def __init__(self,
+                 tb_writer: TensorboardWriter):
+        """
+        Args:
+            tb_writer: TensorboardWriter object to add data to report (like graph and histograms).
+        """
+        Logger.info(f"Please run: tensorboard --logdir {tb_writer.dir_path}")
+        self.tb_writer = tb_writer
+
+    def add_histograms_to_tensorboard(self,
+                                      model: Any,
+                                      repr_dataset: Callable):
+        """
+        Collect histograms and add them to Tensorboard.
+
+        Args:
+            model: Model to collect histograms on.
+            repr_dataset: Dataset that is used an input for collecting histograms.
+
+        Returns:
+            None
+        """
+        Logger.critical(f"add_histograms_to_tensorboard is not implemented.")
+
+    def get_quantized_graph(self,
+                            quantized_model: Any,
+                            repr_dataset: Callable):
+        """
+        Get a graph representation of the quantized model.
+
+        Args:
+            quantized_model: The quantized model.
+            repr_dataset: Representative dataset to use during the graph building.
+
+        Returns:
+            Graph representation of the quantized model.
+        """
+
+        Logger.critical(f"get_quantized_graph is not implemented.")
 
     def get_quant_graph_with_metrics(self,
                                      quantized_model: Any,
                                      collected_data: Dict[str, Any],
-                                     xquant_config: XQuantConfig):
+                                     xquant_config: XQuantConfig,
+                                     repr_dataset: Callable):
         """
         Generate the quantized graph with associated metrics.
 
@@ -39,30 +81,12 @@ class FrameworkReportUtils:
             quantized_model (Any): The model after quantization.
             collected_data (Dict[str, Any]): Data collected during quantization.
             xquant_config (XQuantConfig): Configuration settings for explainable quantization.
+            repr_dataset (Callable): Representative dataset used during graph building.
 
         Returns:
             Any: A graph structure with metrics.
         """
-        raise NotImplemented
-
-    def get_edited_quantized_model(self,
-                                   float_model: Any,
-                                   quantized_model: Any,
-                                   xquant_config: XQuantConfig,
-                                   core_config: mct.core.CoreConfig) -> Any:
-        """
-        Edit the quantized model based on the given configuration.
-
-        Args:
-            float_model (Any): The original floating-point model.
-            quantized_model (Any): The model after quantization.
-            xquant_config (XQuantConfig): Configuration settings for explainable quantization.
-            core_config (mct.core.CoreConfig): Core configuration settings.
-
-        Returns:
-            Any: The edited quantized model.
-        """
-        raise NotImplemented
+        Logger.critical(f"get_quant_graph_with_metrics is not implemented.")
 
     def get_metric_on_output(self,
                              float_model: Any,
@@ -83,13 +107,12 @@ class FrameworkReportUtils:
         Returns:
             Dict[str, float]: A dictionary of computed metrics.
         """
-        raise NotImplemented
+        Logger.critical(f"get_metric_on_output is not implemented.")
 
     def get_metric_on_intermediate(self,
                                    float_model: Any,
                                    quantized_model: Any,
                                    dataset: Callable,
-                                   core_config: mct.core.CoreConfig,
                                    custom_metrics_intermediate: Dict[str, Callable] = None,
                                    is_validation: bool = False) -> Dict[str, Dict[str, float]]:
         """
@@ -99,14 +122,13 @@ class FrameworkReportUtils:
             float_model (Any): The original floating-point model.
             quantized_model (Any): The model after quantization.
             dataset (Callable): Dataset used for evaluation.
-            core_config (mct.core.CoreConfig): Core configuration settings.
             custom_metrics_intermediate (Dict[str, Callable], optional): Custom metrics for intermediate layers. Defaults to None.
             is_validation (bool, optional): Flag indicating if this is a validation dataset. Defaults to False.
 
         Returns:
             Dict[str, Dict[str, float]]: A dictionary of computed metrics for intermediate layers.
         """
-        raise NotImplemented
+        Logger.critical(f"get_metric_on_intermediate is not implemented.")
 
     def get_default_metrics(self) -> Dict[str, Callable]:
         """
@@ -115,24 +137,22 @@ class FrameworkReportUtils:
         Returns:
             Dict[str, Callable]: A dictionary of default metric functions.
         """
-        raise NotImplemented
+        Logger.critical(f"get_default_metrics is not implemented.")
 
     def create_float_folded_model(self,
                                   float_model: Any,
-                                  representative_dataset: Any,
-                                  core_config: mct.core.CoreConfig):
+                                  representative_dataset: Any):
         """
         Create a folded version of the floating-point model.
 
         Args:
             float_model (Any): The floating-point model.
             representative_dataset (Any): Representative dataset used during folding.
-            core_config (mct.core.CoreConfig): Core configuration settings.
 
         Returns:
             Any: The folded floating-point model.
         """
-        raise NotImplemented
+        Logger.critical(f"create_float_folded_model is not implemented.")
 
     def wrapped_dataset(self,
                         dataset: Any,
@@ -149,7 +169,7 @@ class FrameworkReportUtils:
         Returns:
             Any: Wrapped dataset ready for evaluation.
         """
-        raise NotImplemented
+        Logger.critical(f"wrapped_dataset is not implemented.")
 
     def get_float_to_quantized_compare_points(self,
                                               quantized_model: Any,
@@ -164,7 +184,7 @@ class FrameworkReportUtils:
         Returns:
             Dict[str, str]: A dictionary mapping comparison points between the two models.
         """
-        raise NotImplemented
+        Logger.critical(f"get_float_to_quantized_compare_points is not implemented.")
 
     def compute_metrics(self,
                         predictions: Tuple[Any, Any],
@@ -192,25 +212,17 @@ class FrameworkReportUtils:
 
         return metrics
 
-    def add_graph_to_tensorboard(self,
-                                 graph: Graph,
-                                 fw_info: FrameworkInfo,
-                                 report_dir: str):
+    def add_graph_to_tensorboard(self, graph: Graph):
         """
         Add the graph to TensorBoard for visualization.
 
         Args:
             graph (Graph): The graph to add.
-            fw_info (FrameworkInfo): Framework information.
-            report_dir (str): Directory where the TensorBoard logs will be saved.
 
         Returns:
             None
         """
-        tb_writer = TensorboardWriter(report_dir, fw_info)
-        tb_writer.add_graph(graph, "")
-        tb_writer.close()
-        print(f"Please run: tensorboard --logdir {report_dir}")
+        self.tb_writer.add_graph(graph, "")
 
     def create_report_directory(self, dir_path: str):
         """
@@ -224,7 +236,7 @@ class FrameworkReportUtils:
         """
         if not os.path.exists(dir_path):
             os.makedirs(dir_path, exist_ok=True)
-            print(f"Directory created at: {dir_path}")
+            Logger.info(f"Directory created at: {dir_path}")
 
     def dump_report_to_json(self,
                             report_dir: str,
@@ -241,7 +253,7 @@ class FrameworkReportUtils:
         """
         report_file_name = os.path.join(report_dir, REPORT_FILENAME)
         report_file_name = os.path.abspath(report_file_name)
-        print(f"Dumping report data to: {report_file_name}")
+        Logger.info(f"Dumping report data to: {report_file_name}")
 
         with open(report_file_name, 'w') as f:
             json.dump(collected_data, f, indent=4)

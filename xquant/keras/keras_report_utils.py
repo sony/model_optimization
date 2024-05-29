@@ -14,11 +14,15 @@
 #  ==============================================================================
 #
 import keras
+from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
 from tensorflow.keras.models import Model
+from tqdm import tqdm
 
 from mct_quantizers import KerasQuantizationWrapper
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
+from model_compression_toolkit.core.common.model_collector import ModelCollector
+from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -32,31 +36,20 @@ from functools import partial
 from xquant import XQuantConfig
 from xquant.common.constants import INTERMEDIATE_METRICS_REPR, INTERMEDIATE_METRICS_VAL, XQUANT_REPR, XQUANT_VAL
 from xquant.common.framework_report_utils import FrameworkReportUtils, MSE_METRIC_NAME, CS_METRIC_NAME, SQNR_METRIC_NAME
-import model_compression_toolkit as mct
+from model_compression_toolkit.ptq.keras.quantization_facade import DEFAULT_KERAS_TPC
 from model_compression_toolkit.core.keras.reader.reader import model_reader
 from xquant.logger import Logger
 
 
 class KerasReportUtils(FrameworkReportUtils):
 
-    def get_edited_quantized_model(self,
-                                   float_model: keras.Model,
-                                   quantized_model: keras.Model,
-                                   xquant_config: XQuantConfig,
-                                   core_config: mct.core.CoreConfig) -> keras.Model:
+    def __init__(self, report_dir: str):
         """
-        Edit the quantized Keras model according to the given configuration.
-
         Args:
-            float_model (keras.Model): The floating-point Keras model.
-            quantized_model (keras.Model): The quantized Keras model.
-            xquant_config (XQuantConfig): Configuration settings for explainable quantization.
-            core_config (mct.core.CoreConfig): Core configuration settings.
-
-        Returns:
-            keras.Model: The edited quantized model.
+            report_dir: Logging dir path.
         """
-        Logger.critical(f"Editing Keras models is unsupported.")
+        tb_writer = TensorboardWriter(report_dir, DEFAULT_KERAS_INFO)
+        super().__init__(tb_writer=tb_writer)
 
     def get_metric_on_output(self,
                              float_model: keras.Model,
@@ -110,7 +103,6 @@ class KerasReportUtils(FrameworkReportUtils):
                                    float_model: keras.Model,
                                    quantized_model: keras.Model,
                                    dataset: Callable,
-                                   core_config: mct.core.CoreConfig,
                                    custom_metrics_intermediate: Dict[str, Callable] = None,
                                    is_validation: bool = False) -> Dict[str, Dict[str, float]]:
         """
@@ -120,7 +112,6 @@ class KerasReportUtils(FrameworkReportUtils):
             float_model (keras.Model): The floating-point Keras model.
             quantized_model (keras.Model): The quantized Keras model.
             dataset (Callable): Dataset used for inference.
-            core_config (mct.core.CoreConfig): Core configuration settings.
             custom_metrics_intermediate (Dict[str, Callable], optional): Custom metrics for intermediate layers.
             Defaults to None.
             is_validation (bool, optional): Flag indicating if this is a validation dataset. Defaults to False.
@@ -130,8 +121,7 @@ class KerasReportUtils(FrameworkReportUtils):
         """
 
         float_model = self.create_float_folded_model(float_model=float_model,
-                                                     representative_dataset=None,
-                                                     core_config=core_config)
+                                                     representative_dataset=None)
 
         dataset = partial(self.wrapped_dataset,
                           dataset=dataset,
@@ -162,9 +152,9 @@ class KerasReportUtils(FrameworkReportUtils):
 
         metrics_to_compute = list(self.get_default_metrics().keys())
         if custom_metrics_intermediate:
-            assert isinstance(custom_metrics_intermediate,
-                              dict), (f"custom_metrics_intermediate should be a dictionary but is "
-                                      f"{type(custom_metrics_intermediate)}")
+            if not isinstance(custom_metrics_intermediate, dict):
+                Logger.critical(f"custom_metrics_intermediate should be a dictionary but is {type(custom_metrics_intermediate)}")
+
             metrics_to_compute += list(custom_metrics_intermediate.keys())
 
         float_name2quant_name = self.get_float_to_quantized_compare_points(float_model=float_model,
@@ -226,36 +216,49 @@ class KerasReportUtils(FrameworkReportUtils):
     def create_float_folded_model(self,
                                   float_model: keras.Model,
                                   representative_dataset: Any,
-                                  core_config: mct.core.CoreConfig) -> keras.Model:
+                                  ) -> keras.Model:
         """
         Create a folded version of the floating-point model.
 
         Args:
             float_model (keras.Model): The original floating-point model.
             representative_dataset (Any): Representative dataset used during quantization.
-            core_config (mct.core.CoreConfig): Core configuration settings.
 
         Returns:
             keras.Model: The folded floating-point model.
         """
-        float_graph = graph_preparation_runner(in_model=float_model,
-                                               representative_data_gen=None,
-                                               quantization_config=core_config.quantization_config,
-                                               fw_info=DEFAULT_KERAS_INFO,
-                                               fw_impl=KerasImplementation(),
-                                               tpc=mct.get_target_platform_capabilities("tensorflow",
-                                                                                        "imx500"),
-                                               tb_w=None,
-                                               mixed_precision_enable=False,
-                                               running_gptq=False)
-
+        float_graph = self.convert_to_graph(model=float_model)
         float_folded_model, _ = KerasImplementation().model_builder(float_graph,
                                                                     mode=ModelBuilderMode.FLOAT,
                                                                     append2output=None,
                                                                     fw_info=DEFAULT_KERAS_INFO)
         return float_folded_model
 
-    def wrapped_dataset(self, dataset: Any, is_validation: bool, device: str = None) -> Any:
+    def convert_to_graph(self,
+                         model: Model,
+                         repr_dataset: Callable=None):
+        """
+        Convert Keras model to networkx graph representation.
+
+        Args:
+            model: Keras model to convert.
+            repr_dataset: Representative dataset (not used in Keras).
+
+        Returns:
+            Graph representing the model.
+        """
+        graph = graph_preparation_runner(in_model=model,
+                                         representative_data_gen=repr_dataset,
+                                         quantization_config=DEFAULTCONFIG,
+                                         fw_info=DEFAULT_KERAS_INFO,
+                                         fw_impl=KerasImplementation(),
+                                         tpc=DEFAULT_KERAS_TPC)
+        return graph
+
+    def wrapped_dataset(self,
+                        dataset: Any,
+                        is_validation: bool,
+                        device: str = None) -> Any:
         """
         Generator function that wraps 'dataset' to be able to handle both
         representative and validation datasets.
@@ -308,10 +311,28 @@ class KerasReportUtils(FrameworkReportUtils):
 
         return float_name2quant_name
 
+    def get_quantized_graph(self,
+                            quantized_model: Model,
+                            repr_dataset: Callable = None):
+        """
+        Get a graph representation of the quantized model.
+
+        Args:
+            quantized_model: The quantized model.
+            repr_dataset: Representative dataset to use during the graph building (not used in Keras).
+
+        Returns:
+            Graph representation of the quantized model.
+        """
+        quant_graph = model_reader(quantized_model)
+        return quant_graph
+
+
     def get_quant_graph_with_metrics(self,
                                      quantized_model: keras.Model,
                                      collected_data: Dict[str, Any],
-                                     xquant_config: XQuantConfig) -> Graph:
+                                     xquant_config: XQuantConfig,
+                                     repr_dataset: Callable = None) -> Graph:
         """
         Generate the quantized graph with associated metrics.
 
@@ -319,11 +340,12 @@ class KerasReportUtils(FrameworkReportUtils):
             quantized_model (keras.Model): The quantized Keras model.
             collected_data (Dict[str, Any]): Data collected during quantization.
             xquant_config (XQuantConfig): Configuration settings for explainable quantization.
+            repr_dataset (Callable): Representative dataset (not used in Keras).
 
         Returns:
             Graph: A graph structure with metrics.
         """
-        quant_graph = model_reader(quantized_model)
+        quant_graph = self.get_quantized_graph(quantized_model=quantized_model)
         for node in quant_graph.nodes:
             if xquant_config.compute_intermediate_metrics_repr:
                 if node.name in collected_data[INTERMEDIATE_METRICS_REPR].keys():
@@ -332,4 +354,27 @@ class KerasReportUtils(FrameworkReportUtils):
                 if node.name in collected_data[INTERMEDIATE_METRICS_VAL].keys():
                     node.framework_attr[XQUANT_VAL] = collected_data[INTERMEDIATE_METRICS_VAL][node.name]
         return quant_graph
+
+    def add_histograms_to_tensorboard(self,
+                                      model: Model,
+                                      repr_dataset: Callable):
+        """
+        Collect histograms and add them to Tensorboard.
+
+        Args:
+            model: Model to collect histograms on.
+            repr_dataset: Dataset that is used an input for collecting histograms.
+
+        Returns:
+            None
+        """
+        graph = self.convert_to_graph(model,
+                                      repr_dataset)
+        mi = ModelCollector(graph,
+                            KerasImplementation(),
+                            DEFAULT_KERAS_INFO)
+        for _data in tqdm(repr_dataset(), "Collecting Histograms"):
+            mi.infer(_data)
+
+        self.tb_writer.add_histograms(graph, "")
 

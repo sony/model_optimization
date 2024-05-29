@@ -14,6 +14,7 @@
 #  ==============================================================================
 #
 import tempfile
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from typing import Callable, Any, Dict
 
 import model_compression_toolkit as mct
@@ -27,9 +28,9 @@ def collect_report_data(float_model: Any,
                         quantized_model: Any,
                         repr_dataset: Callable,
                         validation_dataset: Callable,
-                        core_config: mct.core.CoreConfig,
+                        # core_config: mct.core.CoreConfig,
                         fw_report_utils: FrameworkReportUtils,
-                        xquant_config: XQuantConfig = None) -> Dict[str, Any]:
+                        xquant_config: XQuantConfig) -> Dict[str, Any]:
     """
     Collects report data by computing various metrics on the quantized model.
 
@@ -40,28 +41,21 @@ def collect_report_data(float_model: Any,
         validation_dataset (Callable): Validation dataset used for evaluation.
         core_config (mct.core.CoreConfig): Core configuration settings.
         fw_report_utils (FrameworkReportUtils): Utilities for generating framework-specific reports.
-        xquant_config (XQuantConfig, optional): Configuration settings for explainable quantization.
-                                                If not provided, a default configuration will be created.
+        xquant_config (XQuantConfig): Configuration settings for explainable quantization.
 
     Returns:
         Dict[str, Any]: A dictionary containing the collected metrics and report data.
     """
 
-    # If no xquant_config is provided, create a default one with a temporary directory for reports.
-    if not xquant_config:
-        report_dir = tempfile.gettempdir()
-        xquant_config = XQuantConfig(report_dir=report_dir)
-
     fw_report_utils.create_report_directory(dir_path=xquant_config.report_dir)
 
-    _collected_data = {}
+    # Collect histograms and add them to Tensorboard.
+    fw_report_utils.add_histograms_to_tensorboard(model=float_model,
+                                                  repr_dataset=repr_dataset,
+                                                  # core_config=core_config
+                                                  )
 
-    # Apply edit rules to the quantized model.
-    if xquant_config.edit_rules:
-        quantized_model = fw_report_utils.get_edited_quantized_model(float_model=float_model,
-                                                                     quantized_model=quantized_model,
-                                                                     xquant_config=xquant_config,
-                                                                     core_config=core_config)
+    _collected_data = {}
 
     # Compute output metrics for the representative dataset.
     if xquant_config.compute_output_metrics_repr:
@@ -85,7 +79,8 @@ def collect_report_data(float_model: Any,
             quantized_model=quantized_model,
             dataset=repr_dataset,
             custom_metrics_intermediate=xquant_config.custom_metrics_intermediate,
-            core_config=core_config)
+            # core_config=core_config
+        )
 
     # Compute intermediate metrics for the validation dataset.
     if xquant_config.compute_intermediate_metrics_val:
@@ -94,9 +89,20 @@ def collect_report_data(float_model: Any,
             quantized_model=quantized_model,
             dataset=validation_dataset,
             custom_metrics_intermediate=xquant_config.custom_metrics_intermediate,
-            core_config=core_config,
+            # core_config=core_config,
             is_validation=True)
 
-    # Return the dictionary containing all collected data.
+    # Generate the quantized graph with metrics.
+    quant_graph = fw_report_utils.get_quant_graph_with_metrics(quantized_model=quantized_model,
+                                                               collected_data=_collected_data,
+                                                               xquant_config=xquant_config,
+                                                               repr_dataset=repr_dataset)
+
+    # Add the quantized graph to TensorBoard for visualization.
+    fw_report_utils.add_graph_to_tensorboard(graph=quant_graph)
+
+    fw_report_utils.dump_report_to_json(report_dir=xquant_config.report_dir,
+                                        collected_data=_collected_data)
+
     return _collected_data
 

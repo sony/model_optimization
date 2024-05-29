@@ -75,7 +75,7 @@ class TestXQuantReport(unittest.TestCase):
             self.quantized_model,
             self.repr_dataset,
             self.validation_dataset,
-            self.core_config,
+            # self.core_config,
             self.xquant_config
         )
 
@@ -92,7 +92,7 @@ class TestXQuantReport(unittest.TestCase):
             self.quantized_model,
             self.repr_dataset,
             self.validation_dataset,
-            self.core_config,
+            # self.core_config,
             self.xquant_config
         )
 
@@ -111,7 +111,7 @@ class TestXQuantReport(unittest.TestCase):
             self.quantized_model,
             self.repr_dataset,
             self.validation_dataset,
-            self.core_config,
+            # self.core_config,
             self.xquant_config
         )
 
@@ -128,7 +128,7 @@ class TestXQuantReport(unittest.TestCase):
             self.quantized_model,
             self.repr_dataset,
             self.validation_dataset,
-            self.core_config,
+            # self.core_config,
             self.xquant_config
         )
 
@@ -150,7 +150,7 @@ class TestXQuantReport(unittest.TestCase):
             self.quantized_model,
             self.repr_dataset,
             self.validation_dataset,
-            self.core_config,
+            # self.core_config,
             self.xquant_config
         )
         self.assertIn(INTERMEDIATE_METRICS_VAL, result)
@@ -166,7 +166,7 @@ class TestXQuantReport(unittest.TestCase):
             self.quantized_model,
             self.repr_dataset,
             self.validation_dataset,
-            self.core_config,
+            # self.core_config,
             self.xquant_config
         )
 
