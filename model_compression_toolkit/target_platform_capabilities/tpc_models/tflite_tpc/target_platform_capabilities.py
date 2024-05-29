@@ -26,8 +26,8 @@ if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.tpc_models.tflite_tpc.latest import get_keras_tpc_latest
 
     # Keras: TPC versioning
-    keras_tpc_models_dict = {'v1': get_keras_tpc_v1(),
-                             LATEST: get_keras_tpc_latest()}
+    keras_tpc_models_dict = {'v1': get_keras_tpc_v1,
+                             LATEST: get_keras_tpc_latest}
 
 ###############################
 # Build Pytorch TPC models
@@ -39,8 +39,8 @@ if FOUND_TORCH:
     from model_compression_toolkit.target_platform_capabilities.tpc_models.tflite_tpc.latest import get_pytorch_tpc_latest
 
     # Pytorch: TPC versioning
-    pytorch_tpc_models_dict = {'v1': get_pytorch_tpc_v1(),
-                               LATEST: get_pytorch_tpc_latest()}
+    pytorch_tpc_models_dict = {'v1': get_pytorch_tpc_v1,
+                               LATEST: get_pytorch_tpc_latest}
 
 tpc_dict = {TENSORFLOW: keras_tpc_models_dict,
             PYTORCH: pytorch_tpc_models_dict}
