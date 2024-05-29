@@ -47,5 +47,6 @@ class ReshapeCallMethod(common.BaseSubstitution):
         """
         # Check op_call_args is not empty and has its argument as a tuple
         if node.op_call_args and not isinstance(node.op_call_args[0], tuple):
-            node.op_call_args = [node.op_call_args]
+            if len(node.op_call_args)>1:
+                node.op_call_args = [node.op_call_args]
         return graph
