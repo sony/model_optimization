@@ -54,6 +54,8 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.mu
     import MultiHeadAttentionDecomposition
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.permute_call_method import \
     PermuteCallMethod
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.reshape_call_method import \
+    ReshapeCallMethod
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.const_holder_conv import \
     FunctionalConvSubstitution
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
@@ -236,7 +238,8 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return [ReshapeWithStaticShapes(),
                 MultiHeadAttentionDecomposition(),
-                PermuteCallMethod(),
+                PermuteCallMethod(), 
+                ReshapeCallMethod(),
                 FunctionalConvSubstitution(fw_info),
                 FunctionalBatchNorm(),
                 FunctionalLayerNorm(),

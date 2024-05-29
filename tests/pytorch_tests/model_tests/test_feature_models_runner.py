@@ -56,6 +56,7 @@ from tests.pytorch_tests.model_tests.feature_models.symmetric_activation_test im
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
     SoftmaxFunctionNetTest
 from tests.pytorch_tests.model_tests.feature_models.permute_substitution_test import PermuteSubstitutionTest
+from tests.pytorch_tests.model_tests.feature_models.reshape_substitution_test import ReshapeSubstitutionTest
 from tests.pytorch_tests.model_tests.feature_models.constant_conv_substitution_test import ConstantConvSubstitutionTest, \
     ConstantConvReuseSubstitutionTest, ConstantConvTransposeSubstitutionTest
 from tests.pytorch_tests.model_tests.feature_models.multi_head_attention_test import MHALayerNetTest, \
@@ -95,6 +96,7 @@ from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import 
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
+
     def test_remove_identity(self):
         """
         This test checks that identity layers are removed from the model.
@@ -270,13 +272,19 @@ class FeatureModelsTestRunner(unittest.TestCase):
                                                enable_weights_quantization=enable_weights_quantization).run_test()
             ConstRepresentationLinearLayerTest(self, func=nn.ConvTranspose2d(16, 16, 1),
                                                const=c_img, enable_weights_quantization=enable_weights_quantization).run_test()
-
+    
     def test_permute_substitution(self):
         """
         This test checks the permute substitution feature
         """
         PermuteSubstitutionTest(self).run_test()
-
+    
+    def test_reshape_substitution(self):
+        """
+        This test checks the permute substitution feature
+        """
+        ReshapeSubstitutionTest(self).run_test()
+    
     def test_constant_conv_substitution(self):
         """
         This test checks the constant conv substitution feature
