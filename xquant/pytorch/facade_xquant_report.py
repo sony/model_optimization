@@ -1,11 +1,11 @@
 #  Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
-#  #
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
-#  #
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-#  #
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,6 @@
 #  ==============================================================================
 
 from typing import Callable
-import model_compression_toolkit as mct
 
 from xquant.common.collect_report_data import collect_report_data
 from xquant import XQuantConfig
@@ -29,20 +28,19 @@ if FOUND_TORCH:
                                            quantized_model: torch.nn.Module,
                                            repr_dataset: Callable,
                                            validation_dataset: Callable,
-                                           # core_config: mct.core.CoreConfig,
                                            xquant_config: XQuantConfig):
         """
+        Generate an explainable quantization report for a quantized Pytorch model.
 
         Args:
-            float_model:
-            quantized_model:
-            repr_dataset:
-            validation_dataset:
-            core_config:
-            xquant_config:
+            float_model (keras.Model): The original floating-point Pytorch model.
+            quantized_model (keras.Model): The quantized Pytorch model.
+            repr_dataset (Callable): The representative dataset used for evaluation.
+            validation_dataset (Callable): The validation dataset used for evaluation.
+            xquant_config (XQuantConfig, optional): Configuration settings for explainable quantization.
 
         Returns:
-
+            Dict[str, Any]: A dictionary containing the collected metrics and report data.
         """
 
         pytorch_report_utils = PytorchReportUtils(xquant_config.report_dir)
@@ -50,7 +48,6 @@ if FOUND_TORCH:
                                               quantized_model=quantized_model,
                                               repr_dataset=repr_dataset,
                                               validation_dataset=validation_dataset,
-                                              # core_config=core_config,
                                               fw_report_utils=pytorch_report_utils,
                                               xquant_config=xquant_config)
 

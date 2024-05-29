@@ -15,7 +15,6 @@
 
 from typing import Callable, Dict, Any
 
-import model_compression_toolkit as mct
 
 from xquant.common.collect_report_data import collect_report_data
 from xquant import XQuantConfig
@@ -26,22 +25,19 @@ if FOUND_TF:
     import keras
     from xquant.keras.keras_report_utils import KerasReportUtils
 
-
     def xquant_report_keras_experimental(float_model: keras.Model,
                                          quantized_model: keras.Model,
                                          repr_dataset: Callable,
                                          validation_dataset: Callable,
-                                         # core_config: mct.core.CoreConfig,
                                          xquant_config: XQuantConfig) -> Dict[str, Any]:
         """
-        Generate an explainable quantization report for Keras models.
+        Generate an explainable quantization report for a quantized Keras model.
 
         Args:
             float_model (keras.Model): The original floating-point Keras model.
             quantized_model (keras.Model): The quantized Keras model.
             repr_dataset (Callable): The representative dataset used for evaluation.
             validation_dataset (Callable): The validation dataset used for evaluation.
-            core_config (mct.core.CoreConfig): Core configuration settings for the model.
             xquant_config (XQuantConfig, optional): Configuration settings for explainable quantization.
 
         Returns:
@@ -56,7 +52,6 @@ if FOUND_TF:
                                               quantized_model=quantized_model,
                                               repr_dataset=repr_dataset,
                                               validation_dataset=validation_dataset,
-                                              # core_config=core_config,
                                               fw_report_utils=keras_report_utils,
                                               xquant_config=xquant_config)
 
