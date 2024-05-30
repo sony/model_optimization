@@ -281,7 +281,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
     
     def test_reshape_substitution(self):
         """
-        This test checks the permute substitution feature
+        This test checks the reshape substitution feature
         """
         ReshapeSubstitutionTest(self).run_test()
     

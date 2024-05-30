@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ from model_compression_toolkit.core.common.graph.base_node import BaseNode
 
 class ReshapeCallMethod(common.BaseSubstitution):
     """
-    Find "permute" node to substitute new dimension argument if needed
+    Find "reshape" node to substitute new dimension argument if needed
     """
 
     def __init__(self):
         """
-        Matches: 'permute' node
+        Matches: 'reshape' node
         """
         nodes = NodeOperationMatcher(reshape)
         super().__init__(matcher_instance=nodes)
@@ -36,7 +36,7 @@ class ReshapeCallMethod(common.BaseSubstitution):
                    graph: Graph,
                    node: BaseNode) -> Graph:
         """
-        Wrap dimension of permute with tuple if it's missing
+        Wrap reshape args with tuple if it's missing
 
         Args:
             graph: Graph we apply the substitution on.
@@ -45,7 +45,6 @@ class ReshapeCallMethod(common.BaseSubstitution):
         Returns:
             Graph after applying the substitution.
         """
-        # Check op_call_args is not empty and has its argument as a tuple
         if node.op_call_args and not isinstance(node.op_call_args[0], tuple):
             if len(node.op_call_args)>1:
                 node.op_call_args = [node.op_call_args]
