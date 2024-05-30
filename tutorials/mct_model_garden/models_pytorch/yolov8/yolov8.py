@@ -14,7 +14,7 @@ detection-head (mainly the box decoding part) that was optimized for model quant
 
 The code is organized as follows:
 - Classes definitions of Yolov8n building blocks: Conv, Bottleneck, C2f, SPPF, Upsample, Concaat, DFL and Detect
-- Detection Model definition: DetectionModelKeras
+- Detection Model definition: DetectionModelPytorch
 - PostProcessWrapper Wrapping the Yolov8n model with PostProcess layer (Specifically, sony_custom_layers/multiclass_nms)
 - A getter function for getting a new instance of the model
 
