@@ -95,50 +95,61 @@ def scale_boxes(boxes: np.ndarray, h_image: int, w_image: int, h_model: int, w_m
 
     return boxes
 
-
-def format_results(outputs: List, img_ids: List, orig_img_dims: List, output_resize: Dict) -> List[Dict]:
+def scale_coords(kpts: np.ndarray, h_image: int, w_image: int, h_model: int, w_model: int, preserve_aspect_ratio: bool) -> np.ndarray:
     """
-    Format model outputs into a list of detection dictionaries.
+    Scale and offset keypoints based on model output size and original image size.
 
     Args:
-        outputs (list): List of model outputs, typically containing bounding boxes, scores, and labels.
-        img_ids (list): List of image IDs corresponding to each output.
-        orig_img_dims (list): List of tuples representing the original image dimensions (h, w) for each output.
-        output_resize (Dict): Contains the resize information to map between the model's
-                 output and the original image dimensions.
+        kpts (numpy.ndarray): Array of bounding keypoints in format [..., 17, 3]  where the last dim is (x, y, visible).
+        h_image (int): Original image height.
+        w_image (int): Original image width.
+        h_model (int): Model output height.
+        w_model (int): Model output width.
+        preserve_aspect_ratio (bool): Whether to preserve image aspect ratio during scaling
 
     Returns:
-        list: A list of detection dictionaries, each containing information about the detected object.
+        numpy.ndarray: Scaled and offset bounding boxes.
     """
-    detections = []
-    h_model, w_model = output_resize['shape']
-    preserve_aspect_ratio = output_resize['aspect_ratio_preservation']
+    deltaH, deltaW = 0, 0
+    H, W = h_model, w_model
+    scale_H, scale_W = h_image / H, w_image / W
 
-    # Process model outputs and convert to detection format
-    for idx, output in enumerate(outputs):
-        image_id = img_ids[idx]
-        scores = output[1].numpy().squeeze()  # Extract scores
-        labels = (coco80_to_coco91(
-            output[2].numpy())).squeeze()  # Convert COCO 80-class indices to COCO 91-class indices
-        boxes = output[0].numpy().squeeze()  # Extract bounding boxes
-        boxes = scale_boxes(boxes, orig_img_dims[idx][0], orig_img_dims[idx][1], h_model, w_model,
-                            preserve_aspect_ratio)
+    if preserve_aspect_ratio:
+        scale_H = scale_W = max(h_image / H, w_image / W)
+        H_tag = int(np.round(h_image / scale_H))
+        W_tag = int(np.round(w_image / scale_W))
+        deltaH, deltaW = int((H - H_tag) / 2), int((W - W_tag) / 2)
 
-        for score, label, box in zip(scores, labels, boxes):
-            detection = {
-                "image_id": image_id,
-                "category_id": label,
-                "bbox": [box[1], box[0], box[3] - box[1], box[2] - box[0]],
-                "score": score
-            }
-            detections.append(detection)
+    # Scale and offset boxes
+    kpts[..., 0] = (kpts[..., 0]  - deltaH) * scale_H
+    kpts[..., 1] = (kpts[..., 1] - deltaW) * scale_W
 
-    return detections
+    # Clip boxes
+    kpts = clip_coords(kpts, h_image, w_image)
+
+    return kpts
+
+
+def clip_coords(kpts: np.ndarray, h: int, w: int) -> np.ndarray:
+    """
+    Clip keypoints to stay within the image boundaries.
+
+    Args:
+        kpts (numpy.ndarray): Array of bounding keypoints in format [..., 17, 3]  where the last dim is (x, y, visible).
+        h (int): Height of the image.
+        w (int): Width of the image.
+
+    Returns:
+        numpy.ndarray: Clipped bounding boxes.
+    """
+    kpts[..., 0] = np.clip(kpts[..., 0], a_min=0, a_max=h)
+    kpts[..., 1] = np.clip(kpts[..., 1], a_min=0, a_max=w)
+    return kpts
 
 
 # COCO evaluation class
 class CocoEval:
-    def __init__(self, path2json: str, output_resize: Dict = None):
+    def __init__(self, path2json: str, output_resize: Dict = None, task: str = 'Detection'):
         """
         Initialize the CocoEval class.
 
@@ -158,6 +169,9 @@ class CocoEval:
         # Resizing information to map between the model's output and the original image dimensions
         self.output_resize = output_resize if output_resize else {'shape': (1, 1), 'aspect_ratio_preservation': False}
 
+        # Set the task type (Detection/Segmentation/Keypoints)
+        self.task = task
+
     def add_batch_detections(self, outputs: Tuple[List, List, List, List], targets: List[Dict]):
         """
         Add batch detections to the evaluation.
@@ -172,9 +186,9 @@ class CocoEval:
             if len(t) > 0:
                 img_ids.append(t[0]['image_id'])
                 orig_img_dims.append(t[0]['orig_img_dims'])
-                _outs.append([outputs[0][idx], outputs[1][idx], outputs[2][idx], outputs[3][idx]])
+                _outs.append([o[idx] for o in outputs])
 
-        batch_detections = format_results(_outs, img_ids, orig_img_dims, self.output_resize)
+        batch_detections = self.format_results(_outs, img_ids, orig_img_dims, self.output_resize)
 
         self.all_detections.extend(batch_detections)
 
@@ -187,7 +201,12 @@ class CocoEval:
         """
         # Initialize COCO evaluation object
         self.coco_dt = self.coco_gt.loadRes(self.all_detections)
-        coco_eval = COCOeval(self.coco_gt, self.coco_dt, 'bbox')
+        if self.task == 'Detection':
+            coco_eval = COCOeval(self.coco_gt, self.coco_dt, 'bbox')
+        elif self.task == 'Keypoints':
+            coco_eval = COCOeval(self.coco_gt, self.coco_dt, 'keypoints')
+        else:
+            raise Exception("Unsupported task type of CocoEval")
 
         # Run evaluation
         coco_eval.evaluate()
@@ -205,6 +224,62 @@ class CocoEval:
         """
         self.all_detections = []
 
+    def format_results(self, outputs: List, img_ids: List, orig_img_dims: List, output_resize: Dict) -> List[Dict]:
+        """
+        Format model outputs into a list of detection dictionaries.
+
+        Args:
+            outputs (list): List of model outputs, typically containing bounding boxes, scores, and labels.
+            img_ids (list): List of image IDs corresponding to each output.
+            orig_img_dims (list): List of tuples representing the original image dimensions (h, w) for each output.
+            output_resize (Dict): Contains the resize information to map between the model's
+                     output and the original image dimensions.
+
+        Returns:
+            list: A list of detection dictionaries, each containing information about the detected object.
+        """
+        detections = []
+        h_model, w_model = output_resize['shape']
+        preserve_aspect_ratio = output_resize['aspect_ratio_preservation']
+
+        if self.task == 'Detection':
+            # Process model outputs and convert to detection format
+            for idx, output in enumerate(outputs):
+                image_id = img_ids[idx]
+                scores = output[1].numpy().squeeze()  # Extract scores
+                labels = (coco80_to_coco91(
+                    output[2].numpy())).squeeze()  # Convert COCO 80-class indices to COCO 91-class indices
+                boxes = output[0].numpy().squeeze()  # Extract bounding boxes
+                boxes = scale_boxes(boxes, orig_img_dims[idx][0], orig_img_dims[idx][1], h_model, w_model,
+                                    preserve_aspect_ratio)
+
+                for score, label, box in zip(scores, labels, boxes):
+                    detection = {
+                        "image_id": image_id,
+                        "category_id": label,
+                        "bbox": [box[1], box[0], box[3] - box[1], box[2] - box[0]],
+                        "score": score
+                    }
+                    detections.append(detection)
+
+        elif self.task == 'Keypoints':
+            for output, image_id, (w_orig, h_orig) in zip(outputs, img_ids, orig_img_dims):
+
+                bbox, scores, kpts = output
+
+                # Add detection results to predicted_keypoints list
+                if kpts.shape[0]:
+                    kpts = kpts.reshape(-1, 17, 3)
+                    kpts = scale_coords(kpts, h_orig, w_orig, 640, 640, True)
+                    for ind, k in enumerate(kpts):
+                        detections.append({
+                            'category_id': 1,
+                            'image_id': image_id,
+                            'keypoints': k.reshape(51).tolist(),
+                            'score': scores.tolist()[ind] if isinstance(scores.tolist(), list) else scores.tolist()
+                        })
+
+            return detections
 
 def load_and_preprocess_image(image_path: str, preprocess: Callable) -> np.ndarray:
     """
@@ -406,7 +481,7 @@ def model_predict(model: Any,
 
 
 def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotation_file: str, batch_size: int,
-                  output_resize: tuple, model_inference: Callable = model_predict) -> dict:
+                  output_resize: tuple, model_inference: Callable = model_predict, task: str = 'Detection') -> dict:
     """
     Evaluate a model on the COCO dataset.
 
@@ -430,7 +505,7 @@ def coco_evaluate(model: Any, preprocess: Callable, dataset_folder: str, annotat
     coco_loader = DataLoader(coco_dataset, batch_size)
 
     # Initialize the evaluation metric object
-    coco_metric = CocoEval(annotation_file, output_resize)
+    coco_metric = CocoEval(annotation_file, output_resize, task)
 
     # Iterate and the evaluation set
     for batch_idx, (images, targets) in enumerate(coco_loader):

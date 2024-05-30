@@ -26,7 +26,7 @@ import contextlib
 import math
 import re
 from copy import deepcopy
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Callable
 
 import numpy as np
 import torch
@@ -38,6 +38,8 @@ from huggingface_hub import PyTorchModelHubMixin
 
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from sony_custom_layers.pytorch.object_detection.nms import multiclass_nms
+
+from tutorials.mct_model_garden.models_pytorch.yolov8.yolov8_postprocess import postprocess_yolov8_keypoints
 
 
 def yaml_load(file: str = 'data.yaml', append_filename: bool = False) -> Dict[str, any]:
@@ -281,8 +283,64 @@ class Detect(nn.Module):
             a[-1].bias.data[:] = 1.0  # box
             b[-1].bias.data[: m.nc] = math.log(5 / m.nc / (640 / s) ** 2)  # cls (.01 objects, 80 classes, 640 img)
 
+class Detect_wo_bb_dec(nn.Module):
+    def __init__(self, nc: int = 80,
+                 ch: List[int] = ()):
+        """
+        Detection layer for YOLOv8.
 
-class Pose(Detect):
+        Args:
+            nc (int): Number of classes.
+            ch (List[int]): List of channel values for detection layers.
+
+        """
+        super().__init__()
+        self.nc = nc  # number of classes
+        self.nl = len(ch)  # number of detection layers
+        self.reg_max = 16  # DFL channels (ch[0] // 16 to scale 4/8/12/16/20 for n/s/m/l/x)
+        self.no = nc + self.reg_max * 4  # number of outputs per anchor
+        self.stride = torch.Tensor([8, 16, 32])
+        self.feat_sizes = torch.Tensor([80, 40, 20])
+        self.img_size = 640  # img size
+        c2, c3 = max((16, ch[0] // 4, self.reg_max * 4)), max(ch[0], min(self.nc, 100))  # channels
+        self.cv2 = nn.ModuleList(
+            nn.Sequential(Conv(x, c2, 3),
+                          Conv(c2, c2, 3), nn.Conv2d(c2, 4 * self.reg_max, 1)) for x in ch)
+        self.cv3 = nn.ModuleList(nn.Sequential(Conv(x, c3, 3), Conv(c3, c3, 3),
+                                               nn.Conv2d(c3, self.nc, 1)) for x in ch)
+        self.dfl = DFL(self.reg_max) if self.reg_max > 1 else nn.Identity()
+        anchors, strides = (x.transpose(0, 1) for x in make_anchors(self.feat_sizes,
+                                                                    self.stride, 0.5))
+        strides = strides / self.img_size
+        anchors = anchors * strides
+        self.relu1 = nn.ReLU()
+        self.relu2 = nn.ReLU()
+        self.relu3 = nn.ReLU()
+        self.relu4 = nn.ReLU()
+
+        self.register_buffer('anchors', anchors)
+        self.register_buffer('strides', strides)
+
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+        shape = x[0].shape  # BCHW
+        for i in range(self.nl):
+            x[i] = torch.cat((self.cv2[i](x[i]), self.cv3[i](x[i])), 1)
+        box, cls = torch.cat([xi.view(shape[0], self.no, -1) for xi in x], 2).split(
+            (self.reg_max * 4, self.nc), 1)
+
+        y_cls = cls.sigmoid()
+        y_bb = self.dfl(box)
+        return y_bb, y_cls
+
+
+    def bias_init(self):
+        """Initialize Detect() biases, WARNING: requires stride availability."""
+        m = self  # self.model[-1]  # Detect() module
+        for a, b, s in zip(m.cv2, m.cv3, m.stride):  # from
+            a[-1].bias.data[:] = 1.0  # box
+            b[-1].bias.data[: m.nc] = math.log(5 / m.nc / (640 / s) ** 2)  # cls (.01 objects, 80 classes, 640 img)
+
+class Pose(Detect_wo_bb_dec):
     """YOLOv8 Pose head for keypoints models."""
 
     def __init__(self, nc=80, kpt_shape=(17, 3), ch=()):
@@ -290,7 +348,7 @@ class Pose(Detect):
         super().__init__(nc, ch)
         self.kpt_shape = kpt_shape  # number of keypoints, number of dims (2 for x,y or 3 for x,y,visible)
         self.nk = kpt_shape[0] * kpt_shape[1]  # number of keypoints total
-        self.detect = Detect.forward
+        self.detect = Detect_wo_bb_dec.forward
 
         c4 = max(ch[0] // 4, self.nk)
         self.cv4 = nn.ModuleList(nn.Sequential(Conv(x, c4, 3), Conv(c4, c4, 3), nn.Conv2d(c4, self.nk, 1)) for x in ch)
@@ -462,7 +520,7 @@ def model_predict(model: Any,
     outputs = model(inputs)
 
     # Detach outputs and move to cpu
-    outputs = outputs.cpu().detach()
+    # outputs = outputs.cpu().detach()
     return outputs
 
 
@@ -496,6 +554,64 @@ class PostProcessWrapper(nn.Module):
         nms = multiclass_nms(boxes=boxes, scores=scores, score_threshold=self.score_threshold,
                              iou_threshold=self.iou_threshold, max_detections=self.max_detections)
         return nms
+
+
+def keypoints_model_predict(model: Any, inputs: np.ndarray) -> List:
+    """
+    Perform inference using the provided PyTorch model on the given inputs.
+
+    This function handles moving the inputs to the appropriate torch device and data type,
+    and detaches and moves the outputs to the CPU.
+
+    Args:
+        model (Any): The PyTorch model used for inference.
+        inputs (np.ndarray): Input data to perform inference on.
+
+    Returns:
+        List: List containing tensors of predictions.
+    """
+    device = get_working_device()
+    inputs = torch.from_numpy(inputs).to(device=device, dtype=torch.float)
+
+    # Run Pytorch inference on the batch
+    outputs = model(inputs)
+
+    # Detach outputs and move to cpu
+    output_np = [o.detach().cpu().numpy() for o in outputs]
+
+    return postprocess_yolov8_keypoints(output_np)
+
+
+# class KeypointsPostProcessWrapper(nn.Module):
+#     def __init__(self,
+#                  model: nn.Module,
+#                  postprocess: Callable,
+#                  score_threshold: float = 0.001,
+#                  iou_threshold: float = 0.7,
+#                  max_detections: int = 300):
+#         """
+#         Wrapping PyTorch Module with multiclass_nms layer from sony_custom_layers.
+#
+#         Args:
+#             model (nn.Module): Model instance.
+#             score_threshold (float): Score threshold for non-maximum suppression.
+#             iou_threshold (float): Intersection over union threshold for non-maximum suppression.
+#             max_detections (float): The number of detections to return.
+#         """
+#         super(KeypointsPostProcessWrapper, self).__init__()
+#         self.model = model
+#         self.postprocess = postprocess
+#         self.score_threshold = score_threshold
+#         self.iou_threshold = iou_threshold
+#         self.max_detections = max_detections
+#
+#     def forward(self, images):
+#         # model inference
+#         outputs = self.model(images)
+#
+#         # Postprocess of model's output
+#         output_np = [o.detach().cpu().numpy() for o in outputs]
+#         return self.postprocess(output_np)
 
 
 def yolov8_pytorch(model_yaml: str) -> (nn.Module, Dict):
