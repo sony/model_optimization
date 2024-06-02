@@ -303,7 +303,7 @@ class HessianInfoService:
             # This way, we always run a computation for a single batch.
             size_to_compute = min(max_remaining_hessians, batch_size)
             next_iter_remaining_samples = (
-                self.compute(trace_hessian_request, hessian_representative_dataset, size_to_compute, batch_size,
+                self.compute(trace_hessian_request, hessian_representative_dataset, size_to_compute,
                              last_iter_remain_samples=next_iter_remaining_samples))
             max_remaining_hessians -= size_to_compute
 
