@@ -55,10 +55,10 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
     def compute(self) -> List[np.ndarray]:
         """
-        Compute the approximation of the trace of the Hessian w.r.t a node's activations.
+        Compute the approximation of the trace of the Hessian w.r.t the requested target nodes' activations.
 
         Returns:
-            List[float]: Approximated trace of the Hessian for an interest point.
+            List[np.ndarray]: Approximated trace of the Hessian for the requested nodes.
         """
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
             model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
@@ -115,8 +115,8 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                             hess_v = g.gradient(f_v, ipt)
 
                             if hess_v is None:
-                                # In case we have an output node, which is an interest point, but it is not differentiable,
-                                # we consider its Hessian to be the initial value 0.
+                                # In case we have an output node, which is an interest point, but it is not
+                                # differentiable, we consider its Hessian to be the initial value 0.
                                 continue
 
                             # Mean over all dims but the batch (CXHXW for conv)

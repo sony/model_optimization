@@ -70,7 +70,8 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
         HessianInfoGranularity.PER_ELEMENT a shape of (2, 3, 3, 3).
 
         Returns:
-            The computed scores as numpy ndarray for target node's weights.
+            The computed scores as a list of numpy ndarray for target node's weights.
+            The function returns a list for compatibility reasons.
         """
 
         # Check if the target node's layer type is supported.
@@ -136,7 +137,8 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
             final_approx = final_approx.reshape(1)
 
-        # Add a batch axis to the Hessian approximation tensor (to align with the expected returned shape)
+        # Add a batch axis to the Hessian approximation tensor (to align with the expected returned shape).
+        # We assume per-image computation, so the batch axis size is 1.
         final_approx = final_approx[np.newaxis, ...]
 
         return [final_approx.detach().cpu().numpy()]

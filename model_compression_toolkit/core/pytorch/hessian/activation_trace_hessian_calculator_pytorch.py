@@ -57,10 +57,10 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
 
     def compute(self) -> List[np.ndarray]:
         """
-        Compute the approximation of the trace of the Hessian w.r.t a node's activations.
+        Compute the approximation of the trace of the Hessian w.r.t the requested target nodes' activations.
 
         Returns:
-            List[float]: Approximated trace of the Hessian for an interest point.
+            List[np.ndarray]: Approximated trace of the Hessian for the requested nodes.
         """
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
 
@@ -138,7 +138,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                 prev_mean_results = torch.mean(torch.stack(ipts_hessian_trace_approx), dim=1)
 
             # Convert results to list of numpy arrays
-            hessian_results = [h.detach().cpu().numpy() for h in ipts_hessian_trace_approx]
+            hessian_results = [torch_tensor_to_numpy(h) for h in ipts_hessian_trace_approx]
             # Extend the Hessian tensors shape to align with expected return type
             # TODO: currently, only per-tensor Hessian is available for activation.
             #  Once implementing per-channel or per-element, this alignment needs to be verified and handled separately.

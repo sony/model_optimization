@@ -85,10 +85,11 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
                                                            input_shape=(1, 8, 8, 3),
                                                            mixed_precision_enabled=True)
 
-        hessian_info_service = hess.HessianInfoService(graph=graph,
-                                                       representative_dataset=representative_dataset,
+        hessian_info_service = hess.HessianInfoService(graph=graph, representative_dataset_gen=representative_dataset,
                                                        fw_impl=keras_impl)
 
+        # Reducing the default number of samples for Mixed precision Hessian approximation
+        # to allow quick execution of the test
         se = keras_impl.get_sensitivity_evaluator(graph,
                                                   MixedPrecisionQuantizationConfig(use_hessian_based_scores=True,
                                                                                    num_of_images=2),

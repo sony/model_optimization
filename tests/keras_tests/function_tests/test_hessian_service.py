@@ -59,8 +59,7 @@ class TestHessianService(unittest.TestCase):
                                                 representative_dataset,
                                                 generate_keras_tpc)
 
-        self.hessian_service = HessianInfoService(graph=self.graph,
-                                                  representative_dataset=representative_dataset,
+        self.hessian_service = HessianInfoService(graph=self.graph, representative_dataset_gen=representative_dataset,
                                                   fw_impl=self.keras_impl)
 
         self.assertEqual(self.hessian_service.graph, self.graph)

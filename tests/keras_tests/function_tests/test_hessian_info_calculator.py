@@ -145,8 +145,7 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
         graph, _repr_dataset, keras_impl = self._setup(layer=Conv2D(filters=2, kernel_size=3))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
         self._test_score_shape(hessian_service,
                                interest_points[1],
@@ -166,8 +165,7 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
         graph, _repr_dataset, keras_impl = self._setup(layer=Dense(2), input_shape=(1, 8))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
 
         self._test_score_shape(hessian_service,
@@ -188,8 +186,7 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
         graph, _repr_dataset, keras_impl = self._setup(layer=Conv2DTranspose(filters=2, kernel_size=3))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
 
         self._test_score_shape(hessian_service,
@@ -210,8 +207,7 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
         graph, _repr_dataset, keras_impl = self._setup(layer=DepthwiseConv2D(kernel_size=3))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
 
         self._test_score_shape(hessian_service,
@@ -247,8 +243,7 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
         interest_points = [n for n in sorted_graph_nodes if n.is_match_type(Conv2D)]
         self.assertTrue(len(interest_points) == 2, f"Expected to find 2 Conv2D nodes but found {len(interest_points)}")
 
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
         node1_approx = self._test_score_shape(hessian_service,
                                               interest_points[0],
@@ -302,8 +297,7 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
         # This test assumes the first Conv2D interest point is the node that
         # we fetch its scores and test their shapes correctness.
         interest_points = [n for n in sorted_graph_nodes if n.type==Conv2D][0]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
         self._test_score_shape(hessian_service,
                                interest_points,
@@ -350,8 +344,7 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
         graph, _repr_dataset, keras_impl = self._setup(layer=Conv2D(filters=2, kernel_size=3))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
         self._test_score_shape(hessian_service,
                                interest_points[1],
@@ -364,8 +357,7 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
         graph, _repr_dataset, keras_impl = self._setup(layer=Dense(2), input_shape=(1, 8))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
 
         self._test_score_shape(hessian_service,
@@ -379,8 +371,7 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
         graph, _repr_dataset, keras_impl = self._setup(layer=Conv2DTranspose(filters=2, kernel_size=3))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
 
         self._test_score_shape(hessian_service,
@@ -394,8 +385,7 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
         graph, _repr_dataset, keras_impl = self._setup(layer=DepthwiseConv2D(kernel_size=3))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
         interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
 
         self._test_score_shape(hessian_service,
@@ -424,8 +414,7 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
         interest_points = [n for n in sorted_graph_nodes if n.is_match_type(Conv2D)]
         self.assertTrue(len(interest_points)==2, f"Expected to find 2 Conv2D nodes but found {len(interest_points)}")
 
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
         node1_approx = self._test_score_shape(hessian_service,
                                               interest_points[0],
@@ -482,8 +471,7 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
         # This test assumes the first Conv2D interest point is the node that
         # we fetch its scores and test their shapes correctness.
         interest_points = [n for n in sorted_graph_nodes if n.type==Conv2D][0]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
         self._test_score_shape(hessian_service,
                                interest_points,
@@ -516,8 +504,7 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
 
     def test_activation_hessian_output_exception(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=Conv2D(filters=2, kernel_size=3))
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
         with self.assertRaises(Exception) as e:
             request = hessian_common.TraceHessianRequest(granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,

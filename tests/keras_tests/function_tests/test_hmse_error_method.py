@@ -89,8 +89,7 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                                 running_gptq=running_gptq  # to enable HMSE in params calculation if needed
                                                 )
 
-        self.his = HessianInfoService(graph=self.graph,
-                                      representative_dataset=representative_dataset,
+        self.his = HessianInfoService(graph=self.graph, representative_dataset_gen=representative_dataset,
                                       fw_impl=self.keras_impl)
 
         mi = ModelCollector(self.graph,

@@ -76,5 +76,4 @@ class TraceHessianRequest:
     def __hash__(self):
         # Computes the hash based on the attributes.
         # The use of a tuple here ensures that the hash is influenced by all the attributes.
-        # return hash((self.mode, self.granularity, self.target_nodes))
         return hash((self.mode, self.granularity, tuple(self.target_nodes)))

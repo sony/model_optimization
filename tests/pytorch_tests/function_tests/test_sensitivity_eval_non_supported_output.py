@@ -66,9 +66,8 @@ class TestSensitivityEvalWithNonSupportedOutputBase(BasePytorchTest):
                                                            generate_pytorch_tpc,
                                                            input_shape=(1, 3, 16, 16),
                                                            mixed_precision_enabled=True)
-        hessian_info_service = HessianInfoService(graph=graph,
-                                                  fw_impl=pytorch_impl,
-                                                  representative_dataset=self.representative_data_gen)
+        hessian_info_service = HessianInfoService(graph=graph, representative_dataset_gen=self.representative_data_gen,
+                                                  fw_impl=pytorch_impl)
 
         se = pytorch_impl.get_sensitivity_evaluator(graph,
                                                     MixedPrecisionQuantizationConfig(use_hessian_based_scores=True),

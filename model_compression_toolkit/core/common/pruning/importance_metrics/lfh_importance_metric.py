@@ -121,7 +121,7 @@ class LFHImportanceMetric(BaseImportanceMetric):
 
         # Initialize HessianInfoService for score computation.
         hessian_info_service = HessianInfoService(graph=self.float_graph,
-                                                  representative_dataset=self.representative_data_gen,
+                                                  representative_dataset_gen=self.representative_data_gen,
                                                   fw_impl=self.fw_impl)
 
         # Fetch and process Hessian scores for output channels of entry nodes.

@@ -70,6 +70,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         HessianInfoGranularity.PER_ELEMENT a shape of (3, 3, 3, 2).
 
         Returns:  The computed scores as a list of numpy arrays.
+        The function returns a list for compatibility reasons.
 
         """
         # Check if the target node's layer type is supported.
@@ -154,6 +155,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             final_approx = tf.reshape(final_approx, weight_tensor.shape)
 
         # Add a batch axis to the Hessian approximation tensor (to align with the expected returned shape)
+        # We assume per-image computation, so the batch axis size is 1.
         final_approx = final_approx[np.newaxis, ...]
 
         return [final_approx.numpy()]

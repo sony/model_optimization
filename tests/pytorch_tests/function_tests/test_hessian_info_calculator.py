@@ -124,7 +124,6 @@ class reused_model(torch.nn.Module):
 
 
 def generate_inputs(inputs_shape):
-    # need positive inputs so won't divide with zero or take root of negative number
     return [1 + np.random.random(in_shape) for in_shape in inputs_shape]
 
 
@@ -199,7 +198,7 @@ class WeightsHessianTraceBasicModelTest(BaseHessianTraceBasicModelTest):
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=self.representative_data_gen,
+                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         for ipt in ipts:
@@ -225,7 +224,7 @@ class WeightsHessianTraceAdvanceModelTest(BaseHessianTraceBasicModelTest):
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=self.representative_data_gen,
+                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         for ipt in ipts:
@@ -254,7 +253,7 @@ class WeightsHessianTraceMultipleOutputsModelTest(BaseHessianTraceBasicModelTest
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=self.representative_data_gen,
+                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         for ipt in ipts:
@@ -283,7 +282,7 @@ class WeightsHessianTraceReuseModelTest(BaseHessianTraceBasicModelTest):
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=self.representative_data_gen,
+                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         for ipt in ipts:
@@ -312,7 +311,7 @@ class ActivationHessianTraceBasicModelTest(BaseHessianTraceBasicModelTest):
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=self.representative_data_gen,
+                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         for ipt in ipts:
@@ -330,7 +329,7 @@ class ActivationHessianTraceAdvanceModelTest(BaseHessianTraceBasicModelTest):
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=self.representative_data_gen,
+                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
 
         # removing last layer cause we do not allow activation Hessian computation for the output layer
@@ -352,7 +351,7 @@ class ActivationHessianTraceMultipleOutputsModelTest(BaseHessianTraceBasicModelT
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=self.representative_data_gen,
+                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
 
         # removing last layer cause we do not allow activation Hessian computation for the output layer
@@ -373,7 +372,7 @@ class ActivationHessianTraceReuseModelTest(BaseHessianTraceBasicModelTest):
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=self.representative_data_gen,
+                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
 
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
@@ -393,7 +392,7 @@ class ActivationHessianOutputExceptionTest(BaseHessianTraceBasicModelTest):
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=self.representative_data_gen,
+                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
 
         with self.unit_test.assertRaises(Exception) as e:
@@ -417,7 +416,7 @@ class ActivationHessianTraceMultipleInputsModelTest(BaseHessianTraceBasicModelTe
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=self.representative_data_gen,
+                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         for ipt in ipts:

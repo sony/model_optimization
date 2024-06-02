@@ -122,7 +122,7 @@ class TestGetGPTQConfig(unittest.TestCase):
         # enabled tracing for code coverage.
         tf.config.run_functions_eagerly(True)
         for i, gptq_config in enumerate(self.gptq_configurations):
-            # Decreasing the default number of samples for GPTQ Hessian approximation
+            # Reducing the default number of samples for GPTQ Hessian approximation
             # to allow quick execution of the test
             gptq_config.hessian_weights_config.hessians_num_samples = 2
 
@@ -139,7 +139,7 @@ class TestGetGPTQConfig(unittest.TestCase):
         tf.config.run_functions_eagerly(True)
 
         for i, gptq_config in enumerate(self.gptq_configurations):
-            # Decreasing the default number of samples for GPTQ Hessian approximation
+            # Reducing the default number of samples for GPTQ Hessian approximation
             # to allow quick execution of the test
             gptq_config.hessian_weights_config.hessians_num_samples = 2
 

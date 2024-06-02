@@ -16,10 +16,11 @@ from collections.abc import Iterable
 
 import numpy as np
 from functools import partial
-from typing import Callable, List, Dict, Any
+from typing import Callable, List, Dict, Any, Tuple
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest
+from model_compression_toolkit.core.common.hessian.trace_hessian_request import TraceHessianRequest, \
+    HessianInfoGranularity, HessianMode
 from model_compression_toolkit.logger import Logger
 
 
@@ -29,7 +30,7 @@ class HessianInfoService:
 
     This class provides functionalities to compute approximation based on the Hessian matrix based
     on the different parameters (such as number of iterations for approximating the info)
-    and input images (from representative_dataset).
+    and input images (using representative_dataset_gen).
     It also offers cache management capabilities for efficient computation and retrieval.
 
     Note:
@@ -40,26 +41,19 @@ class HessianInfoService:
 
     def __init__(self,
                  graph,
-                 representative_dataset: Callable,
+                 representative_dataset_gen: Callable,
                  fw_impl,
-                 num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS
-                 ):
+                 num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
 
         Args:
             graph: Float graph.
-            representative_dataset: A callable that provides a dataset for sampling.
+            representative_dataset_gen: A callable that provides a dataset for sampling.
             fw_impl: Framework-specific implementation for trace Hessian approximation computation.
         """
         self.graph = graph
 
-        self.representative_dataset_gen = representative_dataset
-        # self.representative_dataset = partial(self._sample_batch_representative_dataset,
-        #                                       num_inputs=len(self.graph.input_nodes),
-        #                                       representative_dataset=representative_dataset)
-
-        # self.representative_dataset = partial(self._sample_batch_representative_dataset,
-        #                                       num_inputs=len(self.graph.input_nodes))
+        self.representative_dataset_gen = representative_dataset_gen
 
         self.fw_impl = fw_impl
         self.num_iterations_for_approximation = num_iterations_for_approximation
@@ -67,63 +61,31 @@ class HessianInfoService:
         self.trace_hessian_request_to_score_list = {}
 
     def _sample_batch_representative_dataset(self,
-                                             representative_dataset: Iterable,
+                                             representative_dataset: Iterable[np.ndarray],
                                              num_hessian_samples: int,
                                              num_inputs: int,
-                                             batch_size: int = 1,
-                                             last_iter_remain_samples: List[List[np.ndarray]] = None):
+                                             last_iter_remain_samples: List[List[np.ndarray]] = None
+                                             ) -> Tuple[List[np.ndarray], List[List[np.ndarray]]]:
         """
-        Get a single sample (namely, batch size of 1) from a representative dataset.
+        Get a batch of samples from a representative dataset with the requested num_hessian_samples.
 
         Args:
-            representative_dataset: Callable which returns the representative dataset at any batch size.
+            representative_dataset: A generator which yields batches of input samples.
+            num_hessian_samples: Number of requested samples to compute batch Hessian approximation scores.
+            num_inputs: Number of input layers of the model on which the scores are computed.
+            last_iter_remain_samples: A list of input samples (for each input layer) with remaining samples from
+            previous iterations.
 
-        Returns: List of inputs from representative_dataset where each sample has a batch size of 1.
+        Returns: A tuple with two lists:
+            (1) A list of inputs - a tensor of the requested batch size for each input layer.
+            (2) A list of remaining samples - for each input layer.
         """
 
-        # hessian_samples = []
-        # # Collect the requested number of samples from the representative dataset
-        # # for inp_idx in range(num_inputs):
-        # for batch in representative_dataset:
-        #
-        #     if not isinstance(batch, list):
-        #         Logger.critical(f'Expected images to be a list; found type: {type(batch)}.')
-        #
-        #     # TODO: handle model with multiple inputs. Also, if returning more than one this is because we need more
-        #     #  samples than batch size not for multiple inputs, so need to fix that (ActivationHessianTraceAdvanceModelTest) failing on that
-        #
-        #     batch = batch[0]
-        #
-        #     # Compute number of missing samples to get to the requested amount from the current batch
-        #     num_missing = min(num_hessian_samples - len(hessian_samples), batch.shape[0])
-        #     # Append each sample separately
-        #     samples = [s for s in batch[0:num_missing, ...]]
-        #     hessian_samples += [sample.reshape(1, *sample.shape) for sample in samples]
-        #
-        #     if len(hessian_samples) > num_hessian_samples:
-        #         Logger.critical(f"Requested {num_hessian_samples} samples for computing Hessian approximation but "
-        #                         f"{len(hessian_samples)} were collected.")  # pragma: no cover
-        #     elif len(hessian_samples) == num_hessian_samples:
-        #         # Collected enough samples, constructing a dataset with the requested batch size
-        #         hessian_samples = np.concatenate(hessian_samples, axis=0)
-        #         num_collected_samples = hessian_samples.shape[0]
-        #         hessian_samples = np.split(hessian_samples,
-        #                                    num_collected_samples // min(num_collected_samples, batch_size))
-        #         return hessian_samples
-        #
-        # Logger.critical(
-        #     f"Not enough samples in the provided representative dataset to compute Hessian approximation on "
-        #     f"{num_hessian_samples} samples.")
-
-
-# --------------------------------------------
-        # for batch in representative_dataset:
         all_inp_hessian_samples = [[] for _ in range(num_inputs)]
         # Collect the requested number of samples from the representative dataset
-        # for batch in representative_dataset():
         for batch in representative_dataset:
             if not isinstance(batch, list):
-                Logger.critical(f'Expected images to be a list; found type: {type(batch)}.')
+                Logger.critical(f'Expected batch to be a list; found type: {type(batch)}.')
             all_inp_remaining_samples = [[] for _ in range(num_inputs)]
             for inp_idx in range(len(batch)):
                 inp_batch = batch[inp_idx]
@@ -141,6 +103,7 @@ class HessianInfoService:
                 remaining_samples = [s for s in inp_batch[num_missing:, ...]]
 
                 all_inp_hessian_samples[inp_idx] += [sample.reshape(1, *sample.shape) for sample in samples]
+                # This list would can only get filled on the last batch iteration
                 all_inp_remaining_samples[inp_idx] += (remaining_samples)
 
             if len(all_inp_hessian_samples[0]) > num_hessian_samples:
@@ -191,21 +154,23 @@ class HessianInfoService:
 
         return per_node_counter
 
-    def compute(self, trace_hessian_request: TraceHessianRequest, representative_dataset, size_to_compute: int,
-                batch_size = 1, last_iter_remain_samples=None):
+    def compute(self, trace_hessian_request: TraceHessianRequest, representative_dataset_gen, num_hessian_samples: int,
+                last_iter_remain_samples: List[List[np.ndarray]] = None):
         """
         Computes an approximation of the trace of the Hessian based on the
         provided request configuration and stores it in the cache.
 
         Args:
             trace_hessian_request: Configuration for which to compute the approximation.
+            representative_dataset_gen: A callable that provides a dataset for sampling.
+            num_hessian_samples: Number of requested samples to compute batch Hessian approximation scores.
+            last_iter_remain_samples: A list of input samples (for each input layer) with remaining samples from
+            previous iterations.
         """
         Logger.debug(f"Computing Hessian-trace approximation for nodes {trace_hessian_request.target_nodes}.")
 
-        # images = self.representative_dataset(num_hessian_samples=size_to_compute, batch_size=batch_size)
-        images, next_iter_remain_samples = representative_dataset(num_hessian_samples=size_to_compute,
-                                                                  batch_size=batch_size,
-                                                                  last_iter_remain_samples=last_iter_remain_samples)
+        images, next_iter_remain_samples = representative_dataset_gen(num_hessian_samples=num_hessian_samples,
+                                                                      last_iter_remain_samples=last_iter_remain_samples)
 
         # Get the framework-specific calculator for trace Hessian approximation
         fw_hessian_calculator = self.fw_impl.get_trace_hessian_calculator(graph=self.graph,
@@ -231,15 +196,17 @@ class HessianInfoService:
             # After conversion, trace_hessian_request_to_score_list for a request of a single node should be a list of
             # results of all images, where each result is a tensor of the shape depending on the granularity.
             if single_node_request in self.trace_hessian_request_to_score_list:
-                # self.trace_hessian_request_to_score_list[single_node_request].append(hessian)
                 self.trace_hessian_request_to_score_list[single_node_request] += (
                     self._convert_tensor_to_list_of_appx_results(hessian))
             else:
                 self.trace_hessian_request_to_score_list[single_node_request] = (
-                    # [hessian])
                     self._convert_tensor_to_list_of_appx_results(hessian))
 
-        # TODO: this needs to be explained carefully
+        # In case that we are required to return a number of scores that is larger that the computation batch size
+        # and if in this case the computation batch size is smaller than the representative dataset batch size
+        # we need to carry over remaining samples from the last fetched batch to the next computation, otherwise,
+        # we might skip samples or remain without enough samples to complete the computations for the
+        # requested number of scores.
         return next_iter_remain_samples if next_iter_remain_samples is not None and len(next_iter_remain_samples) > 0 \
         and len(next_iter_remain_samples[0]) > 0 else None
 
@@ -254,9 +221,10 @@ class HessianInfoService:
         Args:
             trace_hessian_request: Configuration for which to fetch the approximation.
             required_size: Number of approximations required.
+            batch_size: The Hessian computation batch size.
 
         Returns:
-            List[List[float]]: For each target node, returnes a list of computed approximations.
+            List[List[float]]: For each target node, returns a list of computed approximations.
             The outer list is per image (thus, has the length as required_size).
             The inner list length dependent on the granularity (1 for per-tensor, 
             OC for per-output-channel when the requested node has OC output-channels, etc.)
@@ -307,6 +275,7 @@ class HessianInfoService:
         Args:
             trace_hessian_request: Configuration for which to ensure the saved info size.
             required_size: Required number of trace Hessian approximations.
+            batch_size: The Hessian computation batch size.
         """
 
         # Get the current number of saved approximations for each node in the request
@@ -324,9 +293,6 @@ class HessianInfoService:
             f"approximations computed.\n"
             f"{max_remaining_hessians} approximations left to compute...")
 
-        # We restrict the requested batch size for the Hessian
-
-
         hessian_representative_dataset = partial(self._sample_batch_representative_dataset,
                                                  num_inputs=len(self.graph.input_nodes),
                                                  representative_dataset=self.representative_dataset_gen())
@@ -341,7 +307,19 @@ class HessianInfoService:
                              last_iter_remain_samples=next_iter_remaining_samples))
             max_remaining_hessians -= size_to_compute
 
-    def _collect_saved_hessians_for_request(self, trace_hessian_request, required_size):
+    def _collect_saved_hessians_for_request(self, trace_hessian_request: TraceHessianRequest, required_size: int
+                                            ) -> List[List[np.ndarray]]:
+        """
+        Collects Hessian approximation for the nodes in the given request.
+
+        Args:
+            trace_hessian_request: Configuration for which to fetch the approximation.
+            required_size: Required number of trace Hessian approximations.
+
+        Returns: A list with List of computed Hessian approximation (a tensor for each score) for each node
+        in the request.
+
+        """
         collected_results = []
         for node in trace_hessian_request.target_nodes:
             single_node_request = self._construct_single_node_request(trace_hessian_request.mode,
@@ -362,13 +340,32 @@ class HessianInfoService:
         return collected_results
 
     @staticmethod
-    def _construct_single_node_request(mode, granularity, node):
+    def _construct_single_node_request(mode: HessianMode, granularity: HessianInfoGranularity, target_nodes
+                                       ) -> TraceHessianRequest:
+        """
+        Constructs a Hessian request with for a single node. Used for retrieving and maintaining cached results.
+
+        Args:
+            mode (HessianMode): Mode of Hessian's trace approximation (w.r.t weights or activations).
+            granularity (HessianInfoGranularity): Granularity level for the approximation.
+            target_nodes (List[BaseNode]): The node in the float graph for which the Hessian's trace approximation is targeted.
+
+        Returns: A TraceHessianRequest with the given details for the requested node.
+
+        """
         return TraceHessianRequest(mode,
                                    granularity,
-                                   target_nodes=[node])
+                                   target_nodes=[target_nodes])
 
     @staticmethod
-    def _convert_tensor_to_list_of_appx_results(t: Any):
-        # keep the dims of the tensor
-        # return [t[i:i+1, :] for i in range(t.shape[0])]
+    def _convert_tensor_to_list_of_appx_results(t: Any) -> List:
+        """
+        Converts a tensor with batch computation results to a list of individual result for each sample in batch.
+
+        Args:
+            t: A tensor with Hessian approximation results.
+
+        Returns: A list with split batch into individual results.
+
+        """
         return [t[i] for i in range(t.shape[0])]
