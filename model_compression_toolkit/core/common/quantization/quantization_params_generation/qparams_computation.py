@@ -84,6 +84,12 @@ def calculate_quantization_params(graph: Graph,
                             mod_attr_cfg = copy.deepcopy(attr_cfg)
                             mod_attr_cfg.weights_error_method = QuantizationErrorMethod.MSE
 
+                    if mod_attr_cfg.weights_per_channel_threshold and output_channels_axis is None:
+                        # TODO: this is a temporary fix to auto-select quant axis. Need to switch to selecting axis according to min-error.
+                        w_shape = n.get_weights_by_keys(attr).shape
+                        output_channels_axis = w_shape.index(max(w_shape))
+                        attr_cfg.weights_channels_axis = (output_channels_axis, output_channels_axis)
+
                     weights_params = get_weights_qparams(n.get_weights_by_keys(attr),
                                                          candidate_qc.weights_quantization_cfg,
                                                          mod_attr_cfg,
