@@ -56,18 +56,6 @@ def get_data_generation_classes(
         output_loss_fn (Callable): Function to compute output loss.
         init_dataset (Any): The initial dataset used for image generation.
     """
-    # Get the image pipeline class corresponding to the specified type
-    image_pipeline = (
-        image_pipeline_dict.get(data_generation_config.image_pipeline_type)(
-            output_image_size=output_image_size,
-            extra_pixels=data_generation_config.extra_pixels))
-
-    # Check if the image pipeline type is valid
-    if image_pipeline is None:
-        Logger.critical(
-            f'Invalid image_pipeline_type {data_generation_config.image_pipeline_type}. '
-            f'Please select one from {ImagePipelineType.get_values()}.')
-
     # Get the normalization values corresponding to the specified type
     normalization = image_normalization_dict.get(data_generation_config.image_normalization_type)
 
@@ -76,6 +64,19 @@ def get_data_generation_classes(
         Logger.critical(
             f'Invalid image_normalization_type {data_generation_config.image_normalization_type}. '
             f'Please select one from {ImageNormalizationType.get_values()}.')
+
+    # Get the image pipeline class corresponding to the specified type
+    image_pipeline = (
+        image_pipeline_dict.get(data_generation_config.image_pipeline_type)(
+            output_image_size=output_image_size,
+            extra_pixels=data_generation_config.extra_pixels,
+            normalization=normalization))
+
+    # Check if the image pipeline type is valid
+    if image_pipeline is None:
+        Logger.critical(
+            f'Invalid image_pipeline_type {data_generation_config.image_pipeline_type}. '
+            f'Please select one from {ImagePipelineType.get_values()}.')
 
     # Get the layer weighting function corresponding to the specified type
     bn_layer_weighting_fn = bn_layer_weighting_function_dict.get(data_generation_config.layer_weighting_type)

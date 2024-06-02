@@ -62,11 +62,11 @@ class BaseKerasDataGenerationTest:
                  initial_lr=1.0,
                  output_loss_multiplier=0.0001,
                  bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
-                 output_loss_type: OutputLossType = OutputLossType.MIN_MAX_DIFF,
+                 output_loss_type: OutputLossType = OutputLossType.NONE,
                  data_init_type: DataInitType = DataInitType.Gaussian,
                  layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
                  image_granularity=ImageGranularity.BatchWise,
-                 image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP_FLIP,
+                 image_pipeline_type: ImagePipelineType = ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
                  image_normalization_type: ImageNormalizationType = ImageNormalizationType.KERAS_APPLICATIONS,
                  extra_pixels: int = 0,
                  bn_layer_types: List = [BatchNormalization]

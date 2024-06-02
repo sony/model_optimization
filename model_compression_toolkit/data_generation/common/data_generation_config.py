@@ -16,6 +16,8 @@ from typing import Any, List, Tuple, Union
 
 from model_compression_toolkit.data_generation.common.enums import SchedulerType, BatchNormAlignemntLossType, \
     DataInitType, BNLayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
+from model_compression_toolkit.data_generation.common.constants import AUTO
+from model_compression_toolkit.logger import Logger
 
 
 class DataGenerationConfig:
@@ -27,7 +29,7 @@ class DataGenerationConfig:
                  optimizer: Any,
                  data_gen_batch_size: int,
                  initial_lr: float,
-                 output_loss_multiplier: float,
+                 output_loss_multiplier: Union[float,str],
                  image_granularity: ImageGranularity = ImageGranularity.AllImages,
                  scheduler_type: SchedulerType = None,
                  bn_alignment_loss_type: BatchNormAlignemntLossType = None,
@@ -39,7 +41,7 @@ class DataGenerationConfig:
                  extra_pixels: Union[int, Tuple[int, int]] = 0,
                  bn_layer_types: List = [],
                  last_layer_types: List = [],
-                 clip_images: bool = True,
+                 image_clipping: bool = True,
                  reflection: bool = True,
                  ):
         """
@@ -50,7 +52,7 @@ class DataGenerationConfig:
             optimizer (Any): The optimizer used for data generation.
             data_gen_batch_size (int): Batch size for data generation.
             initial_lr (float): Initial learning rate for the optimizer.
-            output_loss_multiplier (float): Multiplier for the output loss.
+            output_loss_multiplier (Union[float,str]): Multiplier for the output loss.
             image_granularity (ImageGranularity): Granularity of image data generation. Defaults to ImageGranularity.AllImages.
             scheduler_type (SchedulerType): Type of scheduler for the optimizer. Defaults to None.
             bn_alignment_loss_type (BatchNormAlignemntLossType): Type of BatchNorm alignment loss. Defaults to None.
@@ -62,14 +64,13 @@ class DataGenerationConfig:
             extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
             bn_layer_types (List): List of BatchNorm layer types. Defaults to [].
             last_layer_types (List): List of layer types. Defaults to [].
-            clip_images (bool): Flag to enable image clipping. Defaults to True.
+            image_clipping (bool): Flag to enable image clipping. Defaults to True.
             reflection (bool): Flag to enable reflection. Defaults to True.
         """
         self.n_iter = n_iter
         self.optimizer = optimizer
         self.data_gen_batch_size = data_gen_batch_size
         self.initial_lr = initial_lr
-        self.output_loss_multiplier = output_loss_multiplier
         self.image_granularity = image_granularity
         self.scheduler_type = scheduler_type
         self.bn_alignment_loss_type = bn_alignment_loss_type
@@ -81,6 +82,15 @@ class DataGenerationConfig:
         self.layer_weighting_type = layer_weighting_type
         self.bn_layer_types = bn_layer_types
         self.last_layer_types = last_layer_types
-        self.clip_images = clip_images
+        self.image_clipping = image_clipping
         self.reflection = reflection
+
+        # Check if the output_loss_multiplier type is valid
+        if isinstance(output_loss_multiplier, str) and output_loss_multiplier != AUTO:
+            Logger.error(f"Invalid output_loss_multiplier string '{output_loss_multiplier}'. "
+                            f"'output_loss_multiplier' can be a float number or set to 'auto'. Setting to 'auto'")
+            self.output_loss_multiplier = AUTO
+        else:
+            self.output_loss_multiplier = output_loss_multiplier
+
 

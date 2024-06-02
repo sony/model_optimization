@@ -20,9 +20,6 @@ BATCH_AXIS, CHANNEL_AXIS, H_AXIS, W_AXIS = 0, 1, 2, 3
 # Default initial learning rate constant.
 DEFAULT_PYTORCH_INITIAL_LR = 16
 
-# Default output loss multiplier.
-DEFAULT_PYTORCH_OUTPUT_LOSS_MULTIPLIER = 1e-6
-
 # Default BatchNorm layer types
 DEFAULT_PYTORCH_BN_LAYER_TYPES = [torch.nn.BatchNorm2d]
 
@@ -31,3 +28,6 @@ DEFAULT_PYTORCH_LAST_LAYER_TYPES = [torch.nn.Linear, torch.nn.Conv2d]
 
 # Output string
 OUTPUT = 'output'
+
+# 'auto' string
+AUTO = 'auto'

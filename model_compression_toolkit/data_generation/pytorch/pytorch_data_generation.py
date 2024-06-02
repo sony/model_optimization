@@ -25,10 +25,11 @@ from model_compression_toolkit.data_generation.common.data_generation_config imp
 from model_compression_toolkit.data_generation.common.enums import ImageGranularity, SchedulerType, \
     BatchNormAlignemntLossType, DataInitType, BNLayerWeightingType, ImagePipelineType, ImageNormalizationType, \
     OutputLossType
+from model_compression_toolkit.data_generation.common.image_pipeline import image_normalization_dict
 from model_compression_toolkit.data_generation.pytorch.constants import DEFAULT_PYTORCH_INITIAL_LR, \
-    DEFAULT_PYTORCH_OUTPUT_LOSS_MULTIPLIER, DEFAULT_PYTORCH_BN_LAYER_TYPES, DEFAULT_PYTORCH_LAST_LAYER_TYPES
+    DEFAULT_PYTORCH_BN_LAYER_TYPES, DEFAULT_PYTORCH_LAST_LAYER_TYPES, AUTO
 from model_compression_toolkit.data_generation.pytorch.image_pipeline import image_pipeline_dict, \
-    image_normalization_dict, BaseImagePipeline
+    BaseImagePipeline
 from model_compression_toolkit.data_generation.pytorch.model_info_exctractors import PytorchActivationExtractor, \
     PytorchOriginalBNStatsHolder
 from model_compression_toolkit.data_generation.pytorch.optimization_functions.batchnorm_alignment_functions import \
@@ -51,6 +52,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
     from torch.nn import Module
     from torch.optim import RAdam, Optimizer
     from torch.fx import symbolic_trace
+    from torch.cuda.amp import autocast
 
     from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 
@@ -60,8 +62,8 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             optimizer: Optimizer = RAdam,
             data_gen_batch_size=DEFAULT_DATA_GEN_BS,
             initial_lr=DEFAULT_PYTORCH_INITIAL_LR,
-            output_loss_multiplier=DEFAULT_PYTORCH_OUTPUT_LOSS_MULTIPLIER,
-            scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU,
+            output_loss_multiplier=AUTO,
+            scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU_WITH_RESET,
             bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
             output_loss_type: OutputLossType = OutputLossType.REGULARIZED_MIN_MAX_DIFF,
             data_init_type: DataInitType = DataInitType.Diverse,
@@ -72,7 +74,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             extra_pixels: Union[int, Tuple[int, int]] = 0,
             bn_layer_types: List = DEFAULT_PYTORCH_BN_LAYER_TYPES,
             last_layer_types: List = DEFAULT_PYTORCH_LAST_LAYER_TYPES,
-            clip_images: bool = True,
+            image_clipping: bool = True,
             reflection: bool = True,
     ) -> DataGenerationConfig:
         """
@@ -83,7 +85,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             optimizer (Optimizer): The optimizer to use for the data generation process.
             data_gen_batch_size (int): Batch size for data generation.
             initial_lr (float): Initial learning rate for the optimizer.
-            output_loss_multiplier (float): Multiplier for the output loss during optimization.
+            output_loss_multiplier (Union[float,str]): Multiplier for the output loss during optimization.
             scheduler_type (SchedulerType): The type of scheduler to use.
             bn_alignment_loss_type (BatchNormAlignemntLossType): The type of BatchNorm alignment loss to use.
             output_loss_type (OutputLossType): The type of output loss to use.
@@ -95,7 +97,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
             bn_layer_types (List): List of BatchNorm layer types to be considered for data generation.
             last_layer_types (List): List of layer types to be considered for the output loss.
-            clip_images (bool): Whether to clip images during optimization.
+            image_clipping (bool): Whether to clip images during optimization.
             reflection (bool): Whether to use reflection during optimization.
 
 
@@ -121,7 +123,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             extra_pixels=extra_pixels,
             bn_layer_types=bn_layer_types,
             last_layer_types=last_layer_types,
-            clip_images=clip_images,
+            image_clipping=image_clipping,
             reflection=reflection
         )
 
@@ -176,6 +178,9 @@ if FOUND_TORCH and FOUND_TORCHVISION:
                        f"If you encounter an issue, please open an issue in our GitHub "
                        f"project https://github.com/sony/model_optimization")
 
+        # get the model device
+        device = get_working_device()
+
         # get a static graph representation of the model using torch.fx
         fx_model = symbolic_trace(model)
 		
@@ -198,7 +203,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
 
         # Check if the scheduler type is valid
         if scheduler_get_fn is None or scheduler_step_fn is None:
-            Logger.critical(f'Invalid output_loss_type {data_generation_config.scheduler_type}. '
+            Logger.critical(f'Invalid scheduler_type {data_generation_config.scheduler_type}. '
                             f'Please select one from {SchedulerType.get_values()}.')
 
         # Create a scheduler object with the specified number of iterations
@@ -222,19 +227,20 @@ if FOUND_TORCH and FOUND_TORCHVISION:
 
         # Create an ImagesOptimizationHandler object for handling optimization
         all_imgs_opt_handler = PytorchImagesOptimizationHandler(model=model,
-                                                                   data_gen_batch_size=data_generation_config.data_gen_batch_size,
-                                                                   init_dataset=init_dataset,
-                                                                   optimizer=data_generation_config.optimizer,
-                                                                   image_pipeline=image_pipeline,
-                                                                   activation_extractor=activation_extractor,
-                                                                   image_granularity=data_generation_config.image_granularity,
-                                                                   scheduler_step_fn=scheduler_step_fn,
-                                                                   scheduler=scheduler,
-                                                                   initial_lr=data_generation_config.initial_lr,
-                                                                   normalization_mean=normalization[0],
-                                                                   normalization_std=normalization[1],
-                                                                   clip_images=data_generation_config.clip_images,
-                                                                   reflection=data_generation_config.reflection)
+                                                                data_gen_batch_size=data_generation_config.data_gen_batch_size,
+                                                                init_dataset=init_dataset,
+                                                                optimizer=data_generation_config.optimizer,
+                                                                image_pipeline=image_pipeline,
+                                                                activation_extractor=activation_extractor,
+                                                                image_granularity=data_generation_config.image_granularity,
+                                                                scheduler_step_fn=scheduler_step_fn,
+                                                                scheduler=scheduler,
+                                                                initial_lr=data_generation_config.initial_lr,
+                                                                normalization_mean=normalization[0],
+                                                                normalization_std=normalization[1],
+                                                                image_clipping=data_generation_config.image_clipping,
+                                                                reflection=data_generation_config.reflection,
+                                                                device=device)
 
         # Perform data generation and obtain a list of generated images
         generated_images_list = data_generation(
@@ -247,6 +253,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             bn_alignment_loss_fn=bn_alignment_loss_fn,
             output_loss_fn=output_loss_fn,
             output_loss_multiplier=data_generation_config.output_loss_multiplier,
+            device=device,
         )
         # Return the list of finalized generated images
         return generated_images_list
@@ -261,7 +268,8 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             bn_layer_weighting_fn: Callable,
             bn_alignment_loss_fn: Callable,
             output_loss_fn: Callable,
-            output_loss_multiplier: float
+            output_loss_multiplier: Union[float,str],
+            device: torch.device
     ) -> List[Any]:
         """
         Function to perform data generation using the provided model and data generation configuration.
@@ -275,15 +283,12 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             bn_layer_weighting_fn (Callable): Function to compute layer weighting for the BatchNorm alignment loss .
             bn_alignment_loss_fn (Callable): Function to compute BatchNorm alignment loss.
             output_loss_fn (Callable): Function to compute output loss.
-            output_loss_multiplier (float): Multiplier for the output loss.
+            output_loss_multiplier (Union[float,str]): Multiplier for the output loss.
+            device (torch.device): The current device set for PyTorch operations.
 
         Returns:
             List: Finalized list containing generated images.
         """
-
-        # Compute the layer weights based on orig_bn_stats_holder
-        bn_layer_weights = bn_layer_weighting_fn(orig_bn_stats_holder)
-
         # Get the current time to measure the total time taken
         total_time = time.time()
 
@@ -291,7 +296,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
         ibar = tqdm(range(data_generation_config.n_iter))
 
         # Perform data generation iterations
-        for i_ter in ibar:
+        for i_iter in ibar:
 
             # Randomly reorder the batches
             all_imgs_opt_handler.random_batch_reorder()
@@ -311,7 +316,11 @@ if FOUND_TORCH and FOUND_TORCHVISION:
                 input_imgs = image_pipeline.image_input_manipulation(imgs_to_optimize)
 
                 # Forward pass to extract activations
-                output = activation_extractor.run_model(input_imgs)
+                with autocast():
+                    output = activation_extractor.run_model(input_imgs)
+
+                # Compute the layer weights based on orig_bn_stats_holder
+                bn_layer_weights = bn_layer_weighting_fn(orig_bn_stats_holder, activation_extractor, i_iter, data_generation_config.n_iter)
 
                 # Compute BatchNorm alignment loss
                 bn_loss = all_imgs_opt_handler.compute_bn_loss(input_imgs=input_imgs,
@@ -322,29 +331,31 @@ if FOUND_TORCH and FOUND_TORCHVISION:
                                                                bn_layer_weights=bn_layer_weights)
 
                 # Compute output loss
-                if output_loss_multiplier > 0:
-                    output_loss = output_loss_fn(
-                        output_imgs=output,
-                        activation_extractor=activation_extractor)
-                else:
-                    output_loss = torch.zeros(1).to(get_working_device())
+                output_loss = output_loss_fn(
+                    model_outputs=output,
+                    activation_extractor=activation_extractor,
+                    device=device)
 
                 # Compute total loss
-                total_loss = bn_loss + output_loss_multiplier * output_loss
+                if output_loss_multiplier == AUTO:
+                    total_loss = torch.log(torch.exp(bn_loss) + torch.exp(output_loss))
+                else:
+                    total_loss = bn_loss + output_loss_multiplier * output_loss
 
                 # Perform optimiztion step
-                all_imgs_opt_handler.optimization_step(random_batch_index, total_loss, i_ter)
+                all_imgs_opt_handler.optimization_step(random_batch_index, total_loss, i_iter)
 
                 # Update the statistics based on the updated images
                 if all_imgs_opt_handler.use_all_data_stats:
-                    final_imgs = image_pipeline.image_output_finalize(imgs_to_optimize)
-                    all_imgs_opt_handler.update_statistics(input_imgs=final_imgs,
-                                                           batch_index=random_batch_index,
-                                                           activation_extractor=activation_extractor)
+                    with autocast():
+                        final_imgs = image_pipeline.image_output_finalize(imgs_to_optimize)
+                        all_imgs_opt_handler.update_statistics(input_imgs=final_imgs,
+                                                               batch_index=random_batch_index,
+                                                               activation_extractor=activation_extractor)
 
             ibar.set_description(f"Total Loss: {total_loss.item():.5f}, "
                                  f"BN Loss: {bn_loss.item():.5f}, "
-                                 f"Output Loss: {output_loss_multiplier * output_loss.item():.5f}")
+                                 f"Output Loss: {output_loss.item():.5f}")
 
         # Return a list containing the finalized generated images
         finalized_imgs = all_imgs_opt_handler.get_finalized_images()

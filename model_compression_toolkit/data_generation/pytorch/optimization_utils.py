@@ -20,15 +20,15 @@ from torch import Tensor
 from torch.nn import Module
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
-from torchvision.transforms import Normalize
+from torch.cuda.amp import GradScaler
 
-from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.data_generation.common.enums import ImageGranularity
 from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
 from model_compression_toolkit.data_generation.common.optimization_utils import BatchStatsHolder, AllImagesStatsHolder, \
     BatchOptimizationHolder, ImagesOptimizationHandler
 from model_compression_toolkit.data_generation.common.constants import IMAGE_INPUT
 from model_compression_toolkit.data_generation.pytorch.constants import BATCH_AXIS, H_AXIS, W_AXIS
+from model_compression_toolkit.data_generation.pytorch.image_operations import create_valid_grid
 from model_compression_toolkit.data_generation.pytorch.model_info_exctractors import ActivationExtractor
 
 
@@ -58,8 +58,9 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
                  initial_lr: float,
                  normalization_mean: List[float],
                  normalization_std: List[float],
-                 clip_images: bool,
+                 image_clipping: bool,
                  reflection: bool,
+                 device: str,
                  eps: float = 1e-6):
         """
         Constructor for the PytorchImagesOptimizationHandler class.
@@ -77,8 +78,9 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
             initial_lr (float): The initial learning rate used by the optimizer.
             normalization_mean (List[float]): The mean values for image normalization.
             normalization_std (List[float]): The standard deviation values for image normalization.
-            clip_images (bool): Whether to clip the images during optimization.
+            image_clipping (bool): Whether to clip the images during optimization.
             reflection (bool): Whether to use reflection during image clipping.
+            device (torch.device): The current device set for PyTorch operations.
             eps (float): A small value added for numerical stability.
         """
         super(PytorchImagesOptimizationHandler, self).__init__(model=model,
@@ -93,16 +95,14 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
                                                                   initial_lr=initial_lr,
                                                                   normalization_mean=normalization_mean,
                                                                   normalization_std=normalization_std,
-                                                                  clip_images=clip_images,
+                                                                  image_clipping=image_clipping,
                                                                   reflection=reflection,
                                                                   eps=eps)
 
-        self.device = get_working_device()
-        # Image valid grid, each image value can only be 0 - 255 before normalization
-        t = torch.from_numpy(np.array(list(range(256))).repeat(3).reshape(-1, 3) / 255)
-        self.valid_grid = Normalize(mean=normalization_mean,
-                                    std=normalization_std)(t.transpose(1, 0)[None, :, :, None]).squeeze().to(self.device)
-
+        # Initialize mixed-precision scaler
+        self.scaler = GradScaler()
+        self.device = device
+        self.valid_grid = create_valid_grid(normalization_mean, normalization_std)
 
         # Set the mean axis based on the image granularity
         if self.image_granularity == ImageGranularity.ImageWise:
@@ -167,29 +167,28 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
     def optimization_step(self,
                           batch_index: int,
                           loss: Tensor,
-                          i_ter: int):
+                          i_iter: int):
         """
         Perform an optimization step.
 
         Args:
             batch_index (int): Index of the batch.
             loss (Tensor): Loss value.
-            i_ter (int): Current optimization iteration.
+            i_iter (int): Current optimization iteration.
         """
         # Get optimizer and scheduler for the specific batch index
         optimizer = self.get_optimizer_by_batch_index(batch_index)
         scheduler = self.get_scheduler_by_batch_index(batch_index)
 
         # Backward pass
-        loss.backward()
-
-        # Update weights
-        optimizer.step()
+        self.scaler.scale(loss).backward()
+        self.scaler.step(optimizer)
+        self.scaler.update()
 
         # Perform scheduler step
-        self.scheduler_step_fn(scheduler, i_ter, loss.item())
+        self.scheduler_step_fn(scheduler, i_iter, loss.item())
 
-        if self.clip_images:
+        if self.image_clipping:
             self.batch_opt_holders_list[batch_index].clip_images(self.valid_grid, reflection=self.reflection)
 
 

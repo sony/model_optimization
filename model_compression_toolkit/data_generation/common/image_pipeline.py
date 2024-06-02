@@ -13,15 +13,17 @@
 # limitations under the License.
 # ==============================================================================
 from abc import ABC, abstractmethod
-from typing import Any, Tuple, Union
+from typing import Any, Tuple, Union, Dict, List
 
+from model_compression_toolkit.data_generation import ImageNormalizationType
 from model_compression_toolkit.logger import Logger
 
 
 class BaseImagePipeline(ABC):
     def __init__(self,
                  output_image_size: Union[int, Tuple[int, int]],
-                 extra_pixels: Union[int, Tuple[int, int]] = 0):
+                 extra_pixels: Union[int, Tuple[int, int]] = 0,
+                 normalization: List[List[int]] = [[0, 0, 0], [1, 1, 1]]):
         """
         Base class for image pipeline.
 
@@ -50,6 +52,9 @@ class BaseImagePipeline(ABC):
             Logger.critical(f"'extra_pixels' should a tuple of length 1 or 2. Got tuple of length {len(extra_pixels)}")
         else:
             Logger.critical(f"'extra_pixels' should be an int or tuple but type {type(extra_pixels)} was received.")
+
+        self.normalization = normalization
+
     @abstractmethod
     def get_image_input_size(self) -> Tuple[int, int]:
         """
@@ -87,3 +92,11 @@ class BaseImagePipeline(ABC):
             Any: Finalized images.
         """
         raise NotImplemented
+
+
+# Dictionary mapping ImageNormalizationType to corresponding normalization values
+image_normalization_dict: Dict[ImageNormalizationType, List[List[float]]] = {
+    ImageNormalizationType.TORCHVISION: [[0.485 * 255, 0.456 * 255, 0.406 * 255], [0.229 * 255, 0.224 * 255, 0.225 * 255]],
+    ImageNormalizationType.KERAS_APPLICATIONS: [[127.5, 127.5, 127.5], [127.5, 127.5, 127.5]],
+    ImageNormalizationType.NO_NORMALIZATION: [[0, 0, 0], [1, 1, 1]]
+}

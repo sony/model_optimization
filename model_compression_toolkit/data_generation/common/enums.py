@@ -115,16 +115,15 @@ class BatchNormAlignemntLossType(EnumBaseClass):
 class OutputLossType(EnumBaseClass):
     """
     An enum for choosing the output loss type:
-
     NONE - No output loss is applied.
-
-    MIN_MAX_DIFF - Use min-max difference as the output loss.
-
+    NEGATIVE_MIN_MAX_DIFF - Use the mean of the negative min-max difference as the output loss.
+    INVERSE_MIN_MAX_DIFF - Use mean of the 1/(min-max) difference as the output loss.
     REGULARIZED_MIN_MAX_DIFF - Use regularized min-max difference as the output loss.
 
     """
     NONE = 'none'
-    MIN_MAX_DIFF = 'min_max_diff'
+    NEGATIVE_MIN_MAX_DIFF = 'negative_min_max_diff'
+    INVERSE_MIN_MAX_DIFF = 'inverse_min_max_diff'
     REGULARIZED_MIN_MAX_DIFF = 'regularized_min_max_diff'
 
 
@@ -138,4 +137,5 @@ class SchedulerType(EnumBaseClass):
 
     """
     REDUCE_ON_PLATEAU = 'reduce_on_plateau'
+    REDUCE_ON_PLATEAU_WITH_RESET = 'reduce_on_plateau_with_reset'
     STEP = 'step'

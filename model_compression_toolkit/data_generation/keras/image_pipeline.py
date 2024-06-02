@@ -12,101 +12,47 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Tuple, Dict, Type, List, Union
-
-import numpy as np
+from typing import Tuple, Dict, Type, Union, List
 import tensorflow as tf
 
-from model_compression_toolkit.data_generation.common.enums import ImagePipelineType, ImageNormalizationType
+from model_compression_toolkit.data_generation.common.enums import ImagePipelineType
 from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
+from model_compression_toolkit.data_generation.keras.image_operations import Smoothing, random_flip, random_crop, \
+    clip_images, create_valid_grid, center_crop
 
 
-# Define tf function for image manipulation
-
-def random_crop(image: tf.Tensor,
-                height_crop: int,
-                width_crop: int) -> tf.Tensor:
-    """
-    Randomly crop an image to the specified size.
-
-    Args:
-        image (tf.Tensor): Input image tensor.
-        height_crop (int): Size of the crop in the height axis.
-        width_crop (int): Size of the crop in the width axis.
-
-    Returns:
-        tf.Tensor: Cropped image tensor.
-    """
-    cropped_image = tf.image.random_crop(image,
-                                         size=(tf.shape(image)[0],
-                                               height_crop,
-                                               width_crop,
-                                               tf.shape(image)[-1]))
-    return cropped_image
-
-
-def center_crop(image: tf.Tensor,
-                output_size: Tuple) -> tf.Tensor:
-    """
-    Center crop an image to the specified size.
-
-    Args:
-        image (tf.Tensor): Input image tensor.
-        output_size (Tuple): Size of image after the crop (height and width).
-
-    Returns:
-        tf.Tensor: Cropped image tensor.
-    """
-
-    # Calculate the cropping dimensions
-    input_shape = tf.shape(image)
-    height, width = input_shape[1], input_shape[2]
-    target_height, target_width = output_size[0], output_size[1]
-
-    # Calculate the cropping offsets
-    offset_height = tf.maximum((height - target_height) // 2, 0)
-    offset_width = tf.maximum((width - target_width) // 2, 0)
-
-    # Crop the image
-    cropped_image = tf.image.crop_to_bounding_box(image, offset_height, offset_width, target_height, target_width)
-
-    return cropped_image
-
-
-def random_flip(image: tf.Tensor) -> tf.Tensor:
-    """
-    Randomly flip an image horizontally with a specified probability.
-
-    Args:
-        image (tf.Tensor): Input image tensor.
-
-    Returns:
-        tf.Tensor: Flipped image tensor.
-    """
-    flip_image = tf.image.random_flip_left_right(image)
-    return flip_image
-
-
-class TensorflowCropFlipImagePipeline(BaseImagePipeline):
+class TensorflowSmoothAugmentationImagePipeline(BaseImagePipeline):
     def __init__(self,
                  output_image_size: Union[int, Tuple[int, int]],
-                 extra_pixels: Union[int, Tuple[int, int]]):
+                 extra_pixels: Union[int, Tuple[int, int]],
+                 normalization: List[List[int]],
+                 smoothing_filter_size: int = 3,
+                 smoothing_filter_sigma: float = 1.25):
         """
         Initialize the TensorflowCropFlipImagePipeline.
 
         Args:
             output_image_size (Union[int, Tuple[int, int]]): The output image size.
             extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
-        """
-        super(TensorflowCropFlipImagePipeline, self, ).__init__(output_image_size, extra_pixels)
+            smoothing_filter_size (int): The size of the smoothing filter. Defaults to 3.
+            smoothing_filter_sigma (float): The standard deviation of the smoothing filter. Defaults to 1.25.
+       """
+        super(TensorflowSmoothAugmentationImagePipeline, self, ).__init__(output_image_size, extra_pixels, normalization)
 
+        smoothing = Smoothing(smoothing_filter_size, smoothing_filter_sigma)
         # List of image manipulation functions and their arguments.
         self.img_manipulation_list = [(random_flip, {}),
+                                      (smoothing, {}),
                                       (random_crop, {'height_crop': output_image_size[0],
-                                                     'width_crop': output_image_size[1]})]
+                                                     'width_crop': output_image_size[1]}),
+                                      (clip_images,
+                                       {'valid_grid': create_valid_grid(self.normalization[0], self.normalization[1])})]
 
         # List of output image manipulation functions and their arguments.
-        self.img_output_finalize_list = [(center_crop, {'output_size': output_image_size})]
+        self.img_output_finalize_list = [(smoothing, {}),
+                                         (center_crop, {'output_size': output_image_size}),
+                                         (clip_images, {'valid_grid': create_valid_grid(self.normalization[0],
+                                                                                        self.normalization[1])})]
 
     def get_image_input_size(self) -> Tuple[int, int]:
         """
@@ -161,7 +107,8 @@ class TensorflowCropFlipImagePipeline(BaseImagePipeline):
 class TensorflowIdentityImagePipeline(BaseImagePipeline):
 
     def __init__(self, output_image_size: Union[int, Tuple[int, int]],
-                 extra_pixels: Union[int, Tuple[int, int]]
+                 extra_pixels: Union[int, Tuple[int, int]],
+                 normalization: List[List[int]]
                  ):
         """
         Initialize the TensorflowIdentityImagePipeline.
@@ -170,7 +117,7 @@ class TensorflowIdentityImagePipeline(BaseImagePipeline):
             output_image_size (Union[int, Tuple[int, int]]): The output image size.
             extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
         """
-        super(TensorflowIdentityImagePipeline, self, ).__init__(output_image_size, extra_pixels)
+        super(TensorflowIdentityImagePipeline, self, ).__init__(output_image_size, extra_pixels, normalization)
 
     def get_image_input_size(self) -> Tuple[int, int]:
         """
@@ -211,12 +158,5 @@ class TensorflowIdentityImagePipeline(BaseImagePipeline):
 # Dictionary mapping ImagePipelineType to corresponding image pipeline classes
 image_pipeline_dict: Dict[ImagePipelineType, Type[BaseImagePipeline]] = {
     ImagePipelineType.IDENTITY: TensorflowIdentityImagePipeline,
-    ImagePipelineType.RANDOM_CROP_FLIP: TensorflowCropFlipImagePipeline
-}
-
-# Dictionary mapping ImageNormalizationType to corresponding normalization values
-image_normalization_dict: Dict[ImageNormalizationType, List[List[float]]] = {
-    ImageNormalizationType.TORCHVISION: [[0.485, 0.456, 0.406], [0.229, 0.224, 0.225]],
-    ImageNormalizationType.KERAS_APPLICATIONS: [(127.5, 127.5, 127.5), (127.5, 127.5, 127.5)],
-    ImageNormalizationType.NO_NORMALIZATION: [[0, 0, 0], [1, 1, 1]]
+    ImagePipelineType.SMOOTHING_AND_AUGMENTATION: TensorflowSmoothAugmentationImagePipeline
 }

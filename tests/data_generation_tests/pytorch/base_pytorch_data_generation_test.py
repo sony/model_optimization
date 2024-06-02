@@ -59,7 +59,7 @@ class BasePytorchDataGenerationTest:
                  output_loss_multiplier=0.0001,
                  scheduler_type: SchedulerType = SchedulerType.STEP,
                  bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
-                 output_loss_type: OutputLossType = OutputLossType.MIN_MAX_DIFF,
+                 output_loss_type: OutputLossType = OutputLossType.NONE,
                  data_init_type: DataInitType = DataInitType.Diverse,
                  layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
                  image_granularity=ImageGranularity.AllImages,

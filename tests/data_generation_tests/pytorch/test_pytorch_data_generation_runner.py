@@ -18,6 +18,9 @@ from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
 
 from model_compression_toolkit.data_generation.common.enums import SchedulerType, BatchNormAlignemntLossType, \
     DataInitType, BNLayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
+from model_compression_toolkit.data_generation.common.constants import AUTO
+from model_compression_toolkit.data_generation.pytorch.optimization_functions.lr_scheduler import \
+    ReduceLROnPlateauWithReset
 from tests.data_generation_tests.pytorch.base_pytorch_data_generation_test import BasePytorchDataGenerationTest
 
 
@@ -25,6 +28,7 @@ class PytorchDataGenerationTestRunner(unittest.TestCase):
     def test_pytorch_scheduler_types(self):
         BasePytorchDataGenerationTest(self, scheduler=StepLR, scheduler_type=SchedulerType.STEP).run_test()
         BasePytorchDataGenerationTest(self, scheduler=ReduceLROnPlateau, scheduler_type=SchedulerType.REDUCE_ON_PLATEAU).run_test()
+        BasePytorchDataGenerationTest(self, scheduler=ReduceLROnPlateauWithReset, scheduler_type=SchedulerType.REDUCE_ON_PLATEAU_WITH_RESET).run_test()
 
     def test_pytorch_layer_weighting_types(self):
         BasePytorchDataGenerationTest(self, layer_weighting_type=BNLayerWeightingType.AVERAGE).run_test()
@@ -53,8 +57,12 @@ class PytorchDataGenerationTestRunner(unittest.TestCase):
 
     def test_pytorch_output_loss_types(self):
         BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.NONE).run_test()
-        BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.MIN_MAX_DIFF).run_test()
-        BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.REGULARIZED_MIN_MAX_DIFF).run_test()
+        BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.NEGATIVE_MIN_MAX_DIFF, output_loss_multiplier=0.1).run_test()
+        BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.NEGATIVE_MIN_MAX_DIFF, output_loss_multiplier=AUTO).run_test()
+        BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.INVERSE_MIN_MAX_DIFF, output_loss_multiplier=0.1).run_test()
+        BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.INVERSE_MIN_MAX_DIFF, output_loss_multiplier=AUTO).run_test()
+        BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.REGULARIZED_MIN_MAX_DIFF, output_loss_multiplier=0.1).run_test()
+        BasePytorchDataGenerationTest(self, output_loss_type=OutputLossType.REGULARIZED_MIN_MAX_DIFF, output_loss_multiplier=AUTO).run_test()
 
 if __name__ == '__main__':
     unittest.main()

@@ -19,6 +19,8 @@ from tqdm import tqdm
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.data_generation.common.constants import DEFAULT_N_ITER, DEFAULT_DATA_GEN_BS
 from model_compression_toolkit.data_generation.common.data_generation import get_data_generation_classes
+from model_compression_toolkit.data_generation.common.image_pipeline import image_normalization_dict
+from model_compression_toolkit.data_generation.common.constants import AUTO
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig, \
     ImageGranularity
@@ -29,10 +31,8 @@ if FOUND_TF:
     import tensorflow as tf
     from tensorflow.keras.layers import BatchNormalization
     from tensorflow.keras.optimizers.legacy import Optimizer, Adam
-    from model_compression_toolkit.data_generation.keras.constants import DEFAULT_KERAS_INITIAL_LR, \
-        DEFAULT_KERAS_OUTPUT_LOSS_MULTIPLIER
-    from model_compression_toolkit.data_generation.keras.image_pipeline import (image_pipeline_dict,
-                                                                                image_normalization_dict)
+    from model_compression_toolkit.data_generation.keras.constants import DEFAULT_KERAS_INITIAL_LR
+    from model_compression_toolkit.data_generation.keras.image_pipeline import image_pipeline_dict
     from model_compression_toolkit.data_generation.keras.model_info_exctractors import (KerasActivationExtractor,
                                                                                         KerasOriginalBNStatsHolder)
     from model_compression_toolkit.data_generation.keras.optimization_functions.batchnorm_alignment_functions import \
@@ -54,18 +54,18 @@ if FOUND_TF:
             optimizer: Optimizer = Adam,
             data_gen_batch_size: int = DEFAULT_DATA_GEN_BS,
             initial_lr: float = DEFAULT_KERAS_INITIAL_LR,
-            output_loss_multiplier: float = DEFAULT_KERAS_OUTPUT_LOSS_MULTIPLIER,
-            scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU,
+            output_loss_multiplier: Union[float,str] = AUTO,
+            scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU_WITH_RESET,
             bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
             output_loss_type: OutputLossType = OutputLossType.REGULARIZED_MIN_MAX_DIFF,
             data_init_type: DataInitType = DataInitType.Gaussian,
             layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
             image_granularity: ImageGranularity = ImageGranularity.BatchWise,
-            image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP_FLIP,
+            image_pipeline_type: ImagePipelineType = ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
             image_normalization_type: ImageNormalizationType = ImageNormalizationType.KERAS_APPLICATIONS,
             extra_pixels: Union[int, Tuple[int, int]] = 0,
             bn_layer_types: List = [BatchNormalization],
-            clip_images: bool = True,
+            image_clipping: bool = True,
             reflection: bool = True,
     ) -> DataGenerationConfig:
         """
@@ -76,7 +76,7 @@ if FOUND_TF:
             optimizer (Optimizer): The optimizer to use for the data generation process.
             data_gen_batch_size (int): Batch size for data generation.
             initial_lr (float): Initial learning rate for the optimizer.
-            output_loss_multiplier (float): Multiplier for the output loss during optimization.
+            output_loss_multiplier (Union[float,str]): Multiplier for the output loss during optimization.
             scheduler_type (SchedulerType): The type of scheduler to use.
             bn_alignment_loss_type (BatchNormAlignemntLossType): The type of BatchNorm alignment loss to use.
             output_loss_type (OutputLossType): The type of output loss to use.
@@ -87,7 +87,7 @@ if FOUND_TF:
             image_normalization_type (ImageNormalizationType): The type of image normalization to use.
             extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
             bn_layer_types (List): List of BatchNorm layer types to be considered for data generation.
-            clip_images (bool): Whether to clip images during optimization.
+            image_clipping (bool): Whether to clip images during optimization.
             reflection (bool): Whether to use reflection during optimization.
 
         Returns:
@@ -111,7 +111,7 @@ if FOUND_TF:
             image_normalization_type=image_normalization_type,
             extra_pixels=extra_pixels,
             bn_layer_types=bn_layer_types,
-            clip_images=clip_images,
+            image_clipping=image_clipping,
             reflection=reflection)
 
 
@@ -180,10 +180,6 @@ if FOUND_TF:
                                                        bn_alignment_loss_function_dict=bn_alignment_loss_function_dict,
                                                        output_loss_function_dict=output_loss_function_dict)
 
-        if not all(normalization[1]):
-            Logger.critical(
-                f'Invalid normalization standard deviation {normalization[1]} set to zero, which will lead to division by zero. Please select a non-zero normalization standard deviation.')
-
         # Get the scheduler functions corresponding to the specified scheduler type
         scheduler_get_fn = scheduler_step_function_dict.get(data_generation_config.scheduler_type)
 
@@ -223,9 +219,6 @@ if FOUND_TF:
             model=model,
             orig_bn_stats_holder=orig_bn_stats_holder)
 
-        # Compute the layer weights based on orig_bn_stats_holder
-        bn_layer_weights = bn_layer_weighting_fn(orig_bn_stats_holder=orig_bn_stats_holder)
-
         # Get the current time to measure the total time taken
         total_time = time.time()
 
@@ -233,7 +226,7 @@ if FOUND_TF:
         ibar = tqdm(range(data_generation_config.n_iter))
 
         # Perform data generation iterations
-        for i_ter in ibar:
+        for i_iter in ibar:
 
             # Randomly reorder the batches
             all_imgs_opt_handler.random_batch_reorder()
@@ -245,6 +238,12 @@ if FOUND_TF:
 
                 # Get the images to optimize and the optimizer for the batch
                 imgs_to_optimize = all_imgs_opt_handler.get_images_by_batch_index(batch_index=random_batch_index)
+
+                # Compute the layer weights based on orig_bn_stats_holder
+                bn_layer_weights = bn_layer_weighting_fn(orig_bn_stats_holder=orig_bn_stats_holder,
+                                                         activation_extractor=activation_extractor,
+                                                         i_iter=i_iter,
+                                                         n_iter=data_generation_config.n_iter)
 
                 # Compute the gradients and the loss for the batch
                 gradients, total_loss, bn_loss, output_loss = keras_compute_grads(imgs_to_optimize=imgs_to_optimize,
@@ -266,7 +265,7 @@ if FOUND_TF:
                                                        images=imgs_to_optimize,
                                                        gradients=gradients,
                                                        loss=total_loss,
-                                                       i_ter=i_ter)
+                                                       i_iter=i_iter)
 
                 # Update the statistics based on the updated images
                 if all_imgs_opt_handler.use_all_data_stats:
@@ -293,7 +292,7 @@ if FOUND_TF:
                             bn_layer_weights: Dict,
                             bn_alignment_loss_fn: Callable,
                             output_loss_fn: Callable,
-                            output_loss_multiplier: float) -> (
+                            output_loss_multiplier: Union[float,str]) -> (
             Tuple)[List[tf.Tensor], tf.Tensor, tf.Tensor, tf.Tensor]:
         """
         This function run part of the training step, calculating the losses and the gradients for the batch.
@@ -306,7 +305,7 @@ if FOUND_TF:
             bn_layer_weights (Dict): weights to multiply the loss for each layer.
             bn_alignment_loss_fn (Callable): Function to compute BatchNorm alignment loss.
             output_loss_fn (Callable): Function to compute output loss.
-            output_loss_multiplier (float): Multiplier for the output loss.
+            output_loss_multiplier (Union[float,str]): Multiplier for the output loss.
 
         Returns:
     Returns:
@@ -335,14 +334,16 @@ if FOUND_TF:
                                                            bn_layer_weights=bn_layer_weights)
 
             # Compute output loss
-            # If output_loss_multiplier is zero return 0
-            output_loss = output_loss_multiplier * output_loss_fn(
-                output_imgs=output,
+            output_loss = output_loss_fn(
+                model_outputs=output,
                 activation_extractor=activation_extractor,
-                tape=tape) if output_loss_multiplier > 0 else tf.zeros(1)
+                tape=tape)
 
             # Compute total loss
-            total_loss = bn_loss + output_loss
+            if output_loss_multiplier == AUTO:
+                total_loss = tf.math.log(tf.math.exp(bn_loss) + tf.math.exp(output_loss))
+            else:
+                total_loss = bn_loss + output_loss_multiplier * output_loss
 
             # Get the trainable variables
             variables = [imgs_to_optimize]
