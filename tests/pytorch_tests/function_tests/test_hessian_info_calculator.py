@@ -16,6 +16,7 @@
 import torch
 from torch.nn import Conv2d, BatchNorm2d, ReLU, Linear, Hardswish
 
+from model_compression_toolkit.core.pytorch.constants import KERNEL
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 import numpy as np
 
@@ -166,7 +167,7 @@ class BaseHessianTraceBasicModelTest(BasePytorchTest):
         request = hessian_common.TraceHessianRequest(mode=mode,
                                                      granularity=granularity,
                                                      target_nodes=[interest_point])
-        expected_shape = get_expected_shape(interest_point.weights['weight'].shape, granularity)
+        expected_shape = get_expected_shape(interest_point.weights[KERNEL].shape, granularity)
         info = hessian_service.fetch_hessian(request, num_scores, batch_size=batch_size)
 
         # The call for fetch_hessian returns the requested number of scores for each target node.

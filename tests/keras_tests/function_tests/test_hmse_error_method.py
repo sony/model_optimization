@@ -114,9 +114,9 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
 
             expected_hessian_request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
                                                            granularity=HessianInfoGranularity.PER_ELEMENT,
-                                                           target_node=node)
+                                                           target_nodes=[node])
 
-            self.assertTrue(self.his.count_saved_info_of_request(expected_hessian_request) > 0,
+            self.assertTrue(self.his.count_saved_info_of_request(expected_hessian_request)[node] > 0,
                             f"No Hessian-based scores were computed for node {node}, "
                             "but expected parameters selection to run with HMSE.")
 
@@ -246,9 +246,9 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
 
         expected_hessian_request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
                                                        granularity=HessianInfoGranularity.PER_ELEMENT,
-                                                       target_node=node)
+                                                       target_nodes=[node])
 
-        self.assertTrue(self.his.count_saved_info_of_request(expected_hessian_request) == 0,
+        self.assertTrue(self.his.count_saved_info_of_request(expected_hessian_request)[node] == 0,
                         f"Hessian-based scores were computed for node {node}, "
                         "but expected parameters selection to run with MSE without computing Hessians.")
 

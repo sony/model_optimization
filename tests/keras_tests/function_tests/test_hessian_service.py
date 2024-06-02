@@ -39,8 +39,9 @@ def basic_model(input_shape):
     return keras.Model(inputs=inputs, outputs=outputs)
 
 
-def representative_dataset(num_of_inputs=1):
-    yield [np.random.randn(2, 8, 8, 3).astype(np.float32)] * num_of_inputs
+def representative_dataset(num_of_inputs=1, n_iters=2):
+    for _ in range(n_iters):
+        yield [np.random.randn(2, 8, 8, 3).astype(np.float32)] * num_of_inputs
 
 
 class TestHessianService(unittest.TestCase):
@@ -70,41 +71,49 @@ class TestHessianService(unittest.TestCase):
                                       granularity=HessianInfoGranularity.PER_TENSOR,
                                       target_nodes=[list(self.graph.nodes)[1]])
         hessian = self.hessian_service.fetch_hessian(request, 2)
-        self.assertEqual(len(hessian), 2)
+        self.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
+                                          "approximation, for the single target node.")
+        self.assertEqual(len(hessian[0]), 2, "Expecting 2 Hessian scores.")
 
     def test_clear_cache(self):
         self.hessian_service._clear_saved_hessian_info()
+        target_node = list(self.graph.nodes)[1]
         request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
                                       granularity=HessianInfoGranularity.PER_TENSOR,
-                                      target_nodes=list(self.graph.nodes)[1])
-        self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 0)
+                                      target_nodes=[target_node])
+        self.assertEqual(self.hessian_service.count_saved_info_of_request(request)[target_node], 0)
 
         self.hessian_service.fetch_hessian(request, 1)
-        self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 1)
+        self.assertEqual(self.hessian_service.count_saved_info_of_request(request)[target_node], 1)
         self.hessian_service._clear_saved_hessian_info()
-        self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 0)
-
+        self.assertEqual(self.hessian_service.count_saved_info_of_request(request)[target_node], 0)
 
     def test_double_fetch_hessian(self):
         self.hessian_service._clear_saved_hessian_info()
+        target_node = list(self.graph.nodes)[1]
         request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
                                       granularity=HessianInfoGranularity.PER_TENSOR,
-                                      target_nodes=list(self.graph.nodes)[1])
+                                      target_nodes=[target_node])
         hessian = self.hessian_service.fetch_hessian(request, 2)
-        self.assertEqual(len(hessian), 2)
-        self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 2)
+        self.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
+                                          "approximation, for the single target node.")
+        self.assertEqual(len(hessian[0]), 2, "Expecting 2 Hessian scores.")
+        self.assertEqual(self.hessian_service.count_saved_info_of_request(request)[target_node], 2)
 
         hessian = self.hessian_service.fetch_hessian(request, 2)
-        self.assertEqual(len(hessian), 2)
-        self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 2)
+        self.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
+                                          "approximation, for the single target node.")
+        self.assertEqual(len(hessian[0]), 2, "Expecting 2 Hessian scores.")
+        self.assertEqual(self.hessian_service.count_saved_info_of_request(request)[target_node], 2)
 
     def test_populate_cache_to_size(self):
         self.hessian_service._clear_saved_hessian_info()
+        target_node = list(self.graph.nodes)[1]
         request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
                                       granularity=HessianInfoGranularity.PER_TENSOR,
-                                      target_nodes=list(self.graph.nodes)[1])
+                                      target_nodes=[target_node])
         self.hessian_service._populate_saved_info_to_size(request, 2)
-        self.assertEqual(self.hessian_service.count_saved_info_of_request(request), 2)
+        self.assertEqual(self.hessian_service.count_saved_info_of_request(request)[target_node], 2)
 
 
 if __name__ == "__main__":

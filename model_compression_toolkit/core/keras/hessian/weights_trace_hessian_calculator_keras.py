@@ -46,13 +46,19 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             trace_hessian_request: Configuration request for which to compute the trace Hessian approximation.
             num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
         """
+
+        if len(trace_hessian_request.target_nodes) > 1:
+            Logger.critical(f"Weights Hessian approximation is currently supported only for a single target node,"
+                            f" but the provided request contains the following target nodes: "
+                            f"{trace_hessian_request.target_nodes}.")
+
         super(WeightsTraceHessianCalculatorKeras, self).__init__(graph=graph,
                                                                  input_images=input_images,
                                                                  fw_impl=fw_impl,
                                                                  trace_hessian_request=trace_hessian_request,
                                                                  num_iterations_for_approximation=num_iterations_for_approximation)
 
-    def compute(self) -> np.ndarray:
+    def compute(self) -> List[np.ndarray]:
         """
         Compute the Hessian-based scores w.r.t target node's weights.
         Currently, supported nodes are [Conv2D, Dense, Conv2DTranspose, DepthwiseConv2D].
@@ -63,28 +69,31 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         for HessianInfoGranularity.PER_OUTPUT_CHANNEL the shape will be (2,) and for
         HessianInfoGranularity.PER_ELEMENT a shape of (3, 3, 3, 2).
 
-        Returns:  The computed scores as numpy ndarray.
+        Returns:  The computed scores as a list of numpy arrays.
 
         """
-        # Check if the target node's layer type is supported
-        if not DEFAULT_KERAS_INFO.is_kernel_op(self.hessian_request.target_nodes.type):
-            Logger.critical(
-                f"{self.hessian_request.target_nodes.type} is not supported for Hessian-based scoring with respect to weights.")
+        # Check if the target node's layer type is supported.
+        # We assume that weights Hessian computation is done only for a single node at each request.
+        target_node = self.hessian_request.target_nodes[0]
+        if not DEFAULT_KERAS_INFO.is_kernel_op(target_node.type):
+            Logger.critical(f"Hessian information with respect to weights is not supported for "
+                            f"{target_node.type} layers.")  # pragma: no cover
 
         # Construct the Keras float model for inference
         model, _ = FloatKerasModelBuilder(graph=self.graph).build_model()
 
         # Get the weight attributes for the target node type
-        weight_attributes = DEFAULT_KERAS_INFO.get_kernel_op_attributes(self.hessian_request.target_nodes.type)
+        weight_attributes = DEFAULT_KERAS_INFO.get_kernel_op_attributes(target_node.type)
 
         # Get the weight tensor for the target node
         if len(weight_attributes) != 1:
-            Logger.critical(f"Hessian-based scoring with respect to weights is currently supported only for nodes with a single weight attribute. Found {len(weight_attributes)} attributes.")
+            Logger.critical(f"Hessian-based scoring with respect to weights is currently supported only for nodes with "
+                            f"a single weight attribute. Found {len(weight_attributes)} attributes.")
 
-        weight_tensor = getattr(model.get_layer(self.hessian_request.target_nodes.name), weight_attributes[0])
+        weight_tensor = getattr(model.get_layer(target_node.name), weight_attributes[0])
 
         # Get the output channel index (needed for HessianInfoGranularity.PER_OUTPUT_CHANNEL case)
-        output_channel_axis, _ = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(self.hessian_request.target_nodes.type)
+        output_channel_axis, _ = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(target_node.type)
 
         # Get number of scores that should be calculated by the granularity.
         num_of_scores = self._get_num_scores_by_granularity(weight_tensor,
@@ -144,7 +153,10 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             # Reshaping the scores to the original weight shape
             final_approx = tf.reshape(final_approx, weight_tensor.shape)
 
-        return final_approx.numpy()
+        # Add a batch axis to the Hessian approximation tensor (to align with the expected returned shape)
+        final_approx = final_approx[np.newaxis, ...]
+
+        return [final_approx.numpy()]
 
     def _reshape_gradients(self,
                            gradients: tf.Tensor,

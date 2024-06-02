@@ -184,8 +184,8 @@ class HessianInfoService:
             if n.reuse:
                 # Reused nodes supposed to have been replaced with a reuse_group
                 # representing node before calling this method.
-                Logger.error(f"Expecting the Hessian request to include only non-reused nodes at this point, "
-                             f"but found node {n.name} with 'reuse' status.")
+                Logger.critical(f"Expecting the Hessian request to include only non-reused nodes at this point, "
+                                f"but found node {n.name} with 'reuse' status.")
             # Check if the request for this node is in the saved info and store its count, otherwise store 0
             per_node_counter[n] = len(self.trace_hessian_request_to_score_list.get(hessian_request, []))
 
@@ -256,7 +256,7 @@ class HessianInfoService:
             required_size: Number of approximations required.
 
         Returns:
-            List[List[float]]: List of computed approximations.
+            List[List[float]]: For each target node, returnes a list of computed approximations.
             The outer list is per image (thus, has the length as required_size).
             The inner list length dependent on the granularity (1 for per-tensor, 
             OC for per-output-channel when the requested node has OC output-channels, etc.)
