@@ -96,7 +96,8 @@ class QCOptionsTest(unittest.TestCase):
     def test_empty_qc_options(self):
         with self.assertRaises(AssertionError) as e:
             tp.QuantizationConfigOptions([])
-        self.assertEqual('Options list can not be empty.', str(e.exception))
+        self.assertEqual("'QuantizationConfigOptions' requires at least one 'OpQuantizationConfig'. The provided list is empty.",
+                         str(e.exception))
 
     def test_list_of_no_qc(self):
         with self.assertRaises(AssertionError) as e:
