@@ -13,42 +13,19 @@
 #  limitations under the License.
 #  ==============================================================================
 
-from typing import Dict, Callable, List
-
-from model_compression_toolkit.core.common.network_editors import EditRule
-
+from typing import Dict, Callable
 
 class XQuantConfig:
     def __init__(self,
                  report_dir: str,
-                 compute_output_metrics_repr: bool = True,
-                 compute_output_metrics_val: bool = True,
-                 custom_metrics_output: Dict[str, Callable] = None,
-                 compute_intermediate_metrics_repr: bool = True,
-                 compute_intermediate_metrics_val: bool = False,
-                 custom_metrics_intermediate: Dict[str, Callable] = None,
-                 edit_rules: List[EditRule] = None):
+                 custom_similarity_metrics: Dict[str, Callable] = None):
         """
         Initializes the configuration for explainable quantization.
 
         Args:
             report_dir (str): Directory where the reports will be saved.
-            compute_output_metrics_repr (bool): Whether to compute output metrics for the representative dataset. Default is True.
-            compute_output_metrics_val (bool): Whether to compute output metrics for the validation dataset. Default is True.
-            custom_metrics_output (Dict[str, Callable]): Custom metrics to be computed for the output.
-                                                         The dictionary keys are metric names and the values are callables that implement the metric computation.
-            compute_intermediate_metrics_repr (bool): Whether to compute intermediate metrics for the representative dataset. Default is True.
-            compute_intermediate_metrics_val (bool): Whether to compute intermediate metrics for the validation dataset. Default is False.
-            custom_metrics_intermediate (Dict[str, Callable]): Custom metrics to be computed for intermediate layers.
-                                                                The dictionary keys are metric names and the values are callables that implement the metric computation.
-            edit_rules (List[EditRule]): List of edit rules to apply before computing the metrics.
+            custom_similarity_metrics (Dict[str, Callable]): Custom similarity metrics to be computed between tensors of the two models. The dictionary keys are metric names and the values are callables that implement the similarity metric computation.
         """
         self.report_dir = report_dir
-        self.compute_output_metrics_repr = compute_output_metrics_repr
-        self.compute_output_metrics_val = compute_output_metrics_val
-        self.custom_metrics_output = custom_metrics_output
-        self.compute_intermediate_metrics_repr = compute_intermediate_metrics_repr
-        self.compute_intermediate_metrics_val = compute_intermediate_metrics_val
-        self.custom_metrics_intermediate = custom_metrics_intermediate
-        self.edit_rules = edit_rules
+        self.custom_similarity_metrics = custom_similarity_metrics
 

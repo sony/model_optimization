@@ -65,9 +65,7 @@ class TestXQuantReport(unittest.TestCase):
         self.xquant_config = XQuantConfig(report_dir=self.tmpdir)
 
     def test_xquant_report_output_metrics_repr(self):
-        self.xquant_config.compute_output_metrics_repr = True
-        self.xquant_config.custom_metrics_output = None
-
+        self.xquant_config.custom_similarity_metrics = None
         result = xquant_report_pytorch_experimental(
             self.float_model,
             self.quantized_model,
@@ -81,9 +79,7 @@ class TestXQuantReport(unittest.TestCase):
 
 
     def test_xquant_report_output_metrics_val(self):
-        self.xquant_config.compute_output_metrics_val = True
-        self.xquant_config.custom_metrics_output = None
-
+        self.xquant_config.custom_similarity_metrics = None
         result = xquant_report_pytorch_experimental(
             self.float_model,
             self.quantized_model,
@@ -98,10 +94,7 @@ class TestXQuantReport(unittest.TestCase):
 
 
     def test_custom_output_metric(self):
-        self.xquant_config.compute_output_metrics_repr = True
-        self.xquant_config.compute_output_metrics_val = True
-        self.xquant_config.custom_metrics_output = {'mae': lambda x,y: torch.nn.L1Loss()(x,y).item()}
-
+        self.xquant_config.custom_similarity_metrics = {'mae': lambda x,y: torch.nn.L1Loss()(x,y).item()}
         result = xquant_report_pytorch_experimental(
             self.float_model,
             self.quantized_model,
@@ -115,9 +108,7 @@ class TestXQuantReport(unittest.TestCase):
         self.assertIn("mae", result[OUTPUT_METRICS_REPR])
 
     def test_intermediate_metrics_repr(self):
-        self.xquant_config.compute_intermediate_metrics_repr = True
-        self.xquant_config.custom_metrics_intermediate = None
-
+        self.xquant_config.custom_similarity_metrics = None
         result = xquant_report_pytorch_experimental(
             self.float_model,
             self.quantized_model,
@@ -136,9 +127,7 @@ class TestXQuantReport(unittest.TestCase):
 
 
     def test_intermediate_metrics_val(self):
-        self.xquant_config.compute_intermediate_metrics_val = True
-        self.xquant_config.custom_metrics_intermediate = None
-
+        self.xquant_config.custom_similarity_metrics = None
         result = xquant_report_pytorch_experimental(
             self.float_model,
             self.quantized_model,
@@ -151,9 +140,7 @@ class TestXQuantReport(unittest.TestCase):
             self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES))  # Assuming no custom metrics collected
 
     def test_custom_intermediate_metrics(self):
-        self.xquant_config.compute_intermediate_metrics_repr = True
-        self.xquant_config.custom_metrics_intermediate = {'mae': lambda x,y: torch.nn.L1Loss()(x,y).item()}
-
+        self.xquant_config.custom_similarity_metrics = {'mae': lambda x,y: torch.nn.L1Loss()(x,y).item()}
         result = xquant_report_pytorch_experimental(
             self.float_model,
             self.quantized_model,

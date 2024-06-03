@@ -51,37 +51,33 @@ def collect_report_data(float_model: Any,
     _collected_data = {}
 
     # Compute output metrics for the representative dataset.
-    if xquant_config.compute_output_metrics_repr:
-        _collected_data[OUTPUT_METRICS_REPR] = fw_report_utils.get_metric_on_output(float_model=float_model,
-                                                                                    quantized_model=quantized_model,
-                                                                                    dataset=repr_dataset,
-                                                                                    custom_metrics_output=xquant_config.custom_metrics_output)
+    _collected_data[OUTPUT_METRICS_REPR] = fw_report_utils.get_metric_on_output(float_model=float_model,
+                                                                                quantized_model=quantized_model,
+                                                                                dataset=repr_dataset,
+                                                                                custom_metrics_output=xquant_config.custom_similarity_metrics)
 
     # Compute output metrics for the validation dataset.
-    if xquant_config.compute_output_metrics_val:
-        _collected_data[OUTPUT_METRICS_VAL] = fw_report_utils.get_metric_on_output(float_model=float_model,
-                                                                                   quantized_model=quantized_model,
-                                                                                   dataset=validation_dataset,
-                                                                                   custom_metrics_output=xquant_config.custom_metrics_output,
-                                                                                   is_validation=True)
+    _collected_data[OUTPUT_METRICS_VAL] = fw_report_utils.get_metric_on_output(float_model=float_model,
+                                                                               quantized_model=quantized_model,
+                                                                               dataset=validation_dataset,
+                                                                               custom_metrics_output=xquant_config.custom_similarity_metrics,
+                                                                               is_validation=True)
 
     # Compute intermediate metrics for the representative dataset.
-    if xquant_config.compute_intermediate_metrics_repr:
-        _collected_data[INTERMEDIATE_METRICS_REPR] = fw_report_utils.get_metric_on_intermediate(
-            float_model=float_model,
-            quantized_model=quantized_model,
-            dataset=repr_dataset,
-            custom_metrics_intermediate=xquant_config.custom_metrics_intermediate,
-        )
+    _collected_data[INTERMEDIATE_METRICS_REPR] = fw_report_utils.get_metric_on_intermediate(
+        float_model=float_model,
+        quantized_model=quantized_model,
+        dataset=repr_dataset,
+        custom_metrics_intermediate=xquant_config.custom_similarity_metrics,
+    )
 
     # Compute intermediate metrics for the validation dataset.
-    if xquant_config.compute_intermediate_metrics_val:
-        _collected_data[INTERMEDIATE_METRICS_VAL] = fw_report_utils.get_metric_on_intermediate(
-            float_model=float_model,
-            quantized_model=quantized_model,
-            dataset=validation_dataset,
-            custom_metrics_intermediate=xquant_config.custom_metrics_intermediate,
-            is_validation=True)
+    _collected_data[INTERMEDIATE_METRICS_VAL] = fw_report_utils.get_metric_on_intermediate(
+        float_model=float_model,
+        quantized_model=quantized_model,
+        dataset=validation_dataset,
+        custom_metrics_intermediate=xquant_config.custom_similarity_metrics,
+        is_validation=True)
 
     # Generate the quantized graph with metrics.
     quant_graph = fw_report_utils.get_quant_graph_with_metrics(quantized_model=quantized_model,

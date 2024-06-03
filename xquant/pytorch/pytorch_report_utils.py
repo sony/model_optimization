@@ -424,19 +424,17 @@ class PytorchReportUtils(FrameworkReportUtils):
         quant_graph = self.get_quantized_graph(quantized_model=quantized_model,
                                                repr_dataset=repr_dataset)
         for node in quant_graph.nodes:
-            if xquant_config.compute_intermediate_metrics_repr:
-                if node.name in collected_data[INTERMEDIATE_METRICS_REPR].keys():
-                    node.framework_attr[XQUANT_REPR] = collected_data[INTERMEDIATE_METRICS_REPR][f"{node.name}"]
-                elif node.name.removesuffix("_layer") in collected_data[INTERMEDIATE_METRICS_REPR].keys():
-                    node.framework_attr[XQUANT_REPR] = collected_data[INTERMEDIATE_METRICS_REPR][
-                        node.name.removesuffix("_layer")]
+            if node.name in collected_data[INTERMEDIATE_METRICS_REPR].keys():
+                node.framework_attr[XQUANT_REPR] = collected_data[INTERMEDIATE_METRICS_REPR][f"{node.name}"]
+            elif node.name.removesuffix("_layer") in collected_data[INTERMEDIATE_METRICS_REPR].keys():
+                node.framework_attr[XQUANT_REPR] = collected_data[INTERMEDIATE_METRICS_REPR][
+                    node.name.removesuffix("_layer")]
 
-            if xquant_config.compute_intermediate_metrics_val:
-                if node.name in collected_data[INTERMEDIATE_METRICS_VAL].keys():
-                    node.framework_attr[XQUANT_VAL] = collected_data[INTERMEDIATE_METRICS_VAL][f"{node.name}"]
-                elif node.name.removesuffix("_layer") in collected_data[INTERMEDIATE_METRICS_VAL].keys():
-                    node.framework_attr[XQUANT_VAL] = collected_data[INTERMEDIATE_METRICS_VAL][
-                        node.name.removesuffix("_layer")]
+            if node.name in collected_data[INTERMEDIATE_METRICS_VAL].keys():
+                node.framework_attr[XQUANT_VAL] = collected_data[INTERMEDIATE_METRICS_VAL][f"{node.name}"]
+            elif node.name.removesuffix("_layer") in collected_data[INTERMEDIATE_METRICS_VAL].keys():
+                node.framework_attr[XQUANT_VAL] = collected_data[INTERMEDIATE_METRICS_VAL][
+                    node.name.removesuffix("_layer")]
         return quant_graph
 
     def add_histograms_to_tensorboard(self,

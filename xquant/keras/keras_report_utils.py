@@ -347,12 +347,10 @@ class KerasReportUtils(FrameworkReportUtils):
         """
         quant_graph = self.get_quantized_graph(quantized_model=quantized_model)
         for node in quant_graph.nodes:
-            if xquant_config.compute_intermediate_metrics_repr:
-                if node.name in collected_data[INTERMEDIATE_METRICS_REPR].keys():
-                    node.framework_attr[XQUANT_REPR] = collected_data[INTERMEDIATE_METRICS_REPR][node.name]
-            if xquant_config.compute_intermediate_metrics_val:
-                if node.name in collected_data[INTERMEDIATE_METRICS_VAL].keys():
-                    node.framework_attr[XQUANT_VAL] = collected_data[INTERMEDIATE_METRICS_VAL][node.name]
+            if node.name in collected_data[INTERMEDIATE_METRICS_REPR].keys():
+                node.framework_attr[XQUANT_REPR] = collected_data[INTERMEDIATE_METRICS_REPR][node.name]
+            if node.name in collected_data[INTERMEDIATE_METRICS_VAL].keys():
+                node.framework_attr[XQUANT_VAL] = collected_data[INTERMEDIATE_METRICS_VAL][node.name]
         return quant_graph
 
     def add_histograms_to_tensorboard(self,
