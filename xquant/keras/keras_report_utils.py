@@ -38,6 +38,7 @@ from xquant.common.constants import INTERMEDIATE_METRICS_REPR, INTERMEDIATE_METR
 from xquant.common.framework_report_utils import FrameworkReportUtils, MSE_METRIC_NAME, CS_METRIC_NAME, SQNR_METRIC_NAME
 from model_compression_toolkit.ptq.keras.quantization_facade import DEFAULT_KERAS_TPC
 from model_compression_toolkit.core.keras.reader.reader import model_reader
+from xquant.keras.dataset_utils import KerasDatasetUtils
 
 from xquant.keras.similarity_metrics import KerasSimilarityMetrics
 from xquant.logger import Logger
@@ -52,6 +53,7 @@ class KerasReportUtils(FrameworkReportUtils):
         """
         tb_writer = TensorboardWriter(report_dir, DEFAULT_KERAS_INFO)
         self.similarity_metrics = KerasSimilarityMetrics()
+        self.dataset_utils = KerasDatasetUtils()
         super().__init__(tb_writer=tb_writer)
 
     def get_metric_on_output(self,
@@ -75,7 +77,7 @@ class KerasReportUtils(FrameworkReportUtils):
             Dict[str, float]: A dictionary of computed metrics.
         """
 
-        dataset = partial(self.wrapped_dataset,
+        dataset = partial(self.dataset_utils.wrapped_dataset,
                           dataset=dataset,
                           is_validation=is_validation)
 
@@ -126,7 +128,7 @@ class KerasReportUtils(FrameworkReportUtils):
         float_model = self.create_float_folded_model(float_model=float_model,
                                                      representative_dataset=None)
 
-        dataset = partial(self.wrapped_dataset,
+        dataset = partial(self.dataset_utils.wrapped_dataset,
                           dataset=dataset,
                           is_validation=is_validation)
 
@@ -232,29 +234,6 @@ class KerasReportUtils(FrameworkReportUtils):
                                          fw_impl=KerasImplementation(),
                                          tpc=DEFAULT_KERAS_TPC)
         return graph
-
-    def wrapped_dataset(self,
-                        dataset: Any,
-                        is_validation: bool,
-                        device: str = None) -> Any:
-        """
-        Generator function that wraps 'dataset' to be able to handle both
-        representative and validation datasets.
-
-        Args:
-            dataset (Any): The dataset to wrap.
-            is_validation (bool): Flag indicating if this is a validation dataset.
-            device (str, optional): Device to use for inference. Defaults to None.
-
-        Yields:
-            Any: Processed data from the dataset.
-        """
-
-        def process_data(x: Any, is_validation: bool) -> Any:
-            return x[0] if is_validation else x
-
-        for x in dataset():
-            yield process_data(x, is_validation)
 
     def get_float_to_quantized_compare_points(self,
                                               quantized_model: keras.Model,

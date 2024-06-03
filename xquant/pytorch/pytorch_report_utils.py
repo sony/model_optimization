@@ -25,7 +25,7 @@ from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 from model_compression_toolkit.ptq.pytorch.quantization_facade import DEFAULT_PYTORCH_TPC
 from xquant import XQuantConfig
 from xquant.common.constants import XQUANT_VAL, XQUANT_REPR, INTERMEDIATE_METRICS_REPR, INTERMEDIATE_METRICS_VAL
-from xquant.common.framework_report_utils import FrameworkReportUtils, MSE_METRIC_NAME, CS_METRIC_NAME, SQNR_METRIC_NAME
+from xquant.common.framework_report_utils import FrameworkReportUtils
 from functools import partial
 import torch
 import numpy as np
@@ -37,6 +37,7 @@ from model_compression_toolkit.core.pytorch.default_framework_info import DEFAUL
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 
 from xquant.logger import Logger
+from xquant.pytorch.dataset_utils import PytorchDatasetUtils
 from xquant.pytorch.similarity_metrics import PytorchSimilarityMetrics
 
 
@@ -48,6 +49,7 @@ class PytorchReportUtils(FrameworkReportUtils):
         """
         tb_writer = TensorboardWriter(report_dir, DEFAULT_PYTORCH_INFO)
         self.similarity_metrics = PytorchSimilarityMetrics()
+        self.dataset_utils = PytorchDatasetUtils()
         super().__init__(tb_writer=tb_writer)
 
     def get_metric_on_output(self,
@@ -71,7 +73,7 @@ class PytorchReportUtils(FrameworkReportUtils):
         """
 
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        dataset = partial(self.wrapped_dataset, dataset=dataset, is_validation=is_validation, device=device)
+        dataset = partial(self.dataset_utils.wrapped_dataset, dataset=dataset, is_validation=is_validation, device=device)
 
         float_model.to(device)
         quantized_model.to(device)
@@ -127,7 +129,7 @@ class PytorchReportUtils(FrameworkReportUtils):
         """
 
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        dataset = partial(self.wrapped_dataset, dataset=dataset, is_validation=is_validation, device=device)
+        dataset = partial(self.dataset_utils.wrapped_dataset, dataset=dataset, is_validation=is_validation, device=device)
 
         float_model = self.create_float_folded_model(float_model=float_model,
                                                      representative_dataset=dataset)
@@ -307,54 +309,6 @@ class PytorchReportUtils(FrameworkReportUtils):
                                          quantization_config=DEFAULTCONFIG,
                                          tpc=DEFAULT_PYTORCH_TPC)
         return graph
-
-    def wrapped_dataset(self,
-                        dataset: Any,
-                        is_validation: bool,
-                        device: str):
-        """
-        Wraps the dataset to ensure it is properly transferred to the device and processed on a given device.
-
-        Args:
-            dataset: The dataset to be wrapped.
-            is_validation: A flag indicating if this is a validation dataset.
-            device: The device to transfer the data to.
-
-        Returns:
-            A generator that yields processed data.
-        """
-
-        def process_data(data: Any, is_validation: bool, device: str):
-            """
-            Processes individual data samples to transfer them to the device.
-
-            Args:
-                data: The data sample to process.
-                is_validation: A flag indicating if this is a validation dataset.
-                device: The device to transfer the data to.
-
-            Returns:
-                A generator that yields the processed data.
-            """
-
-            def transfer_to_device(_data):
-                if isinstance(_data, np.ndarray):
-                    return torch.from_numpy(_data).to(device)
-                return _data.to(device)
-
-            if is_validation:
-                inputs = data[0]  # Assume data[0] contains the inputs and data[1] the labels
-                if isinstance(inputs, list):
-                    data = [transfer_to_device(t) for t in inputs]
-                else:
-                    data = [transfer_to_device(inputs)]
-            else:
-                data = [transfer_to_device(t) for t in data]
-
-            yield data
-
-        for x in dataset():
-            return process_data(x, is_validation, device)
 
     def get_float_to_quantized_compare_points(self,
                                               quantized_model: Model,
