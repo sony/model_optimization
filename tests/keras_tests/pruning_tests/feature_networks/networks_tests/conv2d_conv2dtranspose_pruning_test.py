@@ -65,7 +65,8 @@ class Conv2DtoConv2DTransposePruningTest(PruningKerasFeatureTest):
     def get_pruning_config(self):
         if self.use_constant_importance_metric:
             add_const_importance_metric(first_num_oc=6, second_num_oc=4, simd=self.simd)
-            return mct.pruning.PruningConfig(importance_metric=ConstImportanceMetric.CONST)
+            return mct.pruning.PruningConfig(importance_metric=ConstImportanceMetric.CONST,
+                                             num_score_approximations=super().get_pruning_config().num_score_approximations)
         return super().get_pruning_config()
     def get_resource_utilization(self):
         # Remove only one group of channels only one parameter should be pruned
