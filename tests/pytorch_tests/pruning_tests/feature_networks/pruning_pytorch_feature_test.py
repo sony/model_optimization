@@ -29,7 +29,7 @@ from tests.pytorch_tests.utils import count_model_prunable_params
 class PruningPytorchFeatureTest(BasePytorchFeatureNetworkTest):
     def __init__(self,
                  unit_test,
-                 num_calibration_iter=1,
+                 num_calibration_iter=2,
                  val_batch_size=1,
                  num_of_inputs=1,
                  input_shape=(3, 8, 8)):
