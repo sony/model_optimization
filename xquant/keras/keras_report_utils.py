@@ -38,6 +38,7 @@ from xquant.common.constants import INTERMEDIATE_METRICS_REPR, INTERMEDIATE_METR
 from xquant.common.framework_report_utils import FrameworkReportUtils, MSE_METRIC_NAME, CS_METRIC_NAME, SQNR_METRIC_NAME
 from model_compression_toolkit.ptq.keras.quantization_facade import DEFAULT_KERAS_TPC
 from model_compression_toolkit.core.keras.reader.reader import model_reader
+from xquant.common.model_folding import ModelFolding
 from xquant.keras.dataset_utils import KerasDatasetUtils
 
 from xquant.keras.similarity_metrics import KerasSimilarityMetrics
@@ -54,6 +55,9 @@ class KerasReportUtils(FrameworkReportUtils):
         tb_writer = TensorboardWriter(report_dir, DEFAULT_KERAS_INFO)
         self.similarity_metrics = KerasSimilarityMetrics()
         self.dataset_utils = KerasDatasetUtils()
+        self.model_folding = ModelFolding(fw_info=DEFAULT_KERAS_INFO,
+                                          fw_impl=KerasImplementation(),
+                                          fw_default_tpc=DEFAULT_KERAS_TPC)
         super().__init__(tb_writer=tb_writer)
 
     def get_metric_on_output(self,
@@ -125,8 +129,7 @@ class KerasReportUtils(FrameworkReportUtils):
             Dict[str, Dict[str, float]]: A dictionary of computed metrics for intermediate layers.
         """
 
-        float_model = self.create_float_folded_model(float_model=float_model,
-                                                     representative_dataset=None)
+        float_model = self.model_folding.create_float_folded_model(float_model=float_model, representative_dataset=None)
 
         dataset = partial(self.dataset_utils.wrapped_dataset,
                           dataset=dataset,
@@ -192,48 +195,6 @@ class KerasReportUtils(FrameworkReportUtils):
             aggregated_metrics[layer_name] = combined_dict
 
         return aggregated_metrics
-
-    def create_float_folded_model(self,
-                                  float_model: keras.Model,
-                                  representative_dataset: Any,
-                                  ) -> keras.Model:
-        """
-        Create a folded version of the floating-point model.
-
-        Args:
-            float_model (keras.Model): The original floating-point model.
-            representative_dataset (Any): Representative dataset used during quantization.
-
-        Returns:
-            keras.Model: The folded floating-point model.
-        """
-        float_graph = self.convert_to_graph(model=float_model)
-        float_folded_model, _ = KerasImplementation().model_builder(float_graph,
-                                                                    mode=ModelBuilderMode.FLOAT,
-                                                                    append2output=None,
-                                                                    fw_info=DEFAULT_KERAS_INFO)
-        return float_folded_model
-
-    def convert_to_graph(self,
-                         model: Model,
-                         repr_dataset: Callable=None):
-        """
-        Convert Keras model to networkx graph representation.
-
-        Args:
-            model: Keras model to convert.
-            repr_dataset: Representative dataset (not used in Keras).
-
-        Returns:
-            Graph representing the model.
-        """
-        graph = graph_preparation_runner(in_model=model,
-                                         representative_data_gen=repr_dataset,
-                                         quantization_config=DEFAULTCONFIG,
-                                         fw_info=DEFAULT_KERAS_INFO,
-                                         fw_impl=KerasImplementation(),
-                                         tpc=DEFAULT_KERAS_TPC)
-        return graph
 
     def get_float_to_quantized_compare_points(self,
                                               quantized_model: keras.Model,
@@ -323,8 +284,7 @@ class KerasReportUtils(FrameworkReportUtils):
         Returns:
             None
         """
-        graph = self.convert_to_graph(model,
-                                      repr_dataset)
+        graph = self.model_folding.create_float_folded_graph(model, repr_dataset)
         mi = ModelCollector(graph,
                             KerasImplementation(),
                             DEFAULT_KERAS_INFO)

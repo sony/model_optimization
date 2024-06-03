@@ -13,8 +13,7 @@
 #  limitations under the License.
 #  ==============================================================================
 
-from keras import Model
-from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
+
 from tqdm import tqdm
 from typing import Any, Callable, Dict
 
@@ -29,12 +28,9 @@ from xquant.common.framework_report_utils import FrameworkReportUtils
 from functools import partial
 import torch
 import numpy as np
-import tensorflow as tf
-
-from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
-from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
+from xquant.common.model_folding import ModelFolding
 
 from xquant.logger import Logger
 from xquant.pytorch.dataset_utils import PytorchDatasetUtils
@@ -50,11 +46,14 @@ class PytorchReportUtils(FrameworkReportUtils):
         tb_writer = TensorboardWriter(report_dir, DEFAULT_PYTORCH_INFO)
         self.similarity_metrics = PytorchSimilarityMetrics()
         self.dataset_utils = PytorchDatasetUtils()
+        self.model_folding = ModelFolding(fw_info=DEFAULT_PYTORCH_INFO,
+                                          fw_impl=PytorchImplementation(),
+                                          fw_default_tpc=DEFAULT_PYTORCH_TPC)
         super().__init__(tb_writer=tb_writer)
 
     def get_metric_on_output(self,
-                             float_model: Model,
-                             quantized_model: Model,
+                             float_model: torch.nn.Module,
+                             quantized_model: torch.nn.Module,
                              dataset: Callable,
                              custom_metrics_output: Dict[str, Callable] = None,
                              is_validation: bool = False):
@@ -109,8 +108,8 @@ class PytorchReportUtils(FrameworkReportUtils):
         return aggregated_metrics
 
     def get_metric_on_intermediate(self,
-                                   float_model: Model,
-                                   quantized_model: Model,
+                                   float_model: torch.nn.Module,
+                                   quantized_model: torch.nn.Module,
                                    dataset: Callable,
                                    custom_metrics_intermediate: Dict[str, Callable] = None,
                                    is_validation: bool = False):
@@ -131,8 +130,7 @@ class PytorchReportUtils(FrameworkReportUtils):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         dataset = partial(self.dataset_utils.wrapped_dataset, dataset=dataset, is_validation=is_validation, device=device)
 
-        float_model = self.create_float_folded_model(float_model=float_model,
-                                                     representative_dataset=dataset)
+        float_model = self.model_folding.create_float_folded_model(float_model=float_model, representative_dataset=dataset)
 
         float_model.to(device)
         quantized_model.to(device)
@@ -210,109 +208,10 @@ class PytorchReportUtils(FrameworkReportUtils):
             aggregated_metrics[layer_name] = combined_dict
 
         return aggregated_metrics
-    #
-    # def get_default_metrics(self) -> Dict[str, Callable]:
-    #     """
-    #     Returns default metrics to be computed on model outputs.
-    #
-    #     Returns:
-    #         A dictionary of metric names and their corresponding functions.
-    #     """
-    #
-    #     def compute_mse(f_pred: tf.Tensor, q_pred: tf.Tensor) -> float:
-    #         """
-    #         Computes Mean Squared Error between float and quantized predictions.
-    #
-    #         Args:
-    #             f_pred: Float model predictions.
-    #             q_pred: Quantized model predictions.
-    #
-    #         Returns:
-    #             Mean Squared Error as a float.
-    #         """
-    #         mse = torch.nn.functional.mse_loss(f_pred, q_pred)
-    #         return mse.item()
-    #
-    #     def compute_cs(f_pred: tf.Tensor, q_pred: tf.Tensor) -> float:
-    #         """
-    #         Computes Cosine Similarity between float and quantized predictions.
-    #
-    #         Args:
-    #             f_pred: Float model predictions.
-    #             q_pred: Quantized model predictions.
-    #
-    #         Returns:
-    #             Cosine Similarity as a float.
-    #         """
-    #         cs = torch.nn.functional.cosine_similarity(f_pred.flatten(), q_pred.flatten(), dim=0)
-    #         return cs.item()
-    #
-    #     def compute_sqnr(f_pred: tf.Tensor, q_pred: tf.Tensor) -> float:
-    #         """
-    #         Computes Signal-to-Quantization-Noise Ratio between float and quantized predictions.
-    #
-    #         Args:
-    #             f_pred: Float model predictions.
-    #             q_pred: Quantized model predictions.
-    #
-    #         Returns:
-    #             Signal-to-Quantization-Noise Ratio as a float.
-    #         """
-    #         signal_power = torch.mean(f_pred ** 2)
-    #         noise_power = torch.mean((f_pred - q_pred) ** 2)
-    #         sqnr = signal_power / noise_power
-    #         return sqnr.item()
-    #
-    #     return {MSE_METRIC_NAME: compute_mse,
-    #             CS_METRIC_NAME: compute_cs,
-    #             SQNR_METRIC_NAME: compute_sqnr}
-
-    def create_float_folded_model(self,
-                                  float_model: Model,
-                                  representative_dataset: Callable,
-                                  ) -> Model:
-        """
-        Creates a folded float model based on the representative dataset and core configuration.
-
-        Args:
-            float_model: The original float model.
-            representative_dataset: A function that returns the representative dataset.
-
-        Returns:
-            The folded float model.
-        """
-        float_graph = self.convert_to_graph(float_model,
-                                            representative_dataset)
-        float_folded_model, _ = PytorchImplementation().model_builder(float_graph,
-                                                                      mode=ModelBuilderMode.FLOAT,
-                                                                      append2output=None,
-                                                                      fw_info=DEFAULT_PYTORCH_INFO)
-        return float_folded_model
-
-    def convert_to_graph(self,
-                         model: torch.nn.Module,
-                         repr_dataset: Callable):
-        """
-        Convert Pytorch model to networkx graph representation.
-
-        Args:
-            model: Keras model to convert.
-            repr_dataset: Representative dataset (not used in Keras).
-
-        Returns:
-            Graph representing the model.
-        """
-        graph = graph_preparation_runner(in_model=model,
-                                         representative_data_gen=repr_dataset,
-                                         fw_impl=PytorchImplementation(),
-                                         fw_info=DEFAULT_PYTORCH_INFO,
-                                         quantization_config=DEFAULTCONFIG,
-                                         tpc=DEFAULT_PYTORCH_TPC)
-        return graph
 
     def get_float_to_quantized_compare_points(self,
-                                              quantized_model: Model,
-                                              float_model: Model) -> Dict[str, str]:
+                                              quantized_model: torch.nn.Module,
+                                              float_model: torch.nn.Module) -> Dict[str, str]:
         """
         Maps corresponding layers between the float and quantized models for comparison.
 
@@ -407,8 +306,7 @@ class PytorchReportUtils(FrameworkReportUtils):
             None
         """
 
-        graph = self.convert_to_graph(model=model,
-                                      repr_dataset=repr_dataset)
+        graph = self.model_folding.create_float_folded_graph(model=model, repr_dataset=repr_dataset)
         mi = ModelCollector(graph,
                             PytorchImplementation(),
                             DEFAULT_PYTORCH_INFO)

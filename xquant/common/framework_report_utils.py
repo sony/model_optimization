@@ -130,46 +130,7 @@ class FrameworkReportUtils:
         """
         Logger.critical(f"get_metric_on_intermediate is not implemented.")
 
-    # def get_default_metrics(self) -> Dict[str, Callable]:
-    #     """
-    #     Retrieve the default metrics for evaluation.
-    #
-    #     Returns:
-    #         Dict[str, Callable]: A dictionary of default metric functions.
-    #     """
-    #     Logger.critical(f"get_default_metrics is not implemented.")
 
-    def create_float_folded_model(self,
-                                  float_model: Any,
-                                  representative_dataset: Any):
-        """
-        Create a folded version of the floating-point model.
-
-        Args:
-            float_model (Any): The floating-point model.
-            representative_dataset (Any): Representative dataset used during folding.
-
-        Returns:
-            Any: The folded floating-point model.
-        """
-        Logger.critical(f"create_float_folded_model is not implemented.")
-
-    def wrapped_dataset(self,
-                        dataset: Any,
-                        is_validation: bool,
-                        device: str):
-        """
-        Wrap the dataset for handling labeled and unlabeled datasets.
-
-        Args:
-            dataset (Any): The dataset to wrap.
-            is_validation (bool): Flag indicating if this is a validation dataset.
-            device (str): Device to use for evaluation.
-
-        Returns:
-            Any: Wrapped dataset ready for evaluation.
-        """
-        Logger.critical(f"wrapped_dataset is not implemented.")
 
     def get_float_to_quantized_compare_points(self,
                                               quantized_model: Any,
