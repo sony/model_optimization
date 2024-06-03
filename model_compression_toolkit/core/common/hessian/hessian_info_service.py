@@ -61,7 +61,7 @@ class HessianInfoService:
         self.trace_hessian_request_to_score_list = {}
 
     def _sample_batch_representative_dataset(self,
-                                             representative_dataset: Iterable[np.ndarray],
+                                             representative_dataset: Iterable,
                                              num_hessian_samples: int,
                                              num_inputs: int,
                                              last_iter_remain_samples: List[List[np.ndarray]] = None
