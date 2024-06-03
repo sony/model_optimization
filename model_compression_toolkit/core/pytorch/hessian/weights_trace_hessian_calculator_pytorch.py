@@ -48,7 +48,7 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
         """
 
-        if len(trace_hessian_request.target_nodes) > 1:
+        if len(trace_hessian_request.target_nodes) > 1:  # pragma: no cover
             Logger.critical(f"Weights Hessian approximation is currently supported only for a single target node,"
                             f" but the provided request contains the following target nodes: "
                             f"{trace_hessian_request.target_nodes}.")
@@ -88,8 +88,9 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
         weights_attributes = DEFAULT_PYTORCH_INFO.get_kernel_op_attributes(target_node.type)
 
         # Get the weight tensor for the target node
-        if len(weights_attributes) != 1:
-            Logger.critical(f"Currently, Hessian scores with respect to weights are supported only for nodes with a single weight attribute. {len(weights_attributes)} attributes found.")
+        if len(weights_attributes) != 1:  # pragma: no cover
+            Logger.critical(f"Currently, Hessian scores with respect to weights are supported only for nodes with a "
+                            f"single weight attribute. {len(weights_attributes)} attributes found.")
 
         weights_tensor = getattr(getattr(model, target_node.name), weights_attributes[0])
 

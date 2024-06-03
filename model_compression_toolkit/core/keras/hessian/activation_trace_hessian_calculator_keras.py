@@ -82,7 +82,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                 else:
                     outputs = model(*self.input_images)
 
-                if len(outputs) != len(grad_model_outputs):
+                if len(outputs) != len(grad_model_outputs):  # pragma: no cover
                     Logger.critical(
                         f"Model for computing activation Hessian approximation expects {len(grad_model_outputs)} "
                         f"outputs, but got {len(outputs)} output tensors.")
@@ -117,7 +117,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
                             if hess_v is None:
                                 # In case we have an output node, which is an interest point, but it is not
                                 # differentiable, we consider its Hessian to be the initial value 0.
-                                continue
+                                continue  # pragma: no cover
 
                             # Mean over all dims but the batch (CXHXW for conv)
                             hessian_trace_approx = tf.reduce_sum(hess_v ** 2.0,
@@ -150,6 +150,6 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
                 return hessian_results
 
-        else:
+        else:  # pragma: no cover
             Logger.critical(f"{self.hessian_request.granularity} "
                             f"is not supported for Keras activation hessian\'s trace approximation calculator.")

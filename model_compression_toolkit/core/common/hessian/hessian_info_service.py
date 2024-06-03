@@ -85,7 +85,7 @@ class HessianInfoService:
         # Collect the requested number of samples from the representative dataset
         for batch in representative_dataset:
             if not isinstance(batch, list):
-                Logger.critical(f'Expected batch to be a list; found type: {type(batch)}.')
+                Logger.critical(f'Expected batch to be a list; found type: {type(batch)}.')  # pragma: no cover
             all_inp_remaining_samples = [[] for _ in range(num_inputs)]
             for inp_idx in range(len(batch)):
                 inp_batch = batch[inp_idx]
@@ -260,8 +260,9 @@ class HessianInfoService:
         Returns: A reuse group representative node (BaseNode).
         """
         father_nodes = [n for n in self.graph.nodes if not n.reuse and n.reuse_group == node.reuse_group]
-        if len(father_nodes) != 1:
-            Logger.critical(f"Expected a single non-reused node in the reused group, but found {len(father_nodes)}.")
+        if len(father_nodes) != 1:  # pragma: no cover
+            Logger.critical(f"Expected a single non-reused node in the reused group, "
+                            f"but found {len(father_nodes)}.")
 
         return father_nodes[0]
 
@@ -327,9 +328,9 @@ class HessianInfoService:
                                                                       node)
 
             res_for_node = self.trace_hessian_request_to_score_list.get(single_node_request)
-            if res_for_node is None:
+            if res_for_node is None:  # pragma: no cover
                 Logger.critical(f"Couldn't find saved Hessian approximations for node {node.name}.")
-            if len(res_for_node) < required_size:
+            if len(res_for_node) < required_size:  # pragma: no cover
                 Logger.critical(f"Missing Hessian approximations for node {node.name}, requested {required_size} "
                                 f"but found only {len(res_for_node)}.")
 

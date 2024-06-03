@@ -82,7 +82,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
 
             outputs = model(*self.input_images)
 
-            if len(outputs) != len(grad_model_outputs):
+            if len(outputs) != len(grad_model_outputs):  # pragma: no cover
                 Logger.critical(f"Mismatch in expected and actual model outputs for activation Hessian approximation. "
                                 f"Expected {len(grad_model_outputs)} outputs, received {len(outputs)}.")
 
@@ -118,7 +118,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                     if hess_v is None:
                         # In case we have an output node, which is an interest point, but it is not differentiable,
                         # we consider its Hessian to be the initial value 0.
-                        continue
+                        continue  # pragma: no cover
 
                     # Mean over all dims but the batch (CXHXW for conv)
                     hessian_trace_approx = torch.sum(hess_v ** 2.0, dim=tuple(d for d in range(1, len(hess_v.shape))))
@@ -146,7 +146,7 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
 
             return hessian_results
 
-        else:
+        else:  # pragma: no cover
             Logger.critical(f"PyTorch activation Hessian's trace approximation does not support "
                             f"{self.hessian_request.granularity} granularity.")
 

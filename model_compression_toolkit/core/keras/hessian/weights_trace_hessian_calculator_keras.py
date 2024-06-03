@@ -47,7 +47,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
         """
 
-        if len(trace_hessian_request.target_nodes) > 1:
+        if len(trace_hessian_request.target_nodes) > 1:  # pragma: no cover
             Logger.critical(f"Weights Hessian approximation is currently supported only for a single target node,"
                             f" but the provided request contains the following target nodes: "
                             f"{trace_hessian_request.target_nodes}.")
@@ -87,7 +87,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         weight_attributes = DEFAULT_KERAS_INFO.get_kernel_op_attributes(target_node.type)
 
         # Get the weight tensor for the target node
-        if len(weight_attributes) != 1:
+        if len(weight_attributes) != 1:  # pragma: no cover
             Logger.critical(f"Hessian-based scoring with respect to weights is currently supported only for nodes with "
                             f"a single weight attribute. Found {len(weight_attributes)} attributes.")
 
@@ -148,7 +148,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         del tape
 
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
-            if final_approx.shape != (1,):
+            if final_approx.shape != (1,):  # pragma: no cover
                 Logger.critical(f"For HessianInfoGranularity.PER_TENSOR, the expected score shape is (1,), but found {final_approx.shape}.")
         elif self.hessian_request.granularity == HessianInfoGranularity.PER_ELEMENT:
             # Reshaping the scores to the original weight shape
@@ -207,5 +207,5 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             return weight_tensor.shape[output_channel_axis]
         elif self.hessian_request.granularity == HessianInfoGranularity.PER_ELEMENT:
             return tf.size(weight_tensor).numpy()
-        else:
+        else:  # pragma: no cover
             Logger.critical(f"Unexpected granularity encountered: {self.hessian_request.granularity}.")
