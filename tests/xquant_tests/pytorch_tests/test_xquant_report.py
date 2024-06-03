@@ -56,10 +56,8 @@ class TestXQuantReport(unittest.TestCase):
 
     def setUp(self):
         self.float_model = ModelToTest()
-        self.core_config = mct.core.CoreConfig()
         self.repr_dataset = random_data_gen
         self.quantized_model, _ = mct.ptq.pytorch_post_training_quantization(in_module=self.float_model,
-                                                                             core_config=self.core_config,
                                                                              representative_data_gen=self.repr_dataset)
 
         self.validation_dataset = partial(random_data_gen, use_labels=True)
@@ -75,7 +73,6 @@ class TestXQuantReport(unittest.TestCase):
             self.quantized_model,
             self.repr_dataset,
             self.validation_dataset,
-            # self.core_config,
             self.xquant_config
         )
 
@@ -92,7 +89,6 @@ class TestXQuantReport(unittest.TestCase):
             self.quantized_model,
             self.repr_dataset,
             self.validation_dataset,
-            # self.core_config,
             self.xquant_config
         )
 
@@ -111,7 +107,6 @@ class TestXQuantReport(unittest.TestCase):
             self.quantized_model,
             self.repr_dataset,
             self.validation_dataset,
-            # self.core_config,
             self.xquant_config
         )
 
@@ -128,7 +123,6 @@ class TestXQuantReport(unittest.TestCase):
             self.quantized_model,
             self.repr_dataset,
             self.validation_dataset,
-            # self.core_config,
             self.xquant_config
         )
 
@@ -150,7 +144,6 @@ class TestXQuantReport(unittest.TestCase):
             self.quantized_model,
             self.repr_dataset,
             self.validation_dataset,
-            # self.core_config,
             self.xquant_config
         )
         self.assertIn(INTERMEDIATE_METRICS_VAL, result)
@@ -166,7 +159,6 @@ class TestXQuantReport(unittest.TestCase):
             self.quantized_model,
             self.repr_dataset,
             self.validation_dataset,
-            # self.core_config,
             self.xquant_config
         )
 
