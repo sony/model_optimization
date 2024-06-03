@@ -15,7 +15,7 @@
 
 from typing import Callable
 
-from xquant.common.collect_report_data import collect_report_data
+from xquant.common.core_report_generator import core_report_generator
 from xquant import XQuantConfig
 from xquant.common.constants import FOUND_TORCH
 from xquant.logger import Logger
@@ -44,12 +44,12 @@ if FOUND_TORCH:
         """
 
         pytorch_report_utils = PytorchReportUtils(xquant_config.report_dir)
-        _collected_data = collect_report_data(float_model=float_model,
-                                              quantized_model=quantized_model,
-                                              repr_dataset=repr_dataset,
-                                              validation_dataset=validation_dataset,
-                                              fw_report_utils=pytorch_report_utils,
-                                              xquant_config=xquant_config)
+        _collected_data = core_report_generator(float_model=float_model,
+                                                quantized_model=quantized_model,
+                                                repr_dataset=repr_dataset,
+                                                validation_dataset=validation_dataset,
+                                                fw_report_utils=pytorch_report_utils,
+                                                xquant_config=xquant_config)
 
         return _collected_data
 

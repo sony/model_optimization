@@ -16,17 +16,16 @@
 from typing import Callable, Any, Dict
 
 from xquant import XQuantConfig
-from xquant.common.constants import OUTPUT_METRICS_REPR, OUTPUT_METRICS_VAL, INTERMEDIATE_METRICS_REPR, \
-    INTERMEDIATE_METRICS_VAL
+from xquant.common.constants import OUTPUT_METRICS_REPR, OUTPUT_METRICS_VAL, INTERMEDIATE_METRICS_REPR, INTERMEDIATE_METRICS_VAL
 from xquant.common.framework_report_utils import FrameworkReportUtils
 
 
-def collect_report_data(float_model: Any,
-                        quantized_model: Any,
-                        repr_dataset: Callable,
-                        validation_dataset: Callable,
-                        fw_report_utils: FrameworkReportUtils,
-                        xquant_config: XQuantConfig) -> Dict[str, Any]:
+def core_report_generator(float_model: Any,
+                          quantized_model: Any,
+                          repr_dataset: Callable,
+                          validation_dataset: Callable,
+                          fw_report_utils: FrameworkReportUtils,
+                          xquant_config: XQuantConfig) -> Dict[str, Any]:
     """
     Collects report data by computing various metrics on the quantized model.
 

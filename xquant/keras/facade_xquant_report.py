@@ -16,7 +16,7 @@
 from typing import Callable, Dict, Any
 
 
-from xquant.common.collect_report_data import collect_report_data
+from xquant.common.core_report_generator import core_report_generator
 from xquant import XQuantConfig
 from xquant.common.constants import FOUND_TF
 from xquant.logger import Logger
@@ -48,12 +48,12 @@ if FOUND_TF:
         keras_report_utils = KerasReportUtils(xquant_config.report_dir)
 
         # Collect data and metrics for the report.
-        _collected_data = collect_report_data(float_model=float_model,
-                                              quantized_model=quantized_model,
-                                              repr_dataset=repr_dataset,
-                                              validation_dataset=validation_dataset,
-                                              fw_report_utils=keras_report_utils,
-                                              xquant_config=xquant_config)
+        _collected_data = core_report_generator(float_model=float_model,
+                                                quantized_model=quantized_model,
+                                                repr_dataset=repr_dataset,
+                                                validation_dataset=validation_dataset,
+                                                fw_report_utils=keras_report_utils,
+                                                xquant_config=xquant_config)
 
         return _collected_data
 else:
