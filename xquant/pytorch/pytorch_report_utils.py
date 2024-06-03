@@ -37,6 +37,7 @@ from model_compression_toolkit.core.pytorch.default_framework_info import DEFAUL
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 
 from xquant.logger import Logger
+from xquant.pytorch.similarity_metrics import PytorchSimilarityMetrics
 
 
 class PytorchReportUtils(FrameworkReportUtils):
@@ -46,6 +47,7 @@ class PytorchReportUtils(FrameworkReportUtils):
             report_dir: Logging dir path.
         """
         tb_writer = TensorboardWriter(report_dir, DEFAULT_PYTORCH_INFO)
+        self.similarity_metrics = PytorchSimilarityMetrics()
         super().__init__(tb_writer=tb_writer)
 
     def get_metric_on_output(self,
@@ -77,15 +79,15 @@ class PytorchReportUtils(FrameworkReportUtils):
         quantized_model.eval()
 
         # Get the default metrics and add any custom metrics
-        metrics_to_compute = list(self.get_default_metrics().keys())
+        metrics_to_compute = self.similarity_metrics.get_default_metrics()
         if custom_metrics_output:
             assert isinstance(custom_metrics_output,
                               dict), (f"custom_metrics_output should be a dictionary but is "
                                       f"{type(custom_metrics_output)}")
-            metrics_to_compute += list(custom_metrics_output.keys())
+            metrics_to_compute.update(custom_metrics_output)
 
         # Initialize a dictionary to store metrics
-        metrics = {key: [] for key in metrics_to_compute}
+        metrics = {key: [] for key in metrics_to_compute.keys()}
 
         # Iterate over the dataset and compute predictions
         for x in dataset():
@@ -95,7 +97,7 @@ class PytorchReportUtils(FrameworkReportUtils):
                 predictions = (float_pred, quant_pred)
 
             # Compute and store metrics
-            results = self.compute_metrics(predictions, custom_metrics_output)
+            results = self.compute_metrics(predictions, metrics_to_compute)
             for key in metrics:
                 metrics[key].append(results[key])
 
@@ -136,12 +138,12 @@ class PytorchReportUtils(FrameworkReportUtils):
         quantized_model.eval()
 
         # Get the default metrics and add any custom metrics
-        metrics_to_compute = list(self.get_default_metrics().keys())
+        metrics_to_compute = self.similarity_metrics.get_default_metrics()
         if custom_metrics_intermediate:
             if not isinstance(custom_metrics_intermediate, dict):
                 Logger.critical(
                     f"custom_metrics_output should be a dictionary but is {type(custom_metrics_intermediate)}")
-            metrics_to_compute += list(custom_metrics_intermediate.keys())
+            metrics_to_compute.update(custom_metrics_intermediate)
 
         # Map layers between the float and quantized models
         float_name2quant_name = self.get_float_to_quantized_compare_points(float_model=float_model,
@@ -190,7 +192,7 @@ class PytorchReportUtils(FrameworkReportUtils):
             for float_layer, quant_layer in float_name2quant_name.items():
                 results[quant_layer].append(
                     self.compute_metrics((activations_float[float_layer], activations_quant[quant_layer]),
-                                         custom_metrics_intermediate))
+                                         metrics_to_compute))
 
         # Aggregate metrics by averaging
         aggregated_metrics = {}
@@ -206,62 +208,62 @@ class PytorchReportUtils(FrameworkReportUtils):
             aggregated_metrics[layer_name] = combined_dict
 
         return aggregated_metrics
-
-    def get_default_metrics(self) -> Dict[str, Callable]:
-        """
-        Returns default metrics to be computed on model outputs.
-
-        Returns:
-            A dictionary of metric names and their corresponding functions.
-        """
-
-        def compute_mse(f_pred: tf.Tensor, q_pred: tf.Tensor) -> float:
-            """
-            Computes Mean Squared Error between float and quantized predictions.
-
-            Args:
-                f_pred: Float model predictions.
-                q_pred: Quantized model predictions.
-
-            Returns:
-                Mean Squared Error as a float.
-            """
-            mse = torch.nn.functional.mse_loss(f_pred, q_pred)
-            return mse.item()
-
-        def compute_cs(f_pred: tf.Tensor, q_pred: tf.Tensor) -> float:
-            """
-            Computes Cosine Similarity between float and quantized predictions.
-
-            Args:
-                f_pred: Float model predictions.
-                q_pred: Quantized model predictions.
-
-            Returns:
-                Cosine Similarity as a float.
-            """
-            cs = torch.nn.functional.cosine_similarity(f_pred.flatten(), q_pred.flatten(), dim=0)
-            return cs.item()
-
-        def compute_sqnr(f_pred: tf.Tensor, q_pred: tf.Tensor) -> float:
-            """
-            Computes Signal-to-Quantization-Noise Ratio between float and quantized predictions.
-
-            Args:
-                f_pred: Float model predictions.
-                q_pred: Quantized model predictions.
-
-            Returns:
-                Signal-to-Quantization-Noise Ratio as a float.
-            """
-            signal_power = torch.mean(f_pred ** 2)
-            noise_power = torch.mean((f_pred - q_pred) ** 2)
-            sqnr = signal_power / noise_power
-            return sqnr.item()
-
-        return {MSE_METRIC_NAME: compute_mse,
-                CS_METRIC_NAME: compute_cs,
-                SQNR_METRIC_NAME: compute_sqnr}
+    #
+    # def get_default_metrics(self) -> Dict[str, Callable]:
+    #     """
+    #     Returns default metrics to be computed on model outputs.
+    #
+    #     Returns:
+    #         A dictionary of metric names and their corresponding functions.
+    #     """
+    #
+    #     def compute_mse(f_pred: tf.Tensor, q_pred: tf.Tensor) -> float:
+    #         """
+    #         Computes Mean Squared Error between float and quantized predictions.
+    #
+    #         Args:
+    #             f_pred: Float model predictions.
+    #             q_pred: Quantized model predictions.
+    #
+    #         Returns:
+    #             Mean Squared Error as a float.
+    #         """
+    #         mse = torch.nn.functional.mse_loss(f_pred, q_pred)
+    #         return mse.item()
+    #
+    #     def compute_cs(f_pred: tf.Tensor, q_pred: tf.Tensor) -> float:
+    #         """
+    #         Computes Cosine Similarity between float and quantized predictions.
+    #
+    #         Args:
+    #             f_pred: Float model predictions.
+    #             q_pred: Quantized model predictions.
+    #
+    #         Returns:
+    #             Cosine Similarity as a float.
+    #         """
+    #         cs = torch.nn.functional.cosine_similarity(f_pred.flatten(), q_pred.flatten(), dim=0)
+    #         return cs.item()
+    #
+    #     def compute_sqnr(f_pred: tf.Tensor, q_pred: tf.Tensor) -> float:
+    #         """
+    #         Computes Signal-to-Quantization-Noise Ratio between float and quantized predictions.
+    #
+    #         Args:
+    #             f_pred: Float model predictions.
+    #             q_pred: Quantized model predictions.
+    #
+    #         Returns:
+    #             Signal-to-Quantization-Noise Ratio as a float.
+    #         """
+    #         signal_power = torch.mean(f_pred ** 2)
+    #         noise_power = torch.mean((f_pred - q_pred) ** 2)
+    #         sqnr = signal_power / noise_power
+    #         return sqnr.item()
+    #
+    #     return {MSE_METRIC_NAME: compute_mse,
+    #             CS_METRIC_NAME: compute_cs,
+    #             SQNR_METRIC_NAME: compute_sqnr}
 
     def create_float_folded_model(self,
                                   float_model: Model,

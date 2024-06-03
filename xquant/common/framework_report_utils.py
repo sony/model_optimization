@@ -130,14 +130,14 @@ class FrameworkReportUtils:
         """
         Logger.critical(f"get_metric_on_intermediate is not implemented.")
 
-    def get_default_metrics(self) -> Dict[str, Callable]:
-        """
-        Retrieve the default metrics for evaluation.
-
-        Returns:
-            Dict[str, Callable]: A dictionary of default metric functions.
-        """
-        Logger.critical(f"get_default_metrics is not implemented.")
+    # def get_default_metrics(self) -> Dict[str, Callable]:
+    #     """
+    #     Retrieve the default metrics for evaluation.
+    #
+    #     Returns:
+    #         Dict[str, Callable]: A dictionary of default metric functions.
+    #     """
+    #     Logger.critical(f"get_default_metrics is not implemented.")
 
     def create_float_folded_model(self,
                                   float_model: Any,
@@ -188,13 +188,13 @@ class FrameworkReportUtils:
 
     def compute_metrics(self,
                         predictions: Tuple[Any, Any],
-                        custom_metrics_output: Dict[str, Callable] = None) -> Dict[str, float]:
+                        similarity_metrics: Dict[str, Callable]) -> Dict[str, float]:
         """
         Compute metrics based on predictions.
 
         Args:
             predictions (Tuple[Any, Any]): A tuple of predictions from the floating-point and quantized models.
-            custom_metrics_output (Dict[str, Callable], optional): Custom metrics for output evaluation. Defaults to None.
+            similarity_metrics (Dict[str, Callable]): Custom metrics for output evaluation.
 
         Returns:
             Dict[str, float]: A dictionary of computed metrics.
@@ -203,12 +203,7 @@ class FrameworkReportUtils:
         f_pred, q_pred = predictions
 
         # Compute default metrics
-        metrics = {k: v(f_pred=f_pred, q_pred=q_pred) for k, v in self.get_default_metrics().items()}
-
-        # Compute custom metrics if provided
-        if custom_metrics_output:
-            for metric_name, metric_fn in custom_metrics_output.items():
-                metrics[metric_name] = metric_fn(f_pred, q_pred)
+        metrics = {k: v(f_pred, q_pred) for k, v in similarity_metrics.items()}
 
         return metrics
 

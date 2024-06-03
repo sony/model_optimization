@@ -38,6 +38,8 @@ from xquant.common.constants import INTERMEDIATE_METRICS_REPR, INTERMEDIATE_METR
 from xquant.common.framework_report_utils import FrameworkReportUtils, MSE_METRIC_NAME, CS_METRIC_NAME, SQNR_METRIC_NAME
 from model_compression_toolkit.ptq.keras.quantization_facade import DEFAULT_KERAS_TPC
 from model_compression_toolkit.core.keras.reader.reader import model_reader
+
+from xquant.keras.similarity_metrics import KerasSimilarityMetrics
 from xquant.logger import Logger
 
 
@@ -49,6 +51,7 @@ class KerasReportUtils(FrameworkReportUtils):
             report_dir: Logging dir path.
         """
         tb_writer = TensorboardWriter(report_dir, DEFAULT_KERAS_INFO)
+        self.similarity_metrics = KerasSimilarityMetrics()
         super().__init__(tb_writer=tb_writer)
 
     def get_metric_on_output(self,
@@ -76,19 +79,19 @@ class KerasReportUtils(FrameworkReportUtils):
                           dataset=dataset,
                           is_validation=is_validation)
 
-        metrics_to_compute = list(self.get_default_metrics().keys())
+        metrics_to_compute = self.similarity_metrics.get_default_metrics()
         if custom_metrics_output:
             if not isinstance(custom_metrics_output, dict):
                 Logger.critical(f"custom_metrics_output should be a dictionary but is {type(custom_metrics_output)}")
-            metrics_to_compute += list(custom_metrics_output.keys())
+            metrics_to_compute.update(custom_metrics_output)
 
-        metrics = {key: [] for key in metrics_to_compute}
+        metrics = {key: [] for key in list(metrics_to_compute.keys())}
 
         for x in dataset():
             float_predictions = float_model.predict(x)
             quant_predictions = quantized_model.predict(x)
             results = self.compute_metrics((float_predictions, quant_predictions),
-                                           custom_metrics_output)
+                                           metrics_to_compute)
 
             # Accumulating results
             for key in metrics:
@@ -150,12 +153,13 @@ class KerasReportUtils(FrameworkReportUtils):
             # Map the activations to their corresponding layer names
             return {layer_name: predictions[i] for i, layer_name in enumerate(layer_names)}
 
-        metrics_to_compute = list(self.get_default_metrics().keys())
+
+
+        metrics_to_compute = self.similarity_metrics.get_default_metrics()
         if custom_metrics_intermediate:
             if not isinstance(custom_metrics_intermediate, dict):
                 Logger.critical(f"custom_metrics_intermediate should be a dictionary but is {type(custom_metrics_intermediate)}")
-
-            metrics_to_compute += list(custom_metrics_intermediate.keys())
+            metrics_to_compute.update(custom_metrics_intermediate)
 
         float_name2quant_name = self.get_float_to_quantized_compare_points(float_model=float_model,
                                                                            quantized_model=quantized_model)
@@ -171,7 +175,7 @@ class KerasReportUtils(FrameworkReportUtils):
                 quant_activation = quant_activations[quant_layer]
 
                 results[quant_layer].append(
-                    self.compute_metrics((float_activation, quant_activation), custom_metrics_intermediate))
+                    self.compute_metrics((float_activation, quant_activation), metrics_to_compute))
 
         aggregated_metrics = {}
         for layer_name, layer_metrics in results.items():
@@ -186,32 +190,6 @@ class KerasReportUtils(FrameworkReportUtils):
             aggregated_metrics[layer_name] = combined_dict
 
         return aggregated_metrics
-
-    def get_default_metrics(self) -> Dict[str, Callable]:
-        """
-        Retrieve the default metrics for evaluation.
-
-        Returns:
-            Dict[str, Callable]: A dictionary of default metric functions.
-        """
-
-        def compute_mse(f_pred: np.ndarray, q_pred: np.ndarray) -> float:
-            mse = tf.keras.losses.MeanSquaredError()(f_pred, q_pred)
-            return float(mse.numpy())
-
-        def compute_cs(f_pred: np.ndarray, q_pred: np.ndarray) -> float:
-            cs = tf.keras.losses.CosineSimilarity()(f_pred.flatten(), q_pred.flatten())
-            return float(cs.numpy())
-
-        def compute_sqnr(f_pred: np.ndarray, q_pred: np.ndarray) -> float:
-            signal_power = tf.reduce_mean(tf.square(f_pred))
-            noise_power = tf.reduce_mean(tf.square(f_pred - q_pred))
-            sqnr = signal_power / noise_power
-            return float(sqnr.numpy())
-
-        return {MSE_METRIC_NAME: compute_mse,
-                CS_METRIC_NAME: compute_cs,
-                SQNR_METRIC_NAME: compute_sqnr}
 
     def create_float_folded_model(self,
                                   float_model: keras.Model,
