@@ -575,7 +575,7 @@ def evaluate_yolov8_segmentation(model, data_dir, data_type='val2017', img_ids_l
         with torch.no_grad():
             output = model(input_tensor)
         #run post processing (nms)
-        boxes, scores, classes, masks = postprocess_yolov8_inst_seg(outputs=output , conf,iou_thresh, max_dets)
+        boxes, scores, classes, masks = postprocess_yolov8_inst_seg(outputs=output, conf=conf, iou_thres=iou_thresh, max_out_dets=max_dets)
 
         if boxes.size == 0:  
             continue
