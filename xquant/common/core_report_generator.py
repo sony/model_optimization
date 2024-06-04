@@ -44,7 +44,7 @@ def core_report_generator(float_model: Any,
     fw_report_utils.create_report_directory(dir_path=xquant_config.report_dir)
 
     # Collect histograms and add them to Tensorboard.
-    fw_report_utils.add_histograms_to_tensorboard(model=float_model,
+    fw_report_utils.tb_utils.add_histograms_to_tensorboard(model=float_model,
                                                   repr_dataset=repr_dataset)
 
     _collected_data = {}
@@ -53,13 +53,13 @@ def core_report_generator(float_model: Any,
     _collected_data[OUTPUT_METRICS_REPR] = fw_report_utils.get_metric_on_output(float_model=float_model,
                                                                                 quantized_model=quantized_model,
                                                                                 dataset=repr_dataset,
-                                                                                custom_metrics_output=xquant_config.custom_similarity_metrics)
+                                                                                custom_similarity_metrics=xquant_config.custom_similarity_metrics)
 
     # Compute output metrics for the validation dataset.
     _collected_data[OUTPUT_METRICS_VAL] = fw_report_utils.get_metric_on_output(float_model=float_model,
                                                                                quantized_model=quantized_model,
                                                                                dataset=validation_dataset,
-                                                                               custom_metrics_output=xquant_config.custom_similarity_metrics,
+                                                                               custom_similarity_metrics=xquant_config.custom_similarity_metrics,
                                                                                is_validation=True)
 
     # Compute intermediate metrics for the representative dataset.
@@ -67,7 +67,7 @@ def core_report_generator(float_model: Any,
         float_model=float_model,
         quantized_model=quantized_model,
         dataset=repr_dataset,
-        custom_metrics_intermediate=xquant_config.custom_similarity_metrics,
+        custom_similarity_metrics=xquant_config.custom_similarity_metrics,
     )
 
     # Compute intermediate metrics for the validation dataset.
@@ -75,7 +75,7 @@ def core_report_generator(float_model: Any,
         float_model=float_model,
         quantized_model=quantized_model,
         dataset=validation_dataset,
-        custom_metrics_intermediate=xquant_config.custom_similarity_metrics,
+        custom_similarity_metrics=xquant_config.custom_similarity_metrics,
         is_validation=True)
 
     # Generate the quantized graph with metrics.
@@ -85,7 +85,7 @@ def core_report_generator(float_model: Any,
                                                                repr_dataset=repr_dataset)
 
     # Add the quantized graph to TensorBoard for visualization.
-    fw_report_utils.add_graph_to_tensorboard(graph=quant_graph)
+    fw_report_utils.tb_utils.add_graph_to_tensorboard(graph=quant_graph)
 
     fw_report_utils.dump_report_to_json(report_dir=xquant_config.report_dir,
                                         collected_data=_collected_data)

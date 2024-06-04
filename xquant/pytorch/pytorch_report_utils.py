@@ -14,12 +14,9 @@
 #  ==============================================================================
 
 
-from tqdm import tqdm
 from typing import Any, Callable, Dict
 
 from mct_quantizers import PytorchQuantizationWrapper
-from model_compression_toolkit.core.common.model_collector import ModelCollector
-from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 from model_compression_toolkit.ptq.pytorch.quantization_facade import DEFAULT_PYTORCH_TPC
 from xquant import XQuantConfig
@@ -30,7 +27,8 @@ import torch
 import numpy as np
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-from xquant.common.model_folding import ModelFolding
+from xquant.common.model_folding_utils import ModelFoldingUtils
+from xquant.common.tensorboard_utils import TensorboardUtils
 
 from xquant.logger import Logger
 from xquant.pytorch.dataset_utils import PytorchDatasetUtils
@@ -43,36 +41,35 @@ class PytorchReportUtils(FrameworkReportUtils):
         Args:
             report_dir: Logging dir path.
         """
-        tb_writer = TensorboardWriter(report_dir, DEFAULT_PYTORCH_INFO)
-        self.similarity_metrics = PytorchSimilarityMetrics()
-        self.dataset_utils = PytorchDatasetUtils()
-        self.model_folding = ModelFolding(fw_info=DEFAULT_PYTORCH_INFO,
-                                          fw_impl=PytorchImplementation(),
+        fw_info = DEFAULT_PYTORCH_INFO
+        fw_impl = PytorchImplementation()
+
+        similarity_metrics = PytorchSimilarityMetrics()
+        dataset_utils = PytorchDatasetUtils()
+        model_folding = ModelFoldingUtils(fw_info=fw_info,
+                                          fw_impl=fw_impl,
                                           fw_default_tpc=DEFAULT_PYTORCH_TPC)
-        super().__init__(tb_writer=tb_writer)
+        tb_utils = TensorboardUtils(report_dir=report_dir,
+                                    fw_impl=fw_impl,
+                                    fw_info=fw_info,
+                                    model_folding_utils=model_folding)
+        super().__init__(fw_info=fw_info,
+                         fw_impl=fw_impl,
+                         tb_utils=tb_utils,
+                         dataset_utils=dataset_utils,
+                         similarity_metrics=similarity_metrics,
+                         model_folding=model_folding)
 
     def get_metric_on_output(self,
                              float_model: torch.nn.Module,
                              quantized_model: torch.nn.Module,
                              dataset: Callable,
-                             custom_metrics_output: Dict[str, Callable] = None,
+                             custom_similarity_metrics: Dict[str, Callable] = None,
                              is_validation: bool = False):
-        """
-        Computes metrics on the outputs of the float and quantized models.
-
-        Args:
-            float_model: The original float model.
-            quantized_model: The quantized model.
-            dataset: A function that returns the dataset.
-            custom_metrics_output: A dictionary of custom metrics to compute.
-            is_validation: A flag indicating if this is a validation dataset.
-
-        Returns:
-            A dictionary with aggregated metrics.
-        """
 
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        dataset = partial(self.dataset_utils.wrapped_dataset, dataset=dataset, is_validation=is_validation, device=device)
+        dataset = partial(self.dataset_utils.wrapped_dataset, dataset=dataset, is_validation=is_validation,
+                          device=device)
 
         float_model.to(device)
         quantized_model.to(device)
@@ -81,11 +78,11 @@ class PytorchReportUtils(FrameworkReportUtils):
 
         # Get the default metrics and add any custom metrics
         metrics_to_compute = self.similarity_metrics.get_default_metrics()
-        if custom_metrics_output:
-            assert isinstance(custom_metrics_output,
-                              dict), (f"custom_metrics_output should be a dictionary but is "
-                                      f"{type(custom_metrics_output)}")
-            metrics_to_compute.update(custom_metrics_output)
+        if custom_similarity_metrics:
+            assert isinstance(custom_similarity_metrics,
+                              dict), (f"custom_similarity_metrics should be a dictionary but is "
+                                      f"{type(custom_similarity_metrics)}")
+            metrics_to_compute.update(custom_similarity_metrics)
 
         # Initialize a dictionary to store metrics
         metrics = {key: [] for key in metrics_to_compute.keys()}
@@ -111,26 +108,15 @@ class PytorchReportUtils(FrameworkReportUtils):
                                    float_model: torch.nn.Module,
                                    quantized_model: torch.nn.Module,
                                    dataset: Callable,
-                                   custom_metrics_intermediate: Dict[str, Callable] = None,
+                                   custom_similarity_metrics: Dict[str, Callable] = None,
                                    is_validation: bool = False):
-        """
-        Computes metrics on the intermediate layers of the float and quantized models.
-
-        Args:
-            float_model: The original float model.
-            quantized_model: The quantized model.
-            dataset: A function that returns the dataset.
-            custom_metrics_intermediate: A dictionary of custom metrics to compute.
-            is_validation: A flag indicating if this is a validation dataset.
-
-        Returns:
-            A dictionary with aggregated metrics for each layer.
-        """
 
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        dataset = partial(self.dataset_utils.wrapped_dataset, dataset=dataset, is_validation=is_validation, device=device)
+        dataset = partial(self.dataset_utils.wrapped_dataset, dataset=dataset, is_validation=is_validation,
+                          device=device)
 
-        float_model = self.model_folding.create_float_folded_model(float_model=float_model, representative_dataset=dataset)
+        float_model = self.model_folding.create_float_folded_model(float_model=float_model,
+                                                                   representative_dataset=dataset)
 
         float_model.to(device)
         quantized_model.to(device)
@@ -139,27 +125,17 @@ class PytorchReportUtils(FrameworkReportUtils):
 
         # Get the default metrics and add any custom metrics
         metrics_to_compute = self.similarity_metrics.get_default_metrics()
-        if custom_metrics_intermediate:
-            if not isinstance(custom_metrics_intermediate, dict):
+        if custom_similarity_metrics:
+            if not isinstance(custom_similarity_metrics, dict):
                 Logger.critical(
-                    f"custom_metrics_output should be a dictionary but is {type(custom_metrics_intermediate)}")
-            metrics_to_compute.update(custom_metrics_intermediate)
+                    f"custom_similarity_metrics should be a dictionary but is {type(custom_similarity_metrics)}")
+            metrics_to_compute.update(custom_similarity_metrics)
 
         # Map layers between the float and quantized models
         float_name2quant_name = self.get_float_to_quantized_compare_points(float_model=float_model,
                                                                            quantized_model=quantized_model)
 
         def get_activation(name: str, activations: dict):
-            """
-            Returns a hook function to capture activations.
-
-            Args:
-                name: The name of the layer.
-                activations: Dictionary to store activations.
-
-            Returns:
-                Hook function to register.
-            """
 
             def hook(model, input, output):
                 activations[name] = output.detach()
@@ -186,7 +162,8 @@ class PytorchReportUtils(FrameworkReportUtils):
         # Iterate over the dataset and compute activations
         for x in dataset():
             with torch.no_grad():
-                _ = (float_model(*x), quantized_model(*x))
+                float_pred = float_model(*x)
+                quant_pred = quantized_model(*x)
 
             # Compute and store metrics for each layer
             for float_layer, quant_layer in float_name2quant_name.items():
@@ -238,26 +215,6 @@ class PytorchReportUtils(FrameworkReportUtils):
 
         return float_name2quant_name
 
-    def get_quantized_graph(self,
-                            quantized_model: torch.nn.Module,
-                            repr_dataset: Callable):
-        """
-        Get a graph representation of the quantized model.
-
-        Args:
-            quantized_model: The quantized model.
-            repr_dataset: Representative dataset to use during the graph building.
-
-        Returns:
-            Graph representation of the quantized model.
-        """
-
-        pytorch_impl = PytorchImplementation()
-        graph = model_reader(quantized_model,
-                             representative_data_gen=repr_dataset,
-                             to_tensor=pytorch_impl.to_tensor,
-                             to_numpy=pytorch_impl.to_numpy)
-        return graph
 
     def get_quant_graph_with_metrics(self,
                                      quantized_model: torch.nn.Module,
@@ -276,8 +233,11 @@ class PytorchReportUtils(FrameworkReportUtils):
         Returns:
             The updated quantized model graph.
         """
-        quant_graph = self.get_quantized_graph(quantized_model=quantized_model,
-                                               repr_dataset=repr_dataset)
+        quant_graph = model_reader(quantized_model,
+                                   representative_data_gen=repr_dataset,
+                                   to_tensor=self.fw_impl.to_tensor,
+                                   to_numpy=self.fw_impl.to_numpy)
+
         for node in quant_graph.nodes:
             if node.name in collected_data[INTERMEDIATE_METRICS_REPR].keys():
                 node.framework_attr[XQUANT_REPR] = collected_data[INTERMEDIATE_METRICS_REPR][f"{node.name}"]
@@ -291,26 +251,3 @@ class PytorchReportUtils(FrameworkReportUtils):
                 node.framework_attr[XQUANT_VAL] = collected_data[INTERMEDIATE_METRICS_VAL][
                     node.name.removesuffix("_layer")]
         return quant_graph
-
-    def add_histograms_to_tensorboard(self,
-                                      model: torch.nn.Module,
-                                      repr_dataset: Callable,):
-        """
-        Collect histograms and add them to Tensorboard.
-
-        Args:
-            model: Model to collect histograms on.
-            repr_dataset: Dataset that is used an input for collecting histograms.
-
-        Returns:
-            None
-        """
-
-        graph = self.model_folding.create_float_folded_graph(model=model, repr_dataset=repr_dataset)
-        mi = ModelCollector(graph,
-                            PytorchImplementation(),
-                            DEFAULT_PYTORCH_INFO)
-        for _data in tqdm(repr_dataset(), "Statistics Collection"):
-            mi.infer(_data)
-
-        self.tb_writer.add_histograms(graph, "")

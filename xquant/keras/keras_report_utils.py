@@ -38,7 +38,8 @@ from xquant.common.constants import INTERMEDIATE_METRICS_REPR, INTERMEDIATE_METR
 from xquant.common.framework_report_utils import FrameworkReportUtils, MSE_METRIC_NAME, CS_METRIC_NAME, SQNR_METRIC_NAME
 from model_compression_toolkit.ptq.keras.quantization_facade import DEFAULT_KERAS_TPC
 from model_compression_toolkit.core.keras.reader.reader import model_reader
-from xquant.common.model_folding import ModelFolding
+from xquant.common.model_folding_utils import ModelFoldingUtils
+from xquant.common.tensorboard_utils import TensorboardUtils
 from xquant.keras.dataset_utils import KerasDatasetUtils
 
 from xquant.keras.similarity_metrics import KerasSimilarityMetrics
@@ -52,19 +53,31 @@ class KerasReportUtils(FrameworkReportUtils):
         Args:
             report_dir: Logging dir path.
         """
-        tb_writer = TensorboardWriter(report_dir, DEFAULT_KERAS_INFO)
-        self.similarity_metrics = KerasSimilarityMetrics()
-        self.dataset_utils = KerasDatasetUtils()
-        self.model_folding = ModelFolding(fw_info=DEFAULT_KERAS_INFO,
-                                          fw_impl=KerasImplementation(),
+        fw_info = DEFAULT_KERAS_INFO
+        fw_impl = KerasImplementation()
+
+        similarity_metrics = KerasSimilarityMetrics()
+        dataset_utils = KerasDatasetUtils()
+        model_folding = ModelFoldingUtils(fw_info=DEFAULT_KERAS_INFO,
+                                          fw_impl=fw_impl,
                                           fw_default_tpc=DEFAULT_KERAS_TPC)
-        super().__init__(tb_writer=tb_writer)
+
+        tb_utils = TensorboardUtils(report_dir=report_dir,
+                                    fw_impl=fw_impl,
+                                    fw_info=fw_info,
+                                    model_folding_utils=model_folding)
+        super().__init__(fw_info,
+                         fw_impl,
+                         similarity_metrics,
+                         dataset_utils,
+                         model_folding,
+                         tb_utils)
 
     def get_metric_on_output(self,
                              float_model: keras.Model,
                              quantized_model: keras.Model,
                              dataset: Callable,
-                             custom_metrics_output: Dict[str, Callable] = None,
+                             custom_similarity_metrics: Dict[str, Callable] = None,
                              is_validation: bool = False) -> Dict[str, float]:
         """
         Compute metrics on the output of the model.
@@ -73,7 +86,7 @@ class KerasReportUtils(FrameworkReportUtils):
             float_model (keras.Model): The floating-point Keras model.
             quantized_model (keras.Model): The quantized Keras model.
             dataset (Callable): Dataset used for inference.
-            custom_metrics_output (Dict[str, Callable], optional): Custom metrics for output evaluation. Defaults to
+            custom_similarity_metrics (Dict[str, Callable], optional): Custom metrics for output evaluation. Defaults to
             None.
             is_validation (bool, optional): Flag indicating if this is a validation dataset. Defaults to False.
 
@@ -86,10 +99,10 @@ class KerasReportUtils(FrameworkReportUtils):
                           is_validation=is_validation)
 
         metrics_to_compute = self.similarity_metrics.get_default_metrics()
-        if custom_metrics_output:
-            if not isinstance(custom_metrics_output, dict):
+        if custom_similarity_metrics:
+            if not isinstance(custom_similarity_metrics, dict):
                 Logger.critical(f"custom_metrics_output should be a dictionary but is {type(custom_metrics_output)}")
-            metrics_to_compute.update(custom_metrics_output)
+            metrics_to_compute.update(custom_similarity_metrics)
 
         metrics = {key: [] for key in list(metrics_to_compute.keys())}
 
@@ -112,7 +125,7 @@ class KerasReportUtils(FrameworkReportUtils):
                                    float_model: keras.Model,
                                    quantized_model: keras.Model,
                                    dataset: Callable,
-                                   custom_metrics_intermediate: Dict[str, Callable] = None,
+                                   custom_similarity_metrics: Dict[str, Callable] = None,
                                    is_validation: bool = False) -> Dict[str, Dict[str, float]]:
         """
         Compute metrics on intermediate layers of the model.
@@ -161,10 +174,10 @@ class KerasReportUtils(FrameworkReportUtils):
 
 
         metrics_to_compute = self.similarity_metrics.get_default_metrics()
-        if custom_metrics_intermediate:
-            if not isinstance(custom_metrics_intermediate, dict):
-                Logger.critical(f"custom_metrics_intermediate should be a dictionary but is {type(custom_metrics_intermediate)}")
-            metrics_to_compute.update(custom_metrics_intermediate)
+        if custom_similarity_metrics:
+            if not isinstance(custom_similarity_metrics, dict):
+                Logger.critical(f"custom_similarity_metrics should be a dictionary but is {type(custom_similarity_metrics)}")
+            metrics_to_compute.update(custom_similarity_metrics)
 
         float_name2quant_name = self.get_float_to_quantized_compare_points(float_model=float_model,
                                                                            quantized_model=quantized_model)
@@ -229,23 +242,6 @@ class KerasReportUtils(FrameworkReportUtils):
 
         return float_name2quant_name
 
-    def get_quantized_graph(self,
-                            quantized_model: Model,
-                            repr_dataset: Callable = None):
-        """
-        Get a graph representation of the quantized model.
-
-        Args:
-            quantized_model: The quantized model.
-            repr_dataset: Representative dataset to use during the graph building (not used in Keras).
-
-        Returns:
-            Graph representation of the quantized model.
-        """
-        quant_graph = model_reader(quantized_model)
-        return quant_graph
-
-
     def get_quant_graph_with_metrics(self,
                                      quantized_model: keras.Model,
                                      collected_data: Dict[str, Any],
@@ -263,33 +259,11 @@ class KerasReportUtils(FrameworkReportUtils):
         Returns:
             Graph: A graph structure with metrics.
         """
-        quant_graph = self.get_quantized_graph(quantized_model=quantized_model)
+        quant_graph = model_reader(quantized_model)
         for node in quant_graph.nodes:
             if node.name in collected_data[INTERMEDIATE_METRICS_REPR].keys():
                 node.framework_attr[XQUANT_REPR] = collected_data[INTERMEDIATE_METRICS_REPR][node.name]
             if node.name in collected_data[INTERMEDIATE_METRICS_VAL].keys():
                 node.framework_attr[XQUANT_VAL] = collected_data[INTERMEDIATE_METRICS_VAL][node.name]
         return quant_graph
-
-    def add_histograms_to_tensorboard(self,
-                                      model: Model,
-                                      repr_dataset: Callable):
-        """
-        Collect histograms and add them to Tensorboard.
-
-        Args:
-            model: Model to collect histograms on.
-            repr_dataset: Dataset that is used an input for collecting histograms.
-
-        Returns:
-            None
-        """
-        graph = self.model_folding.create_float_folded_graph(model, repr_dataset)
-        mi = ModelCollector(graph,
-                            KerasImplementation(),
-                            DEFAULT_KERAS_INFO)
-        for _data in tqdm(repr_dataset(), "Collecting Histograms"):
-            mi.infer(_data)
-
-        self.tb_writer.add_histograms(graph, "")
 

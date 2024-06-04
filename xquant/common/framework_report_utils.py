@@ -18,7 +18,6 @@ import os
 from typing import Tuple, Any, Callable, Dict
 
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 from xquant import XQuantConfig
 from xquant.common.constants import CS_METRIC_NAME, SQNR_METRIC_NAME, MSE_METRIC_NAME, REPORT_FILENAME
 from xquant.logger import Logger
@@ -30,28 +29,19 @@ DEFAULT_METRICS_NAMES = [CS_METRIC_NAME,
 class FrameworkReportUtils:
 
     def __init__(self,
-                 tb_writer: TensorboardWriter):
-        """
-        Args:
-            tb_writer: TensorboardWriter object to add data to report (like graph and histograms).
-        """
-        Logger.info(f"Please run: tensorboard --logdir {tb_writer.dir_path}")
-        self.tb_writer = tb_writer
+                 fw_info,
+                 fw_impl,
+                 similarity_metrics,
+                 dataset_utils,
+                 model_folding,
+                 tb_utils):
+        self.fw_info = fw_info
+        self.fw_impl = fw_impl
+        self.similarity_metrics = similarity_metrics
+        self.dataset_utils = dataset_utils
+        self.model_folding = model_folding
+        self.tb_utils = tb_utils
 
-    def add_histograms_to_tensorboard(self,
-                                      model: Any,
-                                      repr_dataset: Callable):
-        """
-        Collect histograms and add them to Tensorboard.
-
-        Args:
-            model: Model to collect histograms on.
-            repr_dataset: Dataset that is used an input for collecting histograms.
-
-        Returns:
-            None
-        """
-        Logger.critical(f"add_histograms_to_tensorboard is not implemented.")
 
     def get_quantized_graph(self,
                             quantized_model: Any,
@@ -92,7 +82,7 @@ class FrameworkReportUtils:
                              float_model: Any,
                              quantized_model: Any,
                              dataset: Callable,
-                             custom_metrics_output: Dict[str, Callable] = None,
+                             custom_similarity_metrics: Dict[str, Callable] = None,
                              is_validation: bool = False) -> Dict[str, float]:
         """
         Compute metrics on the output of the model.
@@ -101,7 +91,7 @@ class FrameworkReportUtils:
             float_model (Any): The original floating-point model.
             quantized_model (Any): The model after quantization.
             dataset (Callable): Dataset used for evaluation.
-            custom_metrics_output (Dict[str, Callable], optional): Custom metrics for output evaluation. Defaults to None.
+            custom_similarity_metrics (Dict[str, Callable], optional): Custom metrics for output evaluation. Defaults to None.
             is_validation (bool, optional): Flag indicating if this is a validation dataset. Defaults to False.
 
         Returns:
@@ -113,7 +103,7 @@ class FrameworkReportUtils:
                                    float_model: Any,
                                    quantized_model: Any,
                                    dataset: Callable,
-                                   custom_metrics_intermediate: Dict[str, Callable] = None,
+                                   custom_similarity_metrics: Dict[str, Callable] = None,
                                    is_validation: bool = False) -> Dict[str, Dict[str, float]]:
         """
         Compute metrics on intermediate layers of the model.
@@ -122,7 +112,7 @@ class FrameworkReportUtils:
             float_model (Any): The original floating-point model.
             quantized_model (Any): The model after quantization.
             dataset (Callable): Dataset used for evaluation.
-            custom_metrics_intermediate (Dict[str, Callable], optional): Custom metrics for intermediate layers. Defaults to None.
+            custom_similarity_metrics (Dict[str, Callable], optional): Custom metrics for intermediate layers. Defaults to None.
             is_validation (bool, optional): Flag indicating if this is a validation dataset. Defaults to False.
 
         Returns:
@@ -168,17 +158,6 @@ class FrameworkReportUtils:
 
         return metrics
 
-    def add_graph_to_tensorboard(self, graph: Graph):
-        """
-        Add the graph to TensorBoard for visualization.
-
-        Args:
-            graph (Graph): The graph to add.
-
-        Returns:
-            None
-        """
-        self.tb_writer.add_graph(graph, "")
 
     def create_report_directory(self, dir_path: str):
         """

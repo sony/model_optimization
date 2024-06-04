@@ -22,7 +22,7 @@ from typing import Any, Callable
 from model_compression_toolkit.core.common import Graph
 
 
-class ModelFolding:
+class ModelFoldingUtils:
 
     def __init__(self, fw_info, fw_impl, fw_default_tpc):
         self.fw_info = fw_info
