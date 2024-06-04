@@ -18,7 +18,6 @@ from typing import Callable
 from xquant.common.core_report_generator import core_report_generator
 from xquant import XQuantConfig
 from xquant.common.constants import FOUND_TORCH
-from xquant.logger import Logger
 
 if FOUND_TORCH:
     from xquant.pytorch.pytorch_report_utils import PytorchReportUtils

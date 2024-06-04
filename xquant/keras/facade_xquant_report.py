@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
+import logging
 
 from typing import Callable, Dict, Any
 
@@ -19,7 +20,6 @@ from typing import Callable, Dict, Any
 from xquant.common.core_report_generator import core_report_generator
 from xquant import XQuantConfig
 from xquant.common.constants import FOUND_TF
-from xquant.logger import Logger
 
 if FOUND_TF:
     import keras
@@ -58,6 +58,6 @@ if FOUND_TF:
         return _collected_data
 else:
     def xquant_report_keras_experimental(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use xquant_report_keras_experimental. "
+        logging.critical("Tensorflow must be installed to use xquant_report_keras_experimental. "
                         "The 'tensorflow' package is missing.")  # pragma: no cover
 

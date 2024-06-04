@@ -30,7 +30,6 @@ from model_compression_toolkit.core.pytorch.pytorch_implementation import Pytorc
 from xquant.common.model_folding_utils import ModelFoldingUtils
 from xquant.common.tensorboard_utils import TensorboardUtils
 
-from xquant.logger import Logger
 from xquant.pytorch.dataset_utils import PytorchDatasetUtils
 from xquant.pytorch.similarity_metrics import PytorchSimilarityMetrics
 

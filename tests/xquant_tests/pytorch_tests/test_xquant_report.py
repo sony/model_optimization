@@ -64,7 +64,7 @@ class TestXQuantReport(unittest.TestCase):
         self.tmpdir = tempfile.mkdtemp()
         self.xquant_config = XQuantConfig(report_dir=self.tmpdir)
 
-    def test_xquant_report_output_metrics_repr(self):
+    def test_xquant_report_output_metrics(self):
         self.xquant_config.custom_similarity_metrics = None
         result = xquant_report_pytorch_experimental(
             self.float_model,
@@ -73,41 +73,12 @@ class TestXQuantReport(unittest.TestCase):
             self.validation_dataset,
             self.xquant_config
         )
-
         self.assertIn(OUTPUT_METRICS_REPR, result)
-        self.assertEqual(len(result[OUTPUT_METRICS_REPR]), len(DEFAULT_METRICS_NAMES))  # Assuming no custom metrics collected
-
-
-    def test_xquant_report_output_metrics_val(self):
-        self.xquant_config.custom_similarity_metrics = None
-        result = xquant_report_pytorch_experimental(
-            self.float_model,
-            self.quantized_model,
-            self.repr_dataset,
-            self.validation_dataset,
-            self.xquant_config
-        )
-
+        self.assertEqual(len(result[OUTPUT_METRICS_REPR]), len(DEFAULT_METRICS_NAMES))
         self.assertIn(OUTPUT_METRICS_VAL, result)
-        self.assertEqual(len(result[OUTPUT_METRICS_VAL]), len(DEFAULT_METRICS_NAMES))  # Assuming no custom metrics collected
+        self.assertEqual(len(result[OUTPUT_METRICS_VAL]), len(DEFAULT_METRICS_NAMES))
 
-
-
-    def test_custom_output_metric(self):
-        self.xquant_config.custom_similarity_metrics = {'mae': lambda x,y: torch.nn.L1Loss()(x,y).item()}
-        result = xquant_report_pytorch_experimental(
-            self.float_model,
-            self.quantized_model,
-            self.repr_dataset,
-            self.validation_dataset,
-            self.xquant_config
-        )
-
-        self.assertIn(OUTPUT_METRICS_REPR, result)
-        self.assertEqual(len(result[OUTPUT_METRICS_REPR]), len(DEFAULT_METRICS_NAMES) + 1)
-        self.assertIn("mae", result[OUTPUT_METRICS_REPR])
-
-    def test_intermediate_metrics_repr(self):
+    def test_intermediate_metrics(self):
         self.xquant_config.custom_similarity_metrics = None
         result = xquant_report_pytorch_experimental(
             self.float_model,
@@ -121,25 +92,13 @@ class TestXQuantReport(unittest.TestCase):
         linear_layers = [n for n,m in self.quantized_model.named_modules() if isinstance(m, PytorchQuantizationWrapper)]
         self.assertEqual(len(linear_layers), 1, msg=f"Expected to find one linear layer. Found {len(linear_layers)}")
         self.assertIn(linear_layers[0], result[INTERMEDIATE_METRICS_REPR])
-
         for k,v in result[INTERMEDIATE_METRICS_REPR].items():
-            self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES))  # Assuming no custom metrics collected
-
-
-    def test_intermediate_metrics_val(self):
-        self.xquant_config.custom_similarity_metrics = None
-        result = xquant_report_pytorch_experimental(
-            self.float_model,
-            self.quantized_model,
-            self.repr_dataset,
-            self.validation_dataset,
-            self.xquant_config
-        )
+            self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES))
         self.assertIn(INTERMEDIATE_METRICS_VAL, result)
         for k,v in result[INTERMEDIATE_METRICS_VAL].items():
-            self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES))  # Assuming no custom metrics collected
+            self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES))
 
-    def test_custom_intermediate_metrics(self):
+    def test_custom_metric(self):
         self.xquant_config.custom_similarity_metrics = {'mae': lambda x,y: torch.nn.L1Loss()(x,y).item()}
         result = xquant_report_pytorch_experimental(
             self.float_model,
@@ -148,6 +107,10 @@ class TestXQuantReport(unittest.TestCase):
             self.validation_dataset,
             self.xquant_config
         )
+
+        self.assertIn(OUTPUT_METRICS_REPR, result)
+        self.assertEqual(len(result[OUTPUT_METRICS_REPR]), len(DEFAULT_METRICS_NAMES) + 1)
+        self.assertIn("mae", result[OUTPUT_METRICS_REPR])
 
         self.assertIn(INTERMEDIATE_METRICS_REPR, result)
         for k,v in result[INTERMEDIATE_METRICS_REPR].items():

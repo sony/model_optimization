@@ -13,24 +13,18 @@
 #  limitations under the License.
 #  ==============================================================================
 #
+import logging
+
 import keras
-from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
-from tensorflow.keras.models import Model
-from tqdm import tqdm
 
 from mct_quantizers import KerasQuantizationWrapper
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
-from model_compression_toolkit.core.common.model_collector import ModelCollector
-from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
-from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 
 from typing import Any, Dict, Callable, List
 import numpy as np
 from keras import Model
-import tensorflow as tf
 from functools import partial
 
 from xquant import XQuantConfig
@@ -43,7 +37,6 @@ from xquant.common.tensorboard_utils import TensorboardUtils
 from xquant.keras.dataset_utils import KerasDatasetUtils
 
 from xquant.keras.similarity_metrics import KerasSimilarityMetrics
-from xquant.logger import Logger
 
 
 class KerasReportUtils(FrameworkReportUtils):
@@ -101,7 +94,7 @@ class KerasReportUtils(FrameworkReportUtils):
         metrics_to_compute = self.similarity_metrics.get_default_metrics()
         if custom_similarity_metrics:
             if not isinstance(custom_similarity_metrics, dict):
-                Logger.critical(f"custom_metrics_output should be a dictionary but is {type(custom_metrics_output)}")
+                logging.critical(f"custom_metrics_output should be a dictionary but is {type(custom_similarity_metrics)}")
             metrics_to_compute.update(custom_similarity_metrics)
 
         metrics = {key: [] for key in list(metrics_to_compute.keys())}
@@ -176,7 +169,7 @@ class KerasReportUtils(FrameworkReportUtils):
         metrics_to_compute = self.similarity_metrics.get_default_metrics()
         if custom_similarity_metrics:
             if not isinstance(custom_similarity_metrics, dict):
-                Logger.critical(f"custom_similarity_metrics should be a dictionary but is {type(custom_similarity_metrics)}")
+                logging.critical(f"custom_similarity_metrics should be a dictionary but is {type(custom_similarity_metrics)}")
             metrics_to_compute.update(custom_similarity_metrics)
 
         float_name2quant_name = self.get_float_to_quantized_compare_points(float_model=float_model,
@@ -236,9 +229,9 @@ class KerasReportUtils(FrameworkReportUtils):
                 if candidate_float_layer_name not in float_name2quant_name:
                     float_name2quant_name[candidate_float_layer_name] = quant_point
                 else:
-                    Logger.critical(f"Duplicate mapping found for layer: {candidate_float_layer_name}")
+                    logging.critical(f"Duplicate mapping found for layer: {candidate_float_layer_name}")
             else:
-                Logger.warning(f"Skipping point {quant_point}")
+                logging.warning(f"Skipping point {quant_point}")
 
         return float_name2quant_name
 

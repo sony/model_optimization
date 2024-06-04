@@ -17,10 +17,10 @@ import json
 import os
 from typing import Tuple, Any, Callable, Dict
 
-from model_compression_toolkit.core.common import Graph
+import logging
+
 from xquant import XQuantConfig
 from xquant.common.constants import CS_METRIC_NAME, SQNR_METRIC_NAME, MSE_METRIC_NAME, REPORT_FILENAME
-from xquant.logger import Logger
 
 DEFAULT_METRICS_NAMES = [CS_METRIC_NAME,
                          MSE_METRIC_NAME,
@@ -56,8 +56,7 @@ class FrameworkReportUtils:
         Returns:
             Graph representation of the quantized model.
         """
-
-        Logger.critical(f"get_quantized_graph is not implemented.")
+        logging.critical(f"get_quantized_graph is not implemented.")
 
     def get_quant_graph_with_metrics(self,
                                      quantized_model: Any,
@@ -76,7 +75,7 @@ class FrameworkReportUtils:
         Returns:
             Any: A graph structure with metrics.
         """
-        Logger.critical(f"get_quant_graph_with_metrics is not implemented.")
+        logging.critical(f"get_quant_graph_with_metrics is not implemented.")
 
     def get_metric_on_output(self,
                              float_model: Any,
@@ -97,7 +96,7 @@ class FrameworkReportUtils:
         Returns:
             Dict[str, float]: A dictionary of computed metrics.
         """
-        Logger.critical(f"get_metric_on_output is not implemented.")
+        logging.critical(f"get_metric_on_output is not implemented.")
 
     def get_metric_on_intermediate(self,
                                    float_model: Any,
@@ -118,7 +117,7 @@ class FrameworkReportUtils:
         Returns:
             Dict[str, Dict[str, float]]: A dictionary of computed metrics for intermediate layers.
         """
-        Logger.critical(f"get_metric_on_intermediate is not implemented.")
+        logging.critical(f"get_metric_on_intermediate is not implemented.")
 
 
 
@@ -135,7 +134,7 @@ class FrameworkReportUtils:
         Returns:
             Dict[str, str]: A dictionary mapping comparison points between the two models.
         """
-        Logger.critical(f"get_float_to_quantized_compare_points is not implemented.")
+        logging.critical(f"get_float_to_quantized_compare_points is not implemented.")
 
     def compute_metrics(self,
                         predictions: Tuple[Any, Any],
@@ -171,7 +170,7 @@ class FrameworkReportUtils:
         """
         if not os.path.exists(dir_path):
             os.makedirs(dir_path, exist_ok=True)
-            Logger.info(f"Directory created at: {dir_path}")
+            logging.info(f"Directory created at: {dir_path}")
 
     def dump_report_to_json(self,
                             report_dir: str,
@@ -188,7 +187,7 @@ class FrameworkReportUtils:
         """
         report_file_name = os.path.join(report_dir, REPORT_FILENAME)
         report_file_name = os.path.abspath(report_file_name)
-        Logger.info(f"Dumping report data to: {report_file_name}")
+        logging.info(f"Dumping report data to: {report_file_name}")
 
         with open(report_file_name, 'w') as f:
             json.dump(collected_data, f, indent=4)

@@ -12,6 +12,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
+import logging
+
 from tqdm import tqdm
 from typing import Callable
 
@@ -19,7 +21,6 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 from xquant.common.model_folding_utils import ModelFoldingUtils
-from xquant.logger import Logger
 
 
 class TensorboardUtils:
@@ -28,9 +29,8 @@ class TensorboardUtils:
         self.fw_impl = fw_impl
         self.fw_info = fw_info
         self.model_folding_utils = model_folding_utils
-
         self.tb_writer = TensorboardWriter(report_dir, fw_info)
-        Logger.info(f"Please run: tensorboard --logdir {self.tb_writer.dir_path}")
+        logging.info(f"Please run: tensorboard --logdir {self.tb_writer.dir_path}")
 
     def add_histograms_to_tensorboard(self, model, repr_dataset: Callable):
         graph = self.model_folding_utils.create_float_folded_graph(model, repr_dataset)
