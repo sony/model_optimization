@@ -21,7 +21,7 @@ import torch
 
 import model_compression_toolkit as mct
 from mct_quantizers import PytorchQuantizationWrapper
-from xquant.common.framework_report_utils import DEFAULT_METRICS_NAMES
+from xquant.common.similarity_metrics import DEFAULT_METRICS_NAMES
 from xquant.common.xquant_config import XQuantConfig
 from xquant.pytorch.facade_xquant_report import xquant_report_pytorch_experimental
 from xquant.common.constants import OUTPUT_METRICS_REPR, OUTPUT_METRICS_VAL, INTERMEDIATE_METRICS_REPR, INTERMEDIATE_METRICS_VAL

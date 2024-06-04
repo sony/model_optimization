@@ -14,7 +14,9 @@
 #  ==============================================================================
 from typing import Any, Dict, Callable
 
-from xquant.common.constants import MSE_METRIC_NAME, CS_METRIC_NAME, SQNR_METRIC_NAME
+from xquant.common.constants import CS_METRIC_NAME, SQNR_METRIC_NAME, MSE_METRIC_NAME
+
+DEFAULT_METRICS_NAMES = [CS_METRIC_NAME, MSE_METRIC_NAME, SQNR_METRIC_NAME]
 
 
 class SimilarityMetrics:
@@ -37,4 +39,3 @@ class SimilarityMetrics:
             CS_METRIC_NAME: self.compute_cs,
             SQNR_METRIC_NAME: self.compute_sqnr
         }
-

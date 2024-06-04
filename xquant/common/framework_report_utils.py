@@ -20,11 +20,8 @@ from typing import Tuple, Any, Callable, Dict
 import logging
 
 from xquant import XQuantConfig
-from xquant.common.constants import CS_METRIC_NAME, SQNR_METRIC_NAME, MSE_METRIC_NAME, REPORT_FILENAME
+from xquant.common.constants import REPORT_FILENAME
 
-DEFAULT_METRICS_NAMES = [CS_METRIC_NAME,
-                         MSE_METRIC_NAME,
-                         SQNR_METRIC_NAME]
 
 class FrameworkReportUtils:
 

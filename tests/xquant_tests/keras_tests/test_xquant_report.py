@@ -27,7 +27,7 @@ import keras
 import numpy as np
 
 from xquant.common.constants import OUTPUT_METRICS_REPR, OUTPUT_METRICS_VAL, INTERMEDIATE_METRICS_REPR, INTERMEDIATE_METRICS_VAL
-from xquant.common.framework_report_utils import DEFAULT_METRICS_NAMES
+from xquant.common.similarity_metrics import DEFAULT_METRICS_NAMES
 from xquant.keras.facade_xquant_report import xquant_report_keras_experimental
 
 
