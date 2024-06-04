@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+from typing import Union, Tuple, Dict
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.constants import MIN_THRESHOLD, THRESHOLD, NUM_QPARAM_HESSIAN_SAMPLES
@@ -25,6 +26,8 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import \
     get_tensor_max
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import quantize_tensor
 
 
 def symmetric_selection_tensor(tensor_data: np.ndarray,
@@ -37,7 +40,8 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
                                quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE,
                                node=None,
                                hessian_info_service: HessianInfoService = None,
-                               num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> dict:
+                               num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES,
+                               ) -> Tuple[Dict[str, np.ndarray], int]:
     """
     Compute the optimal threshold based on the provided QuantizationErrorMethod to quantize the tensor.
     Different search is applied, depends on the value of the selected QuantizationErrorMethod.
@@ -47,7 +51,7 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
         p: p-norm to use for the Lp-norm distance.
         n_bits: Number of bits to quantize the tensor.
         per_channel: Whether the quantization should be per-channel or not.
-        channel_axis: Output channel index.
+        channel_axis: Output channel index. is None, search for best axis.
         n_iter: Number of iterations to search for the optimal threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small (not used for this method).
         quant_error_method: an error function to optimize the parameters' selection accordingly.
@@ -57,12 +61,24 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
 
     Returns:
         Optimal threshold to quantize the tensor in a symmetric manner.
+        Selected quantization channel axis.
     """
 
-    tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis, n_bits)
-
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
-        threshold = get_init_threshold(min_threshold, tensor_max, per_channel)
+        if channel_axis is None and per_channel:
+            total_error_list = []
+            th_list = []
+            for _axis in range(len(tensor_data.shape)):
+                tensor_max = get_tensor_max(tensor_data, per_channel, _axis, n_bits)
+                threshold = get_init_threshold(min_threshold, tensor_max, per_channel)
+                q_tensor_data = quantize_tensor(tensor_data, threshold, n_bits, True)
+                total_error_list.append(compute_mse(tensor_data, q_tensor_data, norm=True))
+                th_list.append(threshold)
+            channel_axis = np.argmax(total_error_list)
+            threshold = th_list[channel_axis]
+        else:
+            tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis, n_bits)
+            threshold = get_init_threshold(min_threshold, tensor_max, per_channel)
     else:
         signed = True  # weights are always signed
         axis = -1 if per_channel else None
@@ -71,15 +87,14 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
                                                                        signed=signed, node=node,
                                                                        hessian_info_service=hessian_info_service,
                                                                        num_hessian_samples=num_hessian_samples)
-        threshold = qparams_symmetric_selection_tensor_search(error_function,
-                                                              tensor_data,
-                                                              tensor_max,
-                                                              n_bits,
-                                                              per_channel,
-                                                              channel_axis,
-                                                              min_threshold=min_threshold,
-                                                              signed=signed)
-    return {THRESHOLD: threshold}
+        threshold, channel_axis = qparams_symmetric_selection_tensor_search(error_function,
+                                                                            tensor_data,
+                                                                            n_bits,
+                                                                            per_channel,
+                                                                            channel_axis,
+                                                                            min_threshold=min_threshold,
+                                                                            signed=signed)
+    return {THRESHOLD: threshold}, channel_axis
 
 
 def symmetric_selection_histogram(bins: np.ndarray,

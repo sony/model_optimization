@@ -551,14 +551,15 @@ class FeatureNetworkTest(unittest.TestCase):
         Op2DAddConstCollapsingTest(self).run_test()
 
     def test_const_quantization(self):
-        c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32)
+        c = (np.ones((32, 32, 16)) + np.random.random((32, 32, 16))).astype(np.float32)
         for func in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv]:
-            ConstQuantizationTest(self, func, c).run_test()
-            ConstQuantizationTest(self, func, c, input_reverse_order=True).run_test()
-            ConstQuantizationTest(self, func, c, input_reverse_order=True, use_kwargs=True).run_test()
-            ConstQuantizationTest(self, func, c, use_kwargs=True).run_test()
-            ConstQuantizationTest(self, func, 2.45).run_test()
-            ConstQuantizationTest(self, func, 5.1, input_reverse_order=True).run_test()
+            for qmethod in [QuantizationErrorMethod.MSE, QuantizationErrorMethod.NOCLIPPING]:
+                ConstQuantizationTest(self, func, c, qmethod=qmethod).run_test()
+                ConstQuantizationTest(self, func, c, input_reverse_order=True, qmethod=qmethod).run_test()
+                ConstQuantizationTest(self, func, c, input_reverse_order=True, use_kwargs=True, qmethod=qmethod).run_test()
+                ConstQuantizationTest(self, func, c, use_kwargs=True, qmethod=qmethod).run_test()
+                ConstQuantizationTest(self, func, 2.45, qmethod=qmethod).run_test()
+                ConstQuantizationTest(self, func, 5.1, input_reverse_order=True, qmethod=qmethod).run_test()
 
         AdvancedConstQuantizationTest(self).run_test()
 

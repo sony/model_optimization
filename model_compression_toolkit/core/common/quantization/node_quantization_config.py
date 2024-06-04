@@ -332,7 +332,7 @@ class WeightsAttrQuantizationConfig:
                                                                                     n_bits=self.weights_n_bits,
                                                                                     per_channel=self.weights_per_channel_threshold and self.weights_channels_axis is not None,
                                                                                     channel_axis=self.weights_channels_axis[0],  # output channel axis
-                                                                                    min_threshold=min_threshold))
+                                                                                    min_threshold=min_threshold)[0])
         else:
             self.set_weights_quantization_param({})
 

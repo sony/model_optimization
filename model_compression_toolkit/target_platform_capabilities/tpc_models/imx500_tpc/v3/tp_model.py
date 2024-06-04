@@ -159,9 +159,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # define the desired quantization properties for them.
     const_config = default_config.clone_and_edit(
         default_weight_attr_config=default_config.default_weight_attr_config.clone_and_edit(
-            enable_weights_quantization=True, weights_per_channel_threshold=True))
-    if not (const_config.default_weight_attr_config.weights_quantization_method == tp.QuantizationMethod.POWER_OF_TWO):
-        mct.logger.Logger.error('Constant quantization config should be PoT.')
+            enable_weights_quantization=True, weights_per_channel_threshold=True,
+            weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO))
     const_configuration_options = tp.QuantizationConfigOptions([const_config])
 
     # Create a TargetPlatformModel and set its default quantization config.

@@ -84,19 +84,14 @@ def calculate_quantization_params(graph: Graph,
                             mod_attr_cfg = copy.deepcopy(attr_cfg)
                             mod_attr_cfg.weights_error_method = QuantizationErrorMethod.MSE
 
-                    if mod_attr_cfg.weights_per_channel_threshold and output_channels_axis is None:
-                        # TODO: this is a temporary fix to auto-select quant axis. Need to switch to selecting axis according to min-error.
-                        w_shape = n.get_weights_by_keys(attr).shape
-                        output_channels_axis = w_shape.index(max(w_shape))
-                        attr_cfg.weights_channels_axis = (output_channels_axis, output_channels_axis)
-
-                    weights_params = get_weights_qparams(n.get_weights_by_keys(attr),
-                                                         candidate_qc.weights_quantization_cfg,
-                                                         mod_attr_cfg,
-                                                         output_channels_axis,
-                                                         node=n,
-                                                         hessian_info_service=hessian_info_service,
-                                                         num_hessian_samples=num_hessian_samples)
+                    weights_params, output_channels_axis = get_weights_qparams(n.get_weights_by_keys(attr),
+                                                                               candidate_qc.weights_quantization_cfg,
+                                                                               mod_attr_cfg,
+                                                                               output_channels_axis,
+                                                                               node=n,
+                                                                               hessian_info_service=hessian_info_service,
+                                                                               num_hessian_samples=num_hessian_samples)
+                    attr_cfg.weights_channels_axis = (output_channels_axis, attr_cfg.weights_channels_axis[1])
                     attr_cfg.set_weights_quantization_param(weights_params)
 
             if n.is_activation_quantization_enabled():

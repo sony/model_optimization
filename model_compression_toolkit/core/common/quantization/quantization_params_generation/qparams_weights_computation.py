@@ -50,22 +50,24 @@ def get_weights_qparams(weights_attr_values: np.ndarray,
 
     Returns:
         A dictionary with the quantization threshold of the kernel.
+        Selected quantization channel axis.
     """
     if attr_quant_config.weights_quantization_params_fn is not None:
-        weights_params = attr_quant_config.weights_quantization_params_fn(weights_attr_values,
-                                                                          p=attr_quant_config.l_p_value,
-                                                                          n_bits=attr_quant_config.weights_n_bits,
-                                                                          per_channel=attr_quant_config.weights_per_channel_threshold and output_channels_axis is not None,
-                                                                          channel_axis=output_channels_axis,
-                                                                          min_threshold=weights_quant_config.min_threshold,
-                                                                          quant_error_method=attr_quant_config.weights_error_method,
-                                                                          node=node,
-                                                                          hessian_info_service=hessian_info_service,
-                                                                          num_hessian_samples=num_hessian_samples)
+        weights_params, output_channels_axis = attr_quant_config.weights_quantization_params_fn(
+            weights_attr_values,
+            p=attr_quant_config.l_p_value,
+            n_bits=attr_quant_config.weights_n_bits,
+            per_channel=attr_quant_config.weights_per_channel_threshold,
+            channel_axis=output_channels_axis,
+            min_threshold=weights_quant_config.min_threshold,
+            quant_error_method=attr_quant_config.weights_error_method,
+            node=node,
+            hessian_info_service=hessian_info_service,
+            num_hessian_samples=num_hessian_samples)
     else:
         weights_params = {}
 
-    return weights_params
+    return weights_params, output_channels_axis
 
 
 def _get_kernel_channels_mapping(fw_info:FrameworkInfo,
