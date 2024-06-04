@@ -79,16 +79,11 @@ def qparams_selection_tensor_search(error_function: Callable,
             # is used for quantizing the tensor and computing the error. The error is appended to an error list, which
             # eventually used to select the threshold with the minimal error.
             for i in range(n_iter):
-                if per_channel:
-                    threshold_hat = (threshold / (2 ** i)).reshape([-1, 1])
-                    qt = quantize_tensor(tensor_data_r, threshold_hat, n_bits, signed)
-                    per_channel_error = _error_function_wrapper(error_function, tensor_data_r, qt, threshold_hat)
+                threshold_hat = (threshold / (2 ** i)).reshape([-1, 1])
+                qt = quantize_tensor(tensor_data_r, threshold_hat, n_bits, signed)
+                per_channel_error = _error_function_wrapper(error_function, tensor_data_r, qt, threshold_hat)
 
-                    error_list.append(per_channel_error)
-                else:  # quantize per-tensor
-                    qt = quantize_tensor(tensor_data, threshold / (2 ** i), n_bits, signed)
-                    error = error_function(qt, tensor_data, threshold=threshold / (2 ** i))
-                    error_list.append(error)
+                error_list.append(per_channel_error)
 
             # Take the index of the minimal error, and use it compute the threshold which yielded it.
             err_mat = np.stack(error_list, axis=-1)

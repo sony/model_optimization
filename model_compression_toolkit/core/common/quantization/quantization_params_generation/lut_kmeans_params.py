@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict, Union
+from typing import Dict, Tuple
 import numpy as np
 from sklearn.cluster import KMeans
 
@@ -43,7 +43,7 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
                       node=None,
                       hessian_info_service: HessianInfoService = None,
                       num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES,
-                      ) -> Union[Dict[str, np.ndarray], int]:
+                      ) -> Tuple[Dict[str, np.ndarray], int]:
     """
     The quantizer first finds the closest max value per channel of tensor_data.
     Now, we divide tensor_data with the threshold vector per channel. In addition, we scale the result to the range
