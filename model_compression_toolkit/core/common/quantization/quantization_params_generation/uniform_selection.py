@@ -73,7 +73,7 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
                 q_tensor_data = uniform_quantize_tensor(tensor_data, tensor_min, tensor_max, n_bits)
                 total_error_list.append(compute_mse(tensor_data, q_tensor_data, norm=True))
                 th_list.append((tensor_min, tensor_max))
-            channel_axis = np.argmax(total_error_list)
+            channel_axis = np.argmin(total_error_list)
             mm = th_list[channel_axis]
         else:
             tensor_min = get_tensor_min(tensor_data, per_channel, channel_axis)

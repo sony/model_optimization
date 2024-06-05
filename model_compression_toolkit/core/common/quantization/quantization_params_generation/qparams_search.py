@@ -460,7 +460,7 @@ def qparams_symmetric_selection_tensor_search(error_function: Callable,
         total_error_list.append(res['loss'].mean())
         th_list.append(th)
 
-    best_axis_index = np.argmax(total_error_list)
+    best_axis_index = np.argmin(total_error_list)
     return th_list[best_axis_index], search_axes[best_axis_index]
 
 
@@ -526,7 +526,7 @@ def qparams_uniform_selection_tensor_search(error_function: Callable,
             th_list.append(tuple(np.split(res['param'], 2)))
         total_error_list.append(res['loss'].mean())
 
-    best_axis_index = np.argmax(total_error_list)
+    best_axis_index = np.argmin(total_error_list)
     return th_list[best_axis_index], search_axes[best_axis_index]
 
 

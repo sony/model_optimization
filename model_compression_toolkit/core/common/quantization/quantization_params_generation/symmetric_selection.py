@@ -74,7 +74,7 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
                 q_tensor_data = quantize_tensor(tensor_data, threshold, n_bits, True)
                 total_error_list.append(compute_mse(tensor_data, q_tensor_data, norm=True))
                 th_list.append(threshold)
-            channel_axis = np.argmax(total_error_list)
+            channel_axis = np.argmin(total_error_list)
             threshold = th_list[channel_axis]
         else:
             tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis, n_bits)
