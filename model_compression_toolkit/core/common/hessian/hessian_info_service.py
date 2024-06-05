@@ -216,7 +216,7 @@ class HessianInfoService:
     def fetch_hessian(self,
                       trace_hessian_request: TraceHessianRequest,
                       required_size: int,
-                      batch_size: int = 1) -> List[List[float]]:
+                      batch_size: int = 1) -> List[List[np.ndarray]]:
         """
         Fetches the computed approximations of the trace of the Hessian for the given 
         request and required size.
@@ -227,13 +227,13 @@ class HessianInfoService:
             batch_size: The Hessian computation batch size.
 
         Returns:
-            List[List[float]]: For each target node, returns a list of computed approximations.
+            List[List[np.ndarray]]: For each target node, returns a list of computed approximations.
             The outer list is per image (thus, has the length as required_size).
             The inner list length dependent on the granularity (1 for per-tensor, 
             OC for per-output-channel when the requested node has OC output-channels, etc.)
         """
         if required_size == 0:
-            return []
+            return [[] for _ in trace_hessian_request.target_nodes]
 
         Logger.info(f"\nEnsuring {required_size} Hessian-trace approximation for nodes "
                     f"{trace_hessian_request.target_nodes}.")
