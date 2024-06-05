@@ -17,7 +17,11 @@
 import unittest
 from functools import partial
 import tempfile
+
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
 
 import model_compression_toolkit as mct
 from mct_quantizers import PytorchQuantizationWrapper
@@ -28,41 +32,43 @@ from xquant.common.constants import OUTPUT_METRICS_REPR, OUTPUT_METRICS_VAL, INT
 
 
 
-class ModelToTest(torch.nn.Module):
-
-    def __init__(self):
-        super().__init__()
-        self.conv = torch.nn.Conv2d(in_channels=3, out_channels=3, kernel_size=3)
-        self.bn = torch.nn.BatchNorm2d(num_features=3)
-        self.relu = torch.nn.ReLU()
-
-    def forward(self, x):
-        x = self.conv(x)
-        x = self.bn(x)
-        x = self.relu(x)
-        return x
-
-
-def random_data_gen(shape=(2, 3, 8, 8), use_labels=False):
+def random_data_gen(shape=(3, 8, 8), use_labels=False, num_inputs=1, batch_size=2, num_iter=2):
     if use_labels:
-        for _ in range(2):
-            yield [[torch.randn(*shape)], torch.randn(shape[0])]
+        for _ in range(num_iter):
+            yield [[torch.randn(batch_size, *shape)] * num_inputs, torch.randn(batch_size)]
     else:
-        for _ in range(2):
-            yield [torch.randn(*shape)]
+        for _ in range(num_iter):
+            yield [torch.randn(batch_size, *shape)] * num_inputs
 
-
-class TestXQuantReport(unittest.TestCase):
+class BaseTestEnd2EndPytorchXQuant(unittest.TestCase):
 
     def setUp(self):
-        self.float_model = ModelToTest()
-        self.repr_dataset = random_data_gen
+        self.float_model = self.get_model_to_test()
+        self.repr_dataset = partial(random_data_gen, shape=self.get_input_shape())
         self.quantized_model, _ = mct.ptq.pytorch_post_training_quantization(in_module=self.float_model,
                                                                              representative_data_gen=self.repr_dataset)
 
         self.validation_dataset = partial(random_data_gen, use_labels=True)
         self.tmpdir = tempfile.mkdtemp()
         self.xquant_config = XQuantConfig(report_dir=self.tmpdir)
+
+    def get_input_shape(self):
+        return (3, 8, 8)
+
+    def get_model_to_test(self):
+        class BaseModelTest(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.conv = torch.nn.Conv2d(in_channels=3, out_channels=3, kernel_size=3)
+                self.bn = torch.nn.BatchNorm2d(num_features=3)
+                self.relu = torch.nn.ReLU()
+
+            def forward(self, x):
+                x = self.conv(x)
+                x = self.bn(x)
+                x = self.relu(x)
+                return x
+        return BaseModelTest()
 
     def test_xquant_report_output_metrics(self):
         self.xquant_config.custom_similarity_metrics = None
@@ -90,10 +96,11 @@ class TestXQuantReport(unittest.TestCase):
 
         self.assertIn(INTERMEDIATE_METRICS_REPR, result)
         linear_layers = [n for n,m in self.quantized_model.named_modules() if isinstance(m, PytorchQuantizationWrapper)]
-        self.assertEqual(len(linear_layers), 1, msg=f"Expected to find one linear layer. Found {len(linear_layers)}")
+
         self.assertIn(linear_layers[0], result[INTERMEDIATE_METRICS_REPR])
         for k,v in result[INTERMEDIATE_METRICS_REPR].items():
             self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES))
+
         self.assertIn(INTERMEDIATE_METRICS_VAL, result)
         for k,v in result[INTERMEDIATE_METRICS_VAL].items():
             self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES))
@@ -116,6 +123,66 @@ class TestXQuantReport(unittest.TestCase):
         for k,v in result[INTERMEDIATE_METRICS_REPR].items():
             self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES)+1)
             self.assertIn("mae", v)
+
+
+# Test with Conv2D without BatchNormalization and without Activation
+class TestXQuantReportModel2(BaseTestEnd2EndPytorchXQuant):
+
+    def get_model_to_test(self):
+        class Model(nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.conv1 = nn.Conv2d(3, 3, kernel_size=3, padding=1)
+
+            def forward(self, x):
+                x1 = self.conv1(x)
+                x = x + x1
+                x = F.softmax(x, dim=1)
+                return x
+
+        return Model()
+
+
+# Test with Multiple Convolution Layers and an Addition Operator
+class TestXQuantReportModel3(BaseTestEnd2EndPytorchXQuant):
+    def get_model_to_test(self):
+        class Model(nn.Module):
+            def __init__(self):
+                super(Model, self).__init__()
+                self.conv1 = nn.Conv2d(3, 3, kernel_size=3, padding=1)
+                self.conv2 = nn.Conv2d(3, 3, kernel_size=3, padding=1)
+                self.conv3 = nn.Conv2d(3, 3, kernel_size=3, padding=1)
+
+            def forward(self, x):
+                x1 = self.conv1(x)
+                x2 = self.conv2(x)
+                x = x1 + x2
+                x = self.conv3(x)
+                x = F.softmax(x, dim=1)
+                return x
+
+        return Model()
+
+
+
+class TestXQuantReportModelMBv2(BaseTestEnd2EndPytorchXQuant):
+
+    def get_input_shape(self):
+        return (3, 224, 224)
+
+    def get_model_to_test(self):
+        from torchvision.models.mobilenetv2 import MobileNetV2
+        return MobileNetV2()
+
+
+class TestXQuantReportModelMBv3(BaseTestEnd2EndPytorchXQuant):
+
+    def get_input_shape(self):
+        return (3, 224, 224)
+
+    def get_model_to_test(self):
+        from torchvision.models.mobilenet import mobilenet_v3_small
+        return mobilenet_v3_small()
 
 
 if __name__ == '__main__':
