@@ -17,7 +17,7 @@ import copy
 import numpy as np
 from typing import Callable, Any, List, Tuple
 
-from model_compression_toolkit.constants import AXIS, ACT_HESSIAN_DEFAULT_BATCH_SIZE
+from model_compression_toolkit.constants import AXIS
 from model_compression_toolkit.core import FrameworkInfo, MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
@@ -26,7 +26,6 @@ from model_compression_toolkit.core.common.model_builder_mode import ModelBuilde
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, \
     HessianInfoGranularity, HessianInfoService
-from model_compression_toolkit.core.common.hessian import hessian_info_utils as hessian_utils
 
 
 class SensitivityEvaluation:
@@ -247,7 +246,7 @@ class SensitivityEvaluation:
         # Fetch the trace Hessian approximations for the current interest point
         nodes_approximations = self.hessian_info_service.fetch_hessian(trace_hessian_request=trace_hessian_request,
                                                                        required_size=self.quant_config.num_of_images,
-                                                                       batch_size=ACT_HESSIAN_DEFAULT_BATCH_SIZE)
+                                                                       batch_size=self.quant_config.hessian_batch_size)
 
         # Store the approximations for each node for each image
         approx_by_image = [[nodes_approximations[j][image_idx]

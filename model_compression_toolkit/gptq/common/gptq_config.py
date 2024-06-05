@@ -15,7 +15,7 @@
 from enum import Enum
 from typing import Callable, Any, Dict
 
-from model_compression_toolkit.constants import GPTQ_HESSIAN_NUM_SAMPLES
+from model_compression_toolkit.constants import GPTQ_HESSIAN_NUM_SAMPLES, ACT_HESSIAN_DEFAULT_BATCH_SIZE
 from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
 
 
@@ -41,7 +41,8 @@ class GPTQHessianScoresConfig:
                  hessians_num_samples: int = GPTQ_HESSIAN_NUM_SAMPLES,
                  norm_scores: bool = True,
                  log_norm: bool = True,
-                 scale_log_norm: bool = False):
+                 scale_log_norm: bool = False,
+                 hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE):
 
         """
         Initialize a GPTQHessianWeightsConfig.
@@ -51,12 +52,14 @@ class GPTQHessianScoresConfig:
             norm_scores (bool): Whether to normalize the returned scores of the weighted loss function (to get values between 0 and 1).
             log_norm (bool): Whether to use log normalization for the GPTQ Hessian-based scores.
             scale_log_norm (bool): Whether to scale the final vector of the Hessian-based scores.
+            hessian_batch_size (int): The Hessian computation batch size. used only if using GPTQ with Hessian-based objective.
         """
 
         self.hessians_num_samples = hessians_num_samples
         self.norm_scores = norm_scores
         self.log_norm = log_norm
         self.scale_log_norm = scale_log_norm
+        self.hessian_batch_size = hessian_batch_size
 
 
 class GradientPTQConfig:

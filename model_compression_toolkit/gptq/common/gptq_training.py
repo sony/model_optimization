@@ -188,7 +188,7 @@ class GPTQTrainer(ABC):
         node_approximations = self.hessian_service.fetch_hessian(
             trace_hessian_request=trace_hessian_request,
             required_size=self.gptq_config.hessian_weights_config.hessians_num_samples,
-            batch_size=ACT_HESSIAN_DEFAULT_BATCH_SIZE
+            batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size
         )
 
         for i, target_node in enumerate(self.compare_points):
