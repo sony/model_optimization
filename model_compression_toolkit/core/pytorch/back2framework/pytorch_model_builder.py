@@ -101,6 +101,7 @@ def _run_operation(n: BaseNode,
     Applying the layer (op_func) to the input tensors (input_tensors).
     If quantized is set to True, and the layer's corresponding node (n) has quantization
     attributes, an additional fake-quantization node is built and appended to the layer.
+
     Args:
         n: The corresponding node of the layer it runs.
         input_tensors: List of Pytorch tensors that are the layer's inputs.

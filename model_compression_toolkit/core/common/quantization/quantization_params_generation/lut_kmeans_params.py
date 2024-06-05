@@ -91,7 +91,7 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
     # Add 0 to the LUT
     cc = np.round(kmeans.cluster_centers_)
     if n_data_points < 2 ** n_bits and np.all(cc != 0):
-        # In case only there are fewer data point than potential clusters, we can add the cluster 0.0
+        # In case there are fewer data points than potential clusters, we can add the cluster 0.0
         # to the original clusters array to improve quantization (i.e. no need to zero one of the clusters).
         cc = np.concatenate([np.zeros([1, 1], dtype=cc.dtype), cc])
     closest2zero_idx = (np.abs(cc - 0)).argmin()
