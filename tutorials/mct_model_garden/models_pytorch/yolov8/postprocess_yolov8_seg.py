@@ -1,50 +1,11 @@
 from typing import List
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 from typing import Tuple
 
+from tutorials.mct_model_garden.models_pytorch.yolov8.yolov8_postprocess import nms
 
-def nms(dets: np.ndarray, scores: np.ndarray, iou_thres: float = 0.3, max_out_dets: int = 300) -> List[int]:
-    """
-    Perform Non-Maximum Suppression (NMS) on detected bounding boxes.
 
-    Args:
-        dets (np.ndarray): Array of bounding box coordinates of shape (N, 4) representing [y1, x1, y2, x2].
-        scores (np.ndarray): Array of confidence scores associated with each bounding box.
-        iou_thres (float, optional): IoU threshold for NMS. Default is 0.5.
-        max_out_dets (int, optional): Maximum number of output detections to keep. Default is 300.
-
-    Returns:
-        List[int]: List of indices representing the indices of the bounding boxes to keep after NMS.
-
-    """
-    y1, x1 = dets[:, 0], dets[:, 1]
-    y2, x2 = dets[:, 2], dets[:, 3]
-    areas = (x2 - x1 + 1) * (y2 - y1 + 1)
-    order = scores.argsort()[::-1]
-
-    keep = []
-    while order.size > 0:
-        i = order[0]
-        keep.append(i)
-        xx1 = np.maximum(x1[i], x1[order[1:]])
-        yy1 = np.maximum(y1[i], y1[order[1:]])
-        xx2 = np.minimum(x2[i], x2[order[1:]])
-        yy2 = np.minimum(y2[i], y2[order[1:]])
-
-        w = np.maximum(0.0, xx2 - xx1 + 1)
-        h = np.maximum(0.0, yy2 - yy1 + 1)
-        inter = w * h
-        ovr = inter / (areas[i] + areas[order[1:]] - inter)
-
-        inds = np.where(ovr <= iou_thres)[0]
-        order = order[inds + 1]
-
-    return keep[:max_out_dets]
-
-    
 def combined_nms_seg(batch_boxes, batch_scores, batch_masks, iou_thres: float = 0.3, conf: float = 0.1, max_out_dets: int = 300):
     """
     Perform combined Non-Maximum Suppression (NMS) and segmentation mask processing for batched inputs.
