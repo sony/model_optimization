@@ -198,6 +198,28 @@ Computing Hessian scores can be computationally intensive, potentially leading t
 Furthermore, these scoring methods may introduce unexpected noise into the mixed precision process, necessitating a deeper understanding of the underlying mechanisms and potential recalibration of program parameters.
 
 
+#### 3. Handling _"The model cannot be quantized to meet the specified target resource utilization"_ error
+
+In case you encountered an Exception stating that the model cannot meet the target resource utilization, 
+that means you are trying to run mixed precision quantization to reduce the model's memory footprint (either sum of all 
+weights memory, maximum activation tensor memory, total weights and activation memory or number of bit-operations).
+This process is activated based on a provided target resource utilization data ([ResourceUtilization](./model_compression_toolkit/core/common/mixed_precision/resource_utilization_tools/resource_utilization.py)).
+The error is stating that the provided target is too strict, and the model cannot be quantized, based on the provided [TPC](./model_compression_toolkit/target_platform_capabilities/README.md) and quantization configurations, to meet the desired restrictions.
+
+**Solution:**
+There are several steps that you can try to figure out what the problem is and fix it:
+First of all, verify that you intended to run mixed precision, if not, you shouldn't provide a target resource utilization.
+If you did attempt to compress the model to a specific target, then verify the resource utilization object that you passed to the MCT: 
+1. Verify that it include a value only for the resource that you want to restrict.
+2. Validate the actual compression ratio of the values that you provided.
+
+It may be worth to try and soften the restrictions (increase the target values or remove restrictions on certain resources)
+as an attempt to see if there is a more general problem or whether the problem is with the tightness of the restriction.
+
+If all the above verifications checked out, you might want to look that the provided TPC for any inconsistencies.
+For example, maybe you are trying to restrict the activation memory size, but there are layers that do not provide 
+multiple configuration candidates for quantizing the activation via mixed precision. 
+
 ### GPTQ - Gradient-Based Post Training Quantization
 
 When PTQ (either with or without mixed precision) fails to deliver the required accuracy, GPTQ is potentially the remedy.

@@ -33,7 +33,8 @@ def node_builder(n: BaseNode) -> Module:
 
     framework_attr = copy.copy(n.framework_attr)
     node_instance = n.type(**framework_attr)
-    node_instance.load_state_dict({k: torch.tensor(v) for k, v in n.weights.items()}, strict=False)
+    # Positional weights act as inputs to the PyTorch layer, rather than serving as its weights.
+    node_instance.load_state_dict({k: torch.tensor(v) for k, v in n.weights.items() if isinstance(k, str)}, strict=False)
     set_model(node_instance)
     return node_instance
 

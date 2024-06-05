@@ -52,8 +52,8 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.li
     pytorch_linear_collapsing
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
     import MultiHeadAttentionDecomposition
-from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.permute_call_method import \
-    PermuteCallMethod
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.transform_function_call_method import \
+    TransformFunctionCallMethod
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.const_holder_conv import \
     FunctionalConvSubstitution
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
@@ -236,7 +236,7 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return [ReshapeWithStaticShapes(),
                 MultiHeadAttentionDecomposition(),
-                PermuteCallMethod(),
+                TransformFunctionCallMethod(),
                 FunctionalConvSubstitution(fw_info),
                 FunctionalBatchNorm(),
                 FunctionalLayerNorm(),
@@ -403,13 +403,14 @@ class PytorchImplementation(FrameworkImplementation):
             return True
         return False
 
-    def get_node_distance_fn(self, layer_class: type,
+    def get_mp_node_distance_fn(self, layer_class: type,
                              framework_attrs: Dict[str, Any],
                              compute_distance_fn: Callable = None,
-                             axis: int = None) -> Callable:
+                             axis: int = None,
+                             norm_mse: bool = False) -> Callable:
         """
         A mapping between layers' types and a distance function for computing the distance between
-        two tensors (for loss computation purposes). Returns a specific function if node of specific types is
+        two tensors in mixed precision (for loss computation purposes). Returns a specific function if node of specific types is
         given, or a default (normalized MSE) function otherwise.
 
         Args:
@@ -417,6 +418,7 @@ class PytorchImplementation(FrameworkImplementation):
             framework_attrs: Framework attributes the layer had which the graph node holds.
             compute_distance_fn: An optional distance function to use globally for all nodes.
             axis: The axis on which the operation is preformed (if specified).
+            norm_mse: whether to normalize mse distance function.
 
         Returns: A distance function between two tensors.
         """
@@ -430,7 +432,7 @@ class PytorchImplementation(FrameworkImplementation):
             return compute_cs
         elif layer_class == Linear:
             return compute_cs
-        return compute_mse
+        return partial(compute_mse, norm=norm_mse)
 
     def is_output_node_compatible_for_hessian_score_computation(self,
                                                                 node: BaseNode) -> bool:

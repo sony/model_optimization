@@ -47,23 +47,24 @@ class ConstRepresentationReverseOrderNet(nn.Module):
 
 class ConstRepresentationTest(BasePytorchFeatureNetworkTest):
 
-    def __init__(self, unit_test, func, const, input_reverse_order=False):
+    def __init__(self, unit_test, func, const, input_reverse_order=False, enable_weights_quantization=False):
         super().__init__(unit_test=unit_test, input_shape=(16, 32, 32))
         self.func = func
         self.const = const
         self.input_reverse_order = input_reverse_order
+        self.enable_weights_quantization = enable_weights_quantization
 
     def get_tpc(self):
         tp = generate_test_tp_model({'weights_n_bits': 32,
                                      'activation_n_bits': 32,
-                                     'enable_weights_quantization': False,
+                                     'enable_weights_quantization': self.enable_weights_quantization,
                                      'enable_activation_quantization': False})
         return generate_pytorch_tpc(name="linear_collapsing_test", tp_model=tp)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      mct.core.QuantizationErrorMethod.NOCLIPPING,
-                                      False, False, True)
+                                           mct.core.QuantizationErrorMethod.NOCLIPPING,
+                                           False, False, True)
 
     def create_networks(self):
         if self.input_reverse_order:
@@ -89,15 +90,64 @@ class ConstRepresentationMultiInputNet(nn.Module):
         self.const3 = to_torch_tensor(np.random.random((1, 5, 32, 32)))
 
     def forward(self, x):
-        x1 = sum([self.const1, x, self.const2])  # not really a 3-input add operation, but just in case torch will support it
+        x1 = sum(
+            [self.const1, x, self.const2])  # not really a 3-input add operation, but just in case torch will support it
         x = torch.cat([x1, self.const3, x], dim=1)
         return x
 
 
 class ConstRepresentationMultiInputTest(ConstRepresentationTest):
 
-    def __init__(self, unit_test):
-        super().__init__(unit_test=unit_test, func=None, const=None, input_reverse_order=False)
+    def __init__(self, unit_test, enable_weights_quantization):
+        super().__init__(unit_test=unit_test, func=None, const=None, input_reverse_order=False,
+                         enable_weights_quantization=enable_weights_quantization)
 
     def create_networks(self):
         return ConstRepresentationMultiInputNet()
+
+
+class ConstRepresentationLinearLayerNet(nn.Module):
+    def __init__(self, layer, const):
+        super().__init__()
+        self.layer = layer
+        self.const = to_torch_tensor(const) if isinstance(const, np.ndarray) else const
+
+    def forward(self, x):
+        x1 = self.layer(self.const)
+        x2 = x + self.const
+        return x1 + x2
+
+
+class ConstRepresentationLinearLayerTest(ConstRepresentationTest):
+
+    def __init__(self, unit_test, func, const, enable_weights_quantization):
+        super().__init__(unit_test=unit_test, func=func, const=const, input_reverse_order=False,
+                         enable_weights_quantization=enable_weights_quantization)
+
+    def create_networks(self):
+        return ConstRepresentationLinearLayerNet(self.func, self.const)
+
+
+class ConstRepresentationGetIndexNet(nn.Module):
+    def __init__(self, layer, const, indices):
+        super().__init__()
+        self.layer = layer
+        self.const = to_torch_tensor(const) if isinstance(const, np.ndarray) else const
+        self.indices = indices
+
+    def forward(self, x):
+        const = self.const[self.indices]
+        return self.layer(x, const)
+
+
+class ConstRepresentationGetIndexTest(ConstRepresentationTest):
+
+    def __init__(self, unit_test, func, const, indices, enable_weights_quantization):
+        super().__init__(unit_test=unit_test, func=func, const=const, input_reverse_order=False,
+                         enable_weights_quantization=enable_weights_quantization)
+        self.func = func
+        self.const = const
+        self.indices = indices
+
+    def create_networks(self):
+        return ConstRepresentationGetIndexNet(self.func, self.const, self.indices)

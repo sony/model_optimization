@@ -56,6 +56,4 @@ class BiasCorrectionDepthwiseTest(BaseKerasFeatureNetworkTest):
         error = np.sum(error, axis=(0,1)).flatten()
         bias = dw_layer.weights[2]
         # Input mean is 1 so correction_term = quant_error * 1
-        # TODO:
-        # Increase atol due to a minor difference in Symmetric quantizer
-        self.unit_test.assertTrue(np.isclose(error, bias, atol=1e-7).all())
+        self.unit_test.assertTrue(np.isclose(error, bias.numpy(), atol=3e-7).all())

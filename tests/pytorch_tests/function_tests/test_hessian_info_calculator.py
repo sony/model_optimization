@@ -75,6 +75,7 @@ class multiple_outputs_model(torch.nn.Module):
         self.relu1 = ReLU()
         self.conv2 = Conv2d(3, 3, kernel_size=1, stride=1)
         self.bn2 = BatchNorm2d(3)
+        self.relu2 = ReLU()
         self.hswish = Hardswish()
         self.dense = Linear(8, 7)
 
@@ -84,6 +85,7 @@ class multiple_outputs_model(torch.nn.Module):
         x1 = self.relu1(x)
         x2 = self.conv2(x1)
         x2 = self.bn2(x2)
+        x2 = self.relu2(x2)
         x3 = self.hswish(x2)
         x3 = self.dense(x3)
         return x1, x2, x3
@@ -129,9 +131,10 @@ def get_expected_shape(t_shape, granularity):
 
 class BaseHessianTraceBasicModelTest(BasePytorchTest):
 
-    def __init__(self, unit_test):
+    def __init__(self, unit_test, model):
         super().__init__(unit_test)
         self.val_batch_size = 1
+        self.model = model
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 8, 8]]
@@ -165,7 +168,7 @@ class BaseHessianTraceBasicModelTest(BasePytorchTest):
                                   f"Tensor shape is expected to be {expected_shape} but has shape {score.shape}")
 
     def _setup(self):
-        model_float = basic_model()
+        model_float = self.model()
         pytorch_impl = PytorchImplementation()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, generate_pytorch_tpc)
@@ -175,7 +178,7 @@ class BaseHessianTraceBasicModelTest(BasePytorchTest):
 
 class WeightsHessianTraceBasicModelTest(BaseHessianTraceBasicModelTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, model=basic_model)
         self.val_batch_size = 1
 
     def run_test(self, seed=0):
@@ -201,7 +204,7 @@ class WeightsHessianTraceBasicModelTest(BaseHessianTraceBasicModelTest):
 
 class WeightsHessianTraceAdvanceModelTest(BaseHessianTraceBasicModelTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, model=advanced_model)
         self.val_batch_size = 2
 
     def run_test(self, seed=0):
@@ -230,7 +233,7 @@ class WeightsHessianTraceAdvanceModelTest(BaseHessianTraceBasicModelTest):
 
 class WeightsHessianTraceMultipleOutputsModelTest(BaseHessianTraceBasicModelTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, model=multiple_outputs_model)
         self.val_batch_size = 1
 
     def run_test(self, seed=0):
@@ -259,7 +262,7 @@ class WeightsHessianTraceMultipleOutputsModelTest(BaseHessianTraceBasicModelTest
 
 class WeightsHessianTraceReuseModelTest(BaseHessianTraceBasicModelTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, model=reused_model)
         self.val_batch_size = 1
 
     def run_test(self, seed=0):
@@ -288,7 +291,7 @@ class WeightsHessianTraceReuseModelTest(BaseHessianTraceBasicModelTest):
 
 class ActivationHessianTraceBasicModelTest(BaseHessianTraceBasicModelTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, model=basic_model)
         self.val_batch_size = 1
 
     def run_test(self, seed=0):
@@ -306,7 +309,7 @@ class ActivationHessianTraceBasicModelTest(BaseHessianTraceBasicModelTest):
 
 class ActivationHessianTraceAdvanceModelTest(BaseHessianTraceBasicModelTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, model=advanced_model)
         self.val_batch_size = 2
 
     def run_test(self, seed=0):
@@ -314,7 +317,9 @@ class ActivationHessianTraceAdvanceModelTest(BaseHessianTraceBasicModelTest):
         hessian_service = hessian_common.HessianInfoService(graph=graph,
                                                             representative_dataset=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
-        ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
+
+        # removing last layer cause we do not allow activation Hessian computation for the output layer
+        ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0][:-1]
         for ipt in ipts:
             self.test_hessian_trace_approx(hessian_service,
                                            interest_point=ipt,
@@ -325,7 +330,7 @@ class ActivationHessianTraceAdvanceModelTest(BaseHessianTraceBasicModelTest):
 
 class ActivationHessianTraceMultipleOutputsModelTest(BaseHessianTraceBasicModelTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, model=multiple_outputs_model)
         self.val_batch_size = 1
 
     def run_test(self, seed=0):
@@ -333,7 +338,9 @@ class ActivationHessianTraceMultipleOutputsModelTest(BaseHessianTraceBasicModelT
         hessian_service = hessian_common.HessianInfoService(graph=graph,
                                                             representative_dataset=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
-        ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
+
+        # removing last layer cause we do not allow activation Hessian computation for the output layer
+        ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0][:-1]
         for ipt in ipts:
             self.test_hessian_trace_approx(hessian_service,
                                            interest_point=ipt,
@@ -344,7 +351,7 @@ class ActivationHessianTraceMultipleOutputsModelTest(BaseHessianTraceBasicModelT
 
 class ActivationHessianTraceReuseModelTest(BaseHessianTraceBasicModelTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, model=reused_model)
         self.val_batch_size = 1
 
     def run_test(self, seed=0):
@@ -352,6 +359,7 @@ class ActivationHessianTraceReuseModelTest(BaseHessianTraceBasicModelTest):
         hessian_service = hessian_common.HessianInfoService(graph=graph,
                                                             representative_dataset=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
+
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         for ipt in ipts:
             self.test_hessian_trace_approx(hessian_service,
@@ -360,11 +368,9 @@ class ActivationHessianTraceReuseModelTest(BaseHessianTraceBasicModelTest):
                                            granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
                                            mode=hessian_common.HessianMode.ACTIVATION)
 
-
-
 class ActivationHessianOutputExceptionTest(BaseHessianTraceBasicModelTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test)
+        super().__init__(unit_test, model=basic_model)
         self.val_batch_size = 1
 
     def run_test(self, seed=0):

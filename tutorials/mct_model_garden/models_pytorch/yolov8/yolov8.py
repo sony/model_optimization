@@ -14,7 +14,7 @@ detection-head (mainly the box decoding part) that was optimized for model quant
 
 The code is organized as follows:
 - Classes definitions of Yolov8n building blocks: Conv, Bottleneck, C2f, SPPF, Upsample, Concaat, DFL and Detect
-- Detection Model definition: DetectionModelPyTorch
+- Detection Model definition: DetectionModelPytorch
 - PostProcessWrapper Wrapping the Yolov8n model with PostProcess layer (Specifically, sony_custom_layers/multiclass_nms)
 - A getter function for getting a new instance of the model
 
@@ -33,7 +33,6 @@ import torch
 import torch.nn as nn
 import yaml
 from torch import Tensor
-
 from huggingface_hub import PyTorchModelHubMixin
 
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
@@ -130,9 +129,6 @@ class C2f(nn.Module):
 
     def forward(self, x):
         """Forward pass through C2f layer."""
-        # y = list(self.cv1(x).chunk(2, 1))
-        # y.extend(m(y[-1]) for m in self.m)
-        # return self.cv2(torch.cat(y, 1))
 
         y1 = self.cv1(x).chunk(2, 1)
         y = [y1[0], y1[1]]
@@ -405,7 +401,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             args = [ch[f]]
         elif m is Concat:
             c2 = sum(ch[x] for x in f)
-        elif m in {Detect, Pose}:
+        elif m in [Segment, Detect, Pose]:
             args.append([ch[x] for x in f])
         else:
             c2 = ch[f]
@@ -421,7 +417,6 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
         ch.append(c2)
     return nn.Sequential(*layers), sorted(save)
 
-
 def initialize_weights(model):
     """Initialize model weights to random values."""
     for m in model.modules():
@@ -433,70 +428,6 @@ def initialize_weights(model):
             m.momentum = 0.03
         elif t in [nn.Hardswish, nn.LeakyReLU, nn.ReLU, nn.ReLU6, nn.SiLU]:
             m.inplace = True
-
-
-class DetectionModelPyTorch(nn.Module, PyTorchModelHubMixin):
-    def __init__(self, cfg: dict, ch: int = 3):
-        """
-        YOLOv8 detection model.
-
-        Args:
-            cfg (dict): Model configuration in the form of a YAML string or a dictionary.
-            ch (int): Number of input channels.
-        """
-        super().__init__()
-        # Define model
-        self.yaml = cfg
-        ch = self.yaml['ch'] = self.yaml.get('ch', ch)  # input channels
-        self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch)  # model, savelist
-        self.names = {i: f"{i}" for i in range(self.yaml["nc"])}  # default names dict
-        self.inplace = self.yaml.get("inplace", True)
-
-        # Build strides
-        m = self.model[-1]  # Detect()
-        if isinstance(m, Detect):  # includes all Detect subclasses like Segment, Pose, OBB, WorldDetect
-            m.inplace = self.inplace
-            m.bias_init()  # only run once
-        else:
-            self.stride = torch.Tensor([32])
-
-        # Init weights, biases
-        initialize_weights(self)
-
-    def forward(self, x):
-        """
-        Perform a forward pass through the network.
-
-        Args:
-            x (torch.Tensor): The input tensor to the model.
-
-        Returns:
-            (torch.Tensor): The last output of the model.
-        """
-        y = []  # outputs
-        for m in self.model:
-            if m.f != -1:  # if not from previous layer
-                x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
-            x = m(x)  # run
-            y.append(x if m.i in self.save else None)  # save output
-        return x
-
-    def make_tensors_contiguous(self):
-        for name, param in self.named_parameters():
-            if not param.is_contiguous():
-                param.data = param.data.contiguous()
-
-        for name, buffer in self.named_buffers():
-            if not buffer.is_contiguous():
-                buffer.data = buffer.data.contiguous()
-
-    def save_pretrained(self, save_directory, **kwargs):
-        # Make tensors contiguous
-        self.make_tensors_contiguous()
-
-        # Call the original save_pretrained method
-        super().save_pretrained(save_directory, **kwargs)
-
 
 def model_predict(model: Any,
                   inputs: np.ndarray) -> List:
@@ -522,7 +453,6 @@ def model_predict(model: Any,
     # Detach outputs and move to cpu
     # outputs = outputs.cpu().detach()
     return outputs
-
 
 class PostProcessWrapper(nn.Module):
     def __init__(self,
@@ -656,3 +586,108 @@ def yolov8_pytorch_pp(model_yaml: str,
                                   iou_threshold=iou_threshold,
                                   max_detections=max_detections)
     return model_pp, cfg_dict
+
+class Proto(nn.Module):
+    """YOLOv8 mask Proto module for segmentation models."""
+
+    def __init__(self, c1, c_=256, c2=32):
+        """
+        Initializes the YOLOv8 mask Proto module with specified number of protos and masks.
+
+        Input arguments are ch_in, number of protos, number of masks.
+        """
+        super().__init__()
+        self.cv1 = Conv(c1, c_, k=3)
+        self.upsample = nn.ConvTranspose2d(c_, c_, 2, 2, 0, bias=True)  # nn.Upsample(scale_factor=2, mode='nearest')
+        self.cv2 = Conv(c_, c_, k=3)
+        self.cv3 = Conv(c_, c2)
+
+    def forward(self, x):
+        """Performs a forward pass through layers using an upsampled input image."""
+        return self.cv3(self.cv2(self.upsample(self.cv1(x))))
+
+
+class Segment(Detect):
+    """YOLOv8 Segment head for segmentation models."""
+
+    def __init__(self, nc=80, nm=32, npr=256, ch=()):
+        """Initialize the YOLO model attributes such as the number of masks, prototypes, and the convolution layers."""
+        super().__init__(nc, ch)
+        self.nm = nm  # number of masks
+        self.npr = npr  # number of protos
+        self.proto = Proto(ch[0], self.npr, self.nm)  # protos
+        self.detect = Detect.forward
+
+        c4 = max(ch[0] // 4, self.nm)
+        self.cv4 = nn.ModuleList(nn.Sequential(Conv(x, c4, 3), Conv(c4, c4, 3), nn.Conv2d(c4, self.nm, 1)) for x in ch)
+
+    def forward(self, x):
+        """Return model outputs and mask coefficients if training, otherwise return outputs and mask coefficients."""
+        p = self.proto(x[0])  # mask protos
+        bs = p.shape[0]  # batch size
+
+        mc = torch.cat([self.cv4[i](x[i]).view(bs, self.nm, -1) for i in range(self.nl)], 2)  # mask coefficients
+        y_bb, y_cls = self.detect(self, x)
+        
+        return y_bb, y_cls, mc, p   
+
+
+class ModelPyTorch(nn.Module, PyTorchModelHubMixin):
+    """
+    Unified YOLOv8 model for both detection and segmentation.
+
+    Args:
+        cfg (dict): Model configuration in the form of a YAML string or a dictionary.
+        ch (int): Number of input channels.
+        mode (str): Mode of operation ('detection' or 'segmentation').
+    """
+    def __init__(self, cfg: dict, ch: int = 3, mode: str = 'detection'):
+        super().__init__()
+        self.yaml = cfg
+        ch = self.yaml['ch'] = self.yaml.get('ch', ch)
+        self.mode = mode
+        self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch)
+        self.names = {i: f"{i}" for i in range(self.yaml["nc"])}
+        self.inplace = self.yaml.get("inplace", True)
+
+        m = self.model[-1]
+        if isinstance(m, Segment) and self.mode == 'segmentation':
+            m.inplace = self.inplace
+            m.bias_init()
+        elif isinstance(m, Detect) and self.mode == 'detection':
+            m.inplace = self.inplace
+            m.bias_init()
+        else:
+            self.stride = torch.Tensor([32])
+
+        initialize_weights(self)
+
+    def forward(self, x):
+        y = []
+        for m in self.model:
+            if m.f != -1:
+                x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]
+            x = m(x)
+            y.append(x if m.i in self.save else None)
+        return x
+
+    def load_weights(self, path):
+        self.load_state_dict(torch.load(path))
+
+    def save_weights(self, path):
+        torch.save(self.state_dict(), path)
+
+    def make_tensors_contiguous(self):
+        for name, param in self.named_parameters():
+            if not param.is_contiguous():
+                param.data = param.data.contiguous()
+
+        for name, buffer in self.named_buffers():
+            if not buffer.is_contiguous():
+                buffer.data = buffer.data.contiguous()
+
+    def save_pretrained(self, save_directory, **kwargs):
+        # Make tensors contiguous
+        self.make_tensors_contiguous()
+        # Call the original save_pretrained method
+        super().save_pretrained(save_directory, **kwargs)

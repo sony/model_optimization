@@ -67,11 +67,10 @@ def _build_input_tensors_list(node: BaseNode,
             _input_tensors = node_to_output_tensors_dict[ie.source_node]
             input_tensors.append(_input_tensors)
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
-        if not is_op_quantize_wrapper:
-            input_tensors = node.insert_positional_weights_to_input_list(input_tensors)
+        input_tensors = node.insert_positional_weights_to_input_list(input_tensors)
         # convert inputs from positional weights (numpy arrays) to tensors. Must handle each element in the
         # list separately, because in FX the tensors are FX objects and fail to_torch_tensor
-        input_tensors = [to_torch_tensor(t) if isinstance(t, np.ndarray) else t
+        input_tensors = [to_torch_tensor(t, numpy_type=t.dtype) if isinstance(t, np.ndarray) else t
                          for t in input_tensors]
     return input_tensors
 
@@ -126,6 +125,7 @@ def _run_operation(n: BaseNode,
 
     op_call_args = n.op_call_args if isinstance(n, FunctionalNode) else []
     functional_kwargs = n.op_call_kwargs if isinstance(n, FunctionalNode) else {}
+
     if isinstance(n, FunctionalNode) and n.inputs_as_list:
         out_tensors_of_n_float = op_func(input_tensors, *op_call_args, **functional_kwargs)
     else:

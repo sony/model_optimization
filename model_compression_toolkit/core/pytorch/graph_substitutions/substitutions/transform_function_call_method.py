@@ -12,30 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from torch import permute
+from torch import permute, reshape
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 
 
-class PermuteCallMethod(common.BaseSubstitution):
+class TransformFunctionCallMethod(common.BaseSubstitution):
     """
-    Find "permute" node to substitute new dimension argument if needed
+    Find "permute or reshape" node to substitute new dimension argument if needed
     """
 
     def __init__(self):
         """
-        Matches: 'permute' node
+        Matches: 'permute or reshape' node
         """
-        nodes = NodeOperationMatcher(permute)
+        nodes = NodeOperationMatcher(permute) | NodeOperationMatcher(reshape)
         super().__init__(matcher_instance=nodes)
 
     def substitute(self,
                    graph: Graph,
                    node: BaseNode) -> Graph:
         """
-        Wrap dimension of permute with tuple if it's missing
+        Wrap dimension of permute or reshape with tuple if it's missing
 
         Args:
             graph: Graph we apply the substitution on.
@@ -45,6 +45,6 @@ class PermuteCallMethod(common.BaseSubstitution):
             Graph after applying the substitution.
         """
         # Check op_call_args is not empty and has its argument as a tuple
-        if node.op_call_args and not isinstance(node.op_call_args[0], tuple):
+        if node.op_call_args and not isinstance(node.op_call_args[0], (list,tuple)):
             node.op_call_args = [node.op_call_args]
         return graph

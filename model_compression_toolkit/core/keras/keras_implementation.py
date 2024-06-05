@@ -421,13 +421,14 @@ class KerasImplementation(FrameworkImplementation):
 
         return False
 
-    def get_node_distance_fn(self, layer_class: type,
+    def get_mp_node_distance_fn(self, layer_class: type,
                              framework_attrs: Dict[str, Any],
                              compute_distance_fn: Callable = None,
-                             axis: int = None) -> Callable:
+                             axis: int = None,
+                             norm_mse: bool = False) -> Callable:
         """
         A mapping between layers' types and a distance function for computing the distance between
-        two tensors (for loss computation purposes). Returns a specific function if node of specific types is
+        two tensors in mixed precision (for loss computation purposes). Returns a specific function if node of specific types is
         given, or a default (normalized MSE) function otherwise.
 
         Args:
@@ -435,6 +436,7 @@ class KerasImplementation(FrameworkImplementation):
             framework_attrs: Framework attributes the layer had which the graph node holds.
             compute_distance_fn: An optional distance function to use globally for all nodes.
             axis: The axis on which the operation is preformed (if specified).
+            norm_mse: whether to normalize mse distance function.
 
         Returns: A distance function between two tensors.
         """
@@ -456,7 +458,7 @@ class KerasImplementation(FrameworkImplementation):
             return compute_cs
         elif layer_class == Dense:
             return compute_cs
-        return compute_mse
+        return partial(compute_mse, norm=norm_mse)
 
     def get_trace_hessian_calculator(self,
                                      graph: Graph,

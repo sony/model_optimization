@@ -138,6 +138,7 @@ def nodes_builder(model: GraphModule,
                 if input_node in consts_dict:
                     used_consts.add(input_node)
                     weights.update({i: consts_dict[input_node]})
+
                 tensor_meta = input_node.meta
                 if tensor_meta[TYPE] == torch.Tensor:
                     input_shape += [list(tensor_meta[TENSOR_META].shape)]

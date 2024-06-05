@@ -285,7 +285,7 @@ def _bops_utilization(mp_cfg: List[int],
     # Go over all nodes that should be taken into consideration when computing the BOPS utilization.
     bops = []
     for n in graph.get_topo_sorted_nodes():
-        if n.has_kernel_weight_to_quantize(fw_info):
+        if n.has_kernel_weight_to_quantize(fw_info) and not n.has_positional_weights:
             # If node doesn't have weights then its MAC count is 0, and we shouldn't consider it in the BOPS count.
             incoming_edges = graph.incoming_edges(n, sort_by_attr=EDGE_SINK_INDEX)
             if len(incoming_edges) != 1:
