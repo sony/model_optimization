@@ -26,7 +26,7 @@ import contextlib
 import math
 import re
 from copy import deepcopy
-from typing import Dict, List, Tuple, Any, Callable
+from typing import Dict, List, Tuple, Any
 
 import numpy as np
 import torch
@@ -284,7 +284,7 @@ class Detect_wo_bb_dec(nn.Module):
     def __init__(self, nc: int = 80,
                  ch: List[int] = ()):
         """
-        Detection layer for YOLOv8.
+        Detection layer for YOLOv8. Bounding box decoding was removed.
         Args:
             nc (int): Number of classes.
             ch (List[int]): List of channel values for detection layers.
@@ -304,17 +304,6 @@ class Detect_wo_bb_dec(nn.Module):
         self.cv3 = nn.ModuleList(nn.Sequential(Conv(x, c3, 3), Conv(c3, c3, 3),
                                                nn.Conv2d(c3, self.nc, 1)) for x in ch)
         self.dfl = DFL(self.reg_max) if self.reg_max > 1 else nn.Identity()
-        anchors, strides = (x.transpose(0, 1) for x in make_anchors(self.feat_sizes,
-                                                                    self.stride, 0.5))
-        strides = strides / self.img_size
-        anchors = anchors * strides
-        self.relu1 = nn.ReLU()
-        self.relu2 = nn.ReLU()
-        self.relu3 = nn.ReLU()
-        self.relu4 = nn.ReLU()
-
-        self.register_buffer('anchors', anchors)
-        self.register_buffer('strides', strides)
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         shape = x[0].shape  # BCHW
