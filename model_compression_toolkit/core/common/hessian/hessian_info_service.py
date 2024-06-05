@@ -81,6 +81,10 @@ class HessianInfoService:
             (2) A list of remaining samples - for each input layer.
         """
 
+        if num_inputs < 0:  # pragma: no cover
+            Logger.critical(f"Number of images to compute Hessian approximation must be positive, "
+                            f"but given {num_inputs}.")
+
         all_inp_hessian_samples = [[] for _ in range(num_inputs)]
         # Collect the requested number of samples from the representative dataset
         for batch in representative_dataset:
@@ -99,7 +103,6 @@ class HessianInfoService:
                 num_missing = min(num_hessian_samples - len(all_inp_hessian_samples[inp_idx]), inp_batch.shape[0])
                 # Append each sample separately
                 samples = [s for s in inp_batch[0:num_missing, ...]]
-                # hessian_samples += [sample.reshape(1, *sample.shape) for sample in samples]
                 remaining_samples = [s for s in inp_batch[num_missing:, ...]]
 
                 all_inp_hessian_samples[inp_idx] += [sample.reshape(1, *sample.shape) for sample in samples]
@@ -341,7 +344,7 @@ class HessianInfoService:
         return collected_results
 
     @staticmethod
-    def _construct_single_node_request(mode: HessianMode, granularity: HessianInfoGranularity, target_nodes
+    def _construct_single_node_request(mode: HessianMode, granularity: HessianInfoGranularity, target_nodes: List
                                        ) -> TraceHessianRequest:
         """
         Constructs a Hessian request with for a single node. Used for retrieving and maintaining cached results.

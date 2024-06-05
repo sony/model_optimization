@@ -104,7 +104,7 @@ class ActivationTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
                 # Loop through each interest point activation tensor
                 prev_mean_results = None
-                for j in tqdm(range(20)):  # Approximation iterations
+                for j in tqdm(range(self.num_iterations_for_approximation)):  # Approximation iterations
                     # Getting a random vector with normal distribution
                     v = tf.random.normal(shape=output.shape, dtype=output.dtype)
                     f_v = tf.reduce_sum(v * output)
