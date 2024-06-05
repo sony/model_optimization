@@ -1,3 +1,6 @@
+# The following code was mostly duplicated from https://github.com/ultralytics/ultralytics
+# ==============================================================================
+
 # Ultralytics YOLO 🚀, AGPL-3.0 license
 # YOLOv8-seg instance segmentation model. For Usage examples see https://docs.ultralytics.com/tasks/segment
 ##
