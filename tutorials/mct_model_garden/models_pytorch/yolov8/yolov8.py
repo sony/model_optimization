@@ -14,7 +14,7 @@ detection-head (mainly the box decoding part) that was optimized for model quant
 
 The code is organized as follows:
 - Classes definitions of Yolov8n building blocks: Conv, Bottleneck, C2f, SPPF, Upsample, Concaat, DFL and Detect
-- Detection Model definition: DetectionModelPytorch
+- Detection Model definition: ModelPyTorch
 - PostProcessWrapper Wrapping the Yolov8n model with PostProcess layer (Specifically, sony_custom_layers/multiclass_nms)
 - A getter function for getting a new instance of the model
 
@@ -26,7 +26,7 @@ import contextlib
 import math
 import re
 from copy import deepcopy
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Callable
 
 import numpy as np
 import torch
@@ -277,6 +277,82 @@ class Detect(nn.Module):
             a[-1].bias.data[:] = 1.0  # box
             b[-1].bias.data[: m.nc] = math.log(5 / m.nc / (640 / s) ** 2)  # cls (.01 objects, 80 classes, 640 img)
 
+
+class Detect_wo_bb_dec(nn.Module):
+    def __init__(self, nc: int = 80,
+                 ch: List[int] = ()):
+        """
+        Detection layer for YOLOv8.
+        Args:
+            nc (int): Number of classes.
+            ch (List[int]): List of channel values for detection layers.
+        """
+        super().__init__()
+        self.nc = nc  # number of classes
+        self.nl = len(ch)  # number of detection layers
+        self.reg_max = 16  # DFL channels (ch[0] // 16 to scale 4/8/12/16/20 for n/s/m/l/x)
+        self.no = nc + self.reg_max * 4  # number of outputs per anchor
+        self.stride = torch.Tensor([8, 16, 32])
+        self.feat_sizes = torch.Tensor([80, 40, 20])
+        self.img_size = 640  # img size
+        c2, c3 = max((16, ch[0] // 4, self.reg_max * 4)), max(ch[0], min(self.nc, 100))  # channels
+        self.cv2 = nn.ModuleList(
+            nn.Sequential(Conv(x, c2, 3),
+                          Conv(c2, c2, 3), nn.Conv2d(c2, 4 * self.reg_max, 1)) for x in ch)
+        self.cv3 = nn.ModuleList(nn.Sequential(Conv(x, c3, 3), Conv(c3, c3, 3),
+                                               nn.Conv2d(c3, self.nc, 1)) for x in ch)
+        self.dfl = DFL(self.reg_max) if self.reg_max > 1 else nn.Identity()
+        anchors, strides = (x.transpose(0, 1) for x in make_anchors(self.feat_sizes,
+                                                                    self.stride, 0.5))
+        strides = strides / self.img_size
+        anchors = anchors * strides
+        self.relu1 = nn.ReLU()
+        self.relu2 = nn.ReLU()
+        self.relu3 = nn.ReLU()
+        self.relu4 = nn.ReLU()
+
+        self.register_buffer('anchors', anchors)
+        self.register_buffer('strides', strides)
+
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+        shape = x[0].shape  # BCHW
+        for i in range(self.nl):
+            x[i] = torch.cat((self.cv2[i](x[i]), self.cv3[i](x[i])), 1)
+        box, cls = torch.cat([xi.view(shape[0], self.no, -1) for xi in x], 2).split(
+            (self.reg_max * 4, self.nc), 1)
+
+        y_cls = cls.sigmoid()
+        y_bb = self.dfl(box)
+        return y_bb, y_cls
+
+
+    def bias_init(self):
+        """Initialize Detect() biases, WARNING: requires stride availability."""
+        m = self  # self.model[-1]  # Detect() module
+        for a, b, s in zip(m.cv2, m.cv3, m.stride):  # from
+            a[-1].bias.data[:] = 1.0  # box
+            b[-1].bias.data[: m.nc] = math.log(5 / m.nc / (640 / s) ** 2)  # cls (.01 objects, 80 classes, 640 img)
+
+class Pose(Detect_wo_bb_dec):
+    """YOLOv8 Pose head for keypoints models."""
+
+    def __init__(self, nc=80, kpt_shape=(17, 3), ch=()):
+        """Initialize YOLO network with default parameters and Convolutional Layers."""
+        super().__init__(nc, ch)
+        self.kpt_shape = kpt_shape  # number of keypoints, number of dims (2 for x,y or 3 for x,y,visible)
+        self.nk = kpt_shape[0] * kpt_shape[1]  # number of keypoints total
+        self.detect = Detect_wo_bb_dec.forward
+
+        c4 = max(ch[0] // 4, self.nk)
+        self.cv4 = nn.ModuleList(nn.Sequential(Conv(x, c4, 3), Conv(c4, c4, 3), nn.Conv2d(c4, self.nk, 1)) for x in ch)
+
+    def forward(self, x):
+        """Perform forward pass through YOLO model and return predictions."""
+        bs = x[0].shape[0]  # batch size
+        kpt = torch.cat([self.cv4[i](x[i]).view(bs, self.nk, -1) for i in range(self.nl)], -1)  # (bs, 17*3, h*w)
+        y_bb, y_cls = self.detect(self, x)
+        return y_bb, y_cls, kpt
+
 def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
     """Parse a YOLO model.yaml dictionary into a PyTorch model."""
     import ast
@@ -321,7 +397,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             args = [ch[f]]
         elif m is Concat:
             c2 = sum(ch[x] for x in f)
-        elif m in [Segment, Detect]:
+        elif m in [Segment, Detect, Pose]:
             args.append([ch[x] for x in f])
         else:
             c2 = ch[f]
@@ -419,7 +495,7 @@ def yolov8_pytorch(model_yaml: str) -> (nn.Module, Dict):
     """
     cfg = model_yaml
     cfg_dict = yaml_load(cfg, append_filename=True)  # model dict
-    model = DetectionModelPyTorch(cfg_dict)  # model
+    model = ModelPyTorch(cfg_dict)  # model
     return model, cfg_dict
 
 
@@ -442,7 +518,7 @@ def yolov8_pytorch_pp(model_yaml: str,
     """
     cfg = model_yaml
     cfg_dict = yaml_load(cfg, append_filename=True)  # model dict
-    model = DetectionModelPyTorch(cfg_dict)  # model
+    model = ModelPyTorch(cfg_dict)  # model
     model_pp = PostProcessWrapper(model=model,
                                   score_threshold=score_threshold,
                                   iou_threshold=iou_threshold,
@@ -490,8 +566,8 @@ class Segment(Detect):
 
         mc = torch.cat([self.cv4[i](x[i]).view(bs, self.nm, -1) for i in range(self.nl)], 2)  # mask coefficients
         y_bb, y_cls = self.detect(self, x)
-        
-        return y_bb, y_cls, mc, p   
+
+        return y_bb, y_cls, mc, p
 
 
 class ModelPyTorch(nn.Module, PyTorchModelHubMixin):
