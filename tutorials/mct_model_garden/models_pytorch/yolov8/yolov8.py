@@ -38,6 +38,8 @@ from huggingface_hub import PyTorchModelHubMixin
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from sony_custom_layers.pytorch.object_detection.nms import multiclass_nms
 
+from postprocess_yolov8 import postprocess_yolov8_keypoints
+
 
 def yaml_load(file: str = 'data.yaml', append_filename: bool = False) -> Dict[str, any]:
     """
@@ -480,6 +482,31 @@ class PostProcessWrapper(nn.Module):
         nms = multiclass_nms(boxes=boxes, scores=scores, score_threshold=self.score_threshold,
                              iou_threshold=self.iou_threshold, max_detections=self.max_detections)
         return nms
+
+def keypoints_model_predict(model: Any, inputs: np.ndarray) -> List:
+    """
+    Perform inference using the provided PyTorch model on the given inputs.
+
+    This function handles moving the inputs to the appropriate torch device and data type,
+    and detaches and moves the outputs to the CPU.
+
+    Args:
+        model (Any): The PyTorch model used for inference.
+        inputs (np.ndarray): Input data to perform inference on.
+
+    Returns:
+        List: List containing tensors of predictions.
+    """
+    device = get_working_device()
+    inputs = torch.from_numpy(inputs).to(device=device, dtype=torch.float)
+
+    # Run Pytorch inference on the batch
+    outputs = model(inputs)
+
+    # Detach outputs and move to cpu
+    output_np = [o.detach().cpu().numpy() for o in outputs]
+
+    return postprocess_yolov8_keypoints(output_np)
 
 
 def yolov8_pytorch(model_yaml: str) -> (nn.Module, Dict):
