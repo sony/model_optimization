@@ -23,12 +23,10 @@ import random
 from pycocotools import mask as mask_utils
 import torch
 from tqdm import tqdm
-import cv2
-import matplotlib.pyplot as plt
 
+from ..models_pytorch.yolov8.yolov8_postprocess import scale_boxes, scale_coords
 from ..models_pytorch.yolov8.yolov8_preprocess import yolov8_preprocess_chw_transpose
 from ..models_pytorch.yolov8.postprocess_yolov8_seg import process_masks, postprocess_yolov8_inst_seg
-
 
 
 def coco80_to_coco91(x: np.ndarray) -> np.ndarray:
@@ -46,114 +44,6 @@ def coco80_to_coco91(x: np.ndarray) -> np.ndarray:
          35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62,
          63, 64, 65, 67, 70, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 84, 85, 86, 87, 88, 89, 90])
     return coco91Indexs[x.astype(np.int32)]
-
-
-def clip_boxes(boxes: np.ndarray, h: int, w: int) -> np.ndarray:
-    """
-    Clip bounding boxes to stay within the image boundaries.
-
-    Args:
-        boxes (numpy.ndarray): Array of bounding boxes in format [y_min, x_min, y_max, x_max].
-        h (int): Height of the image.
-        w (int): Width of the image.
-
-    Returns:
-        numpy.ndarray: Clipped bounding boxes.
-    """
-    boxes[..., 0] = np.clip(boxes[..., 0], a_min=0, a_max=h)
-    boxes[..., 1] = np.clip(boxes[..., 1], a_min=0, a_max=w)
-    boxes[..., 2] = np.clip(boxes[..., 2], a_min=0, a_max=h)
-    boxes[..., 3] = np.clip(boxes[..., 3], a_min=0, a_max=w)
-    return boxes
-
-
-def scale_boxes(boxes: np.ndarray, h_image: int, w_image: int, h_model: int, w_model: int,
-                preserve_aspect_ratio: bool) -> np.ndarray:
-    """
-    Scale and offset bounding boxes based on model output size and original image size.
-
-    Args:
-        boxes (numpy.ndarray): Array of bounding boxes in format [y_min, x_min, y_max, x_max].
-        h_image (int): Original image height.
-        w_image (int): Original image width.
-        h_model (int): Model output height.
-        w_model (int): Model output width.
-        preserve_aspect_ratio (bool): Whether to preserve image aspect ratio during scaling
-
-    Returns:
-        numpy.ndarray: Scaled and offset bounding boxes.
-    """
-    deltaH, deltaW = 0, 0
-    H, W = h_model, w_model
-    scale_H, scale_W = h_image / H, w_image / W
-
-    if preserve_aspect_ratio:
-        scale_H = scale_W = max(h_image / H, w_image / W)
-        H_tag = int(np.round(h_image / scale_H))
-        W_tag = int(np.round(w_image / scale_W))
-        deltaH, deltaW = int((H - H_tag) / 2), int((W - W_tag) / 2)
-
-    # Scale and offset boxes
-    boxes[..., 0] = (boxes[..., 0] * H - deltaH) * scale_H
-    boxes[..., 1] = (boxes[..., 1] * W - deltaW) * scale_W
-    boxes[..., 2] = (boxes[..., 2] * H - deltaH) * scale_H
-    boxes[..., 3] = (boxes[..., 3] * W - deltaW) * scale_W
-
-    # Clip boxes
-    boxes = clip_boxes(boxes, h_image, w_image)
-
-    return boxes
-
-def scale_coords(kpts: np.ndarray, h_image: int, w_image: int, h_model: int, w_model: int, preserve_aspect_ratio: bool) -> np.ndarray:
-    """
-    Scale and offset keypoints based on model output size and original image size.
-
-    Args:
-        kpts (numpy.ndarray): Array of bounding keypoints in format [..., 17, 3]  where the last dim is (x, y, visible).
-        h_image (int): Original image height.
-        w_image (int): Original image width.
-        h_model (int): Model output height.
-        w_model (int): Model output width.
-        preserve_aspect_ratio (bool): Whether to preserve image aspect ratio during scaling
-
-    Returns:
-        numpy.ndarray: Scaled and offset bounding boxes.
-    """
-    deltaH, deltaW = 0, 0
-    H, W = h_model, w_model
-    scale_H, scale_W = h_image / H, w_image / W
-
-    if preserve_aspect_ratio:
-        scale_H = scale_W = max(h_image / H, w_image / W)
-        H_tag = int(np.round(h_image / scale_H))
-        W_tag = int(np.round(w_image / scale_W))
-        deltaH, deltaW = int((H - H_tag) / 2), int((W - W_tag) / 2)
-
-    # Scale and offset boxes
-    kpts[..., 0] = (kpts[..., 0]  - deltaH) * scale_H
-    kpts[..., 1] = (kpts[..., 1] - deltaW) * scale_W
-
-    # Clip boxes
-    kpts = clip_coords(kpts, h_image, w_image)
-
-    return kpts
-
-
-def clip_coords(kpts: np.ndarray, h: int, w: int) -> np.ndarray:
-    """
-    Clip keypoints to stay within the image boundaries.
-
-    Args:
-        kpts (numpy.ndarray): Array of bounding keypoints in format [..., 17, 3]  where the last dim is (x, y, visible).
-        h (int): Height of the image.
-        w (int): Width of the image.
-
-    Returns:
-        numpy.ndarray: Clipped bounding boxes.
-    """
-    kpts[..., 0] = np.clip(kpts[..., 0], a_min=0, a_max=h)
-    kpts[..., 1] = np.clip(kpts[..., 1], a_min=0, a_max=w)
-    return kpts
 
 
 # COCO evaluation class
@@ -666,55 +556,3 @@ def evaluate_yolov8_segmentation(model, data_dir, data_type='val2017', img_ids_l
 
     save_results_to_json(results, output_file)
     evaluate_seg_model(ann_file, output_file)
-
-
-class COCODrawer:
-    def __init__(self, categories_file):
-        self.categories = self.get_categories(categories_file)
-
-    def get_categories(self, filename):
-        with open(filename, 'r') as f:
-            return [line.strip() for line in f.readlines()]
-
-    def draw_bounding_box(self, img, annotation, class_id, ax):
-        x_min, y_min = int(annotation[1]), int(annotation[0])
-        x_max, y_max = int(annotation[3]), int(annotation[2])
-        text = self.categories[int(class_id)]
-        cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (0, 0, 255), 2)
-        ax.text(x_min, y_min, text, style='italic',
-                bbox={'facecolor': 'white', 'alpha': 0.7, 'pad': 5})
-
-    def draw_keypoints(self, img, keypoints):
-        skeleton = [
-            [0, 1], [0, 2], [1, 3], [2, 4],  # Head
-            [5, 6], [5, 7], [7, 9], [6, 8],  # Arms
-            [8, 10], [5, 11], [6, 12], [11, 12],  # Body
-            [11, 13], [12, 14], [13, 15], [14, 16]  # Legs
-        ]
-
-        # Draw skeleton lines
-        for connection in skeleton:
-            start_point = (int(keypoints[connection[0]][0]), int(keypoints[connection[0]][1]))
-            end_point = (int(keypoints[connection[1]][0]), int(keypoints[connection[1]][1]))
-            cv2.line(img, start_point, end_point, (255, 0, 0), 2)
-
-        # Draw keypoints as colored circles
-        for point in keypoints:
-            x, y = int(point[0]), int(point[1])
-            cv2.circle(img, (x, y), 3, (0, 255, 0), -1)
-
-    def annotate_image(self, img, b, s, c, k, scale, ax):
-        for index, row in enumerate(b):
-            if s[index] > 0.55:
-                self.draw_bounding_box(img, row * scale, c[index], ax)
-                if k is not None:
-                    self.draw_keypoints(img, k[index] * scale)
-
-    def plot_image(self, img, b, s, c, k=None):
-        fig, ax = plt.subplots()
-        self.annotate_image(img, b, s, c, k, scale=1, ax=ax)
-        ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-        # plt.title(img.shape)
-        return fig, ax
-
-
