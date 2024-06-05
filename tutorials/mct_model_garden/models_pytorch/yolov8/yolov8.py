@@ -38,7 +38,7 @@ from huggingface_hub import PyTorchModelHubMixin
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from sony_custom_layers.pytorch.object_detection.nms import multiclass_nms
 
-from postprocess_yolov8 import postprocess_yolov8_keypoints
+from tutorials.mct_model_garden.models_pytorch.yolov8.yolov8_postprocess import postprocess_yolov8_keypoints
 
 
 def yaml_load(file: str = 'data.yaml', append_filename: bool = False) -> Dict[str, any]:

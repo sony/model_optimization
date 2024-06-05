@@ -23,6 +23,8 @@ import random
 from pycocotools import mask as mask_utils
 import torch
 from tqdm import tqdm
+import cv2
+import matplotlib.pyplot as plt
 
 from ..models_pytorch.yolov8.yolov8_preprocess import yolov8_preprocess_chw_transpose
 from ..models_pytorch.yolov8.postprocess_yolov8_seg import process_masks, postprocess_yolov8_inst_seg
@@ -665,5 +667,54 @@ def evaluate_yolov8_segmentation(model, data_dir, data_type='val2017', img_ids_l
     save_results_to_json(results, output_file)
     evaluate_seg_model(ann_file, output_file)
 
+
+class COCODrawer:
+    def __init__(self, categories_file):
+        self.categories = self.get_categories(categories_file)
+
+    def get_categories(self, filename):
+        with open(filename, 'r') as f:
+            return [line.strip() for line in f.readlines()]
+
+    def draw_bounding_box(self, img, annotation, class_id, ax):
+        x_min, y_min = int(annotation[1]), int(annotation[0])
+        x_max, y_max = int(annotation[3]), int(annotation[2])
+        text = self.categories[int(class_id)]
+        cv2.rectangle(img, (x_min, y_min), (x_max, y_max), (0, 0, 255), 2)
+        ax.text(x_min, y_min, text, style='italic',
+                bbox={'facecolor': 'white', 'alpha': 0.7, 'pad': 5})
+
+    def draw_keypoints(self, img, keypoints):
+        skeleton = [
+            [0, 1], [0, 2], [1, 3], [2, 4],  # Head
+            [5, 6], [5, 7], [7, 9], [6, 8],  # Arms
+            [8, 10], [5, 11], [6, 12], [11, 12],  # Body
+            [11, 13], [12, 14], [13, 15], [14, 16]  # Legs
+        ]
+
+        # Draw skeleton lines
+        for connection in skeleton:
+            start_point = (int(keypoints[connection[0]][0]), int(keypoints[connection[0]][1]))
+            end_point = (int(keypoints[connection[1]][0]), int(keypoints[connection[1]][1]))
+            cv2.line(img, start_point, end_point, (255, 0, 0), 2)
+
+        # Draw keypoints as colored circles
+        for point in keypoints:
+            x, y = int(point[0]), int(point[1])
+            cv2.circle(img, (x, y), 3, (0, 255, 0), -1)
+
+    def annotate_image(self, img, b, s, c, k, scale, ax):
+        for index, row in enumerate(b):
+            if s[index] > 0.55:
+                self.draw_bounding_box(img, row * scale, c[index], ax)
+                if k is not None:
+                    self.draw_keypoints(img, k[index] * scale)
+
+    def plot_image(self, img, b, s, c, k=None):
+        fig, ax = plt.subplots()
+        self.annotate_image(img, b, s, c, k, scale=1, ax=ax)
+        ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        # plt.title(img.shape)
+        return fig, ax
 
 
