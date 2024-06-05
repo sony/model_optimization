@@ -13,10 +13,11 @@
 #  limitations under the License.
 #  ==============================================================================
 
-from xquant.common.similarity_metrics import SimilarityMetrics
+from xquant.common.similarity_metrics import SimilarityFunctions
 import torch
 
-class PytorchSimilarityMetrics(SimilarityMetrics):
+class PytorchSimilarityFunctions(SimilarityFunctions):
+
     @staticmethod
     def compute_mse(f_pred: torch.Tensor, q_pred: torch.Tensor) -> float:
         """
@@ -63,3 +64,4 @@ class PytorchSimilarityMetrics(SimilarityMetrics):
         noise_power = torch.mean((f_pred - q_pred) ** 2)
         sqnr = signal_power / noise_power
         return sqnr.item()
+

@@ -13,30 +13,17 @@
 #  limitations under the License.
 #  ==============================================================================
 
-import logging
 
-import keras
-
-from mct_quantizers import KerasQuantizationWrapper
-from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-
-from typing import Any, Dict, Callable, List
-import numpy as np
-from keras import Model
-from functools import partial
-
-from xquant import XQuantConfig
-from xquant.common.constants import INTERMEDIATE_METRICS_REPR, INTERMEDIATE_METRICS_VAL, XQUANT_REPR, XQUANT_VAL
 from xquant.common.framework_report_utils import FrameworkReportUtils
 from model_compression_toolkit.ptq.keras.quantization_facade import DEFAULT_KERAS_TPC
-from model_compression_toolkit.core.keras.reader.reader import model_reader
 from xquant.common.model_folding_utils import ModelFoldingUtils
-from xquant.common.tensorboard_utils import TensorboardUtils
 from xquant.keras.dataset_utils import KerasDatasetUtils
+from xquant.keras.similarity.similarity_calculator import KerasSimilarityCalculator
 
-from xquant.keras.similarity_metrics import KerasSimilarityMetrics
+from xquant.keras.similarity.similarity_functions import KerasSimilarityFunctions
+from xquant.keras.tensorboard_utils import KerasTensorboardUtils
 
 
 class KerasReportUtils(FrameworkReportUtils):
@@ -49,214 +36,24 @@ class KerasReportUtils(FrameworkReportUtils):
         fw_info = DEFAULT_KERAS_INFO
         fw_impl = KerasImplementation()
 
-        similarity_metrics = KerasSimilarityMetrics()
         dataset_utils = KerasDatasetUtils()
         model_folding = ModelFoldingUtils(fw_info=DEFAULT_KERAS_INFO,
                                           fw_impl=fw_impl,
                                           fw_default_tpc=DEFAULT_KERAS_TPC)
 
-        tb_utils = TensorboardUtils(report_dir=report_dir,
-                                    fw_impl=fw_impl,
-                                    fw_info=fw_info,
-                                    model_folding_utils=model_folding)
+        similarity_calculator = KerasSimilarityCalculator(dataset_utils=dataset_utils,
+                                                          model_folding=model_folding,
+                                                          similarity_functions=KerasSimilarityFunctions())
+
+        tb_utils = KerasTensorboardUtils(report_dir=report_dir,
+                                         fw_impl=fw_impl,
+                                         fw_info=fw_info,
+                                         model_folding_utils=model_folding)
         super().__init__(fw_info,
                          fw_impl,
-                         similarity_metrics,
+                         similarity_calculator,
                          dataset_utils,
                          model_folding,
                          tb_utils)
 
-    def get_metric_on_output(self,
-                             float_model: keras.Model,
-                             quantized_model: keras.Model,
-                             dataset: Callable,
-                             custom_similarity_metrics: Dict[str, Callable] = None,
-                             is_validation: bool = False) -> Dict[str, float]:
-        """
-        Compute metrics on the output of the model.
-
-        Args:
-            float_model (keras.Model): The floating-point Keras model.
-            quantized_model (keras.Model): The quantized Keras model.
-            dataset (Callable): Dataset used for inference.
-            custom_similarity_metrics (Dict[str, Callable], optional): Custom metrics for output evaluation. Defaults to
-            None.
-            is_validation (bool, optional): Flag indicating if this is a validation dataset. Defaults to False.
-
-        Returns:
-            Dict[str, float]: A dictionary of computed metrics.
-        """
-
-        dataset = partial(self.dataset_utils.wrapped_dataset,
-                          dataset=dataset,
-                          is_validation=is_validation)
-
-        metrics_to_compute = self.similarity_metrics.get_default_metrics()
-        if custom_similarity_metrics:
-            if not isinstance(custom_similarity_metrics, dict):
-                logging.critical(f"custom_metrics_output should be a dictionary but is {type(custom_similarity_metrics)}")
-            metrics_to_compute.update(custom_similarity_metrics)
-
-        metrics = {key: [] for key in list(metrics_to_compute.keys())}
-
-        for x in dataset():
-            float_predictions = float_model.predict(x)
-            quant_predictions = quantized_model.predict(x)
-            results = self.compute_metrics((float_predictions, quant_predictions),
-                                           metrics_to_compute)
-
-            # Accumulating results
-            for key in metrics:
-                metrics[key].append(results[key])
-
-        # Averaging metrics across the dataset
-        aggregated_metrics = {key: sum(value) / len(value) for key, value in metrics.items()}
-
-        return aggregated_metrics
-
-    def get_metric_on_intermediate(self,
-                                   float_model: keras.Model,
-                                   quantized_model: keras.Model,
-                                   dataset: Callable,
-                                   custom_similarity_metrics: Dict[str, Callable] = None,
-                                   is_validation: bool = False) -> Dict[str, Dict[str, float]]:
-        """
-        Compute metrics on intermediate layers of the model.
-
-        Args:
-            float_model (keras.Model): The floating-point Keras model.
-            quantized_model (keras.Model): The quantized Keras model.
-            dataset (Callable): Dataset used for inference.
-            custom_metrics_intermediate (Dict[str, Callable], optional): Custom metrics for intermediate layers.
-            Defaults to None.
-            is_validation (bool, optional): Flag indicating if this is a validation dataset. Defaults to False.
-
-        Returns:
-            Dict[str, Dict[str, float]]: A dictionary of computed metrics for intermediate layers.
-        """
-
-        float_model = self.model_folding.create_float_folded_model(float_model=float_model, representative_dataset=None)
-
-        dataset = partial(self.dataset_utils.wrapped_dataset,
-                          dataset=dataset,
-                          is_validation=is_validation)
-
-        def get_activations(model: Model,
-                            layer_names: List[str],
-                            data: Any) -> Dict[str, np.ndarray]:
-            """
-            Extract activations from specified layers of the model for the given input data.
-
-            Args:
-                model (Model): The Keras model from which to extract activations.
-                layer_names (List[str]): List of layer names for which activations are to be extracted.
-                data (Any): Input data for which activations are to be computed.
-
-            Returns:
-                Dict[str, np.ndarray]: A dictionary mapping layer names to their corresponding activations.
-            """
-            # Create a new model that outputs the activations of the specified layers
-            intermediate_layer_model = Model(inputs=model.input,
-                                             outputs=[model.get_layer(name).output for name in layer_names])
-
-            predictions = intermediate_layer_model.predict(data)
-
-            # Map the activations to their corresponding layer names
-            return {layer_name: predictions[i] for i, layer_name in enumerate(layer_names)}
-
-
-
-        metrics_to_compute = self.similarity_metrics.get_default_metrics()
-        if custom_similarity_metrics:
-            if not isinstance(custom_similarity_metrics, dict):
-                logging.critical(f"custom_similarity_metrics should be a dictionary but is {type(custom_similarity_metrics)}")
-            metrics_to_compute.update(custom_similarity_metrics)
-
-        float_name2quant_name = self.get_float_to_quantized_compare_points(float_model=float_model,
-                                                                           quantized_model=quantized_model)
-
-        results = {q_layer: [] for q_layer in float_name2quant_name.values()}
-
-        for x in dataset():
-            quant_activations = get_activations(quantized_model, list(float_name2quant_name.values()), x)
-            float_activations = get_activations(float_model, list(float_name2quant_name.keys()), x)
-
-            for float_layer, quant_layer in float_name2quant_name.items():
-                float_activation = float_activations[float_layer]
-                quant_activation = quant_activations[quant_layer]
-
-                results[quant_layer].append(
-                    self.compute_metrics((float_activation, quant_activation), metrics_to_compute))
-
-        aggregated_metrics = {}
-        for layer_name, layer_metrics in results.items():
-            combined_dict = {}
-            for item in layer_metrics:
-                for key, value in item.items():
-                    if key not in combined_dict:
-                        combined_dict[key] = []
-                    combined_dict[key].append(value)
-            for k, v in combined_dict.items():
-                combined_dict[k] = np.mean(v)
-            aggregated_metrics[layer_name] = combined_dict
-
-        return aggregated_metrics
-
-    def get_float_to_quantized_compare_points(self,
-                                              quantized_model: keras.Model,
-                                              float_model: keras.Model) -> Dict[str, str]:
-        """
-        Get comparison points between the floating-point and quantized models.
-
-        Args:
-            quantized_model (keras.Model): The quantized model.
-            float_model (keras.Model): The floating-point model.
-
-        Returns:
-            Dict[str, str]: A dictionary mapping comparison points between the two models.
-        """
-        quant_points_names = [
-            layer.name for layer in quantized_model.layers
-            if isinstance(layer, KerasQuantizationWrapper)
-        ]
-
-        float_name2quant_name = {}
-
-        for quant_point in quant_points_names:
-            candidate_float_layer_name = quantized_model.get_layer(quant_point).layer.name
-
-            if candidate_float_layer_name in [layer.name for layer in float_model.layers]:
-                if candidate_float_layer_name not in float_name2quant_name:
-                    float_name2quant_name[candidate_float_layer_name] = quant_point
-                else:
-                    logging.critical(f"Duplicate mapping found for layer: {candidate_float_layer_name}")
-            else:
-                logging.warning(f"Skipping point {quant_point}")
-
-        return float_name2quant_name
-
-    def get_quant_graph_with_metrics(self,
-                                     quantized_model: keras.Model,
-                                     collected_data: Dict[str, Any],
-                                     xquant_config: XQuantConfig,
-                                     repr_dataset: Callable = None) -> Graph:
-        """
-        Generate the quantized graph with associated metrics.
-
-        Args:
-            quantized_model (keras.Model): The quantized Keras model.
-            collected_data (Dict[str, Any]): Data collected during quantization.
-            xquant_config (XQuantConfig): Configuration settings for explainable quantization.
-            repr_dataset (Callable): Representative dataset (not used in Keras).
-
-        Returns:
-            Graph: A graph structure with metrics.
-        """
-        quant_graph = model_reader(quantized_model)
-        for node in quant_graph.nodes:
-            if node.name in collected_data[INTERMEDIATE_METRICS_REPR].keys():
-                node.framework_attr[XQUANT_REPR] = collected_data[INTERMEDIATE_METRICS_REPR][node.name]
-            if node.name in collected_data[INTERMEDIATE_METRICS_VAL].keys():
-                node.framework_attr[XQUANT_VAL] = collected_data[INTERMEDIATE_METRICS_VAL][node.name]
-        return quant_graph
 

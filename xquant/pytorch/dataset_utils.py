@@ -62,8 +62,8 @@ class PytorchDatasetUtils(DatasetUtils):
             else:
                 data = [transfer_to_device(t) for t in data]
 
-            yield data
+            return data
 
         for x in dataset():
-            return process_data(x, is_validation, device)
+            yield process_data(x, is_validation, device)
 

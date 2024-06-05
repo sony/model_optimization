@@ -48,38 +48,29 @@ def core_report_generator(float_model: Any,
     fw_report_utils.tb_utils.add_histograms_to_tensorboard(model=float_model,
                                                            repr_dataset=repr_dataset)
 
-    _similarity_metrics = {OUTPUT_METRICS_REPR: fw_report_utils.get_metric_on_output(float_model=float_model,
-                                                                                     quantized_model=quantized_model,
-                                                                                     dataset=repr_dataset,
-                                                                                     custom_similarity_metrics=xquant_config.custom_similarity_metrics),
-                           OUTPUT_METRICS_VAL: fw_report_utils.get_metric_on_output(float_model=float_model,
-                                                                                    quantized_model=quantized_model,
-                                                                                    dataset=validation_dataset,
-                                                                                    custom_similarity_metrics=xquant_config.custom_similarity_metrics,
-                                                                                    is_validation=True),
-                           INTERMEDIATE_METRICS_REPR: fw_report_utils.get_metric_on_intermediate(
-                               float_model=float_model,
-                               quantized_model=quantized_model,
-                               dataset=repr_dataset,
-                               custom_similarity_metrics=xquant_config.custom_similarity_metrics),
-                           INTERMEDIATE_METRICS_VAL: fw_report_utils.get_metric_on_intermediate(
-                               float_model=float_model,
-                               quantized_model=quantized_model,
-                               dataset=validation_dataset,
-                               custom_similarity_metrics=xquant_config.custom_similarity_metrics,
-                               is_validation=True)
-                           }
-
-    # Generate the quantized graph with metrics.
-    quant_graph = fw_report_utils.get_quant_graph_with_metrics(quantized_model=quantized_model,
-                                                               collected_data=_similarity_metrics,
-                                                               xquant_config=xquant_config,
-                                                               repr_dataset=repr_dataset)
+    repr_similarity = fw_report_utils.similarity_calculator.compute_similarity_metrics(float_model=float_model,
+                                                                                       quantized_model=quantized_model,
+                                                                                       dataset=repr_dataset,
+                                                                                       custom_similarity_metrics=xquant_config.custom_similarity_metrics)
+    val_similarity = fw_report_utils.similarity_calculator.compute_similarity_metrics(float_model=float_model,
+                                                                                      quantized_model=quantized_model,
+                                                                                      dataset=validation_dataset,
+                                                                                      custom_similarity_metrics=xquant_config.custom_similarity_metrics,
+                                                                                      is_validation=True)
+    similarity_metrics = {
+        OUTPUT_METRICS_REPR: repr_similarity[0],
+        OUTPUT_METRICS_VAL: val_similarity[0],
+        INTERMEDIATE_METRICS_REPR: repr_similarity[1],
+        INTERMEDIATE_METRICS_VAL: val_similarity[1]
+    }
 
     # Add the quantized graph to TensorBoard for visualization.
-    fw_report_utils.tb_utils.add_graph_to_tensorboard(graph=quant_graph)
+    fw_report_utils.tb_utils.add_graph_to_tensorboard(quantized_model,
+                                                      similarity_metrics,
+                                                      xquant_config,
+                                                      repr_dataset)
 
     fw_report_utils.dump_report_to_json(report_dir=xquant_config.report_dir,
-                                        collected_data=_similarity_metrics)
+                                        collected_data=similarity_metrics)
 
-    return _similarity_metrics
+    return similarity_metrics

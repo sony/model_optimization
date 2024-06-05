@@ -21,6 +21,7 @@ import logging
 
 from xquant import XQuantConfig
 from xquant.common.constants import REPORT_FILENAME
+from xquant.common.tensorboard_utils import TensorboardUtils
 
 
 class FrameworkReportUtils:
@@ -28,32 +29,18 @@ class FrameworkReportUtils:
     def __init__(self,
                  fw_info,
                  fw_impl,
-                 similarity_metrics,
+                 similarity_calculator,
                  dataset_utils,
                  model_folding,
-                 tb_utils):
+                 tb_utils: TensorboardUtils):
         self.fw_info = fw_info
         self.fw_impl = fw_impl
-        self.similarity_metrics = similarity_metrics
+        self.similarity_calculator = similarity_calculator
         self.dataset_utils = dataset_utils
         self.model_folding = model_folding
         self.tb_utils = tb_utils
 
 
-    def get_quantized_graph(self,
-                            quantized_model: Any,
-                            repr_dataset: Callable):
-        """
-        Get a graph representation of the quantized model.
-
-        Args:
-            quantized_model: The quantized model.
-            repr_dataset: Representative dataset to use during the graph building.
-
-        Returns:
-            Graph representation of the quantized model.
-        """
-        logging.critical(f"get_quantized_graph is not implemented.")
 
     def get_quant_graph_with_metrics(self,
                                      quantized_model: Any,
@@ -74,85 +61,6 @@ class FrameworkReportUtils:
         """
         logging.critical(f"get_quant_graph_with_metrics is not implemented.")
 
-    def get_metric_on_output(self,
-                             float_model: Any,
-                             quantized_model: Any,
-                             dataset: Callable,
-                             custom_similarity_metrics: Dict[str, Callable] = None,
-                             is_validation: bool = False) -> Dict[str, float]:
-        """
-        Compute metrics on the output of the model.
-
-        Args:
-            float_model (Any): The original floating-point model.
-            quantized_model (Any): The model after quantization.
-            dataset (Callable): Dataset used for evaluation.
-            custom_similarity_metrics (Dict[str, Callable], optional): Custom metrics for output evaluation. Defaults to None.
-            is_validation (bool, optional): Flag indicating if this is a validation dataset. Defaults to False.
-
-        Returns:
-            Dict[str, float]: A dictionary of computed metrics.
-        """
-        logging.critical(f"get_metric_on_output is not implemented.")
-
-    def get_metric_on_intermediate(self,
-                                   float_model: Any,
-                                   quantized_model: Any,
-                                   dataset: Callable,
-                                   custom_similarity_metrics: Dict[str, Callable] = None,
-                                   is_validation: bool = False) -> Dict[str, Dict[str, float]]:
-        """
-        Compute metrics on intermediate layers of the model.
-
-        Args:
-            float_model (Any): The original floating-point model.
-            quantized_model (Any): The model after quantization.
-            dataset (Callable): Dataset used for evaluation.
-            custom_similarity_metrics (Dict[str, Callable], optional): Custom metrics for intermediate layers. Defaults to None.
-            is_validation (bool, optional): Flag indicating if this is a validation dataset. Defaults to False.
-
-        Returns:
-            Dict[str, Dict[str, float]]: A dictionary of computed metrics for intermediate layers.
-        """
-        logging.critical(f"get_metric_on_intermediate is not implemented.")
-
-
-
-    def get_float_to_quantized_compare_points(self,
-                                              quantized_model: Any,
-                                              float_model: Any) -> Dict[str, str]:
-        """
-        Get comparison points between the floating-point and quantized models.
-
-        Args:
-            quantized_model (Any): The quantized model.
-            float_model (Any): The floating-point model.
-
-        Returns:
-            Dict[str, str]: A dictionary mapping comparison points between the two models.
-        """
-        logging.critical(f"get_float_to_quantized_compare_points is not implemented.")
-
-    def compute_metrics(self,
-                        predictions: Tuple[Any, Any],
-                        similarity_metrics: Dict[str, Callable]) -> Dict[str, float]:
-        """
-        Compute metrics based on predictions.
-
-        Args:
-            predictions (Tuple[Any, Any]): A tuple of predictions from the floating-point and quantized models.
-            similarity_metrics (Dict[str, Callable]): Custom metrics for output evaluation.
-
-        Returns:
-            Dict[str, float]: A dictionary of computed metrics.
-        """
-
-        f_pred, q_pred = predictions
-
-        # Compute default metrics
-        metrics = {k: v(f_pred, q_pred) for k, v in similarity_metrics.items()}
-
-        return metrics
 
 
     def create_report_directory(self, dir_path: str):

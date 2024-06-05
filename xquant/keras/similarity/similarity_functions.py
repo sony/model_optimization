@@ -12,14 +12,23 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
-from typing import Any
+
+from functools import partial
+
+import keras
+import logging
+
+from mct_quantizers.keras.quantize_wrapper import KerasQuantizationWrapper
+
+from typing import Any, Dict, Callable, List, Tuple
 import numpy as np
 import tensorflow as tf
 
-from xquant.common.similarity_metrics import SimilarityMetrics
+from xquant.common.similarity_metrics import SimilarityFunctions
 
 
-class KerasSimilarityMetrics(SimilarityMetrics):
+class KerasSimilarityFunctions(SimilarityFunctions):
+
     @staticmethod
     def compute_mse(f_pred: np.ndarray, q_pred: np.ndarray) -> float:
         mse = tf.keras.losses.MeanSquaredError()(f_pred, q_pred)

@@ -38,14 +38,23 @@ class TensorboardUtils:
         for _data in tqdm(repr_dataset(), "Collecting Histograms"):
             mi.infer(_data)
         self.tb_writer.add_histograms(graph, "")
-    def add_graph_to_tensorboard(self, graph: Graph):
-        """
-        Add the graph to TensorBoard for visualization.
+    def get_graph_for_tensorboard_display(self,
+                                          quantized_model,
+                                          similarity_metrics,
+                                          xquant_config,
+                                          repr_dataset):
+        raise NotImplemented
+    def add_graph_to_tensorboard(self,
+                                 quantized_model,
+                                 similarity_metrics,
+                                 xquant_config,
+                                 repr_dataset
+                                 ):
+        # Generate the quantized graph with metrics.
+        tb_graph = self.get_graph_for_tensorboard_display(quantized_model=quantized_model,
+                                                          similarity_metrics=similarity_metrics,
+                                                          xquant_config=xquant_config,
+                                                          repr_dataset=repr_dataset)
+        self.tb_writer.add_graph(tb_graph, "")
 
-        Args:
-            graph (Graph): The graph to add.
 
-        Returns:
-            None
-        """
-        self.tb_writer.add_graph(graph, "")

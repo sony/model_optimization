@@ -12,14 +12,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
-from typing import Any, Dict, Callable
+import logging
+
+from typing import Any, Dict, Callable, Tuple
 
 from xquant.common.constants import CS_METRIC_NAME, SQNR_METRIC_NAME, MSE_METRIC_NAME
 
 DEFAULT_METRICS_NAMES = [CS_METRIC_NAME, MSE_METRIC_NAME, SQNR_METRIC_NAME]
 
 
-class SimilarityMetrics:
+class SimilarityFunctions:
 
     @staticmethod
     def compute_mse(f_pred: Any, q_pred: Any) -> float:
@@ -39,3 +41,4 @@ class SimilarityMetrics:
             CS_METRIC_NAME: self.compute_cs,
             SQNR_METRIC_NAME: self.compute_sqnr
         }
+
