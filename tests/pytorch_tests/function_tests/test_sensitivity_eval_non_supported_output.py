@@ -13,7 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 import torch
+import numpy as np
 
+from model_compression_toolkit.constants import MP_DEFAULT_NUM_SAMPLES
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
@@ -44,7 +46,10 @@ class TestSensitivityEvalWithNonSupportedOutputBase(BasePytorchTest):
     def create_inputs_shape(self):
         return [[1, 3, 16, 16]]
 
-    def representative_data_gen(self, n_iters=1):
+    def generate_inputs(self, input_shapes):
+        return [np.random.randn(*in_shape) for in_shape in input_shapes]
+
+    def representative_data_gen(self, n_iters=MP_DEFAULT_NUM_SAMPLES):
         input_shapes = self.create_inputs_shape()
         for _ in range(n_iters):
             yield self.generate_inputs(input_shapes)
@@ -61,9 +66,8 @@ class TestSensitivityEvalWithNonSupportedOutputBase(BasePytorchTest):
                                                            generate_pytorch_tpc,
                                                            input_shape=(1, 3, 16, 16),
                                                            mixed_precision_enabled=True)
-        hessian_info_service = HessianInfoService(graph=graph,
-                                                   fw_impl=pytorch_impl,
-                                                   representative_dataset=self.representative_data_gen)
+        hessian_info_service = HessianInfoService(graph=graph, representative_dataset_gen=self.representative_data_gen,
+                                                  fw_impl=pytorch_impl)
 
         se = pytorch_impl.get_sensitivity_evaluator(graph,
                                                     MixedPrecisionQuantizationConfig(use_hessian_based_scores=True),

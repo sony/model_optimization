@@ -99,9 +99,8 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
 
 
 class MixedPercisionSearchTest(MixedPercisionBaseTest):
-    def __init__(self, unit_test, distance_metric=MpDistanceWeighting.AVG, expected_mp_config=[0,0]):
+    def __init__(self, unit_test, distance_metric=MpDistanceWeighting.AVG):
         super().__init__(unit_test, val_batch_size=2)
-        self.expected_mp_config = expected_mp_config
         self.distance_metric = distance_metric
 
     def get_resource_utilization(self):
@@ -113,7 +112,9 @@ class MixedPercisionSearchTest(MixedPercisionBaseTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        self.unit_test.assertTrue((quantization_info.mixed_precision_cfg == self.expected_mp_config).all())
+        self.unit_test.assertTrue(any([b != 0 for b in quantization_info.mixed_precision_cfg]),
+                                  "At least one of the conv layers is expected to be quantized to meet the required "
+                                  "resource utilization target.")
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)

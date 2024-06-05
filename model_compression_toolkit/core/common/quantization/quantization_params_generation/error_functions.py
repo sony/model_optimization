@@ -390,7 +390,7 @@ def _compute_hessian_for_hmse(node,
     """
     _request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
                                    granularity=HessianInfoGranularity.PER_ELEMENT,
-                                   target_node=node)
+                                   target_nodes=[node])
     _scores_for_node = hessian_info_service.fetch_hessian(_request,
                                                           required_size=num_hessian_samples)
 

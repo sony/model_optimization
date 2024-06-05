@@ -21,9 +21,9 @@ from model_compression_toolkit.core.common.quantization.quantize_graph_weights i
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
+from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF, ACT_HESSIAN_DEFAULT_BATCH_SIZE
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GPTQHessianScoresConfig
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import CoreConfig
@@ -68,7 +68,8 @@ if FOUND_TF:
                               loss: Callable = GPTQMultipleTensorsLoss(),
                               log_function: Callable = None,
                               use_hessian_based_weights: bool = True,
-                              regularization_factor: float = REG_DEFAULT) -> GradientPTQConfig:
+                              regularization_factor: float = REG_DEFAULT,
+                              hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE) -> GradientPTQConfig:
         """
         Create a GradientPTQConfigV2 instance for Keras models.
 
@@ -80,6 +81,7 @@ if FOUND_TF:
             log_function (Callable): Function to log information about the gptq process.
             use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
             regularization_factor (float): A floating point number that defines the regularization factor.
+            hessian_batch_size (int): Batch size for Hessian computation in Hessian-based weights GPTQ.
 
         returns:
             a GradientPTQConfigV2 object to use when fine-tuning the quantized model using gptq.
@@ -112,7 +114,8 @@ if FOUND_TF:
                                  train_bias=True,
                                  optimizer_bias=bias_optimizer,
                                  use_hessian_based_weights=use_hessian_based_weights,
-                                 regularization_factor=regularization_factor)
+                                 regularization_factor=regularization_factor,
+                                 hessian_weights_config=GPTQHessianScoresConfig(hessian_batch_size=hessian_batch_size))
 
 
     def keras_gradient_post_training_quantization(in_model: Model, representative_data_gen: Callable,

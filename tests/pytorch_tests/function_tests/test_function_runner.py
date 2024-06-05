@@ -27,6 +27,10 @@ from tests.pytorch_tests.function_tests.layer_fusing_test import LayerFusingTest
 from tests.pytorch_tests.function_tests.set_device_test import SetDeviceTest
 from tests.pytorch_tests.function_tests.set_layer_to_bitwidth_test import TestSetLayerToBitwidthWeights, \
     TestSetLayerToBitwidthActivation
+from tests.pytorch_tests.function_tests.test_hessian_service import FetchActivationHessianTest, FetchWeightsHessianTest, \
+    FetchHessianNotEnoughSamplesThrowTest, FetchHessianNotEnoughSamplesSmallBatchThrowTest, \
+    FetchComputeBatchLargerThanReprBatchTest, FetchHessianRequiredZeroTest, FetchHessianMultipleNodesTest, \
+    DoubleFetchHessianTest
 from tests.pytorch_tests.function_tests.test_sensitivity_eval_non_supported_output import \
     TestSensitivityEvalWithArgmaxNode
 from tests.pytorch_tests.function_tests.test_hessian_info_calculator import WeightsHessianTraceBasicModelTest, \
@@ -34,7 +38,7 @@ from tests.pytorch_tests.function_tests.test_hessian_info_calculator import Weig
     WeightsHessianTraceMultipleOutputsModelTest, WeightsHessianTraceReuseModelTest, \
     ActivationHessianTraceBasicModelTest, ActivationHessianTraceAdvanceModelTest, \
     ActivationHessianTraceMultipleOutputsModelTest, ActivationHessianTraceReuseModelTest, \
-    ActivationHessianOutputExceptionTest
+    ActivationHessianOutputExceptionTest, ActivationHessianTraceMultipleInputsModelTest
 
 
 class FunctionTestRunner(unittest.TestCase):
@@ -111,6 +115,7 @@ class FunctionTestRunner(unittest.TestCase):
         ActivationHessianTraceMultipleOutputsModelTest(self).run_test()
         ActivationHessianTraceReuseModelTest(self).run_test()
         ActivationHessianOutputExceptionTest(self).run_test()
+        ActivationHessianTraceMultipleInputsModelTest(self).run_test()
 
     def test_weights_hessian_trace(self):
         """
@@ -120,6 +125,19 @@ class FunctionTestRunner(unittest.TestCase):
         WeightsHessianTraceAdvanceModelTest(self).run_test()
         WeightsHessianTraceMultipleOutputsModelTest(self).run_test()
         WeightsHessianTraceReuseModelTest(self).run_test()
+
+    def test_hessian_service(self):
+        """
+        This test checks the Hessian service features with pytorch computation workflow.
+        """
+        FetchActivationHessianTest(self).run_test()
+        FetchWeightsHessianTest(self).run_test()
+        FetchHessianNotEnoughSamplesThrowTest(self).run_test()
+        FetchHessianNotEnoughSamplesSmallBatchThrowTest(self).run_test()
+        FetchComputeBatchLargerThanReprBatchTest(self).run_test()
+        FetchHessianRequiredZeroTest(self).run_test()
+        FetchHessianMultipleNodesTest(self).run_test()
+        DoubleFetchHessianTest(self).run_test()
 
     def test_layer_fusing(self):
         """
