@@ -21,6 +21,7 @@ from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 from xquant.common.model_folding_utils import ModelFoldingUtils
+from xquant.logger import LOGGER
 
 
 class TensorboardUtils:
@@ -30,7 +31,7 @@ class TensorboardUtils:
         self.fw_info = fw_info
         self.model_folding_utils = model_folding_utils
         self.tb_writer = TensorboardWriter(report_dir, fw_info)
-        logging.info(f"Please run: tensorboard --logdir {self.tb_writer.dir_path}")
+        LOGGER.info(f"Please run: tensorboard --logdir {self.tb_writer.dir_path}")
 
     def add_histograms_to_tensorboard(self, model, repr_dataset: Callable):
         graph = self.model_folding_utils.create_float_folded_graph(model, repr_dataset)

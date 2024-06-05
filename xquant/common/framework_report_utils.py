@@ -15,13 +15,13 @@
 
 import json
 import os
-from typing import Tuple, Any, Callable, Dict
+from typing import Any, Dict
 
 import logging
 
-from xquant import XQuantConfig
 from xquant.common.constants import REPORT_FILENAME
 from xquant.common.tensorboard_utils import TensorboardUtils
+from xquant.logger import LOGGER
 
 
 class FrameworkReportUtils:
@@ -39,29 +39,6 @@ class FrameworkReportUtils:
         self.dataset_utils = dataset_utils
         self.model_folding = model_folding
         self.tb_utils = tb_utils
-
-
-
-    def get_quant_graph_with_metrics(self,
-                                     quantized_model: Any,
-                                     collected_data: Dict[str, Any],
-                                     xquant_config: XQuantConfig,
-                                     repr_dataset: Callable):
-        """
-        Generate the quantized graph with associated metrics.
-
-        Args:
-            quantized_model (Any): The model after quantization.
-            collected_data (Dict[str, Any]): Data collected during quantization.
-            xquant_config (XQuantConfig): Configuration settings for explainable quantization.
-            repr_dataset (Callable): Representative dataset used during graph building.
-
-        Returns:
-            Any: A graph structure with metrics.
-        """
-        logging.critical(f"get_quant_graph_with_metrics is not implemented.")
-
-
 
     def create_report_directory(self, dir_path: str):
         """
@@ -92,7 +69,7 @@ class FrameworkReportUtils:
         """
         report_file_name = os.path.join(report_dir, REPORT_FILENAME)
         report_file_name = os.path.abspath(report_file_name)
-        logging.info(f"Dumping report data to: {report_file_name}")
+        LOGGER.info(f"Dumping report data to: {report_file_name}")
 
         with open(report_file_name, 'w') as f:
             json.dump(collected_data, f, indent=4)

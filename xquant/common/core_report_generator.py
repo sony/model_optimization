@@ -42,8 +42,6 @@ def core_report_generator(float_model: Any,
         Dict[str, Any]: A dictionary containing the collected metrics and report data.
     """
 
-    fw_report_utils.create_report_directory(dir_path=xquant_config.report_dir)
-
     # Collect histograms and add them to Tensorboard.
     fw_report_utils.tb_utils.add_histograms_to_tensorboard(model=float_model,
                                                            repr_dataset=repr_dataset)
