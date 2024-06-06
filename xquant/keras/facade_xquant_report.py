@@ -12,10 +12,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
-import logging
 
 from typing import Callable, Dict, Any
-
 
 from xquant.common.core_report_generator import core_report_generator
 from xquant import XQuantConfig
@@ -37,12 +35,12 @@ if FOUND_TF:
         Args:
             float_model (keras.Model): The original floating-point Keras model.
             quantized_model (keras.Model): The quantized Keras model.
-            repr_dataset (Callable): The representative dataset used for evaluation.
-            validation_dataset (Callable): The validation dataset used for evaluation.
-            xquant_config (XQuantConfig, optional): Configuration settings for explainable quantization.
+            repr_dataset (Callable): The representative dataset used during quantization for similarity metrics computation.
+            validation_dataset (Callable): The validation dataset used for evaluation for similarity metrics computation.
+            xquant_config (XQuantConfig): Configuration settings for explainable quantization.
 
         Returns:
-            Dict[str, Any]: A dictionary containing the collected metrics and report data.
+            Dict[str, Any]: A dictionary containing the collected similarity metrics and report data.
         """
         # Initialize the logger with the report directory.
         Logger.get_logger(log_dir=xquant_config.report_dir)
@@ -50,7 +48,7 @@ if FOUND_TF:
         # Initialize a utility class for handling Keras-specific reporting tasks.
         keras_report_utils = KerasReportUtils(xquant_config.report_dir)
 
-        # Collect data and metrics for the report.
+        # Create the report after collecting useful data like histograms and similarity metrics.
         _collected_data = core_report_generator(float_model=float_model,
                                                 quantized_model=quantized_model,
                                                 repr_dataset=repr_dataset,
@@ -62,5 +60,4 @@ if FOUND_TF:
 else:
     def xquant_report_keras_experimental(*args, **kwargs):
         Logger.get_logger().critical("Tensorflow must be installed to use xquant_report_keras_experimental. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
-
+                                     "The 'tensorflow' package is missing.")  # pragma: no cover

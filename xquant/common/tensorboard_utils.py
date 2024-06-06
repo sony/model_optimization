@@ -12,49 +12,107 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
-import logging
 
-from tqdm import tqdm
-from typing import Callable
+from model_compression_toolkit.core.common import Graph
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+
 
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
+from xquant import XQuantConfig
 from xquant.common.model_folding_utils import ModelFoldingUtils
 from xquant.logger import Logger
 
 
-class TensorboardUtils:
+from typing import Any, Dict, Callable
+from tqdm import tqdm
 
-    def __init__(self, report_dir: str, model_folding_utils: ModelFoldingUtils, fw_info, fw_impl):
+
+class TensorboardUtils:
+    """
+    Utility class for handling Tensorboard operations like adding graph to display and histograms on the float model.
+    """
+
+    def __init__(self,
+                 report_dir: str,
+                 model_folding_utils: ModelFoldingUtils,
+                 fw_info: FrameworkInfo,
+                 fw_impl: FrameworkImplementation):
+        """
+        Initialize the TensorboardUtils.
+
+        Args:
+            report_dir (str): Directory where Tensorboard logs will be stored.
+            model_folding_utils (ModelFoldingUtils): Utility for model folding operations.
+            fw_info (FrameworkInfo): Framework-specific information.
+            fw_impl (FrameworkImplementation): Framework-specific implementation.
+        """
         self.fw_impl = fw_impl
         self.fw_info = fw_info
         self.model_folding_utils = model_folding_utils
         self.tb_writer = TensorboardWriter(report_dir, fw_info)
         Logger.get_logger().info(f"Please run: tensorboard --logdir {self.tb_writer.dir_path}")
 
-    def add_histograms_to_tensorboard(self, model, repr_dataset: Callable):
+    def get_graph_for_tensorboard_display(self,
+                                          quantized_model: Any,
+                                          similarity_metrics: Dict[str, Any],
+                                          xquant_config: XQuantConfig,
+                                          repr_dataset: Callable) -> Graph:
+        """
+        Get the graph for Tensorboard display. The framework-specific implementations
+        (like KerasTensorboardUtils and PytorchTensorboardUtils) should implement this
+        as it differs between them when combining the similarity metrics into the graph.
+
+        Args:
+            quantized_model (Any): The quantized model.
+            similarity_metrics (Dict[str, Any]): Metrics for model similarity.
+            xquant_config (XQuantConfig): Quantization configuration.
+            repr_dataset (Callable): Representative dataset function.
+
+        Returns:
+            Graph: The generated graph for Tensorboard display.
+        """
+        Logger.get_logger().critical("This method should be implemented by the framework-specific TensorboardUtils.")
+
+    def add_histograms_to_tensorboard(self,
+                                      model: Any,
+                                      repr_dataset: Callable):
+        """
+        Add histograms to Tensorboard after collecting them on the float folded model using
+        the representative dataset.
+
+        Args:
+            model (Any): The model for which to add histograms.
+            repr_dataset (Callable): The representative dataset to use during statistics collection.
+        """
         graph = self.model_folding_utils.create_float_folded_graph(model, repr_dataset)
         mi = ModelCollector(graph, self.fw_impl, self.fw_info)
-        for _data in tqdm(repr_dataset(), "Collecting Histograms"):
+        for _data in tqdm(repr_dataset(), desc="Collecting Histograms"):
             mi.infer(_data)
-        self.tb_writer.add_histograms(graph, "")
-    def get_graph_for_tensorboard_display(self,
-                                          quantized_model,
-                                          similarity_metrics,
-                                          xquant_config,
-                                          repr_dataset):
-        raise NotImplemented
+        self.tb_writer.add_histograms(graph, "")  # Do not use tag since this is the only graph that is added.
+
     def add_graph_to_tensorboard(self,
-                                 quantized_model,
-                                 similarity_metrics,
-                                 xquant_config,
-                                 repr_dataset
-                                 ):
+                                 quantized_model: Any,
+                                 similarity_metrics: Dict[str, Any],
+                                 xquant_config: XQuantConfig,
+                                 repr_dataset: Callable):
+        """
+        Add a graph to Tensorboard. The graph represents the quantized graph
+        with the similarity metrics that were measured in different nodes.
+
+        Args:
+            quantized_model (Any): The quantized model.
+            similarity_metrics (Dict[str, Any]): The similarity metrics that were collected.
+            xquant_config (XQuantConfig): XQuant configuration.
+            repr_dataset (Callable): Representative dataset to use (if needed, like in pytorch case).
+        """
         # Generate the quantized graph with metrics.
         tb_graph = self.get_graph_for_tensorboard_display(quantized_model=quantized_model,
                                                           similarity_metrics=similarity_metrics,
                                                           xquant_config=xquant_config,
                                                           repr_dataset=repr_dataset)
-        self.tb_writer.add_graph(tb_graph, "")
+
+        self.tb_writer.add_graph(tb_graph, "")  # Do not use tag since this is the only graph that is added.
 
 

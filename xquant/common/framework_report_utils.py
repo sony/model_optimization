@@ -15,24 +15,44 @@
 
 import json
 import os
+
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from typing import Any, Dict
 
 import logging
 
 from xquant.common.constants import REPORT_FILENAME
+from xquant.common.dataset_utils import DatasetUtils
+from xquant.common.model_folding_utils import ModelFoldingUtils
+from xquant.common.similarity_calculator import SimilarityCalculator
 from xquant.common.tensorboard_utils import TensorboardUtils
 from xquant.logger import Logger
 
 
 class FrameworkReportUtils:
+    """
+    Class with various utility components required for generating the report in a specific framework.
+    """
 
     def __init__(self,
-                 fw_info,
-                 fw_impl,
-                 similarity_calculator,
-                 dataset_utils,
-                 model_folding,
+                 fw_info: FrameworkInfo,
+                 fw_impl: FrameworkImplementation,
+                 similarity_calculator: SimilarityCalculator,
+                 dataset_utils: DatasetUtils,
+                 model_folding: ModelFoldingUtils,
                  tb_utils: TensorboardUtils):
+        """
+        Initializes the FrameworkReportUtils class with various utility components required for generating the report.
+
+        Args:
+            fw_info (FrameworkInfo): Information about the framework being used.
+            fw_impl (FrameworkImplementation): The implemented functions of the framework.
+            similarity_calculator (SimilarityCalculator): A utility for calculating similarity metrics.
+            dataset_utils (DatasetUtils): Utilities for handling datasets.
+            model_folding (ModelFoldingUtils): Utilities for model folding operations.
+            tb_utils (TensorboardUtils): Utilities for TensorBoard operations.
+        """
         self.fw_info = fw_info
         self.fw_impl = fw_impl
         self.similarity_calculator = similarity_calculator
@@ -47,8 +67,6 @@ class FrameworkReportUtils:
         Args:
             dir_path (str): The path to the directory to create.
 
-        Returns:
-            None
         """
         if not os.path.exists(dir_path):
             os.makedirs(dir_path, exist_ok=True)
@@ -58,14 +76,12 @@ class FrameworkReportUtils:
                             report_dir: str,
                             collected_data: Dict[str, Any]):
         """
-        Dump the collected data into a JSON report.
+        Dump the collected data (similarity, etc.) into a JSON file.
 
         Args:
             report_dir (str): Directory where the report will be saved.
-            collected_data (Dict[str, Any]): Data collected during quantization.
+            collected_data (Dict[str, Any]): Data collected during report generation.
 
-        Returns:
-            None
         """
         report_file_name = os.path.join(report_dir, REPORT_FILENAME)
         report_file_name = os.path.abspath(report_file_name)

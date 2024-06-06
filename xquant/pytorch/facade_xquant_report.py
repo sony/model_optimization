@@ -35,12 +35,12 @@ if FOUND_TORCH:
         Args:
             float_model (keras.Model): The original floating-point Pytorch model.
             quantized_model (keras.Model): The quantized Pytorch model.
-            repr_dataset (Callable): The representative dataset used for evaluation.
+            repr_dataset (Callable): The representative dataset used during quantization.
             validation_dataset (Callable): The validation dataset used for evaluation.
-            xquant_config (XQuantConfig, optional): Configuration settings for explainable quantization.
+            xquant_config (XQuantConfig): Configuration settings for explainable quantization.
 
         Returns:
-            Dict[str, Any]: A dictionary containing the collected metrics and report data.
+            Dict[str, Any]: A dictionary containing the collected similarity metrics and report data.
         """
         # Initialize the logger with the report directory.
         Logger.get_logger(log_dir=xquant_config.report_dir)
@@ -58,5 +58,5 @@ if FOUND_TORCH:
 
 else:
     def xquant_report_pytorch_experimental(*args, **kwargs):
-        Logger.critical("PyTorch must be installed to use 'xquant_report_pytorch_experimental'. "
-                        "The 'torch' package is missing.")  # pragma: no cover
+        Logger.get_logger().critical("PyTorch must be installed to use 'xquant_report_pytorch_experimental'. "
+                                     "The 'torch' package is missing.")  # pragma: no cover
