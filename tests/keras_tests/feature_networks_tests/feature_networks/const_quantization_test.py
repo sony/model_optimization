@@ -89,7 +89,8 @@ class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
 class AdvancedConstQuantizationTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test, input_shape=(32, 32, 3)):
-        super(AdvancedConstQuantizationTest, self).__init__(unit_test=unit_test, input_shape=input_shape)
+        super(AdvancedConstQuantizationTest, self).__init__(unit_test=unit_test, input_shape=input_shape,
+                                                            num_calibration_iter=32)
         self.const = np.random.random((130,))
 
     def get_ptq_facade(self):
