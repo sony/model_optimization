@@ -20,7 +20,7 @@ import numpy as np
 class PruningKerasFeatureTest(BaseKerasFeatureNetworkTest):
     def __init__(self,
                  unit_test,
-                 num_calibration_iter=1,
+                 num_calibration_iter=2,
                  val_batch_size=1,
                  num_of_inputs=1,
                  input_shape=(8, 8, 3)):

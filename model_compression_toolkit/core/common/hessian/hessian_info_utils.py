@@ -17,18 +17,19 @@ import numpy as np
 from model_compression_toolkit.constants import EPS
 
 
-def normalize_scores(hessian_approximations: List) -> np.ndarray:
+def normalize_scores(hessian_approximations: List) -> List[np.ndarray]:
     """
     Normalize Hessian information approximations by dividing the trace Hessian approximations value by the sum of all
     other values.
 
     Args:
-        hessian_approximations: Approximated average Hessian-based scores for each interest point.
+        hessian_approximations: Approximated Hessian-based scores for each image for each interest point.
 
     Returns:
             Normalized list of Hessian info approximations for each interest point.
     """
-    scores_vec = np.asarray(hessian_approximations)
+    scores_vec = np.asarray(hessian_approximations)  # Images x Nodes X Scores
+    norm_scores_per_image = scores_vec / (np.sum(scores_vec, axis=1, keepdims=True) + EPS)
 
-    return scores_vec / (np.sum(scores_vec) + EPS)
+    return [norm_scores_per_image[i] for i in range(norm_scores_per_image.shape[0])]
 

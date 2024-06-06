@@ -19,6 +19,7 @@ import tensorflow as tf
 
 import model_compression_toolkit as mct
 from model_compression_toolkit import DefaultDict
+from model_compression_toolkit.constants import GPTQ_HESSIAN_NUM_SAMPLES
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType, GradientPTQConfig, \
     GPTQHessianScoresConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
@@ -59,9 +60,10 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, quant_method=QuantizationMethod.SYMMETRIC, rounding_type=RoundingType.STE,
                  per_channel=True, input_shape=(1, 16, 16, 3),
                  hessian_weights=True, log_norm_weights=True, scaled_log_norm=False,
-                 quantization_parameter_learning=True):
+                 quantization_parameter_learning=True, num_calibration_iter=GPTQ_HESSIAN_NUM_SAMPLES):
         super().__init__(unit_test,
-                         input_shape=input_shape )
+                         input_shape=input_shape,
+                         num_calibration_iter=num_calibration_iter)
 
         self.quant_method = quant_method
         self.rounding_type = rounding_type
@@ -157,7 +159,7 @@ class GradientPTQNoTempLearningTest(GradientPTQBaseTest):
 class GradientPTQWeightsUpdateTest(GradientPTQBaseTest):
 
     def get_gptq_config(self):
-        return GradientPTQConfig(50, optimizer=tf.keras.optimizers.Adam(
+        return GradientPTQConfig(20, optimizer=tf.keras.optimizers.Adam(
             learning_rate=1e-2), optimizer_rest=tf.keras.optimizers.Adam(
             learning_rate=1e-1), loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
                                  gptq_quantizer_params_override=self.override_params)

@@ -17,6 +17,7 @@ from typing import List
 
 from torch import autograd
 from tqdm import tqdm
+import numpy as np
 
 from model_compression_toolkit.constants import MIN_HESSIAN_ITER, HESSIAN_COMP_TOLERANCE, HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
@@ -27,6 +28,7 @@ from model_compression_toolkit.core.pytorch.hessian.trace_hessian_calculator_pyt
 from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
 from model_compression_toolkit.logger import Logger
 import torch
+
 
 class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
     """
@@ -53,20 +55,22 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                                                                       trace_hessian_request=trace_hessian_request,
                                                                       num_iterations_for_approximation=num_iterations_for_approximation)
 
-    def compute(self) -> List[float]:
+    def compute(self) -> List[np.ndarray]:
         """
-        Compute the approximation of the trace of the Hessian w.r.t a node's activations.
+        Compute the approximation of the trace of the Hessian w.r.t the requested target nodes' activations.
 
         Returns:
-            List[float]: Approximated trace of the Hessian for an interest point.
+            List[np.ndarray]: Approximated trace of the Hessian for the requested nodes.
         """
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
 
             model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
 
-            if self.hessian_request.target_node in model_output_nodes:
-                Logger.critical("Activation Hessian approximation cannot be computed for model outputs. Exclude output nodes from Hessian request targets.")
-            grad_model_outputs = [self.hessian_request.target_node] + model_output_nodes
+            if len([n for n in self.hessian_request.target_nodes if n in model_output_nodes]) > 0:
+                Logger.critical("Activation Hessian approximation cannot be computed for model outputs. "
+                                "Exclude output nodes from Hessian request targets.")
+
+            grad_model_outputs = self.hessian_request.target_nodes + model_output_nodes
             model, _ = FloatPyTorchModelBuilder(graph=self.graph, append2output=grad_model_outputs).build_model()
             model.eval()
 
@@ -78,69 +82,71 @@ class ActivationTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
 
             outputs = model(*self.input_images)
 
-            if len(outputs) != len(grad_model_outputs):
-                Logger.critical(f"Mismatch in expected and actual model outputs for activation Hessian approximation. Expected {len(grad_model_outputs)} outputs, received {len(outputs)}.")
+            if len(outputs) != len(grad_model_outputs):  # pragma: no cover
+                Logger.critical(f"Mismatch in expected and actual model outputs for activation Hessian approximation. "
+                                f"Expected {len(grad_model_outputs)} outputs, received {len(outputs)}.")
 
-            # Extracting the intermediate activation tensors and the model real output
-            # TODO: we are assuming that the hessian request is for a single node.
-            #  When we extend it to multiple nodes in the same request, then we should modify this part to take
-            #  the first "num_target_nodes" outputs from the output list.
-            #  We also assume that the target nodes are not part of the model output nodes, if this assumption changed,
-            #  then the code should be modified accordingly.
-            target_activation_tensors = [outputs[0]]
-            output_tensors = outputs[1:]
+            # Extracting the intermediate activation tensors and the model real output.
+            # Note that we do not allow computing Hessian for output nodes, so there shouldn't be an overlap.
+            num_target_nodes = len(self.hessian_request.target_nodes)
+            # Extract activation tensors of nodes for which we want to compute Hessian
+            target_activation_tensors = outputs[:num_target_nodes]
+            # Extract the model outputs
+            output_tensors = outputs[num_target_nodes:]
             device = output_tensors[0].device
 
             # Concat outputs
             # First, we need to unfold all outputs that are given as list, to extract the actual output tensors
             output = self.concat_tensors(output_tensors)
 
-            ipts_hessian_trace_approx = []
-            for ipt_tensor in tqdm(target_activation_tensors):  # Per Interest point activation tensor
-                trace_hv = []
-                for j in range(self.num_iterations_for_approximation):  # Approximation iterations
-                    # Getting a random vector with normal distribution
-                    v = torch.randn(output.shape, device=device)
-                    f_v = torch.sum(v * output)
-
+            ipts_hessian_trace_approx = [torch.tensor([0.0],
+                                                      requires_grad=True,
+                                                      device=device)
+                                         for _ in range(len(target_activation_tensors))]
+            prev_mean_results = None
+            for j in tqdm(range(self.num_iterations_for_approximation), "Hessian random iterations"):  # Approximation iterations
+                # Getting a random vector with normal distribution
+                v = torch.randn(output.shape, device=device)
+                f_v = torch.sum(v * output)
+                for i, ipt_tensor in enumerate(target_activation_tensors):  # Per Interest point activation tensor
                     # Computing the hessian trace approximation by getting the gradient of (output * v)
                     hess_v = autograd.grad(outputs=f_v,
-                                          inputs=ipt_tensor,
-                                          retain_graph=True,
-                                          allow_unused=True)[0]
+                                           inputs=ipt_tensor,
+                                           retain_graph=True,
+                                           allow_unused=True)[0]
+
                     if hess_v is None:
                         # In case we have an output node, which is an interest point, but it is not differentiable,
-                        # we still want to set some weight for it. For this, we need to add this dummy tensor to the ipt
-                        # Hessian traces list.
-                        trace_hv.append(torch.tensor([0.0],
-                                                     requires_grad=True,
-                                                     device=device))
-                        break
-                    hessian_trace_approx = torch.sum(torch.pow(hess_v, 2.0))
+                        # we consider its Hessian to be the initial value 0.
+                        continue  # pragma: no cover
 
-                    # If the change to the mean Hessian approximation is insignificant we stop the calculation
-                    if j > MIN_HESSIAN_ITER:
-                        new_mean = torch.mean(torch.stack([hessian_trace_approx, *trace_hv]))
-                        delta = new_mean - torch.mean(torch.stack(trace_hv))
-                        if torch.abs(delta) / (torch.abs(new_mean) + 1e-6) < HESSIAN_COMP_TOLERANCE:
-                            trace_hv.append(hessian_trace_approx)
+                    # Mean over all dims but the batch (CXHXW for conv)
+                    hessian_trace_approx = torch.sum(hess_v ** 2.0, dim=tuple(d for d in range(1, len(hess_v.shape))))
+
+                    # Update node Hessian approximation mean over random iterations
+                    ipts_hessian_trace_approx[i] = (j * ipts_hessian_trace_approx[i] + hessian_trace_approx) / (j + 1)
+
+                # If the change to the maximal mean Hessian approximation is insignificant we stop the calculation
+                if j > MIN_HESSIAN_ITER:
+                    if prev_mean_results is not None:
+                        new_mean_res = torch.mean(torch.stack(ipts_hessian_trace_approx), dim=1)
+                        relative_delta_per_node = (torch.abs(new_mean_res - prev_mean_results) /
+                                                   (torch.abs(new_mean_res) + 1e-6))
+                        max_delta = torch.max(relative_delta_per_node)
+                        if max_delta < HESSIAN_COMP_TOLERANCE:
                             break
+                prev_mean_results = torch.mean(torch.stack(ipts_hessian_trace_approx), dim=1)
 
-                    trace_hv.append(hessian_trace_approx)
+            # Convert results to list of numpy arrays
+            hessian_results = [torch_tensor_to_numpy(h) for h in ipts_hessian_trace_approx]
+            # Extend the Hessian tensors shape to align with expected return type
+            # TODO: currently, only per-tensor Hessian is available for activation.
+            #  Once implementing per-channel or per-element, this alignment needs to be verified and handled separately.
+            hessian_results = [h[..., np.newaxis] for h in hessian_results]
 
-                ipts_hessian_trace_approx.append(torch.mean(torch.stack(trace_hv)))  # Get averaged Hessian trace approximation
+            return hessian_results
 
-            # If a node has multiple outputs, it means that multiple approximations were computed
-            # (one per output since granularity is per-tensor). In this case we average the approximations.
-            if len(ipts_hessian_trace_approx) > 1:
-                # Stack tensors and compute the average
-                ipts_hessian_trace_approx = [torch.stack(ipts_hessian_trace_approx).mean()]
-
-            ipts_hessian_trace_approx = torch_tensor_to_numpy(torch.Tensor(
-                ipts_hessian_trace_approx))  # Just to get one tensor instead of list of tensors with single element
-
-            return ipts_hessian_trace_approx.tolist()
-
-        else:
-            Logger.critical(f"PyTorch activation Hessian's trace approximation does not support {self.hessian_request.granularity} granularity.")
+        else:  # pragma: no cover
+            Logger.critical(f"PyTorch activation Hessian's trace approximation does not support "
+                            f"{self.hessian_request.granularity} granularity.")
 

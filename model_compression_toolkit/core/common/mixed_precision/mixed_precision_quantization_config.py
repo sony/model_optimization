@@ -15,6 +15,7 @@
 
 from typing import List, Callable
 
+from model_compression_toolkit.constants import MP_DEFAULT_NUM_SAMPLES, ACT_HESSIAN_DEFAULT_BATCH_SIZE
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 
 
@@ -23,13 +24,14 @@ class MixedPrecisionQuantizationConfig:
     def __init__(self,
                  compute_distance_fn: Callable = None,
                  distance_weighting_method: MpDistanceWeighting = MpDistanceWeighting.AVG,
-                 num_of_images: int = 32,
+                 num_of_images: int = MP_DEFAULT_NUM_SAMPLES,
                  configuration_overwrite: List[int] = None,
                  num_interest_points_factor: float = 1.0,
                  use_hessian_based_scores: bool = False,
                  norm_scores: bool = True,
                  refine_mp_solution: bool = True,
-                 metric_normalization_threshold: float = 1e10):
+                 metric_normalization_threshold: float = 1e10,
+                 hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE):
         """
         Class with mixed precision parameters to quantize the input model.
 
@@ -43,6 +45,7 @@ class MixedPrecisionQuantizationConfig:
             norm_scores (bool): Whether to normalize the returned scores for the weighted distance metric (to get values between 0 and 1).
             refine_mp_solution (bool): Whether to try to improve the final mixed-precision configuration using a greedy algorithm that searches layers to increase their bit-width, or not.
             metric_normalization_threshold (float): A threshold for checking the mixed precision distance metric values, In case of values larger than this threshold, the metric will be scaled to prevent numerical issues.
+            hessian_batch_size (int): The Hessian computation batch size. used only if using mixed precision with Hessian-based objective.
 
         """
 
@@ -60,6 +63,7 @@ class MixedPrecisionQuantizationConfig:
 
         self.use_hessian_based_scores = use_hessian_based_scores
         self.norm_scores = norm_scores
+        self.hessian_batch_size = hessian_batch_size
 
         self.metric_normalization_threshold = metric_normalization_threshold
 

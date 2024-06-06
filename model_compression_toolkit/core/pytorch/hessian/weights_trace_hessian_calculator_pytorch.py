@@ -47,14 +47,19 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             trace_hessian_request: Configuration request for which to compute the trace Hessian approximation.
             num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
         """
+
+        if len(trace_hessian_request.target_nodes) > 1:  # pragma: no cover
+            Logger.critical(f"Weights Hessian approximation is currently supported only for a single target node,"
+                            f" but the provided request contains the following target nodes: "
+                            f"{trace_hessian_request.target_nodes}.")
+
         super(WeightsTraceHessianCalculatorPytorch, self).__init__(graph=graph,
                                                                    input_images=input_images,
                                                                    fw_impl=fw_impl,
                                                                    trace_hessian_request=trace_hessian_request,
                                                                    num_iterations_for_approximation=num_iterations_for_approximation)
 
-
-    def compute(self) -> np.ndarray:
+    def compute(self) -> List[np.ndarray]:
         """
         Compute the Hessian-based scores w.r.t target node's weights.
         The computed scores are returned in a numpy array. The shape of the result differs
@@ -65,27 +70,32 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
         HessianInfoGranularity.PER_ELEMENT a shape of (2, 3, 3, 3).
 
         Returns:
-            The computed scores as numpy ndarray for target node's weights.
+            The computed scores as a list of numpy ndarray for target node's weights.
+            The function returns a list for compatibility reasons.
         """
 
-        # Check if the target node's layer type is supported
-        if not DEFAULT_PYTORCH_INFO.is_kernel_op(self.hessian_request.target_node.type):
-            Logger.critical(f"Hessian information with respect to weights is not supported for {self.hessian_request.target_node.type} layers.")  # pragma: no cover
+        # Check if the target node's layer type is supported.
+        # We assume that weights Hessian computation is done only for a single node at each request.
+        target_node = self.hessian_request.target_nodes[0]
+        if not DEFAULT_PYTORCH_INFO.is_kernel_op(target_node.type):
+            Logger.critical(f"Hessian information with respect to weights is not supported for "
+                            f"{target_node.type} layers.")  # pragma: no cover
 
         # Float model
         model, _ = FloatPyTorchModelBuilder(graph=self.graph).build_model()
 
         # Get the weight attributes for the target node type
-        weights_attributes = DEFAULT_PYTORCH_INFO.get_kernel_op_attributes(self.hessian_request.target_node.type)
+        weights_attributes = DEFAULT_PYTORCH_INFO.get_kernel_op_attributes(target_node.type)
 
         # Get the weight tensor for the target node
-        if len(weights_attributes) != 1:
-            Logger.critical(f"Currently, Hessian scores with respect to weights are supported only for nodes with a single weight attribute. {len(weights_attributes)} attributes found.")
+        if len(weights_attributes) != 1:  # pragma: no cover
+            Logger.critical(f"Currently, Hessian scores with respect to weights are supported only for nodes with a "
+                            f"single weight attribute. {len(weights_attributes)} attributes found.")
 
-        weights_tensor = getattr(getattr(model,self.hessian_request.target_node.name),weights_attributes[0])
+        weights_tensor = getattr(getattr(model, target_node.name), weights_attributes[0])
 
         # Get the output channel index
-        output_channel_axis, _ = DEFAULT_PYTORCH_INFO.kernel_channels_mapping.get(self.hessian_request.target_node.type)
+        output_channel_axis, _ = DEFAULT_PYTORCH_INFO.kernel_channels_mapping.get(target_node.type)
         shape_channel_axis = [i for i in range(len(weights_tensor.shape))]
         if self.hessian_request.granularity == HessianInfoGranularity.PER_OUTPUT_CHANNEL:
             shape_channel_axis.remove(output_channel_axis)
@@ -128,5 +138,9 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
             final_approx = final_approx.reshape(1)
 
-        return final_approx.detach().cpu().numpy()
+        # Add a batch axis to the Hessian approximation tensor (to align with the expected returned shape).
+        # We assume per-image computation, so the batch axis size is 1.
+        final_approx = final_approx[np.newaxis, ...]
+
+        return [final_approx.detach().cpu().numpy()]
 

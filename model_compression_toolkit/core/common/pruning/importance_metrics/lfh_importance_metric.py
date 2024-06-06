@@ -121,7 +121,7 @@ class LFHImportanceMetric(BaseImportanceMetric):
 
         # Initialize HessianInfoService for score computation.
         hessian_info_service = HessianInfoService(graph=self.float_graph,
-                                                  representative_dataset=self.representative_data_gen,
+                                                  representative_dataset_gen=self.representative_data_gen,
                                                   fw_impl=self.fw_impl)
 
         # Fetch and process Hessian scores for output channels of entry nodes.
@@ -129,13 +129,13 @@ class LFHImportanceMetric(BaseImportanceMetric):
         for node in entry_nodes:
             _request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
                                            granularity=HessianInfoGranularity.PER_OUTPUT_CHANNEL,
-                                           target_node=node)
+                                           target_nodes=[node])
             _scores_for_node = hessian_info_service.fetch_hessian(_request,
                                                                   required_size=self.pruning_config.num_score_approximations)
             nodes_scores.append(_scores_for_node)
 
         # Average and map scores to nodes.
-        self._entry_node_to_hessian_score = {node: np.mean(scores, axis=0) for node, scores in zip(entry_nodes, nodes_scores)}
+        self._entry_node_to_hessian_score = {node: np.mean(scores[0], axis=0) for node, scores in zip(entry_nodes, nodes_scores)}
 
         self._entry_node_count_oc_nparams = self._count_oc_nparams(entry_nodes=entry_nodes)
         _entry_node_l2_oc_norm = self._get_squaredl2norm(entry_nodes=entry_nodes)
