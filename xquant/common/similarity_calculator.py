@@ -75,9 +75,9 @@ class SimilarityCalculator:
                 if candidate_float_layer_name not in float_name2quant_name:
                     float_name2quant_name[candidate_float_layer_name] = quant_point
                 else:
-                    logging.critical(f"Duplicate mapping found for layer: {candidate_float_layer_name}")
+                    Logger.get_logger().critical(f"Duplicate mapping found for layer: {candidate_float_layer_name}")
             else:
-                logging.warning(f"Skipping point {quant_point}")
+                Logger.get_logger().warning(f"Skipping point {quant_point}")
 
         return float_name2quant_name
 

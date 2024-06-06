@@ -21,7 +21,7 @@ import logging
 
 from xquant.common.constants import REPORT_FILENAME
 from xquant.common.tensorboard_utils import TensorboardUtils
-from xquant.logger import LOGGER
+from xquant.logger import Logger
 
 
 class FrameworkReportUtils:
@@ -52,7 +52,7 @@ class FrameworkReportUtils:
         """
         if not os.path.exists(dir_path):
             os.makedirs(dir_path, exist_ok=True)
-            logging.info(f"Directory created at: {dir_path}")
+            Logger.get_logger().info(f"Directory created at: {dir_path}")
 
     def dump_report_to_json(self,
                             report_dir: str,
@@ -69,7 +69,7 @@ class FrameworkReportUtils:
         """
         report_file_name = os.path.join(report_dir, REPORT_FILENAME)
         report_file_name = os.path.abspath(report_file_name)
-        LOGGER.info(f"Dumping report data to: {report_file_name}")
+        Logger.get_logger().info(f"Dumping report data to: {report_file_name}")
 
         with open(report_file_name, 'w') as f:
             json.dump(collected_data, f, indent=4)

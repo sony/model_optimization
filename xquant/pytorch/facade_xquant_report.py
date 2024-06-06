@@ -18,6 +18,7 @@ from typing import Callable
 from xquant.common.core_report_generator import core_report_generator
 from xquant import XQuantConfig
 from xquant.common.constants import FOUND_TORCH
+from xquant.logger import Logger
 
 if FOUND_TORCH:
     from xquant.pytorch.pytorch_report_utils import PytorchReportUtils
@@ -41,8 +42,11 @@ if FOUND_TORCH:
         Returns:
             Dict[str, Any]: A dictionary containing the collected metrics and report data.
         """
+        # Initialize the logger with the report directory.
+        Logger.get_logger(log_dir=xquant_config.report_dir)
 
         pytorch_report_utils = PytorchReportUtils(xquant_config.report_dir)
+
         _collected_data = core_report_generator(float_model=float_model,
                                                 quantized_model=quantized_model,
                                                 repr_dataset=repr_dataset,

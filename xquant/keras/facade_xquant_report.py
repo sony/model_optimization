@@ -20,6 +20,7 @@ from typing import Callable, Dict, Any
 from xquant.common.core_report_generator import core_report_generator
 from xquant import XQuantConfig
 from xquant.common.constants import FOUND_TF
+from xquant.logger import Logger
 
 if FOUND_TF:
     import keras
@@ -43,6 +44,8 @@ if FOUND_TF:
         Returns:
             Dict[str, Any]: A dictionary containing the collected metrics and report data.
         """
+        # Initialize the logger with the report directory.
+        Logger.get_logger(log_dir=xquant_config.report_dir)
 
         # Initialize a utility class for handling Keras-specific reporting tasks.
         keras_report_utils = KerasReportUtils(xquant_config.report_dir)
@@ -58,6 +61,6 @@ if FOUND_TF:
         return _collected_data
 else:
     def xquant_report_keras_experimental(*args, **kwargs):
-        logging.critical("Tensorflow must be installed to use xquant_report_keras_experimental. "
+        Logger.get_logger().critical("Tensorflow must be installed to use xquant_report_keras_experimental. "
                         "The 'tensorflow' package is missing.")  # pragma: no cover
 

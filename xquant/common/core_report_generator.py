@@ -19,6 +19,7 @@ from xquant import XQuantConfig
 from xquant.common.constants import OUTPUT_METRICS_REPR, OUTPUT_METRICS_VAL, INTERMEDIATE_METRICS_REPR, \
     INTERMEDIATE_METRICS_VAL
 from xquant.common.framework_report_utils import FrameworkReportUtils
+from xquant.logger import Logger
 
 
 def core_report_generator(float_model: Any,
