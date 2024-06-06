@@ -35,9 +35,9 @@ This test checks the Mixed Precision feature.
 """
 
 
-class MixedPercisionBaseTest(BasePytorchTest):
-    def __init__(self, unit_test):
-        super().__init__(unit_test)
+class MixedPrecisionBaseTest(BasePytorchTest):
+    def __init__(self, unit_test, num_calibration_iter=1):
+        super().__init__(unit_test, num_calibration_iter=num_calibration_iter)
 
     def get_tpc(self):
         return get_pytorch_test_tpc_dict(tp_model=get_tp_model(),
@@ -75,7 +75,7 @@ class MixedPercisionBaseTest(BasePytorchTest):
             self.unit_test.assertFalse((q_weights == float_weights).all())
 
 
-class MixedPercisionSearch8Bit(MixedPercisionBaseTest):
+class MixedPrecisionSearch8Bit(MixedPrecisionBaseTest):
     def __init__(self, unit_test, distance_metric=MpDistanceWeighting.AVG):
         super().__init__(unit_test)
 
@@ -97,7 +97,33 @@ class MixedPercisionSearch8Bit(MixedPercisionBaseTest):
         self.compare_results(quantization_info, quantized_models, float_model, 0)
 
 
-class MixedPercisionSearchPartWeightsLayers(MixedPercisionBaseTest):
+class MixedPrecisionWithHessianScores(MixedPrecisionBaseTest):
+    def __init__(self, unit_test, distance_metric=MpDistanceWeighting.AVG):
+        super().__init__(unit_test, num_calibration_iter=10)
+
+        self.distance_metric = distance_metric
+
+    def generate_inputs(self, input_shapes):
+        return [np.random.random(in_shape) for in_shape in input_shapes]
+
+    def get_resource_utilization(self):
+        return ResourceUtilization(380)
+
+    def get_core_configs(self):
+        qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
+                                         relu_bound_to_power_of_2=False, weights_bias_correction=True,
+                                         input_scaling=False, activation_channel_equalization=False)
+        mpc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=10,
+                                                        distance_weighting_method=self.distance_metric,
+                                                        use_hessian_based_scores=True)
+
+        return {"mixed_precision_model": mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)}
+
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        self.compare_results(quantization_info, quantized_models, float_model, 0)
+
+
+class MixedPrecisionSearchPartWeightsLayers(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -175,7 +201,7 @@ class MixedPercisionSearchPartWeightsLayers(MixedPercisionBaseTest):
             self.unit_test.assertTrue(
                 np.unique(q_weights[i, :]).flatten().shape[0] <= 4)
 
-class MixedPercisionSearch2Bit(MixedPercisionBaseTest):
+class MixedPrecisionSearch2Bit(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -186,7 +212,7 @@ class MixedPercisionSearch2Bit(MixedPercisionBaseTest):
         self.compare_results(quantization_info, quantized_models, float_model, 2)
 
 
-class MixedPercisionSearch4Bit(MixedPercisionBaseTest):
+class MixedPrecisionSearch4Bit(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -197,7 +223,7 @@ class MixedPercisionSearch4Bit(MixedPercisionBaseTest):
         self.compare_results(quantization_info, quantized_models, float_model, 1)
 
 
-class MixedPercisionActivationDisabledTest(MixedPercisionBaseTest):
+class MixedPrecisionActivationDisabledTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -218,7 +244,7 @@ class MixedPercisionActivationDisabledTest(MixedPercisionBaseTest):
         self.compare_results(quantization_info, quantized_models, float_model, 0)
 
 
-class MixedPercisionSearchLastLayerDistance(MixedPercisionBaseTest):
+class MixedPrecisionSearchLastLayerDistance(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 

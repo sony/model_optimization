@@ -37,9 +37,9 @@ layers = keras.layers
 tp = mct.target_platform
 
 
-class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test, val_batch_size=1):
-        super().__init__(unit_test, val_batch_size=val_batch_size)
+class MixedPrecisionBaseTest(BaseKerasFeatureNetworkTest):
+    def __init__(self, unit_test, val_batch_size=1, num_calibration_iter=1):
+        super().__init__(unit_test, val_batch_size=val_batch_size, num_calibration_iter=num_calibration_iter)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
@@ -67,7 +67,7 @@ class MixedPercisionBaseTest(BaseKerasFeatureNetworkTest):
         raise NotImplementedError
 
 
-class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
+class MixedPrecisionManuallyConfiguredTest(MixedPrecisionBaseTest):
 
     def get_tpc(self):
         base_config, _, default_config = get_op_quantization_configs()
@@ -98,7 +98,7 @@ class MixedPercisionManuallyConfiguredTest(MixedPercisionBaseTest):
         self.unit_test.assertTrue(np.unique(conv_layers[1].weights[0]).flatten().shape[0] <= 8)
 
 
-class MixedPercisionSearchTest(MixedPercisionBaseTest):
+class MixedPrecisionSearchTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test, distance_metric=MpDistanceWeighting.AVG):
         super().__init__(unit_test, val_batch_size=2)
         self.distance_metric = distance_metric
@@ -130,7 +130,40 @@ class MixedPercisionSearchTest(MixedPercisionBaseTest):
             "final weights and activation memory sum should be equal to total memory.")
 
 
-class MixedPercisionSearchPartWeightsLayersTest(MixedPercisionBaseTest):
+class MixedPrecisionWithHessianScoresTest(MixedPrecisionBaseTest):
+    def __init__(self, unit_test, distance_metric=MpDistanceWeighting.AVG):
+        super().__init__(unit_test, val_batch_size=2, num_calibration_iter=10)
+        self.distance_metric = distance_metric
+
+    def get_resource_utilization(self):
+        return ResourceUtilization(17919)
+
+    def get_mixed_precision_config(self):
+        return mct.core.MixedPrecisionQuantizationConfig(num_of_images=10,
+                                                         distance_weighting_method=self.distance_metric,
+                                                         use_hessian_based_scores=True)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
+        self.unit_test.assertTrue(any([b != 0 for b in quantization_info.mixed_precision_cfg]),
+                                  "At least one of the conv layers is expected to be quantized to meet the required "
+                                  "resource utilization target.")
+        for i in range(32):  # quantized per channel
+            self.unit_test.assertTrue(
+                np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
+        for i in range(32):  # quantized per channel
+            self.unit_test.assertTrue(
+                np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
+
+        # Verify final ResourceUtilization
+        self.unit_test.assertTrue(
+            quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory ==
+            quantization_info.final_resource_utilization.total_memory,
+            "Running weights mixed-precision with unconstrained ResourceUtilization, "
+            "final weights and activation memory sum should be equal to total memory.")
+
+
+class MixedPrecisionSearchPartWeightsLayersTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, val_batch_size=2)
 
@@ -200,7 +233,7 @@ class MixedPercisionSearchPartWeightsLayersTest(MixedPercisionBaseTest):
                 np.unique(dense_layer.get_quantized_weights()['kernel'][:, i]).flatten().shape[0] <= 4)
 
 
-class MixedPercisionSearch4BitsAvgTest(MixedPercisionBaseTest):
+class MixedPrecisionSearch4BitsAvgTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -226,7 +259,7 @@ class MixedPercisionSearch4BitsAvgTest(MixedPercisionBaseTest):
             "final weights and activation memory sum should be equal to total memory.")
 
 
-class MixedPercisionCombinedNMSTest(MixedPercisionBaseTest):
+class MixedPrecisionCombinedNMSTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -266,7 +299,7 @@ class MixedPercisionCombinedNMSTest(MixedPercisionBaseTest):
             "final weights and activation memory sum should be equal to total memory.")
 
 
-class MixedPercisionSearch2BitsAvgTest(MixedPercisionBaseTest):
+class MixedPrecisionSearch2BitsAvgTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -292,7 +325,7 @@ class MixedPercisionSearch2BitsAvgTest(MixedPercisionBaseTest):
             "final weights and activation memory sum should be equal to total memory.")
 
 
-class MixedPercisionSearchActivationNonConfNodesTest(MixedPercisionBaseTest):
+class MixedPrecisionSearchActivationNonConfNodesTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
         # Total ResourceUtilization for weights in 2 bit avg and non-configurable activation in 8 bit
@@ -313,7 +346,7 @@ class MixedPercisionSearchActivationNonConfNodesTest(MixedPercisionBaseTest):
             "final weights and activation memory sum should be equal to total memory.")
 
 
-class MixedPercisionSearchTotalMemoryNonConfNodesTest(MixedPercisionBaseTest):
+class MixedPrecisionSearchTotalMemoryNonConfNodesTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
         # Total ResourceUtilization for weights in 2 bit avg and non-configurable activation in 8 bit
@@ -334,7 +367,7 @@ class MixedPercisionSearchTotalMemoryNonConfNodesTest(MixedPercisionBaseTest):
             "final weights and activation memory sum should be equal to total memory.")
 
 
-class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
+class MixedPrecisionDepthwiseTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -374,7 +407,7 @@ class MixedPercisionDepthwiseTest(MixedPercisionBaseTest):
         return mct.core.MixedPrecisionQuantizationConfig()
 
 
-class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
+class MixedPrecisionActivationDisabled(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -413,7 +446,7 @@ class MixedPrecisionActivationDisabled(MixedPercisionBaseTest):
                 np.unique(conv_layers[1].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
 
 
-class MixedPercisionSearchLastLayerDistanceTest(MixedPercisionBaseTest):
+class MixedPrecisionSearchLastLayerDistanceTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, val_batch_size=2)
 

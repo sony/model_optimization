@@ -123,15 +123,16 @@ from tests.keras_tests.feature_networks_tests.feature_networks.symmetric_thresho
     SymmetricThresholdSelectionActivationTest, SymmetricThresholdSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
-from tests.keras_tests.feature_networks_tests.feature_networks.test_kmeans_quantizer import KmeansQuantizerTest, \
-    KmeansQuantizerTestManyClasses, KmeansQuantizerNotPerChannelTest
+from tests.keras_tests.feature_networks_tests.feature_networks.test_kmeans_quantizer import \
+    KmeansQuantizerTestManyClasses
 from tests.keras_tests.feature_networks_tests.feature_networks.uniform_range_selection_activation_test import \
     UniformRangeSelectionActivationTest, UniformRangeSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
-    MixedPercisionSearchTest, MixedPercisionDepthwiseTest, \
-    MixedPercisionSearch4BitsAvgTest, MixedPercisionSearch2BitsAvgTest, MixedPrecisionActivationDisabled, \
-    MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationNonConfNodesTest, \
-    MixedPercisionSearchTotalMemoryNonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
+    MixedPrecisionSearch4BitsAvgTest, MixedPrecisionSearch2BitsAvgTest, MixedPrecisionActivationDisabled, \
+    MixedPrecisionWithHessianScoresTest, MixedPrecisionSearchTest, \
+    MixedPrecisionSearchPartWeightsLayersTest, MixedPrecisionDepthwiseTest, MixedPrecisionSearchLastLayerDistanceTest, \
+    MixedPrecisionSearchActivationNonConfNodesTest, MixedPrecisionSearchTotalMemoryNonConfNodesTest, \
+    MixedPrecisionCombinedNMSTest
 from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substitution_test import MatmulToDenseSubstitutionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.metadata_test import MetadataTest
 from tests.keras_tests.feature_networks_tests.feature_networks.tpc_test import TpcTest
@@ -207,17 +208,18 @@ class FeatureNetworkTest(unittest.TestCase):
         ReusedSeparableTest(self).run_test()
 
     def test_mixed_precision_search_2bits_avg(self):
-        MixedPercisionSearch2BitsAvgTest(self).run_test()
+        MixedPrecisionSearch2BitsAvgTest(self).run_test()
 
     def test_mixed_precision_search_4bits_avg(self):
-        MixedPercisionSearch4BitsAvgTest(self).run_test()
+        MixedPrecisionSearch4BitsAvgTest(self).run_test()
 
     def test_mixed_precision_search_4bits_avg_nms(self):
-        MixedPercisionCombinedNMSTest(self).run_test()
+        MixedPrecisionCombinedNMSTest(self).run_test()
 
     def test_mixed_precision_search(self):
-        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
-        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
+        MixedPrecisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
+        MixedPrecisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
+        MixedPrecisionWithHessianScoresTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
 
     def test_requires_mixed_recision(self):
         RequiresMixedPrecisionWeights(self, weights_memory=True).run_test()
@@ -227,22 +229,22 @@ class FeatureNetworkTest(unittest.TestCase):
         RequiresMixedPrecision(self).run_test()
 
     def test_mixed_precision_for_part_weights_layers(self):
-        MixedPercisionSearchPartWeightsLayersTest(self).run_test()
+        MixedPrecisionSearchPartWeightsLayersTest(self).run_test()
 
     def test_mixed_precision_activation_disabled(self):
         MixedPrecisionActivationDisabled(self).run_test()
 
     def test_mixed_precision_dw(self):
-        MixedPercisionDepthwiseTest(self).run_test()
+        MixedPrecisionDepthwiseTest(self).run_test()
 
     def test_mixed_precision_search_with_last_layer_distance(self):
-        MixedPercisionSearchLastLayerDistanceTest(self).run_test()
+        MixedPrecisionSearchLastLayerDistanceTest(self).run_test()
 
     def test_mixed_precision_search_activation_non_conf_nodes(self):
-        MixedPercisionSearchActivationNonConfNodesTest(self).run_test()
+        MixedPrecisionSearchActivationNonConfNodesTest(self).run_test()
 
     def test_mixed_precision_search_total_non_conf_nodes(self):
-        MixedPercisionSearchTotalMemoryNonConfNodesTest(self).run_test()
+        MixedPrecisionSearchTotalMemoryNonConfNodesTest(self).run_test()
 
     def test_mixed_precision_activation_search(self):
         MixedPrecisionActivationSearchTest(self).run_test()

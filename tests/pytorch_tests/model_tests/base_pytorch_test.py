@@ -35,9 +35,10 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                  unit_test,
                  float_reconstruction_error=1e-6,
                  convert_to_fx=True,
-                 val_batch_size=1):
+                 val_batch_size=1,
+                 num_calibration_iter=1):
 
-        super().__init__(unit_test, val_batch_size=val_batch_size)
+        super().__init__(unit_test, val_batch_size=val_batch_size, num_calibration_iter=num_calibration_iter)
         self.float_reconstruction_error = float_reconstruction_error
         self.convert_to_fx = convert_to_fx
 
