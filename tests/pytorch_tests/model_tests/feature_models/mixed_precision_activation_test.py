@@ -29,7 +29,7 @@ This test checks the Mixed Precision feature.
 """
 
 
-class MixedPercisionActivationBaseTest(BasePytorchTest):
+class MixedPrecisionActivationBaseTest(BasePytorchTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
@@ -65,7 +65,7 @@ class MixedPercisionActivationBaseTest(BasePytorchTest):
         self.unit_test.assertTrue(all(result_config == expected_config))
 
 
-class MixedPercisionActivationSearch8Bit(MixedPercisionActivationBaseTest):
+class MixedPrecisionActivationSearch8Bit(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
         self.expected_config = [1, 0, 0, 0]
@@ -77,7 +77,7 @@ class MixedPercisionActivationSearch8Bit(MixedPercisionActivationBaseTest):
         self.verify_config(quantization_info.mixed_precision_cfg, self.expected_config)
 
 
-class MixedPercisionActivationSearch2Bit(MixedPercisionActivationBaseTest):
+class MixedPrecisionActivationSearch2Bit(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
         self.expected_config = [2, 8, 2, 2]
@@ -89,7 +89,7 @@ class MixedPercisionActivationSearch2Bit(MixedPercisionActivationBaseTest):
         self.verify_config(quantization_info.mixed_precision_cfg, self.expected_config)
 
 
-class MixedPercisionActivationSearch4Bit(MixedPercisionActivationBaseTest):
+class MixedPrecisionActivationSearch4Bit(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
         self.expected_config = [1, 4, 1, 1]
@@ -101,7 +101,7 @@ class MixedPercisionActivationSearch4Bit(MixedPercisionActivationBaseTest):
         self.verify_config(quantization_info.mixed_precision_cfg, self.expected_config)
 
 
-class MixedPercisionActivationSearch4BitFunctional(MixedPercisionActivationBaseTest):
+class MixedPrecisionActivationSearch4BitFunctional(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
         self.expected_config = [1, 4, 4, 1]
@@ -116,7 +116,7 @@ class MixedPercisionActivationSearch4BitFunctional(MixedPercisionActivationBaseT
         self.verify_config(quantization_info.mixed_precision_cfg, self.expected_config)
 
 
-class MixedPercisionActivationMultipleInputs(MixedPercisionActivationBaseTest):
+class MixedPrecisionActivationMultipleInputs(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
         self.expected_config = [0 for _ in range(8)] + [1] # expected config for this test.

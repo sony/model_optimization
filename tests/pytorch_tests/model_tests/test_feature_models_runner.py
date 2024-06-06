@@ -46,8 +46,8 @@ from tests.pytorch_tests.model_tests.feature_models.residual_collapsing_test imp
     ResidualCollapsingTest2
 from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
-    MixedPercisionActivationSearch8Bit, MixedPercisionActivationSearch2Bit, MixedPercisionActivationSearch4Bit, \
-    MixedPercisionActivationSearch4BitFunctional, MixedPercisionActivationMultipleInputs
+    MixedPrecisionActivationSearch8Bit, MixedPrecisionActivationSearch2Bit, MixedPrecisionActivationSearch4Bit, \
+    MixedPrecisionActivationSearch4BitFunctional, MixedPrecisionActivationMultipleInputs
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.scalar_tensor_test import ScalarTensorTest
@@ -70,9 +70,9 @@ from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test impo
 from tests.pytorch_tests.model_tests.feature_models.layer_name_test import ReuseNameNetTest
 from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTWeightsQuantizerTest, \
     LUTActivationQuantizerTest
-from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import MixedPercisionSearch8Bit, \
-    MixedPercisionSearch2Bit, MixedPercisionSearch4Bit, MixedPercisionActivationDisabledTest, \
-    MixedPercisionSearchLastLayerDistance, MixedPercisionSearchPartWeightsLayers
+from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import MixedPrecisionSearch4Bit, \
+    MixedPrecisionActivationDisabledTest, MixedPrecisionSearchLastLayerDistance, MixedPrecisionWithHessianScores, \
+    MixedPrecisionSearch8Bit, MixedPrecisionSearchPartWeightsLayers, MixedPrecisionSearch2Bit
 from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multiple_tensors_test import \
     MultipleOutputsMultipleTensorsNetTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_outputs_node_test import MultipleOutputsNetTest
@@ -444,20 +444,26 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the Mixed Precision search.
         """
-        MixedPercisionSearch8Bit(self, distance_metric=MpDistanceWeighting.AVG).run_test()
-        MixedPercisionSearch8Bit(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
+        MixedPrecisionSearch8Bit(self, distance_metric=MpDistanceWeighting.AVG).run_test()
+        MixedPrecisionSearch8Bit(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
+
+    def test_mixed_precision_with_hessian_weights(self):
+        """
+        This test checks the Mixed Precision search with Hessian-based scores.
+        """
+        MixedPrecisionWithHessianScores(self, distance_metric=MpDistanceWeighting.AVG).run_test()
 
     def test_mixed_precision_part_weights_layers(self):
         """
         This test checks the Mixed Precision search.
         """
-        MixedPercisionSearchPartWeightsLayers(self).run_test()
+        MixedPrecisionSearchPartWeightsLayers(self).run_test()
 
     def test_mixed_precision_2bit(self):
         """
         This test checks the Mixed Precision search.
         """
-        MixedPercisionSearch2Bit(self).run_test()
+        MixedPrecisionSearch2Bit(self).run_test()
 
     def test_reshape_net(self):
         """
@@ -471,49 +477,49 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the Mixed Precision search.
         """
-        MixedPercisionSearch4Bit(self).run_test()
+        MixedPrecisionSearch4Bit(self).run_test()
 
     def test_mixed_precision_with_last_layer_distance(self):
         """
         This test checks the Mixed Precision search with last layer distance function.
         """
-        MixedPercisionSearchLastLayerDistance(self).run_test()
+        MixedPrecisionSearchLastLayerDistance(self).run_test()
 
     def test_mixed_precision_activation_disabled(self):
         """
         This test checks the Mixed Precision search.
         """
-        MixedPercisionActivationDisabledTest(self).run_test()
+        MixedPrecisionActivationDisabledTest(self).run_test()
 
     def test_mixed_precision_activation_8bit(self):
         """
         This test checks the activation Mixed Precision search.
         """
-        MixedPercisionActivationSearch8Bit(self).run_test()
+        MixedPrecisionActivationSearch8Bit(self).run_test()
 
     def test_mixed_precision_activation_2bit(self):
         """
         This test checks the activation Mixed Precision search.
         """
-        MixedPercisionActivationSearch2Bit(self).run_test()
+        MixedPrecisionActivationSearch2Bit(self).run_test()
 
     def test_mixed_precision_activation_4bit(self):
         """
         This test checks the activation Mixed Precision search.
         """
-        MixedPercisionActivationSearch4Bit(self).run_test()
+        MixedPrecisionActivationSearch4Bit(self).run_test()
 
     def test_mixed_precision_activation_4bit_functional(self):
         """
         This test checks the activation Mixed Precision search with functional node.
         """
-        MixedPercisionActivationSearch4BitFunctional(self).run_test()
+        MixedPrecisionActivationSearch4BitFunctional(self).run_test()
 
     def test_mixed_precision_multiple_inputs(self):
         """
         This test checks the activation Mixed Precision search with multiple inputs to model.
         """
-        MixedPercisionActivationMultipleInputs(self).run_test()
+        MixedPrecisionActivationMultipleInputs(self).run_test()
 
     def test_mixed_precision_bops_utilization(self):
         """

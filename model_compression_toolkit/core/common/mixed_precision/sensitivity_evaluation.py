@@ -392,7 +392,11 @@ class SensitivityEvaluation:
             mean_distance_per_layer = ipts_distances.mean(axis=1)
 
             # Use weights such that every layer's distance is weighted differently (possibly).
-            mean_ipts_distance = np.average(mean_distance_per_layer, weights=metrics_weights_fn(ipts_distances))
+            weight_scores = metrics_weights_fn(ipts_distances)
+            weight_scores = np.asarray(weight_scores) if isinstance(weight_scores, List) else weight_scores
+            weight_scores = weight_scores.flatten()
+
+            mean_ipts_distance = np.average(mean_distance_per_layer, weights=weight_scores)
 
         mean_output_distance = 0
         if len(out_pts_distances) > 0:
