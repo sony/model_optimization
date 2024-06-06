@@ -12,32 +12,38 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
-from typing import Any
+
+from typing import Any, Callable
 
 from xquant.common.dataset_utils import DatasetUtils
 import numpy as np
 
 import torch
 
+
 class PytorchDatasetUtils(DatasetUtils):
 
     @staticmethod
-    def wrapped_dataset(dataset: Any, is_validation: bool, device: str = None) -> Any:
+    def prepare_dataset(dataset: Callable, is_validation: bool, device: str = None):
         """
-                Wraps the dataset to ensure it is properly transferred to the device and processed on a given device.
+        Prepare the dataset so calling it will return only inputs for the model (like in the case
+        of the representative dataset). For example, when the validation dataset is used, the labels
+        should be removed.
 
-                Args:
-                    dataset: The dataset to be wrapped.
-                    is_validation: A flag indicating if this is a validation dataset.
-                    device: The device to transfer the data to.
+        Args:
+            dataset: Dataset to prepare.
+            is_validation: Whether it's validation dataset or not.
+            device: Device to transfer the data to.
 
-                Returns:
-                    A generator that yields processed data.
-                """
+        Returns:
+            Generator to use for retrieving the dataset inputs.
+
+        """
 
         def process_data(data: Any, is_validation: bool, device: str):
             """
-            Processes individual data samples to transfer them to the device.
+            Processes individual data samples: Transfer them to the device, convert to torch tensors if needed,
+            remove labels if this is a validation dataset.
 
             Args:
                 data: The data sample to process.
@@ -45,7 +51,7 @@ class PytorchDatasetUtils(DatasetUtils):
                 device: The device to transfer the data to.
 
             Returns:
-                A generator that yields the processed data.
+                The data as torch tensors on the desired device.
             """
 
             def transfer_to_device(_data):
@@ -66,4 +72,3 @@ class PytorchDatasetUtils(DatasetUtils):
 
         for x in dataset():
             yield process_data(x, is_validation, device)
-

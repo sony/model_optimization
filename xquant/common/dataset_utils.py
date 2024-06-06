@@ -12,12 +12,32 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
-from typing import Any
+
+from typing import Callable
+
+from xquant.logger import Logger
 
 
 class DatasetUtils:
+    """
+    Class with helpful methods for handling different kinds of datasets from the user.
+    """
 
     @staticmethod
-    def wrapped_dataset(dataset: Any, is_validation: bool, device: str = None) -> Any:
-        raise NotImplemented
+    def prepare_dataset(dataset: Callable, is_validation: bool, device: str = None):
+        """
+        Prepare the dataset so calling it will return only inputs for the model (like in the case
+        of the representative dataset). For example, when the validation dataset is used, the labels
+        should be removed.
+
+        Args:
+            dataset: Dataset to prepare.
+            is_validation: Whether it's validation dataset or not.
+            device: Device to transfer the data to.
+
+        Returns:
+            Generator to use for retrieving the dataset inputs.
+        """
+
+        Logger.get_logger().critical("This method should be implemented by the framework-specific DatasetUtils.")
 

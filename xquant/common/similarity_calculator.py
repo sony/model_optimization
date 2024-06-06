@@ -88,7 +88,7 @@ class SimilarityCalculator:
                                    custom_similarity_metrics: Dict[str, Callable] = None,
                                    is_validation: bool = False) -> Tuple[Dict[str, float], Dict[str, Dict[str, float]]]:
 
-        dataset = partial(self.dataset_utils.wrapped_dataset,
+        dataset = partial(self.dataset_utils.prepare_dataset,
                           dataset=dataset,
                           is_validation=is_validation,
                           device=self.device)
