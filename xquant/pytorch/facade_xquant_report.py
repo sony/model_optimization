@@ -33,8 +33,8 @@ if FOUND_TORCH:
         Generate an explainable quantization report for a quantized Pytorch model.
 
         Args:
-            float_model (keras.Model): The original floating-point Pytorch model.
-            quantized_model (keras.Model): The quantized Pytorch model.
+            float_model (torch.nn.Module): The original floating-point Pytorch model.
+            quantized_model (torch.nn.Module): The quantized Pytorch model.
             repr_dataset (Callable): The representative dataset used during quantization.
             validation_dataset (Callable): The validation dataset used for evaluation.
             xquant_config (XQuantConfig): Configuration settings for explainable quantization.

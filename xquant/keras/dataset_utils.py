@@ -19,6 +19,9 @@ from xquant.common.dataset_utils import DatasetUtils
 
 
 class KerasDatasetUtils(DatasetUtils):
+    """
+    Class with helpful methods for handling different kinds of Keras datasets from the user.
+    """
 
     @staticmethod
     def prepare_dataset(dataset: Any, is_validation: bool, device: str = None):

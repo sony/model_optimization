@@ -28,7 +28,7 @@ import numpy as np
 
 from xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, \
     INTERMEDIATE_SIMILARITY_METRICS_VAL
-from xquant.common.similarity_metrics import DEFAULT_SIMILARITY_METRICS_NAMES
+from xquant.common.similarity_functions import DEFAULT_SIMILARITY_METRICS_NAMES
 from xquant.keras.facade_xquant_report import xquant_report_keras_experimental
 
 

@@ -27,6 +27,9 @@ from xquant.pytorch.tensorboard_utils import PytorchTensorboardUtils
 
 
 class PytorchReportUtils(FrameworkReportUtils):
+    """
+    Class with various utility components required for generating the report for a Pytorch model.
+    """
     def __init__(self, report_dir: str):
         """
         Args:

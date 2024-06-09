@@ -28,7 +28,9 @@ from xquant.keras.tensorboard_utils import KerasTensorboardUtils
 
 
 class KerasReportUtils(FrameworkReportUtils):
-
+    """
+    Class with various utility components required for generating the report for a Keras model.
+    """
     def __init__(self, report_dir: str):
         """
         Args:

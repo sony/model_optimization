@@ -22,7 +22,9 @@ import torch
 
 
 class PytorchDatasetUtils(DatasetUtils):
-
+    """
+    Class with helpful methods for handling different kinds of Pytorch datasets from the user.
+    """
     @staticmethod
     def prepare_dataset(dataset: Callable, is_validation: bool, device: str = None):
         """

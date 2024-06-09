@@ -31,7 +31,8 @@ from tqdm import tqdm
 
 class TensorboardUtils:
     """
-    Utility class for handling Tensorboard operations like adding graph to display and histograms on the float model.
+    Utility class for handling Tensorboard operations like adding graph to display
+    and histograms on the float model.
     """
 
     def __init__(self,
@@ -57,7 +58,6 @@ class TensorboardUtils:
     def get_graph_for_tensorboard_display(self,
                                           quantized_model: Any,
                                           similarity_metrics: Dict[str, Any],
-                                          xquant_config: XQuantConfig,
                                           repr_dataset: Callable) -> Graph:
         """
         Get the graph for Tensorboard display. The framework-specific implementations
@@ -67,7 +67,6 @@ class TensorboardUtils:
         Args:
             quantized_model (Any): The quantized model.
             similarity_metrics (Dict[str, Any]): Metrics for model similarity.
-            xquant_config (XQuantConfig): Quantization configuration.
             repr_dataset (Callable): Representative dataset function.
 
         Returns:
@@ -95,7 +94,6 @@ class TensorboardUtils:
     def add_graph_to_tensorboard(self,
                                  quantized_model: Any,
                                  similarity_metrics: Dict[str, Any],
-                                 xquant_config: XQuantConfig,
                                  repr_dataset: Callable):
         """
         Add a graph to Tensorboard. The graph represents the quantized graph
@@ -104,13 +102,11 @@ class TensorboardUtils:
         Args:
             quantized_model (Any): The quantized model.
             similarity_metrics (Dict[str, Any]): The similarity metrics that were collected.
-            xquant_config (XQuantConfig): XQuant configuration.
             repr_dataset (Callable): Representative dataset to use (if needed, like in pytorch case).
         """
         # Generate the quantized graph with similarity metrics.
         tb_graph = self.get_graph_for_tensorboard_display(quantized_model=quantized_model,
                                                           similarity_metrics=similarity_metrics,
-                                                          xquant_config=xquant_config,
                                                           repr_dataset=repr_dataset)
 
         self.tb_writer.add_graph(tb_graph, "")  # Do not use tag since this is the only graph that is added.

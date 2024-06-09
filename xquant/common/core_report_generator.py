@@ -19,7 +19,6 @@ from xquant import XQuantConfig
 from xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, \
     INTERMEDIATE_SIMILARITY_METRICS_VAL
 from xquant.common.framework_report_utils import FrameworkReportUtils
-from xquant.logger import Logger
 
 
 def core_report_generator(float_model: Any,
@@ -37,8 +36,8 @@ def core_report_generator(float_model: Any,
     Args:
         float_model (Any): The original floating-point model.
         quantized_model (Any): The model after quantization.
-        repr_dataset (Callable): Representative dataset used during quantization.
-        validation_dataset (Callable): Validation dataset used for evaluation.
+        repr_dataset (Callable): Representative dataset used for similarity metrics computation.
+        validation_dataset (Callable): Validation dataset used for similarity metrics computation.
         fw_report_utils (FrameworkReportUtils): Utilities for generating framework-specific reports.
         xquant_config (XQuantConfig): Configuration settings for explainable quantization.
 
@@ -50,6 +49,7 @@ def core_report_generator(float_model: Any,
     fw_report_utils.tb_utils.add_histograms_to_tensorboard(model=float_model,
                                                            repr_dataset=repr_dataset)
 
+    # Compute similarity metrics on representative dataset and validation set.
     repr_similarity = fw_report_utils.similarity_calculator.compute_similarity_metrics(float_model=float_model,
                                                                                        quantized_model=quantized_model,
                                                                                        dataset=repr_dataset,
@@ -66,12 +66,12 @@ def core_report_generator(float_model: Any,
         INTERMEDIATE_SIMILARITY_METRICS_VAL: val_similarity[1]
     }
 
-    # Add the quantized graph to TensorBoard for visualization.
+    # Add a graph of the quantized model with the similarity metrics to TensorBoard for visualization.
     fw_report_utils.tb_utils.add_graph_to_tensorboard(quantized_model,
                                                       similarity_metrics,
-                                                      xquant_config,
                                                       repr_dataset)
 
+    # Save data to a json file.
     fw_report_utils.dump_report_to_json(report_dir=xquant_config.report_dir,
                                         collected_data=similarity_metrics)
 

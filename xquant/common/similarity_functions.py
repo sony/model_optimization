@@ -12,30 +12,67 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
-import logging
 
-from typing import Any, Dict, Callable, Tuple
+from typing import Any, Dict, Callable
 
 from xquant.common.constants import CS_SIMILARITY_METRIC_NAME, SQNR_SIMILARITY_METRIC_NAME, MSE_SIMILARITY_METRIC_NAME
 
 DEFAULT_SIMILARITY_METRICS_NAMES = [CS_SIMILARITY_METRIC_NAME, MSE_SIMILARITY_METRIC_NAME, SQNR_SIMILARITY_METRIC_NAME]
 
-
 class SimilarityFunctions:
+    """
+    A class that provides various static methods to compute similarity metrics between tensors.
+    """
 
     @staticmethod
     def compute_mse(f_pred: Any, q_pred: Any) -> float:
+        """
+        Compute the Mean Squared Error (MSE) between two tensors (usually, the float and quantized predictions).
+
+        Args:
+            f_pred (Any): Float model predictions.
+            q_pred (Any): Quantized model predictions.
+
+        Returns:
+            float: The computed MSE value.
+        """
         raise NotImplemented
 
     @staticmethod
     def compute_cs(f_pred: Any, q_pred: Any) -> float:
+        """
+        Compute the Cosine Similarity (CS) between two tensors (usually, the float and quantized predictions).
+
+        Args:
+            f_pred (Any): Float model predictions.
+            q_pred (Any): Quantized model predictions.
+
+        Returns:
+            float: The computed CS value.
+        """
         raise NotImplemented
 
     @staticmethod
     def compute_sqnr(f_pred: Any, q_pred: Any) -> float:
+        """
+        Compute the Signal-to-Quantization-Noise Ratio (SQNR) between two tensors (usually, the float and quantized predictions).
+
+        Args:
+            f_pred (Any): Float model predictions.
+            q_pred (Any): Quantized model predictions.
+
+        Returns:
+            float: The computed SQNR value.
+        """
         raise NotImplemented
 
     def get_default_similarity_metrics(self) -> Dict[str, Callable]:
+        """
+        Get the default similarity metrics to compute.
+
+        Returns:
+            Dict[str, Callable]: A dictionary where the keys are similarity metric names and the values are the corresponding functions.
+        """
         return {
             MSE_SIMILARITY_METRIC_NAME: self.compute_mse,
             CS_SIMILARITY_METRIC_NAME: self.compute_cs,

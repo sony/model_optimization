@@ -12,31 +12,90 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
+from typing import Any, Dict, List, Tuple
+
 from abc import ABC, abstractmethod
 
 from xquant.logger import Logger
 
 
 class ModelAnalyzerUtils(ABC):
+    """
+    This class provides abstract methods for analyzing a model, specifically for
+    extracting activations and comparing float and quantized models.
+    """
 
     @abstractmethod
-    def get_activations(self, float_model, quantized_model, float_name2quant_name, data):
+    def extract_model_activations(self,
+                                  float_model: Any,
+                                  quantized_model: Any,
+                                  float_name2quant_name: Dict[str, str],
+                                  data: List[Any]) -> Tuple[Dict[str, Any], Dict[str, Any], Any, Any]:
+        """
+        Extracts activations from both the float and quantized models.
+
+        Args:
+            float_model: The float model.
+            quantized_model: The quantized model.
+            float_name2quant_name: A mapping from float model layer names to quantized model layer
+            names.
+            data: Input data for which to compute activations.
+
+        Returns:
+                - Dictionary of activations for the float model.
+                - Dictionary of activations for the quantized model.
+                - Predictions from the float model.
+                - Predictions from the quantized model.
+        """
         Logger.get_logger().critical("This method should be implemented by the framework-specific ModelAnalyzerUtils.")
 
 
     @abstractmethod
-    def get_quant_compare_points(self, quantized_model):
+    def identify_quantized_compare_points(self, quantized_model: Any) -> List[str]:
+        """
+        Identifies the layers in the quantized model that are wrapped with the quantization wrapper.
+        These layers will serve as comparison points.
+
+        Notes:
+            This currently means that the quantized compare points are the linear layers that are wrapped,
+            but this may be changed in the future.
+
+        Args:
+            quantized_model: The quantized model from which to identify comparison points.
+
+        Returns:
+            List[str]: Names of the layers wrapped with the quantization wrapper.
+        """
         Logger.get_logger().critical("This method should be implemented by the framework-specific ModelAnalyzerUtils.")
 
 
     @abstractmethod
-    def get_float_candidate_layer(self,
-                                  quant_compare_point,
-                                  quantized_model):
+    def find_corresponding_float_layer(self,
+                                       quant_compare_point: List[str],
+                                       quantized_model: Any) -> str:
+        """
+        Finds the corresponding float model layer for a given quantized model layer.
+
+        Args:
+            quant_compare_point: The name of the quantized model layer.
+            quantized_model: The quantized model.
+
+        Returns:
+            str: The name of the corresponding layer in the float model.
+        """
         Logger.get_logger().critical("This method should be implemented by the framework-specific ModelAnalyzerUtils.")
 
     @abstractmethod
-    def get_float_layers_names(self, float_model):
+    def extract_float_layer_names(self, float_model: Any) -> List[str]:
+        """
+        Extracts the names of all layers in the float model.
+
+        Args:
+            float_model: The float model from which to extract layer names.
+
+        Returns:
+            List[str]: Names of all layers in the float model.
+        """
         Logger.get_logger().critical("This method should be implemented by the framework-specific ModelAnalyzerUtils.")
 
 
