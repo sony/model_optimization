@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+from tqdm import tqdm
 from typing import List
 import torch
 from torch import autograd
@@ -48,11 +48,6 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
         """
 
-        if len(trace_hessian_request.target_nodes) > 1:  # pragma: no cover
-            Logger.critical(f"Weights Hessian approximation is currently supported only for a single target node,"
-                            f" but the provided request contains the following target nodes: "
-                            f"{trace_hessian_request.target_nodes}.")
-
         super(WeightsTraceHessianCalculatorPytorch, self).__init__(graph=graph,
                                                                    input_images=input_images,
                                                                    fw_impl=fw_impl,
@@ -74,73 +69,89 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             The function returns a list for compatibility reasons.
         """
 
-        # Check if the target node's layer type is supported.
-        # We assume that weights Hessian computation is done only for a single node at each request.
-        target_node = self.hessian_request.target_nodes[0]
-        if not DEFAULT_PYTORCH_INFO.is_kernel_op(target_node.type):
-            Logger.critical(f"Hessian information with respect to weights is not supported for "
-                            f"{target_node.type} layers.")  # pragma: no cover
+        # Check if all target nodes layers types are supported.
+        if any([not DEFAULT_PYTORCH_INFO.is_kernel_op(target_node.type)
+                for target_node in self.hessian_request.target_nodes]):  # pragma: no cover
+            Logger.critical(f"Not all layers in the given Hessian request support Hessian information computation.")
 
         # Float model
         model, _ = FloatPyTorchModelBuilder(graph=self.graph).build_model()
-
-        # Get the weight attributes for the target node type
-        weights_attributes = DEFAULT_PYTORCH_INFO.get_kernel_op_attributes(target_node.type)
-
-        # Get the weight tensor for the target node
-        if len(weights_attributes) != 1:  # pragma: no cover
-            Logger.critical(f"Currently, Hessian scores with respect to weights are supported only for nodes with a "
-                            f"single weight attribute. {len(weights_attributes)} attributes found.")
-
-        weights_tensor = getattr(getattr(model, target_node.name), weights_attributes[0])
-
-        # Get the output channel index
-        output_channel_axis, _ = DEFAULT_PYTORCH_INFO.kernel_channels_mapping.get(target_node.type)
-        shape_channel_axis = [i for i in range(len(weights_tensor.shape))]
-        if self.hessian_request.granularity == HessianInfoGranularity.PER_OUTPUT_CHANNEL:
-            shape_channel_axis.remove(output_channel_axis)
-        elif self.hessian_request.granularity == HessianInfoGranularity.PER_ELEMENT:
-            shape_channel_axis = ()
 
         # Run model inference
         outputs = model(self.input_images)
         output_tensor = self.concat_tensors(outputs)
         device = output_tensor.device
 
-        approximation_per_iteration = []
-        for j in range(self.num_iterations_for_approximation):
+        ipts_hessian_trace_approx = [torch.tensor([0.0],
+                                                  requires_grad=True,
+                                                  device=device)
+                                     for _ in range(len(self.hessian_request.target_nodes))]
+
+        prev_mean_results = None
+        for j in tqdm(range(self.num_iterations_for_approximation)):
             # Getting a random vector with normal distribution and the same shape as the model output
             v = torch.randn_like(output_tensor, device=device)
             f_v = torch.mean(torch.sum(v * output_tensor, dim=-1))
-            # Compute gradients of f_v with respect to the weights
-            f_v_grad = autograd.grad(outputs=f_v,
-                                     inputs=weights_tensor,
-                                     retain_graph=True)[0]
+            for i, ipt_node in enumerate(self.hessian_request.target_nodes):  # Per Interest point weights tensor
 
-            # Trace{A^T * A} = sum of all squares values of A
-            approx = f_v_grad ** 2
-            if len(shape_channel_axis) > 0:
-                approx = torch.sum(approx, dim=shape_channel_axis)
+                # Check if the target node's layer type is supported.
+                if not DEFAULT_PYTORCH_INFO.is_kernel_op(ipt_node.type):
+                    Logger.critical(f"Hessian information with respect to weights is not supported for "
+                                    f"{ipt_node.type} layers.")  # pragma: no cover
 
+                # Get the weight attributes for the target node type
+                weights_attributes = DEFAULT_PYTORCH_INFO.get_kernel_op_attributes(ipt_node.type)
+
+                # Get the weight tensor for the target node
+                if len(weights_attributes) != 1:  # pragma: no cover
+                    Logger.critical(f"Currently, Hessian scores with respect to weights are supported only for nodes with a "
+                                    f"single weight attribute. {len(weights_attributes)} attributes found.")
+
+                weights_tensor = getattr(getattr(model, ipt_node.name), weights_attributes[0])
+
+                # Get the output channel index
+                output_channel_axis, _ = DEFAULT_PYTORCH_INFO.kernel_channels_mapping.get(ipt_node.type)
+                shape_channel_axis = [i for i in range(len(weights_tensor.shape))]
+                if self.hessian_request.granularity == HessianInfoGranularity.PER_OUTPUT_CHANNEL:
+                    shape_channel_axis.remove(output_channel_axis)
+                elif self.hessian_request.granularity == HessianInfoGranularity.PER_ELEMENT:
+                    shape_channel_axis = ()
+
+                # Compute gradients of f_v with respect to the weights
+                f_v_grad = autograd.grad(outputs=f_v,
+                                         inputs=weights_tensor,
+                                         retain_graph=True)[0]
+
+                # Trace{A^T * A} = sum of all squares values of A
+                approx = f_v_grad ** 2
+                if len(shape_channel_axis) > 0:
+                    approx = torch.sum(approx, dim=shape_channel_axis)
+
+                # Update node Hessian approximation mean over random iterations
+                ipts_hessian_trace_approx[i] = (j * ipts_hessian_trace_approx[i] + approx) / (j + 1)
+
+            # If the change to the maximal mean Hessian approximation is insignificant we stop the calculation
+            # Note that we do not consider granularity when computing the mean
             if j > MIN_HESSIAN_ITER:
-                new_mean = (torch.sum(torch.stack(approximation_per_iteration), dim=0) + approx)/(j+1)
-                delta = new_mean - torch.mean(torch.stack(approximation_per_iteration), dim=0)
-                converged_tensor = torch.abs(delta) / (torch.abs(new_mean) + HESSIAN_EPS) < HESSIAN_COMP_TOLERANCE
-                if torch.all(converged_tensor):
-                    break
+                if prev_mean_results is not None:
+                    new_mean_res = torch.as_tensor([torch.mean(res) for res in ipts_hessian_trace_approx],
+                                                   device=device)
+                    relative_delta_per_node = (torch.abs(new_mean_res - prev_mean_results) /
+                                               (torch.abs(new_mean_res) + 1e-6))
+                    max_delta = torch.max(relative_delta_per_node)
+                    if max_delta < HESSIAN_COMP_TOLERANCE:
+                        break
 
-            approximation_per_iteration.append(approx)
-
-        # Compute the mean of the approximations
-        final_approx = torch.mean(torch.stack(approximation_per_iteration), dim=0)
+            prev_mean_results = torch.as_tensor([torch.mean(res) for res in ipts_hessian_trace_approx], device=device)
 
         # Make sure all final shape are tensors and not scalar
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
-            final_approx = final_approx.reshape(1)
+            ipts_hessian_trace_approx = [final_approx.reshape(1) for final_approx in ipts_hessian_trace_approx]
 
         # Add a batch axis to the Hessian approximation tensor (to align with the expected returned shape).
         # We assume per-image computation, so the batch axis size is 1.
-        final_approx = final_approx[np.newaxis, ...]
+        final_approx = [r_final_approx[np.newaxis, ...].detach().cpu().numpy()
+                        for r_final_approx in ipts_hessian_trace_approx]
 
-        return [final_approx.detach().cpu().numpy()]
+        return final_approx
 

@@ -47,11 +47,6 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
         """
 
-        if len(trace_hessian_request.target_nodes) > 1:  # pragma: no cover
-            Logger.critical(f"Weights Hessian approximation is currently supported only for a single target node,"
-                            f" but the provided request contains the following target nodes: "
-                            f"{trace_hessian_request.target_nodes}.")
-
         super(WeightsTraceHessianCalculatorKeras, self).__init__(graph=graph,
                                                                  input_images=input_images,
                                                                  fw_impl=fw_impl,
@@ -73,12 +68,11 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         The function returns a list for compatibility reasons.
 
         """
-        # Check if the target node's layer type is supported.
-        # We assume that weights Hessian computation is done only for a single node at each request.
-        target_node = self.hessian_request.target_nodes[0]
-        if not DEFAULT_KERAS_INFO.is_kernel_op(target_node.type):
-            Logger.critical(f"Hessian information with respect to weights is not supported for "
-                            f"{target_node.type} layers.")  # pragma: no cover
+
+        # Check if all target nodes layers types are supported.
+        if any([not DEFAULT_KERAS_INFO.is_kernel_op(target_node.type)
+                for target_node in self.hessian_request.target_nodes]):  # pragma: no cover
+            Logger.critical(f"Not all layers in the given Hessian request support Hessian information computation.")
 
         # Construct the Keras float model for inference
         model, _ = FloatKerasModelBuilder(graph=self.graph).build_model()

@@ -376,7 +376,7 @@ def _get_sliced_histogram(bins: np.ndarray,
 
 def _compute_hessian_for_hmse(node,
                               hessian_info_service: HessianInfoService,
-                              num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> List[np.ndarray]:
+                              num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> List[List[np.ndarray]]:
     """
     Compute and retrieve Hessian-based scores for using during HMSE error computation.
 
@@ -476,7 +476,7 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
 
     if quant_error_method == qc.QuantizationErrorMethod.HMSE:
         node_hessian_scores = _compute_hessian_for_hmse(node, hessian_info_service, num_hessian_samples)
-        node_hessian_scores = np.sqrt(np.mean(node_hessian_scores, axis=0))
+        node_hessian_scores = np.sqrt(np.mean(node_hessian_scores[0], axis=0))
 
         return lambda x, y, threshold: _hmse_error_function_wrapper(x, y, norm=norm, axis=axis,
                                                                     hessian_scores=node_hessian_scores)
