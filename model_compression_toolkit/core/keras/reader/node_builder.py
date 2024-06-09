@@ -158,7 +158,7 @@ def build_node(node: KerasNode,
             if is_const(arg) or (
                     keras_layer.symbol in tf_function_symbols and
                     isinstance(arg, (tuple, list))):
-                if i in kwarg2index.values():
+                if inputs_as_list or i in kwarg2index.values():
                     weights.update({i: to_numpy(arg, is_single_tensor=True)})
         # remove weights and KerasTensors and weights from op_call_args
         if inputs_as_list:
