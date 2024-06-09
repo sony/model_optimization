@@ -13,7 +13,7 @@
 #  limitations under the License.
 #  ==============================================================================
 
-from xquant.common.xquant_config import XQuantConfig
-from xquant.pytorch.facade_xquant_report import xquant_report_pytorch_experimental
-from xquant.keras.facade_xquant_report import xquant_report_keras_experimental
+from model_compression_toolkit.xquant.common.xquant_config import XQuantConfig
+from model_compression_toolkit.xquant.keras.facade_xquant_report import xquant_report_keras_experimental
+from model_compression_toolkit.xquant.pytorch.facade_xquant_report import xquant_report_pytorch_experimental
 

@@ -13,18 +13,18 @@
 #  limitations under the License.
 #  ==============================================================================
 
-from typing import Callable
+from typing import Any
 
-from xquant.logger import Logger
+from model_compression_toolkit.xquant.common.dataset_utils import DatasetUtils
 
 
-class DatasetUtils:
+class KerasDatasetUtils(DatasetUtils):
     """
-    Class with helpful methods for handling different kinds of datasets from the user.
+    Class with helpful methods for handling different kinds of Keras datasets from the user.
     """
 
     @staticmethod
-    def prepare_dataset(dataset: Callable, is_validation: bool, device: str = None):
+    def prepare_dataset(dataset: Any, is_validation: bool, device: str = None):
         """
         Prepare the dataset so calling it will return only inputs for the model (like in the case
         of the representative dataset). For example, when the validation dataset is used, the labels
@@ -38,6 +38,20 @@ class DatasetUtils:
         Returns:
             Generator to use for retrieving the dataset inputs.
         """
+        def process_data(x: Any, is_validation: bool):
+            """
+            Processes individual data samples to transfer them to the device and convert to torch tensors if needed.
 
-        Logger.get_logger().critical("This method should be implemented by the framework-specific DatasetUtils.")
+            Args:
+                data: The data sample to process.
+                is_validation: A flag indicating if this is a validation dataset.
+                device: The device to transfer the data to.
+
+            Returns:
+                The data as torch tensors on the desired device.
+            """
+            return x[0] if is_validation else x  # Assume data[0] contains the inputs and data[1] the labels
+
+        for x in dataset():
+            yield process_data(x, is_validation)
 

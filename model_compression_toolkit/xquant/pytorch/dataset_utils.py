@@ -15,7 +15,7 @@
 
 from typing import Any, Callable
 
-from xquant.common.dataset_utils import DatasetUtils
+from model_compression_toolkit.xquant.common.dataset_utils import DatasetUtils
 import numpy as np
 
 import torch

@@ -20,16 +20,18 @@ import tempfile
 
 import model_compression_toolkit as mct
 from mct_quantizers import KerasQuantizationWrapper
-from xquant import XQuantConfig
+from model_compression_toolkit.xquant.common.similarity_functions import DEFAULT_SIMILARITY_METRICS_NAMES
+from model_compression_toolkit.xquant.common.xquant_config import XQuantConfig
+
 import tensorflow as tf
 
 import keras
 import numpy as np
 
-from xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, \
+from model_compression_toolkit.xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, \
     INTERMEDIATE_SIMILARITY_METRICS_VAL
-from xquant.common.similarity_functions import DEFAULT_SIMILARITY_METRICS_NAMES
-from xquant.keras.facade_xquant_report import xquant_report_keras_experimental
+
+from model_compression_toolkit.xquant.keras.facade_xquant_report import xquant_report_keras_experimental
 
 
 def random_data_gen(shape=(8, 8, 3), use_labels=False, num_inputs=1, batch_size=2, num_iter=2):
@@ -80,8 +82,7 @@ class BaseTestEnd2EndKerasXQuant(unittest.TestCase):
         self.assertEqual(len(result[OUTPUT_SIMILARITY_METRICS_VAL]), len(DEFAULT_SIMILARITY_METRICS_NAMES))
 
     def test_custom_metric(self):
-        self.xquant_config.custom_similarity_metrics = {
-            'mae': lambda x, y: float(tf.keras.losses.MAE(x.flatten(), y.flatten()).numpy())}
+        self.xquant_config.custom_similarity_metrics = {'mae': lambda x, y: float(tf.keras.losses.MAE(x.flatten(), y.flatten()).numpy())}
         result = xquant_report_keras_experimental(
             self.float_model,
             self.quantized_model,

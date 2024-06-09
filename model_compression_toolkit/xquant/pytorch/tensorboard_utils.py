@@ -20,9 +20,9 @@ import torch
 
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.pytorch.reader.reader import model_reader
-from xquant.common.constants import XQUANT_REPR, INTERMEDIATE_SIMILARITY_METRICS_REPR, XQUANT_VAL, INTERMEDIATE_SIMILARITY_METRICS_VAL
-from xquant.common.model_folding_utils import ModelFoldingUtils
-from xquant.common.tensorboard_utils import TensorboardUtils
+from model_compression_toolkit.xquant.common.constants import XQUANT_REPR, INTERMEDIATE_SIMILARITY_METRICS_REPR, XQUANT_VAL, INTERMEDIATE_SIMILARITY_METRICS_VAL
+from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
+from model_compression_toolkit.xquant.common.tensorboard_utils import TensorboardUtils
 
 class PytorchTensorboardUtils(TensorboardUtils):
     """

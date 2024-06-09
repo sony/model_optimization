@@ -16,12 +16,12 @@
 from typing import Callable
 
 from model_compression_toolkit.constants import FOUND_TORCH
-from xquant.common.core_report_generator import core_report_generator
-from xquant import XQuantConfig
-from xquant.logger import Logger
+from model_compression_toolkit.xquant.common.core_report_generator import core_report_generator
+from model_compression_toolkit.xquant import XQuantConfig
+from model_compression_toolkit.xquant.logger import Logger
 
 if FOUND_TORCH:
-    from xquant.pytorch.pytorch_report_utils import PytorchReportUtils
+    from model_compression_toolkit.xquant.pytorch.pytorch_report_utils import PytorchReportUtils
     import torch
 
     def xquant_report_pytorch_experimental(float_model: torch.nn.Module,

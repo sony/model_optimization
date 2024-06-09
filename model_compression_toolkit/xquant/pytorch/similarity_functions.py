@@ -27,7 +27,7 @@
 #  limitations under the License.
 #  ==============================================================================
 
-from xquant.common.similarity_functions import SimilarityFunctions
+from model_compression_toolkit.xquant.common.similarity_functions import SimilarityFunctions
 import torch
 
 class PytorchSimilarityFunctions(SimilarityFunctions):

@@ -15,10 +15,10 @@
 
 from typing import Callable, Any, Dict
 
-from xquant import XQuantConfig
-from xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, \
+from model_compression_toolkit.xquant import XQuantConfig
+from model_compression_toolkit.xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, \
     INTERMEDIATE_SIMILARITY_METRICS_VAL
-from xquant.common.framework_report_utils import FrameworkReportUtils
+from model_compression_toolkit.xquant.common.framework_report_utils import FrameworkReportUtils
 
 
 def core_report_generator(float_model: Any,

@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Tuple
 
 from abc import ABC, abstractmethod
 
-from xquant.logger import Logger
+from model_compression_toolkit.xquant.logger import Logger
 
 
 class ModelAnalyzerUtils(ABC):

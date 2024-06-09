@@ -20,14 +20,12 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from typing import Any, Dict
 
-import logging
-
-from xquant.common.constants import REPORT_FILENAME
-from xquant.common.dataset_utils import DatasetUtils
-from xquant.common.model_folding_utils import ModelFoldingUtils
-from xquant.common.similarity_calculator import SimilarityCalculator
-from xquant.common.tensorboard_utils import TensorboardUtils
-from xquant.logger import Logger
+from model_compression_toolkit.xquant.common.constants import REPORT_FILENAME
+from model_compression_toolkit.xquant.common.dataset_utils import DatasetUtils
+from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
+from model_compression_toolkit.xquant.common.similarity_calculator import SimilarityCalculator
+from model_compression_toolkit.xquant.common.tensorboard_utils import TensorboardUtils
+from model_compression_toolkit.xquant.logger import Logger
 
 
 class FrameworkReportUtils:

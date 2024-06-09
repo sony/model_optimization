@@ -20,9 +20,8 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
-from xquant import XQuantConfig
-from xquant.common.model_folding_utils import ModelFoldingUtils
-from xquant.logger import Logger
+from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
+from model_compression_toolkit.xquant.logger import Logger
 
 
 from typing import Any, Dict, Callable

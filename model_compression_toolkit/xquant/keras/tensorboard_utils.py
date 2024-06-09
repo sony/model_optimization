@@ -21,11 +21,10 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 
 from model_compression_toolkit.core.keras.reader.reader import model_reader
-from xquant import XQuantConfig
 
-from xquant.common.constants import XQUANT_REPR, INTERMEDIATE_SIMILARITY_METRICS_REPR, XQUANT_VAL, INTERMEDIATE_SIMILARITY_METRICS_VAL
-from xquant.common.model_folding_utils import ModelFoldingUtils
-from xquant.common.tensorboard_utils import TensorboardUtils
+from model_compression_toolkit.xquant.common.constants import XQUANT_REPR, INTERMEDIATE_SIMILARITY_METRICS_REPR, XQUANT_VAL, INTERMEDIATE_SIMILARITY_METRICS_VAL
+from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
+from model_compression_toolkit.xquant.common.tensorboard_utils import TensorboardUtils
 
 
 class KerasTensorboardUtils(TensorboardUtils):

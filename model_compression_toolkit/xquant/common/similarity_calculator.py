@@ -16,11 +16,11 @@ from functools import partial
 
 from typing import Tuple, Any, Dict, Callable
 
-from xquant.common.dataset_utils import DatasetUtils
-from xquant.common.model_analyzer_utils import ModelAnalyzerUtils
-from xquant.common.model_folding_utils import ModelFoldingUtils
-from xquant.common.similarity_functions import SimilarityFunctions
-from xquant.logger import Logger
+from model_compression_toolkit.xquant.common.dataset_utils import DatasetUtils
+from model_compression_toolkit.xquant.common.model_analyzer_utils import ModelAnalyzerUtils
+from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
+from model_compression_toolkit.xquant.common.similarity_functions import SimilarityFunctions
+from model_compression_toolkit.xquant.logger import Logger
 
 class SimilarityCalculator:
     """

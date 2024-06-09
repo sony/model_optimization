@@ -15,15 +15,15 @@
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 
 from model_compression_toolkit.ptq.pytorch.quantization_facade import DEFAULT_PYTORCH_TPC
-from xquant.common.framework_report_utils import FrameworkReportUtils
+from model_compression_toolkit.xquant.common.framework_report_utils import FrameworkReportUtils
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-from xquant.common.model_folding_utils import ModelFoldingUtils
-from xquant.common.similarity_calculator import SimilarityCalculator
-from xquant.pytorch.dataset_utils import PytorchDatasetUtils
-from xquant.pytorch.model_analyzer_utils import PytorchModelAnalyzerUtils
-from xquant.pytorch.similarity_functions import PytorchSimilarityFunctions
-from xquant.pytorch.tensorboard_utils import PytorchTensorboardUtils
+from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
+from model_compression_toolkit.xquant.common.similarity_calculator import SimilarityCalculator
+from model_compression_toolkit.xquant.pytorch.dataset_utils import PytorchDatasetUtils
+from model_compression_toolkit.xquant.pytorch.model_analyzer_utils import PytorchModelAnalyzerUtils
+from model_compression_toolkit.xquant.pytorch.similarity_functions import PytorchSimilarityFunctions
+from model_compression_toolkit.xquant.pytorch.tensorboard_utils import PytorchTensorboardUtils
 
 
 class PytorchReportUtils(FrameworkReportUtils):

@@ -16,15 +16,15 @@
 
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-from xquant.common.framework_report_utils import FrameworkReportUtils
+from model_compression_toolkit.xquant.common.framework_report_utils import FrameworkReportUtils
 from model_compression_toolkit.ptq.keras.quantization_facade import DEFAULT_KERAS_TPC
-from xquant.common.model_folding_utils import ModelFoldingUtils
-from xquant.common.similarity_calculator import SimilarityCalculator
-from xquant.keras.dataset_utils import KerasDatasetUtils
-from xquant.keras.model_analyzer_utils import KerasModelAnalyzerUtils
+from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
+from model_compression_toolkit.xquant.common.similarity_calculator import SimilarityCalculator
+from model_compression_toolkit.xquant.keras.dataset_utils import KerasDatasetUtils
+from model_compression_toolkit.xquant.keras.model_analyzer_utils import KerasModelAnalyzerUtils
 
-from xquant.keras.similarity_functions import KerasSimilarityFunctions
-from xquant.keras.tensorboard_utils import KerasTensorboardUtils
+from model_compression_toolkit.xquant.keras.similarity_functions import KerasSimilarityFunctions
+from model_compression_toolkit.xquant.keras.tensorboard_utils import KerasTensorboardUtils
 
 
 class KerasReportUtils(FrameworkReportUtils):

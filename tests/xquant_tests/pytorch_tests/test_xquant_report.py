@@ -25,10 +25,10 @@ import torch.nn.functional as F
 
 import model_compression_toolkit as mct
 from mct_quantizers import PytorchQuantizationWrapper
-from xquant.common.similarity_functions import DEFAULT_SIMILARITY_METRICS_NAMES
-from xquant.common.xquant_config import XQuantConfig
-from xquant.pytorch.facade_xquant_report import xquant_report_pytorch_experimental
-from xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, INTERMEDIATE_SIMILARITY_METRICS_VAL
+from model_compression_toolkit.xquant.common.similarity_functions import DEFAULT_SIMILARITY_METRICS_NAMES
+from model_compression_toolkit.xquant.common.xquant_config import XQuantConfig
+from model_compression_toolkit.xquant.pytorch.facade_xquant_report import xquant_report_pytorch_experimental
+from model_compression_toolkit.xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, INTERMEDIATE_SIMILARITY_METRICS_VAL
 
 
 

@@ -30,7 +30,7 @@
 import numpy as np
 import tensorflow as tf
 
-from xquant.common.similarity_functions import SimilarityFunctions
+from model_compression_toolkit.xquant.common.similarity_functions import SimilarityFunctions
 
 class KerasSimilarityFunctions(SimilarityFunctions):
     """
