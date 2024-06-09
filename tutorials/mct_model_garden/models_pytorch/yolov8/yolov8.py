@@ -34,11 +34,12 @@ import torch.nn as nn
 import yaml
 from torch import Tensor
 from huggingface_hub import PyTorchModelHubMixin
+import importlib
 
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
-from sony_custom_layers.pytorch.object_detection.nms import multiclass_nms
-
 from tutorials.mct_model_garden.models_pytorch.yolov8.yolov8_postprocess import postprocess_yolov8_keypoints
+if importlib.util.find_spec("sony_custom_layers"):
+    from sony_custom_layers.pytorch.object_detection.nms import multiclass_nms
 
 
 def yaml_load(file: str = 'data.yaml', append_filename: bool = False) -> Dict[str, any]:
