@@ -56,7 +56,8 @@ def qparams_selection_tensor_search(error_function: Callable,
         signed: a flag whether the tensor is signed.
 
     Returns:
-        Optimal constrained threshold to quantize the tensor.
+        Optimal constrained threshold to quantize the tensor, and best channel axis if input channel_axis was None,
+        else return the input channel axis.
 
     """
 

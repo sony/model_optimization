@@ -326,13 +326,17 @@ class WeightsAttrQuantizationConfig:
 
         """
         assert self.enable_weights_quantization
+        assert not (self.weights_per_channel_threshold and self.weights_channels_axis is None), \
+            "Trying to calculate threshold per channel, channel axis in None."
         if self.weights_quantization_params_fn is not None:
-            self.set_weights_quantization_param(self.weights_quantization_params_fn(tensor_data,
-                                                                                    p=self.l_p_value,
-                                                                                    n_bits=self.weights_n_bits,
-                                                                                    per_channel=self.weights_per_channel_threshold and self.weights_channels_axis is not None,
-                                                                                    channel_axis=self.weights_channels_axis[0],  # output channel axis
-                                                                                    min_threshold=min_threshold)[0])
+            self.set_weights_quantization_param(
+                self.weights_quantization_params_fn(tensor_data,
+                                                    p=self.l_p_value,
+                                                    n_bits=self.weights_n_bits,
+                                                    per_channel=self.weights_per_channel_threshold and self.weights_channels_axis is not None,
+                                                    channel_axis=self.weights_channels_axis[0],  # output channel axis
+                                                    min_threshold=min_threshold)[0]  # Take only first output, the q-params, as axis is already chosen.
+            )
         else:
             self.set_weights_quantization_param({})
 

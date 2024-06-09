@@ -51,7 +51,7 @@ def symmetric_selection_tensor(tensor_data: np.ndarray,
         p: p-norm to use for the Lp-norm distance.
         n_bits: Number of bits to quantize the tensor.
         per_channel: Whether the quantization should be per-channel or not.
-        channel_axis: Output channel index. is None, search for best axis.
+        channel_axis: Output channel index. if None, search for best axis.
         n_iter: Number of iterations to search for the optimal threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small (not used for this method).
         quant_error_method: an error function to optimize the parameters' selection accordingly.

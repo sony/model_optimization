@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 
 import numpy as np
 
@@ -34,7 +34,7 @@ def get_weights_qparams(weights_attr_values: np.ndarray,
                         output_channels_axis: int,
                         node=None,
                         hessian_info_service: HessianInfoService = None,
-                        num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> Dict[Any, Any]:
+                        num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> Tuple[Dict[Any, Any], int]:
     """
     Compute thresholds to quantize a kernel according to a NodeWeightsQuantizationConfig
     instance.

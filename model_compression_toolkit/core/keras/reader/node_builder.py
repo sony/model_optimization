@@ -158,7 +158,8 @@ def build_node(node: KerasNode,
             if is_const(arg) or (
                     keras_layer.symbol in tf_function_symbols and
                     isinstance(arg, (tuple, list))):
-                weights.update({i: to_numpy(arg, is_single_tensor=True)})
+                if i in kwarg2index.values():
+                    weights.update({i: to_numpy(arg, is_single_tensor=True)})
         # remove weights and KerasTensors and weights from op_call_args
         if inputs_as_list:
             op_call_args = tuple(op_call_args[1:])
@@ -169,8 +170,7 @@ def build_node(node: KerasNode,
         # read weights from call kwargs
         weight_keys = []
         for k, v in op_call_kwargs.items():
-            if is_const(v) or (keras_layer.function in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv, tf.pow,
-                                                        tf.matmul] and
+            if is_const(v) or (keras_layer.symbol in tf_function_symbols and
                                isinstance(v, (tuple, list))):
                 if k in kwarg2index:
                     weights.update({kwarg2index[k]: to_numpy(v, is_single_tensor=True)})

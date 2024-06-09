@@ -83,7 +83,8 @@ def _merge_inputs(_node: BaseNode, input_tensors: List, op_call_args: List,
         _input_list = op_call_args.copy()
         if tensor_input_indices is None:
             tensor_input_indices = _node.tensor_input_indices
-        assert len(tensor_input_indices) == len(input_tensors), 'Mismatch between input tensors and indices'
+        assert len(tensor_input_indices) == len(input_tensors), \
+            f'Mismatch between input tensors ({len(tensor_input_indices)}) and indices {len(input_tensors)}'
         for i, t in zip(tensor_input_indices, input_tensors):
             _input_list.insert(i, t)
     else:
