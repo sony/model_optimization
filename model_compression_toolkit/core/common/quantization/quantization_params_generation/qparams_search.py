@@ -27,7 +27,7 @@ from model_compression_toolkit.constants import MIN_THRESHOLD, DEFAULT_TOL, DEFA
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import quantize_tensor, \
     reshape_tensor_for_per_channel_search, uniform_quantize_tensor, get_output_shape
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import max_power_of_two, \
-    get_tensor_max
+    get_tensor_max, get_tensor_min
 
 
 def qparams_selection_tensor_search(error_function: Callable,
@@ -56,41 +56,49 @@ def qparams_selection_tensor_search(error_function: Callable,
         signed: a flag whether the tensor is signed.
 
     Returns:
-        Optimal constrained threshold to quantize the tensor.
+        Optimal constrained threshold to quantize the tensor, and best channel axis if input channel_axis was None,
+        else return the input channel axis.
 
     """
 
-    output_shape = get_output_shape(tensor_data.shape, channel_axis)
+    search_axes = range(len(tensor_data.shape)) if channel_axis is None and per_channel else [channel_axis]
+    total_error_list = []
+    th_list = []
+    for _axis in search_axes:
+        output_shape = get_output_shape(tensor_data.shape, _axis)
 
-    # First threshold to check is the constrained threshold based on the tensor's maximal value.
-    tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis, n_bits)
-    threshold = 2 * max_power_of_two(tensor_max, min_threshold)
+        # First threshold to check is the constrained threshold based on the tensor's maximal value.
+        tensor_max = get_tensor_max(tensor_data, per_channel, _axis, n_bits)
+        threshold = 2 * max_power_of_two(tensor_max, min_threshold)
 
-    # If the threshold is computed per-channel, we rearrange the tensor such that each sub-tensor
-    # is flattened, and we iterate over each one of them when searching for the threshold.
-    if per_channel:
-        tensor_data_r = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
-
-    error_list = []  # init an empty error list
-    # On each iteration a new constrained threshold which equal to half of the previous tested threshold
-    # is used for quantizing the tensor and computing the error. The error is appended to an error list, which
-    # eventually used to select the threshold with the minimal error.
-    for i in range(n_iter):
+        # Rearrange the tensor such that each sub-tensor is flattened, and we iterate over each
+        # one of them when searching for the threshold.
         if per_channel:
-            threshold_hat = (threshold / (2 ** i)).reshape([-1, 1])
-            qt = quantize_tensor(tensor_data_r, threshold_hat, n_bits, signed)
-            per_channel_error = _error_function_wrapper(error_function, tensor_data_r, qt, threshold_hat)
+            tensor_data_r = reshape_tensor_for_per_channel_search(tensor_data, _axis)
 
-            error_list.append(per_channel_error)
-        else:  # quantize per-tensor
-            qt = quantize_tensor(tensor_data, threshold / (2 ** i), n_bits, signed)
-            error = error_function(qt, tensor_data, threshold=threshold / (2 ** i))
-            error_list.append(error)
+        error_list = []  # init an empty error list
+        # On each iteration a new constrained threshold which equal to half of the previous tested threshold
+        # is used for quantizing the tensor and computing the error. The error is appended to an error list, which
+        # eventually used to select the threshold with the minimal error.
+        for i in range(n_iter):
+            if per_channel:
+                threshold_hat = (threshold / (2 ** i)).reshape([-1, 1])
+                qt = quantize_tensor(tensor_data_r, threshold_hat, n_bits, signed)
+                per_channel_error = _error_function_wrapper(error_function, tensor_data_r, qt, threshold_hat)
+                error_list.append(per_channel_error)
+            else:  # quantize per-tensor
+                qt = quantize_tensor(tensor_data, threshold / (2 ** i), n_bits, signed)
+                error = error_function(qt, tensor_data, threshold=threshold / (2 ** i))
+                error_list.append(error)
 
-    # Take the index of the minimal error, and use it compute the threshold which yielded it.
-    i = np.argmin(np.stack(error_list, axis=-1), axis=-1)
+        # Take the index of the minimal error, and use it compute the threshold which yielded it.
+        err_mat = np.stack(error_list, axis=-1)
+        i = np.argmin(err_mat, axis=-1)
+        th_list.append(np.maximum(np.reshape(threshold.flatten() / np.power(2, i), output_shape), min_threshold))
+        total_error_list.append(err_mat.min(axis=-1).mean())
 
-    return np.maximum(np.reshape(threshold.flatten() / np.power(2, i), output_shape), min_threshold)
+    best_axis_index = np.argmin(total_error_list)
+    return th_list[best_axis_index], search_axes[best_axis_index]
 
 
 def qparams_selection_histogram_search(error_function: Callable,
@@ -390,13 +398,12 @@ def search_dynamic_range(base_range: np.ndarray, x: np.ndarray, scalers: np.ndar
 
 def qparams_symmetric_selection_tensor_search(error_function: Callable,
                                               tensor_data: np.ndarray,
-                                              tensor_max: np.ndarray,
                                               n_bits: int,
                                               per_channel: bool = False,
                                               channel_axis: int = 1,
                                               n_iter: int = SYMMETRIC_TENSOR_PER_CHANNEL_N_ITER,
                                               min_threshold=MIN_THRESHOLD,
-                                              signed: bool = True) -> Any:
+                                              signed: bool = True) -> Tuple[np.ndarray, int]:
     """
     Search for optimal threshold (per-channel or per-tensor) for symmetric quantization of a tensor,
     using the iterative optimizer method.
@@ -404,7 +411,6 @@ def qparams_symmetric_selection_tensor_search(error_function: Callable,
     Args:
         error_function: Function to compute the error between the original and quantized tensors.
         tensor_data: Numpy array with tensor's content.
-        tensor_max: The max value of the tensor.
         n_bits: Number of bits to quantize the tensor.
         per_channel: Whether the tensor should be quantized per-channel or per-tensor.
         channel_axis: Index of output channels dimension.
@@ -417,46 +423,55 @@ def qparams_symmetric_selection_tensor_search(error_function: Callable,
 
     """
 
-    output_shape = get_output_shape(tensor_data.shape, channel_axis)
+    search_axes = range(len(tensor_data.shape)) if channel_axis is None and per_channel else [channel_axis]
+    total_error_list = []
+    th_list = []
+    for _axis in search_axes:
+        tensor_max = get_tensor_max(tensor_data, per_channel, _axis, n_bits)
+        output_shape = get_output_shape(tensor_data.shape, _axis)
 
-    # If the threshold is computed per-channel, we rearrange the tensor such that each sub-tensor
-    # is flattened, and we iterate over each one of them when searching for the threshold.
-    if per_channel:
-        tensor_data_r = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
-        max_tensor = np.maximum(min_threshold, tensor_max)
-        res = qparams_symmetric_iterative_minimization(x0=max_tensor,
-                                                       x=tensor_data_r,
-                                                       loss_fn=error_function,  # gets float_tensor, fxp_tensor, threshold
-                                                       n_bits=n_bits,
-                                                       signed=signed,
-                                                       n_intervals=SYMMETRIC_TENSOR_PER_CHANNEL_N_INTERVALS,
-                                                       n_iter=SYMMETRIC_TENSOR_PER_CHANNEL_N_ITER,
-                                                       dec_freq=SYMMETRIC_TENSOR_PER_CHANNEL_DEC_FREQ,
-                                                       per_channel=True)
-        return np.reshape(np.maximum(min_threshold, res['param']), output_shape)
-    else:
-        # quantize per-tensor
-        res = qparams_symmetric_iterative_minimization(x0=get_init_threshold(min_threshold, tensor_max),
-                                                       x=tensor_data,
-                                                       loss_fn=error_function,
-                                                       n_bits=n_bits,
-                                                       signed=signed,
-                                                       n_intervals=SYMMETRIC_TENSOR_N_INTERVALS,
-                                                       n_iter=SYMMETRIC_TENSOR_N_ITER,
-                                                       dec_freq=SYMMETRIC_TENSOR_DEC_FREQ,
-                                                       per_channel=False)
+        if per_channel:
+            # Rearrange the tensor such that each sub-tensor is flattened, and we iterate
+            # over each one of them when searching for the threshold.
+            tensor_data_r = reshape_tensor_for_per_channel_search(tensor_data, _axis)
+            max_tensor = np.maximum(min_threshold, tensor_max)
+            res = qparams_symmetric_iterative_minimization(x0=max_tensor,
+                                                           x=tensor_data_r,
+                                                           loss_fn=error_function,  # gets float_tensor, fxp_tensor, threshold
+                                                           n_bits=n_bits,
+                                                           signed=signed,
+                                                           n_intervals=SYMMETRIC_TENSOR_PER_CHANNEL_N_INTERVALS,
+                                                           n_iter=SYMMETRIC_TENSOR_PER_CHANNEL_N_ITER,
+                                                           dec_freq=SYMMETRIC_TENSOR_PER_CHANNEL_DEC_FREQ,
+                                                           per_channel=True)
+            th = np.reshape(np.maximum(min_threshold, res['param']), output_shape)
+        else:
+            # quantize per-tensor
+            res = qparams_symmetric_iterative_minimization(x0=get_init_threshold(min_threshold, tensor_max),
+                                                           x=tensor_data,
+                                                           loss_fn=error_function,
+                                                           n_bits=n_bits,
+                                                           signed=signed,
+                                                           n_intervals=SYMMETRIC_TENSOR_N_INTERVALS,
+                                                           n_iter=SYMMETRIC_TENSOR_N_ITER,
+                                                           dec_freq=SYMMETRIC_TENSOR_DEC_FREQ,
+                                                           per_channel=False)
+            th = max(min_threshold, res['param'])
 
-        return max(min_threshold, res['param'])
+        total_error_list.append(res['loss'].mean())
+        th_list.append(th)
+
+    best_axis_index = np.argmin(total_error_list)
+    return th_list[best_axis_index], search_axes[best_axis_index]
 
 
 def qparams_uniform_selection_tensor_search(error_function: Callable,
                                             tensor_data: np.ndarray,
-                                            tensor_min: np.ndarray,
-                                            tensor_max: np.ndarray,
                                             n_bits: int,
                                             per_channel: bool = False,
                                             channel_axis: int = 1,
-                                            n_iter: int = UNIFORM_TENSOR_PER_CHANNEL_N_ITER) -> Any:
+                                            n_iter: int = UNIFORM_TENSOR_PER_CHANNEL_N_ITER,
+                                            ) -> Tuple[Tuple[np.ndarray, np.ndarray], int]:
     """
     Search for optimal quantization range (per-channel or per-tensor) for uniform quantization of a tensor,
     using the iterative optimizer method and built-in scale factors
@@ -465,8 +480,6 @@ def qparams_uniform_selection_tensor_search(error_function: Callable,
     Args:
         error_function: Function to compute the error between the original and quantized tensors.
         tensor_data: Numpy array with tensor's content.
-        tensor_min: The min value of the tensor.
-        tensor_max: The max value of the tensor.
         n_bits: Number of bits to quantize the tensor.
         per_channel: Whether the tensor should be quantized per-channel or per-tensor.
         channel_axis: Index of output channels dimension.
@@ -477,17 +490,22 @@ def qparams_uniform_selection_tensor_search(error_function: Callable,
 
     """
 
-    output_shape = get_output_shape(tensor_data.shape, channel_axis)
+    search_axes = range(len(tensor_data.shape)) if channel_axis is None and per_channel else [channel_axis]
+    total_error_list = []
+    th_list = []
+    for _axis in search_axes:
+        tensor_min = get_tensor_min(tensor_data, per_channel, _axis)
+        tensor_max = get_tensor_max(tensor_data, per_channel, _axis, n_bits, is_uniform_quantization=True)
+        output_shape = get_output_shape(tensor_data.shape, _axis)
 
-    alpha = np.linspace(BOTTOM_FACTOR, UPPER_FACTOR, UNIFORM_TENSOR_N_SAMPLES)
-    beta = np.linspace(BOTTOM_FACTOR, UPPER_FACTOR, UNIFORM_TENSOR_N_SAMPLES)
-    scalers = np.asarray(list(itertools.product(alpha, beta)))
+        alpha = np.linspace(BOTTOM_FACTOR, UPPER_FACTOR, UNIFORM_TENSOR_N_SAMPLES)
+        beta = np.linspace(BOTTOM_FACTOR, UPPER_FACTOR, UNIFORM_TENSOR_N_SAMPLES)
+        scalers = np.asarray(list(itertools.product(alpha, beta)))
 
-    # If the threshold is computed per-channel, we rearrange the tensor such that each sub-tensor
-    # is flattened, and we iterate over each one of them when searching for the threshold.
-    if per_channel:
+        # Rearrange the tensor such that each sub-tensor is flattened, and we iterate over
+        # each one of them when searching for the threshold.
         if per_channel:
-            tensor_data_r = reshape_tensor_for_per_channel_search(tensor_data, channel_axis)
+            tensor_data_r = reshape_tensor_for_per_channel_search(tensor_data, _axis)
             tensor_min_max = np.column_stack([tensor_min.flatten(), tensor_max.flatten()])
             res = iterative_uniform_dynamic_range_search(x0=tensor_min_max,
                                                          x=tensor_data_r,
@@ -496,18 +514,21 @@ def qparams_uniform_selection_tensor_search(error_function: Callable,
                                                          n_bits=n_bits,
                                                          n_iter=UNIFORM_TENSOR_PER_CHANNEL_N_ITER,
                                                          per_channel=True)
-            return np.reshape(res['param'][:, 0], output_shape), np.reshape(res['param'][:, 1], output_shape)
-    else:
-        # quantize per-tensor
-        pass
-        res = iterative_uniform_dynamic_range_search(x0=np.array([tensor_min, tensor_max]),
-                                                     x=tensor_data,
-                                                     scalers=scalers,
-                                                     loss_fn=error_function,
-                                                     n_bits=n_bits,
-                                                     n_iter=UNIFORM_TENSOR_N_ITER,
-                                                     per_channel=False)
-        return res['param']
+            th_list.append((np.reshape(res['param'][:, 0], output_shape), np.reshape(res['param'][:, 1], output_shape)))
+        else:
+            # quantize per-tensor
+            res = iterative_uniform_dynamic_range_search(x0=np.array([tensor_min, tensor_max]),
+                                                         x=tensor_data,
+                                                         scalers=scalers,
+                                                         loss_fn=error_function,
+                                                         n_bits=n_bits,
+                                                         n_iter=UNIFORM_TENSOR_N_ITER,
+                                                         per_channel=False)
+            th_list.append(tuple(np.split(res['param'], 2)))
+        total_error_list.append(res['loss'].mean())
+
+    best_axis_index = np.argmin(total_error_list)
+    return th_list[best_axis_index], search_axes[best_axis_index]
 
 
 def qparams_symmetric_selection_histogram_search(error_function: Callable,

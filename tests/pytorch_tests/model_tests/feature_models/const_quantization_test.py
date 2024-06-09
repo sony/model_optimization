@@ -101,7 +101,7 @@ class AdvancedConstQuantizationNet(nn.Module):
 
 class AdvancedConstQuantizationTest(BasePytorchFeatureNetworkTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test=unit_test, input_shape=(3, 32, 32))
+        super().__init__(unit_test=unit_test, input_shape=(3, 32, 32), num_calibration_iter=32)
         self.const = (np.random.random((130, 1, 1))).astype(np.float32)
 
     def get_ptq_facade(self):

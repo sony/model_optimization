@@ -32,6 +32,7 @@ tp = mct.target_platform
 class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test, layer, const, is_list_input=False, input_reverse_order=False, use_kwargs=False,
+                 qmethod: mct.core.QuantizationErrorMethod = mct.core.QuantizationErrorMethod.MSE,
                  input_shape=(32, 32, 16)):
         super(ConstQuantizationTest, self).__init__(unit_test=unit_test, input_shape=input_shape)
         self.layer = layer
@@ -39,10 +40,14 @@ class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
         self.is_list_input = is_list_input
         self.input_reverse_order = input_reverse_order
         self.use_kwargs = use_kwargs
+        self.qmethod = qmethod
 
     def generate_inputs(self):
         # need positive inputs so won't divide with zero or take root of negative number
         return [1 + np.random.random(in_shape) for in_shape in self.get_input_shapes()]
+
+    def get_quantization_config(self):
+        return mct.core.QuantizationConfig(weights_error_method=self.qmethod)
 
     def get_tpc(self):
         return mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v3")
@@ -84,7 +89,8 @@ class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
 class AdvancedConstQuantizationTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test, input_shape=(32, 32, 3)):
-        super(AdvancedConstQuantizationTest, self).__init__(unit_test=unit_test, input_shape=input_shape)
+        super(AdvancedConstQuantizationTest, self).__init__(unit_test=unit_test, input_shape=input_shape,
+                                                            num_calibration_iter=32)
         self.const = np.random.random((130,))
 
     def get_ptq_facade(self):

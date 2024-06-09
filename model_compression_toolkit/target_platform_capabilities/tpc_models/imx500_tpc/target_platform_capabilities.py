@@ -27,6 +27,8 @@ if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1_pot.tpc_keras import get_keras_tpc as get_keras_tpc_v1_pot
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v2.tpc_keras import get_keras_tpc as get_keras_tpc_v2
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v2_lut.tpc_keras import get_keras_tpc as get_keras_tpc_v2_lut
+    from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tpc_keras import get_keras_tpc as get_keras_tpc_v3
+    from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3_lut.tpc_keras import get_keras_tpc as get_keras_tpc_v3_lut
 
     # Keras: TPC versioning
     keras_tpc_models_dict = {'v1': get_keras_tpc_v1,
@@ -34,6 +36,8 @@ if FOUND_TF:
                              'v1_pot': get_keras_tpc_v1_pot,
                              'v2': get_keras_tpc_v2,
                              'v2_lut': get_keras_tpc_v2_lut,
+                             'v3': get_keras_tpc_v3,
+                             'v3_lut': get_keras_tpc_v3_lut,
                              LATEST: get_keras_tpc_latest}
 
 ###############################
@@ -52,6 +56,10 @@ if FOUND_TORCH:
         get_pytorch_tpc as get_pytorch_tpc_v2
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v2_lut.tpc_pytorch import \
         get_pytorch_tpc as get_pytorch_tpc_v2_lut
+    from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tpc_pytorch import \
+        get_pytorch_tpc as get_pytorch_tpc_v3
+    from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3_lut.tpc_pytorch import \
+        get_pytorch_tpc as get_pytorch_tpc_v3_lut
 
     # Pytorch: TPC versioning
     pytorch_tpc_models_dict = {'v1': get_pytorch_tpc_v1,
@@ -59,6 +67,8 @@ if FOUND_TORCH:
                                'v1_pot': get_pytorch_tpc_v1_pot,
                                'v2': get_pytorch_tpc_v2,
                                'v2_lut': get_pytorch_tpc_v2_lut,
+                               'v3': get_pytorch_tpc_v3,
+                               'v3_lut': get_pytorch_tpc_v3_lut,
                                LATEST: get_pytorch_tpc_latest}
 
 tpc_dict = {TENSORFLOW: keras_tpc_models_dict,
