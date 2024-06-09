@@ -18,7 +18,7 @@ import torch
 
 from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 from xquant import XQuantConfig
-from xquant.common.constants import XQUANT_REPR, INTERMEDIATE_METRICS_REPR, XQUANT_VAL, INTERMEDIATE_METRICS_VAL
+from xquant.common.constants import XQUANT_REPR, INTERMEDIATE_SIMILARITY_METRICS_REPR, XQUANT_VAL, INTERMEDIATE_SIMILARITY_METRICS_VAL
 from xquant.common.model_folding_utils import ModelFoldingUtils
 from xquant.common.tensorboard_utils import TensorboardUtils
 
@@ -34,11 +34,12 @@ class PytorchTensorboardUtils(TensorboardUtils):
                                           xquant_config: XQuantConfig,
                                           repr_dataset: Callable):
         """
-        Updates the quantized model graph with metrics data collected during evaluation.
+        Get the graph to display on tensorboard. The graph represents the quantized model
+        with the similarity metrics that were measured.
 
         Args:
             quantized_model: The quantized model.
-            similarity_metrics: Dictionary containing the collected metrics data.
+            similarity_metrics: Dictionary containing the collected similarity metrics values.
             xquant_config: Configuration settings for quantization.
             repr_dataset: Representative dataset used during graph building.
 
@@ -51,15 +52,15 @@ class PytorchTensorboardUtils(TensorboardUtils):
                                    to_numpy=self.fw_impl.to_numpy)
 
         for node in quant_graph.nodes:
-            if node.name in similarity_metrics[INTERMEDIATE_METRICS_REPR].keys():
-                node.framework_attr[XQUANT_REPR] = similarity_metrics[INTERMEDIATE_METRICS_REPR][f"{node.name}"]
-            elif node.name.removesuffix("_layer") in similarity_metrics[INTERMEDIATE_METRICS_REPR].keys():
-                node.framework_attr[XQUANT_REPR] = similarity_metrics[INTERMEDIATE_METRICS_REPR][
+            if node.name in similarity_metrics[INTERMEDIATE_SIMILARITY_METRICS_REPR].keys():
+                node.framework_attr[XQUANT_REPR] = similarity_metrics[INTERMEDIATE_SIMILARITY_METRICS_REPR][f"{node.name}"]
+            elif node.name.removesuffix("_layer") in similarity_metrics[INTERMEDIATE_SIMILARITY_METRICS_REPR].keys():
+                node.framework_attr[XQUANT_REPR] = similarity_metrics[INTERMEDIATE_SIMILARITY_METRICS_REPR][
                     node.name.removesuffix("_layer")]
 
-            if node.name in similarity_metrics[INTERMEDIATE_METRICS_VAL].keys():
-                node.framework_attr[XQUANT_VAL] = similarity_metrics[INTERMEDIATE_METRICS_VAL][f"{node.name}"]
-            elif node.name.removesuffix("_layer") in similarity_metrics[INTERMEDIATE_METRICS_VAL].keys():
-                node.framework_attr[XQUANT_VAL] = similarity_metrics[INTERMEDIATE_METRICS_VAL][
+            if node.name in similarity_metrics[INTERMEDIATE_SIMILARITY_METRICS_VAL].keys():
+                node.framework_attr[XQUANT_VAL] = similarity_metrics[INTERMEDIATE_SIMILARITY_METRICS_VAL][f"{node.name}"]
+            elif node.name.removesuffix("_layer") in similarity_metrics[INTERMEDIATE_SIMILARITY_METRICS_VAL].keys():
+                node.framework_attr[XQUANT_VAL] = similarity_metrics[INTERMEDIATE_SIMILARITY_METRICS_VAL][
                     node.name.removesuffix("_layer")]
         return quant_graph

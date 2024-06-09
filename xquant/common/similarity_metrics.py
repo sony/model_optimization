@@ -16,9 +16,9 @@ import logging
 
 from typing import Any, Dict, Callable, Tuple
 
-from xquant.common.constants import CS_METRIC_NAME, SQNR_METRIC_NAME, MSE_METRIC_NAME
+from xquant.common.constants import CS_SIMILARITY_METRIC_NAME, SQNR_SIMILARITY_METRIC_NAME, MSE_SIMILARITY_METRIC_NAME
 
-DEFAULT_METRICS_NAMES = [CS_METRIC_NAME, MSE_METRIC_NAME, SQNR_METRIC_NAME]
+DEFAULT_SIMILARITY_METRICS_NAMES = [CS_SIMILARITY_METRIC_NAME, MSE_SIMILARITY_METRIC_NAME, SQNR_SIMILARITY_METRIC_NAME]
 
 
 class SimilarityFunctions:
@@ -35,10 +35,10 @@ class SimilarityFunctions:
     def compute_sqnr(f_pred: Any, q_pred: Any) -> float:
         raise NotImplemented
 
-    def get_default_metrics(self) -> Dict[str, Callable]:
+    def get_default_similarity_metrics(self) -> Dict[str, Callable]:
         return {
-            MSE_METRIC_NAME: self.compute_mse,
-            CS_METRIC_NAME: self.compute_cs,
-            SQNR_METRIC_NAME: self.compute_sqnr
+            MSE_SIMILARITY_METRIC_NAME: self.compute_mse,
+            CS_SIMILARITY_METRIC_NAME: self.compute_cs,
+            SQNR_SIMILARITY_METRIC_NAME: self.compute_sqnr
         }
 

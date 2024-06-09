@@ -16,8 +16,8 @@
 from typing import Callable, Any, Dict
 
 from xquant import XQuantConfig
-from xquant.common.constants import OUTPUT_METRICS_REPR, OUTPUT_METRICS_VAL, INTERMEDIATE_METRICS_REPR, \
-    INTERMEDIATE_METRICS_VAL
+from xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, \
+    INTERMEDIATE_SIMILARITY_METRICS_VAL
 from xquant.common.framework_report_utils import FrameworkReportUtils
 from xquant.logger import Logger
 
@@ -29,7 +29,10 @@ def core_report_generator(float_model: Any,
                           fw_report_utils: FrameworkReportUtils,
                           xquant_config: XQuantConfig) -> Dict[str, Any]:
     """
-    Collects report data by computing various metrics on the quantized model.
+    Generate report in tensorboard with a graph of the quantized model and similarity metrics that
+    have been measured when comparing to the float model (or any other two models).
+    The report also contains histograms that are collected on the baseline model (usually, the float
+    model).
 
     Args:
         float_model (Any): The original floating-point model.
@@ -40,7 +43,7 @@ def core_report_generator(float_model: Any,
         xquant_config (XQuantConfig): Configuration settings for explainable quantization.
 
     Returns:
-        Dict[str, Any]: A dictionary containing the collected metrics and report data.
+        Dict[str, Any]: A dictionary containing the collected similarity metrics and report data.
     """
 
     # Collect histograms and add them to Tensorboard.
@@ -57,10 +60,10 @@ def core_report_generator(float_model: Any,
                                                                                       custom_similarity_metrics=xquant_config.custom_similarity_metrics,
                                                                                       is_validation=True)
     similarity_metrics = {
-        OUTPUT_METRICS_REPR: repr_similarity[0],
-        OUTPUT_METRICS_VAL: val_similarity[0],
-        INTERMEDIATE_METRICS_REPR: repr_similarity[1],
-        INTERMEDIATE_METRICS_VAL: val_similarity[1]
+        OUTPUT_SIMILARITY_METRICS_REPR: repr_similarity[0],
+        OUTPUT_SIMILARITY_METRICS_VAL: val_similarity[0],
+        INTERMEDIATE_SIMILARITY_METRICS_REPR: repr_similarity[1],
+        INTERMEDIATE_SIMILARITY_METRICS_VAL: val_similarity[1]
     }
 
     # Add the quantized graph to TensorBoard for visualization.

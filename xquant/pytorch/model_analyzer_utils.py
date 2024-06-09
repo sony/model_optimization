@@ -12,25 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
-
-from functools import partial
-from typing import Dict, Callable
-from mct_quantizers.pytorch.quantize_wrapper import PytorchQuantizationWrapper
 import torch
+from mct_quantizers.pytorch.quantize_wrapper import PytorchQuantizationWrapper
 
-from model_compression_toolkit.core.pytorch.utils import set_model, get_working_device
-from xquant.common.similarity_calculator import SimilarityCalculator
+from xquant.common.model_analyzer_utils import ModelAnalyzerUtils
+from xquant.logger import Logger
 
 
-class PytorchSimilarityCalculator(SimilarityCalculator):
-    def __init__(self,
-                 dataset_utils,
-                 model_folding,
-                 similarity_functions):
-        super().__init__(dataset_utils,
-                         model_folding,
-                         similarity_functions,
-                         device=get_working_device())
+class PytorchModelAnalyzerUtils(ModelAnalyzerUtils):
 
     def get_activations(self,
                         float_model: torch.nn.Module,
@@ -60,7 +49,7 @@ class PytorchSimilarityCalculator(SimilarityCalculator):
 
         return activations_float, activations_quant, float_predictions, quant_predictions
 
-    def get_quant_compare_points(self, quantized_model:torch.nn.Module):
+    def get_quant_compare_points(self, quantized_model: torch.nn.Module):
         return [n for n, m in quantized_model.named_modules() if isinstance(m, PytorchQuantizationWrapper)]
 
     def get_float_candidate_layer(self, quant_compare_point, quantized_model):
@@ -68,5 +57,3 @@ class PytorchSimilarityCalculator(SimilarityCalculator):
 
     def get_float_layers_names(self, float_model):
         return [n for n, m in float_model.named_modules()]
-
-

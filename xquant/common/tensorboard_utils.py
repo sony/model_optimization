@@ -107,7 +107,7 @@ class TensorboardUtils:
             xquant_config (XQuantConfig): XQuant configuration.
             repr_dataset (Callable): Representative dataset to use (if needed, like in pytorch case).
         """
-        # Generate the quantized graph with metrics.
+        # Generate the quantized graph with similarity metrics.
         tb_graph = self.get_graph_for_tensorboard_display(quantized_model=quantized_model,
                                                           similarity_metrics=similarity_metrics,
                                                           xquant_config=xquant_config,

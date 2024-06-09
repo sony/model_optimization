@@ -12,30 +12,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
-#
+from typing import Any, List, Tuple, Dict
 
-from functools import partial
-
+from mct_quantizers import KerasQuantizationWrapper
+from xquant.common.model_analyzer_utils import ModelAnalyzerUtils
 import keras
-import logging
-
-from mct_quantizers.keras.quantize_wrapper import KerasQuantizationWrapper
-
-from typing import Any, Dict, Callable, List, Tuple
 import numpy as np
-import tensorflow as tf
-
-from xquant.common.similarity_calculator import SimilarityCalculator
 
 
-class KerasSimilarityCalculator(SimilarityCalculator):
-    def __init__(self,
-                 dataset_utils,
-                 model_folding,
-                 similarity_functions):
-        super().__init__(dataset_utils,
-                         model_folding,
-                         similarity_functions)
+class KerasModelAnalyzerUtils(ModelAnalyzerUtils):
 
     def get_activations(self,
                         float_model: keras.Model,

@@ -25,10 +25,10 @@ import torch.nn.functional as F
 
 import model_compression_toolkit as mct
 from mct_quantizers import PytorchQuantizationWrapper
-from xquant.common.similarity_metrics import DEFAULT_METRICS_NAMES
+from xquant.common.similarity_metrics import DEFAULT_SIMILARITY_METRICS_NAMES
 from xquant.common.xquant_config import XQuantConfig
 from xquant.pytorch.facade_xquant_report import xquant_report_pytorch_experimental
-from xquant.common.constants import OUTPUT_METRICS_REPR, OUTPUT_METRICS_VAL, INTERMEDIATE_METRICS_REPR, INTERMEDIATE_METRICS_VAL
+from xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, INTERMEDIATE_SIMILARITY_METRICS_VAL
 
 
 
@@ -79,10 +79,10 @@ class BaseTestEnd2EndPytorchXQuant(unittest.TestCase):
             self.validation_dataset,
             self.xquant_config
         )
-        self.assertIn(OUTPUT_METRICS_REPR, result)
-        self.assertEqual(len(result[OUTPUT_METRICS_REPR]), len(DEFAULT_METRICS_NAMES))
-        self.assertIn(OUTPUT_METRICS_VAL, result)
-        self.assertEqual(len(result[OUTPUT_METRICS_VAL]), len(DEFAULT_METRICS_NAMES))
+        self.assertIn(OUTPUT_SIMILARITY_METRICS_REPR, result)
+        self.assertEqual(len(result[OUTPUT_SIMILARITY_METRICS_REPR]), len(DEFAULT_SIMILARITY_METRICS_NAMES))
+        self.assertIn(OUTPUT_SIMILARITY_METRICS_VAL, result)
+        self.assertEqual(len(result[OUTPUT_SIMILARITY_METRICS_VAL]), len(DEFAULT_SIMILARITY_METRICS_NAMES))
 
     def test_intermediate_metrics(self):
         self.xquant_config.custom_similarity_metrics = None
@@ -94,16 +94,16 @@ class BaseTestEnd2EndPytorchXQuant(unittest.TestCase):
             self.xquant_config
         )
 
-        self.assertIn(INTERMEDIATE_METRICS_REPR, result)
+        self.assertIn(INTERMEDIATE_SIMILARITY_METRICS_REPR, result)
         linear_layers = [n for n,m in self.quantized_model.named_modules() if isinstance(m, PytorchQuantizationWrapper)]
 
-        self.assertIn(linear_layers[0], result[INTERMEDIATE_METRICS_REPR])
-        for k,v in result[INTERMEDIATE_METRICS_REPR].items():
-            self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES))
+        self.assertIn(linear_layers[0], result[INTERMEDIATE_SIMILARITY_METRICS_REPR])
+        for k,v in result[INTERMEDIATE_SIMILARITY_METRICS_REPR].items():
+            self.assertEqual(len(v), len(DEFAULT_SIMILARITY_METRICS_NAMES))
 
-        self.assertIn(INTERMEDIATE_METRICS_VAL, result)
-        for k,v in result[INTERMEDIATE_METRICS_VAL].items():
-            self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES))
+        self.assertIn(INTERMEDIATE_SIMILARITY_METRICS_VAL, result)
+        for k,v in result[INTERMEDIATE_SIMILARITY_METRICS_VAL].items():
+            self.assertEqual(len(v), len(DEFAULT_SIMILARITY_METRICS_NAMES))
 
     def test_custom_metric(self):
         self.xquant_config.custom_similarity_metrics = {'mae': lambda x,y: torch.nn.L1Loss()(x,y).item()}
@@ -115,13 +115,13 @@ class BaseTestEnd2EndPytorchXQuant(unittest.TestCase):
             self.xquant_config
         )
 
-        self.assertIn(OUTPUT_METRICS_REPR, result)
-        self.assertEqual(len(result[OUTPUT_METRICS_REPR]), len(DEFAULT_METRICS_NAMES) + 1)
-        self.assertIn("mae", result[OUTPUT_METRICS_REPR])
+        self.assertIn(OUTPUT_SIMILARITY_METRICS_REPR, result)
+        self.assertEqual(len(result[OUTPUT_SIMILARITY_METRICS_REPR]), len(DEFAULT_SIMILARITY_METRICS_NAMES) + 1)
+        self.assertIn("mae", result[OUTPUT_SIMILARITY_METRICS_REPR])
 
-        self.assertIn(INTERMEDIATE_METRICS_REPR, result)
-        for k,v in result[INTERMEDIATE_METRICS_REPR].items():
-            self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES)+1)
+        self.assertIn(INTERMEDIATE_SIMILARITY_METRICS_REPR, result)
+        for k,v in result[INTERMEDIATE_SIMILARITY_METRICS_REPR].items():
+            self.assertEqual(len(v), len(DEFAULT_SIMILARITY_METRICS_NAMES) + 1)
             self.assertIn("mae", v)
 
 

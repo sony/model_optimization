@@ -15,9 +15,9 @@
 
 from typing import Callable
 
+from model_compression_toolkit.constants import FOUND_TORCH
 from xquant.common.core_report_generator import core_report_generator
 from xquant import XQuantConfig
-from xquant.common.constants import FOUND_TORCH
 from xquant.logger import Logger
 
 if FOUND_TORCH:

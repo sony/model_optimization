@@ -12,15 +12,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
+from model_compression_toolkit.core.pytorch.utils import get_working_device
 
 from model_compression_toolkit.ptq.pytorch.quantization_facade import DEFAULT_PYTORCH_TPC
 from xquant.common.framework_report_utils import FrameworkReportUtils
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from xquant.common.model_folding_utils import ModelFoldingUtils
+from xquant.common.similarity_calculator import SimilarityCalculator
 from xquant.pytorch.dataset_utils import PytorchDatasetUtils
-from xquant.pytorch.similarity.similarity_calculator import PytorchSimilarityCalculator
-from xquant.pytorch.similarity.similarity_functions import PytorchSimilarityFunctions
+from xquant.pytorch.model_analyzer_utils import PytorchModelAnalyzerUtils
+from xquant.pytorch.similarity_functions import PytorchSimilarityFunctions
 from xquant.pytorch.tensorboard_utils import PytorchTensorboardUtils
 
 
@@ -38,9 +40,11 @@ class PytorchReportUtils(FrameworkReportUtils):
                                           fw_impl=fw_impl,
                                           fw_default_tpc=DEFAULT_PYTORCH_TPC)
 
-        similarity_calculator = PytorchSimilarityCalculator(dataset_utils=dataset_utils,
-                                                            model_folding=model_folding,
-                                                            similarity_functions=PytorchSimilarityFunctions())
+        similarity_calculator = SimilarityCalculator(dataset_utils=dataset_utils,
+                                                     model_folding=model_folding,
+                                                     similarity_functions=PytorchSimilarityFunctions(),
+                                                     model_analyzer_utils=PytorchModelAnalyzerUtils(),
+                                                     device=get_working_device())
 
         tb_utils = PytorchTensorboardUtils(report_dir=report_dir,
                                            fw_impl=fw_impl,

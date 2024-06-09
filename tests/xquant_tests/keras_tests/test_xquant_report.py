@@ -26,9 +26,9 @@ import tensorflow as tf
 import keras
 import numpy as np
 
-from xquant.common.constants import OUTPUT_METRICS_REPR, OUTPUT_METRICS_VAL, INTERMEDIATE_METRICS_REPR, \
-    INTERMEDIATE_METRICS_VAL
-from xquant.common.similarity_metrics import DEFAULT_METRICS_NAMES
+from xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, \
+    INTERMEDIATE_SIMILARITY_METRICS_VAL
+from xquant.common.similarity_metrics import DEFAULT_SIMILARITY_METRICS_NAMES
 from xquant.keras.facade_xquant_report import xquant_report_keras_experimental
 
 
@@ -74,10 +74,10 @@ class BaseTestEnd2EndKerasXQuant(unittest.TestCase):
             self.xquant_config
         )
 
-        self.assertIn(OUTPUT_METRICS_REPR, result)
-        self.assertEqual(len(result[OUTPUT_METRICS_REPR]), len(DEFAULT_METRICS_NAMES))
-        self.assertIn(OUTPUT_METRICS_VAL, result)
-        self.assertEqual(len(result[OUTPUT_METRICS_VAL]), len(DEFAULT_METRICS_NAMES))
+        self.assertIn(OUTPUT_SIMILARITY_METRICS_REPR, result)
+        self.assertEqual(len(result[OUTPUT_SIMILARITY_METRICS_REPR]), len(DEFAULT_SIMILARITY_METRICS_NAMES))
+        self.assertIn(OUTPUT_SIMILARITY_METRICS_VAL, result)
+        self.assertEqual(len(result[OUTPUT_SIMILARITY_METRICS_VAL]), len(DEFAULT_SIMILARITY_METRICS_NAMES))
 
     def test_custom_metric(self):
         self.xquant_config.custom_similarity_metrics = {
@@ -90,13 +90,13 @@ class BaseTestEnd2EndKerasXQuant(unittest.TestCase):
             self.xquant_config
         )
 
-        self.assertIn(OUTPUT_METRICS_REPR, result)
-        self.assertEqual(len(result[OUTPUT_METRICS_REPR]), len(DEFAULT_METRICS_NAMES) + 1)
-        self.assertIn("mae", result[OUTPUT_METRICS_REPR])
+        self.assertIn(OUTPUT_SIMILARITY_METRICS_REPR, result)
+        self.assertEqual(len(result[OUTPUT_SIMILARITY_METRICS_REPR]), len(DEFAULT_SIMILARITY_METRICS_NAMES) + 1)
+        self.assertIn("mae", result[OUTPUT_SIMILARITY_METRICS_REPR])
 
-        self.assertIn(INTERMEDIATE_METRICS_REPR, result)
-        for k, v in result[INTERMEDIATE_METRICS_REPR].items():
-            self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES) + 1)
+        self.assertIn(INTERMEDIATE_SIMILARITY_METRICS_REPR, result)
+        for k, v in result[INTERMEDIATE_SIMILARITY_METRICS_REPR].items():
+            self.assertEqual(len(v), len(DEFAULT_SIMILARITY_METRICS_NAMES) + 1)
             self.assertIn("mae", v)
 
     def test_intermediate_metrics(self):
@@ -109,16 +109,16 @@ class BaseTestEnd2EndKerasXQuant(unittest.TestCase):
             self.xquant_config
         )
 
-        self.assertIn(INTERMEDIATE_METRICS_REPR, result)
+        self.assertIn(INTERMEDIATE_SIMILARITY_METRICS_REPR, result)
         linear_layers = [l.name for l in self.quantized_model.layers if isinstance(l, KerasQuantizationWrapper)]
-        self.assertIn(linear_layers[0], result[INTERMEDIATE_METRICS_REPR])
+        self.assertIn(linear_layers[0], result[INTERMEDIATE_SIMILARITY_METRICS_REPR])
 
-        for k, v in result[INTERMEDIATE_METRICS_REPR].items():
-            self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES))
+        for k, v in result[INTERMEDIATE_SIMILARITY_METRICS_REPR].items():
+            self.assertEqual(len(v), len(DEFAULT_SIMILARITY_METRICS_NAMES))
 
-        self.assertIn(INTERMEDIATE_METRICS_VAL, result)
-        for k, v in result[INTERMEDIATE_METRICS_VAL].items():
-            self.assertEqual(len(v), len(DEFAULT_METRICS_NAMES))
+        self.assertIn(INTERMEDIATE_SIMILARITY_METRICS_VAL, result)
+        for k, v in result[INTERMEDIATE_SIMILARITY_METRICS_VAL].items():
+            self.assertEqual(len(v), len(DEFAULT_SIMILARITY_METRICS_NAMES))
 
 
 # Test with Conv2D without BatchNormalization and without Activation
