@@ -65,10 +65,10 @@ class ReshapeWithStaticShapes(common.BaseSubstitution):
 
         # When a "reshape" is called with multiple arguments (e.g. x.reshape(-1, channels, height, width)
         # this substitution converts it x.reshape((-1, channels, height, width)), so need to update the
-        # tensor_input_indices attribute.
-        # scalar argument's shape is [1] so remove those indices from tensor_input_indices
+        # tensor_input_allocs attribute.
+        # scalar argument's shape is [1] so remove those indices from tensor_input_allocs
         # node.input_shape example: [[1, 32, 4, 32], [1], [1], [1]]
-        node.tensor_input_indices = node.tensor_input_indices[:sum([i != [1] for i in node.input_shape])]
+        node.tensor_input_allocs = node.tensor_input_allocs[:sum([i != [1] for i in node.input_shape])]
 
         # modify the node input info
         node.input_shape = [node.input_shape[0]]
