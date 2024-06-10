@@ -69,11 +69,6 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
             The function returns a list for compatibility reasons.
         """
 
-        # Check if all target nodes layers types are supported.
-        if any([not DEFAULT_PYTORCH_INFO.is_kernel_op(target_node.type)
-                for target_node in self.hessian_request.target_nodes]):  # pragma: no cover
-            Logger.critical(f"Not all layers in the given Hessian request support Hessian information computation.")
-
         # Float model
         model, _ = FloatPyTorchModelBuilder(graph=self.graph).build_model()
 

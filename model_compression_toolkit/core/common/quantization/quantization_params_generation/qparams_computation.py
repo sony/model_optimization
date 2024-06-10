@@ -29,7 +29,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.logger import Logger
 
 
-def _collect_nodes_for_hmse(nodes_list: List[BaseNode], graph: Graph):
+def _collect_nodes_for_hmse(nodes_list: List[BaseNode], graph: Graph) -> List[BaseNode]:
     """
     Collects nodes that are compatiable for parameters selection search using HMSE,
     that is, have a kernel attribute that is configured for HMSE error method.

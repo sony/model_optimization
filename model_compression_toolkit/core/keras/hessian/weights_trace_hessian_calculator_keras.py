@@ -15,9 +15,10 @@
 
 import numpy as np
 import tensorflow as tf
+from tqdm import tqdm
 from typing import List
 
-from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_HESSIAN_ITER, HESSIAN_COMP_TOLERANCE, HESSIAN_EPS
+from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_HESSIAN_ITER, HESSIAN_COMP_TOLERANCE
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianInfoGranularity
 from model_compression_toolkit.core.keras.back2framework.float_model_builder import FloatKerasModelBuilder
@@ -69,33 +70,11 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
 
         """
 
-        # Check if all target nodes layers types are supported.
-        if any([not DEFAULT_KERAS_INFO.is_kernel_op(target_node.type)
-                for target_node in self.hessian_request.target_nodes]):  # pragma: no cover
-            Logger.critical(f"Not all layers in the given Hessian request support Hessian information computation.")
-
         # Construct the Keras float model for inference
         model, _ = FloatKerasModelBuilder(graph=self.graph).build_model()
 
-        # Get the weight attributes for the target node type
-        weight_attributes = DEFAULT_KERAS_INFO.get_kernel_op_attributes(target_node.type)
-
-        # Get the weight tensor for the target node
-        if len(weight_attributes) != 1:  # pragma: no cover
-            Logger.critical(f"Hessian-based scoring with respect to weights is currently supported only for nodes with "
-                            f"a single weight attribute. Found {len(weight_attributes)} attributes.")
-
-        weight_tensor = getattr(model.get_layer(target_node.name), weight_attributes[0])
-
-        # Get the output channel index (needed for HessianInfoGranularity.PER_OUTPUT_CHANNEL case)
-        output_channel_axis, _ = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(target_node.type)
-
-        # Get number of scores that should be calculated by the granularity.
-        num_of_scores = self._get_num_scores_by_granularity(weight_tensor,
-                                                            output_channel_axis)
-
         # Initiate a gradient tape for automatic differentiation
-        with tf.GradientTape(persistent=True) as tape:
+        with (tf.GradientTape(persistent=True) as tape):
             # Perform a forward pass (inference) to get the output, while watching
             # the input tensor for gradient computation
             tape.watch(self.input_images)
@@ -104,55 +83,97 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
             # Combine outputs if the model returns multiple output tensors
             output = self._concat_tensors(outputs)
 
-            approximation_per_iteration = []
-            for j in range(self.num_iterations_for_approximation):  # Approximation iterations
+            ipts_hessian_trace_approx = [tf.Variable([0.0], dtype=tf.float32, trainable=True)
+                                         for _ in range(len(self.hessian_request.target_nodes))]
+
+            prev_mean_results = None
+            tensors_original_shape = []
+            for j in tqdm(range(self.num_iterations_for_approximation)):  # Approximation iterations
                 # Getting a random vector with normal distribution and the same shape as the model output
                 v = tf.random.normal(shape=output.shape)
                 f_v = tf.reduce_sum(v * output)
 
-                # Stop recording operations for automatic differentiation
+                for i, ipt_node in enumerate(self.hessian_request.target_nodes):  # Per Interest point weights tensor
+
+                    # Check if the target node's layer type is supported.
+                    if not DEFAULT_KERAS_INFO.is_kernel_op(ipt_node.type):
+                        Logger.critical(f"Hessian information with respect to weights is not supported for "
+                                        f"{ipt_node.type} layers.")  # pragma: no cover
+
+                    # Get the weight attributes for the target node type
+                    weight_attributes = DEFAULT_KERAS_INFO.get_kernel_op_attributes(ipt_node.type)
+
+                    # Get the weight tensor for the target node
+                    if len(weight_attributes) != 1:  # pragma: no cover
+                        Logger.critical(
+                            f"Hessian-based scoring with respect to weights is currently supported only for nodes with "
+                            f"a single weight attribute. Found {len(weight_attributes)} attributes.")
+
+                    weight_tensor = getattr(model.get_layer(ipt_node.name), weight_attributes[0])
+
+                    if j == 0:
+                        # On the first iteration we store the weight_tensor shape for later reshaping the results
+                        # back if necessary
+                        tensors_original_shape.append(weight_tensor.shape)
+
+                    # Get the output channel index (needed for HessianInfoGranularity.PER_OUTPUT_CHANNEL case)
+                    output_channel_axis, _ = DEFAULT_KERAS_INFO.kernel_channels_mapping.get(ipt_node.type)
+
+                    # Get number of scores that should be calculated by the granularity.
+                    num_of_scores = self._get_num_scores_by_granularity(weight_tensor,
+                                                                        output_channel_axis)
+
+                    # Stop recording operations for automatic differentiation
+                    with tape.stop_recording():
+                        # Compute gradients of f_v with respect to the weights
+                        gradients = tape.gradient(f_v, weight_tensor)
+                        gradients = self._reshape_gradients(gradients,
+                                                            output_channel_axis,
+                                                            num_of_scores)
+
+                        approx = tf.reduce_sum(tf.pow(gradients, 2.0), axis=1)
+
+                        # Update node Hessian approximation mean over random iterations
+                        ipts_hessian_trace_approx[i] = (j * ipts_hessian_trace_approx[i] + approx) / (j + 1)
+
+                        # Free gradients
+                        del gradients
+
+                # If the change to the mean approximation is insignificant (to all outputs)
+                # we stop the calculation.
                 with tape.stop_recording():
-                    # Compute gradients of f_v with respect to the weights
-                    gradients = tape.gradient(f_v, weight_tensor)
-                    gradients = self._reshape_gradients(gradients,
-                                                        output_channel_axis,
-                                                        num_of_scores)
-                    approx = tf.reduce_sum(tf.pow(gradients, 2.0), axis=1)
-
-                    # Free gradients
-                    del gradients
-
-                    # If the change to the mean approximation is insignificant (to all outputs)
-                    # we stop the calculation.
                     if j > MIN_HESSIAN_ITER:
-                        # Compute new means and deltas
-                        new_mean = tf.reduce_mean(tf.stack(approximation_per_iteration + approx), axis=0)
-                        delta = new_mean - tf.reduce_mean(tf.stack(approximation_per_iteration), axis=0)
-                        is_converged = np.all(np.abs(delta) / (np.abs(new_mean) + HESSIAN_EPS) < HESSIAN_COMP_TOLERANCE)
-                        if is_converged:
-                            approximation_per_iteration.append(approx)
-                            break
+                        if prev_mean_results is not None:
+                            new_mean_res = \
+                                tf.convert_to_tensor([tf.reduce_mean(res) for res in ipts_hessian_trace_approx])
+                            relative_delta_per_node = (tf.abs(new_mean_res - prev_mean_results) /
+                                                       (tf.abs(new_mean_res) + 1e-6))
+                            max_delta = tf.reduce_max(relative_delta_per_node)
+                            if max_delta < HESSIAN_COMP_TOLERANCE:
+                                break
 
-                    approximation_per_iteration.append(approx)
-
-            # Compute the mean of the approximations
-            final_approx = tf.reduce_mean(tf.stack(approximation_per_iteration), axis=0)
+                prev_mean_results = tf.convert_to_tensor([tf.reduce_mean(res) for res in ipts_hessian_trace_approx])
 
         # Free gradient tape
         del tape
 
         if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
-            if final_approx.shape != (1,):  # pragma: no cover
-                Logger.critical(f"For HessianInfoGranularity.PER_TENSOR, the expected score shape is (1,), but found {final_approx.shape}.")
+            for final_approx in ipts_hessian_trace_approx:
+                if final_approx.shape != (1,):  # pragma: no cover
+                    Logger.critical(f"For HessianInfoGranularity.PER_TENSOR, the expected score shape is (1,), "
+                                    f"but found {final_approx.shape}.")
         elif self.hessian_request.granularity == HessianInfoGranularity.PER_ELEMENT:
             # Reshaping the scores to the original weight shape
-            final_approx = tf.reshape(final_approx, weight_tensor.shape)
+            ipts_hessian_trace_approx = \
+                [tf.reshape(final_approx, s) for final_approx, s in
+                 zip(ipts_hessian_trace_approx, tensors_original_shape)]
 
         # Add a batch axis to the Hessian approximation tensor (to align with the expected returned shape)
         # We assume per-image computation, so the batch axis size is 1.
-        final_approx = final_approx[np.newaxis, ...]
+        final_approx = [r_final_approx[np.newaxis, ...].numpy()
+                        for r_final_approx in ipts_hessian_trace_approx]
 
-        return [final_approx.numpy()]
+        return final_approx
 
     def _reshape_gradients(self,
                            gradients: tf.Tensor,
