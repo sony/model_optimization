@@ -70,10 +70,10 @@ class KerasModelAnalyzerUtils(ModelAnalyzerUtils):
 
             # Create a new model that outputs the intermediate and final layer outputs
             intermediate_layer_model = keras.Model(inputs=model.input, outputs=_model_outputs)
-            predictions = intermediate_layer_model.predict(data)
+            predictions = intermediate_layer_model(data)
 
             # Map layer names to their corresponding activations and return with the output predictions
-            return {layer_name: predictions[i] for i, layer_name in enumerate(layer_names)}, predictions[-1]
+            return {layer_name: predictions[i].numpy() for i, layer_name in enumerate(layer_names)}, predictions[-1].numpy()
 
         # Compute activations for the quantized model
         quant_activations, quant_predictions = _compute_activations(quantized_model,
