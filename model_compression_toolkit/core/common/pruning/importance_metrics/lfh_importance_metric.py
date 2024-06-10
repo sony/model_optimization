@@ -135,7 +135,7 @@ class LFHImportanceMetric(BaseImportanceMetric):
             nodes_scores.append(_scores_for_node)
 
         # Average and map scores to nodes.
-        self._entry_node_to_hessian_score = {node: np.mean(scores[0], axis=0) for node, scores in zip(entry_nodes, nodes_scores)}
+        self._entry_node_to_hessian_score = {node: np.mean(scores[0], axis=0).flatten() for node, scores in zip(entry_nodes, nodes_scores)}
 
         self._entry_node_count_oc_nparams = self._count_oc_nparams(entry_nodes=entry_nodes)
         _entry_node_l2_oc_norm = self._get_squaredl2norm(entry_nodes=entry_nodes)
