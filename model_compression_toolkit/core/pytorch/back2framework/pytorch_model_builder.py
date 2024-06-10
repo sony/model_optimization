@@ -66,7 +66,7 @@ def _build_input_tensors_list(node: BaseNode,
     return input_tensors
 
 
-def _merge_inputs(_node: BaseNode, input_tensors: List, op_call_args: List,
+def _merge_inputs(_node: BaseNode, input_tensors: List, op_call_args: List, op_call_kwargs: Dict,
                   tensor_input_indices: List = None) -> List:
     """
     Merge input tensors list with positional weights and op_call_args, according to correct order.
@@ -75,6 +75,8 @@ def _merge_inputs(_node: BaseNode, input_tensors: List, op_call_args: List,
         _node: The node the inputs are for.
         input_tensors: activation input tensors to node.
         op_call_args: framework node call args.
+        op_call_kwargs: framework node call kwargs.
+        tensor_input_indices: List of input indices to node.
 
     Returns:
         Combined list of input_tensors and op_call_args.
@@ -86,11 +88,17 @@ def _merge_inputs(_node: BaseNode, input_tensors: List, op_call_args: List,
         assert len(tensor_input_indices) == len(input_tensors), \
             f'Mismatch between input tensors ({len(tensor_input_indices)}) and indices {len(input_tensors)}'
         for i, t in zip(tensor_input_indices, input_tensors):
-            _input_list.insert(i, t)
+            if isinstance(i, str):
+                if i in op_call_kwargs:
+                    a=1
+                assert i not in op_call_kwargs
+                op_call_kwargs.update({i: t})
+            else:
+                _input_list.insert(i, t)
     else:
         _input_list = input_tensors + op_call_args
 
-    return _input_list
+    return _input_list, op_call_kwargs
 
 
 def _run_operation(n: BaseNode,
@@ -132,7 +140,8 @@ def _run_operation(n: BaseNode,
     if isinstance(n, FunctionalNode) and n.inputs_as_list:
         out_tensors_of_n_float = op_func(input_tensors, *op_call_args, **functional_kwargs)
     else:
-        merged_inputs = _merge_inputs(n, input_tensors, op_call_args, tensor_input_indices=_tensor_input_indices)
+        merged_inputs, functional_kwargs = _merge_inputs(n, input_tensors, op_call_args, functional_kwargs.copy(),
+                                                         tensor_input_indices=_tensor_input_indices)
         out_tensors_of_n_float = op_func(*merged_inputs, **functional_kwargs)
 
     # Add a fake quant node if the node has an activation threshold.

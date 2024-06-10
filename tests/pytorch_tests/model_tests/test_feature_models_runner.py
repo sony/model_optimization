@@ -90,7 +90,8 @@ from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test impo
 from tests.pytorch_tests.model_tests.feature_models.metadata_test import MetadataTest
 from tests.pytorch_tests.model_tests.feature_models.tpc_test import TpcTest
 from tests.pytorch_tests.model_tests.feature_models.const_representation_test import ConstRepresentationTest, \
-    ConstRepresentationMultiInputTest, ConstRepresentationLinearLayerTest, ConstRepresentationGetIndexTest
+    ConstRepresentationMultiInputTest, ConstRepresentationLinearLayerTest, ConstRepresentationGetIndexTest, \
+    ConstRepresentationCodeTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from tests.pytorch_tests.model_tests.feature_models.const_quantization_test import ConstQuantizationTest, \
     AdvancedConstQuantizationTest
@@ -269,7 +270,9 @@ class FeatureModelsTestRunner(unittest.TestCase):
                                                enable_weights_quantization=enable_weights_quantization).run_test()
             ConstRepresentationLinearLayerTest(self, func=nn.ConvTranspose2d(16, 16, 1),
                                                const=c_img, enable_weights_quantization=enable_weights_quantization).run_test()
-    
+
+        ConstRepresentationCodeTest(self).run_test()
+
     def test_permute_substitution(self):
         """
         This test checks the permute substitution feature

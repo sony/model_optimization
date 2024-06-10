@@ -140,7 +140,7 @@ def nodes_builder(model: GraphModule,
                     weights.update({i: consts_dict[input_node]})
 
                 tensor_meta = input_node.meta
-                if tensor_meta[TYPE] == torch.Tensor:
+                if tensor_meta[TYPE] in [torch.Tensor, torch.nn.parameter.Parameter]:
                     input_shape += [list(tensor_meta[TENSOR_META].shape)]
                 elif tensor_meta[TYPE] == tuple:
                     input_shape += [list(n.shape) for n in tensor_meta[TENSOR_META]]
@@ -159,8 +159,11 @@ def nodes_builder(model: GraphModule,
 
         # filter Nodes from framework attributes, we replace these attributes with nx graph nodes
         framework_attr_filtered = {}
+        framework_attr_nodes = {}
         for k, v in framework_attr.items():
-            if not isinstance(v, torch.fx.node.Node):
+            if isinstance(v, torch.fx.node.Node):
+                framework_attr_nodes[k] = v
+            else:
                 framework_attr_filtered[k] = v
         framework_attr = framework_attr_filtered
 
@@ -186,6 +189,9 @@ def nodes_builder(model: GraphModule,
                     for i, arg in enumerate(node.args):
                         if arg == in_node:
                             tensor_input_index.append(i)
+                    for k, arg in framework_attr_nodes.items():
+                        if arg == in_node:
+                            tensor_input_index.append(k)
 
             # remove torch.fx.node.Node from inputs to graph_node_type
             op_call_args = [arg for arg in op_call_args if not isinstance(arg, Node)]
