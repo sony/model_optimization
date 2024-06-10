@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+from typing import Union, Tuple, Dict
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.constants import MIN_THRESHOLD, RANGE_MIN, RANGE_MAX, NUM_QPARAM_HESSIAN_SAMPLES
@@ -24,6 +25,9 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import get_tensor_max, \
     get_tensor_min
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit.core.common.similarity_analyzer import compute_mse
+from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import uniform_quantize_tensor
+
 
 def uniform_selection_tensor(tensor_data: np.ndarray,
                              p: int,
@@ -35,7 +39,8 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
                              quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE,
                              node=None,
                              hessian_info_service: HessianInfoService = None,
-                             num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> dict:
+                             num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES,
+                             ) -> Tuple[Dict[str, np.ndarray], int]:
     """
     Compute the optimal quantization range based on the provided QuantizationErrorMethod
     to uniformly quantize the tensor.
@@ -46,7 +51,7 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
         p: p-norm to use for the Lp-norm distance.
         n_bits: Number of bits to quantize the tensor.
         per_channel: Whether the quantization should be per-channel or not.
-        channel_axis: Output channel index.
+        channel_axis: Output channel index. if None, search for best axis.
         n_iter: Number of iterations to search for the optimal threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small (not used for this method).
         quant_error_method: an error function to optimize the range parameters' selection accordingly.
@@ -56,27 +61,48 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
 
     Returns:
         Optimal quantization range to quantize the tensor uniformly.
+        Selected quantization channel axis.
     """
-    tensor_min = get_tensor_min(tensor_data, per_channel, channel_axis)
-    tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis, n_bits, is_uniform_quantization=True)
-
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
-        mm = tensor_min, tensor_max
+        if channel_axis is None and per_channel:
+            total_error_list = []
+            th_list = []
+            for _axis in range(len(tensor_data.shape)):
+                tensor_min = get_tensor_min(tensor_data, per_channel, _axis)
+                tensor_max = get_tensor_max(tensor_data, per_channel, _axis, n_bits, is_uniform_quantization=True)
+                q_tensor_data = uniform_quantize_tensor(tensor_data, tensor_min, tensor_max, n_bits)
+                total_error_list.append(compute_mse(tensor_data, q_tensor_data, norm=True))
+                th_list.append((tensor_min, tensor_max))
+            channel_axis = np.argmin(total_error_list)
+            mm = th_list[channel_axis]
+        else:
+            tensor_min = get_tensor_min(tensor_data, per_channel, channel_axis)
+            tensor_max = get_tensor_max(tensor_data, per_channel, channel_axis, n_bits, is_uniform_quantization=True)
+            mm = tensor_min, tensor_max
     else:
         axis = -1 if per_channel else None
         error_function = get_threshold_selection_tensor_error_function(QuantizationMethod.UNIFORM, quant_error_method,
                                                                        p, axis=axis, norm=False, node=node,
                                                                        hessian_info_service=hessian_info_service,
                                                                        num_hessian_samples=num_hessian_samples)
-        mm = qparams_uniform_selection_tensor_search(error_function,
-                                                     tensor_data,
-                                                     tensor_min,
-                                                     tensor_max,
-                                                     n_bits,
-                                                     per_channel,
-                                                     channel_axis)
+        mm, channel_axis = qparams_uniform_selection_tensor_search(error_function,
+                                                                   tensor_data,
+                                                                   n_bits,
+                                                                   per_channel,
+                                                                   channel_axis)
+    # In case the tensor\axis has a single value, then min==max, so need to adjust either min or max to zero.
+    if not isinstance(mm[0], np.ndarray):
+        if mm[0] > 0:
+            mm = (np.float32(0).astype(mm[0].dtype), mm[1])
+        if mm[1] < 0:
+            mm = (mm[0], np.float32(0).astype(mm[1].dtype))
+    else:
+        adj_min_to_zero = np.logical_and(mm[1] == mm[0], mm[0] > 0)
+        adj_max_to_zero = np.logical_and(mm[1] == mm[0], mm[1] < 0)
+        mm[0][adj_min_to_zero] = 0
+        mm[1][adj_max_to_zero] = 0
     return {RANGE_MIN: mm[0],
-            RANGE_MAX: mm[1]}
+            RANGE_MAX: mm[1]}, channel_axis
 
 
 def uniform_selection_histogram(bins: np.ndarray,

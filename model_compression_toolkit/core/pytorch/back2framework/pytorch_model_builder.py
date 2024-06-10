@@ -39,20 +39,16 @@ from mct_quantizers import PytorchQuantizationWrapper
 def _build_input_tensors_list(node: BaseNode,
                               graph: Graph,
                               inputs: Tuple[Any],
-                              node_to_output_tensors_dict: Dict[BaseNode, List],
-                              is_op_quantize_wrapper: bool) -> List[List]:
+                              node_to_output_tensors_dict: Dict[BaseNode, List]) -> List[List]:
     """
     Given a node, build a list of input tensors the node gets. The list is built based on the
-    node's incoming edges, previous nodes' output tensors and the node's positional weights.
-    Positional weights aren't used if the node's op is PytorchQuantizationWrapper, since it's
-    positional weights are already in the wrapper.
+    node's incoming edges, previous nodes' output tensors.
 
     Args:
         node: Node to build its input tensors list.
         graph: Graph the node is in.
         inputs: list of input tensors to model.
         node_to_output_tensors_dict: A dictionary from a node to its output tensors.
-        is_op_quantize_wrapper: Whether the func_op is a PytorchQuantizationWrapper or not.
 
     Returns:
         A list of the node's input tensors.
@@ -67,35 +63,30 @@ def _build_input_tensors_list(node: BaseNode,
             _input_tensors = node_to_output_tensors_dict[ie.source_node]
             input_tensors.append(_input_tensors)
         input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
-        input_tensors = node.insert_positional_weights_to_input_list(input_tensors)
-        # convert inputs from positional weights (numpy arrays) to tensors. Must handle each element in the
-        # list separately, because in FX the tensors are FX objects and fail to_torch_tensor
-        input_tensors = [to_torch_tensor(t, numpy_type=t.dtype) if isinstance(t, np.ndarray) else t
-                         for t in input_tensors]
     return input_tensors
 
 
 def _merge_inputs(_node: BaseNode, input_tensors: List, op_call_args: List,
-                  is_op_quantize_wrapper: bool) -> List:
+                  tensor_input_indices: List = None) -> List:
     """
-    Merge input tensors list with op_call_args, according to correct order.
+    Merge input tensors list with positional weights and op_call_args, according to correct order.
 
     Args:
         _node: The node the inputs are for.
         input_tensors: activation input tensors to node.
         op_call_args: framework node call args.
-        is_op_quantize_wrapper: Whether the func_op is a PytorchQuantizationWrapper or not.
+
     Returns:
         Combined list of input_tensors and op_call_args.
     """
     if isinstance(_node, FunctionalNode) and _node.tensor_input_indices:
         _input_list = op_call_args.copy()
-        if is_op_quantize_wrapper:
-            _input_list = input_tensors + _input_list
-        else:
-            assert len(_node.tensor_input_indices) == len(input_tensors), 'Mismatch between input tensors and indices'
-            for i, t in zip(_node.tensor_input_indices, input_tensors):
-                _input_list.insert(i, t)
+        if tensor_input_indices is None:
+            tensor_input_indices = _node.tensor_input_indices
+        assert len(tensor_input_indices) == len(input_tensors), \
+            f'Mismatch between input tensors ({len(tensor_input_indices)}) and indices {len(input_tensors)}'
+        for i, t in zip(tensor_input_indices, input_tensors):
+            _input_list.insert(i, t)
     else:
         _input_list = input_tensors + op_call_args
 
@@ -126,10 +117,22 @@ def _run_operation(n: BaseNode,
     op_call_args = n.op_call_args if isinstance(n, FunctionalNode) else []
     functional_kwargs = n.op_call_kwargs if isinstance(n, FunctionalNode) else {}
 
+    if not (isinstance(n, FunctionalNode) and isinstance(op_func, PytorchQuantizationWrapper)):
+        # Insert positional weights only when not a quantized functional node, because quantized functional nodes
+        # insert the quantized weights in the wrapper.
+        input_tensors = n.insert_positional_weights_to_input_list(input_tensors)
+        # convert inputs from positional weights (numpy arrays) to tensors. Must handle each element in the
+        # list separately, because in FX the tensors are FX objects and fail to_torch_tensor
+        input_tensors = [to_torch_tensor(t, numpy_type=t.dtype) if isinstance(t, np.ndarray) else t
+                         for t in input_tensors]
+        _tensor_input_indices = None
+    else:
+        _tensor_input_indices = [i for i in n.tensor_input_indices if i not in n.weights]
+
     if isinstance(n, FunctionalNode) and n.inputs_as_list:
         out_tensors_of_n_float = op_func(input_tensors, *op_call_args, **functional_kwargs)
     else:
-        merged_inputs = _merge_inputs(n, input_tensors, op_call_args, isinstance(op_func, PytorchQuantizationWrapper))
+        merged_inputs = _merge_inputs(n, input_tensors, op_call_args, tensor_input_indices=_tensor_input_indices)
         out_tensors_of_n_float = op_func(*merged_inputs, **functional_kwargs)
 
     # Add a fake quant node if the node has an activation threshold.
@@ -295,8 +298,7 @@ class PytorchModel(torch.nn.Module):
             input_tensors = _build_input_tensors_list(node,
                                                       self.graph,
                                                       args,
-                                                      node_to_output_tensors_dict,
-                                                      isinstance(op_func, PytorchQuantizationWrapper))
+                                                      node_to_output_tensors_dict)
             use_activation_quantization, activation_quantization_fn = self._get_activation_quantization_fn(node)
 
             # Run node operation and fetch outputs
