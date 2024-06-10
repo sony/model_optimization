@@ -390,4 +390,4 @@ class HessianInfoService:
         Returns: A list with split batch into individual results.
 
         """
-        return [t[i] for i in range(t.shape[0])]
+        return [t[i:i+1, :] for i in range(t.shape[0])]
