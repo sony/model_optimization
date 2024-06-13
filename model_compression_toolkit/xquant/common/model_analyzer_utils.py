@@ -47,7 +47,7 @@ class ModelAnalyzer(ABC):
                 - Predictions from the float model.
                 - Predictions from the quantized model.
         """
-        Logger.critical("This method should be implemented by the framework-specific ModelAnalyzerUtils.")
+        Logger.critical("This method should be implemented by the framework-specific ModelAnalyzer.")  # pragma: no cover
 
 
     @abstractmethod
@@ -66,7 +66,7 @@ class ModelAnalyzer(ABC):
         Returns:
             List[str]: Names of the layers wrapped with the quantization wrapper.
         """
-        Logger.critical("This method should be implemented by the framework-specific ModelAnalyzerUtils.")
+        Logger.critical("This method should be implemented by the framework-specific ModelAnalyzer.")  # pragma: no cover
 
 
     @abstractmethod
@@ -83,7 +83,7 @@ class ModelAnalyzer(ABC):
         Returns:
             str: The name of the corresponding layer in the float model.
         """
-        Logger.critical("This method should be implemented by the framework-specific ModelAnalyzerUtils.")
+        Logger.critical("This method should be implemented by the framework-specific ModelAnalyzer.")  # pragma: no cover
 
     @abstractmethod
     def extract_float_layer_names(self, float_model: Any) -> List[str]:
@@ -96,6 +96,6 @@ class ModelAnalyzer(ABC):
         Returns:
             List[str]: Names of all layers in the float model.
         """
-        Logger.critical("This method should be implemented by the framework-specific ModelAnalyzerUtils.")
+        Logger.critical("This method should be implemented by the framework-specific ModelAnalyzer.")  # pragma: no cover
 
 

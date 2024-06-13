@@ -85,17 +85,16 @@ class ModelFoldingUtils:
         Returns:
             The folded graph.
         """
-        """ 
-        Consider simplifying this function by extracting relevant parts to a separate method in MCT.
-
-        Issues:
-        1. The quantization config affects how the optimized graph looks (e.g., collapsing).
-        2. The back2fw function requires quantization info even for float models.
-        
-        Future Considerations:
-        - Remove quantization config parts related to graph optimizations.
-        - Update back2fw to handle float models without needing quantization info.
-        """
+        # TODO:
+        # Consider simplifying graph_preparation_runner by extracting relevant parts to a separate method in MCT.
+        #
+        # Issues:
+        # 1. The quantization config affects how the optimized graph looks (e.g., collapsing).
+        # 2. The back2fw function requires quantization info even for float models.
+        #
+        # Future Considerations:
+        # - Remove quantization config parts related to graph optimizations.
+        # - Update back2fw to handle float models without needing quantization info.
         graph = graph_preparation_runner(in_model=model,
                                          representative_data_gen=repr_dataset,
                                          fw_impl=self.fw_impl,

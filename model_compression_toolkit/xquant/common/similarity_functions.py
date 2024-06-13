@@ -36,7 +36,7 @@ class SimilarityFunctions:
         Returns:
             float: The computed MSE value.
         """
-        raise NotImplemented
+        raise NotImplemented  # pragma: no cover
 
     @staticmethod
     def compute_cs(x: Any, y: Any) -> float:
@@ -50,7 +50,7 @@ class SimilarityFunctions:
         Returns:
             float: The computed CS value.
         """
-        raise NotImplemented
+        raise NotImplemented  # pragma: no cover
 
     @staticmethod
     def compute_sqnr(x: Any, y: Any) -> float:
@@ -64,7 +64,7 @@ class SimilarityFunctions:
         Returns:
             float: The computed SQNR value.
         """
-        raise NotImplemented
+        raise NotImplemented  # pragma: no cover
 
     def get_default_similarity_metrics(self) -> Dict[str, Callable]:
         """

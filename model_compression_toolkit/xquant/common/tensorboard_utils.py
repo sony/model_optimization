@@ -71,7 +71,7 @@ class TensorboardUtils:
         Returns:
             Graph: The generated graph for Tensorboard display.
         """
-        Logger.critical("This method should be implemented by the framework-specific TensorboardUtils.")
+        Logger.critical("This method should be implemented by the framework-specific TensorboardUtils.") # pragma: no cover
 
     def add_histograms_to_tensorboard(self,
                                       model: Any,

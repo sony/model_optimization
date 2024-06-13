@@ -39,5 +39,5 @@ class DatasetUtils:
             Generator to use for retrieving the dataset inputs.
         """
 
-        Logger.critical("This method should be implemented by the framework-specific DatasetUtils.")
+        Logger.critical("This method should be implemented by the framework-specific DatasetUtils.")  # pragma: no cover
 
