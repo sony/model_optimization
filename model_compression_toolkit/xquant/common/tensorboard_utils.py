@@ -18,15 +18,12 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 
 
-from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 from model_compression_toolkit.xquant.common.constants import TENSORBOARD_DEFAULT_TAG
-from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.logger import Logger
 
 
 from typing import Any, Dict, Callable
-from tqdm import tqdm
 
 
 class TensorboardUtils:
@@ -37,7 +34,6 @@ class TensorboardUtils:
 
     def __init__(self,
                  report_dir: str,
-                 model_folding_utils: ModelFoldingUtils,
                  fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation):
         """
@@ -45,13 +41,11 @@ class TensorboardUtils:
 
         Args:
             report_dir (str): Directory where Tensorboard logs will be stored.
-            model_folding_utils (ModelFoldingUtils): Utility for model folding operations.
             fw_info (FrameworkInfo): Framework-specific information.
             fw_impl (FrameworkImplementation): Framework-specific implementation.
         """
         self.fw_impl = fw_impl
         self.fw_info = fw_info
-        self.model_folding_utils = model_folding_utils
         self.tb_writer = TensorboardWriter(report_dir, fw_info)
         Logger.info(f"Please run: tensorboard --logdir {self.tb_writer.dir_path}")
 
@@ -75,20 +69,13 @@ class TensorboardUtils:
         Logger.critical("This method should be implemented by the framework-specific TensorboardUtils.") # pragma: no cover
 
     def add_histograms_to_tensorboard(self,
-                                      model: Any,
-                                      repr_dataset: Callable):
+                                      graph: Graph):
         """
-        Add histograms to Tensorboard after collecting them on the float folded model using
-        the representative dataset.
+        Add histograms to Tensorboard from a graph that holds these statistics.
 
         Args:
-            model (Any): The model for which to add histograms.
-            repr_dataset (Callable): The representative dataset to use during statistics collection.
+            graph (Graph): Graph with histograms to add to the tensorboard.
         """
-        graph = self.model_folding_utils.create_float_folded_graph(model, repr_dataset)
-        mi = ModelCollector(graph, self.fw_impl, self.fw_info)
-        for _data in tqdm(repr_dataset(), desc="Collecting Histograms"):
-            mi.infer(_data)
         self.tb_writer.add_histograms(graph, TENSORBOARD_DEFAULT_TAG)
 
     def add_graph_to_tensorboard(self,

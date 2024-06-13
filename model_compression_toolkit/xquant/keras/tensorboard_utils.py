@@ -23,7 +23,6 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.keras.reader.reader import model_reader
 
 from model_compression_toolkit.xquant.common.constants import XQUANT_REPR, INTERMEDIATE_SIMILARITY_METRICS_REPR, XQUANT_VAL, INTERMEDIATE_SIMILARITY_METRICS_VAL
-from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.xquant.common.tensorboard_utils import TensorboardUtils
 
 
@@ -36,7 +35,6 @@ class KerasTensorboardUtils(TensorboardUtils):
     """
 
     def __init__(self, report_dir: str,
-                 model_folding_utils: ModelFoldingUtils,
                  fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation):
         """
@@ -44,12 +42,10 @@ class KerasTensorboardUtils(TensorboardUtils):
 
         Args:
             report_dir (str): Directory where the TensorBoard files will be stored.
-            model_folding_utils (ModelFoldingUtils): Utility for handling model folding operations.
             fw_info (FrameworkInfo): Information about the framework being used.
             fw_impl (FrameworkImplementation): Implementation functions for the framework.
         """
         super().__init__(report_dir,
-                         model_folding_utils,
                          fw_info,
                          fw_impl)
 

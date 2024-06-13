@@ -30,8 +30,8 @@ class PytorchTensorboardUtils(TensorboardUtils):
     This class provides functionalities to display quantized model graphs on TensorBoard.
     """
 
-    def __init__(self, report_dir: str,
-                 model_folding_utils: ModelFoldingUtils,
+    def __init__(self,
+                 report_dir: str,
                  fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation):
         """
@@ -39,12 +39,10 @@ class PytorchTensorboardUtils(TensorboardUtils):
 
         Args:
             report_dir: Directory where the reports are stored.
-            model_folding_utils: Utilities for handling model folding operations.
             fw_info: Information about the framework being used.
             fw_impl: Implementation methods for the framework.
         """
         super().__init__(report_dir,
-                         model_folding_utils,
                          fw_info,
                          fw_impl)
 

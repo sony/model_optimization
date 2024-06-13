@@ -38,7 +38,7 @@ class FrameworkReportUtils:
                  fw_impl: FrameworkImplementation,
                  similarity_calculator: SimilarityCalculator,
                  dataset_utils: DatasetUtils,
-                 model_folding: ModelFoldingUtils,
+                 model_folding_utils: ModelFoldingUtils,
                  tb_utils: TensorboardUtils):
         """
         Initializes the FrameworkReportUtils class with various utility components required for generating the report.
@@ -48,14 +48,14 @@ class FrameworkReportUtils:
             fw_impl (FrameworkImplementation): The implemented functions of the framework.
             similarity_calculator (SimilarityCalculator): A utility for calculating similarity metrics.
             dataset_utils (DatasetUtils): Utilities for handling datasets.
-            model_folding (ModelFoldingUtils): Utilities for model folding operations.
+            model_folding_utils (ModelFoldingUtils): Utilities for model folding operations.
             tb_utils (TensorboardUtils): Utilities for TensorBoard operations.
         """
         self.fw_info = fw_info
         self.fw_impl = fw_impl
         self.similarity_calculator = similarity_calculator
         self.dataset_utils = dataset_utils
-        self.model_folding = model_folding
+        self.model_folding_utils = model_folding_utils
         self.tb_utils = tb_utils
 
     def create_report_directory(self, dir_path: str):

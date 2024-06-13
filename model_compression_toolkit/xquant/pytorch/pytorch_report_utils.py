@@ -51,12 +51,11 @@ class PytorchReportUtils(FrameworkReportUtils):
 
         tb_utils = PytorchTensorboardUtils(report_dir=report_dir,
                                            fw_impl=fw_impl,
-                                           fw_info=fw_info,
-                                           model_folding_utils=model_folding)
+                                           fw_info=fw_info)
 
         super().__init__(fw_info=fw_info,
                          fw_impl=fw_impl,
                          tb_utils=tb_utils,
                          dataset_utils=dataset_utils,
                          similarity_calculator=similarity_calculator,
-                         model_folding=model_folding)
+                         model_folding_utils=model_folding)

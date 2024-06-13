@@ -12,9 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
-
+from tqdm import tqdm
 from typing import Callable, Any, Dict
 
+from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.xquant import XQuantConfig
 from model_compression_toolkit.xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, \
     INTERMEDIATE_SIMILARITY_METRICS_VAL
@@ -44,10 +45,14 @@ def core_report_generator(float_model: Any,
     Returns:
         Dict[str, Any]: A dictionary containing the collected similarity metrics and report data.
     """
+    # Collect histograms on the float model.
+    float_graph = fw_report_utils.model_folding_utils.create_float_folded_graph(float_model, repr_dataset)
+    mi = ModelCollector(float_graph, fw_report_utils.fw_impl, fw_report_utils.fw_info)
+    for _data in tqdm(repr_dataset(), desc="Collecting Histograms"):
+        mi.infer(_data)
 
     # Collect histograms and add them to Tensorboard.
-    fw_report_utils.tb_utils.add_histograms_to_tensorboard(model=float_model,
-                                                           repr_dataset=repr_dataset)
+    fw_report_utils.tb_utils.add_histograms_to_tensorboard(graph=float_graph)
 
     # Compute similarity metrics on representative dataset and validation set.
     repr_similarity = fw_report_utils.similarity_calculator.compute_similarity_metrics(float_model=float_model,
