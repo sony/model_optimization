@@ -17,7 +17,7 @@ from functools import partial
 from typing import Tuple, Any, Dict, Callable
 
 from model_compression_toolkit.xquant.common.dataset_utils import DatasetUtils
-from model_compression_toolkit.xquant.common.model_analyzer_utils import ModelAnalyzer
+from model_compression_toolkit.xquant.common.model_analyzer import ModelAnalyzer
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.xquant.common.similarity_functions import SimilarityFunctions
 from model_compression_toolkit.logger import Logger

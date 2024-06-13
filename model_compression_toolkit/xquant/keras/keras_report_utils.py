@@ -21,7 +21,7 @@ from model_compression_toolkit.ptq.keras.quantization_facade import DEFAULT_KERA
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.xquant.common.similarity_calculator import SimilarityCalculator
 from model_compression_toolkit.xquant.keras.dataset_utils import KerasDatasetUtils
-from model_compression_toolkit.xquant.keras.model_analyzer_utils import KerasModelAnalyzer
+from model_compression_toolkit.xquant.keras.model_analyzer import KerasModelAnalyzer
 
 from model_compression_toolkit.xquant.keras.similarity_functions import KerasSimilarityFunctions
 from model_compression_toolkit.xquant.keras.tensorboard_utils import KerasTensorboardUtils

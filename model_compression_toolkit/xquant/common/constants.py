@@ -30,3 +30,5 @@ XQUANT_VAL = 'xquant_val'
 
 # Report file name:
 REPORT_FILENAME = 'quant_report.json'
+
+TENSORBOARD_DEFAULT_TAG = 'xquant'

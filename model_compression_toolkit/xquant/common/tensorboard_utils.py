@@ -20,6 +20,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
+from model_compression_toolkit.xquant.common.constants import TENSORBOARD_DEFAULT_TAG
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.logger import Logger
 
@@ -88,7 +89,7 @@ class TensorboardUtils:
         mi = ModelCollector(graph, self.fw_impl, self.fw_info)
         for _data in tqdm(repr_dataset(), desc="Collecting Histograms"):
             mi.infer(_data)
-        self.tb_writer.add_histograms(graph, "")  # Do not use tag since this is the only graph that is added.
+        self.tb_writer.add_histograms(graph, TENSORBOARD_DEFAULT_TAG)
 
     def add_graph_to_tensorboard(self,
                                  quantized_model: Any,
@@ -108,6 +109,6 @@ class TensorboardUtils:
                                                           similarity_metrics=similarity_metrics,
                                                           repr_dataset=repr_dataset)
 
-        self.tb_writer.add_graph(tb_graph, "")  # Do not use tag since this is the only graph that is added.
+        self.tb_writer.add_graph(tb_graph, TENSORBOARD_DEFAULT_TAG)
 
 

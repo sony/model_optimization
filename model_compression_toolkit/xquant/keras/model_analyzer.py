@@ -15,7 +15,7 @@
 from typing import List, Tuple, Dict
 
 from mct_quantizers import KerasQuantizationWrapper
-from model_compression_toolkit.xquant.common.model_analyzer_utils import ModelAnalyzer
+from model_compression_toolkit.xquant.common.model_analyzer import ModelAnalyzer
 import keras
 import numpy as np
 

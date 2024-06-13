@@ -17,7 +17,7 @@ from typing import Dict, List, Tuple
 import torch
 from mct_quantizers.pytorch.quantize_wrapper import PytorchQuantizationWrapper
 
-from model_compression_toolkit.xquant.common.model_analyzer_utils import ModelAnalyzer
+from model_compression_toolkit.xquant.common.model_analyzer import ModelAnalyzer
 
 
 class PytorchModelAnalyzer(ModelAnalyzer):
