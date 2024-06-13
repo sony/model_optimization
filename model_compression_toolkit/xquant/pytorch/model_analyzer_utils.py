@@ -17,10 +17,10 @@ from typing import Dict, List, Tuple
 import torch
 from mct_quantizers.pytorch.quantize_wrapper import PytorchQuantizationWrapper
 
-from model_compression_toolkit.xquant.common.model_analyzer_utils import ModelAnalyzerUtils
+from model_compression_toolkit.xquant.common.model_analyzer_utils import ModelAnalyzer
 
 
-class PytorchModelAnalyzerUtils(ModelAnalyzerUtils):
+class PytorchModelAnalyzer(ModelAnalyzer):
     """
     This class provides utilities for analyzing Pytorch models, specifically for
     extracting activations and comparing float and quantized models.

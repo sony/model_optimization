@@ -21,7 +21,7 @@ from model_compression_toolkit.core.pytorch.pytorch_implementation import Pytorc
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.xquant.common.similarity_calculator import SimilarityCalculator
 from model_compression_toolkit.xquant.pytorch.dataset_utils import PytorchDatasetUtils
-from model_compression_toolkit.xquant.pytorch.model_analyzer_utils import PytorchModelAnalyzerUtils
+from model_compression_toolkit.xquant.pytorch.model_analyzer_utils import PytorchModelAnalyzer
 from model_compression_toolkit.xquant.pytorch.similarity_functions import PytorchSimilarityFunctions
 from model_compression_toolkit.xquant.pytorch.tensorboard_utils import PytorchTensorboardUtils
 
@@ -46,7 +46,7 @@ class PytorchReportUtils(FrameworkReportUtils):
         similarity_calculator = SimilarityCalculator(dataset_utils=dataset_utils,
                                                      model_folding=model_folding,
                                                      similarity_functions=PytorchSimilarityFunctions(),
-                                                     model_analyzer_utils=PytorchModelAnalyzerUtils(),
+                                                     model_analyzer_utils=PytorchModelAnalyzer(),
                                                      device=get_working_device())
 
         tb_utils = PytorchTensorboardUtils(report_dir=report_dir,

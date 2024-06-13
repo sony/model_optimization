@@ -21,7 +21,7 @@ from model_compression_toolkit.ptq.keras.quantization_facade import DEFAULT_KERA
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.xquant.common.similarity_calculator import SimilarityCalculator
 from model_compression_toolkit.xquant.keras.dataset_utils import KerasDatasetUtils
-from model_compression_toolkit.xquant.keras.model_analyzer_utils import KerasModelAnalyzerUtils
+from model_compression_toolkit.xquant.keras.model_analyzer_utils import KerasModelAnalyzer
 
 from model_compression_toolkit.xquant.keras.similarity_functions import KerasSimilarityFunctions
 from model_compression_toolkit.xquant.keras.tensorboard_utils import KerasTensorboardUtils
@@ -47,7 +47,7 @@ class KerasReportUtils(FrameworkReportUtils):
         similarity_calculator = SimilarityCalculator(dataset_utils=dataset_utils,
                                                      model_folding=model_folding,
                                                      similarity_functions=KerasSimilarityFunctions(),
-                                                     model_analyzer_utils=KerasModelAnalyzerUtils())
+                                                     model_analyzer_utils=KerasModelAnalyzer())
 
         tb_utils = KerasTensorboardUtils(report_dir=report_dir,
                                          fw_impl=fw_impl,

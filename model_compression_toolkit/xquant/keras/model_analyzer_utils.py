@@ -15,12 +15,12 @@
 from typing import List, Tuple, Dict
 
 from mct_quantizers import KerasQuantizationWrapper
-from model_compression_toolkit.xquant.common.model_analyzer_utils import ModelAnalyzerUtils
+from model_compression_toolkit.xquant.common.model_analyzer_utils import ModelAnalyzer
 import keras
 import numpy as np
 
 
-class KerasModelAnalyzerUtils(ModelAnalyzerUtils):
+class KerasModelAnalyzer(ModelAnalyzer):
     """
     This class provides utilities for analyzing Keras models, specifically for
     extracting activations and comparing float and quantized models.

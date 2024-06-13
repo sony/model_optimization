@@ -17,7 +17,7 @@ from functools import partial
 from typing import Tuple, Any, Dict, Callable
 
 from model_compression_toolkit.xquant.common.dataset_utils import DatasetUtils
-from model_compression_toolkit.xquant.common.model_analyzer_utils import ModelAnalyzerUtils
+from model_compression_toolkit.xquant.common.model_analyzer_utils import ModelAnalyzer
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.xquant.common.similarity_functions import SimilarityFunctions
 from model_compression_toolkit.logger import Logger
@@ -33,7 +33,7 @@ class SimilarityCalculator:
                  dataset_utils: DatasetUtils,
                  model_folding: ModelFoldingUtils,
                  similarity_functions: SimilarityFunctions,
-                 model_analyzer_utils: ModelAnalyzerUtils,
+                 model_analyzer_utils: ModelAnalyzer,
                  device: str = None):
         """
         Initialize the SimilarityCalculator with required utilities.
@@ -42,7 +42,7 @@ class SimilarityCalculator:
             dataset_utils (DatasetUtils): Utility class for dataset preparation.
             model_folding (ModelFoldingUtils): Utility class for model folding operations.
             similarity_functions (SimilarityFunctions): Class containing similarity functions.
-            model_analyzer_utils (ModelAnalyzerUtils): Utility class for model analysis.
+            model_analyzer_utils (ModelAnalyzer): Utility class for model analysis.
             device (str, optional): Device to perform computations on (e.g., 'cpu', 'cuda'). Defaults to None.
         """
         self.dataset_utils = dataset_utils

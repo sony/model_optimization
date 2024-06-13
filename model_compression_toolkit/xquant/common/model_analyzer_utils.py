@@ -19,7 +19,7 @@ from abc import ABC, abstractmethod
 from model_compression_toolkit.logger import Logger
 
 
-class ModelAnalyzerUtils(ABC):
+class ModelAnalyzer(ABC):
     """
     This class provides abstract methods for analyzing a model, specifically for
     extracting activations and comparing float and quantized models.
