@@ -31,4 +31,8 @@ XQUANT_VAL = 'xquant_val'
 # Report file name:
 REPORT_FILENAME = 'quant_report.json'
 
+# Tag to use in tensorboard for the graph we plot:
 TENSORBOARD_DEFAULT_TAG = 'xquant'
+
+# When extracting the activations of a model we hold the output using a dedicated key:
+MODEL_OUTPUT_KEY = 'model_output_key'

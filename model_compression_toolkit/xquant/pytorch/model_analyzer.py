@@ -16,6 +16,7 @@ from typing import Dict, List, Tuple
 
 import torch
 from mct_quantizers.pytorch.quantize_wrapper import PytorchQuantizationWrapper
+from model_compression_toolkit.xquant.common.constants import MODEL_OUTPUT_KEY
 
 from model_compression_toolkit.xquant.common.model_analyzer import ModelAnalyzer
 
@@ -30,7 +31,7 @@ class PytorchModelAnalyzer(ModelAnalyzer):
                                   float_model: torch.nn.Module,
                                   quantized_model: torch.nn.Module,
                                   float_name2quant_name: Dict[str, str],
-                                  data: List[torch.Tensor]) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor], torch.Tensor, torch.Tensor]:
+                                  data: List[torch.Tensor]) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
         Extracts activations from both the float and quantized models.
 
@@ -42,11 +43,9 @@ class PytorchModelAnalyzer(ModelAnalyzer):
             data (List[torch.Tensor]): Input data for which to compute activations.
 
         Returns:
-            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor], torch.Tensor, torch.Tensor]:
+            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
                 - Dictionary of activations for the float model.
                 - Dictionary of activations for the quantized model.
-                - Predictions from the float model.
-                - Predictions from the quantized model.
         """
 
         def _compute_activations(name: str, activations: dict):
@@ -84,7 +83,10 @@ class PytorchModelAnalyzer(ModelAnalyzer):
             float_predictions = float_model(*data)
             quant_predictions = quantized_model(*data)
 
-        return activations_float, activations_quant, float_predictions, quant_predictions
+        activations_float[MODEL_OUTPUT_KEY] = float_predictions
+        activations_quant[MODEL_OUTPUT_KEY] = quant_predictions
+
+        return activations_float, activations_quant
 
     def identify_quantized_compare_points(self,
                                           quantized_model: torch.nn.Module) -> List[str]:

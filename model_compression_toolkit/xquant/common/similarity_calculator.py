@@ -16,6 +16,7 @@ from functools import partial
 
 from typing import Tuple, Any, Dict, Callable
 
+from model_compression_toolkit.xquant.common.constants import MODEL_OUTPUT_KEY
 from model_compression_toolkit.xquant.common.dataset_utils import DatasetUtils
 from model_compression_toolkit.xquant.common.model_analyzer import ModelAnalyzer
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
@@ -158,9 +159,12 @@ class SimilarityCalculator:
         # Iterate over the dataset and compute similarity metrics.
         for x in dataset():
             # Extract activations and predictions from both models.
-            float_activations, quant_activations, float_predictions, quant_predictions = (
+            float_activations, quant_activations = (
                 self.model_analyzer_utils.extract_model_activations(
                 float_model, quantized_model, float_name2quant_name, x))
+
+            float_predictions = float_activations[MODEL_OUTPUT_KEY]
+            quant_predictions = quant_activations[MODEL_OUTPUT_KEY]
 
             # Compute similarity metrics for the output predictions.
             output_results = self.compute_tensors_similarity((float_predictions, quant_predictions),

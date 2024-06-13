@@ -30,7 +30,7 @@ class ModelAnalyzer(ABC):
                                   float_model: Any,
                                   quantized_model: Any,
                                   float_name2quant_name: Dict[str, str],
-                                  data: List[Any]) -> Tuple[Dict[str, Any], Dict[str, Any], Any, Any]:
+                                  data: List[Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """
         Extracts activations from both the float and quantized models.
 
@@ -44,8 +44,6 @@ class ModelAnalyzer(ABC):
         Returns:
                 - Dictionary of activations for the float model.
                 - Dictionary of activations for the quantized model.
-                - Predictions from the float model.
-                - Predictions from the quantized model.
         """
         Logger.critical("This method should be implemented by the framework-specific ModelAnalyzer.")  # pragma: no cover
 
