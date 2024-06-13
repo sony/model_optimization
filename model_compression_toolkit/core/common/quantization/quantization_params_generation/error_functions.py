@@ -19,6 +19,7 @@ import model_compression_toolkit.core.common.quantization.quantization_config as
 from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoGranularity, \
     HessianInfoService
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.constants import FLOAT_32, NUM_QPARAM_HESSIAN_SAMPLES
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import uniform_quantize_tensor, \
@@ -476,6 +477,9 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
 
     if quant_error_method == qc.QuantizationErrorMethod.HMSE:
         node_hessian_scores = _compute_hessian_for_hmse(node, hessian_info_service, num_hessian_samples)
+        if len(node_hessian_scores) != 1:
+            Logger.critical(f"Expecting single node Hessian score request to return a list of length 1, but got a list "
+                            f"of length {len(node_hessian_scores)}.")
         node_hessian_scores = np.sqrt(np.mean(node_hessian_scores[0], axis=0))
 
         return lambda x, y, threshold: _hmse_error_function_wrapper(x, y, norm=norm, axis=axis,
