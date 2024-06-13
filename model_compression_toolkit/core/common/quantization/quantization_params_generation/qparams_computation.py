@@ -20,12 +20,38 @@ from typing import List
 from model_compression_toolkit.constants import NUM_QPARAM_HESSIAN_SAMPLES
 from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.hessian import HessianInfoService
+from model_compression_toolkit.core.common.hessian import HessianInfoService, TraceHessianRequest, HessianMode, \
+    HessianInfoGranularity
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_weights_computation import \
     get_weights_qparams
 from model_compression_toolkit.logger import Logger
+
+
+def _collect_nodes_for_hmse(nodes_list: List[BaseNode], graph: Graph) -> List[BaseNode]:
+    """
+    Collects nodes that are compatiable for parameters selection search using HMSE,
+    that is, have a kernel attribute that is configured for HMSE error method.
+
+    Args:
+        nodes_list: A list of nodes to search quantization parameters for.
+        graph: Graph to compute its nodes' quantization parameters..
+
+    Returns: A (possibly empty) list of nodes.
+
+    """
+    hmse_nodes = []
+    for n in nodes_list:
+        kernel_attr_name = graph.fw_info.get_kernel_op_attributes(n.type)
+        kernel_attr_name = None if kernel_attr_name is None or len(kernel_attr_name) == 0 else kernel_attr_name[0]
+
+        if kernel_attr_name is not None and n.is_weights_quantization_enabled(kernel_attr_name) and \
+            all([c.weights_quantization_cfg.get_attr_config(kernel_attr_name).weights_error_method ==
+                 QuantizationErrorMethod.HMSE for c in n.candidates_quantization_cfg]):
+            hmse_nodes.append(n)
+
+    return hmse_nodes
 
 
 def calculate_quantization_params(graph: Graph,
@@ -58,6 +84,17 @@ def calculate_quantization_params(graph: Graph,
     # Create a list of nodes to compute their thresholds
     nodes_list: List[BaseNode] = nodes if specific_nodes else graph.nodes()
 
+    # Collecting nodes that are configured to search weights quantization parameters using HMSE optimization
+    # and computing required Hessian information to be used for HMSE parameters selection.
+    # The Hessian scores are computed and stored in the hessian_info_service object.
+    nodes_for_hmse = _collect_nodes_for_hmse(nodes_list, graph)
+    if len(nodes_for_hmse) > 0:
+        hessian_info_service.fetch_hessian(TraceHessianRequest(mode=HessianMode.WEIGHTS,
+                                                               granularity=HessianInfoGranularity.PER_ELEMENT,
+                                                               target_nodes=nodes_for_hmse),
+                                           required_size=num_hessian_samples,
+                                           batch_size=1)
+
     for n in tqdm(nodes_list, "Calculating quantization parameters"):  # iterate only nodes that we should compute their thresholds
         for candidate_qc in n.candidates_quantization_cfg:
             for attr in n.get_node_weights_attributes():
@@ -73,6 +110,8 @@ def calculate_quantization_params(graph: Graph,
                     mod_attr_cfg = attr_cfg
 
                     if attr_cfg.weights_error_method == QuantizationErrorMethod.HMSE:
+                        # Although we collected nodes for HMSE before running the loop, we keep this verification to
+                        # notify the user in case of HMSE configured for node that is not compatible for this method
                         kernel_attr_name = graph.fw_info.get_kernel_op_attributes(n.type)
                         if len(kernel_attr_name) > 0:
                             kernel_attr_name = kernel_attr_name[0]

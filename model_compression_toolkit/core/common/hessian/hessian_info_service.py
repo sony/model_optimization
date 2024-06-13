@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from collections.abc import Iterable
 
 import numpy as np
 from functools import partial
@@ -189,6 +188,10 @@ class HessianInfoService:
         images, next_iter_remain_samples = representative_dataset_gen(num_hessian_samples=num_hessian_samples,
                                                                       last_iter_remain_samples=last_iter_remain_samples)
 
+        # Compute and store the computed approximation in the saved info
+        topo_sorted_nodes_names = [x.name for x in self.graph.get_topo_sorted_nodes()]
+        trace_hessian_request.target_nodes.sort(key=lambda x: topo_sorted_nodes_names.index(x.name))
+
         # Get the framework-specific calculator for trace Hessian approximation
         fw_hessian_calculator = self.fw_impl.get_trace_hessian_calculator(graph=self.graph,
                                                                           input_images=images,
@@ -197,12 +200,7 @@ class HessianInfoService:
 
         trace_hessian = fw_hessian_calculator.compute()
 
-        # Store the computed approximation in the saved info
-        topo_sorted_nodes_names = [x.name for x in self.graph.get_topo_sorted_nodes()]
-        sorted_target_nodes = sorted(trace_hessian_request.target_nodes,
-                                     key=lambda x: topo_sorted_nodes_names.index(x.name))
-
-        for node, hessian in zip(sorted_target_nodes, trace_hessian):
+        for node, hessian in zip(trace_hessian_request.target_nodes, trace_hessian):
             single_node_request = self._construct_single_node_request(trace_hessian_request.mode,
                                                                       trace_hessian_request.granularity,
                                                                       node)
@@ -246,6 +244,10 @@ class HessianInfoService:
             The inner list length dependent on the granularity (1 for per-tensor, 
             OC for per-output-channel when the requested node has OC output-channels, etc.)
         """
+
+        if len(trace_hessian_request.target_nodes) == 0:
+            return []
+
         if required_size == 0:
             return [[] for _ in trace_hessian_request.target_nodes]
 
