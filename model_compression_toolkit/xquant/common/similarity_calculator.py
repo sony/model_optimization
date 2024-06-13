@@ -20,7 +20,7 @@ from model_compression_toolkit.xquant.common.dataset_utils import DatasetUtils
 from model_compression_toolkit.xquant.common.model_analyzer_utils import ModelAnalyzerUtils
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.xquant.common.similarity_functions import SimilarityFunctions
-from model_compression_toolkit.xquant.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 class SimilarityCalculator:
     """
@@ -98,9 +98,9 @@ class SimilarityCalculator:
                 if candidate_float_layer_name not in float_name2quant_name:
                     float_name2quant_name[candidate_float_layer_name] = quant_point
                 else:
-                    Logger.get_logger().critical(f"Duplicate mapping found for layer: {candidate_float_layer_name}.")
+                    Logger.critical(f"Duplicate mapping found for layer: {candidate_float_layer_name}.")
             else:
-                Logger.get_logger().warning(
+                Logger.warning(
                     f"Could not find a matching layer in the float model for layer with name {quant_point}, "
                     f"skipping it in similarity metrics comparison points computation.")
 
@@ -141,7 +141,7 @@ class SimilarityCalculator:
         similarity_metrics_to_compute = self.similarity_functions.get_default_similarity_metrics()
         if custom_similarity_metrics:
             if not isinstance(custom_similarity_metrics, dict):
-                Logger.get_logger().critical(
+                Logger.critical(
                     f"custom_similarity_metrics should be a dictionary but is of type "
                     f"{type(custom_similarity_metrics)}.")
             similarity_metrics_to_compute.update(custom_similarity_metrics)

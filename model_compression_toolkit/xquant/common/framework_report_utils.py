@@ -25,7 +25,7 @@ from model_compression_toolkit.xquant.common.dataset_utils import DatasetUtils
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.xquant.common.similarity_calculator import SimilarityCalculator
 from model_compression_toolkit.xquant.common.tensorboard_utils import TensorboardUtils
-from model_compression_toolkit.xquant.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 
 class FrameworkReportUtils:
@@ -68,7 +68,7 @@ class FrameworkReportUtils:
         """
         if not os.path.exists(dir_path):
             os.makedirs(dir_path, exist_ok=True)
-            Logger.get_logger().info(f"Directory created at: {dir_path}")
+            Logger.info(f"Directory created at: {dir_path}")
 
     def dump_report_to_json(self,
                             report_dir: str,
@@ -83,7 +83,7 @@ class FrameworkReportUtils:
         """
         report_file_name = os.path.join(report_dir, REPORT_FILENAME)
         report_file_name = os.path.abspath(report_file_name)
-        Logger.get_logger().info(f"Dumping report data to: {report_file_name}")
+        Logger.info(f"Dumping report data to: {report_file_name}")
 
         with open(report_file_name, 'w') as f:
             json.dump(collected_data, f, indent=4)

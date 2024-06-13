@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import TensorboardWriter
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
-from model_compression_toolkit.xquant.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 
 from typing import Any, Dict, Callable
@@ -52,7 +52,7 @@ class TensorboardUtils:
         self.fw_info = fw_info
         self.model_folding_utils = model_folding_utils
         self.tb_writer = TensorboardWriter(report_dir, fw_info)
-        Logger.get_logger().info(f"Please run: tensorboard --logdir {self.tb_writer.dir_path}")
+        Logger.info(f"Please run: tensorboard --logdir {self.tb_writer.dir_path}")
 
     def get_graph_for_tensorboard_display(self,
                                           quantized_model: Any,
@@ -71,7 +71,7 @@ class TensorboardUtils:
         Returns:
             Graph: The generated graph for Tensorboard display.
         """
-        Logger.get_logger().critical("This method should be implemented by the framework-specific TensorboardUtils.")
+        Logger.critical("This method should be implemented by the framework-specific TensorboardUtils.")
 
     def add_histograms_to_tensorboard(self,
                                       model: Any,

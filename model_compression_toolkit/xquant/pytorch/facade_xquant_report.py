@@ -18,7 +18,7 @@ from typing import Callable
 from model_compression_toolkit.constants import FOUND_TORCH
 from model_compression_toolkit.xquant.common.core_report_generator import core_report_generator
 from model_compression_toolkit.xquant import XQuantConfig
-from model_compression_toolkit.xquant.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 if FOUND_TORCH:
     from model_compression_toolkit.xquant.pytorch.pytorch_report_utils import PytorchReportUtils
@@ -43,7 +43,7 @@ if FOUND_TORCH:
             Dict[str, Any]: A dictionary containing the collected similarity metrics and report data.
         """
         # Initialize the logger with the report directory.
-        Logger.get_logger(log_dir=xquant_config.report_dir)
+        Logger.set_log_file(log_folder=xquant_config.report_dir)
 
         pytorch_report_utils = PytorchReportUtils(xquant_config.report_dir)
 
@@ -58,5 +58,5 @@ if FOUND_TORCH:
 
 else:
     def xquant_report_pytorch_experimental(*args, **kwargs):
-        Logger.get_logger().critical("PyTorch must be installed to use 'xquant_report_pytorch_experimental'. "
+        Logger.critical("PyTorch must be installed to use 'xquant_report_pytorch_experimental'. "
                                      "The 'torch' package is missing.")  # pragma: no cover

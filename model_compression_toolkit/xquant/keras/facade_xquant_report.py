@@ -18,7 +18,7 @@ from typing import Callable, Dict, Any
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.xquant.common.core_report_generator import core_report_generator
 from model_compression_toolkit.xquant import XQuantConfig
-from model_compression_toolkit.xquant.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 if FOUND_TF:
     import keras
@@ -43,7 +43,7 @@ if FOUND_TF:
             Dict[str, Any]: A dictionary containing the collected similarity metrics and report data.
         """
         # Initialize the logger with the report directory.
-        Logger.get_logger(log_dir=xquant_config.report_dir)
+        Logger.set_log_file(log_folder=xquant_config.report_dir)
 
         # Initialize a utility class for handling Keras-specific reporting tasks.
         keras_report_utils = KerasReportUtils(xquant_config.report_dir)
@@ -59,5 +59,5 @@ if FOUND_TF:
         return _collected_data
 else:
     def xquant_report_keras_experimental(*args, **kwargs):
-        Logger.get_logger().critical("Tensorflow must be installed to use xquant_report_keras_experimental. "
+        Logger.critical("Tensorflow must be installed to use xquant_report_keras_experimental. "
                                      "The 'tensorflow' package is missing.")  # pragma: no cover

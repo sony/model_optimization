@@ -15,7 +15,7 @@
 
 from typing import Callable
 
-from model_compression_toolkit.xquant.logger import Logger
+from model_compression_toolkit.logger import Logger
 
 
 class DatasetUtils:
@@ -39,5 +39,5 @@ class DatasetUtils:
             Generator to use for retrieving the dataset inputs.
         """
 
-        Logger.get_logger().critical("This method should be implemented by the framework-specific DatasetUtils.")
+        Logger.critical("This method should be implemented by the framework-specific DatasetUtils.")
 
