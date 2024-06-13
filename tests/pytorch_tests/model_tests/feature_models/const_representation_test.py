@@ -167,12 +167,21 @@ class ConstRepresentationCodeNet(nn.Module):
     def forward(self, x):
         _shape = x.shape[2:]
         x = self.conv2d(x)
+
+        # input tensor in kwargs
         x = nn.functional.interpolate(x, size=_shape)
+
         # reshaping batch_norm input to 3 axes to avoid bn-folding.
-        x = nn.functional.batch_norm(x.reshape((-1, 16, int(np.prod(self.input_shape)))),
+        x = x.reshape((-1, 16, int(np.prod(self.input_shape))))
+
+        # input const in kwargs (not the first kwargs!)
+        x = nn.functional.batch_norm(x,
                                      self.bn.running_mean, self.bn.running_var,
                                      momentum=0.2, eps=1e-6, bias=self.bn.bias)
+
+        # input all tensors and consts in kwargs
         x = torch.sub(input=self.sub_const, other=x)
+
         return torch.reshape(x, (-1, 16) + self.input_shape)
 
 
@@ -182,8 +191,6 @@ class ConstRepresentationCodeTest(BasePytorchFeatureNetworkTest):
         super().__init__(unit_test=unit_test)
 
     def create_networks(self):
-        ConstRepresentationCodeNet(self.input_shape[2:])(
-            torch.from_numpy(self.generate_inputs()[0].astype(np.float32)))
         return ConstRepresentationCodeNet(self.input_shape[2:])
 
     def get_tpc(self):
