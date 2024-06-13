@@ -183,8 +183,8 @@ class SimilarityCalculator:
         # Aggregate the intermediate similarity metrics for each layer.
         for layer_name, layer_similarity_metrics in intermediate_similarity_metrics.items():
             for similarity_name, similarity_values_list in layer_similarity_metrics.items():
-                intermediate_similarity_metrics[layer_name][similarity_name] = sum(
-                    intermediate_similarity_metrics[layer_name][similarity_name]) / len(
-                    intermediate_similarity_metrics[layer_name][similarity_name])
+                if len(similarity_values_list) == 0:
+                    Logger.critical(f"Can not average similarities of an empty list.")
+                intermediate_similarity_metrics[layer_name][similarity_name] = sum(similarity_values_list) / len(similarity_values_list)
 
         return aggregated_output_similarity_metrics, intermediate_similarity_metrics
