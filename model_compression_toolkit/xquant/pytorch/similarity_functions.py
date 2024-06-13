@@ -20,49 +20,49 @@ import torch
 class PytorchSimilarityFunctions(SimilarityFunctions):
 
     @staticmethod
-    def compute_mse(f_pred: torch.Tensor, q_pred: torch.Tensor) -> float:
+    def compute_mse(x: torch.Tensor, y: torch.Tensor) -> float:
         """
-        Computes Mean Squared Error between float and quantized predictions.
+        Computes Mean Squared Error between between two tensors (usually, the float and quantized tensors).
 
         Args:
-            f_pred: Float model predictions.
-            q_pred: Quantized model predictions.
+            x: Float model predictions.
+            y: Quantized model predictions.
 
         Returns:
             Mean Squared Error as a float.
         """
-        mse = torch.nn.functional.mse_loss(f_pred, q_pred)
+        mse = torch.nn.functional.mse_loss(x, y)
         return mse.item()
 
     @staticmethod
-    def compute_cs(f_pred: torch.Tensor, q_pred: torch.Tensor) -> float:
+    def compute_cs(x: torch.Tensor, y: torch.Tensor) -> float:
         """
-        Computes Cosine Similarity between float and quantized predictions.
+        Computes Cosine Similarity between two tensors (usually, the float and quantized tensors).
 
         Args:
-            f_pred: Float model predictions.
-            q_pred: Quantized model predictions.
+            x: Float model predictions.
+            y: Quantized model predictions.
 
         Returns:
             Cosine Similarity as a float.
         """
-        cs = torch.nn.functional.cosine_similarity(f_pred.flatten(), q_pred.flatten(), dim=0)
+        cs = torch.nn.functional.cosine_similarity(x.flatten(), y.flatten(), dim=0)
         return cs.item()
 
     @staticmethod
-    def compute_sqnr(f_pred: torch.Tensor, q_pred: torch.Tensor) -> float:
+    def compute_sqnr(x: torch.Tensor, y: torch.Tensor) -> float:
         """
-        Computes Signal-to-Quantization-Noise Ratio between float and quantized predictions.
+        Computes Signal-to-Quantization-Noise Ratio between two tensors (usually, the float and quantized tensors).
 
         Args:
-            f_pred: Float model predictions.
-            q_pred: Quantized model predictions.
+            x: Float model predictions.
+            y: Quantized model predictions.
 
         Returns:
             Signal-to-Quantization-Noise Ratio as a float.
         """
-        signal_power = torch.mean(f_pred ** 2)
-        noise_power = torch.mean((f_pred - q_pred) ** 2)
+        signal_power = torch.mean(x ** 2)
+        noise_power = torch.mean((x - y) ** 2)
         sqnr = signal_power / noise_power
         return sqnr.item()
 

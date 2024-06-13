@@ -26,49 +26,49 @@ class KerasSimilarityFunctions(SimilarityFunctions):
     """
 
     @staticmethod
-    def compute_mse(f_pred: np.ndarray, q_pred: np.ndarray) -> float:
+    def compute_mse(x: np.ndarray, y: np.ndarray) -> float:
         """
-        Compute the Mean Squared Error (MSE) between the float and quantized predictions.
+        Compute the Mean Squared Error (MSE) between two tensors (usually, the float and quantized tensors).
 
         Args:
-            f_pred (np.ndarray): Float model predictions.
-            q_pred (np.ndarray): Quantized model predictions.
+            x (np.ndarray): First tensor to compare.
+            y (np.ndarray): Second tensor to compare.
 
         Returns:
             float: The computed MSE value.
         """
-        mse = tf.keras.losses.MeanSquaredError()(f_pred, q_pred)
+        mse = tf.keras.losses.MeanSquaredError()(x, y)
         return float(mse.numpy())
 
     @staticmethod
-    def compute_cs(f_pred: np.ndarray, q_pred: np.ndarray) -> float:
+    def compute_cs(x: np.ndarray, y: np.ndarray) -> float:
         """
-        Compute the Cosine Similarity (CS) between the float and quantized predictions.
+        Compute the Cosine Similarity (CS) between two tensors (usually, the float and quantized tensors).
 
         Args:
-            f_pred (np.ndarray): Float model predictions.
-            q_pred (np.ndarray): Quantized model predictions.
+            x (np.ndarray): First tensor to compare.
+            y (np.ndarray): Second tensor to compare.
 
         Returns:
             float: The computed CS value.
         """
-        cs = tf.keras.losses.CosineSimilarity()(f_pred.flatten(), q_pred.flatten())
+        cs = tf.keras.losses.CosineSimilarity()(x.flatten(), y.flatten())
         return float(cs.numpy())
 
     @staticmethod
-    def compute_sqnr(f_pred: np.ndarray, q_pred: np.ndarray) -> float:
+    def compute_sqnr(x: np.ndarray, y: np.ndarray) -> float:
         """
-        Compute the Signal-to-Quantization-Noise Ratio (SQNR) between the float and quantized predictions.
+        Compute the Signal-to-Quantization-Noise Ratio (SQNR) between two tensors (usually, the float and quantized tensors).
 
         Args:
-            f_pred (np.ndarray): Float model predictions.
-            q_pred (np.ndarray): Quantized model predictions.
+            x (np.ndarray): First tensor to compare.
+            y (np.ndarray): Second tensor to compare.
 
         Returns:
             float: The computed SQNR value.
         """
-        signal_power = tf.reduce_mean(tf.square(f_pred))
-        noise_power = tf.reduce_mean(tf.square(f_pred - q_pred))
+        signal_power = tf.reduce_mean(tf.square(x))
+        noise_power = tf.reduce_mean(tf.square(x - y))
         sqnr = signal_power / noise_power
         return float(sqnr.numpy())
 

@@ -25,13 +25,13 @@ class SimilarityFunctions:
     """
 
     @staticmethod
-    def compute_mse(f_pred: Any, q_pred: Any) -> float:
+    def compute_mse(x: Any, y: Any) -> float:
         """
         Compute the Mean Squared Error (MSE) between two tensors (usually, the float and quantized predictions).
 
         Args:
-            f_pred (Any): Float model predictions.
-            q_pred (Any): Quantized model predictions.
+            x (Any): First tensor to compare.
+            y (Any): Second tensor to compare.
 
         Returns:
             float: The computed MSE value.
@@ -39,13 +39,13 @@ class SimilarityFunctions:
         raise NotImplemented
 
     @staticmethod
-    def compute_cs(f_pred: Any, q_pred: Any) -> float:
+    def compute_cs(x: Any, y: Any) -> float:
         """
         Compute the Cosine Similarity (CS) between two tensors (usually, the float and quantized predictions).
 
         Args:
-            f_pred (Any): Float model predictions.
-            q_pred (Any): Quantized model predictions.
+            x (Any): First tensor to compare.
+            y (Any): Second tensor to compare.
 
         Returns:
             float: The computed CS value.
@@ -53,13 +53,13 @@ class SimilarityFunctions:
         raise NotImplemented
 
     @staticmethod
-    def compute_sqnr(f_pred: Any, q_pred: Any) -> float:
+    def compute_sqnr(x: Any, y: Any) -> float:
         """
         Compute the Signal-to-Quantization-Noise Ratio (SQNR) between two tensors (usually, the float and quantized predictions).
 
         Args:
-            f_pred (Any): Float model predictions.
-            q_pred (Any): Quantized model predictions.
+            x (Any): First tensor to compare.
+            y (Any): Second tensor to compare.
 
         Returns:
             float: The computed SQNR value.

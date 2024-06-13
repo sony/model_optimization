@@ -52,21 +52,21 @@ class SimilarityCalculator:
         self.device = device
 
     @staticmethod
-    def compute_tensors_similarity(predictions: Tuple[Any, Any],
+    def compute_tensors_similarity(tensors_to_compare: Tuple[Any, Any],
                                    similarity_metrics: Dict[str, Callable]) -> Dict[str, float]:
         """
         Compute the similarity between two tensors using provided similarity metrics.
 
         Args:
-            predictions (Tuple[Any, Any]): Tensors to compare.
+            tensors_to_compare (Tuple[Any, Any]): Tensors to compare by computing their similarity.
             similarity_metrics (Dict[str, Callable]): A dictionary with similarity metric names and functions.
 
         Returns:
             Dict[str, float]: A dictionary of similarity metric names and their computed values.
         """
-        f_pred, q_pred = predictions
-        metrics = {k: v(f_pred, q_pred) for k, v in similarity_metrics.items()}
-        return metrics
+        x, y = tensors_to_compare
+        similarity_metrics = {k: v(x, y) for k, v in similarity_metrics.items()}
+        return similarity_metrics
 
     def _get_float_to_quantized_compare_points(self,
                                                quantized_model: Any,
