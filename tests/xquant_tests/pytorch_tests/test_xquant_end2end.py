@@ -13,6 +13,9 @@
 #  limitations under the License.
 #  ==============================================================================
 #
+import glob
+
+import os
 
 import unittest
 from functools import partial
@@ -21,15 +24,17 @@ import tempfile
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from tensorboard.backend.event_processing import event_file_loader
+from tensorboard.compat.proto.graph_pb2 import GraphDef
 
 import model_compression_toolkit as mct
 from mct_quantizers import PytorchQuantizationWrapper
 from model_compression_toolkit.xquant.common.similarity_functions import DEFAULT_SIMILARITY_METRICS_NAMES
 from model_compression_toolkit.xquant.common.xquant_config import XQuantConfig
 from model_compression_toolkit.xquant.pytorch.facade_xquant_report import xquant_report_pytorch_experimental
-from model_compression_toolkit.xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, INTERMEDIATE_SIMILARITY_METRICS_VAL
-
+from model_compression_toolkit.xquant.common.constants import OUTPUT_SIMILARITY_METRICS_REPR, \
+    OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, INTERMEDIATE_SIMILARITY_METRICS_VAL, \
+    XQUANT_REPR, XQUANT_VAL
 
 
 def random_data_gen(shape=(3, 8, 8), use_labels=False, num_inputs=1, batch_size=2, num_iter=2):
@@ -123,6 +128,27 @@ class BaseTestEnd2EndPytorchXQuant(unittest.TestCase):
         for k,v in result[INTERMEDIATE_SIMILARITY_METRICS_REPR].items():
             self.assertEqual(len(v), len(DEFAULT_SIMILARITY_METRICS_NAMES) + 1)
             self.assertIn("mae", v)
+
+    def test_tensorboard_graph(self):
+        self.xquant_config.custom_similarity_metrics = None
+        result = xquant_report_pytorch_experimental(
+            self.float_model,
+            self.quantized_model,
+            self.repr_dataset,
+            self.validation_dataset,
+            self.xquant_config
+        )
+        events_dir = os.path.join(self.xquant_config.report_dir, 'xquant')
+        initial_graph_events_files = glob.glob(events_dir + '/*events*')
+        initial_graph_event = initial_graph_events_files[0]
+        efl = event_file_loader.LegacyEventFileLoader(initial_graph_event).Load()
+        for e in efl:
+            if len(e.graph_def) > 0:  # skip events with no graph_def such as event version
+                g = GraphDef().FromString(e.graph_def)
+        for node in g.node:
+            if node.device == 'PytorchQuantizationWrapper':
+                self.assertIn(XQUANT_REPR, str(node))
+                self.assertIn(XQUANT_VAL, str(node))
 
 
 # Test with Conv2D without BatchNormalization and without Activation
