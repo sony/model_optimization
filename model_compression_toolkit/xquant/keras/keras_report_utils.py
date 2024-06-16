@@ -40,7 +40,7 @@ class KerasReportUtils(FrameworkReportUtils):
         fw_impl = KerasImplementation()
 
         dataset_utils = KerasDatasetUtils()
-        model_folding = ModelFoldingUtils(fw_info=DEFAULT_KERAS_INFO,
+        model_folding = ModelFoldingUtils(fw_info=fw_info,
                                           fw_impl=fw_impl,
                                           fw_default_tpc=DEFAULT_KERAS_TPC)
 

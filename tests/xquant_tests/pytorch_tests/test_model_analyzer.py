@@ -21,7 +21,7 @@ from model_compression_toolkit.xquant.pytorch.model_analyzer import PytorchModel
 from tests.xquant_tests.pytorch_tests.test_xquant_end2end import random_data_gen
 import model_compression_toolkit as mct
 from torch import nn
-class TestKerasModelAnalyzer(unittest.TestCase):
+class TestPytorchModelAnalyzer(unittest.TestCase):
 
     def setUp(self):
         self.device = get_working_device()
