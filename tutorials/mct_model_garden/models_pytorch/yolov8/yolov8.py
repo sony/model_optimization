@@ -498,6 +498,28 @@ def keypoints_model_predict(model: Any, inputs: np.ndarray) -> List:
 
     return postprocess_yolov8_keypoints(output_np)
 
+def seg_model_predict(model: Any,
+                  inputs: np.ndarray) -> List:
+    """
+    Perform inference using the provided PyTorch model on the given inputs.
+
+    This function handles moving the inputs to the appropriate torch data type and format,
+    and returns the outputs.
+
+    Args:
+        model (Any): The PyTorch model used for inference.
+        inputs (np.ndarray): Input data to perform inference on.
+
+    Returns:
+        List: List containing tensors of predictions.
+    """
+    input_tensor = torch.from_numpy(inputs).unsqueeze(0)  # Add batch dimension
+
+    # Run the model
+    with torch.no_grad():
+        outputs = model(input_tensor)
+
+    return outputs
 
 def yolov8_pytorch(model_yaml: str) -> (nn.Module, Dict):
     """

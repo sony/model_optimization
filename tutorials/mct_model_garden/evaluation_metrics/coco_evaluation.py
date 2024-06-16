@@ -21,7 +21,6 @@ from pycocotools.cocoeval import COCOeval
 from typing import List, Dict, Tuple, Callable, Any
 import random
 from pycocotools import mask as mask_utils
-import torch
 from tqdm import tqdm
 
 from ..models_pytorch.yolov8.yolov8_postprocess import scale_boxes, scale_coords
@@ -178,7 +177,7 @@ class CocoEval:
                             'score': scores.tolist()[ind] if isinstance(scores.tolist(), list) else scores.tolist()
                         })
 
-            return detections
+        return detections
 
 def load_and_preprocess_image(image_path: str, preprocess: Callable) -> np.ndarray:
     """
@@ -506,12 +505,13 @@ def evaluate_seg_model(annotation_file, results_file):
     coco_eval.summarize()
 
 
-def evaluate_yolov8_segmentation(model, data_dir, data_type='val2017', img_ids_limit=800, output_file='results.json',iou_thresh=0.7, conf=0.001, max_dets=300,mask_thresh=0.55):
+def evaluate_yolov8_segmentation(model, model_predict_func, data_dir, data_type='val2017', img_ids_limit=800, output_file='results.json',iou_thresh=0.7, conf=0.001, max_dets=300,mask_thresh=0.55):
     """
     Evaluate YOLOv8 model for instance segmentation on COCO dataset.
 
     Parameters:
     - model: The YOLOv8 model to be evaluated.
+    - model_predict_func: A function to execute the model preidction
     - data_dir: The directory containing the COCO dataset.
     - data_type: The type of dataset to evaluate against (default is 'val2017').
     - img_ids_limit: The maximum number of images to evaluate (default is 800).
@@ -535,11 +535,10 @@ def evaluate_yolov8_segmentation(model, data_dir, data_type='val2017', img_ids_l
 
         # Preprocess the image
         input_img = load_and_preprocess_image(image_path, yolov8_preprocess_chw_transpose).astype('float32')
-        input_tensor = torch.from_numpy(input_img).unsqueeze(0)  # Add batch dimension
 
         # Run the model
-        with torch.no_grad():
-            output = model(input_tensor)
+        output = model_predict_func(model, input_img)
+
         #run post processing (nms)
         boxes, scores, classes, masks = postprocess_yolov8_inst_seg(outputs=output, conf=conf, iou_thres=iou_thresh, max_out_dets=max_dets)
 
