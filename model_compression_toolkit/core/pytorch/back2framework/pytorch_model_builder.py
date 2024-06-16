@@ -22,6 +22,7 @@ from networkx import topological_sort
 
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core import common
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
@@ -67,7 +68,7 @@ def _build_input_tensors_list(node: BaseNode,
 
 
 def _merge_inputs(_node: BaseNode, input_tensors: List, op_call_args: List, op_call_kwargs: Dict,
-                  tensor_input_allocs: List = None) -> List:
+                  tensor_input_allocs: List = None) -> Tuple[List, Dict]:
     """
     Merge input tensors list with positional weights and op_call_args, according to correct order.
 
@@ -85,12 +86,12 @@ def _merge_inputs(_node: BaseNode, input_tensors: List, op_call_args: List, op_c
         _input_list = op_call_args.copy()
         if tensor_input_allocs is None:
             tensor_input_allocs = _node.tensor_input_allocs
-        assert len(tensor_input_allocs) == len(input_tensors), \
-            f'Mismatch between input tensors ({len(tensor_input_allocs)}) and indices {len(input_tensors)}'
+        if len(tensor_input_allocs) != len(input_tensors):
+            Logger.error(f'Mismatch between input tensors ({len(tensor_input_allocs)}) '
+                         f'and indices {len(input_tensors)} in node {_node.name}.')  # pragma: no cover
         for i, t in zip(tensor_input_allocs, input_tensors):
+            # insert input tensors in either args or kwargs, according to tensor_input_allocs
             if isinstance(i, str):
-                if i in op_call_kwargs:
-                    a=1
                 assert i not in op_call_kwargs
                 op_call_kwargs.update({i: t})
             else:
