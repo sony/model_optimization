@@ -74,7 +74,7 @@ class WeightsTraceHessianCalculatorKeras(TraceHessianCalculatorKeras):
         model, _ = FloatKerasModelBuilder(graph=self.graph).build_model()
 
         # Initiate a gradient tape for automatic differentiation
-        with (tf.GradientTape(persistent=True) as tape):
+        with tf.GradientTape(persistent=True) as tape:
             # Perform a forward pass (inference) to get the output, while watching
             # the input tensor for gradient computation
             tape.watch(self.input_images)
