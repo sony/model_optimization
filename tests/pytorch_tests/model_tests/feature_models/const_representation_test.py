@@ -154,3 +154,56 @@ class ConstRepresentationGetIndexTest(ConstRepresentationTest):
 
     def create_networks(self):
         return ConstRepresentationGetIndexNet(self.func, self.const, self.indices)
+
+
+class ConstRepresentationCodeNet(nn.Module):
+    def __init__(self, input_shape):
+        super().__init__()
+        self.input_shape = input_shape
+        self.conv2d = nn.Conv2d(3, 16, 3, 2, padding=1)
+        self.bn = nn.BatchNorm2d(16)
+        self.register_buffer('sub_const', 10 * torch.rand((1, 16, 64)))
+
+    def forward(self, x):
+        _shape = x.shape[2:]
+        x = self.conv2d(x)
+
+        # input tensor in kwargs
+        x = nn.functional.interpolate(x, size=_shape)
+
+        # reshaping batch_norm input to 3 axes to avoid bn-folding.
+        x = x.reshape((-1, 16, int(np.prod(self.input_shape))))
+
+        # input const in kwargs (not the first kwargs!)
+        x = nn.functional.batch_norm(x,
+                                     self.bn.running_mean, self.bn.running_var,
+                                     momentum=0.2, eps=1e-6, bias=self.bn.bias)
+
+        # input all tensors and consts in kwargs
+        x = torch.sub(input=self.sub_const, other=x)
+
+        return torch.reshape(x, (-1, 16) + self.input_shape)
+
+
+class ConstRepresentationCodeTest(BasePytorchFeatureNetworkTest):
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test=unit_test)
+
+    def create_networks(self):
+        return ConstRepresentationCodeNet(self.input_shape[2:])
+
+    def get_tpc(self):
+        tp = generate_test_tp_model({'weights_n_bits': 32,
+                                     'activation_n_bits': 32,
+                                     'enable_activation_quantization': False})
+        return generate_pytorch_tpc(name="linear_collapsing_test", tp_model=tp)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        in_torch_tensor = to_torch_tensor(input_x[0])
+        set_model(float_model)
+        y = float_model(in_torch_tensor)
+        y_hat = quantized_model(in_torch_tensor)
+        self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
+        cs = cosine_similarity(torch_tensor_to_numpy(y), torch_tensor_to_numpy(y_hat))
+        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')

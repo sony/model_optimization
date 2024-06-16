@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 from model_compression_toolkit.core.common.graph.edge import Edge
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.constants import OUTPUT, PLACEHOLDER, TENSOR_META, CALL_FUNCTION, TYPE, \
-    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, TENSOR_INPUT_INDICES, GET_ATTR
+    CALL_METHOD, BIAS, FUNCTIONAL_OP, OP_CALL_KWARGS, OP_CALL_ARGS, INPUTS_AS_LIST, TENSOR_INPUT_ALLOCS, GET_ATTR
 from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.logger import Logger
 
@@ -140,7 +140,7 @@ def nodes_builder(model: GraphModule,
                     weights.update({i: consts_dict[input_node]})
 
                 tensor_meta = input_node.meta
-                if tensor_meta[TYPE] == torch.Tensor:
+                if tensor_meta[TYPE] in [torch.Tensor, torch.nn.parameter.Parameter]:
                     input_shape += [list(tensor_meta[TENSOR_META].shape)]
                 elif tensor_meta[TYPE] == tuple:
                     input_shape += [list(n.shape) for n in tensor_meta[TENSOR_META]]
@@ -159,8 +159,11 @@ def nodes_builder(model: GraphModule,
 
         # filter Nodes from framework attributes, we replace these attributes with nx graph nodes
         framework_attr_filtered = {}
+        framework_attr_nodes = {}
         for k, v in framework_attr.items():
-            if not isinstance(v, torch.fx.node.Node):
+            if isinstance(v, torch.fx.node.Node):
+                framework_attr_nodes[k] = v
+            else:
                 framework_attr_filtered[k] = v
         framework_attr = framework_attr_filtered
 
@@ -177,7 +180,7 @@ def nodes_builder(model: GraphModule,
                 [isinstance(n, torch.fx.node.Node) for n in node.args[0]])
             inputs_as_list = inputs_as_list1 or (len(node.args) > 0 and isinstance(node.args[0], Node) and
                                                  node.args[0].op == PLACEHOLDER and node.args[0].meta[TYPE] in (list, tuple))
-            tensor_input_index = []
+            tensor_input_alloc = []
             op_call_args = list(node.args)
             if inputs_as_list:
                 op_call_args.pop(0)
@@ -185,7 +188,10 @@ def nodes_builder(model: GraphModule,
                 for in_node in node.all_input_nodes:
                     for i, arg in enumerate(node.args):
                         if arg == in_node:
-                            tensor_input_index.append(i)
+                            tensor_input_alloc.append(i)
+                    for k, arg in framework_attr_nodes.items():
+                        if arg == in_node:
+                            tensor_input_alloc.append(k)
 
             # remove torch.fx.node.Node from inputs to graph_node_type
             op_call_args = [arg for arg in op_call_args if not isinstance(arg, Node)]
@@ -197,7 +203,7 @@ def nodes_builder(model: GraphModule,
                       OP_CALL_ARGS: op_call_args,
                       OP_CALL_KWARGS: node_kwargs,
                       INPUTS_AS_LIST: inputs_as_list,
-                      TENSOR_INPUT_INDICES: tensor_input_index}
+                      TENSOR_INPUT_ALLOCS: tensor_input_alloc}
         else:
             graph_node_type = BaseNode
             kwargs = {}

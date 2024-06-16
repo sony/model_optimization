@@ -22,6 +22,7 @@ from networkx import topological_sort
 
 from model_compression_toolkit.core import FrameworkInfo
 from model_compression_toolkit.core import common
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
@@ -66,8 +67,8 @@ def _build_input_tensors_list(node: BaseNode,
     return input_tensors
 
 
-def _merge_inputs(_node: BaseNode, input_tensors: List, op_call_args: List,
-                  tensor_input_indices: List = None) -> List:
+def _merge_inputs(_node: BaseNode, input_tensors: List, op_call_args: List, op_call_kwargs: Dict,
+                  tensor_input_allocs: List = None) -> Tuple[List, Dict]:
     """
     Merge input tensors list with positional weights and op_call_args, according to correct order.
 
@@ -75,22 +76,30 @@ def _merge_inputs(_node: BaseNode, input_tensors: List, op_call_args: List,
         _node: The node the inputs are for.
         input_tensors: activation input tensors to node.
         op_call_args: framework node call args.
+        op_call_kwargs: framework node call kwargs.
+        tensor_input_allocs: List of input allocations to node.
 
     Returns:
         Combined list of input_tensors and op_call_args.
     """
-    if isinstance(_node, FunctionalNode) and _node.tensor_input_indices:
+    if isinstance(_node, FunctionalNode) and _node.tensor_input_allocs:
         _input_list = op_call_args.copy()
-        if tensor_input_indices is None:
-            tensor_input_indices = _node.tensor_input_indices
-        assert len(tensor_input_indices) == len(input_tensors), \
-            f'Mismatch between input tensors ({len(tensor_input_indices)}) and indices {len(input_tensors)}'
-        for i, t in zip(tensor_input_indices, input_tensors):
-            _input_list.insert(i, t)
+        if tensor_input_allocs is None:
+            tensor_input_allocs = _node.tensor_input_allocs
+        if len(tensor_input_allocs) != len(input_tensors):
+            Logger.error(f'Mismatch between input tensors ({len(tensor_input_allocs)}) '
+                         f'and indices {len(input_tensors)} in node {_node.name}.')  # pragma: no cover
+        for i, t in zip(tensor_input_allocs, input_tensors):
+            # insert input tensors in either args or kwargs, according to tensor_input_allocs
+            if isinstance(i, str):
+                assert i not in op_call_kwargs
+                op_call_kwargs.update({i: t})
+            else:
+                _input_list.insert(i, t)
     else:
         _input_list = input_tensors + op_call_args
 
-    return _input_list
+    return _input_list, op_call_kwargs
 
 
 def _run_operation(n: BaseNode,
@@ -125,14 +134,15 @@ def _run_operation(n: BaseNode,
         # list separately, because in FX the tensors are FX objects and fail to_torch_tensor
         input_tensors = [to_torch_tensor(t, numpy_type=t.dtype) if isinstance(t, np.ndarray) else t
                          for t in input_tensors]
-        _tensor_input_indices = None
+        _tensor_input_allocs = None
     else:
-        _tensor_input_indices = [i for i in n.tensor_input_indices if i not in n.weights]
+        _tensor_input_allocs = [i for i in n.tensor_input_allocs if i not in n.weights]
 
     if isinstance(n, FunctionalNode) and n.inputs_as_list:
         out_tensors_of_n_float = op_func(input_tensors, *op_call_args, **functional_kwargs)
     else:
-        merged_inputs = _merge_inputs(n, input_tensors, op_call_args, tensor_input_indices=_tensor_input_indices)
+        merged_inputs, functional_kwargs = _merge_inputs(n, input_tensors, op_call_args, functional_kwargs.copy(),
+                                                         tensor_input_allocs=_tensor_input_allocs)
         out_tensors_of_n_float = op_func(*merged_inputs, **functional_kwargs)
 
     # Add a fake quant node if the node has an activation threshold.
