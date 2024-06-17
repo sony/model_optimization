@@ -67,8 +67,10 @@ def nms_output_model(input_shape):
     model = keras.Model(inputs=inputs, outputs=outputs)
     return model
 
+
 def representative_dataset():
-    yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]
+    for _ in range(2):
+        yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]
 
 
 class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
@@ -83,12 +85,14 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
                                                            input_shape=(1, 8, 8, 3),
                                                            mixed_precision_enabled=True)
 
-        hessian_info_service = hess.HessianInfoService(graph=graph,
-                                                       representative_dataset=representative_dataset,
+        hessian_info_service = hess.HessianInfoService(graph=graph, representative_dataset_gen=representative_dataset,
                                                        fw_impl=keras_impl)
 
+        # Reducing the default number of samples for Mixed precision Hessian approximation
+        # to allow quick execution of the test
         se = keras_impl.get_sensitivity_evaluator(graph,
-                                                  MixedPrecisionQuantizationConfig(use_hessian_based_scores=True),
+                                                  MixedPrecisionQuantizationConfig(use_hessian_based_scores=True,
+                                                                                   num_of_images=2),
                                                   representative_dataset,
                                                   DEFAULT_KERAS_INFO,
                                                   hessian_info_service=hessian_info_service)

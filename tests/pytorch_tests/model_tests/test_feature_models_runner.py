@@ -21,6 +21,7 @@ from torch import nn
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
+from model_compression_toolkit.target_platform_capabilities import constants as C
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_attributes_quantization_test import BNAttributesQuantization
 from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import LayerNormNetTest
@@ -45,8 +46,8 @@ from tests.pytorch_tests.model_tests.feature_models.residual_collapsing_test imp
     ResidualCollapsingTest2
 from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
-    MixedPercisionActivationSearch8Bit, MixedPercisionActivationSearch2Bit, MixedPercisionActivationSearch4Bit, \
-    MixedPercisionActivationSearch4BitFunctional, MixedPercisionActivationMultipleInputs
+    MixedPrecisionActivationSearch8Bit, MixedPrecisionActivationSearch2Bit, MixedPrecisionActivationSearch4Bit, \
+    MixedPrecisionActivationSearch4BitFunctional, MixedPrecisionActivationMultipleInputs
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.scalar_tensor_test import ScalarTensorTest
@@ -56,6 +57,7 @@ from tests.pytorch_tests.model_tests.feature_models.symmetric_activation_test im
 from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
     SoftmaxFunctionNetTest
 from tests.pytorch_tests.model_tests.feature_models.permute_substitution_test import PermuteSubstitutionTest
+from tests.pytorch_tests.model_tests.feature_models.reshape_substitution_test import ReshapeSubstitutionTest
 from tests.pytorch_tests.model_tests.feature_models.constant_conv_substitution_test import ConstantConvSubstitutionTest, \
     ConstantConvReuseSubstitutionTest, ConstantConvTransposeSubstitutionTest
 from tests.pytorch_tests.model_tests.feature_models.multi_head_attention_test import MHALayerNetTest, \
@@ -68,9 +70,9 @@ from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test impo
 from tests.pytorch_tests.model_tests.feature_models.layer_name_test import ReuseNameNetTest
 from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTWeightsQuantizerTest, \
     LUTActivationQuantizerTest
-from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import MixedPercisionSearch8Bit, \
-    MixedPercisionSearch2Bit, MixedPercisionSearch4Bit, MixedPercisionActivationDisabledTest, \
-    MixedPercisionSearchLastLayerDistance, MixedPercisionSearchPartWeightsLayers
+from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import MixedPrecisionSearch4Bit, \
+    MixedPrecisionActivationDisabledTest, MixedPrecisionSearchLastLayerDistance, MixedPrecisionWithHessianScores, \
+    MixedPrecisionSearch8Bit, MixedPrecisionSearchPartWeightsLayers, MixedPrecisionSearch2Bit
 from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multiple_tensors_test import \
     MultipleOutputsMultipleTensorsNetTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_outputs_node_test import MultipleOutputsNetTest
@@ -86,8 +88,10 @@ from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccurac
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
 from tests.pytorch_tests.model_tests.feature_models.metadata_test import MetadataTest
+from tests.pytorch_tests.model_tests.feature_models.tpc_test import TpcTest
 from tests.pytorch_tests.model_tests.feature_models.const_representation_test import ConstRepresentationTest, \
-    ConstRepresentationMultiInputTest
+    ConstRepresentationMultiInputTest, ConstRepresentationLinearLayerTest, ConstRepresentationGetIndexTest, \
+    ConstRepresentationCodeTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from tests.pytorch_tests.model_tests.feature_models.const_quantization_test import ConstQuantizationTest, \
     AdvancedConstQuantizationTest
@@ -95,6 +99,7 @@ from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import 
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
+
     def test_remove_identity(self):
         """
         This test checks that identity layers are removed from the model.
@@ -232,32 +237,54 @@ class FeatureModelsTestRunner(unittest.TestCase):
         ResidualCollapsingTest1(self).run_test()
         ResidualCollapsingTest2(self).run_test()
 
-    # def test_const_quantization(self):
-    #     c = (np.ones((32,)) + np.random.random((32,))).astype(np.float32)
-    #     for func in [torch.add, torch.sub, torch.mul, torch.div]:
-    #         ConstQuantizationTest(self, func, c).run_test()
-    #         ConstQuantizationTest(self, func, c, input_reverse_order=True).run_test()
-    #         ConstQuantizationTest(self, func, 2.45).run_test()
-    #         ConstQuantizationTest(self, func, 5, input_reverse_order=True).run_test()
-    #
-    #     AdvancedConstQuantizationTest(self).run_test()
+    def test_const_quantization(self):
+        c = (np.ones((16, 32, 32)) + np.random.random((16, 32, 32))).astype(np.float32)
+        for func in [torch.add, torch.sub, torch.mul, torch.div]:
+            ConstQuantizationTest(self, func, c).run_test()
+            ConstQuantizationTest(self, func, c, input_reverse_order=True).run_test()
+            ConstQuantizationTest(self, func, 2.45).run_test()
+            ConstQuantizationTest(self, func, 5, input_reverse_order=True).run_test()
+
+        AdvancedConstQuantizationTest(self).run_test()
 
     def test_const_representation(self):
-        c = (np.ones((32,)) + np.random.random((32,))).astype(np.float32)
-        for func in [torch.add, torch.sub, torch.mul, torch.div]:
-            ConstRepresentationTest(self, func, c).run_test()
-            ConstRepresentationTest(self, func, c, input_reverse_order=True).run_test()
-            ConstRepresentationTest(self, func, 2.45).run_test()
-            ConstRepresentationTest(self, func, 5, input_reverse_order=True).run_test()
+        for const_dtype in [np.float32, np.int64, np.int32]:
+            c = (np.ones((32,)) + np.random.random((32,))).astype(const_dtype)
+            c_64 = (np.ones((64,)) + np.random.random((64,))).astype(const_dtype)
+            indices = np.random.randint(64, size=32)
+            for func in [torch.add, torch.sub, torch.mul, torch.div]:
+                ConstRepresentationTest(self, func, c).run_test()
+                ConstRepresentationTest(self, func, c, input_reverse_order=True).run_test()
+                ConstRepresentationTest(self, func, 2.45).run_test()
+                ConstRepresentationTest(self, func, 5, input_reverse_order=True).run_test()
+                ConstRepresentationGetIndexTest(self, func, c_64, indices).run_test()
 
         ConstRepresentationMultiInputTest(self).run_test()
+
+        for enable_weights_quantization in [False, True]:
+            c_img = (np.ones((1, 16, 32, 32)) + np.random.random((1, 16, 32, 32))).astype(np.float32)
+            ConstRepresentationLinearLayerTest(self, func=nn.Linear(32, 32), const=c_img,
+                                               enable_weights_quantization=enable_weights_quantization).run_test()
+            ConstRepresentationLinearLayerTest(self, func=nn.Conv2d(16, 16, 1),
+                                               const=c_img,
+                                               enable_weights_quantization=enable_weights_quantization).run_test()
+            ConstRepresentationLinearLayerTest(self, func=nn.ConvTranspose2d(16, 16, 1),
+                                               const=c_img, enable_weights_quantization=enable_weights_quantization).run_test()
+
+        ConstRepresentationCodeTest(self).run_test()
 
     def test_permute_substitution(self):
         """
         This test checks the permute substitution feature
         """
         PermuteSubstitutionTest(self).run_test()
-
+    
+    def test_reshape_substitution(self):
+        """
+        This test checks the reshape substitution feature
+        """
+        ReshapeSubstitutionTest(self).run_test()
+    
     def test_constant_conv_substitution(self):
         """
         This test checks the constant conv substitution feature
@@ -415,20 +442,26 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the Mixed Precision search.
         """
-        MixedPercisionSearch8Bit(self, distance_metric=MpDistanceWeighting.AVG).run_test()
-        MixedPercisionSearch8Bit(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
+        MixedPrecisionSearch8Bit(self, distance_metric=MpDistanceWeighting.AVG).run_test()
+        MixedPrecisionSearch8Bit(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
+
+    def test_mixed_precision_with_hessian_weights(self):
+        """
+        This test checks the Mixed Precision search with Hessian-based scores.
+        """
+        MixedPrecisionWithHessianScores(self, distance_metric=MpDistanceWeighting.AVG).run_test()
 
     def test_mixed_precision_part_weights_layers(self):
         """
         This test checks the Mixed Precision search.
         """
-        MixedPercisionSearchPartWeightsLayers(self).run_test()
+        MixedPrecisionSearchPartWeightsLayers(self).run_test()
 
     def test_mixed_precision_2bit(self):
         """
         This test checks the Mixed Precision search.
         """
-        MixedPercisionSearch2Bit(self).run_test()
+        MixedPrecisionSearch2Bit(self).run_test()
 
     def test_reshape_net(self):
         """
@@ -442,49 +475,49 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the Mixed Precision search.
         """
-        MixedPercisionSearch4Bit(self).run_test()
+        MixedPrecisionSearch4Bit(self).run_test()
 
     def test_mixed_precision_with_last_layer_distance(self):
         """
         This test checks the Mixed Precision search with last layer distance function.
         """
-        MixedPercisionSearchLastLayerDistance(self).run_test()
+        MixedPrecisionSearchLastLayerDistance(self).run_test()
 
     def test_mixed_precision_activation_disabled(self):
         """
         This test checks the Mixed Precision search.
         """
-        MixedPercisionActivationDisabledTest(self).run_test()
+        MixedPrecisionActivationDisabledTest(self).run_test()
 
     def test_mixed_precision_activation_8bit(self):
         """
         This test checks the activation Mixed Precision search.
         """
-        MixedPercisionActivationSearch8Bit(self).run_test()
+        MixedPrecisionActivationSearch8Bit(self).run_test()
 
     def test_mixed_precision_activation_2bit(self):
         """
         This test checks the activation Mixed Precision search.
         """
-        MixedPercisionActivationSearch2Bit(self).run_test()
+        MixedPrecisionActivationSearch2Bit(self).run_test()
 
     def test_mixed_precision_activation_4bit(self):
         """
         This test checks the activation Mixed Precision search.
         """
-        MixedPercisionActivationSearch4Bit(self).run_test()
+        MixedPrecisionActivationSearch4Bit(self).run_test()
 
     def test_mixed_precision_activation_4bit_functional(self):
         """
         This test checks the activation Mixed Precision search with functional node.
         """
-        MixedPercisionActivationSearch4BitFunctional(self).run_test()
+        MixedPrecisionActivationSearch4BitFunctional(self).run_test()
 
     def test_mixed_precision_multiple_inputs(self):
         """
         This test checks the activation Mixed Precision search with multiple inputs to model.
         """
-        MixedPercisionActivationMultipleInputs(self).run_test()
+        MixedPrecisionActivationMultipleInputs(self).run_test()
 
     def test_mixed_precision_bops_utilization(self):
         """
@@ -603,6 +636,17 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_metadata(self):
         MetadataTest(self).run_test()
+
+    def test_torch_tpcs(self):
+        TpcTest(f'{C.IMX500_TP_MODEL}.v1', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v1_lut', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v1_pot', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v2', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v2_lut', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v3', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v3_lut', self).run_test()
+        TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
+        TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
 
 
 if __name__ == '__main__':

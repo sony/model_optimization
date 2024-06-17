@@ -25,7 +25,7 @@ class FunctionalNode(BaseNode):
                  functional_op: Any = None,
                  inputs_as_list: bool = False,
                  has_activation: bool = True,
-                 tensor_input_indices = None):
+                 tensor_input_allocs = None):
         """
         Init a FunctionalNode object.
 
@@ -44,7 +44,7 @@ class FunctionalNode(BaseNode):
             functional_op: The op the node implements.
             inputs_as_list: Whether to pass the node its input tensors as a list or not when calling the layer.
             has_activation: Whether the node has activations that we might want to quantize.
-            tensor_input_indices: A list of indices for activation tensors in the node's input tensor list
+            tensor_input_allocs: A list of indices for activation tensors in the node's input tensor list
 
         """
 
@@ -63,7 +63,7 @@ class FunctionalNode(BaseNode):
         self.op_call_args = op_call_args
         self.functional_op = functional_op
         self.inputs_as_list = inputs_as_list
-        self.tensor_input_indices = [] if tensor_input_indices is None else tensor_input_indices
+        self.tensor_input_allocs = [] if tensor_input_allocs is None else tensor_input_allocs
 
     @property
     def type(self):

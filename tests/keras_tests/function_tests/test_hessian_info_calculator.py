@@ -24,6 +24,7 @@ from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input, Con
 
 import model_compression_toolkit as mct
 import model_compression_toolkit.core.common.hessian as hessian_common
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
@@ -57,7 +58,8 @@ def get_multiple_outputs_model(input_shape):
     x = Conv2D(filters=2, kernel_size=3)(inputs)
     x = BatchNormalization()(x)
     out1 = ReLU(max_value=6.0)(x)
-    out2 = Conv2D(2, 4)(out1)
+    x2 = Conv2D(2, 4)(out1)
+    out2 = ReLU(max_value=6.0)(x2)
     return keras.Model(inputs=inputs, outputs=[out1, out2])
 
 
@@ -78,7 +80,7 @@ def get_multiple_inputs_model(input_shape):
     x = Conv2D(filters=2, kernel_size=3)(inputs)
     x2 = Conv2D(filters=2, kernel_size=3)(inputs2)
 
-    outputs = x+x2
+    outputs = x + x2
     return keras.Model(inputs=[inputs, inputs2], outputs=outputs)
 
 
@@ -86,25 +88,18 @@ def representative_dataset(input_shape, num_of_inputs=1):
     yield [np.random.randn(*input_shape).astype(np.float32)] * num_of_inputs
 
 
-class TestHessianInfoCalculatorBase(unittest.TestCase):
-    def _fetch_scores(self, hessian_info, target_node, granularity, mode, num_scores=1):
-        request = hessian_common.TraceHessianRequest(mode=mode,
-                                                     granularity=granularity,
-                                                     target_node=target_node)
-        info = hessian_info.fetch_hessian(request, num_scores)
-        assert len(info) == num_scores, f"fetched {num_scores} score but {len(info)} scores were fetched"
-        return np.mean(np.stack(info), axis=0)
+def get_expected_shape(t_shape, granularity, node_type):
+    if granularity == hessian_common.HessianInfoGranularity.PER_ELEMENT:
+        return (1, *t_shape)
+    elif granularity == hessian_common.HessianInfoGranularity.PER_TENSOR:
+        return (1, 1)
+    else:
+        return (1, t_shape[-1] * t_shape[2]) if node_type == DepthwiseConv2D else \
+            (1, t_shape[2]) if node_type == Conv2DTranspose else \
+                (1, t_shape[-1])
 
-    def _test_score_shape(self, hessian_service, interest_point, granularity, mode, expected_shape, num_scores=1):
-        score = self._fetch_scores(hessian_info=hessian_service,
-                                   target_node=interest_point,  # linear op
-                                   granularity=granularity,
-                                   mode=mode,
-                                   num_scores=num_scores)
-        self.assertTrue(isinstance(score, np.ndarray), f"scores expected to be a numpy array but is {type(score)}")
-        self.assertTrue(score.shape == expected_shape,
-                        f"Tensor shape is expected to be {expected_shape} but has shape {score.shape}")  # per tensor
-        return score
+
+class TestHessianInfoCalculatorBase(unittest.TestCase):
 
     def _setup(self, layer, input_shape=(1, 8, 8, 3)):
         in_model = basic_model(input_shape, layer=layer)
@@ -122,103 +117,106 @@ class TestHessianInfoCalculatorBase(unittest.TestCase):
 
 class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
 
+    def _test_hessian_scores(self, hessian_info, target_nodes, granularity, num_scores=1):
+        request = hessian_common.TraceHessianRequest(mode=hessian_common.HessianMode.WEIGHTS,
+                                                     granularity=granularity,
+                                                     target_nodes=target_nodes)
+
+        info = hessian_info.fetch_hessian(request, num_scores)
+
+        scores = []
+        for i, target_node in enumerate(target_nodes):
+            # The call for fetch_hessian returns the requested number of scores for each target node.
+            # Since in this test we request computation for a single node, we need to extract its results from the list.
+            self.assertTrue(isinstance(info, list))
+
+            node_info = info[i]
+
+            self.assertTrue(len(node_info) == num_scores, f"fetched {num_scores} score but {len(node_info)} scores were fetched")
+            score = np.mean(np.stack(node_info), axis=0)
+
+            kernel_attr_name = [w for w in target_node.weights if KERNEL in w]
+            self.assertTrue(len(kernel_attr_name) == 1, "Expecting exactly 1 kernel attribute.")
+            expected_shape = (
+                get_expected_shape(target_node.weights[kernel_attr_name[0]].shape, granularity, target_node.type))
+
+            self.assertTrue(isinstance(score, np.ndarray), f"scores expected to be a numpy array but is {type(score)}")
+            self.assertTrue(score.shape == expected_shape,
+                            f"Tensor shape is expected to be {expected_shape} but has shape {score.shape}")  # per tensor
+
+            scores.append(score)
+
+        return scores
+
     def test_conv2d_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=Conv2D(filters=2, kernel_size=3))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
-        interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        interest_points = [n for n in sorted_graph_nodes if len(n.weights) > 0]
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(1,))
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(2,))
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(3, 3, 3, 2))
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL)
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT)
         del hessian_service
 
     def test_dense_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=Dense(2), input_shape=(1, 8))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
-        interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        interest_points = [n for n in sorted_graph_nodes if n.type == Dense]
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
 
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(1,))
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(2,))
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(8, 2))
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL)
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT)
         del hessian_service
 
     def test_conv2dtranspose_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=Conv2DTranspose(filters=2, kernel_size=3))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
-        interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        interest_points = [n for n in sorted_graph_nodes if len(n.weights) > 0]
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
 
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(1,))
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(2,))
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(3, 3, 2, 3))
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL)
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT)
         del hessian_service
 
     def test_depthwiseconv2d_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=DepthwiseConv2D(kernel_size=3))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
-        interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        interest_points = [n for n in sorted_graph_nodes if len(n.weights) > 0]
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
 
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(1,))
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(3,))
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(3, 3, 3, 1))
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL)
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT)
         del hessian_service
 
     def test_reused_layer(self):
@@ -238,35 +236,34 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
 
         # Two nodes representing the same reused layer
         interest_points = [n for n in sorted_graph_nodes if n.is_match_type(Conv2D)]
-        self.assertTrue(len(interest_points)==2, f"Expected to find 2 Conv2D nodes but found {len(interest_points)}")
+        self.assertTrue(len(interest_points) == 2, f"Expected to find 2 Conv2D nodes but found {len(interest_points)}")
 
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
-        node1_approx = self._test_score_shape(hessian_service,
-                                              interest_points[0],
-                                              granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                                              mode=hessian_common.HessianMode.WEIGHTS,
-                                              expected_shape=(1,))
-        node2_approx = self._test_score_shape(hessian_service,
-                                              interest_points[1],
-                                              granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                                              mode=hessian_common.HessianMode.WEIGHTS,
-                                              expected_shape=(1,))
-        self.assertTrue(np.all(node1_approx==node2_approx), f'Approximations of nodes of a reused layer '
-                                                            f'should be equal')
+        node1_approx = self._test_hessian_scores(hessian_service,
+                                                 [interest_points[0]],
+                                                 granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)[0]
+        node2_approx = self._test_hessian_scores(hessian_service,
+                                                 [interest_points[1]],
+                                                 granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)[0]
+        self.assertTrue(np.all(node1_approx == node2_approx), f'Approximations of nodes of a reused layer '
+                                                              f'should be equal')
 
-        node1_count = hessian_service.count_saved_info_of_request(
-            hessian_common.TraceHessianRequest(target_node=interest_points[0],
-                                               mode=hessian_common.HessianMode.WEIGHTS,
-                                               granularity=hessian_common.HessianInfoGranularity.PER_TENSOR))
-        self.assertTrue(node1_count == 1)
+        # Expecting call for count_saved_info_of_request for reused node to be with a reconstructed request with the
+        # node's representative group member for its reuse group
+        with self.assertRaises(Exception) as e:
+            node1_count = hessian_service.count_saved_info_of_request(
+                hessian_common.TraceHessianRequest(target_nodes=[interest_points[0]],
+                                                   mode=hessian_common.HessianMode.WEIGHTS,
+                                                   granularity=hessian_common.HessianInfoGranularity.PER_TENSOR))
+        self.assertTrue("Expecting the Hessian request to include only non-reused nodes at this point"
+                        in str(e.exception))
 
         node2_count = hessian_service.count_saved_info_of_request(
-            hessian_common.TraceHessianRequest(target_node=interest_points[1],
+            hessian_common.TraceHessianRequest(target_nodes=[interest_points[1]],
                                                mode=hessian_common.HessianMode.WEIGHTS,
                                                granularity=hessian_common.HessianInfoGranularity.PER_TENSOR))
-        self.assertTrue(node2_count == 1)
+        self.assertTrue(node2_count[interest_points[1]] == 1)
         self.assertTrue(len(hessian_service.trace_hessian_request_to_score_list) == 1)
         del hessian_service
 
@@ -292,28 +289,20 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
 
         # This test assumes the first Conv2D interest point is the node that
         # we fetch its scores and test their shapes correctness.
-        interest_points = [n for n in sorted_graph_nodes if n.type==Conv2D][0]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        interest_points = [n for n in sorted_graph_nodes if n.type == Conv2D]
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
-        self._test_score_shape(hessian_service,
-                               interest_points,
-                               granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(1,))
-        self._test_score_shape(hessian_service,
-                               interest_points,
-                               granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(2,))
-        self._test_score_shape(hessian_service,
-                               interest_points,
-                               granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT,
-                               mode=hessian_common.HessianMode.WEIGHTS,
-                               expected_shape=(3, 3, 3, 2))
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL)
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT)
 
         del hessian_service
-
 
     def test_multiple_inputs(self):
         input_shape = (1, 8, 8, 3)
@@ -340,66 +329,83 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
 
 class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
 
+    def _test_hessian_scores(self, hessian_info, target_nodes, granularity, num_scores=1):
+        request = hessian_common.TraceHessianRequest(mode=hessian_common.HessianMode.ACTIVATION,
+                                                     granularity=granularity,
+                                                     target_nodes=target_nodes)
+        info = hessian_info.fetch_hessian(request, num_scores)
+
+        # The call for fetch_hessian returns the requested number of scores for each target node.
+        self.assertTrue(isinstance(info, list))
+
+        # currently, activation support only per-tensor Hessian
+        expected_shape = (1, 1)
+        scores = []
+
+        for i, target_node in enumerate(target_nodes):
+            node_info = info[i]
+            self.assertTrue(len(node_info) == num_scores,
+                            f"Requested {num_scores} score but {len(node_info)} scores were fetched")
+
+            score = np.mean(np.stack(node_info), axis=0)
+
+            self.assertTrue(score.shape == expected_shape,
+                            f"Tensor shape is expected to be {expected_shape} but has shape {score.shape}")  # per tensor
+
+            scores.append(score)
+
+        return scores
+
     def test_conv2d_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=Conv2D(filters=2, kernel_size=3))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
-        interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+
+        interest_points = [n for n in sorted_graph_nodes if len(n.weights) > 0]
+
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                               mode=hessian_common.HessianMode.ACTIVATION,
-                               expected_shape=(1,))
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
 
         del hessian_service
 
     def test_dense_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=Dense(2), input_shape=(1, 8))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
-        interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        interest_points = [n for n in sorted_graph_nodes if len(n.weights) > 0]
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
 
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                               mode=hessian_common.HessianMode.ACTIVATION,
-                               expected_shape=(1,))
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
 
         del hessian_service
 
     def test_conv2dtranspose_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=Conv2DTranspose(filters=2, kernel_size=3))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
-        interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        interest_points = [n for n in sorted_graph_nodes if len(n.weights) > 0]
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
 
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                               mode=hessian_common.HessianMode.ACTIVATION,
-                               expected_shape=(1,))
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
 
         del hessian_service
 
     def test_depthwiseconv2d_granularity(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=DepthwiseConv2D(kernel_size=3))
         sorted_graph_nodes = graph.get_topo_sorted_nodes()
-        interest_points = [n for n in sorted_graph_nodes]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        interest_points = [n for n in sorted_graph_nodes if len(n.weights) > 0]
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
 
-        self._test_score_shape(hessian_service,
-                               interest_points[1],
-                               granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                               mode=hessian_common.HessianMode.ACTIVATION,
-                               expected_shape=(1,))
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
 
         del hessian_service
 
@@ -420,36 +426,37 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
 
         # Two nodes representing the same reused layer
         interest_points = [n for n in sorted_graph_nodes if n.is_match_type(Conv2D)]
-        self.assertTrue(len(interest_points)==2, f"Expected to find 2 Conv2D nodes but found {len(interest_points)}")
+        self.assertTrue(len(interest_points) == 2, f"Expected to find 2 Conv2D nodes but found {len(interest_points)}")
 
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
-        node1_approx = self._test_score_shape(hessian_service,
-                                              interest_points[0],
-                                              granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                                              mode=hessian_common.HessianMode.ACTIVATION,
-                                              expected_shape=(1,))
-        node2_approx = self._test_score_shape(hessian_service,
-                                              interest_points[1],
-                                              granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                                              mode=hessian_common.HessianMode.ACTIVATION,
-                                              expected_shape=(1,))
+
+        node1_approx = self._test_hessian_scores(hessian_service,
+                                                 [interest_points[0]],
+                                                 granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)[0]
+        node2_approx = self._test_hessian_scores(hessian_service,
+                                                 [interest_points[1]],
+                                                 granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)[0]
 
         self.assertTrue(np.all(node1_approx == node2_approx), f'Approximations of nodes of a reused layer '
                                                               f'should be equal')
 
-        node1_count = hessian_service.count_saved_info_of_request(
-            hessian_common.TraceHessianRequest(target_node=interest_points[0],
-                                               mode=hessian_common.HessianMode.ACTIVATION,
-                                               granularity=hessian_common.HessianInfoGranularity.PER_TENSOR))
-        self.assertTrue(node1_count == 1)
+        # Expecting call for count_saved_info_of_request for reused node to be with a reconstructed request with the
+        # node's representative group member for its reuse group
+        with self.assertRaises(Exception) as e:
+            node1_count = hessian_service.count_saved_info_of_request(
+                hessian_common.TraceHessianRequest(target_nodes=[interest_points[0]],
+                                                   mode=hessian_common.HessianMode.ACTIVATION,
+                                                   granularity=hessian_common.HessianInfoGranularity.PER_TENSOR))
+        self.assertTrue("Expecting the Hessian request to include only non-reused nodes at this point"
+                        in str(e.exception))
 
         node2_count = hessian_service.count_saved_info_of_request(
-            hessian_common.TraceHessianRequest(target_node=interest_points[1],
+            hessian_common.TraceHessianRequest(target_nodes=[interest_points[1]],
                                                mode=hessian_common.HessianMode.ACTIVATION,
                                                granularity=hessian_common.HessianInfoGranularity.PER_TENSOR))
-        self.assertTrue(node2_count == 1)
+        self.assertTrue(node2_count[interest_points[1]] == 1)
+
         self.assertTrue(len(hessian_service.trace_hessian_request_to_score_list) == 1)
 
         del hessian_service
@@ -476,15 +483,12 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
 
         # This test assumes the first Conv2D interest point is the node that
         # we fetch its scores and test their shapes correctness.
-        interest_points = [n for n in sorted_graph_nodes if n.type==Conv2D][0]
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        interest_points = [n for n in sorted_graph_nodes if n.type == Conv2D]
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
-        self._test_score_shape(hessian_service,
-                               interest_points,
-                               granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                               mode=hessian_common.HessianMode.ACTIVATION,
-                               expected_shape=(1,))
+        self._test_hessian_scores(hessian_service,
+                                  interest_points,
+                                  granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
 
         del hessian_service
 
@@ -512,13 +516,12 @@ class TestHessianInfoCalculatorActivation(TestHessianInfoCalculatorBase):
 
     def test_activation_hessian_output_exception(self):
         graph, _repr_dataset, keras_impl = self._setup(layer=Conv2D(filters=2, kernel_size=3))
-        hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset=_repr_dataset,
+        hessian_service = hessian_common.HessianInfoService(graph=graph, representative_dataset_gen=_repr_dataset,
                                                             fw_impl=keras_impl)
         with self.assertRaises(Exception) as e:
             request = hessian_common.TraceHessianRequest(granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
                                                          mode=hessian_common.HessianMode.ACTIVATION,
-                                                         target_node=graph.get_outputs()[0].node)
+                                                         target_nodes=[graph.get_outputs()[0].node])
             _ = hessian_service.fetch_hessian(request, required_size=1)
 
         self.assertTrue("Trying to compute activation Hessian approximation with respect to the model output"

@@ -31,7 +31,7 @@ deployment performance.
         <td>COCO</td>
     </tr>
     <tr>
-        <td> <a href="pytorch/ptq/keras_yolov8n_for_imx500.ipynb">YOLOv8n</a></td>
+        <td> <a href="pytorch/pytorch_yolov8n_for_imx500.ipynb">YOLOv8n</a></td>
         <td>PyTorch</td>
         <td>COCO</td>
     </tr>
@@ -53,13 +53,13 @@ deployment performance.
     </tr>
     <tr>
         <td >Instance Segmentation</td>
-        <td>YOLOv8n-seg</td>
+        <td> <a href="pytorch/pytorch_yolov8n_seg_for_imx500.ipynb">YOLOv8n-seg</a></td>
         <td>PyTorch</td>
         <td>COCO</td>
     </tr>
     <tr>
         <td>Pose Estimation</td>
-        <td>YOLOv8n-pose</td>
+        <td> <a href="pytorch/pytorch_yolov8n_pose_for_imx500.ipynb">YOLOv8n-pose</a></td>
         <td>PyTorch</td>
         <td>COCO</td>
     </tr>

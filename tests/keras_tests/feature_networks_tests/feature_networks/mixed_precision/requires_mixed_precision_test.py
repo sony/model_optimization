@@ -24,13 +24,13 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
     get_op_quantization_configs
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_tests import get_base_mp_nbits_candidates
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
-    MixedPercisionBaseTest
+    MixedPrecisionBaseTest
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras, get_weights_only_mp_tpc_keras
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 import model_compression_toolkit as mct
 
 
-class RequiresMixedPrecision(MixedPercisionBaseTest):
+class RequiresMixedPrecision(MixedPrecisionBaseTest):
     """
     A test to ensure that mixed precision is used instead of single precision
     when the memory allocated for resources is less than the memory required for all layers using single precision.

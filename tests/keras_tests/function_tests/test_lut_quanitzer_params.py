@@ -32,7 +32,7 @@ class TestLUTQuantizerParams(unittest.TestCase):
                                                 p=2,
                                                 n_bits=4,
                                                 per_channel=True,
-                                                channel_axis=channel_axis)
+                                                channel_axis=channel_axis)[0]
         lut_values = quantization_params[LUT_VALUES]
         scales_per_channel = quantization_params[SCALE_PER_CHANNEL]
         # check size of scales
@@ -50,7 +50,7 @@ class TestLUTQuantizerParams(unittest.TestCase):
                                                 p=2,
                                                 n_bits=4,
                                                 per_channel=True,
-                                                channel_axis=channel_axis)
+                                                channel_axis=channel_axis)[0]
         lut_values = quantization_params[LUT_VALUES]
         scales_per_channel = quantization_params[SCALE_PER_CHANNEL]
         # check size of scales
@@ -59,7 +59,8 @@ class TestLUTQuantizerParams(unittest.TestCase):
         # check that all scales are power of 2
         self.assertTrue(np.all([math.log2(n).is_integer() for n in list(scales_per_channel.flatten())]))
         # len(unique(tensor_data)) < 2 ** n_bits then lut_values = len(unique(tensor_data))
-        self.assertTrue(len(lut_values.flatten()) <= len(np.unique(tensor_data.flatten())))
+        is_zero_added = 0 in lut_values and 0 not in tensor_data  # check if 0 was added to LUT values in quantization.
+        self.assertTrue(len(lut_values.flatten()) - int(is_zero_added) <= len(np.unique(tensor_data.flatten())))
 
 
 if __name__ == '__main__':

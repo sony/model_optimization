@@ -25,6 +25,7 @@ from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq import RoundingType
+from model_compression_toolkit.target_platform_capabilities import constants as C
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
     ActivationDecompositionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_bound_to_power_of_2_test import \
@@ -122,17 +123,19 @@ from tests.keras_tests.feature_networks_tests.feature_networks.symmetric_thresho
     SymmetricThresholdSelectionActivationTest, SymmetricThresholdSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.test_depthwise_conv2d_replacement import \
     DwConv2dReplacementTest
-from tests.keras_tests.feature_networks_tests.feature_networks.test_kmeans_quantizer import KmeansQuantizerTest, \
-    KmeansQuantizerTestManyClasses, KmeansQuantizerNotPerChannelTest
+from tests.keras_tests.feature_networks_tests.feature_networks.test_kmeans_quantizer import \
+    KmeansQuantizerTestManyClasses
 from tests.keras_tests.feature_networks_tests.feature_networks.uniform_range_selection_activation_test import \
     UniformRangeSelectionActivationTest, UniformRangeSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
-    MixedPercisionSearchTest, MixedPercisionDepthwiseTest, \
-    MixedPercisionSearch4BitsAvgTest, MixedPercisionSearch2BitsAvgTest, MixedPrecisionActivationDisabled, \
-    MixedPercisionSearchLastLayerDistanceTest, MixedPercisionSearchActivationNonConfNodesTest, \
-    MixedPercisionSearchTotalMemoryNonConfNodesTest, MixedPercisionSearchPartWeightsLayersTest, MixedPercisionCombinedNMSTest
+    MixedPrecisionSearch4BitsAvgTest, MixedPrecisionSearch2BitsAvgTest, MixedPrecisionActivationDisabled, \
+    MixedPrecisionWithHessianScoresTest, MixedPrecisionSearchTest, \
+    MixedPrecisionSearchPartWeightsLayersTest, MixedPrecisionDepthwiseTest, MixedPrecisionSearchLastLayerDistanceTest, \
+    MixedPrecisionSearchActivationNonConfNodesTest, MixedPrecisionSearchTotalMemoryNonConfNodesTest, \
+    MixedPrecisionCombinedNMSTest
 from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substitution_test import MatmulToDenseSubstitutionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.metadata_test import MetadataTest
+from tests.keras_tests.feature_networks_tests.feature_networks.tpc_test import TpcTest
 from tests.keras_tests.feature_networks_tests.feature_networks.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest, ConstRepresentationMatMulTest
 from tests.keras_tests.feature_networks_tests.feature_networks.concatination_threshold_update import ConcatThresholdtest
@@ -205,17 +208,18 @@ class FeatureNetworkTest(unittest.TestCase):
         ReusedSeparableTest(self).run_test()
 
     def test_mixed_precision_search_2bits_avg(self):
-        MixedPercisionSearch2BitsAvgTest(self).run_test()
+        MixedPrecisionSearch2BitsAvgTest(self).run_test()
 
     def test_mixed_precision_search_4bits_avg(self):
-        MixedPercisionSearch4BitsAvgTest(self).run_test()
+        MixedPrecisionSearch4BitsAvgTest(self).run_test()
 
     def test_mixed_precision_search_4bits_avg_nms(self):
-        MixedPercisionCombinedNMSTest(self).run_test()
+        MixedPrecisionCombinedNMSTest(self).run_test()
 
     def test_mixed_precision_search(self):
-        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG, expected_mp_config=[0, 1]).run_test()
-        MixedPercisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER, expected_mp_config=[1, 0]).run_test()
+        MixedPrecisionSearchTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
+        MixedPrecisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
+        MixedPrecisionWithHessianScoresTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
 
     def test_requires_mixed_recision(self):
         RequiresMixedPrecisionWeights(self, weights_memory=True).run_test()
@@ -225,22 +229,22 @@ class FeatureNetworkTest(unittest.TestCase):
         RequiresMixedPrecision(self).run_test()
 
     def test_mixed_precision_for_part_weights_layers(self):
-        MixedPercisionSearchPartWeightsLayersTest(self).run_test()
+        MixedPrecisionSearchPartWeightsLayersTest(self).run_test()
 
     def test_mixed_precision_activation_disabled(self):
         MixedPrecisionActivationDisabled(self).run_test()
 
     def test_mixed_precision_dw(self):
-        MixedPercisionDepthwiseTest(self).run_test()
+        MixedPrecisionDepthwiseTest(self).run_test()
 
     def test_mixed_precision_search_with_last_layer_distance(self):
-        MixedPercisionSearchLastLayerDistanceTest(self).run_test()
+        MixedPrecisionSearchLastLayerDistanceTest(self).run_test()
 
     def test_mixed_precision_search_activation_non_conf_nodes(self):
-        MixedPercisionSearchActivationNonConfNodesTest(self).run_test()
+        MixedPrecisionSearchActivationNonConfNodesTest(self).run_test()
 
     def test_mixed_precision_search_total_non_conf_nodes(self):
-        MixedPercisionSearchTotalMemoryNonConfNodesTest(self).run_test()
+        MixedPrecisionSearchTotalMemoryNonConfNodesTest(self).run_test()
 
     def test_mixed_precision_activation_search(self):
         MixedPrecisionActivationSearchTest(self).run_test()
@@ -548,17 +552,18 @@ class FeatureNetworkTest(unittest.TestCase):
         SixConv2DCollapsingTest(self).run_test()
         Op2DAddConstCollapsingTest(self).run_test()
 
-    # def test_const_quantization(self):
-    #     c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32)
-    #     for func in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv]:
-    #         ConstQuantizationTest(self, func, c).run_test()
-    #         ConstQuantizationTest(self, func, c, input_reverse_order=True).run_test()
-    #         ConstQuantizationTest(self, func, c, input_reverse_order=True, use_kwargs=True).run_test()
-    #         ConstQuantizationTest(self, func, c, use_kwargs=True).run_test()
-    #         ConstQuantizationTest(self, func, 2.45).run_test()
-    #         ConstQuantizationTest(self, func, 5.1, input_reverse_order=True).run_test()
-    #
-    #     AdvancedConstQuantizationTest(self).run_test()
+    def test_const_quantization(self):
+        c = (np.ones((32, 32, 16)) + np.random.random((32, 32, 16))).astype(np.float32)
+        for func in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv]:
+            for qmethod in [QuantizationErrorMethod.MSE, QuantizationErrorMethod.NOCLIPPING]:
+                ConstQuantizationTest(self, func, c, qmethod=qmethod).run_test()
+                ConstQuantizationTest(self, func, c, input_reverse_order=True, qmethod=qmethod).run_test()
+                ConstQuantizationTest(self, func, c, input_reverse_order=True, use_kwargs=True, qmethod=qmethod).run_test()
+                ConstQuantizationTest(self, func, c, use_kwargs=True, qmethod=qmethod).run_test()
+                ConstQuantizationTest(self, func, 2.45, qmethod=qmethod).run_test()
+                ConstQuantizationTest(self, func, 5.1, input_reverse_order=True, qmethod=qmethod).run_test()
+
+        AdvancedConstQuantizationTest(self).run_test()
 
     def test_const_representation(self):
         c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32)
@@ -775,6 +780,17 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_metadata(self):
         MetadataTest(self).run_test()
 
-    
+    def test_keras_tpcs(self):
+        TpcTest(f'{C.IMX500_TP_MODEL}.v1', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v1_lut', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v1_pot', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v2', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v2_lut', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v3', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v3_lut', self).run_test()
+        TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
+        TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -96,6 +96,16 @@ class BaseNode:
         """
         return self.has_activation
 
+    @property
+    def has_positional_weights(self):
+        """
+        Returns has_positional_weights attribute.
+
+        Returns: Whether the node has positional weights.
+
+        """
+        return any(isinstance(key, int) for key in self.weights.keys())
+
     def is_activation_quantization_enabled(self) -> bool:
         """
 
@@ -228,7 +238,8 @@ class BaseNode:
         """
         for pos, weight in sorted((pos, weight) for pos, weight in self.weights.items()
                                   if isinstance(pos, int)):
-            assert pos <= len(input_tensors), 'Positional weight index mismatch'
+            if pos > len(input_tensors):
+                Logger.critical("The positional weight index cannot exceed the number of input tensors to the node.")  # pragma: no cover
             input_tensors.insert(pos, weight)
 
         return input_tensors

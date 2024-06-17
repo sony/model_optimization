@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>QuantizationErrorMethod &#8212; MCT Documentation: ver 2.0.0</title>
+    <title>QuantizationErrorMethod &#8212; MCT Documentation: ver 2.1.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.0.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.1.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">QuantizationErrorMethod</a></li> 
       </ul>
     </div>  
@@ -49,10 +49,11 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.core.</span></span><span class="sig-name descname"><span class="pre">QuantizationErrorMethod</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.core.QuantizationErrorMethod" title="Permalink to this definition">¶</a></dt>
 <dd><p>Method for quantization threshold selection:</p>
 <p>NOCLIPPING - Use min/max values as thresholds.</p>
-<p>MSE - Use min square error for minimizing quantization noise.</p>
-<p>MAE - Use min absolute error for minimizing quantization noise.</p>
+<p>MSE - Use mean square error for minimizing quantization noise.</p>
+<p>MAE - Use mean absolute error for minimizing quantization noise.</p>
 <p>KL - Use KL-divergence to make signals distributions to be similar as possible.</p>
 <p>Lp - Use Lp-norm to minimizing quantization noise.</p>
+<p>HMSE - Use Hessian-based mean squared error for minimizing quantization noise. This method is using Hessian scores to factorize more valuable parameters when computing the error induced by quantization.</p>
 </dd></dl>
 
 </section>
@@ -84,7 +85,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.0.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.1.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">QuantizationErrorMethod</a></li> 
       </ul>
     </div>

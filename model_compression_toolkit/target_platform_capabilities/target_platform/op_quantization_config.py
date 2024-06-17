@@ -197,7 +197,7 @@ class OpQuantizationConfig:
             self.simd_size == other.simd_size
 
 
-class QuantizationConfigOptions(object):
+class QuantizationConfigOptions:
     """
 
     Wrap a set of quantization configurations to consider during the quantization
@@ -215,19 +215,24 @@ class QuantizationConfigOptions(object):
         """
 
         assert isinstance(quantization_config_list,
-                          list), f'\'QuantizationConfigOptions\' options list must be a list, but received: {type(quantization_config_list)}.'
-        assert len(quantization_config_list) > 0, f'Options list can not be empty.'
+                          list), f"'QuantizationConfigOptions' options list must be a list, but received: {type(quantization_config_list)}."
         for cfg in quantization_config_list:
-            assert isinstance(cfg, OpQuantizationConfig), f'Each option must be an instance of \'OpQuantizationConfig\', but found an object of type: {type(cfg)}.'
+            assert isinstance(cfg, OpQuantizationConfig),\
+                f"Each option must be an instance of 'OpQuantizationConfig', but found an object of type: {type(cfg)}."
         self.quantization_config_list = quantization_config_list
         if len(quantization_config_list) > 1:
-            assert base_config is not None, f'For multiple configurations, a \'base_config\' is required for non-mixed-precision optimization.'
-            assert base_config in quantization_config_list, f"\'base_config\' must be included in the quantization config options list."
+            assert base_config is not None, \
+                f"For multiple configurations, a 'base_config' is required for non-mixed-precision optimization."
+            assert any([base_config is cfg for cfg in quantization_config_list]), \
+                f"'base_config' must be included in the quantization config options list."
+            # Enforce base_config to be a reference to an instance in quantization_config_list.
             self.base_config = base_config
         elif len(quantization_config_list) == 1:
+            assert base_config is None or base_config == quantization_config_list[0], "'base_config' should be included in 'quantization_config_list'"
+            # Set base_config to be a reference to the first instance in quantization_config_list.
             self.base_config = quantization_config_list[0]
         else:
-            Logger.critical("\'QuantizationConfigOptions\' requires at least one \'OpQuantizationConfig\'; the provided list is empty.")
+            raise AssertionError("'QuantizationConfigOptions' requires at least one 'OpQuantizationConfig'. The provided list is empty.")
 
     def __eq__(self, other):
         """

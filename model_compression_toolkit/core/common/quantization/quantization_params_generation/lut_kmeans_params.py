@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Dict
+from typing import Dict, Tuple
 import numpy as np
 from sklearn.cluster import KMeans
 
@@ -42,7 +42,8 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
                       is_symmetric: bool = False,
                       node=None,
                       hessian_info_service: HessianInfoService = None,
-                      num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> Dict:
+                      num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES,
+                      ) -> Tuple[Dict[str, np.ndarray], int]:
     """
     The quantizer first finds the closest max value per channel of tensor_data.
     Now, we divide tensor_data with the threshold vector per channel. In addition, we scale the result to the range
@@ -70,27 +71,34 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
     if n_bits >= LUT_VALUES_BITWIDTH:
         Logger.critical(f'Look-Up-Table (LUT) bit configuration exceeds maximum: {n_bits} bits provided, must be less than {LUT_VALUES_BITWIDTH} bits.')  # pragma: no cover
     # TODO: need to set this externally
+    n_data_points = len(np.unique(tensor_data.flatten()))
     if len(np.unique(tensor_data.flatten())) < 2 ** n_bits:
-        n_clusters = len(np.unique(tensor_data.flatten()))
+        n_clusters = n_data_points
     else:
         n_clusters = 2 ** n_bits
     kmeans = KMeans(n_clusters=n_clusters, n_init=10)
 
     threshold_selection_tensor = symmetric_selection_tensor if is_symmetric else power_of_two_selection_tensor
-    thresholds_per_channel = threshold_selection_tensor(tensor_data, p, n_bits, per_channel,
-                                                        channel_axis, n_iter, min_threshold,
-                                                        qc.QuantizationErrorMethod.NOCLIPPING)[THRESHOLD]
+
+    _params, channel_axis = threshold_selection_tensor(tensor_data, p, n_bits, per_channel,
+                                                       channel_axis, n_iter, min_threshold,
+                                                       qc.QuantizationErrorMethod.NOCLIPPING)
+    thresholds_per_channel = _params[THRESHOLD]
 
     tensor_for_kmeans = int_quantization_with_threshold(tensor_data, thresholds_per_channel, LUT_VALUES_BITWIDTH)
     kmeans.fit(tensor_for_kmeans.reshape(-1, 1))
 
     # Add 0 to the LUT
     cc = np.round(kmeans.cluster_centers_)
+    if n_data_points < 2 ** n_bits and np.all(cc != 0):
+        # In case there are fewer data points than potential clusters, we can add the cluster 0.0
+        # to the original clusters array to improve quantization (i.e. no need to zero one of the clusters).
+        cc = np.concatenate([np.zeros([1, 1], dtype=cc.dtype), cc])
     closest2zero_idx = (np.abs(cc - 0)).argmin()
     cc[closest2zero_idx] = 0.0
 
     return {LUT_VALUES: cc,
-            SCALE_PER_CHANNEL: thresholds_per_channel}
+            SCALE_PER_CHANNEL: thresholds_per_channel}, channel_axis
 
 
 def lut_kmeans_histogram(bins: np.ndarray,
