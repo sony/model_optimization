@@ -59,6 +59,9 @@ class TestDocsLinks(unittest.TestCase):
                                 if _link[0] == '#':
                                     # A link starting with '#' is a local reference to a headline in the current file --> ignore
                                     pass
+                                elif _link.startswith('data:image/'):
+                                    # A link starting with 'data:image/' is a base64-encoded image --> ignore
+                                    print("Inline image, skipping:", _link)
                                 elif 'http://' in _link or 'https://' in _link:
                                     if self.check_link(_link):
                                         print("Link ok:", _link)
