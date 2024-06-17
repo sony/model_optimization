@@ -56,7 +56,8 @@ def get_gptq_trainable_parameters(fxp_model: nn.Module,
 
             if add_bias and hasattr(layer.layer, BIAS):
                 bias = getattr(layer.layer, BIAS)
-                trainable_bias.append(bias)
+                if bias is not None:
+                    trainable_bias.append(bias)
 
     return trainable_aux_weights, trainable_bias, trainable_threshold
 

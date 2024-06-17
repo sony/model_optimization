@@ -299,7 +299,9 @@ class PytorchGPTQTrainer(GPTQTrainer):
                 for config_attr, config_value in activation_quant_config.items():
                     node.final_activation_quantization_cfg.set_quant_config_attr(config_attr, config_value)
                 if self.gptq_config.train_bias and hasattr(layer.layer, BIAS):
-                    node.set_weights_by_keys(BIAS, self.fw_impl.to_numpy(getattr(layer.layer, BIAS)))
+                    bias = getattr(layer.layer, BIAS)
+                    if bias is not None:
+                        node.set_weights_by_keys(BIAS, self.fw_impl.to_numpy(bias))
 
         return graph_quant
 
@@ -316,4 +318,5 @@ class PytorchGPTQTrainer(GPTQTrainer):
             if isinstance(layer, PytorchQuantizationWrapper):
                 if hasattr(layer.layer, BIAS):
                     bias = getattr(layer.layer, BIAS)
-                    bias.requires_grad = self.gptq_config.train_bias
+                    if bias is not None:
+                        bias.requires_grad = self.gptq_config.train_bias

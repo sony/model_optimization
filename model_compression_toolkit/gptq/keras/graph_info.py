@@ -63,7 +63,7 @@ def get_gptq_trainable_parameters(fxp_model: Model,
                 kernel_ops_attrs = fw_info.kernel_ops_attributes_mapping.get(type(layer.layer))
                 use_bias = kernel_ops_attrs is not None and kernel_ops_attrs[0] is not None \
                            and layer.layer.get_config().get(USE_BIAS)
-                if use_bias is not None and use_bias:
+                if use_bias is not None and use_bias and layer.layer.bias is not None:
                     bias_weights.append([layer.layer.bias])
 
     return trainable_weights, bias_weights, trainable_threshold

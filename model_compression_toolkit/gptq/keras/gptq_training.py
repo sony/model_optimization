@@ -353,7 +353,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                     node.final_activation_quantization_cfg.set_quant_config_attr(config_attr, config_value)
                 if self.gptq_config.train_bias:
                     use_bias = layer.layer.get_config().get(USE_BIAS)
-                    if use_bias is not None and use_bias:
+                    if use_bias is not None and use_bias and layer.layer.bias is not None:
                         new_bias = layer.layer.bias.numpy()
                         node.set_weights_by_keys(BIAS, new_bias)
 
