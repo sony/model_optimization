@@ -1,0 +1,16 @@
+name: Python 3.11, Pytorch 2.3
+on:
+  workflow_dispatch: # Allow manual triggers
+  schedule:
+    - cron: 0 0 * * *
+  pull_request:
+    branches:
+      - main
+
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/run_pytorch_tests.yml
+    with:
+      python-version: "3.11"
+      torch-version: "2.3.*"
