@@ -13,11 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 import inspect
-from typing import Dict, List, Tuple, Callable
+from operator import getitem
+from typing import Dict, List, Tuple, Callable, Union, Any
+
+import numpy as np
 import torch
 from torch.fx import GraphModule, Node
 
-from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.base_graph import OutTensor
 from model_compression_toolkit.core.common.graph.edge import Edge
@@ -28,29 +30,79 @@ from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlac
 from model_compression_toolkit.logger import Logger
 
 
-def extract_holder_weights(constant_name, node_target, model, weights, to_numpy):
+def _extract_parameters_and_buffers(module: Union[torch.nn.Module, GraphModule],
+                                    to_numpy: Callable) -> Dict[str, np.ndarray]:
     """
-    Extract layer weights and named buffers to a dictionary.
+    Extract parameters & buffers from input module to a dictionary.
     Args:
-        constant_name: name to write the parameters under, should be the node name.
-        node_target: relevant parameter name from Pytorch FX model.
-        model: Pytorch FX model.
-        weights: dictionary containing the weights of the node.
+        module: FX ot PyTorch module to extract parameters and buffers from.
+
+    Returns:
+        Dictionary containing module parameters and buffers by name.
+    """
+
+    named_parameters = {name: to_numpy(parameter) for name, parameter in module.named_parameters()}
+    named_buffers = {name: to_numpy(buffer) for name, buffer in module.named_buffers()}
+
+    return {**named_parameters, **named_buffers}
+
+
+def _extract_torch_layer_data(node_module: torch.nn.Module,
+                              to_numpy: Callable) -> Tuple[Any, Dict[str, np.ndarray], Dict]:
+    """
+    Extract required data from the node to rebuild the PyTorch layer.
+
+    Args:
+        node_module: Torch layer, such as nn.Conv2d, nn.Linear, etc.
         to_numpy: Function to convert framework's tensor to a Numpy array.
 
     Returns:
-        Updated weights dictionary.
+        Node layer class.
+        PyTorch layer weights and named buffers to a weights dictionary.
+        framework_attr dictionary required to rebuild the layer with the layer class.
     """
-    named_parameters_weights = {constant_name: to_numpy(parameter) for name, parameter in
-                                model.named_parameters() if node_target == name}
-    named_buffer_weights = {constant_name: to_numpy(parameter) for name, parameter in
-                            model.named_buffers() if node_target == name}
-    if len(named_parameters_weights) + len(named_buffer_weights) > 1:
-        Logger.critical("A single constant parameter must correspond to exactly one tensor. Found {len(named_parameters_weights) + len(named_buffer_weights)} parameters.")
+    node_type = type(node_module)
+    framework_attr = node_module.__dict__
+    fullargspec = inspect.getfullargspec(node_type.__init__).args
+    framework_attr = {k: v for k, v in framework_attr.items() if k in fullargspec}
+    if hasattr(node_module, BIAS) and BIAS in fullargspec:
+        framework_attr[BIAS] = False if node_module.bias is None else True
 
-    weights.update(named_parameters_weights)
-    weights.update(named_buffer_weights)
-    return weights
+    # Extract layer weights and named buffers.
+    weights = {n: w for n, w in _extract_parameters_and_buffers(node_module, to_numpy).items() if len(w.shape) > 0}
+    return node_type, weights, framework_attr
+
+
+def _extract_input_and_output_shapes(_node: Node) -> Tuple[List, List]:
+    """
+    Extract input and output shapes of a node.
+    Args:
+        _node: fx node.
+
+    Returns:
+        Input and output shapes as lists.
+    """
+    input_shape = []
+    if _node.op != PLACEHOLDER:
+        for i, input_node in enumerate(_node.all_input_nodes):
+            tensor_meta = input_node.meta
+            if tensor_meta[TYPE] in [torch.Tensor, torch.nn.parameter.Parameter]:
+                input_shape += [list(tensor_meta[TENSOR_META].shape)]
+            elif tensor_meta[TYPE] == tuple:
+                input_shape += [list(n.shape) for n in tensor_meta[TENSOR_META]]
+            elif tensor_meta[TYPE] == int:
+                input_shape += [[1]]
+
+    if _node.meta[TYPE] == torch.Tensor:
+        output_shape = [list(_node.meta[TENSOR_META].shape)]
+    elif _node.meta[TYPE] in (list, tuple):
+        output_shape = [list(m.shape) for m in _node.meta[TENSOR_META]]
+    elif _node.meta[TYPE] == int:
+        output_shape = [[1]]
+    else:
+        output_shape = []
+
+    return input_shape, output_shape
 
 
 def nodes_builder(model: GraphModule,
@@ -67,135 +119,109 @@ def nodes_builder(model: GraphModule,
     Returns:
         A list of Graph nodes that were built from the fx GraphModule nodes.
     """
-    # init function variables:
-    inputs = []
-    outputs = []
-    nodes = []
-    output_nodes = []
+    # Init function variables:
+    inputs, outputs = [], []
+    nodes, output_nodes = [], []
     fx_node_2_graph_node = {}
     consts_dict = {}
     used_consts = set()
 
+    # Init parameters & buffers dictionary
+    model_parameters_and_buffers = _extract_parameters_and_buffers(model, to_numpy)
+
     for node in model.graph.nodes:
-        # extract node type and framework attributes
-        framework_attr = dict(node.kwargs)
+
+        # ##############################################
+        #  Extract node type and framework attributes  #
+        # ##############################################
+        weights = {}
+        framework_attr = {}
         node_has_activation = True
+
         if node.target in module_dict.keys():
-            node_module = module_dict[node.target]
-            node_type = type(node_module)
-            framework_attr = node_module.__dict__
-            fullargspec = inspect.getfullargspec(node_type.__init__).args
-            framework_attr = {k: v for k, v in framework_attr.items() if k in fullargspec}
-            if hasattr(node_module, BIAS) and BIAS in fullargspec:
-                framework_attr[BIAS] = False if node_module.bias is None else True
+            # PyTorch module node, such as nn.Conv2d or nn.Linear.
+            node_type, weights, framework_attr = _extract_torch_layer_data(module_dict[node.target], to_numpy)
+
         elif node.op == CALL_FUNCTION:
+            # Node is a function that handle a parameter\buffer in the model.
             node_type = node.target
-            if node_type == getattr:
+            if node_type in [getattr, getitem]:
                 node_has_activation = False
-                Logger.warning(
-                    'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
-                    'converting the model.')
+
         elif node.op == PLACEHOLDER:
+            # Input node to the model.
             node_type = DummyPlaceHolder
+
         elif node.op == OUTPUT:
+            # Output node of the model. Only saved in output_nodes for later handling.
             output_nodes += node.all_input_nodes
             continue
+
         elif node.op == CALL_METHOD:
+            # Node is a PyTorch function such as torch.add, torch.reshape etc.
             if hasattr(torch, node.target):
                 node_type = getattr(torch, node.target)
             elif hasattr(torch.Tensor, node.target):
                 node_type = getattr(torch.Tensor, node.target)
             else:
-                Logger.critical(f"The call method '{node.target}' is not supported.")
+                Logger.critical(f"The call method '{node.target}' in {node} is not supported.")
+
         elif node.op == GET_ATTR:
-            Logger.warning(
-                'Pytorch model has a parameter or constant Tensor value. This can cause unexpected behaviour when '
-                'converting the model.')
+            # Node holding a constant -> add to consts_dict so can add them later to weights of next node.
+            if node.target in consts_dict:
+                Logger.critical('A constant weight appears to have been recorded multiple times.')
+            consts_dict[node] = model_parameters_and_buffers[node.target]
+            continue
         else:
             Logger.critical(f'Encountered an unsupported node type in node: {node.name}.')
 
-        # extract layer weights and named buffers
-        weights = {}
-        if node.target in module_dict.keys():
-            named_parameters_weights = {name: to_numpy(parameter) for name, parameter in
-                                        module_dict[node.target].named_parameters()}
-            named_buffer_weights = {name: to_numpy(parameter) for name, parameter in
-                                    module_dict[node.target].named_buffers() if len(parameter.shape) > 0}
-            weights.update(named_parameters_weights)
-            weights.update(named_buffer_weights)
-
-        if node.op == GET_ATTR:
-            new_const = extract_holder_weights(node, node.target, model, weights, to_numpy)
-            if list(new_const.keys())[0] in consts_dict:
-                Logger.critical('A constant weight appears to have been recorded multiple times.')
-            consts_dict.update(new_const)
-            continue
-
-        # extract input shapes and const weights
-        input_shape = []
+        # Add constants to weights dictionary.
         if node.op != PLACEHOLDER:
             for i, input_node in enumerate(node.all_input_nodes):
                 if input_node in consts_dict:
                     used_consts.add(input_node)
                     weights.update({i: consts_dict[input_node]})
 
-                tensor_meta = input_node.meta
-                if tensor_meta[TYPE] in [torch.Tensor, torch.nn.parameter.Parameter]:
-                    input_shape += [list(tensor_meta[TENSOR_META].shape)]
-                elif tensor_meta[TYPE] == tuple:
-                    input_shape += [list(n.shape) for n in tensor_meta[TENSOR_META]]
-                elif tensor_meta[TYPE] == int:
-                    input_shape += [[1]]
+        # Extract input and output shapes of the node.
+        input_shape, output_shape = _extract_input_and_output_shapes(node)
 
-        # extract output shapes
-        if node.meta[TYPE] == torch.Tensor:
-            output_shape = [list(node.meta[TENSOR_META].shape)]
-        elif node.meta[TYPE] in (list, tuple):
-            output_shape = [list(m.shape) for m in node.meta[TENSOR_META]]
-        elif node.meta[TYPE] == int:
-            output_shape = [[1]]
-        else:
-            output_shape = []
-
-        # filter Nodes from framework attributes, we replace these attributes with nx graph nodes
-        framework_attr_filtered = {}
-        framework_attr_nodes = {}
-        for k, v in framework_attr.items():
-            if isinstance(v, torch.fx.node.Node):
-                framework_attr_nodes[k] = v
-            else:
-                framework_attr_filtered[k] = v
-        framework_attr = framework_attr_filtered
-
-        # filter Nodes from node kwargs, we replace these attributes with nx graph nodes
-        node_kwargs = {}
-        for k, v in node.kwargs.items():
-            if not isinstance(v, torch.fx.node.Node):
-                node_kwargs[k] = v
-
-        # initiate graph nodes
+        # Initiate graph nodes.
         if node.op in [CALL_METHOD, CALL_FUNCTION]:
             graph_node_type = FunctionalNode
+
+            # Filter nodes from node_kwargs, we replace these attributes with nx graph nodes
+            node_kwargs, nodes_in_kwargs = {}, {}
+            for k, v in node.kwargs.items():
+                if isinstance(v, Node):
+                    nodes_in_kwargs[k] = v
+                else:
+                    node_kwargs[k] = v
+
+            # Check if node inputs is a list of nodes, such as torch.cat.
             inputs_as_list1 = len(node.args) > 0 and isinstance(node.args[0], (list, tuple)) and all(
-                [isinstance(n, torch.fx.node.Node) for n in node.args[0]])
+                [isinstance(n, Node) for n in node.args[0]])
             inputs_as_list = inputs_as_list1 or (len(node.args) > 0 and isinstance(node.args[0], Node) and
                                                  node.args[0].op == PLACEHOLDER and node.args[0].meta[TYPE] in (list, tuple))
+
+            # Build tensor_input_alloc required for the model builder. All input nodes are received as a list in the builder,
+            # so tensor_input_alloc is used to allocate each input tensor in the correct place in the node's args & kwargs.
             tensor_input_alloc = []
             op_call_args = list(node.args)
             if inputs_as_list:
                 op_call_args.pop(0)
             else:
                 for in_node in node.all_input_nodes:
+                    # The extra for loop is used to tackle the case of the same input tensor for this node (e.g. torch.add(x, x)).
                     for i, arg in enumerate(node.args):
                         if arg == in_node:
                             tensor_input_alloc.append(i)
-                    for k, arg in framework_attr_nodes.items():
+                    for k, arg in nodes_in_kwargs.items():
                         if arg == in_node:
                             tensor_input_alloc.append(k)
 
-            # remove torch.fx.node.Node from inputs to graph_node_type
+            # Remove torch.fx.node.Node from inputs to the functional node. FX nodes are input tensors in the builder.
             op_call_args = [arg for arg in op_call_args if not isinstance(arg, Node)]
-            # convert torch.fx.immutable_collections.immutable_list to tuple
+            # Convert torch.fx.immutable_collections.immutable_list to tuple.
             op_call_args = [tuple(arg) if isinstance(arg, torch.fx.immutable_collections.immutable_list) else arg
                             for arg in op_call_args]
 
@@ -205,8 +231,12 @@ def nodes_builder(model: GraphModule,
                       INPUTS_AS_LIST: inputs_as_list,
                       TENSOR_INPUT_ALLOCS: tensor_input_alloc}
         else:
+            if not all([not isinstance(v, Node) for v in framework_attr.values()]):
+                Logger.error(f'Found FX nodes in framework attributes of {node.name}. This node type should not contain any.')
+
             graph_node_type = BaseNode
             kwargs = {}
+
         graph_node = graph_node_type(name=node.name,
                                      framework_attr=framework_attr,
                                      input_shape=input_shape,
@@ -216,7 +246,7 @@ def nodes_builder(model: GraphModule,
                                      has_activation=node_has_activation,
                                      **kwargs)
 
-        # generate graph inputs list
+        # Generate graph inputs list.
         if node.op == PLACEHOLDER:
             for ii in range(len(output_shape)):
                 inputs.append(graph_node)
@@ -224,12 +254,12 @@ def nodes_builder(model: GraphModule,
         fx_node_2_graph_node[node] = graph_node
         nodes.append(graph_node)
 
-    # make sure all extracted constants were used in the graph
+    # Check whether all extracted constants were used in the graph.
     not_connected_consts = [c for c in consts_dict if c not in used_consts]
     if not_connected_consts:
-        Logger.critical(f'Error reading graph: These constants are not connected in the graph: {not_connected_consts}.')
+        Logger.warning(f'Error reading graph: These constants are not connected in the graph: {not_connected_consts}.')
 
-    # generate graph outputs list
+    # Generate graph outputs list.
     for node in output_nodes:
         outputs.append(OutTensor(fx_node_2_graph_node[node], output_nodes.index(node)))
 

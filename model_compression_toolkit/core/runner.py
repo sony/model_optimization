@@ -216,7 +216,7 @@ def _set_final_resource_utilization(graph: Graph,
                 # No relevant nodes have been quantized with affect on the given target - since we only consider
                 # in the model's final size the quantized layers size, this means that the final size for this target
                 # is zero.
-                Logger.warning(f"No relevant quantized layers for the ru target {ru_target} were found, the recorded"
+                Logger.warning(f"No relevant quantized layers for the ru target {ru_target} were found, the recorded "
                                f"final ru for this target would be 0.")
                 final_ru_dict[ru_target] = 0
 

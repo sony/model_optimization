@@ -1,4 +1,4 @@
-from typing import Dict, Any, Tuple, Type
+from typing import Dict, Any, Tuple, Type, List, Union
 
 from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
@@ -25,7 +25,7 @@ class FunctionalNode(BaseNode):
                  functional_op: Any = None,
                  inputs_as_list: bool = False,
                  has_activation: bool = True,
-                 tensor_input_allocs = None):
+                 tensor_input_allocs: List[Union[int, str]] = None):
         """
         Init a FunctionalNode object.
 
@@ -44,8 +44,7 @@ class FunctionalNode(BaseNode):
             functional_op: The op the node implements.
             inputs_as_list: Whether to pass the node its input tensors as a list or not when calling the layer.
             has_activation: Whether the node has activations that we might want to quantize.
-            tensor_input_allocs: A list of indices for activation tensors in the node's input tensor list
-
+            tensor_input_allocs: A list of indices and strings for allocatins input tensors in the node's args and kwargs
         """
 
         super().__init__(name,

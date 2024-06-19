@@ -20,6 +20,7 @@ import torch.nn.functional as F
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import BaseNode, Graph
+from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.constants import *
 from model_compression_toolkit.logger import Logger
 
@@ -37,7 +38,7 @@ class FunctionalBatchNorm(common.BaseSubstitution):
         super().__init__(matcher_instance=bn_node)
 
     @staticmethod
-    def get_attributes_from_weights(node: BaseNode) -> Dict:
+    def get_attributes_from_weights(node: FunctionalNode) -> Dict:
         """
         convert functional batch_norm positional weights to BatchNorm2d weights
         Args:
@@ -53,23 +54,22 @@ class FunctionalBatchNorm(common.BaseSubstitution):
                         GAMMA: np.ones(node.weights[1].shape),
                         BETA: np.zeros(node.weights[1].shape)}
 
-        has_weight = WEIGHT not in node.framework_attr
-        has_bias = BIAS not in node.framework_attr
+        # Check if weight and/or bias were not given.
+        if KERNEL in node.tensor_input_allocs:
+            weights_dict[GAMMA] = node.weights[node.tensor_input_allocs.index(KERNEL)]
+        elif KERNEL not in node.op_call_kwargs:
+            weights_dict[GAMMA] = node.weights[3]
 
-        if 3 in node.weights:
-            if has_weight:
-                weights_dict[GAMMA] = node.weights[3]
-            else:
-                weights_dict[BETA] = node.weights[3]
-        if 4 in node.weights:
-            assert has_bias
+        if BIAS in node.tensor_input_allocs:
+            weights_dict[BETA] = node.weights[node.tensor_input_allocs.index(BIAS)]
+        elif BIAS not in node.op_call_kwargs:
             weights_dict[BETA] = node.weights[4]
 
         return weights_dict
 
     def substitute(self,
                    graph: Graph,
-                   node: BaseNode) -> Graph:
+                   node: FunctionalNode) -> Graph:
         """
         Substitute functional.batch_norm and its inputs with BatchNorm2d.
         Args:
@@ -87,10 +87,13 @@ class FunctionalBatchNorm(common.BaseSubstitution):
         bn_node_weights = self.get_attributes_from_weights(node)
         if not bn_node_weights:
             return graph
+        framework_attr = {NUM_FEATURES: out_channels}
+        if EPSILON in node.op_call_kwargs:
+            framework_attr.update({EPSILON: node.op_call_kwargs[EPSILON]})
+        if MOMENTUM in node.op_call_kwargs:
+            framework_attr.update({MOMENTUM: node.op_call_kwargs[MOMENTUM]})
         new_batchnorm2d = BaseNode(name=node.name + '_into_BatchNorm2d',
-                                   framework_attr={NUM_FEATURES: out_channels,
-                                                   EPSILON: EPSILON_VAL,
-                                                   MOMENTUM: MOMENTUM_VAL},
+                                   framework_attr=framework_attr,
                                    input_shape=node.output_shape,
                                    output_shape=node.output_shape,
                                    weights=bn_node_weights,

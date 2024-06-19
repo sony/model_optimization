@@ -126,7 +126,9 @@ def _run_operation(n: BaseNode,
     op_call_args = n.op_call_args if isinstance(n, FunctionalNode) else []
     functional_kwargs = n.op_call_kwargs if isinstance(n, FunctionalNode) else {}
 
-    if not (isinstance(n, FunctionalNode) and isinstance(op_func, PytorchQuantizationWrapper)):
+    if isinstance(n, FunctionalNode) and isinstance(op_func, PytorchQuantizationWrapper):
+        _tensor_input_allocs = [i for i in n.tensor_input_allocs if i not in n.weights]
+    else:
         # Insert positional weights only when not a quantized functional node, because quantized functional nodes
         # insert the quantized weights in the wrapper.
         input_tensors = n.insert_positional_weights_to_input_list(input_tensors)
@@ -135,8 +137,6 @@ def _run_operation(n: BaseNode,
         input_tensors = [to_torch_tensor(t, numpy_type=t.dtype) if isinstance(t, np.ndarray) else t
                          for t in input_tensors]
         _tensor_input_allocs = None
-    else:
-        _tensor_input_allocs = [i for i in n.tensor_input_allocs if i not in n.weights]
 
     if isinstance(n, FunctionalNode) and n.inputs_as_list:
         out_tensors_of_n_float = op_func(input_tensors, *op_call_args, **functional_kwargs)

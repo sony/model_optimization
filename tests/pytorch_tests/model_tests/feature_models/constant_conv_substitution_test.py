@@ -61,9 +61,9 @@ class ConstantConvSubstitutionTest(BaseConstantConvSubstitutionTest):
             self.conv2 = nn.Conv2d(16, 8, kernel_size=(1,1), bias=True)
 
         def forward(self, x):
-            x = F.conv2d(x, weight=self.conv1.weight, bias=self.conv1.bias)
+            x = F.conv2d(x, bias=self.conv1.bias, weight=self.conv1.weight)
             x = F.relu(x)
-            x = F.conv2d(x, weight=self.conv2.weight, bias=self.conv2.bias)
+            x = F.conv2d(x, bias=self.conv2.bias, weight=self.conv2.weight)
             x = F.relu(x)
             return x
 
