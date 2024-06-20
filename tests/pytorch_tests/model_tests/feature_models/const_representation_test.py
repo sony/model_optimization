@@ -171,7 +171,7 @@ class ConstRepresentationCodeNet(nn.Module):
         _shape = x.shape[2:]
         x = self.conv2d(input=x)
         x2 = self.const_conv2d(input=self.conv_const)
-        x = torch.add(other=x2, input=x)
+        x = torch.sub(other=x2, input=x)
         # input tensor in kwargs
         x = nn.functional.interpolate(x, size=_shape)
 
