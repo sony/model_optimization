@@ -14,7 +14,7 @@
 # ==============================================================================
 import inspect
 from operator import getitem
-from typing import Dict, List, Tuple, Callable, Union, Any
+from typing import Dict, List, Tuple, Callable, Union, Any, Type
 
 import numpy as np
 import torch
@@ -47,7 +47,7 @@ def _extract_parameters_and_buffers(module: Union[torch.nn.Module, GraphModule],
     return {**named_parameters, **named_buffers}
 
 
-def is_instance_first_arg(n: Node, expected_type: Any) -> bool:
+def is_instance_first_arg(n: Node, expected_type: Union[Type, Tuple[Type]]) -> bool:
     """
     Check whether first argument of the node is the expected type
     Args:
@@ -55,6 +55,7 @@ def is_instance_first_arg(n: Node, expected_type: Any) -> bool:
         expected_type: Expected 1st argument type.
 
     Returns:
+        True is the first argument of node n is of the expected type, else return False.
 
     """
     return len(n.args) > 0 and isinstance(n.args[0], expected_type)
