@@ -87,6 +87,7 @@ class BNFoldingNetTest(BasePytorchTest):
         self.unit_test.assertTrue(self.fold_applied is not is_bn_in_model)
 
         # TODO: remove this and set atol=1e-5 for all tests after fixing the issue with ConvTranspose2d.
+        # https://github.com/sony/model_optimization/issues/1115
         is_convtranspose2d_in_model = nn.ConvTranspose2d in [type(module) for name, module in quant_model.named_modules()]
         atol = 1e-3 if is_convtranspose2d_in_model else 1e-5
         self.unit_test.assertTrue(np.isclose(out_quant, out_float, atol=atol, rtol=1e-4).all())

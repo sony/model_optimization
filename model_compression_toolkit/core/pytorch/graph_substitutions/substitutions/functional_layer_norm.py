@@ -41,7 +41,9 @@ class FunctionalLayerNorm(common.BaseSubstitution):
     @staticmethod
     def get_attributes_from_weights(node: FunctionalNode, normalized_shape: [Tuple, List, int]) -> Dict:
         """
-        Parse layer_norm(input, normalized_shape, weight=None, bias=None)
+        Convert functional layer_norm positional weights to LayerNorm weights. Extract indices of gamma
+        and beta according to tensor_input_allocs if they were input as kwargs. If they were input as args,
+        use their fixed positions.
         Args:
             node: Node that match the pattern in the substitution init.
             normalized_shape: nn.LayerNorm "normalized_shape" argument

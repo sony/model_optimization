@@ -106,7 +106,7 @@ def _run_operation(n: BaseNode,
                    input_tensors: List,
                    op_func: Any,
                    quantize_node_activation_fn,
-                   use_activation_quantization: bool) -> Tuple[Union[List, torch.Tensor], Union[List, torch.Tensor]]:
+                   use_activation_quantization: bool) -> Tuple[List[torch.Tensor], List[torch.Tensor]]:
     """
     Applying the layer (op_func) to the input tensors (input_tensors).
     If quantized is set to True, and the layer's corresponding node (n) has quantization
@@ -126,11 +126,11 @@ def _run_operation(n: BaseNode,
     op_call_args = n.op_call_args if isinstance(n, FunctionalNode) else []
     functional_kwargs = n.op_call_kwargs if isinstance(n, FunctionalNode) else {}
 
+    # Insert positional weights only when not a quantized functional node, because quantized functional nodes
+    # insert the quantized weights in the wrapper.
     if isinstance(n, FunctionalNode) and isinstance(op_func, PytorchQuantizationWrapper):
         _tensor_input_allocs = [i for i in n.tensor_input_allocs if i not in n.weights]
     else:
-        # Insert positional weights only when not a quantized functional node, because quantized functional nodes
-        # insert the quantized weights in the wrapper.
         input_tensors = n.insert_positional_weights_to_input_list(input_tensors)
         # convert inputs from positional weights (numpy arrays) to tensors. Must handle each element in the
         # list separately, because in FX the tensors are FX objects and fail to_torch_tensor
@@ -152,6 +152,8 @@ def _run_operation(n: BaseNode,
             out_tensors_of_n_float = torch.cat(out_tensors_of_n_float, dim=0)
         out_tensors_of_n = quantize_node_activation_fn(out_tensors_of_n_float)
 
+    if not isinstance(out_tensors_of_n, list):
+        out_tensors_of_n, out_tensors_of_n_float = [out_tensors_of_n], [out_tensors_of_n_float]
     return out_tensors_of_n, out_tensors_of_n_float
 
 
@@ -318,12 +320,8 @@ class PytorchModel(torch.nn.Module):
                                                                       quantize_node_activation_fn=activation_quantization_fn,
                                                                       use_activation_quantization=use_activation_quantization)
 
-            if isinstance(out_tensors_of_n, list):
-                node_to_output_tensors_dict.update({node: out_tensors_of_n})
-                node_to_output_tensors_dict_float.update({node: out_tensors_of_n_float})
-            else:
-                node_to_output_tensors_dict.update({node: [out_tensors_of_n]})
-                node_to_output_tensors_dict_float.update({node: [out_tensors_of_n_float]})
+            node_to_output_tensors_dict.update({node: out_tensors_of_n})
+            node_to_output_tensors_dict_float.update({node: out_tensors_of_n_float})
 
         if self.append2output:
             outputs = _generate_outputs(self.append2output,

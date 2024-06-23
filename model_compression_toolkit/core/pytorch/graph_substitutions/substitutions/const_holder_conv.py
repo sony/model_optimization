@@ -61,8 +61,12 @@ class FunctionalConvSubstitution(common.BaseSubstitution):
         # Create new node of layer convolution
         if 1 not in func_node.weights:
             Logger.critical(f'Weight input missing for node {func_node.name}.')  # pragma: no cover
+        # Extract index of kernel and bias according to tensor_input_allocs if they were input as kwargs. If
+        # they were input as args, use their fixed positions.
         weight_index = func_node.tensor_input_allocs.index(KERNEL) if KERNEL in func_node.tensor_input_allocs else 1
         bias_index = func_node.tensor_input_allocs.index(BIAS) if BIAS in func_node.tensor_input_allocs else 2
+        if weight_index not in func_node.weights:
+            Logger.critical(f'Mismatch between tensor_input_allocs and weight index in node {func_node.name}.')  # pragma: no cover
         weight = func_node.weights[weight_index]
         bias = func_node.weights.get(bias_index)
         framework_attr = func_node.op_call_kwargs

@@ -47,10 +47,56 @@ def _extract_parameters_and_buffers(module: Union[torch.nn.Module, GraphModule],
     return {**named_parameters, **named_buffers}
 
 
+def is_instance_first_arg(n: Node, expected_type: Any) -> bool:
+    """
+    Check whether first argument of the node is the expected type
+    Args:
+        n: fx node.
+        expected_type: Expected 1st argument type.
+
+    Returns:
+
+    """
+    return len(n.args) > 0 and isinstance(n.args[0], expected_type)
+
+
+def _build_input_alloc_and_call_args(n: Node, input_tensors_in_node_kwargs: Dict,
+                                     inputs_as_list: bool) -> Tuple[List, List]:
+    """
+    Build the tensor inputs list and op_call_args of the functional node.
+
+    Args:
+        n: fx node.
+        input_tensors_in_node_kwargs: A dictionary of node kwarg name and input fx node.
+        inputs_as_list: Is node's inputs are a list.
+
+    Returns:
+        A list of updated op_call args.
+        A list of tensor allocations in node's inputs.
+
+    """
+
+    tensor_input_alloc = []
+    op_call_args = list(n.args)
+    if inputs_as_list:
+        op_call_args.pop(0)
+    else:
+        for in_node in n.all_input_nodes:
+            # The extra for loop is used to tackle the case of the same input tensor for this node (e.g. torch.add(x, x)).
+            for i, arg in enumerate(n.args):
+                if arg == in_node:
+                    tensor_input_alloc.append(i)
+            for k, arg in input_tensors_in_node_kwargs.items():
+                if arg == in_node:
+                    tensor_input_alloc.append(k)
+
+    return op_call_args, tensor_input_alloc
+
+
 def _extract_torch_layer_data(node_module: torch.nn.Module,
                               to_numpy: Callable) -> Tuple[Any, Dict[str, np.ndarray], Dict]:
     """
-    Extract required data from the node to rebuild the PyTorch layer.
+    Extract required data from a non-functional node to rebuild the PyTorch layer.
 
     Args:
         node_module: Torch layer, such as nn.Conv2d, nn.Linear, etc.
@@ -58,13 +104,18 @@ def _extract_torch_layer_data(node_module: torch.nn.Module,
 
     Returns:
         Node layer class.
-        PyTorch layer weights and named buffers to a weights dictionary.
-        framework_attr dictionary required to rebuild the layer with the layer class.
+        A mapping between the layer's named parameters and buffers to their tensor values.
+        A framework_attr dictionary required to instantiate the node with the layer class.
     """
     node_type = type(node_module)
-    framework_attr = node_module.__dict__
+    if not isinstance(node_module, torch.nn.Module):
+        Logger.error(f"Expected an instance of torch.nn.Module for node {node_module.name}, but got {node_type}")
+    # Extract the instance framework_attr (i.e. the arguments the class instance was initialized with). "fullargspec"
+    # is a list of the layer's attribute names, that will be used as keys of the framework_attr dictionary. We the
+    # values from the layer instance.
     fullargspec = inspect.getfullargspec(node_type.__init__).args
-    framework_attr = {k: v for k, v in framework_attr.items() if k in fullargspec}
+    framework_attr = {k: v for k, v in node_module.__dict__.items() if k in fullargspec}
+    # The "bias" argument doesn't appear in the node_module.__dict__, so we add it manually.
     if hasattr(node_module, BIAS) and BIAS in fullargspec:
         framework_attr[BIAS] = False if node_module.bias is None else True
 
@@ -126,7 +177,7 @@ def nodes_builder(model: GraphModule,
     consts_dict = {}
     used_consts = set()
 
-    # Init parameters & buffers dictionary
+    # Init parameters & buffers dictionary of the entire model. We later extract the constants values from this dictionary.
     model_parameters_and_buffers = _extract_parameters_and_buffers(model, to_numpy)
 
     for node in model.graph.nodes:
@@ -189,37 +240,32 @@ def nodes_builder(model: GraphModule,
         if node.op in [CALL_METHOD, CALL_FUNCTION]:
             graph_node_type = FunctionalNode
 
-            # Filter nodes from node_kwargs, we replace these attributes with nx graph nodes
-            node_kwargs, nodes_in_kwargs = {}, {}
+            # Filter FX nodes from node_kwargs. These FX nodes are tensor inputs to the node that are part of the
+            # model's graph. We remove them because the node_kwargs should not include input tensors of the node.
+            # These input tensors will be inserted in the kwargs according to the tensor_input_alloc which is used
+            # to convert the input_tensors list in the builder to the node's args & kwargs.
+            node_kwargs, input_tensors_in_node_kwargs = {}, {}
             for k, v in node.kwargs.items():
                 if isinstance(v, Node):
-                    nodes_in_kwargs[k] = v
+                    input_tensors_in_node_kwargs[k] = v
                 else:
                     node_kwargs[k] = v
 
-            # Check if node inputs is a list of nodes, such as torch.cat.
-            inputs_as_list1 = len(node.args) > 0 and isinstance(node.args[0], (list, tuple)) and all(
+            # Check if node's first input argument is a list of input fx nodes, such as torch.cat:
+            is_first_input_list_of_nodes = is_instance_first_arg(node, (list, tuple)) and all(
                 [isinstance(n, Node) for n in node.args[0]])
-            inputs_as_list = inputs_as_list1 or (len(node.args) > 0 and isinstance(node.args[0], Node) and
-                                                 node.args[0].op == PLACEHOLDER and node.args[0].meta[TYPE] in (list, tuple))
+            is_placeholder_a_list = is_instance_first_arg(node, Node) and \
+                     node.args[0].op == PLACEHOLDER and node.args[0].meta[TYPE] in (list, tuple)
+            inputs_as_list = is_first_input_list_of_nodes or is_placeholder_a_list
 
             # Build tensor_input_alloc required for the model builder. All input nodes are received as a list in the builder,
             # so tensor_input_alloc is used to allocate each input tensor in the correct place in the node's args & kwargs.
-            tensor_input_alloc = []
-            op_call_args = list(node.args)
-            if inputs_as_list:
-                op_call_args.pop(0)
-            else:
-                for in_node in node.all_input_nodes:
-                    # The extra for loop is used to tackle the case of the same input tensor for this node (e.g. torch.add(x, x)).
-                    for i, arg in enumerate(node.args):
-                        if arg == in_node:
-                            tensor_input_alloc.append(i)
-                    for k, arg in nodes_in_kwargs.items():
-                        if arg == in_node:
-                            tensor_input_alloc.append(k)
+            op_call_args, tensor_input_alloc = _build_input_alloc_and_call_args(node, input_tensors_in_node_kwargs,
+                                                                                inputs_as_list)
 
-            # Remove torch.fx.node.Node from inputs to the functional node. FX nodes are input tensors in the builder.
+            # Remove torch.fx.node.Node from inputs to the functional node. FX nodes are input tensors in the builder,
+            # so they are remove from the op_call_args (same as op_call_kwargs) and are inserted back according to the
+            # tensor_input_alloc list.
             op_call_args = [arg for arg in op_call_args if not isinstance(arg, Node)]
             # Convert torch.fx.immutable_collections.immutable_list to tuple.
             op_call_args = [tuple(arg) if isinstance(arg, torch.fx.immutable_collections.immutable_list) else arg
@@ -232,7 +278,7 @@ def nodes_builder(model: GraphModule,
                       TENSOR_INPUT_ALLOCS: tensor_input_alloc}
         else:
             if not all([not isinstance(v, Node) for v in framework_attr.values()]):
-                Logger.error(f'Found FX nodes in framework attributes of {node.name}. This node type should not contain any.')
+                Logger.critical(f'Found FX nodes in framework attributes of {node.name}. This node type should not contain any.')  # pragma: no cover
 
             graph_node_type = BaseNode
             kwargs = {}
@@ -257,7 +303,7 @@ def nodes_builder(model: GraphModule,
     # Check whether all extracted constants were used in the graph.
     not_connected_consts = [c for c in consts_dict if c not in used_consts]
     if not_connected_consts:
-        Logger.warning(f'Error reading graph: These constants are not connected in the graph: {not_connected_consts}.')
+        Logger.critical(f'Error reading graph: These constants are not connected in the graph: {not_connected_consts}.')  # pragma: no cover
 
     # Generate graph outputs list.
     for node in output_nodes:

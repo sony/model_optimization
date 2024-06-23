@@ -44,7 +44,7 @@ class FunctionalNode(BaseNode):
             functional_op: The op the node implements.
             inputs_as_list: Whether to pass the node its input tensors as a list or not when calling the layer.
             has_activation: Whether the node has activations that we might want to quantize.
-            tensor_input_allocs: A list of indices and strings for allocatins input tensors in the node's args and kwargs
+            tensor_input_allocs: A list of indices and strings for allocations input tensors in the node's args and kwargs.
         """
 
         super().__init__(name,

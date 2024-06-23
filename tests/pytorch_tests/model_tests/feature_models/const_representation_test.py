@@ -167,6 +167,10 @@ class ConstRepresentationCodeNet(nn.Module):
         self.bn = nn.BatchNorm2d(16)
         self.register_buffer('sub_const', 10 * torch.rand((1, 16, 64)))
 
+        # Register unused buffer and parameter to test that FX doesn't include them in the FX graph.
+        self.register_buffer('unused_buffer', 10 * torch.rand((1, 16, 64)))
+        self.register_parameter('unused_parameter', nn.Parameter(10 * torch.rand((1, 16, 64))))
+
     def forward(self, x):
         _shape = x.shape[2:]
         x = self.conv2d(input=x)

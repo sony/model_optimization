@@ -40,7 +40,10 @@ class FunctionalBatchNorm(common.BaseSubstitution):
     @staticmethod
     def get_attributes_from_weights(node: FunctionalNode) -> Dict:
         """
-        convert functional batch_norm positional weights to BatchNorm2d weights
+        Convert functional batch_norm positional weights to BatchNorm2d weights. Extract indices of gamma
+        and beta according to tensor_input_allocs if they were input as kwargs. If they were input as args,
+        use their fixed positions.
+
         Args:
             node: functional batch_norm node.
 
