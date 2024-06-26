@@ -20,9 +20,6 @@ IMAGE_INPUT = 'image_input'
 # Output string
 OUTPUT = 'output'
 
-# 'auto' string
-AUTO = 'auto'
-
 # Define a constant for the number of channels in input image.
 NUM_INPUT_CHANNELS = 3
 

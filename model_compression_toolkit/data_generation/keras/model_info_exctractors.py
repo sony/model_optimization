@@ -96,7 +96,6 @@ class KerasActivationExtractor(ActivationExtractor):
         self.bn_layer_names = [layer.name for layer in model.layers if isinstance(layer,
                                                                                   self.layer_types_to_extract_inputs)]
         self.num_layers = len(self.bn_layer_names)
-        Logger.info(f'Number of layers = {self.num_layers}')
 
         # Initialize stats containers
         self.activations = {}

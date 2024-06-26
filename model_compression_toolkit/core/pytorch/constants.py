@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+import torch
 
 # # Layer type constants:
 PLACEHOLDER = 'placeholder'
@@ -94,3 +94,8 @@ BIAS_V = 'bias_v'
 # # Batch size value for 'reshape' and 'view' operators,
 # # the value is -1 so the batch size is inferred from the length of the array and remaining dimensions.
 BATCH_DIM_VALUE = -1
+
+
+# The maximum and minimum representable values for float16
+MAX_FLOAT16 = torch.finfo(torch.float16).max - 1
+MIN_FLOAT16 = torch.finfo(torch.float16).min - 1

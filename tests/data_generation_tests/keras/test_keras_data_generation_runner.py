@@ -16,7 +16,6 @@ import unittest
 
 from model_compression_toolkit.data_generation.common.enums import SchedulerType, BatchNormAlignemntLossType, \
     DataInitType, BNLayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
-from model_compression_toolkit.data_generation.common.constants import AUTO
 from tests.data_generation_tests.keras.base_keras_data_generation_test import BaseKerasDataGenerationTest, \
     NoBNDataGenerationModel
 
@@ -55,11 +54,8 @@ class KerasDataGenerationTestRunner(unittest.TestCase):
     def test_keras_output_loss_types(self):
         BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.NONE).run_test()
         BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.NEGATIVE_MIN_MAX_DIFF, output_loss_multiplier=0.1).run_test()
-        BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.NEGATIVE_MIN_MAX_DIFF, output_loss_multiplier=AUTO).run_test()
         BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.INVERSE_MIN_MAX_DIFF, output_loss_multiplier=0.1).run_test()
-        BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.INVERSE_MIN_MAX_DIFF, output_loss_multiplier=AUTO).run_test()
         BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.REGULARIZED_MIN_MAX_DIFF, output_loss_multiplier=0.1).run_test()
-        BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.REGULARIZED_MIN_MAX_DIFF, output_loss_multiplier=AUTO).run_test()
 
     def test_keras_no_bn(self):
         with self.assertRaises(Exception) as e:

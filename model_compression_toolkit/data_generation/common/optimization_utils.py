@@ -209,9 +209,11 @@ class ImagesOptimizationHandler:
                 imgs_layer_mean, imgs_layer_second_moment, imgs_layer_std = self.all_imgs_stats_holder.get_stats(
                     batch_index, layer_name)
 
-            # Accumulate the batchnorm alignment weighted by the layer weight
-            total_bn_loss += bn_layer_weight * bn_alignment_loss_fn(bn_layer_mean, imgs_layer_mean, bn_layer_std,
-                                                                    imgs_layer_std)
+            if imgs_layer_mean is not None and imgs_layer_std is not None:
+                bn_alignment_loss = bn_alignment_loss_fn(bn_layer_mean, imgs_layer_mean, bn_layer_std,
+                                     imgs_layer_std)
+                # Accumulate the batchnorm alignment weighted by the layer weight
+                total_bn_loss += bn_layer_weight * bn_alignment_loss
 
         return total_bn_loss
 
@@ -418,7 +420,7 @@ class BatchStatsHolder:
         Returns:
             Any: the mean for the specified layer.
         """
-        return self.bn_mean[bn_layer_name]
+        return self.bn_mean.get(bn_layer_name)
 
     def get_second_moment(self, bn_layer_name: str) -> Any:
         """
@@ -430,7 +432,7 @@ class BatchStatsHolder:
         Returns:
             Any: the second moment for the specified layer.
         """
-        return self.bn_second_moment[bn_layer_name]
+        return self.bn_second_moment.get(bn_layer_name)
 
     def get_var(self, bn_layer_name: str) -> Any:
         """

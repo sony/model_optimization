@@ -40,7 +40,8 @@ def random_crop(image: tf.Tensor,
 
 
 def center_crop(image: tf.Tensor,
-                output_size: Tuple) -> tf.Tensor:
+                height_crop: int,
+                width_crop: int) -> tf.Tensor:
     """
     Center crop an image to the specified size.
 
@@ -55,14 +56,13 @@ def center_crop(image: tf.Tensor,
     # Calculate the cropping dimensions
     input_shape = tf.shape(image)
     height, width = input_shape[1], input_shape[2]
-    target_height, target_width = output_size[0], output_size[1]
 
     # Calculate the cropping offsets
-    offset_height = tf.maximum((height - target_height) // 2, 0)
-    offset_width = tf.maximum((width - target_width) // 2, 0)
+    offset_height = tf.maximum((height - height_crop) // 2, 0)
+    offset_width = tf.maximum((width - width_crop) // 2, 0)
 
     # Crop the image
-    cropped_image = tf.image.crop_to_bounding_box(image, offset_height, offset_width, target_height, target_width)
+    cropped_image = tf.image.crop_to_bounding_box(image, offset_height, offset_width, height_crop, width_crop)
 
     return cropped_image
 

@@ -43,14 +43,15 @@ class TensorflowSmoothAugmentationImagePipeline(BaseImagePipeline):
         # List of image manipulation functions and their arguments.
         self.img_manipulation_list = [(random_flip, {}),
                                       (smoothing, {}),
-                                      (random_crop, {'height_crop': output_image_size[0],
-                                                     'width_crop': output_image_size[1]}),
+                                      (random_crop, {'height_crop': self.output_image_size[0],
+                                                     'width_crop': self.output_image_size[1]}),
                                       (clip_images,
                                        {'valid_grid': create_valid_grid(self.normalization[0], self.normalization[1])})]
 
         # List of output image manipulation functions and their arguments.
         self.img_output_finalize_list = [(smoothing, {}),
-                                         (center_crop, {'output_size': output_image_size}),
+                                         (center_crop, {'height_crop': self.output_image_size[0],
+                                                        'width_crop': self.output_image_size[1]}),
                                          (clip_images, {'valid_grid': create_valid_grid(self.normalization[0],
                                                                                         self.normalization[1])})]
 

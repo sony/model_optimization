@@ -16,7 +16,6 @@ from enum import Enum
 
 
 class EnumBaseClass(Enum):
-    @classmethod
     def get_values(cls):
         """
         Get the list of values corresponding to the enum members.
@@ -24,7 +23,23 @@ class EnumBaseClass(Enum):
         Returns:
             List of values.
         """
-        return [value.value for value in cls.__members__.values()]
+        return list(cls.__members__.values())
+
+    @classmethod
+    def get_enum_by_value(cls, target_value):
+        """
+        Function to get the key corresponding to a given enum value.
+
+        Parameters:
+        target_value: The value to find the key for.
+
+        Returns:
+        The key corresponding to the given value if found, else None.
+        """
+        for value in cls.__members__.values():
+            if value.value == target_value:
+                return value
+        return None
 
 
 class ImageGranularity(EnumBaseClass):

@@ -16,9 +16,6 @@ from typing import Any, List, Tuple, Union
 
 from model_compression_toolkit.data_generation.common.enums import SchedulerType, BatchNormAlignemntLossType, \
     DataInitType, BNLayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
-from model_compression_toolkit.data_generation.common.constants import AUTO
-from model_compression_toolkit.logger import Logger
-
 
 class DataGenerationConfig:
     """
@@ -29,7 +26,7 @@ class DataGenerationConfig:
                  optimizer: Any,
                  data_gen_batch_size: int,
                  initial_lr: float,
-                 output_loss_multiplier: Union[float,str],
+                 output_loss_multiplier: float,
                  image_granularity: ImageGranularity = ImageGranularity.AllImages,
                  scheduler_type: SchedulerType = None,
                  bn_alignment_loss_type: BatchNormAlignemntLossType = None,
@@ -52,7 +49,7 @@ class DataGenerationConfig:
             optimizer (Any): The optimizer used for data generation.
             data_gen_batch_size (int): Batch size for data generation.
             initial_lr (float): Initial learning rate for the optimizer.
-            output_loss_multiplier (Union[float,str]): Multiplier for the output loss.
+            output_loss_multiplier (float): Multiplier for the output loss.
             image_granularity (ImageGranularity): Granularity of image data generation. Defaults to ImageGranularity.AllImages.
             scheduler_type (SchedulerType): Type of scheduler for the optimizer. Defaults to None.
             bn_alignment_loss_type (BatchNormAlignemntLossType): Type of BatchNorm alignment loss. Defaults to None.
@@ -84,13 +81,6 @@ class DataGenerationConfig:
         self.last_layer_types = last_layer_types
         self.image_clipping = image_clipping
         self.reflection = reflection
-
-        # Check if the output_loss_multiplier type is valid
-        if isinstance(output_loss_multiplier, str) and output_loss_multiplier != AUTO:
-            Logger.error(f"Invalid output_loss_multiplier string '{output_loss_multiplier}'. "
-                            f"'output_loss_multiplier' can be a float number or set to 'auto'. Setting to 'auto'")
-            self.output_loss_multiplier = AUTO
-        else:
-            self.output_loss_multiplier = output_loss_multiplier
+        self.output_loss_multiplier = output_loss_multiplier
 
 

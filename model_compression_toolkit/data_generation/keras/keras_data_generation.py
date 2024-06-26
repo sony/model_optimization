@@ -20,7 +20,6 @@ from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.data_generation.common.constants import DEFAULT_N_ITER, DEFAULT_DATA_GEN_BS
 from model_compression_toolkit.data_generation.common.data_generation import get_data_generation_classes
 from model_compression_toolkit.data_generation.common.image_pipeline import image_normalization_dict
-from model_compression_toolkit.data_generation.common.constants import AUTO
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig, \
     ImageGranularity
@@ -31,7 +30,8 @@ if FOUND_TF:
     import tensorflow as tf
     from tensorflow.keras.layers import BatchNormalization
     from tensorflow.keras.optimizers.legacy import Optimizer, Adam
-    from model_compression_toolkit.data_generation.keras.constants import DEFAULT_KERAS_INITIAL_LR
+    from model_compression_toolkit.data_generation.keras.constants import DEFAULT_KERAS_INITIAL_LR, \
+    DEFAULT_KERAS_EXTRA_PIXELS, DEFAULT_KERAS_OUTPUT_LOSS_MULTIPLIER
     from model_compression_toolkit.data_generation.keras.image_pipeline import image_pipeline_dict
     from model_compression_toolkit.data_generation.keras.model_info_exctractors import (KerasActivationExtractor,
                                                                                         KerasOriginalBNStatsHolder)
@@ -54,16 +54,16 @@ if FOUND_TF:
             optimizer: Optimizer = Adam,
             data_gen_batch_size: int = DEFAULT_DATA_GEN_BS,
             initial_lr: float = DEFAULT_KERAS_INITIAL_LR,
-            output_loss_multiplier: Union[float,str] = AUTO,
+            output_loss_multiplier: float = DEFAULT_KERAS_OUTPUT_LOSS_MULTIPLIER,
             scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU_WITH_RESET,
             bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
-            output_loss_type: OutputLossType = OutputLossType.REGULARIZED_MIN_MAX_DIFF,
+            output_loss_type: OutputLossType = OutputLossType.NEGATIVE_MIN_MAX_DIFF,
             data_init_type: DataInitType = DataInitType.Gaussian,
             layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
             image_granularity: ImageGranularity = ImageGranularity.BatchWise,
             image_pipeline_type: ImagePipelineType = ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
             image_normalization_type: ImageNormalizationType = ImageNormalizationType.KERAS_APPLICATIONS,
-            extra_pixels: Union[int, Tuple[int, int]] = 0,
+            extra_pixels: Union[int, Tuple[int, int]] = DEFAULT_KERAS_EXTRA_PIXELS,
             bn_layer_types: List = [BatchNormalization],
             image_clipping: bool = True,
             reflection: bool = True,
@@ -76,7 +76,7 @@ if FOUND_TF:
             optimizer (Optimizer): The optimizer to use for the data generation process.
             data_gen_batch_size (int): Batch size for data generation.
             initial_lr (float): Initial learning rate for the optimizer.
-            output_loss_multiplier (Union[float,str]): Multiplier for the output loss during optimization.
+            output_loss_multiplier (float): Multiplier for the output loss during optimization.
             scheduler_type (SchedulerType): The type of scheduler to use.
             bn_alignment_loss_type (BatchNormAlignemntLossType): The type of BatchNorm alignment loss to use.
             output_loss_type (OutputLossType): The type of output loss to use.
@@ -292,7 +292,7 @@ if FOUND_TF:
                             bn_layer_weights: Dict,
                             bn_alignment_loss_fn: Callable,
                             output_loss_fn: Callable,
-                            output_loss_multiplier: Union[float,str]) -> (
+                            output_loss_multiplier: float) -> (
             Tuple)[List[tf.Tensor], tf.Tensor, tf.Tensor, tf.Tensor]:
         """
         This function run part of the training step, calculating the losses and the gradients for the batch.
@@ -305,7 +305,7 @@ if FOUND_TF:
             bn_layer_weights (Dict): weights to multiply the loss for each layer.
             bn_alignment_loss_fn (Callable): Function to compute BatchNorm alignment loss.
             output_loss_fn (Callable): Function to compute output loss.
-            output_loss_multiplier (Union[float,str]): Multiplier for the output loss.
+            output_loss_multiplier (float): Multiplier for the output loss.
 
         Returns:
     Returns:
@@ -340,10 +340,7 @@ if FOUND_TF:
                 tape=tape)
 
             # Compute total loss
-            if output_loss_multiplier == AUTO:
-                total_loss = tf.math.log(tf.math.exp(bn_loss) + tf.math.exp(output_loss))
-            else:
-                total_loss = bn_loss + output_loss_multiplier * output_loss
+            total_loss = bn_loss + output_loss_multiplier * output_loss
 
             # Get the trainable variables
             variables = [imgs_to_optimize]

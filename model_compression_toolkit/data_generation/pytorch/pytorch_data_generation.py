@@ -27,7 +27,8 @@ from model_compression_toolkit.data_generation.common.enums import ImageGranular
     OutputLossType
 from model_compression_toolkit.data_generation.common.image_pipeline import image_normalization_dict
 from model_compression_toolkit.data_generation.pytorch.constants import DEFAULT_PYTORCH_INITIAL_LR, \
-    DEFAULT_PYTORCH_BN_LAYER_TYPES, DEFAULT_PYTORCH_LAST_LAYER_TYPES, AUTO
+    DEFAULT_PYTORCH_BN_LAYER_TYPES, DEFAULT_PYTORCH_LAST_LAYER_TYPES, DEFAULT_PYTORCH_EXTRA_PIXELS, \
+    DEFAULT_PYTORCH_OUTPUT_LOSS_MULTIPLIER
 from model_compression_toolkit.data_generation.pytorch.image_pipeline import image_pipeline_dict, \
     BaseImagePipeline
 from model_compression_toolkit.data_generation.pytorch.model_info_exctractors import PytorchActivationExtractor, \
@@ -62,16 +63,16 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             optimizer: Optimizer = RAdam,
             data_gen_batch_size=DEFAULT_DATA_GEN_BS,
             initial_lr=DEFAULT_PYTORCH_INITIAL_LR,
-            output_loss_multiplier=AUTO,
+            output_loss_multiplier=DEFAULT_PYTORCH_OUTPUT_LOSS_MULTIPLIER,
             scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU_WITH_RESET,
             bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
-            output_loss_type: OutputLossType = OutputLossType.REGULARIZED_MIN_MAX_DIFF,
-            data_init_type: DataInitType = DataInitType.Diverse,
+            output_loss_type: OutputLossType = OutputLossType.NEGATIVE_MIN_MAX_DIFF,
+            data_init_type: DataInitType = DataInitType.Gaussian,
             layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
             image_granularity=ImageGranularity.AllImages,
             image_pipeline_type: ImagePipelineType = ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
             image_normalization_type: ImageNormalizationType = ImageNormalizationType.TORCHVISION,
-            extra_pixels: Union[int, Tuple[int, int]] = 0,
+            extra_pixels: Union[int, Tuple[int, int]] = DEFAULT_PYTORCH_EXTRA_PIXELS,
             bn_layer_types: List = DEFAULT_PYTORCH_BN_LAYER_TYPES,
             last_layer_types: List = DEFAULT_PYTORCH_LAST_LAYER_TYPES,
             image_clipping: bool = True,
@@ -85,7 +86,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             optimizer (Optimizer): The optimizer to use for the data generation process.
             data_gen_batch_size (int): Batch size for data generation.
             initial_lr (float): Initial learning rate for the optimizer.
-            output_loss_multiplier (Union[float,str]): Multiplier for the output loss during optimization.
+            output_loss_multiplier (float): Multiplier for the output loss during optimization.
             scheduler_type (SchedulerType): The type of scheduler to use.
             bn_alignment_loss_type (BatchNormAlignemntLossType): The type of BatchNorm alignment loss to use.
             output_loss_type (OutputLossType): The type of output loss to use.
@@ -268,7 +269,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             bn_layer_weighting_fn: Callable,
             bn_alignment_loss_fn: Callable,
             output_loss_fn: Callable,
-            output_loss_multiplier: Union[float,str],
+            output_loss_multiplier: float,
             device: torch.device
     ) -> List[Any]:
         """
@@ -283,7 +284,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             bn_layer_weighting_fn (Callable): Function to compute layer weighting for the BatchNorm alignment loss .
             bn_alignment_loss_fn (Callable): Function to compute BatchNorm alignment loss.
             output_loss_fn (Callable): Function to compute output loss.
-            output_loss_multiplier (Union[float,str]): Multiplier for the output loss.
+            output_loss_multiplier (float): Multiplier for the output loss.
             device (torch.device): The current device set for PyTorch operations.
 
         Returns:
@@ -337,10 +338,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
                     device=device)
 
                 # Compute total loss
-                if output_loss_multiplier == AUTO:
-                    total_loss = torch.log(torch.exp(bn_loss) + torch.exp(output_loss))
-                else:
-                    total_loss = bn_loss + output_loss_multiplier * output_loss
+                total_loss = bn_loss + output_loss_multiplier * output_loss
 
                 # Perform optimiztion step
                 all_imgs_opt_handler.optimization_step(random_batch_index, total_loss, i_iter)
@@ -360,6 +358,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
         # Return a list containing the finalized generated images
         finalized_imgs = all_imgs_opt_handler.get_finalized_images()
         Logger.info(f'Total time to generate {len(finalized_imgs)} images (seconds): {int(time.time() - total_time)}')
+        Logger.info(f'Final Loss: Total {total_loss.item()}, BN loss {bn_loss.item()}, Output loss {output_loss.item()}')
         return finalized_imgs
 else:
     # If torch is not installed,
