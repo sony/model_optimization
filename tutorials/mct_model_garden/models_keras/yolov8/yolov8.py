@@ -312,7 +312,7 @@ class Detect:
 
         #  Anchors normalization - optimizations for better quantization
         self.strides = self.strides / img_size
-        self.split_strides = [self.strides[:nd0], self.strides[nd0:nd1], self.strides[nd1:nd2]]
+        self.split_strides = [self.strides[0], self.strides[nd0], self.strides[nd1]]
         self.anchors = self.anchors * self.strides
 
     def __call__(self, x):
