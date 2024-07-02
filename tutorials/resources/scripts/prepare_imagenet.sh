@@ -1,6 +1,4 @@
 #!/bin/bash
-rm -rf imagenet/val
-mkdir imagenet/val
 tar -xf imagenet/ILSVRC2012_img_val.tar -C imagenet/val
 wget https://raw.githubusercontent.com/tensorflow/models/master/research/slim/datasets/imagenet_2012_validation_synset_labels.txt -O imagenet/val/imagenet_2012_validation_synset_labels.txt
 cd imagenet/val; find . -name "*.JPEG" | sort > images.txt
