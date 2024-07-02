@@ -167,7 +167,7 @@ if FOUND_TORCH:
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.critical("Given quantization config for mixed-precision is not of type 'MixedPrecisionQuantizationConfig'. "
-                                "Ensure usage of the correct API for 'keras_post_training_quantization' "
+                                "Ensure usage of the correct API for 'pytorch_gradient_post_training_quantization' "
                                 "or provide a valid mixed-precision configuration.")  # pragma: no cover
 
         tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
