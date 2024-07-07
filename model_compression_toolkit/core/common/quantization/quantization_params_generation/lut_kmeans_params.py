@@ -20,7 +20,7 @@ from sklearn.cluster import KMeans
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.constants import LUT_VALUES, MIN_THRESHOLD, SCALE_PER_CHANNEL, \
     LUT_VALUES_BITWIDTH, THRESHOLD, NUM_QPARAM_HESSIAN_SAMPLES
-from model_compression_toolkit.core.common.hessian import HessianInfoService
+from model_compression_toolkit.core.common.hessian import HessianScoresService
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import \
     max_power_of_two, int_quantization_with_threshold
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.symmetric_selection import \
@@ -41,7 +41,7 @@ def lut_kmeans_tensor(tensor_data: np.ndarray,
                       quant_error_method: qc.QuantizationErrorMethod = None,
                       is_symmetric: bool = False,
                       node=None,
-                      hessian_info_service: HessianInfoService = None,
+                      hessian_info_service: HessianScoresService = None,
                       num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES,
                       ) -> Tuple[Dict[str, np.ndarray], int]:
     """

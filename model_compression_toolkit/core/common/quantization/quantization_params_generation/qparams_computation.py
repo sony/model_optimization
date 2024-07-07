@@ -20,8 +20,8 @@ from typing import List
 from model_compression_toolkit.constants import NUM_QPARAM_HESSIAN_SAMPLES
 from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common import Graph, BaseNode
-from model_compression_toolkit.core.common.hessian import HessianInfoService, TraceHessianRequest, HessianMode, \
-    HessianInfoGranularity
+from model_compression_toolkit.core.common.hessian import HessianScoresService, HessianScoresRequest, HessianMode, \
+    HessianScoresGranularity
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
     import get_activations_qparams
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_weights_computation import \
@@ -57,7 +57,7 @@ def _collect_nodes_for_hmse(nodes_list: List[BaseNode], graph: Graph) -> List[Ba
 def calculate_quantization_params(graph: Graph,
                                   nodes: List[BaseNode] = [],
                                   specific_nodes: bool = False,
-                                  hessian_info_service: HessianInfoService = None,
+                                  hessian_info_service: HessianScoresService = None,
                                   num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES):
     """
     For a graph, go over its nodes, compute quantization params (for both weights and activations according
@@ -89,9 +89,9 @@ def calculate_quantization_params(graph: Graph,
     # The Hessian scores are computed and stored in the hessian_info_service object.
     nodes_for_hmse = _collect_nodes_for_hmse(nodes_list, graph)
     if len(nodes_for_hmse) > 0:
-        hessian_info_service.fetch_hessian(TraceHessianRequest(mode=HessianMode.WEIGHTS,
-                                                               granularity=HessianInfoGranularity.PER_ELEMENT,
-                                                               target_nodes=nodes_for_hmse),
+        hessian_info_service.fetch_hessian(HessianScoresRequest(mode=HessianMode.WEIGHTS,
+                                                                granularity=HessianScoresGranularity.PER_ELEMENT,
+                                                                target_nodes=nodes_for_hmse),
                                            required_size=num_hessian_samples,
                                            batch_size=1)
 

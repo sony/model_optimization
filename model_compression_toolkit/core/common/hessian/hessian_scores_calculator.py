@@ -18,16 +18,16 @@ from typing import List, Any
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest
 from model_compression_toolkit.logger import Logger
 
 
-class TraceHessianCalculator(ABC):
+class HessianScoresCalculator(ABC):
     """
-    Abstract base class for computing an approximation of the trace of the Hessian.
+    Abstract base class for computing scores based on the Hessian matrix approximation.
 
     This class provides a structure for implementing different methods to compute
-    the trace of the Hessian approximation based on the provided configuration,
+    scores based on Hessian-approximation according to the provided configuration,
     input images, and other parameters.
     """
 
@@ -35,15 +35,15 @@ class TraceHessianCalculator(ABC):
                  graph: Graph,
                  input_images: List[Any],
                  fw_impl,
-                 trace_hessian_request: TraceHessianRequest,
+                 hessian_scores_request: HessianScoresRequest,
                  num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
         Args:
             graph: Computational graph for the float model.
             input_images: List of input images for the computation.
-            fw_impl: Framework-specific implementation for trace Hessian computation.
-            trace_hessian_request: Configuration request for which to compute the trace Hessian approximation.
-            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
+            fw_impl: Framework-specific implementation for Hessian-approximation scores computation.
+            hessian_scores_request: Configuration request for which to compute the Hessian-based approximation.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian-approximation scores.
 
         """
         self.graph = graph
@@ -60,15 +60,15 @@ class TraceHessianCalculator(ABC):
             Logger.critical(f"The graph requires {len(graph.get_inputs())} inputs, but the provided representative dataset contains {len(self.input_images)} inputs.")
 
         self.fw_impl = fw_impl
-        self.hessian_request = trace_hessian_request
+        self.hessian_request = hessian_scores_request
 
     @abstractmethod
     def compute(self) -> List[float]:
         """
-        Abstract method to compute the approximation of the trace of the Hessian.
+        Abstract method to compute the scores based on the Hessian-approximation matrix.
 
         This method should be implemented by subclasses to provide the specific
-        computation method for the trace Hessian approximation.
+        computation method for the Hessian-approximation scores.
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement compute method.')  # pragma: no cover
 

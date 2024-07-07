@@ -16,8 +16,8 @@ from copy import deepcopy
 from typing import Tuple, Callable, List
 import numpy as np
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoGranularity, \
-    HessianInfoService
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianScoresGranularity, \
+    HessianScoresService
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
@@ -376,7 +376,7 @@ def _get_sliced_histogram(bins: np.ndarray,
 
 
 def _compute_hessian_for_hmse(node,
-                              hessian_info_service: HessianInfoService,
+                              hessian_info_service: HessianScoresService,
                               num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> List[List[np.ndarray]]:
     """
     Compute and retrieve Hessian-based scores for using during HMSE error computation.
@@ -389,9 +389,9 @@ def _compute_hessian_for_hmse(node,
     Returns: A list with computed Hessian-based scores tensors for the given node.
 
     """
-    _request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
-                                   granularity=HessianInfoGranularity.PER_ELEMENT,
-                                   target_nodes=[node])
+    _request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
+                                    granularity=HessianScoresGranularity.PER_ELEMENT,
+                                    target_nodes=[node])
     _scores_for_node = hessian_info_service.fetch_hessian(_request,
                                                           required_size=num_hessian_samples)
 
@@ -430,7 +430,7 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
                                                   n_bits: int = 8,
                                                   signed: bool = True,
                                                   node=None,
-                                                  hessian_info_service: HessianInfoService = None,
+                                                  hessian_info_service: HessianScoresService = None,
                                                   num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> Callable:
     """
     Returns the error function compatible to the provided threshold method,

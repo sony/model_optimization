@@ -153,7 +153,7 @@ if FOUND_TORCH:
         tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
         fw_impl = PytorchImplementation()
 
-        # Ignore trace hessian service as we do not use it here
+        # Ignore hessian scores service as we do not use it here
         tg, bit_widths_config, _ = core_runner(in_model=in_model,
                                                representative_data_gen=representative_data_gen,
                                                core_config=core_config,

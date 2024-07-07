@@ -18,41 +18,41 @@ import torch
 from torch import autograd
 import numpy as np
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianInfoGranularity
-from model_compression_toolkit.core.pytorch.hessian.trace_hessian_calculator_pytorch import \
-    TraceHessianCalculatorPytorch
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianScoresGranularity
+from model_compression_toolkit.core.pytorch.hessian.hessian_scores_calculator_pytorch import \
+    HessianScoresCalculatorPytorch
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.back2framework.float_model_builder import FloatPyTorchModelBuilder
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_HESSIAN_ITER, HESSIAN_COMP_TOLERANCE, HESSIAN_EPS
 
 
-class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
+class WeightsHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
     """
-    Pytorch-specific implementation of the Trace Hessian approximation computation w.r.t node's weights.
+    Pytorch-specific implementation of the Hessian approximation scores computation w.r.t node's weights.
     """
 
     def __init__(self,
                  graph: Graph,
                  input_images: List[torch.Tensor],
                  fw_impl,
-                 trace_hessian_request: TraceHessianRequest,
+                 hessian_scores_request: HessianScoresRequest,
                  num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
 
         Args:
             graph: Computational graph for the float model.
             input_images: List of input images for the computation.
-            fw_impl: Framework-specific implementation for trace Hessian computation.
-            trace_hessian_request: Configuration request for which to compute the trace Hessian approximation.
-            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
+            fw_impl: Framework-specific implementation for Hessian scores computation.
+            hessian_scores_request: Configuration request for which to compute the Hessian approximation scores.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian scores.
         """
 
-        super(WeightsTraceHessianCalculatorPytorch, self).__init__(graph=graph,
-                                                                   input_images=input_images,
-                                                                   fw_impl=fw_impl,
-                                                                   trace_hessian_request=trace_hessian_request,
-                                                                   num_iterations_for_approximation=num_iterations_for_approximation)
+        super(WeightsHessianScoresCalculatorPytorch, self).__init__(graph=graph,
+                                                                    input_images=input_images,
+                                                                    fw_impl=fw_impl,
+                                                                    hessian_scores_request=hessian_scores_request,
+                                                                    num_iterations_for_approximation=num_iterations_for_approximation)
 
     def compute(self) -> List[np.ndarray]:
         """
@@ -77,9 +77,9 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
         output_tensor = self.concat_tensors(outputs)
         device = output_tensor.device
 
-        ipts_hessian_trace_approx = [torch.tensor([0.0],
-                                                  requires_grad=True,
-                                                  device=device)
+        ipts_hessian_approx_scores = [torch.tensor([0.0],
+                                                   requires_grad=True,
+                                                   device=device)
                                      for _ in range(len(self.hessian_request.target_nodes))]
 
         prev_mean_results = None
@@ -107,9 +107,9 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                 # Get the output channel index
                 output_channel_axis, _ = DEFAULT_PYTORCH_INFO.kernel_channels_mapping.get(ipt_node.type)
                 shape_channel_axis = [i for i in range(len(weights_tensor.shape))]
-                if self.hessian_request.granularity == HessianInfoGranularity.PER_OUTPUT_CHANNEL:
+                if self.hessian_request.granularity == HessianScoresGranularity.PER_OUTPUT_CHANNEL:
                     shape_channel_axis.remove(output_channel_axis)
-                elif self.hessian_request.granularity == HessianInfoGranularity.PER_ELEMENT:
+                elif self.hessian_request.granularity == HessianScoresGranularity.PER_ELEMENT:
                     shape_channel_axis = ()
 
                 # Compute gradients of f_v with respect to the weights
@@ -123,13 +123,13 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                     approx = torch.sum(approx, dim=shape_channel_axis)
 
                 # Update node Hessian approximation mean over random iterations
-                ipts_hessian_trace_approx[i] = (j * ipts_hessian_trace_approx[i] + approx) / (j + 1)
+                ipts_hessian_approx_scores[i] = (j * ipts_hessian_approx_scores[i] + approx) / (j + 1)
 
             # If the change to the maximal mean Hessian approximation is insignificant we stop the calculation
             # Note that we do not consider granularity when computing the mean
             if j > MIN_HESSIAN_ITER:
                 if prev_mean_results is not None:
-                    new_mean_res = torch.as_tensor([torch.mean(res) for res in ipts_hessian_trace_approx],
+                    new_mean_res = torch.as_tensor([torch.mean(res) for res in ipts_hessian_approx_scores],
                                                    device=device)
                     relative_delta_per_node = (torch.abs(new_mean_res - prev_mean_results) /
                                                (torch.abs(new_mean_res) + 1e-6))
@@ -137,16 +137,16 @@ class WeightsTraceHessianCalculatorPytorch(TraceHessianCalculatorPytorch):
                     if max_delta < HESSIAN_COMP_TOLERANCE:
                         break
 
-            prev_mean_results = torch.as_tensor([torch.mean(res) for res in ipts_hessian_trace_approx], device=device)
+            prev_mean_results = torch.as_tensor([torch.mean(res) for res in ipts_hessian_approx_scores], device=device)
 
         # Make sure all final shape are tensors and not scalar
-        if self.hessian_request.granularity == HessianInfoGranularity.PER_TENSOR:
-            ipts_hessian_trace_approx = [final_approx.reshape(1) for final_approx in ipts_hessian_trace_approx]
+        if self.hessian_request.granularity == HessianScoresGranularity.PER_TENSOR:
+            ipts_hessian_approx_scores = [final_approx.reshape(1) for final_approx in ipts_hessian_approx_scores]
 
         # Add a batch axis to the Hessian approximation tensor (to align with the expected returned shape).
         # We assume per-image computation, so the batch axis size is 1.
         final_approx = [r_final_approx[np.newaxis, ...].detach().cpu().numpy()
-                        for r_final_approx in ipts_hessian_trace_approx]
+                        for r_final_approx in ipts_hessian_approx_scores]
 
         return final_approx
 

@@ -85,8 +85,8 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
                                                            input_shape=(1, 8, 8, 3),
                                                            mixed_precision_enabled=True)
 
-        hessian_info_service = hess.HessianInfoService(graph=graph, representative_dataset_gen=representative_dataset,
-                                                       fw_impl=keras_impl)
+        hessian_info_service = hess.HessianScoresService(graph=graph, representative_dataset_gen=representative_dataset,
+                                                         fw_impl=keras_impl)
 
         # Reducing the default number of samples for Mixed precision Hessian approximation
         # to allow quick execution of the test
@@ -95,7 +95,7 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
                                                                                    num_of_images=2),
                                                   representative_dataset,
                                                   DEFAULT_KERAS_INFO,
-                                                  hessian_info_service=hessian_info_service)
+                                                  hessian_scores_service=hessian_info_service)
 
     def test_not_supported_output_argmax(self):
         model = argmax_output_model((8, 8, 3))

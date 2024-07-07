@@ -24,8 +24,8 @@ from model_compression_toolkit.core.common.graph.functional_node import Function
 from model_compression_toolkit.core.common.similarity_analyzer import compute_kl_divergence
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, \
-    HessianInfoGranularity, HessianInfoService
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, \
+    HessianScoresGranularity, HessianScoresService
 
 
 class SensitivityEvaluation:
@@ -42,7 +42,7 @@ class SensitivityEvaluation:
                  fw_impl: Any,
                  set_layer_to_bitwidth: Callable,
                  disable_activation_for_metric: bool = False,
-                 hessian_info_service: HessianInfoService = None
+                 hessian_scores_service: HessianScoresService = None
                  ):
         """
         Initiates all relevant objects to manage a sensitivity evaluation for MP search.
@@ -65,7 +65,7 @@ class SensitivityEvaluation:
             set_layer_to_bitwidth: A fw-dependent function that allows to configure a configurable MP model
                     with a specific bit-width configuration.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
-            hessian_info_service: HessianInfoService to fetch Hessian traces approximations.
+            hessian_scores_service: HessianScoresService to fetch Hessian approximation scores.
 
         """
         self.graph = graph
@@ -76,9 +76,9 @@ class SensitivityEvaluation:
         self.set_layer_to_bitwidth = set_layer_to_bitwidth
         self.disable_activation_for_metric = disable_activation_for_metric
         if self.quant_config.use_hessian_based_scores:
-            if not isinstance(hessian_info_service, HessianInfoService):
-                Logger.critical(f"When using Hessian-based approximations for sensitivity evaluation, a valid HessianInfoService object is required; found {type(hessian_info_service)}.")
-            self.hessian_info_service = hessian_info_service
+            if not isinstance(hessian_scores_service, HessianScoresService):
+                Logger.critical(f"When using Hessian-based approximations for sensitivity evaluation, a valid HessianInfoService object is required; found {type(hessian_scores_service)}.")
+            self.hessian_info_service = hessian_scores_service
 
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names(self.fw_info)
 
@@ -237,14 +237,14 @@ class SensitivityEvaluation:
          to be used for the distance metric weighted average computation.
 
         """
-        # Create a request for trace Hessian approximation with specific configurations
+        # Create a request for Hessian approximation scores with specific configurations
         # (here we use per-tensor approximation of the Hessian's trace w.r.t the node's activations)
-        trace_hessian_request = TraceHessianRequest(mode=HessianMode.ACTIVATION,
-                                                    granularity=HessianInfoGranularity.PER_TENSOR,
+        hessian_info_request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
+                                                    granularity=HessianScoresGranularity.PER_TENSOR,
                                                     target_nodes=self.interest_points)
 
-        # Fetch the trace Hessian approximations for the current interest point
-        nodes_approximations = self.hessian_info_service.fetch_hessian(trace_hessian_request=trace_hessian_request,
+        # Fetch the Hessian approximation scores for the current interest point
+        nodes_approximations = self.hessian_info_service.fetch_hessian(hessian_info_request=hessian_info_request,
                                                                        required_size=self.quant_config.num_of_images,
                                                                        batch_size=self.quant_config.hessian_batch_size)
 

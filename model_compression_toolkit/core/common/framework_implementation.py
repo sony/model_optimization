@@ -24,7 +24,7 @@ from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianInfoService
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianScoresService
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
@@ -49,23 +49,23 @@ class FrameworkImplementation(ABC):
         raise NotImplemented(f'{self.__class__.__name__} did not supply a constants module.')  # pragma: no cover
 
     @abstractmethod
-    def get_trace_hessian_calculator(self,
-                                     graph: Graph,
-                                     input_images: List[Any],
-                                     trace_hessian_request: TraceHessianRequest,
-                                     num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
+    def get_hessian_scores_calculator(self,
+                                      graph: Graph,
+                                      input_images: List[Any],
+                                      hessian_scores_request: HessianScoresRequest,
+                                      num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
-        Get framework trace hessian approximations calculator based on the trace hessian request.
+        Get framework hessian-approximation scores calculator based on the hessian scores request.
         Args:
             input_images: Images to use for computation.
             graph: Float graph to compute the approximation of its different nodes.
-            trace_hessian_request: TraceHessianRequest to search for the desired calculator.
-            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
+            hessian_scores_request: HessianScoresRequest to search for the desired calculator.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian-approximation scores.
 
-        Returns: TraceHessianCalculator to use for the trace hessian approximation computation for this request.
+        Returns: HessianScoresCalculator to use for the hessian approximation scores computation for this request.
         """
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
-                             f'framework\'s get_trace_hessian_calculator method.')  # pragma: no cover
+                             f'framework\'s get_hessian_scores_calculator method.')  # pragma: no cover
 
     @abstractmethod
     def to_numpy(self, tensor: Any) -> np.ndarray:
@@ -298,7 +298,7 @@ class FrameworkImplementation(ABC):
                                   quant_config: MixedPrecisionQuantizationConfig,
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
-                                  hessian_info_service: HessianInfoService = None,
+                                  hessian_scores_service: HessianScoresService = None,
                                   disable_activation_for_metric: bool = False) -> SensitivityEvaluation:
         """
         Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
@@ -310,7 +310,7 @@ class FrameworkImplementation(ABC):
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
-            hessian_info_service: HessianInfoService to fetch Hessian traces approximations.
+            hessian_scores_service: HessianScoresService to fetch scores based on Hessian-approximation.
 
         Returns:
             A function that computes the metric.

@@ -17,7 +17,7 @@ from typing import Union, Tuple, Dict
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.constants import MIN_THRESHOLD, THRESHOLD, NUM_QPARAM_HESSIAN_SAMPLES
-from model_compression_toolkit.core.common.hessian import HessianInfoService
+from model_compression_toolkit.core.common.hessian import HessianScoresService
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_search import \
     qparams_selection_tensor_search, qparams_selection_histogram_search
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import max_power_of_two, get_tensor_max
@@ -37,7 +37,7 @@ def power_of_two_selection_tensor(tensor_data: np.ndarray,
                                   min_threshold: float = MIN_THRESHOLD,
                                   quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE,
                                   node=None,
-                                  hessian_info_service: HessianInfoService = None,
+                                  hessian_info_service: HessianScoresService = None,
                                   num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES,
                                   ) -> Tuple[Dict[str, np.ndarray], int]:
     """

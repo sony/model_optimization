@@ -19,7 +19,7 @@ from model_compression_toolkit.constants import EPS
 
 def normalize_scores(hessian_approximations: List) -> List[np.ndarray]:
     """
-    Normalize Hessian information approximations by dividing the trace Hessian approximations value by the sum of all
+    Normalize Hessian scores approximations by dividing their value by the sum of all
     other values.
 
     Args:
