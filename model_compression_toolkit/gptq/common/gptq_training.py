@@ -316,7 +316,7 @@ def gptq_training(graph_float: Graph,
                                     fw_impl,
                                     fw_info,
                                     representative_data_gen,
-                                    hessian_info_service=hessian_scores_service)
+                                    hessian_scores_service=hessian_scores_service)
 
     # Training process
     gptq_trainer.train(representative_data_gen)
