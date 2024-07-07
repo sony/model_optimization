@@ -28,17 +28,21 @@ class BNFoldingNet(nn.Module):
         super(BNFoldingNet, self).__init__()
         self.conv1 = test_layer
         self.fold_applied = fold_applied
-        self.bn = nn.BatchNorm2d(test_layer.out_channels)
+        self.bn = nn.BatchNorm2d(test_layer.out_channels, eps=1e-2)
         self.functional = functional
         self.has_weight = has_weight
 
     def forward(self, inp):
         x1 = self.conv1(inp)
         if self.functional:
-            w = self.bn.weight if self.has_weight else None
-            x = nn.functional.batch_norm(x1, self.bn.running_mean, self.bn.running_var, weight=w,
-                                         bias=self.bn.bias, training=self.bn.training, momentum=self.bn.momentum,
-                                         eps=self.bn.eps)
+            if self.has_weight:
+                x = nn.functional.batch_norm(x1, self.bn.running_mean, self.bn.running_var, eps=self.bn.eps,
+                                             bias=self.bn.bias, weight=self.bn.weight, training=self.bn.training,
+                                             momentum=self.bn.momentum)
+            else:
+                x = nn.functional.batch_norm(x1, running_var=self.bn.running_var, running_mean=self.bn.running_mean,
+                                             eps=self.bn.eps, bias=self.bn.bias, weight=self.bn.weight,
+                                             training=self.bn.training, momentum=self.bn.momentum)
         else:
             x = self.bn(x1)
         x = torch.relu(x)

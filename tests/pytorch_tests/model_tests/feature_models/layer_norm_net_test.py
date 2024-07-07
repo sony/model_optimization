@@ -39,13 +39,13 @@ class LayerNormNet(torch.nn.Module):
 
         # Apply layer_norm with all the combinations of arguments.
         if self.has_weight and self.has_bias:
-            x = torch.nn.functional.layer_norm(x, normalized_shape=(3,), weight=self.weight0, bias=self.bias0)
+            x = torch.nn.functional.layer_norm(x, normalized_shape=(3,), weight=self.weight0, bias=self.bias0, eps=0.01)
         elif self.has_weight and not self.has_bias:
-            x = torch.nn.functional.layer_norm(x, normalized_shape=(3,), weight=self.weight1) # Layer normalization along the last dimension
+            x = torch.nn.functional.layer_norm(x, normalized_shape=(3,), eps=0.01, bias=None, weight=self.weight1) # Layer normalization along the last dimension
         elif not self.has_weight and self.has_bias:
-            x = torch.nn.functional.layer_norm(x, normalized_shape=(3,), bias=self.bias1)  # Layer normalization along the last dimension
+            x = torch.nn.functional.layer_norm(x, eps=0.01, normalized_shape=(3,), bias=self.bias1)  # Layer normalization along the last dimension
         else:
-            x = torch.nn.functional.layer_norm(x, normalized_shape=(3,))  # Layer normalization along the last dimension
+            x = torch.nn.functional.layer_norm(x, normalized_shape=(3,), eps=0.01)  # Layer normalization along the last dimension
 
         return x
 

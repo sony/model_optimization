@@ -19,6 +19,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
+from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.pytorch.constants import IN_CHANNELS, OUT_CHANNELS, KERNEL_SIZE, KERNEL, BIAS
 from model_compression_toolkit.core.common import FrameworkInfo
 
@@ -37,7 +38,7 @@ class FunctionalConvSubstitution(common.BaseSubstitution):
 
     def substitute(self,
                    graph: Graph,
-                   func_node: BaseNode) -> Graph:
+                   func_node: FunctionalNode) -> Graph:
         """
         Substitute functional and conv/linear layer with torch layer
         Args:
@@ -60,9 +61,15 @@ class FunctionalConvSubstitution(common.BaseSubstitution):
         # Create new node of layer convolution
         if 1 not in func_node.weights:
             Logger.critical(f'Weight input missing for node {func_node.name}.')  # pragma: no cover
-        weight = func_node.weights[1]
-        bias = func_node.weights.get(2)
-        framework_attr = func_node.framework_attr
+        # Extract index of kernel and bias according to tensor_input_allocs if they were input as kwargs. If
+        # they were input as args, use their fixed positions.
+        weight_index = func_node.tensor_input_allocs.index(KERNEL) if KERNEL in func_node.tensor_input_allocs else 1
+        bias_index = func_node.tensor_input_allocs.index(BIAS) if BIAS in func_node.tensor_input_allocs else 2
+        if weight_index not in func_node.weights:
+            Logger.critical(f'Mismatch between tensor_input_allocs and weight index in node {func_node.name}.')  # pragma: no cover
+        weight = func_node.weights[weight_index]
+        bias = func_node.weights.get(bias_index)
+        framework_attr = func_node.op_call_kwargs
         framework_attr.update({OUT_CHANNELS: weight.shape[out_channel_index]})
         framework_attr.update({IN_CHANNELS: weight.shape[in_channel_index]})
         framework_attr.update({KERNEL_SIZE: weight.shape[2:]})

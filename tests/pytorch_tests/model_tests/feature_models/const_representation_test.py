@@ -161,13 +161,21 @@ class ConstRepresentationCodeNet(nn.Module):
         super().__init__()
         self.input_shape = input_shape
         self.conv2d = nn.Conv2d(3, 16, 3, 2, padding=1)
+        self.const_conv2d = nn.Conv2d(3, 16, 3, 2, padding=1)
+        self.register_parameter('conv_const', nn.Parameter(torch.rand((1, 3) + self.input_shape)))
+        self.conv2d_t = nn.ConvTranspose2d(16, 16, 3, stride=2)
         self.bn = nn.BatchNorm2d(16)
         self.register_buffer('sub_const', 10 * torch.rand((1, 16, 64)))
 
+        # Register unused buffer and parameter to test that FX doesn't include them in the FX graph.
+        self.register_buffer('unused_buffer', 10 * torch.rand((1, 16, 64)))
+        self.register_parameter('unused_parameter', nn.Parameter(10 * torch.rand((1, 16, 64))))
+
     def forward(self, x):
         _shape = x.shape[2:]
-        x = self.conv2d(x)
-
+        x = self.conv2d(input=x)
+        x2 = self.const_conv2d(input=self.conv_const)
+        x = torch.sub(other=x2, input=x)
         # input tensor in kwargs
         x = nn.functional.interpolate(x, size=_shape)
 
