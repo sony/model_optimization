@@ -20,7 +20,7 @@ from tqdm import tqdm
 import copy
 import torch
 
-from model_compression_toolkit.core.common.hessian import HessianScoresService
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
@@ -50,7 +50,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
                  fw_impl: FrameworkImplementation,
                  fw_info: FrameworkInfo,
                  representative_data_gen: Callable,
-                 hessian_scores_service: HessianScoresService = None):
+                 hessian_info_service: HessianInfoService = None):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
         Use the dataset generator to pass images through the teacher and student networks to get intermediate
@@ -64,14 +64,14 @@ class PytorchGPTQTrainer(GPTQTrainer):
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
             fw_info: Framework information
             representative_data_gen: Dataset to use for inputs of the models.
-            hessian_scores_service: HessianScoresService to fetch scores based on the hessian approximation of the float model.
+            hessian_info_service: HessianInfoService to fetch info based on the hessian approximation of the float model.
         """
         super().__init__(graph_float,
                          graph_quant,
                          gptq_config,
                          fw_impl,
                          fw_info,
-                         hessian_scores_service=hessian_scores_service)
+                         hessian_info_service=hessian_info_service)
 
         self.loss_list = []
         self.input_scale = 1

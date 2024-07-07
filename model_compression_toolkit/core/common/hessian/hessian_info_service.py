@@ -24,11 +24,11 @@ from model_compression_toolkit.core.common.hessian.hessian_scores_request import
 from model_compression_toolkit.logger import Logger
 
 
-class HessianScoresService:
+class HessianInfoService:
     """
-    A service to manage, store, and compute scores of the Hessian-based approximation.
+    A service to manage, store, and compute information based on the Hessian matrix approximation.
 
-    This class provides functionalities to compute scores based on the Hessian matrix approximation
+    This class provides functionalities to compute information based on the Hessian matrix approximation
     based on the different parameters (such as number of iterations for approximating the scores)
     and input images (using representative_dataset_gen).
     It also offers cache management capabilities for efficient computation and retrieval.
@@ -36,7 +36,7 @@ class HessianScoresService:
     Note:
     - The Hessian provides valuable information about the curvature of the loss function.
     - Computation can be computationally heavy and time-consuming.
-    - The computed scores based on Hessian approximation (and not the precise Hessian matrix).
+    - The computed information is based on Hessian approximation (and not the precise Hessian matrix).
     """
 
     def __init__(self,
@@ -171,7 +171,7 @@ class HessianScoresService:
         return per_node_counter
 
     def compute(self,
-                hessian_info_request: HessianScoresRequest,
+                hessian_scores_request: HessianScoresRequest,
                 representative_dataset_gen,
                 num_hessian_samples: int,
                 last_iter_remain_samples: List[List[np.ndarray]] = None):
@@ -180,32 +180,32 @@ class HessianScoresService:
         provided request configuration and stores it in the cache.
 
         Args:
-            hessian_info_request: Configuration for which to compute the approximation.
+            hessian_scores_request: Configuration for which to compute the approximation.
             representative_dataset_gen: A callable that provides a dataset for sampling.
             num_hessian_samples: Number of requested samples to compute batch Hessian approximation scores.
             last_iter_remain_samples: A list of input samples (for each input layer) with remaining samples from
             previous iterations.
         """
-        Logger.debug(f"Computing Hessian-scores approximations for nodes {hessian_info_request.target_nodes}.")
+        Logger.debug(f"Computing Hessian-scores approximations for nodes {hessian_scores_request.target_nodes}.")
 
         images, next_iter_remain_samples = representative_dataset_gen(num_hessian_samples=num_hessian_samples,
                                                                       last_iter_remain_samples=last_iter_remain_samples)
 
         # Compute and store the computed approximation in the saved info
         topo_sorted_nodes_names = [x.name for x in self.graph.get_topo_sorted_nodes()]
-        hessian_info_request.target_nodes.sort(key=lambda x: topo_sorted_nodes_names.index(x.name))
+        hessian_scores_request.target_nodes.sort(key=lambda x: topo_sorted_nodes_names.index(x.name))
 
         # Get the framework-specific calculator Hessian-approximation scores
         fw_hessian_calculator = self.fw_impl.get_hessian_scores_calculator(graph=self.graph,
                                                                            input_images=images,
-                                                                           hessian_scores_request=hessian_info_request,
+                                                                           hessian_scores_request=hessian_scores_request,
                                                                            num_iterations_for_approximation=self.num_iterations_for_approximation)
 
         hessian_scores = fw_hessian_calculator.compute()
 
-        for node, hessian in zip(hessian_info_request.target_nodes, hessian_scores):
-            single_node_request = self._construct_single_node_request(hessian_info_request.mode,
-                                                                      hessian_info_request.granularity,
+        for node, hessian in zip(hessian_scores_request.target_nodes, hessian_scores):
+            single_node_request = self._construct_single_node_request(hessian_scores_request.mode,
+                                                                      hessian_scores_request.granularity,
                                                                       node)
 
             # The hessian for each node is expected to be a tensor where the first axis represents the number of
@@ -229,7 +229,7 @@ class HessianScoresService:
         and len(next_iter_remain_samples[0]) > 0 else None
 
     def fetch_hessian(self,
-                      hessian_info_request: HessianScoresRequest,
+                      hessian_scores_request: HessianScoresRequest,
                       required_size: int,
                       batch_size: int = 1) -> List[List[np.ndarray]]:
         """
@@ -237,7 +237,7 @@ class HessianScoresService:
         request and required size.
 
         Args:
-            hessian_info_request: Configuration for which to fetch the approximation.
+            hessian_scores_request: Configuration for which to fetch the approximation.
             required_size: Number of approximations required.
             batch_size: The Hessian computation batch size.
 
@@ -248,28 +248,28 @@ class HessianScoresService:
             OC for per-output-channel when the requested node has OC output-channels, etc.)
         """
 
-        if len(hessian_info_request.target_nodes) == 0:
+        if len(hessian_scores_request.target_nodes) == 0:
             return []
 
         if required_size == 0:
-            return [[] for _ in hessian_info_request.target_nodes]
+            return [[] for _ in hessian_scores_request.target_nodes]
 
         Logger.info(f"\nEnsuring {required_size} Hessian-approximation scores for nodes "
-                    f"{hessian_info_request.target_nodes}.")
+                    f"{hessian_scores_request.target_nodes}.")
 
         # Replace node in reused target nodes with a representing node from the 'reuse group'.
-        for n in hessian_info_request.target_nodes:
+        for n in hessian_scores_request.target_nodes:
             if n.reuse_group:
                 rep_node = self._get_representing_of_reuse_group(n)
-                hessian_info_request.target_nodes.remove(n)
-                if rep_node not in hessian_info_request.target_nodes:
-                    hessian_info_request.target_nodes.append(rep_node)
+                hessian_scores_request.target_nodes.remove(n)
+                if rep_node not in hessian_scores_request.target_nodes:
+                    hessian_scores_request.target_nodes.append(rep_node)
 
         # Ensure the saved info has the required number of approximations
-        self._populate_saved_info_to_size(hessian_info_request, required_size, batch_size)
+        self._populate_saved_info_to_size(hessian_scores_request, required_size, batch_size)
 
         # Return the saved approximations for the given request
-        return self._collect_saved_hessians_for_request(hessian_info_request, required_size)
+        return self._collect_saved_hessians_for_request(hessian_scores_request, required_size)
 
     def _get_representing_of_reuse_group(self, node) -> Any:
         """
@@ -289,20 +289,20 @@ class HessianScoresService:
         return father_nodes[0]
 
     def _populate_saved_info_to_size(self,
-                                     hessian_info_request: HessianScoresRequest,
+                                     hessian_scores_request: HessianScoresRequest,
                                      required_size: int,
                                      batch_size: int = 1):
         """
         Ensures that the saved info has the required size of Hessian approximation scores for the given request.
 
         Args:
-            hessian_info_request: Configuration of the request to ensure the saved info size.
+            hessian_scores_request: Configuration of the request to ensure the saved info size.
             required_size: Required number of Hessian-approximation scores.
             batch_size: The Hessian computation batch size.
         """
 
         # Get the current number of saved approximations for each node in the request
-        current_existing_hessians = self.count_saved_scores_of_request(hessian_info_request)
+        current_existing_hessians = self.count_saved_scores_of_request(hessian_scores_request)
 
         # Compute the required number of approximations to meet the required size.
         # Since we allow batch and multi-nodes computation, we take the node with the maximal number of missing
@@ -311,7 +311,7 @@ class HessianScoresService:
         max_remaining_hessians = required_size - min_exist_hessians
 
         Logger.info(
-            f"Running Hessian approximation computation for {len(hessian_info_request.target_nodes)} nodes.\n "
+            f"Running Hessian approximation computation for {len(hessian_scores_request.target_nodes)} nodes.\n "
             f"The node with minimal existing Hessian-approximation scores has {min_exist_hessians} "
             f"approximated scores computed.\n"
             f"{max_remaining_hessians} approximations left to compute...")
@@ -328,18 +328,18 @@ class HessianScoresService:
             pbar.update(1)
             size_to_compute = min(max_remaining_hessians, batch_size)
             next_iter_remaining_samples = (
-                self.compute(hessian_info_request, hessian_representative_dataset, size_to_compute,
+                self.compute(hessian_scores_request, hessian_representative_dataset, size_to_compute,
                              last_iter_remain_samples=next_iter_remaining_samples))
             max_remaining_hessians -= size_to_compute
 
     def _collect_saved_hessians_for_request(self,
-                                            hessian_info_request: HessianScoresRequest,
+                                            hessian_scores_request: HessianScoresRequest,
                                             required_size: int) -> List[List[np.ndarray]]:
         """
         Collects Hessian approximation for the nodes in the given request.
 
         Args:
-            hessian_info_request: Configuration for which to fetch the approximation.
+            hessian_scores_request: Configuration for which to fetch the approximation.
             required_size: Required number of Hessian-approximation scores.
 
         Returns: A list with List of computed Hessian approximation (a tensor for each score) for each node
@@ -347,9 +347,9 @@ class HessianScoresService:
 
         """
         collected_results = []
-        for node in hessian_info_request.target_nodes:
-            single_node_request = self._construct_single_node_request(hessian_info_request.mode,
-                                                                      hessian_info_request.granularity,
+        for node in hessian_scores_request.target_nodes:
+            single_node_request = self._construct_single_node_request(hessian_scores_request.mode,
+                                                                      hessian_scores_request.granularity,
                                                                       node)
 
             res_for_node = self.hessian_scores_request_to_scores_list.get(single_node_request)
@@ -368,8 +368,7 @@ class HessianScoresService:
     @staticmethod
     def _construct_single_node_request(mode: HessianMode,
                                        granularity: HessianScoresGranularity,
-                                       target_nodes: List
-                                       ) -> HessianScoresRequest:
+                                       target_nodes: List) -> HessianScoresRequest:
         """
         Constructs a Hessian request with for a single node. Used for retrieving and maintaining cached results.
 

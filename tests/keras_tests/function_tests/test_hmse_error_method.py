@@ -22,7 +22,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.constants import THRESHOLD, RANGE_MAX
-from model_compression_toolkit.core.common.hessian import HessianScoresService, HessianScoresRequest, HessianMode, \
+from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
@@ -89,8 +89,8 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                                 running_gptq=running_gptq  # to enable HMSE in params calculation if needed
                                                 )
 
-        self.his = HessianScoresService(graph=self.graph, representative_dataset_gen=representative_dataset,
-                                        fw_impl=self.keras_impl)
+        self.his = HessianInfoService(graph=self.graph, representative_dataset_gen=representative_dataset,
+                                      fw_impl=self.keras_impl)
 
         mi = ModelCollector(self.graph,
                             fw_impl=self.keras_impl,

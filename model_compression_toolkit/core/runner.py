@@ -19,7 +19,7 @@ from typing import Callable, Tuple, Any, List, Dict
 import numpy as np
 
 from model_compression_toolkit.core.common import FrameworkInfo
-from model_compression_toolkit.core.common.hessian.hessian_scores_service import HessianScoresService
+from model_compression_toolkit.core.common.hessian.hessian_info_service import HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import \
     requires_mixed_precision
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
@@ -112,8 +112,8 @@ def core_runner(in_model: Any,
                                      mixed_precision_enable=core_config.mixed_precision_enable,
                                      running_gptq=running_gptq)
 
-    hessian_info_service = HessianScoresService(graph=graph, representative_dataset_gen=representative_data_gen,
-                                                fw_impl=fw_impl)
+    hessian_info_service = HessianInfoService(graph=graph, representative_dataset_gen=representative_data_gen,
+                                              fw_impl=fw_impl)
 
     tg = quantization_preparation_runner(graph=graph,
                                          representative_data_gen=representative_data_gen,
@@ -135,7 +135,7 @@ def core_runner(in_model: Any,
                                                  target_resource_utilization,
                                                  core_config.mixed_precision_config,
                                                  representative_data_gen,
-                                                 hessian_scores_service=hessian_info_service)
+                                                 hessian_info_service=hessian_info_service)
         else:
             Logger.warning(
                 f'Mixed Precision has overwrite bit-width configuration{core_config.mixed_precision_config.configuration_overwrite}')

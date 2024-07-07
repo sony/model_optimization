@@ -26,9 +26,9 @@ from model_compression_toolkit.gptq.common.gptq_framework_implementation import 
 from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.hessian import HessianScoresService, HessianScoresRequest, HessianMode, \
+from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
-from model_compression_toolkit.core.common.hessian import hessian_scores_utils as hessian_utils
+from model_compression_toolkit.core.common.hessian import hessian_info_utils as hessian_utils
 
 
 class GPTQTrainer(ABC):
@@ -42,7 +42,7 @@ class GPTQTrainer(ABC):
                  gptq_config: GradientPTQConfig,
                  fw_impl: GPTQFrameworkImplemantation,
                  fw_info: FrameworkInfo,
-                 hessian_scores_service: HessianScoresService = None):
+                 hessian_info_service: HessianInfoService = None):
         """
         Build two models from a graph: A teacher network (float model) and a student network (quantized model).
         Use the dataset generator to pass images through the teacher and student networks to get intermediate
@@ -55,7 +55,7 @@ class GPTQTrainer(ABC):
             gptq_config: GradientPTQConfig with parameters about the tuning process.
             fw_impl: Framework implementation
             fw_info: Framework information
-            hessian_scores_service: HessianScoresService for fetching and computing Hessian-approximation scores.
+            hessian_info_service: HessianInfoService for fetching and computing Hessian-approximation information.
         """
         self.graph_float = copy.deepcopy(graph_float)
         self.graph_quant = copy.deepcopy(graph_quant)
@@ -75,10 +75,10 @@ class GPTQTrainer(ABC):
 
         self.fxp_model, self.gptq_user_info = self.build_gptq_model()
         if self.gptq_config.use_hessian_based_weights:
-            if not isinstance(hessian_scores_service, HessianScoresService):
+            if not isinstance(hessian_info_service, HessianInfoService):
                 Logger.critical(f"When using Hessian-based approximations for sensitivity evaluation, "
-                                f"an 'HessianInfoService' object must be provided, but received: {hessian_scores_service}.")   # pragma: no cover
-            self.hessian_service = hessian_scores_service
+                                f"an 'HessianInfoService' object must be provided, but received: {hessian_info_service}.")   # pragma: no cover
+            self.hessian_service = hessian_info_service
 
     def get_optimizer_with_param(self,
                                  flattened_trainable_weights: List[Any],
@@ -186,7 +186,7 @@ class GPTQTrainer(ABC):
             target_nodes=self.compare_points
         )
         node_approximations = self.hessian_service.fetch_hessian(
-            hessian_info_request=hessian_scores_request,
+            hessian_scores_request=hessian_scores_request,
             required_size=self.gptq_config.hessian_weights_config.hessians_num_samples,
             batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size
         )
@@ -291,7 +291,7 @@ def gptq_training(graph_float: Graph,
                   representative_data_gen: Callable,
                   fw_impl: GPTQFrameworkImplemantation,
                   fw_info: FrameworkInfo,
-                  hessian_scores_service: HessianScoresService = None) -> Graph:
+                  hessian_info_service: HessianInfoService = None) -> Graph:
     """
     GPTQ training process using knowledge distillation with a teacher network (float model) and a student network (quantized model).
     Args:
@@ -301,7 +301,7 @@ def gptq_training(graph_float: Graph,
         representative_data_gen: Dataset to use for inputs of the models.
         fw_impl: Framework implementation
         fw_info: Framework information
-        hessian_scores_service: HessianScoresService to fetch scores based on the Hessian approximation.
+        hessian_info_service: HessianInfoService to fetch information based on the Hessian approximation.
 
     Returns:
         Quantized graph for export
@@ -316,7 +316,7 @@ def gptq_training(graph_float: Graph,
                                     fw_impl,
                                     fw_info,
                                     representative_data_gen,
-                                    hessian_scores_service=hessian_scores_service)
+                                    hessian_info_service=hessian_info_service)
 
     # Training process
     gptq_trainer.train(representative_data_gen)

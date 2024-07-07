@@ -17,7 +17,7 @@ from typing import Dict, Any, Tuple
 import numpy as np
 
 from model_compression_toolkit.constants import NUM_QPARAM_HESSIAN_SAMPLES
-from model_compression_toolkit.core.common.hessian import HessianScoresService
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
@@ -33,7 +33,7 @@ def get_weights_qparams(weights_attr_values: np.ndarray,
                         attr_quant_config: WeightsAttrQuantizationConfig,
                         output_channels_axis: int,
                         node=None,
-                        hessian_info_service: HessianScoresService = None,
+                        hessian_info_service: HessianInfoService = None,
                         num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> Tuple[Dict[Any, Any], int]:
     """
     Compute thresholds to quantize a kernel according to a NodeWeightsQuantizationConfig

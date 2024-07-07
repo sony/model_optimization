@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.similarity_analyzer import compute_kl
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, \
-    HessianScoresGranularity, HessianScoresService
+    HessianScoresGranularity, HessianInfoService
 
 
 class SensitivityEvaluation:
@@ -42,7 +42,7 @@ class SensitivityEvaluation:
                  fw_impl: Any,
                  set_layer_to_bitwidth: Callable,
                  disable_activation_for_metric: bool = False,
-                 hessian_scores_service: HessianScoresService = None
+                 hessian_info_service: HessianInfoService = None
                  ):
         """
         Initiates all relevant objects to manage a sensitivity evaluation for MP search.
@@ -65,7 +65,7 @@ class SensitivityEvaluation:
             set_layer_to_bitwidth: A fw-dependent function that allows to configure a configurable MP model
                     with a specific bit-width configuration.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
-            hessian_scores_service: HessianScoresService to fetch Hessian approximation scores.
+            hessian_info_service: HessianInfoService to fetch Hessian approximation information.
 
         """
         self.graph = graph
@@ -76,9 +76,9 @@ class SensitivityEvaluation:
         self.set_layer_to_bitwidth = set_layer_to_bitwidth
         self.disable_activation_for_metric = disable_activation_for_metric
         if self.quant_config.use_hessian_based_scores:
-            if not isinstance(hessian_scores_service, HessianScoresService):
-                Logger.critical(f"When using Hessian-based approximations for sensitivity evaluation, a valid HessianInfoService object is required; found {type(hessian_scores_service)}.")
-            self.hessian_info_service = hessian_scores_service
+            if not isinstance(hessian_info_service, HessianInfoService):
+                Logger.critical(f"When using Hessian-based approximations for sensitivity evaluation, a valid HessianInfoService object is required; found {type(hessian_info_service)}.")
+            self.hessian_info_service = hessian_info_service
 
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names(self.fw_info)
 
@@ -244,7 +244,7 @@ class SensitivityEvaluation:
                                                     target_nodes=self.interest_points)
 
         # Fetch the Hessian approximation scores for the current interest point
-        nodes_approximations = self.hessian_info_service.fetch_hessian(hessian_info_request=hessian_info_request,
+        nodes_approximations = self.hessian_info_service.fetch_hessian(hessian_scores_request=hessian_info_request,
                                                                        required_size=self.quant_config.num_of_images,
                                                                        batch_size=self.quant_config.hessian_batch_size)
 

@@ -21,7 +21,7 @@ from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantization
 from tensorflow.keras.models import Model
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianScoresService
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianInfoService
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remove_identity import RemoveIdentity
 from model_compression_toolkit.core.keras.hessian.activation_hessian_scores_calculator_keras import \
     ActivationHessianScoresCalculatorKeras
@@ -353,7 +353,7 @@ class KerasImplementation(FrameworkImplementation):
                                   representative_data_gen: Callable,
                                   fw_info: FrameworkInfo,
                                   disable_activation_for_metric: bool = False,
-                                  hessian_scores_service: HessianScoresService = None) -> SensitivityEvaluation:
+                                  hessian_info_service: HessianInfoService = None) -> SensitivityEvaluation:
         """
         Creates and returns an object which handles the computation of a sensitivity metric for a mixed-precision
         configuration (comparing to the float model).
@@ -364,7 +364,7 @@ class KerasImplementation(FrameworkImplementation):
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
-            hessian_scores_service: HessianScoresService to fetch scores based on a Hessian-approximation for the float model.
+            hessian_info_service: HessianScoresService to fetch scores based on a Hessian-approximation for the float model.
 
         Returns:
             A SensitivityEvaluation object.
@@ -381,7 +381,7 @@ class KerasImplementation(FrameworkImplementation):
                                                                    weights_quant_layer_type=KerasQuantizationWrapper,
                                                                    activation_quant_layer_type=KerasActivationQuantizationHolder),
                                      disable_activation_for_metric=disable_activation_for_metric,
-                                     hessian_scores_service=hessian_scores_service)
+                                     hessian_info_service=hessian_info_service)
 
     def get_node_prior_info(self,
                             node: BaseNode,

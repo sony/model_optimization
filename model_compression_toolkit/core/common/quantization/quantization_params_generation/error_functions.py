@@ -17,7 +17,7 @@ from typing import Tuple, Callable, List
 import numpy as np
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianScoresGranularity, \
-    HessianScoresService
+    HessianInfoService
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
@@ -376,7 +376,7 @@ def _get_sliced_histogram(bins: np.ndarray,
 
 
 def _compute_hessian_for_hmse(node,
-                              hessian_info_service: HessianScoresService,
+                              hessian_info_service: HessianInfoService,
                               num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> List[List[np.ndarray]]:
     """
     Compute and retrieve Hessian-based scores for using during HMSE error computation.
@@ -430,7 +430,7 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
                                                   n_bits: int = 8,
                                                   signed: bool = True,
                                                   node=None,
-                                                  hessian_info_service: HessianScoresService = None,
+                                                  hessian_info_service: HessianInfoService = None,
                                                   num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> Callable:
     """
     Returns the error function compatible to the provided threshold method,

@@ -17,7 +17,7 @@ from typing import Union, Tuple, Dict
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.constants import MIN_THRESHOLD, RANGE_MIN, RANGE_MAX, NUM_QPARAM_HESSIAN_SAMPLES
-from model_compression_toolkit.core.common.hessian import HessianScoresService
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_search import \
     qparams_uniform_selection_tensor_search, qparams_uniform_selection_histogram_search
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import \
@@ -38,7 +38,7 @@ def uniform_selection_tensor(tensor_data: np.ndarray,
                              min_threshold: float = MIN_THRESHOLD,
                              quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE,
                              node=None,
-                             hessian_info_service: HessianScoresService = None,
+                             hessian_info_service: HessianInfoService = None,
                              num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES,
                              ) -> Tuple[Dict[str, np.ndarray], int]:
     """

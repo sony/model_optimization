@@ -20,7 +20,7 @@ from typing import List, Callable, Dict
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian import HessianScoresService
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_functions_mapping import ru_functions_mapping
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -51,7 +51,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
                      mp_config: MixedPrecisionQuantizationConfig,
                      representative_data_gen: Callable,
                      search_method: BitWidthSearchMethod = BitWidthSearchMethod.INTEGER_PROGRAMMING,
-                     hessian_scores_service: HessianScoresService = None) -> List[int]:
+                     hessian_info_service: HessianInfoService = None) -> List[int]:
     """
     Search for an MP configuration for a given graph. Given a search_method method (by default, it's linear
     programming), we use the sensitivity_evaluator object that provides a function to compute an
@@ -68,7 +68,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
         mp_config: Mixed-precision quantization configuration.
         representative_data_gen: Dataset to use for retrieving images for the models inputs.
         search_method: BitWidthSearchMethod to define which searching method to use.
-        hessian_scores_service: HessianScoresService to fetch Hessian-approximation scores.
+        hessian_info_service: HessianInfoService to fetch Hessian-approximation information.
 
     Returns:
         A MP configuration for the graph (list of integers, where the index in the list, is the node's
@@ -102,7 +102,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
         representative_data_gen=representative_data_gen,
         fw_info=fw_info,
         disable_activation_for_metric=disable_activation_for_metric,
-        hessian_scores_service=hessian_scores_service)
+        hessian_info_service=hessian_info_service)
 
     # Each pair of (resource utilization method, resource utilization aggregation) should match to a specific
     # provided target resource utilization

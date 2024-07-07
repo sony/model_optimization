@@ -19,7 +19,7 @@ from typing import Callable, List, Dict, Tuple
 
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.hessian import HessianScoresService, HessianMode, HessianScoresGranularity, \
+from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianMode, HessianScoresGranularity, \
     HessianScoresRequest
 from model_compression_toolkit.core.common.pruning.channels_grouping import ChannelGrouping
 from model_compression_toolkit.core.common.pruning.importance_metrics.base_importance_metric import BaseImportanceMetric
@@ -120,9 +120,9 @@ class LFHImportanceMetric(BaseImportanceMetric):
         """
 
         # Initialize HessianInfoService for score computation.
-        hessian_info_service = HessianScoresService(graph=self.float_graph,
-                                                    representative_dataset_gen=self.representative_data_gen,
-                                                    fw_impl=self.fw_impl)
+        hessian_info_service = HessianInfoService(graph=self.float_graph,
+                                                  representative_dataset_gen=self.representative_data_gen,
+                                                  fw_impl=self.fw_impl)
 
         # Fetch and process Hessian scores for output channels of entry nodes.
         nodes_scores = []

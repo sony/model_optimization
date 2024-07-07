@@ -13,5 +13,5 @@
 # limitations under the License.
 # ==============================================================================
 from model_compression_toolkit.core.common.hessian.hessian_scores_request import HessianScoresRequest, HessianMode, HessianScoresGranularity
-from model_compression_toolkit.core.common.hessian.hessian_scores_service import HessianScoresService
-import model_compression_toolkit.core.common.hessian.hessian_scores_utils as hessian_utils
+from model_compression_toolkit.core.common.hessian.hessian_info_service import HessianInfoService
+import model_compression_toolkit.core.common.hessian.hessian_info_utils as hessian_utils

@@ -20,7 +20,7 @@ import numpy as np
 from tensorflow import initializers
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input
 
-from model_compression_toolkit.core.common.hessian import HessianScoresService, HessianScoresRequest, HessianMode, \
+from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -71,8 +71,8 @@ class TestHessianService(unittest.TestCase):
                                                 representative_dataset,
                                                 generate_keras_tpc)
 
-        self.hessian_service = HessianScoresService(graph=self.graph, representative_dataset_gen=representative_dataset,
-                                                    fw_impl=self.keras_impl)
+        self.hessian_service = HessianInfoService(graph=self.graph, representative_dataset_gen=representative_dataset,
+                                                  fw_impl=self.keras_impl)
 
         self.assertEqual(self.hessian_service.graph, self.graph)
         self.assertEqual(self.hessian_service.fw_impl, self.keras_impl)
@@ -146,9 +146,9 @@ class TestHessianService(unittest.TestCase):
                                                 representative_dataset,
                                                 generate_keras_tpc)
 
-        self.hessian_service = HessianScoresService(graph=self.graph,
-                                                    representative_dataset_gen=representative_dataset,
-                                                    fw_impl=self.keras_impl)
+        self.hessian_service = HessianInfoService(graph=self.graph,
+                                                  representative_dataset_gen=representative_dataset,
+                                                  fw_impl=self.keras_impl)
 
         self.assertEqual(self.hessian_service.graph, self.graph)
         self.assertEqual(self.hessian_service.fw_impl, self.keras_impl)

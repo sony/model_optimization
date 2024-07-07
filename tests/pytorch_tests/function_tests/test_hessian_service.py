@@ -18,7 +18,7 @@ import unittest
 from torch import nn
 import numpy as np
 
-from model_compression_toolkit.core.common.hessian import HessianScoresService, HessianScoresRequest, HessianMode, \
+from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
@@ -89,8 +89,8 @@ class BaseHessianServiceTest(BasePytorchTest):
         assert (self.request is not None and self.num_scores is not None and self.num_nodes is not None
                 and self.graph is not None), "Test parameters are not initialized."
 
-        self.hessian_service = HessianScoresService(graph=self.graph, representative_dataset_gen=representative_dataset,
-                                                    fw_impl=self.pytorch_impl)
+        self.hessian_service = HessianInfoService(graph=self.graph, representative_dataset_gen=representative_dataset,
+                                                  fw_impl=self.pytorch_impl)
 
         self.unit_test.assertEqual(self.hessian_service.graph, self.graph)
         self.unit_test.assertEqual(self.hessian_service.fw_impl, self.pytorch_impl)

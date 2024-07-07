@@ -17,7 +17,7 @@ import numpy as np
 
 from model_compression_toolkit.constants import MP_DEFAULT_NUM_SAMPLES
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.core.common.hessian import HessianScoresService
+from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
@@ -66,14 +66,14 @@ class TestSensitivityEvalWithNonSupportedOutputBase(BasePytorchTest):
                                                            generate_pytorch_tpc,
                                                            input_shape=(1, 3, 16, 16),
                                                            mixed_precision_enabled=True)
-        hessian_info_service = HessianScoresService(graph=graph, representative_dataset_gen=self.representative_data_gen,
-                                                    fw_impl=pytorch_impl)
+        hessian_info_service = HessianInfoService(graph=graph, representative_dataset_gen=self.representative_data_gen,
+                                                  fw_impl=pytorch_impl)
 
         se = pytorch_impl.get_sensitivity_evaluator(graph,
                                                     MixedPrecisionQuantizationConfig(use_hessian_based_scores=True),
                                                     self.representative_data_gen,
                                                     DEFAULT_PYTORCH_INFO,
-                                                    hessian_scores_service=hessian_info_service)
+                                                    hessian_info_service=hessian_info_service)
 
 
 class TestSensitivityEvalWithArgmaxNode(TestSensitivityEvalWithNonSupportedOutputBase):
