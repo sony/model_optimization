@@ -51,7 +51,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
                      mp_config: MixedPrecisionQuantizationConfig,
                      representative_data_gen: Callable,
                      search_method: BitWidthSearchMethod = BitWidthSearchMethod.INTEGER_PROGRAMMING,
-                     hessian_info_service: HessianInfoService=None) -> List[int]:
+                     hessian_info_service: HessianInfoService = None) -> List[int]:
     """
     Search for an MP configuration for a given graph. Given a search_method method (by default, it's linear
     programming), we use the sensitivity_evaluator object that provides a function to compute an
@@ -68,7 +68,7 @@ def search_bit_width(graph_to_search_cfg: Graph,
         mp_config: Mixed-precision quantization configuration.
         representative_data_gen: Dataset to use for retrieving images for the models inputs.
         search_method: BitWidthSearchMethod to define which searching method to use.
-        hessian_info_service: HessianInfoService to fetch Hessian traces approximations.
+        hessian_info_service: HessianInfoService to fetch Hessian-approximation information.
 
     Returns:
         A MP configuration for the graph (list of integers, where the index in the list, is the node's

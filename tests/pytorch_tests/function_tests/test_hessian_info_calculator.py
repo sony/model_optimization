@@ -128,9 +128,9 @@ def generate_inputs(inputs_shape):
 
 
 def get_expected_shape(t_shape, granularity):
-    if granularity == hessian_common.HessianInfoGranularity.PER_ELEMENT:
+    if granularity == hessian_common.HessianScoresGranularity.PER_ELEMENT:
         return (1, *t_shape)
-    elif granularity == hessian_common.HessianInfoGranularity.PER_TENSOR:
+    elif granularity == hessian_common.HessianScoresGranularity.PER_TENSOR:
         return (1, 1)
     else:
         return (1, t_shape[0])
@@ -159,12 +159,12 @@ class BaseHessianTraceBasicModelTest(BasePytorchTest):
     def test_hessian_trace_approx(self,
                                   hessian_service,
                                   interest_points,
-                                  granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL,
+                                  granularity=hessian_common.HessianScoresGranularity.PER_OUTPUT_CHANNEL,
                                   num_scores=1,
                                   batch_size=1):
-        request = hessian_common.TraceHessianRequest(mode=hessian_common.HessianMode.WEIGHTS,
-                                                     granularity=granularity,
-                                                     target_nodes=interest_points)
+        request = hessian_common.HessianScoresRequest(mode=hessian_common.HessianMode.WEIGHTS,
+                                                      granularity=granularity,
+                                                      target_nodes=interest_points)
 
         for i, interest_point in enumerate(interest_points):
             expected_shape = get_expected_shape(interest_point.weights[KERNEL].shape, granularity)
@@ -188,9 +188,9 @@ class BaseHessianTraceBasicModelTest(BasePytorchTest):
                                       num_scores=1,
                                       batch_size=1):
 
-        request = hessian_common.TraceHessianRequest(mode=mode,
-                                                     granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                                                     target_nodes=interest_points)
+        request = hessian_common.HessianScoresRequest(mode=mode,
+                                                      granularity=hessian_common.HessianScoresGranularity.PER_TENSOR,
+                                                      target_nodes=interest_points)
         info = hessian_service.fetch_hessian(request, num_scores, batch_size=batch_size)
 
         # currently, activation support only per-tensor Hessian
@@ -231,13 +231,13 @@ class WeightsHessianTraceBasicModelTest(BaseHessianTraceBasicModelTest):
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         self.test_hessian_trace_approx(hessian_service,
                                        interest_points=ipts,
-                                       granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL)
+                                       granularity=hessian_common.HessianScoresGranularity.PER_OUTPUT_CHANNEL)
         self.test_hessian_trace_approx(hessian_service,
                                        interest_points=ipts,
-                                       granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
+                                       granularity=hessian_common.HessianScoresGranularity.PER_TENSOR)
         self.test_hessian_trace_approx(hessian_service,
                                        interest_points=ipts,
-                                       granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT)
+                                       granularity=hessian_common.HessianScoresGranularity.PER_ELEMENT)
 
 
 class WeightsHessianTraceAdvanceModelTest(BaseHessianTraceBasicModelTest):
@@ -254,15 +254,15 @@ class WeightsHessianTraceAdvanceModelTest(BaseHessianTraceBasicModelTest):
         self.test_hessian_trace_approx(hessian_service,
                                        interest_points=ipts,
                                        num_scores=1,
-                                       granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL)
+                                       granularity=hessian_common.HessianScoresGranularity.PER_OUTPUT_CHANNEL)
         self.test_hessian_trace_approx(hessian_service,
                                        interest_points=ipts,
                                        num_scores=2,
-                                       granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
+                                       granularity=hessian_common.HessianScoresGranularity.PER_TENSOR)
         self.test_hessian_trace_approx(hessian_service,
                                        interest_points=ipts,
                                        num_scores=3,
-                                       granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT)
+                                       granularity=hessian_common.HessianScoresGranularity.PER_ELEMENT)
 
 
 class WeightsHessianTraceMultipleOutputsModelTest(BaseHessianTraceBasicModelTest):
@@ -279,15 +279,15 @@ class WeightsHessianTraceMultipleOutputsModelTest(BaseHessianTraceBasicModelTest
         self.test_hessian_trace_approx(hessian_service,
                                        interest_points=ipts,
                                        num_scores=1,
-                                       granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL)
+                                       granularity=hessian_common.HessianScoresGranularity.PER_OUTPUT_CHANNEL)
         self.test_hessian_trace_approx(hessian_service,
                                        interest_points=ipts,
                                        num_scores=2,
-                                       granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
+                                       granularity=hessian_common.HessianScoresGranularity.PER_TENSOR)
         self.test_hessian_trace_approx(hessian_service,
                                        interest_points=ipts,
                                        num_scores=3,
-                                       granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT)
+                                       granularity=hessian_common.HessianScoresGranularity.PER_ELEMENT)
 
 
 class WeightsHessianTraceReuseModelTest(BaseHessianTraceBasicModelTest):
@@ -304,15 +304,15 @@ class WeightsHessianTraceReuseModelTest(BaseHessianTraceBasicModelTest):
         self.test_hessian_trace_approx(hessian_service,
                                        interest_points=ipts,
                                        num_scores=1,
-                                       granularity=hessian_common.HessianInfoGranularity.PER_OUTPUT_CHANNEL)
+                                       granularity=hessian_common.HessianScoresGranularity.PER_OUTPUT_CHANNEL)
         self.test_hessian_trace_approx(hessian_service,
                                        interest_points=ipts,
                                        num_scores=2,
-                                       granularity=hessian_common.HessianInfoGranularity.PER_TENSOR)
+                                       granularity=hessian_common.HessianScoresGranularity.PER_TENSOR)
         self.test_hessian_trace_approx(hessian_service,
                                        interest_points=ipts,
                                        num_scores=3,
-                                       granularity=hessian_common.HessianInfoGranularity.PER_ELEMENT)
+                                       granularity=hessian_common.HessianScoresGranularity.PER_ELEMENT)
 
 
 class ActivationHessianTraceBasicModelTest(BaseHessianTraceBasicModelTest):
@@ -400,9 +400,9 @@ class ActivationHessianOutputExceptionTest(BaseHessianTraceBasicModelTest):
                                                             fw_impl=pytorch_impl)
 
         with self.unit_test.assertRaises(Exception) as e:
-            request = hessian_common.TraceHessianRequest(mode=hessian_common.HessianMode.ACTIVATION,
-                                                         granularity=hessian_common.HessianInfoGranularity.PER_TENSOR,
-                                                         target_nodes=[graph.get_outputs()[0].node])
+            request = hessian_common.HessianScoresRequest(mode=hessian_common.HessianMode.ACTIVATION,
+                                                          granularity=hessian_common.HessianScoresGranularity.PER_TENSOR,
+                                                          target_nodes=[graph.get_outputs()[0].node])
             _ = hessian_service.fetch_hessian(request, required_size=1)
 
         self.unit_test.assertTrue("Activation Hessian approximation cannot be computed for model outputs"

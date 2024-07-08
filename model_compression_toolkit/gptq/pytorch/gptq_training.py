@@ -64,7 +64,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
             fw_info: Framework information
             representative_data_gen: Dataset to use for inputs of the models.
-            hessian_info_service: HessianInfoService to fetch approximations of the hessian traces for the float model.
+            hessian_info_service: HessianInfoService to fetch info based on the hessian approximation of the float model.
         """
         super().__init__(graph_float,
                          graph_quant,

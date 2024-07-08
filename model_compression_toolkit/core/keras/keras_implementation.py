@@ -21,11 +21,11 @@ from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantization
 from tensorflow.keras.models import Model
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoService
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianInfoService
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remove_identity import RemoveIdentity
-from model_compression_toolkit.core.keras.hessian.activation_trace_hessian_calculator_keras import \
-    ActivationTraceHessianCalculatorKeras
-from model_compression_toolkit.core.keras.hessian.weights_trace_hessian_calculator_keras import WeightsTraceHessianCalculatorKeras
+from model_compression_toolkit.core.keras.hessian.activation_hessian_scores_calculator_keras import \
+    ActivationHessianScoresCalculatorKeras
+from model_compression_toolkit.core.keras.hessian.weights_hessian_scores_calculator_keras import WeightsHessianScoresCalculatorKeras
 from model_compression_toolkit.exporter.model_wrapper.fw_agnostic.get_inferable_quantizers import \
     get_inferable_quantizers
 from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
@@ -364,7 +364,7 @@ class KerasImplementation(FrameworkImplementation):
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
-            hessian_info_service: HessianInfoService to fetch approximations of the hessian traces for the float model.
+            hessian_info_service: HessianScoresService to fetch scores based on a Hessian-approximation for the float model.
 
         Returns:
             A SensitivityEvaluation object.
@@ -460,36 +460,36 @@ class KerasImplementation(FrameworkImplementation):
             return compute_cs
         return partial(compute_mse, norm=norm_mse)
 
-    def get_trace_hessian_calculator(self,
-                                     graph: Graph,
-                                     input_images: List[Any],
-                                     trace_hessian_request: TraceHessianRequest,
-                                     num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
+    def get_hessian_scores_calculator(self,
+                                      graph: Graph,
+                                      input_images: List[Any],
+                                      hessian_scores_request: HessianScoresRequest,
+                                      num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
-        Get Keras trace hessian approximations calculator based on the trace hessian request.
+        Get Keras Hessian-approximation scores calculator based on the request.
         Args:
             input_images: Images to use for computation.
             graph: Float graph to compute the approximation of its different nodes.
-            trace_hessian_request: TraceHessianRequest to search for the desired calculator.
-            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
+            hessian_scores_request: HessianScoresRequest to search for the desired calculator.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian scores.
 
-        Returns: TraceHessianCalculatorKeras to use for the trace hessian approximation computation for this request.
+        Returns: HessianScoresCalculatorKeras to use for the Hessian-approximation scores computation for this request.
 
         """
-        if trace_hessian_request.mode == HessianMode.ACTIVATION:
-            return ActivationTraceHessianCalculatorKeras(graph=graph,
-                                                         trace_hessian_request=trace_hessian_request,
-                                                         input_images=input_images,
-                                                         fw_impl=self,
-                                                         num_iterations_for_approximation=num_iterations_for_approximation)
-        elif trace_hessian_request.mode == HessianMode.WEIGHTS:
-            return WeightsTraceHessianCalculatorKeras(graph=graph,
-                                                      trace_hessian_request=trace_hessian_request,
-                                                      input_images=input_images,
-                                                      fw_impl=self,
-                                                      num_iterations_for_approximation=num_iterations_for_approximation)
+        if hessian_scores_request.mode == HessianMode.ACTIVATION:
+            return ActivationHessianScoresCalculatorKeras(graph=graph,
+                                                          hessian_scores_request=hessian_scores_request,
+                                                          input_images=input_images,
+                                                          fw_impl=self,
+                                                          num_iterations_for_approximation=num_iterations_for_approximation)
+        elif hessian_scores_request.mode == HessianMode.WEIGHTS:
+            return WeightsHessianScoresCalculatorKeras(graph=graph,
+                                                       hessian_scores_request=hessian_scores_request,
+                                                       input_images=input_images,
+                                                       fw_impl=self,
+                                                       num_iterations_for_approximation=num_iterations_for_approximation)
         else:
-            Logger.critical(f"Unsupported Hessian mode for Keras: {trace_hessian_request.mode}.")   # pragma: no cover
+            Logger.critical(f"Unsupported Hessian mode for Keras: {hessian_scores_request.mode}.")   # pragma: no cover
 
     def is_output_node_compatible_for_hessian_score_computation(self,
                                                                 node: BaseNode) -> Any:

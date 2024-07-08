@@ -16,7 +16,7 @@ from copy import deepcopy
 from typing import Tuple, Callable, List
 import numpy as np
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoGranularity, \
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianScoresGranularity, \
     HessianInfoService
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_mae, compute_lp_norm
 from model_compression_toolkit.logger import Logger
@@ -389,9 +389,9 @@ def _compute_hessian_for_hmse(node,
     Returns: A list with computed Hessian-based scores tensors for the given node.
 
     """
-    _request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
-                                   granularity=HessianInfoGranularity.PER_ELEMENT,
-                                   target_nodes=[node])
+    _request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
+                                    granularity=HessianScoresGranularity.PER_ELEMENT,
+                                    target_nodes=[node])
     _scores_for_node = hessian_info_service.fetch_hessian(_request,
                                                           required_size=num_hessian_samples)
 

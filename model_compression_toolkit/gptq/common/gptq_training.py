@@ -26,8 +26,8 @@ from model_compression_toolkit.gptq.common.gptq_framework_implementation import 
 from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.hessian import HessianInfoService, TraceHessianRequest, HessianMode, \
-    HessianInfoGranularity
+from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
+    HessianScoresGranularity
 from model_compression_toolkit.core.common.hessian import hessian_info_utils as hessian_utils
 
 
@@ -55,7 +55,7 @@ class GPTQTrainer(ABC):
             gptq_config: GradientPTQConfig with parameters about the tuning process.
             fw_impl: Framework implementation
             fw_info: Framework information
-            hessian_info_service: HessianInfoService for fetching and computing Hessian's trace approximation.
+            hessian_info_service: HessianInfoService for fetching and computing Hessian-approximation information.
         """
         self.graph_float = copy.deepcopy(graph_float)
         self.graph_quant = copy.deepcopy(graph_quant)
@@ -132,10 +132,10 @@ class GPTQTrainer(ABC):
 
     def compute_hessian_based_weights(self) -> np.ndarray:
         """
-        Computes trace hessian approximations per layer w.r.t activations of the interest points.
+        Computes scores based on the hessian approximation per layer w.r.t activations of the interest points.
 
         Returns:
-            np.ndarray: Trace hessian approximations.
+            np.ndarray: Scores based on the hessian matrix approximation.
         """
         if not self.gptq_config.use_hessian_based_weights:
             # Return a default weight distribution based on the number of compare points
@@ -143,15 +143,15 @@ class GPTQTrainer(ABC):
             return np.asarray([1 / num_nodes for _ in range(num_nodes)])
 
         # Fetch hessian approximations for each target node
-        compare_point_to_trace_hessian_approximations = self._fetch_hessian_approximations()
+        compare_point_to_hessian_approx_scores = self._fetch_hessian_approximations()
         # Process the fetched hessian approximations to gather them per images
-        trace_hessian_approx_by_image = (
-            self._process_hessian_approximations(compare_point_to_trace_hessian_approximations))
+        hessian_approx_score_by_image = (
+            self._process_hessian_approximations(compare_point_to_hessian_approx_scores))
 
         # Check if log normalization is enabled in the configuration
         if self.gptq_config.hessian_weights_config.log_norm:
             # Calculate the mean of the approximations across images
-            mean_approx_scores = np.mean(trace_hessian_approx_by_image, axis=0)
+            mean_approx_scores = np.mean(hessian_approx_score_by_image, axis=0)
             # Reduce unnecessary dims, should remain with one dimension for the number of nodes
             mean_approx_scores = np.squeeze(mean_approx_scores)
             # Handle zero values to avoid log(0)
@@ -170,7 +170,7 @@ class GPTQTrainer(ABC):
             return log_weights - np.min(log_weights)
         else:
             # If log normalization is not enabled, return the mean of the approximations across images
-            return np.mean(trace_hessian_approx_by_image, axis=0)
+            return np.mean(hessian_approx_score_by_image, axis=0)
 
     def _fetch_hessian_approximations(self) -> Dict[BaseNode, List[List[float]]]:
         """
@@ -180,13 +180,13 @@ class GPTQTrainer(ABC):
             Mapping of target nodes to their hessian approximations.
         """
         approximations = {}
-        trace_hessian_request = TraceHessianRequest(
+        hessian_scores_request = HessianScoresRequest(
             mode=HessianMode.ACTIVATION,
-            granularity=HessianInfoGranularity.PER_TENSOR,
+            granularity=HessianScoresGranularity.PER_TENSOR,
             target_nodes=self.compare_points
         )
         node_approximations = self.hessian_service.fetch_hessian(
-            trace_hessian_request=trace_hessian_request,
+            hessian_scores_request=hessian_scores_request,
             required_size=self.gptq_config.hessian_weights_config.hessians_num_samples,
             batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size
         )
@@ -203,21 +203,21 @@ class GPTQTrainer(ABC):
         Returns list of lists where each inner list is the approximations per image to all interest points.
 
         Args:
-            approximations: Hessian trace approximations mapping to process.
+            approximations: Hessian scores approximations mapping to process.
             Dictionary of Node to a list of the length of the number of images that were fetched.
 
         Returns:
             Processed approximations as a list of lists where each inner list is the approximations
              per image to all interest points.
         """
-        trace_hessian_approx_by_image = [[approximations[target_node][image_idx] for target_node in self.compare_points]
+        hessian_approx_score_by_image = [[approximations[target_node][image_idx] for target_node in self.compare_points]
                                          for image_idx in
                                          range(self.gptq_config.hessian_weights_config.hessians_num_samples)]
 
         if self.gptq_config.hessian_weights_config.norm_scores:
-            trace_hessian_approx_by_image = hessian_utils.normalize_scores(trace_hessian_approx_by_image)
+            hessian_approx_score_by_image = hessian_utils.normalize_scores(hessian_approx_score_by_image)
 
-        return trace_hessian_approx_by_image
+        return hessian_approx_score_by_image
 
     def _get_approximations_by_interest_point(self, approximations: Dict, image_idx: int) -> List:
         """
@@ -232,25 +232,25 @@ class GPTQTrainer(ABC):
         """
         approx_by_interest_point = []
         for target_node in self.compare_points:
-            trace_approx = approximations[target_node][image_idx]
-            self._validate_trace_approximation(trace_approx)
-            approx_by_interest_point.append(trace_approx[0])
+            hessian_approx_scores = approximations[target_node][image_idx]
+            self._validate_scores_approximation(hessian_approx_scores)
+            approx_by_interest_point.append(hessian_approx_scores[0])
         return approx_by_interest_point
 
     @staticmethod
-    def _validate_trace_approximation(trace_approx: List):
+    def _validate_scores_approximation(hessian_approx_scores: List):
         """
-        Validates the structure and length of the trace approximation.
+        Validates the structure and length of the Hessian-approximation scores.
 
         Args:
-            trace_approx: Trace approximation to validate.
+            hessian_approx_scores: Scores to validate.
         """
-        if not isinstance(trace_approx, list):
-            Logger.critical(f"Trace approximation was expected to be a list but is of type: {type(trace_approx)}.")   # pragma: no cover
-        if len(trace_approx) != 1:
-            Logger.critical(f"Trace approximation was expected to have a length of 1 "
+        if not isinstance(hessian_approx_scores, list):
+            Logger.critical(f"Scores approximation was expected to be a list but is of type: {type(hessian_approx_scores)}.")   # pragma: no cover
+        if len(hessian_approx_scores) != 1:
+            Logger.critical(f"Scores approximation was expected to have a length of 1 "
                             f"(for computations with granularity set to 'HessianInfoGranularity.PER_TENSOR') "
-                            f"but has a length of {len(trace_approx)}."
+                            f"but has a length of {len(hessian_approx_scores)}."
             )   # pragma: no cover
 
 
@@ -291,7 +291,7 @@ def gptq_training(graph_float: Graph,
                   representative_data_gen: Callable,
                   fw_impl: GPTQFrameworkImplemantation,
                   fw_info: FrameworkInfo,
-                  hessian_info_service: HessianInfoService=None) -> Graph:
+                  hessian_info_service: HessianInfoService = None) -> Graph:
     """
     GPTQ training process using knowledge distillation with a teacher network (float model) and a student network (quantized model).
     Args:
@@ -301,7 +301,7 @@ def gptq_training(graph_float: Graph,
         representative_data_gen: Dataset to use for inputs of the models.
         fw_impl: Framework implementation
         fw_info: Framework information
-        hessian_info_service: HessianInfoService to fetch Hessian traces approximations.
+        hessian_info_service: HessianInfoService to fetch information based on the Hessian approximation.
 
     Returns:
         Quantized graph for export

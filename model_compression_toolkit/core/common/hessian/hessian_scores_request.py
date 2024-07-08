@@ -28,11 +28,11 @@ class HessianMode(Enum):
     ACTIVATION = 1     # Hessian approximation based on activations
 
 
-class HessianInfoGranularity(Enum):
+class HessianScoresGranularity(Enum):
     """
-    Enum representing the granularity level for Hessian information computation.
+    Enum representing the granularity level for Hessian scores computation.
 
-    This determines the number the Hessian approximations is computed for some node.
+    This determines the number the Hessian scores is computed for some node.
     Note: This is not the actual Hessian but an approximation.
     """
     PER_ELEMENT = 0
@@ -40,25 +40,25 @@ class HessianInfoGranularity(Enum):
     PER_TENSOR = 2
 
 
-class TraceHessianRequest:
+class HessianScoresRequest:
     """
-    Request configuration for the trace of the Hessian approximation.
+    Request configuration for the Hessian-approximation scores.
 
-    This class defines the parameters for the approximation of the trace of the Hessian matrix.
+    This class defines the parameters for the scores based on the Hessian matrix approximation.
     It specifies the mode (weights/activations), granularity (element/channel/tensor), and the target node.
-    Note: This does not compute the actual Hessian's trace but approximates it.
+
+    Note: This does not compute scores using the actual Hessian matrix but an approximation.
     """
 
     def __init__(self,
                  mode: HessianMode,
-                 granularity: HessianInfoGranularity,
-                 target_nodes: List,
-                 ):
+                 granularity: HessianScoresGranularity,
+                 target_nodes: List):
         """
         Attributes:
-            mode (HessianMode): Mode of Hessian's trace approximation (w.r.t weights or activations).
-            granularity (HessianInfoGranularity): Granularity level for the approximation.
-            target_nodes (List[BaseNode]): The node in the float graph for which the Hessian's trace approximation is targeted.
+            mode (HessianMode): Mode of Hessian-approximation score (w.r.t weights or activations).
+            granularity (HessianScoresGranularity): Granularity level for the approximation.
+            target_nodes (List[BaseNode]): The node in the float graph for which the Hessian's approximation scores is targeted.
         """
 
         self.mode = mode  # w.r.t activations or weights
@@ -66,9 +66,9 @@ class TraceHessianRequest:
         self.target_nodes = target_nodes
 
     def __eq__(self, other):
-        # Checks if the other object is an instance of TraceHessianRequest
+        # Checks if the other object is an instance of HessianScoresRequest
         # and then checks if all attributes are equal.
-        return isinstance(other, TraceHessianRequest) and \
+        return isinstance(other, HessianScoresRequest) and \
                self.mode == other.mode and \
                self.granularity == other.granularity and \
                self.target_nodes == other.target_nodes

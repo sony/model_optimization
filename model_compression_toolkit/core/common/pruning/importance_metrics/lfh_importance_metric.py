@@ -19,8 +19,8 @@ from typing import Callable, List, Dict, Tuple
 
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianMode, HessianInfoGranularity, \
-    TraceHessianRequest
+from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianMode, HessianScoresGranularity, \
+    HessianScoresRequest
 from model_compression_toolkit.core.common.pruning.channels_grouping import ChannelGrouping
 from model_compression_toolkit.core.common.pruning.importance_metrics.base_importance_metric import BaseImportanceMetric
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig
@@ -127,9 +127,9 @@ class LFHImportanceMetric(BaseImportanceMetric):
         # Fetch and process Hessian scores for output channels of entry nodes.
         nodes_scores = []
         for node in entry_nodes:
-            _request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
-                                           granularity=HessianInfoGranularity.PER_OUTPUT_CHANNEL,
-                                           target_nodes=[node])
+            _request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
+                                            granularity=HessianScoresGranularity.PER_OUTPUT_CHANNEL,
+                                            target_nodes=[node])
             _scores_for_node = hessian_info_service.fetch_hessian(_request,
                                                                   required_size=self.pruning_config.num_score_approximations)
             nodes_scores.append(_scores_for_node)

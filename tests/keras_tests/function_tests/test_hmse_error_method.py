@@ -22,8 +22,8 @@ import model_compression_toolkit as mct
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.constants import THRESHOLD, RANGE_MAX
-from model_compression_toolkit.core.common.hessian import HessianInfoService, TraceHessianRequest, HessianMode, \
-    HessianInfoGranularity
+from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
+    HessianScoresGranularity
 from model_compression_toolkit.core.common.model_collector import ModelCollector
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
@@ -111,11 +111,11 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
             self.assertTrue(kernel_attr_qparams.weights_quantization_params.get(param_name) is not None,
                             f"Expecting {node_type} node parameters {param_name} to be initialized.")
 
-            expected_hessian_request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
-                                                           granularity=HessianInfoGranularity.PER_ELEMENT,
-                                                           target_nodes=[node])
+            expected_hessian_request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
+                                                            granularity=HessianScoresGranularity.PER_ELEMENT,
+                                                            target_nodes=[node])
 
-            self.assertTrue(self.his.count_saved_info_of_request(expected_hessian_request)[node] > 0,
+            self.assertTrue(self.his.count_saved_scores_of_request(expected_hessian_request)[node] > 0,
                             f"No Hessian-based scores were computed for node {node}, "
                             "but expected parameters selection to run with HMSE.")
 
@@ -184,11 +184,11 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
             self.assertTrue(len(node) == 1, f"Expecting exactly 1 {node_type} node in test model.")
             node = node[0]
 
-            expected_hessian_request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
-                                                           granularity=HessianInfoGranularity.PER_ELEMENT,
-                                                           target_node=node)
+            expected_hessian_request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
+                                                            granularity=HessianScoresGranularity.PER_ELEMENT,
+                                                            target_node=node)
 
-            self.assertTrue(self.his.count_saved_info_of_request(expected_hessian_request) == 0,
+            self.assertTrue(self.his.count_saved_scores_of_request(expected_hessian_request) == 0,
                             f"Hessian-based scores were computed for node {node}, "
                             "but expected parameters selection to run with MSE without computing Hessians.")
 
@@ -243,11 +243,11 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
         self.assertTrue(len(node) == 1, f"Expecting exactly 1 {node_type} node in test model.")
         node = node[0]
 
-        expected_hessian_request = TraceHessianRequest(mode=HessianMode.WEIGHTS,
-                                                       granularity=HessianInfoGranularity.PER_ELEMENT,
-                                                       target_nodes=[node])
+        expected_hessian_request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
+                                                        granularity=HessianScoresGranularity.PER_ELEMENT,
+                                                        target_nodes=[node])
 
-        self.assertTrue(self.his.count_saved_info_of_request(expected_hessian_request)[node] == 0,
+        self.assertTrue(self.his.count_saved_scores_of_request(expected_hessian_request)[node] == 0,
                         f"Hessian-based scores were computed for node {node}, "
                         "but expected parameters selection to run with MSE without computing Hessians.")
 

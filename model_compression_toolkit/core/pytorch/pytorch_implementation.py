@@ -30,7 +30,7 @@ from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, Co
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest, HessianMode, HessianInfoService
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
@@ -76,10 +76,10 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.we
     WeightsActivationSplit
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.concat_threshold_update import \
     ConcatThresholdUpdate
-from model_compression_toolkit.core.pytorch.hessian.activation_trace_hessian_calculator_pytorch import \
-    ActivationTraceHessianCalculatorPytorch
-from model_compression_toolkit.core.pytorch.hessian.weights_trace_hessian_calculator_pytorch import \
-    WeightsTraceHessianCalculatorPytorch
+from model_compression_toolkit.core.pytorch.hessian.activation_hessian_scores_calculator_pytorch import \
+    ActivationHessianScoresCalculatorPytorch
+from model_compression_toolkit.core.pytorch.hessian.weights_hessian_scores_calculator_pytorch import \
+    WeightsHessianScoresCalculatorPytorch
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_activation_quantizer import \
     ConfigurableActivationQuantizer
 from model_compression_toolkit.core.pytorch.mixed_precision.configurable_weights_quantizer import \
@@ -353,7 +353,7 @@ class PytorchImplementation(FrameworkImplementation):
             representative_data_gen: Dataset to use for retrieving images for the models inputs.
             fw_info: FrameworkInfo object with information about the specific framework's model.
             disable_activation_for_metric: Whether to disable activation quantization when computing the MP metric.
-            hessian_info_service: HessianInfoService to fetch approximations of the hessian traces for the float model.
+            hessian_info_service: HessianScoresService to fetch approximations of the hessian scores for the float model.
 
         Returns:
             A SensitivityEvaluation object.
@@ -515,34 +515,34 @@ class PytorchImplementation(FrameworkImplementation):
 
         return model(*inputs)
 
-    def get_trace_hessian_calculator(self,
-                                     graph: Graph,
-                                     input_images: List[Any],
-                                     trace_hessian_request: TraceHessianRequest,
-                                     num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
+    def get_hessian_scores_calculator(self,
+                                      graph: Graph,
+                                      input_images: List[Any],
+                                      hessian_scores_request: HessianScoresRequest,
+                                      num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
-        Get Pytorch trace hessian approximations calculator based on the trace hessian request.
+        Get Pytorch hessian scores calculator based on the hessian scores request.
         Args:
             input_images: Images to use for computation.
             graph: Float graph to compute the approximation of its different nodes.
-            trace_hessian_request: TraceHessianRequest to search for the desired calculator.
-            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
+            hessian_scores_request: HessianScoresRequest to search for the desired calculator.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian scores.
 
-        Returns: TraceHessianCalculatorPytorch to use for the trace hessian approximation computation for this request.
+        Returns: HessianScoresCalculatorPytorch to use for the hessian approximation scores computation for this request.
 
         """
-        if trace_hessian_request.mode == HessianMode.ACTIVATION:
-            return ActivationTraceHessianCalculatorPytorch(graph=graph,
-                                                           trace_hessian_request=trace_hessian_request,
-                                                           input_images=input_images,
-                                                           fw_impl=self,
-                                                           num_iterations_for_approximation=num_iterations_for_approximation)
-        elif trace_hessian_request.mode == HessianMode.WEIGHTS:
-            return WeightsTraceHessianCalculatorPytorch(graph=graph,
-                                                        trace_hessian_request=trace_hessian_request,
-                                                        input_images=input_images,
-                                                        fw_impl=self,
-                                                        num_iterations_for_approximation=num_iterations_for_approximation)
+        if hessian_scores_request.mode == HessianMode.ACTIVATION:
+            return ActivationHessianScoresCalculatorPytorch(graph=graph,
+                                                            hessian_scores_request=hessian_scores_request,
+                                                            input_images=input_images,
+                                                            fw_impl=self,
+                                                            num_iterations_for_approximation=num_iterations_for_approximation)
+        elif hessian_scores_request.mode == HessianMode.WEIGHTS:
+            return WeightsHessianScoresCalculatorPytorch(graph=graph,
+                                                         hessian_scores_request=hessian_scores_request,
+                                                         input_images=input_images,
+                                                         fw_impl=self,
+                                                         num_iterations_for_approximation=num_iterations_for_approximation)
 
     def get_inferable_quantizers(self, node: BaseNode):
         """

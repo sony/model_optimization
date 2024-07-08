@@ -74,7 +74,7 @@ class KerasGPTQTrainer(GPTQTrainer):
             fw_impl: FrameworkImplementation object with a specific framework methods implementation.
             fw_info: Framework information.
             representative_data_gen: Dataset to use for inputs of the models.
-            hessian_info_service: HessianInfoService for fetching and computing Hessian's trace approximation.
+            hessian_info_service: HessianScoresService for fetching and computing Hessian's approximation scores.
 
         """
         super().__init__(graph_float,

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.core.common.hessian.trace_hessian_calculator import TraceHessianCalculator
+from model_compression_toolkit.core.common.hessian.hessian_scores_calculator import HessianScoresCalculator
 
 from typing import List, Tuple, Dict, Any, Union
 
@@ -23,38 +23,38 @@ from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-from model_compression_toolkit.core.common.hessian import TraceHessianRequest
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest
 from model_compression_toolkit.core.keras.back2framework.instance_builder import OperationHandler
 from tensorflow.python.util.object_identity import Reference as TFReference
 
 from model_compression_toolkit.logger import Logger
 
 
-class TraceHessianCalculatorKeras(TraceHessianCalculator):
+class HessianScoresCalculatorKeras(HessianScoresCalculator):
     """
-    Keras-specific implementation of the Trace Hessian approximation Calculator.
-    This class serves as a base for other Keras-specific trace Hessian approximation calculators.
+    Keras-specific implementation of the Hessian approximation scores Calculator.
+    This class serves as a base for other Keras-specific Hessian approximation scores calculators.
     """
     def __init__(self,
                  graph: Graph,
                  input_images: List[tf.Tensor],
                  fw_impl,
-                 trace_hessian_request: TraceHessianRequest,
+                 hessian_scores_request: HessianScoresRequest,
                  num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
 
         Args:
             graph: Computational graph for the float model.
             input_images: List of input images for the computation.
-            fw_impl: Framework-specific implementation for trace Hessian computation.
-            trace_hessian_request: Configuration request for which to compute the trace Hessian approximation.
-            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian trace.
+            fw_impl: Framework-specific implementation for Hessian-approximation scores computation.
+            hessian_scores_request: Configuration request for which to compute the Hessian approximation scores.
+            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian-based scores.
         """
-        super(TraceHessianCalculatorKeras, self).__init__(graph=graph,
-                                                          input_images=input_images,
-                                                          fw_impl=fw_impl,
-                                                          trace_hessian_request=trace_hessian_request,
-                                                          num_iterations_for_approximation=num_iterations_for_approximation)
+        super(HessianScoresCalculatorKeras, self).__init__(graph=graph,
+                                                           input_images=input_images,
+                                                           fw_impl=fw_impl,
+                                                           hessian_scores_request=hessian_scores_request,
+                                                           num_iterations_for_approximation=num_iterations_for_approximation)
 
     def _concat_tensors(self, tensors_to_concate: Union[tf.Tensor, List[tf.Tensor]]) -> tf.Tensor:
         """
