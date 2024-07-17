@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Union
 
 import tensorflow as tf
 from tensorflow.python.util import tf_inspect
@@ -80,6 +80,72 @@ def get_kwargs2index(tfoplambda_layer: TFOpLambda) -> Dict[str, int]:
     return {arg_name: i for i, arg_name in enumerate(full_args)}
 
 
+def _extract_const_attrs_from_kwargs(op_call_kwargs: Dict[str, Any],
+                                     kwarg2index: Dict[str, int],
+                                     weights: Dict[Union[str, int], Any]):
+    """
+    Extract const weights of the layer from the operator's key arguments dictionary.
+    This function extracts the attributes, updates the nodes weights dictionary and removes them from the original
+    kwargs mapping.
+
+    Args:
+        op_call_kwargs: A mapping of the operator key arguments.
+        kwarg2index: A dictionary with argument number and index: {arg_name: arg_index}.
+        weights: Node weights mapping. This dictionary is modified by this function.
+
+    Returns: A modified operator arguments list.
+
+    """
+
+    # read weights from call kwargs
+    weight_keys = []
+    for k, v in op_call_kwargs.items():
+        if is_const(v):
+            if k in kwarg2index:
+                weights.update({kwarg2index[k]: to_numpy(v, is_single_tensor=True)})
+                weight_keys.append(k)
+
+    # remove weights and KerasTensors from op_call_kwargs
+    op_call_kwargs = {k: v for k, v in op_call_kwargs.items()
+                      if not (kwarg2index.get(k) in weights or is_tensor(v))}
+
+    return op_call_kwargs
+
+
+def _extract_const_attrs_from_args(op_call_args: List[Any],
+                                   inputs_as_list: bool,
+                                   kwarg2index: Dict[str, int],
+                                   weights: Dict[Union[str, int], Any]):
+    """
+    Extract const weights of the layer from the operator's arguments list.
+    This function extracts the attributes, updates the nodes weights dictionary and removes them from the original
+    arguments list.
+
+    Args:
+        op_call_args: A list of the operator arguments.
+        inputs_as_list: Whether the input of the layer is a list.
+        kwarg2index: A dictionary with argument number and index: {arg_name: arg_index}.
+        weights: Node weights mapping. This dictionary is modified by this function.
+
+    Returns: A modified operator arguments list.
+
+    """
+
+    # read weights from call args
+    for i, arg in enumerate(op_call_args[0] if inputs_as_list else op_call_args):
+        if is_const(arg):
+            if inputs_as_list or i in kwarg2index.values():
+                weights.update({i: to_numpy(arg, is_single_tensor=True)})
+
+    # remove weights and KerasTensors from op_call_args
+    if inputs_as_list:
+        op_call_args = tuple(op_call_args[1:])
+    else:
+        op_call_args = tuple([a for i, a in enumerate(op_call_args) if not (i in weights or is_tensor(a))])
+
+    return op_call_args
+
+
 def build_node(node: KerasNode,
                node_name_to_node: dict) -> BaseNode:
     """
@@ -139,29 +205,8 @@ def build_node(node: KerasNode,
         if len(weights) > 0:
             Logger.critical('Functional nodes are not expected to have weights in this framework.')
 
-        # read weights from call args
-        for i, arg in enumerate(op_call_args[0] if inputs_as_list else op_call_args):
-            if is_const(arg):
-                if inputs_as_list or i in kwarg2index.values():
-                    weights.update({i: to_numpy(arg, is_single_tensor=True)})
-        # remove weights and KerasTensors from op_call_args
-        if inputs_as_list:
-            op_call_args = tuple(op_call_args[1:])
-        else:
-            op_call_args = tuple([a for i, a in enumerate(op_call_args) if not (i in weights or is_tensor(a))])
-
-        # read weights from call kwargs
-        weight_keys = []
-        for k, v in op_call_kwargs.items():
-            # if is_const(v) or (keras_layer.symbol in tf_function_symbols and
-            #                    isinstance(v, (tuple, list))):
-            if is_const(v):
-                if k in kwarg2index:
-                    weights.update({kwarg2index[k]: to_numpy(v, is_single_tensor=True)})
-                    weight_keys.append(k)
-        # remove weights and KerasTensors from op_call_kwargs
-        op_call_kwargs = {k: v for k, v in op_call_kwargs.items()
-                          if not (kwarg2index.get(k) in weights or is_tensor(v))}
+        op_call_args = _extract_const_attrs_from_args(op_call_args, inputs_as_list, kwarg2index, weights)
+        op_call_kwargs = _extract_const_attrs_from_kwargs(op_call_kwargs, kwarg2index, weights)
 
         node = FunctionalNode(node_name,
                               layer_config,
