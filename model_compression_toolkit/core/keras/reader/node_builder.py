@@ -41,7 +41,7 @@ layers = keras.layers
 
 REUSED_IDENTIFIER = '_reused_'
 
-is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray, float))
+is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray, float, tuple, list))
 is_tensor = lambda x: isinstance(x, KerasTensor)
 
 
@@ -74,23 +74,10 @@ def get_kwargs2index(tfoplambda_layer: TFOpLambda) -> Dict[str, int]:
     Returns:
         A dictionary with argument number and index: {arg_name: arg_index}.
     """
-    kwargs2index = {tf.add: {'x': 0, 'y': 1},
-                    tf.subtract: {'x': 0, 'y': 1},
-                    tf.divide: {'x': 0, 'y': 1},
-                    tf.truediv: {'x': 0, 'y': 1},
-                    tf.multiply: {'x': 0, 'y': 1},
-                    tf.pow: {'x': 0, 'y': 1},
-                    tf.matmul: {'a': 0, 'b': 1}}.get(tfoplambda_layer.function)
-    if not kwargs2index:
-        # In TF 2.15 the function attribute is different and doesn't match the original
-        # operation object we use. Therefore, we extract kwargs2index with the symbol.
-        kwargs2index = {'__operators__.add': {'x': 0, 'y': 1},
-                        'math.add': {'x': 0, 'y': 1},
-                        'math.multiply': {'x': 0, 'y': 1},
-                        'linalg.matmul': {'a': 0, 'b': 1},
-                        'concat': {'values': 0}}.get(tfoplambda_layer.symbol, {})
 
-    return kwargs2index
+    full_args = tf_inspect.getfullargspec(tfoplambda_layer.function).args
+
+    return {arg_name: i for i, arg_name in enumerate(full_args)}
 
 
 def build_node(node: KerasNode,
@@ -153,29 +140,26 @@ def build_node(node: KerasNode,
             Logger.critical('Functional nodes are not expected to have weights in this framework.')
 
         # read weights from call args
-        tf_function_symbols = get_tf_function_symbols()
         for i, arg in enumerate(op_call_args[0] if inputs_as_list else op_call_args):
-            if is_const(arg) or (
-                    keras_layer.symbol in tf_function_symbols and
-                    isinstance(arg, (tuple, list))):
+            if is_const(arg):
                 if inputs_as_list or i in kwarg2index.values():
                     weights.update({i: to_numpy(arg, is_single_tensor=True)})
-        # remove weights and KerasTensors and weights from op_call_args
+        # remove weights and KerasTensors from op_call_args
         if inputs_as_list:
             op_call_args = tuple(op_call_args[1:])
         else:
-            op_call_args = tuple([a for i, a in enumerate(op_call_args)
-                                  if not (i in weights or is_tensor(a))])
+            op_call_args = tuple([a for i, a in enumerate(op_call_args) if not (i in weights or is_tensor(a))])
 
         # read weights from call kwargs
         weight_keys = []
         for k, v in op_call_kwargs.items():
-            if is_const(v) or (keras_layer.symbol in tf_function_symbols and
-                               isinstance(v, (tuple, list))):
+            # if is_const(v) or (keras_layer.symbol in tf_function_symbols and
+            #                    isinstance(v, (tuple, list))):
+            if is_const(v):
                 if k in kwarg2index:
                     weights.update({kwarg2index[k]: to_numpy(v, is_single_tensor=True)})
                     weight_keys.append(k)
-        # remove weights and KerasTensors and weights from op_call_kwargs
+        # remove weights and KerasTensors from op_call_kwargs
         op_call_kwargs = {k: v for k, v in op_call_kwargs.items()
                           if not (kwarg2index.get(k) in weights or is_tensor(v))}
 

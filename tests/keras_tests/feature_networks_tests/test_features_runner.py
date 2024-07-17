@@ -137,7 +137,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substituti
 from tests.keras_tests.feature_networks_tests.feature_networks.metadata_test import MetadataTest
 from tests.keras_tests.feature_networks_tests.feature_networks.tpc_test import TpcTest
 from tests.keras_tests.feature_networks_tests.feature_networks.const_representation_test import ConstRepresentationTest, \
-    ConstRepresentationMultiInputTest, ConstRepresentationMatMulTest
+    ConstRepresentationMultiInputTest, ConstRepresentationMatMulTest, ConstRepresentationListTypeArgsTest
 from tests.keras_tests.feature_networks_tests.feature_networks.concatination_threshold_update import ConcatThresholdtest
 from tests.keras_tests.feature_networks_tests.feature_networks.const_quantization_test import ConstQuantizationTest, \
     AdvancedConstQuantizationTest
@@ -586,6 +586,7 @@ class FeatureNetworkTest(unittest.TestCase):
             ConstRepresentationTest(self, func, c, use_kwargs=True, is_list_input=True).run_test()
 
         ConstRepresentationMultiInputTest(self).run_test()
+        ConstRepresentationListTypeArgsTest(self).run_test()
 
     def test_second_moment(self):
         DepthwiseConv2DSecondMomentTest(self).run_test()
