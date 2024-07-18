@@ -82,7 +82,7 @@ def get_kwargs2index(tfoplambda_layer: TFOpLambda) -> Dict[str, int]:
 
 def _extract_const_attrs_from_kwargs(op_call_kwargs: Dict[str, Any],
                                      kwarg2index: Dict[str, int],
-                                     weights: Dict[Union[str, int], Any]):
+                                     weights: Dict[Union[str, int], Any]) -> Dict[str, Any]:
     """
     Extract const weights of the layer from the operator's key arguments dictionary.
     This function extracts the attributes, updates the nodes weights dictionary and removes them from the original
@@ -93,7 +93,7 @@ def _extract_const_attrs_from_kwargs(op_call_kwargs: Dict[str, Any],
         kwarg2index: A dictionary with argument number and index: {arg_name: arg_index}.
         weights: Node weights mapping. This dictionary is modified by this function.
 
-    Returns: A modified operator arguments list.
+    Returns: A modified operator key arguments mapping.
 
     """
 
@@ -139,7 +139,7 @@ def _build_arguments_alloc(n: KerasNode, inputs_as_list: bool, kwarg2index: Dict
 def _extract_const_attrs_from_args(op_call_args: List[Any],
                                    inputs_as_list: bool,
                                    kwarg2index: Dict[str, int],
-                                   weights: Dict[Union[str, int], Any]):
+                                   weights: Dict[Union[str, int], Any]) -> List[Any]:
     """
     Extract const weights of the layer from the operator's arguments list.
     This function extracts the attributes, updates the nodes weights dictionary and removes them from the original
@@ -170,7 +170,18 @@ def _extract_const_attrs_from_args(op_call_args: List[Any],
     return op_call_args
 
 
-def _has_const_attributes(op_call_args, op_call_kwargs, input_as_list):
+def _has_const_attributes(op_call_args: List, op_call_kwargs: Dict, input_as_list: bool) -> bool:
+    """
+    Returns whether the layer's input include a constant tensor (that we might want to quantize).
+
+    Args:
+        op_call_args: A list of arguments to the layer.
+        op_call_kwargs: A dictionary of key-arguments to the layer.
+        input_as_list: Whether the input to the layer is a list of tensors.
+
+    Returns: True if the input arguments include a constant tensor, False otherwise.
+
+    """
     if input_as_list:
         return any([is_const(a) for a in op_call_args[0]])
     const_args = [a for a in op_call_args if is_const(a)]

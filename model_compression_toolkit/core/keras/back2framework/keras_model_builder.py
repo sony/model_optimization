@@ -274,7 +274,6 @@ class KerasModelBuilder(BaseModelBuilder):
         else:
             input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
             if isinstance(n, FunctionalNode):
-            #     op_call_args = [] if n.op_call_args is None else copy(n.op_call_args)
                 op_call_kwargs = {} if n.op_call_kwargs is None else copy(n.op_call_kwargs)
             if not isinstance(op_func, KerasQuantizationWrapper):
                 # The KerasQuantizationWrapper will insert the quantized positional weights internally.
@@ -356,37 +355,3 @@ class KerasModelBuilder(BaseModelBuilder):
             return quantized_node_outputs
 
         return node_outputs
-
-    def _merge_inputs(self, _node: BaseNode, input_tensors: List, op_call_args: List, op_call_kwargs: Dict,
-                      tensor_input_allocs: List = None) -> Tuple[List, Dict]:
-        """
-        Merge input tensors list with positional weights and op_call_args, according to correct order.
-
-        Args:
-            _node: The node the inputs are for.
-            input_tensors: activation input tensors to node.
-            op_call_args: framework node call args.
-            op_call_kwargs: framework node call kwargs.
-            tensor_input_allocs: List of input allocations to node.
-
-        Returns:
-            Combined list of input_tensors and op_call_args.
-        """
-        if isinstance(_node, FunctionalNode) and _node.tensor_input_allocs:
-            _input_list = op_call_args.copy()
-            if tensor_input_allocs is None:
-                tensor_input_allocs = _node.tensor_input_allocs
-            if len(tensor_input_allocs) != len(input_tensors):
-                Logger.error(f'Mismatch between input tensors ({len(tensor_input_allocs)}) '
-                             f'and indices {len(input_tensors)} in node {_node.name}.')  # pragma: no cover
-            for i, t in zip(tensor_input_allocs, input_tensors):
-                # insert input tensors in either args or kwargs, according to tensor_input_allocs
-                if isinstance(i, str):
-                    assert i not in op_call_kwargs
-                    op_call_kwargs.update({i: t})
-                else:
-                    _input_list.insert(i, t)
-        else:
-            _input_list = input_tensors + op_call_args
-
-        return _input_list, op_call_kwargs

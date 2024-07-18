@@ -565,24 +565,24 @@ class FeatureNetworkTest(unittest.TestCase):
         AdvancedConstQuantizationTest(self).run_test()
 
     def test_const_representation(self):
-        # c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32)
-        # for func in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv, tf.pow]:
-        #     ConstRepresentationTest(self, func, c).run_test()
-        #     ConstRepresentationTest(self, func, c, input_reverse_order=True).run_test()
-        #     ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwargs=True).run_test()
-        #     ConstRepresentationTest(self, func, c, use_kwargs=True).run_test()
-        #     ConstRepresentationTest(self, func, 2.45).run_test()
-        #     ConstRepresentationTest(self, func, 5.1, input_reverse_order=True).run_test()
-        #
-        # # tf.matmul test
-        # ConstRepresentationMatMulTest(self).run_test()
-        #
-        # c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32).reshape((1, -1))
-        # for func in [layers.Add(), layers.Multiply(), layers.Subtract()]:
-        #     ConstRepresentationTest(self, func, c, is_list_input=True).run_test()
-        #     ConstRepresentationTest(self, func, c, input_reverse_order=True, is_list_input=True).run_test()
-        #     ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwargs=True, is_list_input=True).run_test()
-        #     ConstRepresentationTest(self, func, c, use_kwargs=True, is_list_input=True).run_test()
+        c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32)
+        for func in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv, tf.pow]:
+            ConstRepresentationTest(self, func, c).run_test()
+            ConstRepresentationTest(self, func, c, input_reverse_order=True).run_test()
+            ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwargs=True).run_test()
+            ConstRepresentationTest(self, func, c, use_kwargs=True).run_test()
+            ConstRepresentationTest(self, func, 2.45).run_test()
+            ConstRepresentationTest(self, func, 5.1, input_reverse_order=True).run_test()
+
+        # tf.matmul test
+        ConstRepresentationMatMulTest(self).run_test()
+
+        c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32).reshape((1, -1))
+        for func in [layers.Add(), layers.Multiply(), layers.Subtract()]:
+            ConstRepresentationTest(self, func, c, is_list_input=True).run_test()
+            ConstRepresentationTest(self, func, c, input_reverse_order=True, is_list_input=True).run_test()
+            ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwargs=True, is_list_input=True).run_test()
+            ConstRepresentationTest(self, func, c, use_kwargs=True, is_list_input=True).run_test()
 
         ConstRepresentationMultiInputTest(self).run_test()
         ConstRepresentationListTypeArgsTest(self).run_test()
