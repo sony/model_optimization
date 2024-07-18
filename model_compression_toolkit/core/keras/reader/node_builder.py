@@ -98,12 +98,10 @@ def _extract_const_attrs_from_kwargs(op_call_kwargs: Dict[str, Any],
     """
 
     # read weights from call kwargs
-    weight_keys = []
     for k, v in op_call_kwargs.items():
         if is_const(v):
-            if k in kwarg2index:
-                weights.update({kwarg2index[k]: to_numpy(v, is_single_tensor=True)})
-                weight_keys.append(k)
+            # if k in kwarg2index:
+            weights.update({kwarg2index[k]: to_numpy(v, is_single_tensor=True)})
 
     # remove weights and KerasTensors from op_call_kwargs
     op_call_kwargs = {k: v for k, v in op_call_kwargs.items()
@@ -137,8 +135,10 @@ def _build_arguments_alloc(n: KerasNode, inputs_as_list: bool, kwarg2index: Dict
     return tensor_input_alloc
 
 def _extract_const_attrs_from_args(op_call_args: List[Any],
+                                   op_call_kwargs: Dict[str, Any],
                                    inputs_as_list: bool,
                                    kwarg2index: Dict[str, int],
+                                   tensor_inputs_alloc: List,
                                    weights: Dict[Union[str, int], Any]) -> List[Any]:
     """
     Extract const weights of the layer from the operator's arguments list.
@@ -158,14 +158,20 @@ def _extract_const_attrs_from_args(op_call_args: List[Any],
     # read weights from call args
     for i, arg in enumerate(op_call_args[0] if inputs_as_list else op_call_args):
         if is_const(arg):
-            if inputs_as_list or i in kwarg2index.values():
-                weights.update({i: to_numpy(arg, is_single_tensor=True)})
+            # if inputs_as_list or i in kwarg2index.values():
+            weights.update({i: to_numpy(arg, is_single_tensor=True)})
+        else:
+            if not inputs_as_list:
+                if tensor_inputs_alloc is not None and len(tensor_inputs_alloc) > 0:
+                    # In this case we move all arguments and inputs to the kwargs
+                    op_call_kwargs.update({tensor_inputs_alloc[i]: arg})
 
     # remove weights and KerasTensors from op_call_args
     if inputs_as_list:
         op_call_args = tuple(op_call_args[1:])
     else:
-        op_call_args = tuple([a for i, a in enumerate(op_call_args) if not (i in weights or is_tensor(a))])
+        op_call_args = tuple([a for i, a in enumerate(op_call_args) if not (i in weights or is_tensor(a)
+                                                                            or tensor_inputs_alloc is not None and len(tensor_inputs_alloc) > 0 and tensor_inputs_alloc[i] in op_call_kwargs)])
 
     return op_call_args
 
@@ -254,7 +260,8 @@ def build_node(node: KerasNode,
         tensor_input_alloc = None if not _has_const_attributes(op_call_args, op_call_kwargs, inputs_as_list) \
             else _build_arguments_alloc(node, inputs_as_list, kwarg2index)
 
-        op_call_args = _extract_const_attrs_from_args(op_call_args, inputs_as_list, kwarg2index, weights)
+        op_call_args = _extract_const_attrs_from_args(op_call_args, op_call_kwargs, inputs_as_list, kwarg2index,
+                                                      tensor_input_alloc, weights)
         op_call_kwargs = _extract_const_attrs_from_kwargs(op_call_kwargs, kwarg2index, weights)
 
         node = FunctionalNode(node_name,
