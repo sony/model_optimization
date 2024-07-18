@@ -137,7 +137,6 @@ def _build_arguments_alloc(n: KerasNode, inputs_as_list: bool, kwarg2index: Dict
 def _extract_const_attrs_from_args(op_call_args: List[Any],
                                    op_call_kwargs: Dict[str, Any],
                                    inputs_as_list: bool,
-                                   kwarg2index: Dict[str, int],
                                    tensor_inputs_alloc: List,
                                    weights: Dict[Union[str, int], Any]) -> List[Any]:
     """
@@ -147,8 +146,9 @@ def _extract_const_attrs_from_args(op_call_args: List[Any],
 
     Args:
         op_call_args: A list of the operator arguments.
+        op_call_kwargs: A mapping of key-arguments of the operator.
         inputs_as_list: Whether the input of the layer is a list.
-        kwarg2index: A dictionary with argument number and index: {arg_name: arg_index}.
+        tensor_inputs_alloc: Allocation of argument inputs to the operator (if there are const inputs, otherwise None).
         weights: Node weights mapping. This dictionary is modified by this function.
 
     Returns: A modified operator arguments list.
@@ -260,7 +260,7 @@ def build_node(node: KerasNode,
         tensor_input_alloc = None if not _has_const_attributes(op_call_args, op_call_kwargs, inputs_as_list) \
             else _build_arguments_alloc(node, inputs_as_list, kwarg2index)
 
-        op_call_args = _extract_const_attrs_from_args(op_call_args, op_call_kwargs, inputs_as_list, kwarg2index,
+        op_call_args = _extract_const_attrs_from_args(op_call_args, op_call_kwargs, inputs_as_list,
                                                       tensor_input_alloc, weights)
         op_call_kwargs = _extract_const_attrs_from_kwargs(op_call_kwargs, kwarg2index, weights)
 
