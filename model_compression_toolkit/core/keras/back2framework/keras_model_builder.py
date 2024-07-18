@@ -282,6 +282,8 @@ class KerasModelBuilder(BaseModelBuilder):
                         if n.inputs_as_list:
                             input_tensors = n.insert_positional_weights_to_input_list(input_tensors)
                         else:
+                            # If the were any const attributes in the layer's inputs, we retrieve them as kwargs
+                            # for the operator call.
                             for pos, k in enumerate(n.tensor_input_allocs):
                                 if k not in op_call_kwargs:  # op_call_kwargs is initialized because we are under FunctionalNode
                                     # If the argument is saved in tensor_input_allocs but does not exists in the node kwargs

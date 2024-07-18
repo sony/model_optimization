@@ -64,12 +64,6 @@ def get_kwargs2index(tfoplambda_layer: TFOpLambda) -> Dict[str, int]:
     Positional weights are saved according to their index in the node's call arguments, so
     need to know the function arguments' names in case the weights are in the kwargs.
 
-    Note: the kwargs2index dictionary is initialized manually (and not with tf_inspect) so
-    it will only include the arguments that may contain constants. For example, we don't
-    want the transpose_a attribute of tf.matmul to be saved as a constant.
-
-    Every operation we add support to, needs to be added here.
-
     Args:
         tfoplambda_layer: TFOpLambda layer.
 
@@ -115,6 +109,11 @@ def _extract_const_attrs_from_kwargs(op_call_kwargs: Dict[str, Any],
 def _build_arguments_alloc(n: KerasNode, inputs_as_list: bool, kwarg2index: Dict[str, int]) -> List:
     """
     Builds arguments allocation list.
+    In Keras, if there is any argument that is a constant, we convert all arguments and inputs to be
+    considered as op kwargs for simpler reconstruction of the model from the graph later.
+    Therefore, we build a location list that includes the argument names (keys).
+    If the input is a list, then we don't need to save the keys, since we can assume that all possible constant
+    arguments are within the first argument (the list) and are stored by their position in the list.
 
     Args:
         n: fx node.
@@ -157,13 +156,15 @@ def _extract_const_attrs_from_args(op_call_args: List[Any],
 
     """
 
+    move_args_to_kwargs = tensor_inputs_alloc is not None and len(tensor_inputs_alloc) > 0
+
     # read weights from call args
     for i, arg in enumerate(op_call_args[0] if inputs_as_list else op_call_args):
         if is_const(arg):
             weights.update({i: to_numpy(arg, is_single_tensor=True)})
         else:
             if not inputs_as_list:
-                if tensor_inputs_alloc is not None and len(tensor_inputs_alloc) > 0:
+                if move_args_to_kwargs:
                     # In this case we move all arguments and inputs to the kwargs
                     op_call_kwargs.update({tensor_inputs_alloc[i]: arg})
 
@@ -171,8 +172,9 @@ def _extract_const_attrs_from_args(op_call_args: List[Any],
     if inputs_as_list:
         op_call_args = tuple(op_call_args[1:])
     else:
-        op_call_args = tuple([a for i, a in enumerate(op_call_args) if not (i in weights or is_tensor(a)
-                                                                            or tensor_inputs_alloc is not None and len(tensor_inputs_alloc) > 0 and tensor_inputs_alloc[i] in op_call_kwargs)])
+        op_call_args = tuple([a for i, a in enumerate(op_call_args)
+                              if not (i in weights or is_tensor(a) or (move_args_to_kwargs and tensor_inputs_alloc[i]
+                                                                       in op_call_kwargs))])
 
     return op_call_args
 
