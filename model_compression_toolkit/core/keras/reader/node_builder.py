@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Any, List, Dict, Union
+from copy import copy
+
+from typing import Any, List, Dict, Union, Tuple
 
 import tensorflow as tf
 from tensorflow.python.util import tf_inspect
@@ -138,7 +140,7 @@ def _extract_const_attrs_from_args(op_call_args: List[Any],
                                    op_call_kwargs: Dict[str, Any],
                                    inputs_as_list: bool,
                                    tensor_inputs_alloc: List,
-                                   weights: Dict[Union[str, int], Any]) -> List[Any]:
+                                   weights: Dict[Union[str, int], Any]) -> Tuple:
     """
     Extract const weights of the layer from the operator's arguments list.
     This function extracts the attributes, updates the nodes weights dictionary and removes them from the original
@@ -158,7 +160,6 @@ def _extract_const_attrs_from_args(op_call_args: List[Any],
     # read weights from call args
     for i, arg in enumerate(op_call_args[0] if inputs_as_list else op_call_args):
         if is_const(arg):
-            # if inputs_as_list or i in kwarg2index.values():
             weights.update({i: to_numpy(arg, is_single_tensor=True)})
         else:
             if not inputs_as_list:
@@ -213,8 +214,8 @@ def build_node(node: KerasNode,
     """
     keras_layer = node.layer  # get the layer the node represents.
     layer_config = keras_layer.get_config()  # layer configuration to reconstruct it.
-    op_call_args = node.call_args
-    op_call_kwargs = node.call_kwargs
+    op_call_args = copy(node.call_args)
+    op_call_kwargs = copy(node.call_kwargs)
     layer_class = type(keras_layer)  # class path to instantiating it in back2framework.
     weights = {v.name: v.numpy() for v in keras_layer.weights}  # layer's weights
 
