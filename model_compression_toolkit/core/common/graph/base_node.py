@@ -36,7 +36,7 @@ class BaseNode:
                  framework_attr: Dict[str, Any],
                  input_shape: Tuple[Any],
                  output_shape: Tuple[Any],
-                 weights: Dict[str, np.ndarray],
+                 weights: Dict[Union[str, int], np.ndarray],
                  layer_class: type,
                  reuse: bool = False,
                  reuse_group: str = None,

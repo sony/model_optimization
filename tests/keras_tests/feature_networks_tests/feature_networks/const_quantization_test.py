@@ -17,9 +17,10 @@ import tensorflow as tf
 import numpy as np
 
 import model_compression_toolkit as mct
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
-from mct_quantizers import KerasQuantizationWrapper
+from mct_quantizers import KerasQuantizationWrapper, QuantizationMethod
 
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
