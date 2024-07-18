@@ -88,8 +88,9 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertFalse(get_node(ReLU(max_value=8)).is_match_filter_params(relu_with_params))
 
         lrelu_with_params = LayerFilterParams(tf.nn.leaky_relu, SmallerEq("alpha", 2))
-        self.assertFalse(get_node(partial(tf.nn.leaky_relu, alpha=0.4)).is_match_filter_params(lrelu_with_params))  # alpha is float so it is consideres a consant weight of the op
+        self.assertTrue(get_node(partial(tf.nn.leaky_relu, alpha=0.4)).is_match_filter_params(lrelu_with_params))
         self.assertTrue(get_node(partial(tf.nn.leaky_relu, alpha=2)).is_match_filter_params(lrelu_with_params))
+        self.assertFalse(get_node(partial(tf.nn.leaky_relu, alpha=2.1)).is_match_filter_params(lrelu_with_params))
 
         lrelu_with_params = LayerFilterParams(tf.nn.leaky_relu)
         self.assertTrue(get_node(partial(tf.nn.leaky_relu, alpha=0.4)).is_match_filter_params(lrelu_with_params))

@@ -41,7 +41,7 @@ layers = keras.layers
 
 REUSED_IDENTIFIER = '_reused_'
 
-is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray, float, tuple, list))
+is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray, tuple, list))
 is_tensor = lambda x: isinstance(x, KerasTensor)
 
 
@@ -112,6 +112,30 @@ def _extract_const_attrs_from_kwargs(op_call_kwargs: Dict[str, Any],
     return op_call_kwargs
 
 
+def _build_arguments_alloc(n: KerasNode, inputs_as_list: bool, kwarg2index: Dict[str, int]) -> List:
+    """
+    Builds arguments allocation list.
+
+    Args:
+        n: fx node.
+        inputs_as_list: Is node's inputs are a list.
+
+    Returns:
+        A list of argument allocations in the node's inputs.
+
+    """
+
+    tensor_input_alloc = []
+    op_call_args = list(n.call_args)
+    if not inputs_as_list:
+        sorted_kwargs_pos = sorted(kwarg2index.items(), key=lambda x: x[1])
+        tensor_input_alloc = [k for k, _ in sorted_kwargs_pos[:len(op_call_args)]]
+        for k, idx in sorted_kwargs_pos[len(op_call_args):]:
+            if k in n.call_kwargs:
+                tensor_input_alloc.append(k)
+
+    return tensor_input_alloc
+
 def _extract_const_attrs_from_args(op_call_args: List[Any],
                                    inputs_as_list: bool,
                                    kwarg2index: Dict[str, int],
@@ -144,6 +168,15 @@ def _extract_const_attrs_from_args(op_call_args: List[Any],
         op_call_args = tuple([a for i, a in enumerate(op_call_args) if not (i in weights or is_tensor(a))])
 
     return op_call_args
+
+
+def _has_const_attributes(op_call_args, op_call_kwargs, input_as_list):
+    if input_as_list:
+        return any([is_const(a) for a in op_call_args[0]])
+    const_args = [a for a in op_call_args if is_const(a)]
+    const_kwargs = [k for k, v in op_call_kwargs.items() if is_const(v)]
+
+    return len(const_args) > 0 or len(const_kwargs) > 0
 
 
 def build_node(node: KerasNode,
@@ -205,6 +238,11 @@ def build_node(node: KerasNode,
         if len(weights) > 0:
             Logger.critical('Functional nodes are not expected to have weights in this framework.')
 
+        # Build tensor_input_alloc required for the model builder. All inputs are received as a list in the builder,
+        # so tensor_input_alloc is used to allocate each input in the correct place in the node's args & kwargs.
+        tensor_input_alloc = None if not _has_const_attributes(op_call_args, op_call_kwargs, inputs_as_list) \
+            else _build_arguments_alloc(node, inputs_as_list, kwarg2index)
+
         op_call_args = _extract_const_attrs_from_args(op_call_args, inputs_as_list, kwarg2index, weights)
         op_call_kwargs = _extract_const_attrs_from_kwargs(op_call_kwargs, kwarg2index, weights)
 
@@ -219,7 +257,8 @@ def build_node(node: KerasNode,
                               is_reused,
                               reuse_group,
                               functional_op=keras_layer.function,
-                              inputs_as_list=inputs_as_list)
+                              inputs_as_list=inputs_as_list,
+                              tensor_input_allocs=tensor_input_alloc)
     else:
         # Read constant weights from layers such as layers.Add
         if len(op_call_args) > 0 and isinstance(op_call_args[0], (list, tuple)):

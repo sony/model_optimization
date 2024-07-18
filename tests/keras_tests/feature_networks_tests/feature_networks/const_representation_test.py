@@ -77,7 +77,7 @@ class ConstRepresentationTest(BaseKerasFeatureNetworkTest):
         y_hat = quantized_model.predict(input_x)
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
         cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
+        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}, for operator {self.layer}')
 
 
 class ConstRepresentationListTypeArgsTest(BaseKerasFeatureNetworkTest):

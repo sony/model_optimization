@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from copy import copy
 
 import tensorflow as tf
 from keras.models import Model
@@ -19,6 +20,7 @@ from packaging import version
 
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
 from model_compression_toolkit.core.common.user_info import UserInformation
+from model_compression_toolkit.logger import Logger
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras import Input
@@ -271,15 +273,37 @@ class KerasModelBuilder(BaseModelBuilder):
                                                                            out_tensors_of_n_float)
         else:
             input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
+            if isinstance(n, FunctionalNode):
+            #     op_call_args = [] if n.op_call_args is None else copy(n.op_call_args)
+                op_call_kwargs = {} if n.op_call_kwargs is None else copy(n.op_call_kwargs)
             if not isinstance(op_func, KerasQuantizationWrapper):
                 # The KerasQuantizationWrapper will insert the quantized positional weights internally.
-                input_tensors = n.insert_positional_weights_to_input_list(input_tensors)
+                if isinstance(n, FunctionalNode):
+                    if n.tensor_input_allocs is not None:
+                        if n.inputs_as_list:
+                            input_tensors = n.insert_positional_weights_to_input_list(input_tensors)
+                        else:
+                            for pos, k in enumerate(n.tensor_input_allocs):
+                                if k not in op_call_kwargs:  # op_call_kwargs is initialized because we are under FunctionalNode
+                                    # If the argument is saved in tensor_input_allocs but does not exists in the node kwargs
+                                    # then it is expected to be either an input tensor or a positional weight of the node.
+                                    arg = n.weights.get(pos)
+                                    if arg is None:
+                                        if len(input_tensors) == 0:
+                                            Logger.critical(f"Couldn't find a weight or input tensor matching operator's "
+                                                            f"argument name '{k}' in location {pos} for node {n.name}.")
+                                        arg = input_tensors.pop(0)
+                                    op_call_kwargs.update({k: arg})
+                else:
+                    # If the operator is not a functional node then positional weights should be inserted
+                    # into the inputs list.
+                    input_tensors = n.insert_positional_weights_to_input_list(input_tensors)
             # Build a functional node using its args
             if isinstance(n, FunctionalNode):
                 if n.inputs_as_list:  # If the first argument should be a list of tensors:
-                    out_tensors_of_n_float = op_func(input_tensors, *n.op_call_args, **n.op_call_kwargs)
+                    out_tensors_of_n_float = op_func(input_tensors, *n.op_call_args, **op_call_kwargs)
                 else:  # If the input tensors should not be a list but iterated:
-                    out_tensors_of_n_float = op_func(*input_tensors, *n.op_call_args, **n.op_call_kwargs)
+                    out_tensors_of_n_float = op_func(*input_tensors, *n.op_call_args, **op_call_kwargs)
             else:
                 # If operator expects a single input tensor, it cannot be a list as it should
                 # have a dtype field.
@@ -332,3 +356,37 @@ class KerasModelBuilder(BaseModelBuilder):
             return quantized_node_outputs
 
         return node_outputs
+
+    def _merge_inputs(self, _node: BaseNode, input_tensors: List, op_call_args: List, op_call_kwargs: Dict,
+                      tensor_input_allocs: List = None) -> Tuple[List, Dict]:
+        """
+        Merge input tensors list with positional weights and op_call_args, according to correct order.
+
+        Args:
+            _node: The node the inputs are for.
+            input_tensors: activation input tensors to node.
+            op_call_args: framework node call args.
+            op_call_kwargs: framework node call kwargs.
+            tensor_input_allocs: List of input allocations to node.
+
+        Returns:
+            Combined list of input_tensors and op_call_args.
+        """
+        if isinstance(_node, FunctionalNode) and _node.tensor_input_allocs:
+            _input_list = op_call_args.copy()
+            if tensor_input_allocs is None:
+                tensor_input_allocs = _node.tensor_input_allocs
+            if len(tensor_input_allocs) != len(input_tensors):
+                Logger.error(f'Mismatch between input tensors ({len(tensor_input_allocs)}) '
+                             f'and indices {len(input_tensors)} in node {_node.name}.')  # pragma: no cover
+            for i, t in zip(tensor_input_allocs, input_tensors):
+                # insert input tensors in either args or kwargs, according to tensor_input_allocs
+                if isinstance(i, str):
+                    assert i not in op_call_kwargs
+                    op_call_kwargs.update({i: t})
+                else:
+                    _input_list.insert(i, t)
+        else:
+            _input_list = input_tensors + op_call_args
+
+        return _input_list, op_call_kwargs
