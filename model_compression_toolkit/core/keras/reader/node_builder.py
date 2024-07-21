@@ -242,10 +242,12 @@ def build_node(node: KerasNode,
     output_shape = keras_layer.get_output_shape_at(io_index)
 
     if layer_class in [TFOpLambda, SlicingOpLambda]:
-        # Some functional ops (such as tf.concat) should receive the input tensors as a list
-        # and some are not (such as tf.multiply), so each FunctionalNode holds
-        # a flag to indicate that.
-        inputs_as_list = __is_functional_inputs_a_list(op_call_args)
+        # Some functional ops should receive the input tensors as a list,
+        # so each FunctionalNode holds a flag to indicate that.
+        # Other functional ops can receive each argument as list, but in that case not all inputs appear in that list.
+        inputs_as_list = (keras_layer.symbol in [TFOpLambda(tf.concat).symbol, TFOpLambda(tf.stack).symbol,
+                                                 TFOpLambda(tf.add_n).symbol] and len(op_call_args) > 0 and
+                          isinstance(op_call_args[0], list))
 
         kwarg2index = get_kwargs2index(keras_layer)
 
@@ -299,23 +301,3 @@ def build_node(node: KerasNode,
 
     node_name_to_node[node_name] = node
     return node
-
-
-def __is_functional_inputs_a_list(op_call_args: Any) -> bool:
-    """
-    Check whether the input tensors should be passed as a list
-    or not.
-
-    Args:
-        op_call_args: Arguments list to check.
-
-    Returns:
-        Whether the input tensors should be passed as a list or not.
-    """
-
-    if len(op_call_args) > 0 and isinstance(op_call_args[0], list):
-        inputs_as_list = True
-        for arg in op_call_args[0]:
-            inputs_as_list = inputs_as_list and (is_tensor(arg) or is_const(arg))
-        return inputs_as_list
-    return False
