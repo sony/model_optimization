@@ -245,9 +245,7 @@ def build_node(node: KerasNode,
         # Some functional ops should receive the input tensors as a list,
         # so each FunctionalNode holds a flag to indicate that.
         # Other functional ops can receive each argument as list, but in that case not all inputs appear in that list.
-        inputs_as_list = (keras_layer.symbol in [TFOpLambda(tf.concat).symbol, TFOpLambda(tf.stack).symbol,
-                                                 TFOpLambda(tf.add_n).symbol] and len(op_call_args) > 0 and
-                          isinstance(op_call_args[0], list))
+        inputs_as_list = __is_functional_inputs_a_list(op_call_args, keras_layer)
 
         kwarg2index = get_kwargs2index(keras_layer)
 
@@ -301,3 +299,22 @@ def build_node(node: KerasNode,
 
     node_name_to_node[node_name] = node
     return node
+
+
+def __is_functional_inputs_a_list(op_call_args: Any, keras_layer: Any) -> bool:
+    """
+    Check whether the input tensors should be passed as a list
+    or not. This is relevant only for specific TF operators that are specified in the function's condition.
+
+    Args:
+        op_call_args: Arguments list to check.
+        keras_layer: TFOpLambda layer.
+
+    Returns:
+        Whether the input tensors should be passed as a list or not.
+    """
+
+    return (keras_layer.symbol in
+            [TFOpLambda(tf.concat).symbol, TFOpLambda(tf.stack).symbol,TFOpLambda(tf.add_n).symbol] and
+            len(op_call_args) > 0 and
+            isinstance(op_call_args[0], list))
