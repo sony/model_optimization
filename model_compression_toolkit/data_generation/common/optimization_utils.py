@@ -48,8 +48,6 @@ class ImagesOptimizationHandler:
                  scheduler: Any,
                  normalization_mean: List[float],
                  normalization_std: List[float],
-                 image_clipping: bool,
-                 reflection: bool,
                  initial_lr: float,
                  eps: float = 1e-6):
         """
@@ -67,8 +65,6 @@ class ImagesOptimizationHandler:
             scheduler (Any): The scheduler responsible for adjusting the learning rate of the optimizer over time.
             normalization_mean (List[float]): Mean values used for image normalization.
             normalization_std (List[float]): Standard deviation values used for image normalization.
-            image_clipping (bool): Flag indicating whether to clip generated images during optimization.
-            reflection (bool): Flag indicating whether to use reflection during image generation.
             initial_lr (float): The initial learning rate used by the optimizer.
             eps (float, optional): A small value added for numerical stability. Defaults to 1e-6.
 
@@ -79,8 +75,6 @@ class ImagesOptimizationHandler:
         self.scheduler = scheduler
         self.scheduler_step_fn = scheduler_step_fn
         self.image_granularity = image_granularity
-        self.image_clipping = image_clipping
-        self.reflection = reflection
         self.eps = eps
         self.targets = []
         self.initial_lr = initial_lr

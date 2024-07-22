@@ -66,6 +66,7 @@ class BasePytorchDataGenerationTest:
                  image_pipeline_type: ImagePipelineType = ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
                  image_normalization_type: ImageNormalizationType = ImageNormalizationType.TORCHVISION,
                  extra_pixels: int = 0,
+                 image_clipping: bool = True,
                  bn_layer_types: List = [torch.nn.BatchNorm2d]
                  ):
         self.unit_test = unit_test
@@ -87,6 +88,7 @@ class BasePytorchDataGenerationTest:
         self.image_pipeline_type = image_pipeline_type
         self.image_normalization_type = image_normalization_type
         self.extra_pixels = extra_pixels
+        self.image_clipping = image_clipping
         self.bn_layer_types = bn_layer_types
 
 
@@ -106,6 +108,7 @@ class BasePytorchDataGenerationTest:
             image_pipeline_type=self.image_pipeline_type,
             image_normalization_type=self.image_normalization_type,
             extra_pixels=self.extra_pixels,
+            image_clipping=self.image_clipping,
             bn_layer_types=self.bn_layer_types)
 
     def run_test(self):

@@ -70,6 +70,7 @@ def get_data_generation_classes(
         image_pipeline_dict.get(data_generation_config.image_pipeline_type)(
             output_image_size=output_image_size,
             extra_pixels=data_generation_config.extra_pixels,
+            image_clipping=data_generation_config.image_clipping,
             normalization=normalization))
 
     # Check if the image pipeline type is valid

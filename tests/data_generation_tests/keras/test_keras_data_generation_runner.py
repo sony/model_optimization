@@ -45,7 +45,9 @@ class KerasDataGenerationTestRunner(unittest.TestCase):
         BaseKerasDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
                                     extra_pixels=0).run_test()
         BaseKerasDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
-                                    extra_pixels=1).run_test()
+                                    image_clipping=False, extra_pixels=1).run_test()
+        BaseKerasDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
+                                    image_clipping=True, extra_pixels=1).run_test()
 
     def test_keras_image_normalization_types(self):
         BaseKerasDataGenerationTest(self, image_normalization_type=ImageNormalizationType.KERAS_APPLICATIONS).run_test()

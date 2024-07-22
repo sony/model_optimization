@@ -26,6 +26,7 @@ class TensorflowSmoothAugmentationImagePipeline(BaseImagePipeline):
                  output_image_size: Union[int, Tuple[int, int]],
                  extra_pixels: Union[int, Tuple[int, int]],
                  normalization: List[List[int]],
+                 image_clipping: bool = False,
                  smoothing_filter_size: int = 3,
                  smoothing_filter_sigma: float = 1.25):
         """
@@ -34,10 +35,12 @@ class TensorflowSmoothAugmentationImagePipeline(BaseImagePipeline):
         Args:
             output_image_size (Union[int, Tuple[int, int]]): The output image size.
             extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
+            normalization (List[List[float]]): The image normalization values for processing images during optimization.
+            image_clipping (bool): Whether to clip images during optimization.
             smoothing_filter_size (int): The size of the smoothing filter. Defaults to 3.
             smoothing_filter_sigma (float): The standard deviation of the smoothing filter. Defaults to 1.25.
        """
-        super(TensorflowSmoothAugmentationImagePipeline, self, ).__init__(output_image_size, extra_pixels, normalization)
+        super(TensorflowSmoothAugmentationImagePipeline, self, ).__init__(output_image_size, extra_pixels, image_clipping, normalization)
 
         smoothing = Smoothing(smoothing_filter_size, smoothing_filter_sigma)
         # List of image manipulation functions and their arguments.
@@ -45,15 +48,17 @@ class TensorflowSmoothAugmentationImagePipeline(BaseImagePipeline):
                                       (smoothing, {}),
                                       (random_crop, {'height_crop': self.output_image_size[0],
                                                      'width_crop': self.output_image_size[1]}),
-                                      (clip_images,
-                                       {'valid_grid': create_valid_grid(self.normalization[0], self.normalization[1])})]
+                                      ]
 
         # List of output image manipulation functions and their arguments.
         self.img_output_finalize_list = [(smoothing, {}),
                                          (center_crop, {'height_crop': self.output_image_size[0],
                                                         'width_crop': self.output_image_size[1]}),
-                                         (clip_images, {'valid_grid': create_valid_grid(self.normalization[0],
-                                                                                        self.normalization[1])})]
+                                         ]
+        if image_clipping:
+            clip_fn = (clip_images, {'valid_grid': create_valid_grid(self.normalization[0], self.normalization[1])})
+            self.img_manipulation_list.append(clip_fn)
+            self.img_output_finalize_list.append(clip_fn)
 
     def get_image_input_size(self) -> Tuple[int, int]:
         """
@@ -109,7 +114,8 @@ class TensorflowIdentityImagePipeline(BaseImagePipeline):
 
     def __init__(self, output_image_size: Union[int, Tuple[int, int]],
                  extra_pixels: Union[int, Tuple[int, int]],
-                 normalization: List[List[int]]
+                 normalization: List[List[int]],
+                 image_clipping: bool = False
                  ):
         """
         Initialize the TensorflowIdentityImagePipeline.
@@ -117,8 +123,10 @@ class TensorflowIdentityImagePipeline(BaseImagePipeline):
         Args:
             output_image_size (Union[int, Tuple[int, int]]): The output image size.
             extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
+            normalization (List[List[float]]): The image normalization values for processing images during optimization.
+            image_clipping (bool): Whether to clip images during optimization.
         """
-        super(TensorflowIdentityImagePipeline, self, ).__init__(output_image_size, extra_pixels, normalization)
+        super(TensorflowIdentityImagePipeline, self, ).__init__(output_image_size, extra_pixels, image_clipping, normalization)
 
     def get_image_input_size(self) -> Tuple[int, int]:
         """

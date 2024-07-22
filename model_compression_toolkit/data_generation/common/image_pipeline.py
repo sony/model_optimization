@@ -23,13 +23,16 @@ class BaseImagePipeline(ABC):
     def __init__(self,
                  output_image_size: Union[int, Tuple[int, int]],
                  extra_pixels: Union[int, Tuple[int, int]] = 0,
+                 image_clipping: bool = False,
                  normalization: List[List[int]] = [[0, 0, 0], [1, 1, 1]]):
         """
         Base class for image pipeline.
 
         Args:
             output_image_size (Union[int, Tuple[int, int]]): The desired output image size.
-            extra_pixels Union[int, Tuple[int, int]]: Extra pixels to add to the input image size. Defaults to 0.
+            extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
+            image_clipping (bool): Whether to clip images during optimization.
+            normalization (List[List[float]]): The image normalization values for processing images during optimization.
         """
         if isinstance(output_image_size, int):
             self.output_image_size = (output_image_size, output_image_size)
@@ -53,6 +56,7 @@ class BaseImagePipeline(ABC):
         else:
             Logger.critical(f"'extra_pixels' should be an int or tuple but type {type(extra_pixels)} was received.")
 
+        self.image_clipping = image_clipping
         self.normalization = normalization
 
     @abstractmethod

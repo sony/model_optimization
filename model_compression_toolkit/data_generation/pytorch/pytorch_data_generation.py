@@ -76,7 +76,6 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             bn_layer_types: List = DEFAULT_PYTORCH_BN_LAYER_TYPES,
             last_layer_types: List = DEFAULT_PYTORCH_LAST_LAYER_TYPES,
             image_clipping: bool = True,
-            reflection: bool = True,
     ) -> DataGenerationConfig:
         """
         Function to create a DataGenerationConfig object with the specified configuration parameters.
@@ -99,7 +98,6 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             bn_layer_types (List): List of BatchNorm layer types to be considered for data generation.
             last_layer_types (List): List of layer types to be considered for the output loss.
             image_clipping (bool): Whether to clip images during optimization.
-            reflection (bool): Whether to use reflection during optimization.
 
 
         Returns:
@@ -125,7 +123,6 @@ if FOUND_TORCH and FOUND_TORCHVISION:
             bn_layer_types=bn_layer_types,
             last_layer_types=last_layer_types,
             image_clipping=image_clipping,
-            reflection=reflection
         )
 
 
@@ -239,8 +236,6 @@ if FOUND_TORCH and FOUND_TORCHVISION:
                                                                 initial_lr=data_generation_config.initial_lr,
                                                                 normalization_mean=normalization[0],
                                                                 normalization_std=normalization[1],
-                                                                image_clipping=data_generation_config.image_clipping,
-                                                                reflection=data_generation_config.reflection,
                                                                 device=device)
 
         # Perform data generation and obtain a list of generated images

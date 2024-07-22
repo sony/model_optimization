@@ -48,7 +48,8 @@ class PytorchDataGenerationTestRunner(unittest.TestCase):
         BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.IDENTITY).run_test()
         BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION, extra_pixels=32).run_test()
         BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION, extra_pixels=0).run_test()
-        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION, extra_pixels=1).run_test()
+        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION, image_clipping=True, extra_pixels=1).run_test()
+        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION, image_clipping=False, extra_pixels=1).run_test()
 
     def test_pytorch_image_normalization_types(self):
         BasePytorchDataGenerationTest(self, image_normalization_type=ImageNormalizationType.TORCHVISION).run_test()

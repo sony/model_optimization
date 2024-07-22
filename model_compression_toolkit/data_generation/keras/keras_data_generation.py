@@ -65,8 +65,7 @@ if FOUND_TF:
             image_normalization_type: ImageNormalizationType = ImageNormalizationType.KERAS_APPLICATIONS,
             extra_pixels: Union[int, Tuple[int, int]] = DEFAULT_KERAS_EXTRA_PIXELS,
             bn_layer_types: List = [BatchNormalization],
-            image_clipping: bool = True,
-            reflection: bool = True,
+            image_clipping: bool = False,
     ) -> DataGenerationConfig:
         """
         Function to create a DataGenerationConfig object with the specified configuration parameters.
@@ -88,7 +87,6 @@ if FOUND_TF:
             extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
             bn_layer_types (List): List of BatchNorm layer types to be considered for data generation.
             image_clipping (bool): Whether to clip images during optimization.
-            reflection (bool): Whether to use reflection during optimization.
 
         Returns:
             DataGenerationConfig: Data generation configuration object.
@@ -111,8 +109,7 @@ if FOUND_TF:
             image_normalization_type=image_normalization_type,
             extra_pixels=extra_pixels,
             bn_layer_types=bn_layer_types,
-            image_clipping=image_clipping,
-            reflection=reflection)
+            image_clipping=image_clipping)
 
 
     def keras_data_generation_experimental(

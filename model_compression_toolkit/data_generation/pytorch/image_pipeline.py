@@ -31,15 +31,19 @@ class PytorchIdentityImagePipeline(BaseImagePipeline):
     def __init__(self,
                  output_image_size: Union[int, Tuple[int, int]],
                  extra_pixels: Union[int, Tuple[int, int]] = 0,
-                 normalization: List[List[int]] = [[0, 0, 0], [1, 1, 1]]):
+                 normalization: List[List[int]] = [[0, 0, 0], [1, 1, 1]],
+                 image_clipping: bool = True,
+                 ):
         """
         Initialize the PytorchIdentityImagePipeline.
 
         Args:
             output_image_size (Union[int, Tuple[int, int]]): The output image size.
             extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size (not used in identity pipeline).
+            normalization (List[List[float]]): The image normalization values for processing images during optimization.
+            image_clipping (bool): Whether to clip images during optimization.
         """
-        super(PytorchIdentityImagePipeline, self).__init__(output_image_size, extra_pixels, normalization)
+        super(PytorchIdentityImagePipeline, self).__init__(output_image_size, extra_pixels, image_clipping, normalization)
 
     def get_image_input_size(self) -> Tuple[int, int]:
         """
@@ -83,6 +87,7 @@ class PytorchSmoothAugmentationImagePipeline(BaseImagePipeline):
                  output_image_size: Union[int, Tuple[int, int]],
                  extra_pixels: Union[int, Tuple[int, int]] = 0,
                  normalization: List[List[int]] = [[0, 0, 0], [1, 1, 1]],
+                 image_clipping: bool = True,
                  smoothing_filter_size: int = 3,
                  smoothing_filter_sigma: float = 1.25):
         """
@@ -91,10 +96,12 @@ class PytorchSmoothAugmentationImagePipeline(BaseImagePipeline):
         Args:
             output_image_size (Union[int, Tuple[int, int]]): The output image size.
             extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
+            normalization (List[List[float]]): The image normalization values for processing images during optimization.
+            image_clipping (bool): Whether to clip images during optimization.
             smoothing_filter_size (int): The size of the smoothing filter. Defaults to 3.
             smoothing_filter_sigma (float): The standard deviation of the smoothing filter. Defaults to 1.25.
         """
-        super(PytorchSmoothAugmentationImagePipeline, self).__init__(output_image_size, extra_pixels, normalization)
+        super(PytorchSmoothAugmentationImagePipeline, self).__init__(output_image_size, extra_pixels, image_clipping, normalization)
         self.smoothing = Smoothing(size=smoothing_filter_size, sigma=smoothing_filter_sigma)
         self.random_crop = RandomCrop(self.output_image_size)
         self.random_flip = RandomHorizontalFlip(0.5)
@@ -123,7 +130,8 @@ class PytorchSmoothAugmentationImagePipeline(BaseImagePipeline):
         new_images = self.random_flip(images)
         new_images = self.smoothing(new_images)
         new_images = self.random_crop(new_images)
-        new_images = self.clip_images(new_images, self.valid_grid)
+        if self.image_clipping:
+            new_images = self.clip_images(new_images, self.valid_grid)
         return new_images
 
     def image_output_finalize(self, images: Tensor) -> Tensor:
@@ -138,7 +146,8 @@ class PytorchSmoothAugmentationImagePipeline(BaseImagePipeline):
         """
         new_images = self.smoothing(images)
         new_images = self.center_crop(new_images)
-        new_images = self.clip_images(new_images, self.valid_grid)
+        if self.image_clipping:
+            new_images = self.clip_images(new_images, self.valid_grid)
         return new_images
 
     @staticmethod

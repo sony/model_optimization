@@ -39,7 +39,6 @@ class DataGenerationConfig:
                  bn_layer_types: List = [],
                  last_layer_types: List = [],
                  image_clipping: bool = True,
-                 reflection: bool = True,
                  ):
         """
         Initialize the DataGenerationConfig.
@@ -62,7 +61,6 @@ class DataGenerationConfig:
             bn_layer_types (List): List of BatchNorm layer types. Defaults to [].
             last_layer_types (List): List of layer types. Defaults to [].
             image_clipping (bool): Flag to enable image clipping. Defaults to True.
-            reflection (bool): Flag to enable reflection. Defaults to True.
         """
         self.n_iter = n_iter
         self.optimizer = optimizer
@@ -80,7 +78,6 @@ class DataGenerationConfig:
         self.bn_layer_types = bn_layer_types
         self.last_layer_types = last_layer_types
         self.image_clipping = image_clipping
-        self.reflection = reflection
         self.output_loss_multiplier = output_loss_multiplier
 
 

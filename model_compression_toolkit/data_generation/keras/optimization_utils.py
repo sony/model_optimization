@@ -80,8 +80,6 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
                                                              initial_lr=data_generation_config.initial_lr,
                                                              normalization_mean=self.normalization_mean,
                                                              normalization_std=self.normalization_std,
-                                                             image_clipping=data_generation_config.image_clipping,
-                                                             reflection=data_generation_config.reflection,
                                                              eps=eps)
 
         # Set the mean axis based on the image granularity
@@ -102,7 +100,7 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
 
             # Define the imgs as tf.Variable
             batched_images = tf.Variable(initial_value=tf.zeros_like(images), trainable=True,
-                                         constraint=lambda z: self.clip_images(z))
+                                         constraint=lambda z: z)
             batched_images.assign(value=images)
 
             self.batch_opt_holders_list.append(
@@ -126,33 +124,6 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
                                                               input_imgs=input_imgs,
                                                               activation_extractor=activation_extractor)
 
-    def clip_images(self,
-                         z: tf.Tensor) -> tf.Tensor:
-        """
-        Clips and optionally reflects the input tensor `z` channel-wise based on the valid value range.
-
-        Args:
-            z (tf.Tensor): Input tensor to be clipped and reflected.
-
-        Returns:
-            tf.Tensor: Clipped and reflected tensor.
-        """
-        if self.image_clipping:
-            images = z.numpy()
-            for i_ch in range(self.valid_grid.shape[0]):
-                # Clip the values of the channel within the valid range.
-                clamp = tf.clip_by_value(t=z[:, :, :, i_ch], clip_value_min=tf.reduce_min(self.valid_grid[i_ch, :]),
-                                         clip_value_max=tf.reduce_max(self.valid_grid[i_ch, :]))
-                if self.reflection:
-                    # Reflect the values.
-                    images[:, :, :, i_ch] = 2 * clamp - z[:, :, :, i_ch]
-                else:
-                    images[:, :, :, i_ch] = clamp
-            # Assign the clipped reflected values back to `z`.
-            z.assign(images)
-            return z
-        else:
-            return z
 
     def get_layer_accumulated_stats(self, layer_name: str) -> Tuple[tf.Tensor, tf.Tensor]:
         """

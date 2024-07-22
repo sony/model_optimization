@@ -59,8 +59,6 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
                  initial_lr: float,
                  normalization_mean: List[float],
                  normalization_std: List[float],
-                 image_clipping: bool,
-                 reflection: bool,
                  device: str,
                  eps: float = 1e-6):
         """
@@ -79,8 +77,6 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
             initial_lr (float): The initial learning rate used by the optimizer.
             normalization_mean (List[float]): The mean values for image normalization.
             normalization_std (List[float]): The standard deviation values for image normalization.
-            image_clipping (bool): Whether to clip the images during optimization.
-            reflection (bool): Whether to use reflection during image clipping.
             device (torch.device): The current device set for PyTorch operations.
             eps (float): A small value added for numerical stability.
         """
@@ -96,8 +92,6 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
                                                                   initial_lr=initial_lr,
                                                                   normalization_mean=normalization_mean,
                                                                   normalization_std=normalization_std,
-                                                                  image_clipping=image_clipping,
-                                                                  reflection=reflection,
                                                                   eps=eps)
 
         # Initialize mixed-precision scaler
@@ -191,9 +185,6 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
         # Perform scheduler step
         self.scheduler_step_fn(scheduler, i_iter, loss.item())
 
-        if self.image_clipping:
-            self.batch_opt_holders_list[batch_index].clip_images(self.valid_grid, reflection=self.reflection)
-
 
     def zero_grad(self, batch_index: int):
         """
@@ -260,25 +251,6 @@ class PytorchBatchOptimizationHolder(BatchOptimizationHolder):
         self.images.requires_grad = True
         self.optimizer = optimizer([self.images], lr=initial_lr)
         self.scheduler = scheduler(self.optimizer)
-
-    def clip_images(self,
-                    valid_grid: Tensor,
-                    reflection: bool = True):
-        """
-        Clip the images.
-
-        Args:
-            valid_grid (Tensor): A tensor containing valid values for image clipping.
-            reflection (bool): Whether to use reflection during image clipping. Defaults to True.
-        """
-        with torch.no_grad():
-            for i_ch in range(valid_grid.shape[0]):
-                clamp = torch.clamp(self.images[:, i_ch, :, :], valid_grid[i_ch, :].min(), valid_grid[i_ch, :].max())
-                if reflection:
-                    self.images[:, i_ch, :, :] = 2 * clamp - self.images[:, i_ch, :, :]
-                else:
-                    self.images[:, i_ch, :, :] = clamp
-        self.images.requires_grad = True
 
 
 class PytorchAllImagesStatsHolder(AllImagesStatsHolder):
