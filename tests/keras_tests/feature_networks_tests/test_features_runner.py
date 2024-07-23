@@ -38,6 +38,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.bn_attributes_qua
 from tests.keras_tests.feature_networks_tests.feature_networks.bn_folding_test import Conv2DBNFoldingTest, \
     DepthwiseConv2DBNFoldingTest, DepthwiseConv2DBNFoldingHighMultiplierTest, Conv2DTransposeBNFoldingTest, \
     Conv2DBNConcatFoldingTest, SeparableConv2DBNFoldingTest, BNForwardFoldingTest
+from tests.keras_tests.feature_networks_tests.feature_networks.compute_max_cut_test import ComputeMaxCutTest
 from tests.keras_tests.feature_networks_tests.feature_networks.conv_bn_relu_residual_test import ConvBnReluResidualTest
 from tests.keras_tests.feature_networks_tests.feature_networks.decompose_separable_conv_test import \
     DecomposeSeparableConvTest
@@ -147,6 +148,9 @@ layers = tf.keras.layers
 
 
 class FeatureNetworkTest(unittest.TestCase):
+
+    def test_compute_max_cut(self):
+        ComputeMaxCutTest(self).run_test()
 
     def test_remove_identity(self):
         RemoveIdentityTest(self).run_test()

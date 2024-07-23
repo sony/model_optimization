@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #  ==============================================================================
-
+from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from typing import Dict, Any, Callable
 
@@ -23,6 +23,14 @@ from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 from model_compression_toolkit.xquant.common.constants import XQUANT_REPR, INTERMEDIATE_SIMILARITY_METRICS_REPR, XQUANT_VAL, INTERMEDIATE_SIMILARITY_METRICS_VAL
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.xquant.common.tensorboard_utils import TensorboardUtils
+
+NODES_WITHOUT_CUT_INFO = [torch.fake_quantize_per_tensor_affine]
+
+def is_wrapped_linear_op(quantized_model, node):
+    # Check if a node in a torch fx graph represents a linear layer (conv2d/linear)
+    # that is wrapped in the quantized model
+    return hasattr(quantized_model, node.name.removesuffix('_layer')) and isinstance(
+        getattr(quantized_model, node.name.removesuffix('_layer')), PytorchQuantizationWrapper)
 
 class PytorchTensorboardUtils(TensorboardUtils):
     """
@@ -49,7 +57,8 @@ class PytorchTensorboardUtils(TensorboardUtils):
     def get_graph_for_tensorboard_display(self,
                                           quantized_model: torch.nn.Module,
                                           similarity_metrics: Dict[str, Any],
-                                          repr_dataset: Callable):
+                                          repr_dataset: Callable,
+                                          quantized_model_metadata: Dict):
         """
         Get the graph to display on TensorBoard. The graph represents the quantized model
         with the similarity metrics that were measured.
@@ -58,6 +67,7 @@ class PytorchTensorboardUtils(TensorboardUtils):
             quantized_model: The quantized model to be displayed on TensorBoard.
             similarity_metrics: Dictionary containing the collected similarity metrics values.
             repr_dataset: Callable that generates the representative dataset used during graph building.
+            quantized_model_metadata (Dict): Metadata from the quantized model.
 
         Returns:
             The updated quantized model graph with similarity metrics embedded.
@@ -67,6 +77,8 @@ class PytorchTensorboardUtils(TensorboardUtils):
                                    representative_data_gen=repr_dataset,
                                    to_tensor=self.fw_impl.to_tensor,
                                    to_numpy=self.fw_impl.to_numpy)
+
+        insert_cut_info_into_graph(quant_graph, quantized_model_metadata, quantized_model)
 
         # Iterate through each node in the graph
         for node in quant_graph.nodes:
@@ -85,3 +97,94 @@ class PytorchTensorboardUtils(TensorboardUtils):
                     node.name.removesuffix("_layer")]
 
         return quant_graph
+
+
+def populate_fused_node_memory_elements(quantized_model_metadata):
+    """
+    Populate a dictionary mapping fused node names to their corresponding memory elements.
+
+    Args:
+        quantized_model_metadata (dict): Metadata containing scheduling information for the quantized model.
+
+    Returns:
+        dict: A dictionary with fused node names as keys and memory elements as values.
+    """
+    fused_node_to_memory_elements = {}
+
+    for cut in quantized_model_metadata['scheduling_info']['cuts']:
+        fused_node = cut['op_order'][-1]
+
+        # Ignore dummy types
+        if not fused_node.startswith('DummyType'):
+            fused_node_to_memory_elements[fused_node] = cut['mem_elements']
+
+    return fused_node_to_memory_elements
+
+
+def assign_cut_info_to_node(node, memory_elements):
+    """
+    Assign cut memory elements and total size to a node's framework attributes.
+
+    Args:
+        node (Node): The node to which the memory elements and total size will be assigned.
+        memory_elements (list): List of memory elements to be assigned to the node.
+    """
+    node.framework_attr['cut_memory_elements'] = [
+        f"{mem_element['node_name']}_outTensor_{mem_element['node_output_index']}"
+        for mem_element in memory_elements
+    ]
+    node.framework_attr['cut_total_size'] = sum(
+        mem_element['total_size'] for mem_element in memory_elements
+    )
+
+
+def process_node_cut_info(node, fused_node_to_memory_elements, quantized_model_metadata, quantized_model):
+    """
+    Process and assign cut information for a given node based on metadata and fused nodes mapping.
+
+    Args:
+        node (Node): The node to process.
+        fused_node_to_memory_elements (dict): Dictionary mapping fused nodes to memory elements.
+        quantized_model_metadata (dict): Metadata containing scheduling information for the quantized model.
+        quantized_model: The quantized model.
+    """
+    node_name_without_suffix = node.name.removesuffix('_layer')
+    fused_nodes_mapping = quantized_model_metadata['scheduling_info']['fused_nodes_mapping']
+
+    if node.name in fused_node_to_memory_elements:
+        # Directly assign cut info if node name is in fused_node_to_memory_elements
+        assign_cut_info_to_node(node, fused_node_to_memory_elements[node.name])
+
+    elif is_wrapped_linear_op(quantized_model, node) and node_name_without_suffix in fused_node_to_memory_elements:
+        # Assign cut info if the node is a wrapped linear operation with a matching name without suffix
+        assign_cut_info_to_node(node, fused_node_to_memory_elements[node_name_without_suffix])
+
+    elif node.name in fused_nodes_mapping:
+        # Assign cut info if the node name is in the fused nodes mapping
+        original_node_name = fused_nodes_mapping[node.name]
+        assign_cut_info_to_node(node, fused_node_to_memory_elements[original_node_name])
+
+    elif is_wrapped_linear_op(quantized_model, node) and node_name_without_suffix in fused_nodes_mapping:
+        # Assign cut info if the node is a wrapped linear operation and its name without suffix is in the fused nodes mapping
+        original_node_name = fused_nodes_mapping[node_name_without_suffix]
+        assign_cut_info_to_node(node, fused_node_to_memory_elements[original_node_name])
+
+
+def insert_cut_info_into_graph(quant_graph, quantized_model_metadata, quantized_model):
+    """
+    Insert information about cut tensors into the graph nodes based on the provided metadata.
+
+    Args:
+        quant_graph (Graph): The graph representing the quantized model.
+        quantized_model_metadata (dict): Metadata containing scheduling information for the quantized model.
+        quantized_model: The quantized model.
+    """
+    # Populate the mapping of fused nodes to memory elements
+    fused_node_to_memory_elements = populate_fused_node_memory_elements(quantized_model_metadata)
+
+    for node in quant_graph.nodes:
+        # Skip nodes without cut information
+        if node.type not in NODES_WITHOUT_CUT_INFO:
+            process_node_cut_info(node, fused_node_to_memory_elements, quantized_model_metadata, quantized_model)
+
+

@@ -27,6 +27,8 @@ INTERMEDIATE_SIMILARITY_METRICS_VAL = 'intermediate_similarity_metrics_val'
 # Graph attribute names:
 XQUANT_REPR = 'xquant_repr'
 XQUANT_VAL = 'xquant_val'
+CUT_MEMORY_ELEMENTS = 'cut_memory_elements'
+CUT_TOTAL_SIZE = 'cut_total_size'
 
 # Report file name:
 REPORT_FILENAME = 'quant_report.json'
@@ -36,3 +38,4 @@ TENSORBOARD_DEFAULT_TAG = 'xquant'
 
 # When extracting the activations of a model we hold the output using a dedicated key:
 MODEL_OUTPUT_KEY = 'model_output_key'
+

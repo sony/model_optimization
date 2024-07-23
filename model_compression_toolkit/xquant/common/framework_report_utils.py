@@ -18,7 +18,7 @@ import os
 
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from typing import Any, Dict
+from typing import Any, Dict, Callable
 
 from model_compression_toolkit.xquant.common.constants import REPORT_FILENAME
 from model_compression_toolkit.xquant.common.dataset_utils import DatasetUtils
@@ -39,7 +39,8 @@ class FrameworkReportUtils:
                  similarity_calculator: SimilarityCalculator,
                  dataset_utils: DatasetUtils,
                  model_folding_utils: ModelFoldingUtils,
-                 tb_utils: TensorboardUtils):
+                 tb_utils: TensorboardUtils,
+                 get_metadata_fn: Callable):
         """
         Initializes the FrameworkReportUtils class with various utility components required for generating the report.
 
@@ -50,6 +51,7 @@ class FrameworkReportUtils:
             dataset_utils (DatasetUtils): Utilities for handling datasets.
             model_folding_utils (ModelFoldingUtils): Utilities for model folding operations.
             tb_utils (TensorboardUtils): Utilities for TensorBoard operations.
+            get_metadata_fn (Callable): Function to retrieve the metadata from the quantized model.
         """
         self.fw_info = fw_info
         self.fw_impl = fw_impl
@@ -57,6 +59,7 @@ class FrameworkReportUtils:
         self.dataset_utils = dataset_utils
         self.model_folding_utils = model_folding_utils
         self.tb_utils = tb_utils
+        self.get_metadata_fn = get_metadata_fn
 
     def create_report_directory(self, dir_path: str):
         """
