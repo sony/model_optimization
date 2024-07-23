@@ -19,7 +19,7 @@ import numpy as np
 
 from model_compression_toolkit.data_generation.common.enums import SchedulerType
 from model_compression_toolkit.data_generation.keras.optimization_functions.lr_scheduler import \
-    ReduceLROnPlateauWithReset, ReduceLROnPlateau
+    ReduceLROnPlateau
 
 
 def get_reduce_lr_on_plateau_scheduler(n_iter: int, initial_lr: float):
@@ -35,22 +35,9 @@ def get_reduce_lr_on_plateau_scheduler(n_iter: int, initial_lr: float):
     """
     return partial(ReduceLROnPlateau, min_lr=1e-4, factor=0.5, patience=int(n_iter / 50))
 
-def get_reduce_lr_on_plateau_with_reset_scheduler(n_iter: int, initial_lr: float):
-    """
-    Create a custom ReduceLROnPlateauWithReset learning rate scheduler.
-
-    Args:
-        n_iter (int): Total number of iterations.
-        initial_lr (float): Initial learning rate.
-
-    Returns:
-        callable: Partial function for creating ReduceLROnPlateauWithReset scheduler.
-    """
-    return partial(ReduceLROnPlateauWithReset, min_lr=1e-4, factor=0.5, patience=int(n_iter / 50))
 
 
 # Define a dictionary that maps scheduler types to functions for creating schedulers.
 scheduler_step_function_dict: Dict[SchedulerType, Callable] = {
     SchedulerType.REDUCE_ON_PLATEAU: get_reduce_lr_on_plateau_scheduler,  # ReduceLROnPlateau scheduler.
-    SchedulerType.REDUCE_ON_PLATEAU_WITH_RESET: get_reduce_lr_on_plateau_with_reset_scheduler  # ReduceLROnPlateauWithReset scheduler.
 }

@@ -23,7 +23,6 @@ from tests.data_generation_tests.keras.base_keras_data_generation_test import Ba
 class KerasDataGenerationTestRunner(unittest.TestCase):
     def test_keras_scheduler_types(self):
         BaseKerasDataGenerationTest(self, scheduler_type=SchedulerType.REDUCE_ON_PLATEAU).run_test()
-        BaseKerasDataGenerationTest(self, scheduler_type=SchedulerType.REDUCE_ON_PLATEAU_WITH_RESET).run_test()
 
     def test_keras_layer_weighting_types(self):
         BaseKerasDataGenerationTest(self, layer_weighting_type=BNLayerWeightingType.AVERAGE).run_test()

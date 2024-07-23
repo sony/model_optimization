@@ -17,8 +17,7 @@ import unittest
 import numpy as np
 from keras.src.optimizers import Adam
 
-from model_compression_toolkit.data_generation.keras.optimization_functions.lr_scheduler import ReduceLROnPlateau, \
-    ReduceLROnPlateauWithReset
+from model_compression_toolkit.data_generation.keras.optimization_functions.lr_scheduler import ReduceLROnPlateau
 
 
 class TestReduceLROnPlateau(unittest.TestCase):
@@ -67,12 +66,6 @@ class TestReduceLROnPlateau(unittest.TestCase):
         self.scheduler._reset()
         self.scheduler.on_epoch_end(1, 0.05)  # Immediate improvement
         self.assertAlmostEqual(float(self.optimizer.learning_rate.numpy()), initial_lr, places=7)
-
-
-class TestReduceLROnPlateauWithReset(TestReduceLROnPlateau):
-    def setUp(self):
-        self.optimizer = Adam(learning_rate=0.1)
-        self.scheduler = ReduceLROnPlateauWithReset(optimizer=self.optimizer)
 
 
 if __name__ == '__main__':

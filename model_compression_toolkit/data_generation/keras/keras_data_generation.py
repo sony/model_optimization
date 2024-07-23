@@ -55,7 +55,7 @@ if FOUND_TF:
             data_gen_batch_size: int = DEFAULT_DATA_GEN_BS,
             initial_lr: float = DEFAULT_KERAS_INITIAL_LR,
             output_loss_multiplier: float = DEFAULT_KERAS_OUTPUT_LOSS_MULTIPLIER,
-            scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU_WITH_RESET,
+            scheduler_type: SchedulerType = SchedulerType.REDUCE_ON_PLATEAU   ,
             bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
             output_loss_type: OutputLossType = OutputLossType.NEGATIVE_MIN_MAX_DIFF,
             data_init_type: DataInitType = DataInitType.Gaussian,
