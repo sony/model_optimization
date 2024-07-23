@@ -195,10 +195,7 @@ if FOUND_TF:
         # Create an activation extractor object to extract activations from the model
         activation_extractor = KerasActivationExtractor(model=model,
                                                         layer_types_to_extract_inputs=
-                                                        data_generation_config.bn_layer_types,
-                                                        image_granularity=data_generation_config.image_granularity,
-                                                        image_input_manipulation=
-                                                        image_pipeline.image_input_manipulation)
+                                                        data_generation_config.bn_layer_types)
 
         # Create an orig_bn_stats_holder object to hold original BatchNorm statistics
         orig_bn_stats_holder = KerasOriginalBNStatsHolder(model=model,
