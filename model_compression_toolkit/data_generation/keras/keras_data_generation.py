@@ -183,7 +183,7 @@ if FOUND_TF:
         # Check if the scheduler type is valid
         if scheduler_get_fn is None:
             Logger.critical(
-                f'Invalid scheduler_type {data_generation_config.scheduler_type}. Please select one from {SchedulerType.get_values()}.')
+                f'Invalid scheduler_type {data_generation_config.scheduler_type}. Please select one from {SchedulerType.get_values()}.') # pragma: no cover
 
         # Create a scheduler object with the specified number of iterations
         scheduler = scheduler_get_fn(n_iter=data_generation_config.n_iter,

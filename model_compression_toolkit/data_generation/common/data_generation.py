@@ -63,7 +63,7 @@ def get_data_generation_classes(
     if normalization is None:
         Logger.critical(
             f'Invalid image_normalization_type {data_generation_config.image_normalization_type}. '
-            f'Please select one from {ImageNormalizationType.get_values()}.')
+            f'Please select one from {ImageNormalizationType.get_values()}.') # pragma: no cover
 
     # Get the image pipeline class corresponding to the specified type
     image_pipeline = (
@@ -77,7 +77,7 @@ def get_data_generation_classes(
     if image_pipeline is None:
         Logger.critical(
             f'Invalid image_pipeline_type {data_generation_config.image_pipeline_type}. '
-            f'Please select one from {ImagePipelineType.get_values()}.')
+            f'Please select one from {ImagePipelineType.get_values()}.') # pragma: no cover
 
     # Get the layer weighting function corresponding to the specified type
     bn_layer_weighting_fn = bn_layer_weighting_function_dict.get(data_generation_config.layer_weighting_type)
@@ -85,7 +85,7 @@ def get_data_generation_classes(
     if bn_layer_weighting_fn is None:
         Logger.critical(
             f'Invalid layer_weighting_type {data_generation_config.layer_weighting_type}. '
-            f'Please select one from {BNLayerWeightingType.get_values()}.')
+            f'Please select one from {BNLayerWeightingType.get_values()}.') # pragma: no cover
 
     # Get the image initialization function corresponding to the specified type
     image_initialization_fn = image_initialization_function_dict.get(data_generation_config.data_init_type)
@@ -94,7 +94,7 @@ def get_data_generation_classes(
     if image_initialization_fn is None:
         Logger.critical(
             f'Invalid data_init_type {data_generation_config.data_init_type}. '
-            f'Please select one from {DataInitType.get_values()}.')
+            f'Please select one from {DataInitType.get_values()}.') # pragma: no cover
 
     # Get the BatchNorm alignment loss function corresponding to the specified type
     bn_alignment_loss_fn = bn_alignment_loss_function_dict.get(data_generation_config.bn_alignment_loss_type)
@@ -103,7 +103,7 @@ def get_data_generation_classes(
     if bn_alignment_loss_fn is None:
         Logger.critical(
             f'Invalid bn_alignment_loss_type {data_generation_config.bn_alignment_loss_type}. '
-            f'Please select one from {BatchNormAlignemntLossType.get_values()}.')
+            f'Please select one from {BatchNormAlignemntLossType.get_values()}.') # pragma: no cover
 
     # Get the output loss function corresponding to the specified type
     output_loss_fn = output_loss_function_dict.get(data_generation_config.output_loss_type)
@@ -112,7 +112,7 @@ def get_data_generation_classes(
     if output_loss_fn is None:
         Logger.critical(
             f'Invalid output_loss_type {data_generation_config.output_loss_type}. '
-            f'Please select one from {OutputLossType.get_values()}.')
+            f'Please select one from {OutputLossType.get_values()}.') # pragma: no cover
 
     # Initialize the dataset for data generation
     init_dataset = image_initialization_fn(

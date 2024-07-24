@@ -104,6 +104,7 @@ class BaseKerasDataGenerationTest:
             optimizer=self.optimizer,
             scheduler_type=self.scheduler_type,
             image_normalization_type=self.image_normalization_type,
+            image_pipeline_type=self.image_pipeline_type,
             layer_weighting_type=self.layer_weighting_type,
             image_granularity=self.image_granularity,
             data_init_type=self.data_init_type,
