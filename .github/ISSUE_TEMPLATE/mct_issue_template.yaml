@@ -63,7 +63,6 @@ body:
       description:
       placeholder:
       value:
-      render: markdown
     validations:
       required: true
   - type: textarea
@@ -73,7 +72,6 @@ body:
       description: What did you expect to happen?
       placeholder:
       value:
-      render: markdown
     validations:
       required: false
   - type: textarea
