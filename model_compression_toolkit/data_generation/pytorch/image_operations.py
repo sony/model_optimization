@@ -12,15 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import List
+
 import numpy as np
 import torch
 import torch.nn.functional as F
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from torchvision.transforms import Normalize
 
-def create_valid_grid(means, stds) -> torch.Tensor:
+from model_compression_toolkit.logger import Logger
+
+
+def create_valid_grid(means: List[int], stds: List[int]) -> torch.Tensor:
     """
     Create a valid grid for image normalization.
+
+    Args:
+        means (List[int]): List of mean values per channel.
+        stds (List[int]): List of standard deviation values per channel.
 
     Returns:
         torch.Tensor: The valid grid for image normalization.
@@ -42,13 +51,15 @@ class Smoothing(torch.nn.Module):
         Initialize the Smoothing module.
 
         Args:
-            size (int): The size of the Gaussian kernel.
-            sigma (float): The standard deviation of the Gaussian kernel.
+            size (int): The size of the Gaussian kernel (Default: 3).
+            sigma (float): The standard deviation of the Gaussian kernel (Defalut: 1.25).
             kernel (torch.Tensor, optional): Precomputed Gaussian kernel. If None, it will be created.
         """
         super().__init__()
         if kernel is None:
             kernel = self.gaussian_kernel(size, sigma)
+        if kernel.dim() != 2:
+            Logger.critical("Kernel must have 2 dimensions. Found {} dimensions.".format(kernel.dim()))
         kernel = kernel.view(1, 1, kernel.shape[0], kernel.shape[1])
         # Repeat for 3 color channels
         kernel = kernel.repeat(3, 1, 1, 1)

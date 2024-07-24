@@ -80,8 +80,8 @@ class ReduceLROnPlateauWithReset:
         self.mode_worse = None  # the worse value for the chosen mode
         self.eps = eps
         self.last_epoch = 0
-        self._init_is_better(mode=mode, threshold=threshold,
-                             threshold_mode=threshold_mode)
+
+        self._init_is_better()
         self._reset()
 
     def _reset(self) -> None:
@@ -179,31 +179,22 @@ class ReduceLROnPlateauWithReset:
         else:  # mode == 'max' and threshold_mode == 'abs':
             return a > best + self.threshold
 
-    def _init_is_better(self, mode: str, threshold: float, threshold_mode: str) -> None:
+    def _init_is_better(self) -> None:
         """
         Initialize the comparison function for determining if a new value is better.
-
-        Args:
-            mode (str): The mode for comparison, 'min' or 'max'.
-            threshold (float): The threshold for comparison.
-            threshold_mode (str): The mode for threshold, 'rel' or 'abs'.
 
         Raises:
             ValueError: If an unknown mode or threshold mode is provided.
         """
-        if mode not in {'min', 'max'}:
-            raise ValueError('mode ' + mode + ' is unknown!')
-        if threshold_mode not in {'rel', 'abs'}:
-            raise ValueError('threshold mode ' + threshold_mode + ' is unknown!')
+        if self.mode not in {'min', 'max'}:
+            raise ValueError('mode ' + self.mode + ' is unknown!')
+        if self.threshold_mode not in {'rel', 'abs'}:
+            raise ValueError('threshold mode ' + self.threshold_mode + ' is unknown!')
 
-        if mode == 'min':
+        if self.mode == 'min':
             self.mode_worse = float('inf')
         else:  # mode == 'max':
             self.mode_worse = float('-inf')
-
-        self.mode = mode
-        self.threshold = threshold
-        self.threshold_mode = threshold_mode
 
     def state_dict(self) -> Dict[str, Any]:
         """
@@ -222,4 +213,4 @@ class ReduceLROnPlateauWithReset:
             state_dict (dict): The state dictionary to load.
         """
         self.__dict__.update(state_dict)
-        self._init_is_better(mode=self.mode, threshold=self.threshold, threshold_mode=self.threshold_mode)
+        self._init_is_better()

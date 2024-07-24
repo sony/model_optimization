@@ -22,7 +22,7 @@ DEFAULT_KERAS_INITIAL_LR = 1
 DEFAULT_KERAS_EXTRA_PIXELS = 32
 
 # Default output loss multiplier.
-DEFAULT_KERAS_OUTPUT_LOSS_MULTIPLIER = 1e-5
+DEFAULT_KERAS_OUTPUT_LOSS_MULTIPLIER = 1e-3
 
 # Minimum value for image pixel intensity.
 IMAGE_MIN_VAL = 0.0

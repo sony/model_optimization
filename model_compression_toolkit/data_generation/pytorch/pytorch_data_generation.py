@@ -137,7 +137,7 @@ if FOUND_TORCH and FOUND_TORCHVISION:
         Args:
             model (Module): PyTorch model to generate data for.
             n_images (int): Number of images to generate.
-            output_image_size (Union[int, Tuple[int, int]]: The hight and width size of the output images.
+            output_image_size (Union[int, Tuple[int, int]]): The hight and width size of the output images.
             data_generation_config (DataGenerationConfig): Configuration for data generation.
 
         Returns:
