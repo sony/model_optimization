@@ -70,13 +70,14 @@ class CocoEval:
         # Set the task type (Detection/Segmentation/Keypoints)
         self.task = task
 
-    def add_batch_detections(self, outputs: Tuple[List, List, List, List], targets: List[Dict]):
+    def add_batch_detections(self, outputs: Tuple[List, List, List, List], targets: List[Dict], custom_labels: Callable=coco80_to_coco91):
         """
         Add batch detections to the evaluation.
 
         Args:
             outputs (list): List of model outputs, typically containing bounding boxes, scores, and labels.
             targets (list): List of ground truth annotations for the batch.
+            custom_labels (Callable): A function to map label outputs. Default, COCO re-map from 80 (model) to 91 (dataset)
         """
         img_ids, _outs = [], []
         orig_img_dims = []
@@ -86,7 +87,7 @@ class CocoEval:
                 orig_img_dims.append(t[0]['orig_img_dims'])
                 _outs.append([o[idx] for o in outputs])
 
-        batch_detections = self.format_results(_outs, img_ids, orig_img_dims, self.output_resize)
+        batch_detections = self.format_results(_outs, img_ids, orig_img_dims, self.output_resize, custom_labels)
 
         self.all_detections.extend(batch_detections)
 
@@ -122,7 +123,7 @@ class CocoEval:
         """
         self.all_detections = []
 
-    def format_results(self, outputs: List, img_ids: List, orig_img_dims: List, output_resize: Dict) -> List[Dict]:
+    def format_results(self, outputs: List, img_ids: List, orig_img_dims: List, output_resize: Dict, custom_labels: Callable) -> List[Dict]:
         """
         Format model outputs into a list of detection dictionaries.
 
@@ -132,6 +133,7 @@ class CocoEval:
             orig_img_dims (list): List of tuples representing the original image dimensions (h, w) for each output.
             output_resize (Dict): Contains the resize information to map between the model's
                      output and the original image dimensions.
+            custom_labels (Callable): A function to map label outputs. Typically, COCO re-map from 80 (model) to 91 (dataset)
 
         Returns:
             list: A list of detection dictionaries, each containing information about the detected object.
@@ -145,8 +147,8 @@ class CocoEval:
             for idx, output in enumerate(outputs):
                 image_id = img_ids[idx]
                 scores = output[1].numpy().squeeze()  # Extract scores
-                labels = (coco80_to_coco91(
-                    output[2].numpy())).squeeze()  # Convert COCO 80-class indices to COCO 91-class indices
+                labels = (custom_labels(
+                    output[2].numpy())).squeeze()  # Provide a function to map label outputs
                 boxes = output[0].numpy().squeeze()  # Extract bounding boxes
                 boxes = scale_boxes(boxes, orig_img_dims[idx][0], orig_img_dims[idx][1], h_model, w_model,
                                     preserve_aspect_ratio)
