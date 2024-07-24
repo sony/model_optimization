@@ -78,8 +78,7 @@ if found_tf:
     from tests.keras_tests.pruning_tests.test_pretrained_models import PruningPretrainedModelsTest
     from tests.keras_tests.pruning_tests.feature_networks.test_pruning_feature_networks import PruningFeatureNetworksTest
     from tests.keras_tests.function_tests.test_hmse_error_method import TestParamSelectionWithHMSE
-    from tests.data_generation_tests.keras.test_scheduler_step import TestReduceLROnPlateau, \
-        TestReduceLROnPlateauWithReset
+    from tests.data_generation_tests.keras.test_scheduler_step import TestReduceLROnPlateau
 
 if found_pytorch:
     from tests.pytorch_tests.function_tests.test_activation_quantization_functions import TestActivationQuantizationFunctions as TestActivationQuantizationFunctionsPytorch
