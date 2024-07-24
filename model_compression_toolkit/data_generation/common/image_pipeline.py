@@ -67,7 +67,7 @@ class BaseImagePipeline(ABC):
         Returns:
             Tuple[int, int]: The input image size.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
 
     @abstractmethod
     def image_input_manipulation(self,
@@ -81,7 +81,7 @@ class BaseImagePipeline(ABC):
         Returns:
             Any: Manipulated images.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
 
     @abstractmethod
     def image_output_finalize(self,
@@ -95,7 +95,7 @@ class BaseImagePipeline(ABC):
         Returns:
             Any: Finalized images.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
 
 
 # Dictionary mapping ImageNormalizationType to corresponding normalization values

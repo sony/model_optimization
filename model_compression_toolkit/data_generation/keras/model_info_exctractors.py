@@ -199,9 +199,3 @@ class KerasActivationExtractor(ActivationExtractor):
                     last_layer = layer
                     break
         return last_layer
-
-    def remove(self):
-        """
-        Remove the stats containers.
-        """
-        self.activations = {}
