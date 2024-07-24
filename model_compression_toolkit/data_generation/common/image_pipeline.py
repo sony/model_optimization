@@ -41,9 +41,9 @@ class BaseImagePipeline(ABC):
         elif isinstance(output_image_size, tuple) and len(output_image_size) == 2:
             self.output_image_size = output_image_size
         elif isinstance(output_image_size, tuple):
-            Logger.critical(f"'output_image_size' should a tuple of length 1 or 2. Got tuple of length {len(output_image_size)}")
+            Logger.critical(f"'output_image_size' should a tuple of length 1 or 2. Got tuple of length {len(output_image_size)}") # pragma: no cover
         else:
-            Logger.critical(f"'output_image_size' should be an int or tuple but type {type(output_image_size)} was received.")
+            Logger.critical(f"'output_image_size' should be an int or tuple but type {type(output_image_size)} was received.") # pragma: no cover
 
         if isinstance(extra_pixels, int):
             self.extra_pixels = (extra_pixels, extra_pixels)
@@ -52,9 +52,9 @@ class BaseImagePipeline(ABC):
         elif isinstance(extra_pixels, tuple) and len(extra_pixels) == 2:
             self.extra_pixels = extra_pixels
         elif isinstance(extra_pixels, tuple):
-            Logger.critical(f"'extra_pixels' should a tuple of length 1 or 2. Got tuple of length {len(extra_pixels)}")
+            Logger.critical(f"'extra_pixels' should a tuple of length 1 or 2. Got tuple of length {len(extra_pixels)}") # pragma: no cover
         else:
-            Logger.critical(f"'extra_pixels' should be an int or tuple but type {type(extra_pixels)} was received.")
+            Logger.critical(f"'extra_pixels' should be an int or tuple but type {type(extra_pixels)} was received.") # pragma: no cover
 
         self.image_clipping = image_clipping
         self.normalization = normalization

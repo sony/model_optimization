@@ -205,15 +205,6 @@ class PytorchActivationExtractor(ActivationExtractor):
         """
         return self.last_linear_layer_weights
 
-    def get_num_extractor_layers(self) -> int:
-        """
-        Get the number of hooked layers in the model.
-
-        Returns:
-            int: Number of hooked layers in the model.
-        """
-        return self.num_layers
-
     def get_extractor_layer_names(self) -> List:
         """
         Get a list of the hooked layer names.

@@ -31,6 +31,7 @@ class PytorchDataGenerationTestRunner(unittest.TestCase):
 
     def test_pytorch_layer_weighting_types(self):
         BasePytorchDataGenerationTest(self, layer_weighting_type=BNLayerWeightingType.AVERAGE).run_test()
+        BasePytorchDataGenerationTest(self, layer_weighting_type=BNLayerWeightingType.FIRST_LAYER_MULTIPLIER).run_test()
 
     def test_pytorch_bn_alignment_types(self):
         BasePytorchDataGenerationTest(self, bn_alignment_loss_type=BatchNormAlignemntLossType.L2_SQUARE).run_test()
@@ -46,10 +47,10 @@ class PytorchDataGenerationTestRunner(unittest.TestCase):
 
     def test_pytorch_image_pipeline_types(self):
         BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.IDENTITY).run_test()
-        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION, extra_pixels=32).run_test()
-        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION, extra_pixels=0).run_test()
-        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION, image_clipping=True, extra_pixels=1).run_test()
-        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION, image_clipping=False, extra_pixels=1).run_test()
+        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION, output_image_size=(32,), extra_pixels=32).run_test()
+        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION, output_image_size=32, extra_pixels=(0,)).run_test()
+        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION, image_clipping=True, output_image_size=(32, 32), extra_pixels=1).run_test()
+        BasePytorchDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION, image_clipping=False, output_image_size=(32, 24), extra_pixels=(1, 3)).run_test()
 
     def test_pytorch_image_normalization_types(self):
         BasePytorchDataGenerationTest(self, image_normalization_type=ImageNormalizationType.TORCHVISION).run_test()

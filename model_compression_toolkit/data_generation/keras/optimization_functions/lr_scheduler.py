@@ -17,6 +17,8 @@ from typing import Dict, Union
 import numpy as np
 import tensorflow as tf
 
+from model_compression_toolkit.logger import Logger
+
 
 class ReduceLROnPlateau(tf.keras.callbacks.Callback):
     """
@@ -54,7 +56,7 @@ class ReduceLROnPlateau(tf.keras.callbacks.Callback):
         super(ReduceLROnPlateau, self).__init__()
 
         if factor >= 1.0:
-            raise ValueError('Factor should be < 1.0.')
+            Logger.critical('Factor should be < 1.0.') # pragma: no cover
         self.factor = factor
 
         self.optimizer = optimizer
@@ -171,9 +173,9 @@ class ReduceLROnPlateau(tf.keras.callbacks.Callback):
             ValueError: If an unknown mode or threshold mode is provided.
         """
         if mode not in {'min', 'max'}:
-            raise ValueError(f'mode {mode} is unknown!')
+            Logger.critical(f'mode {mode} is unknown!') # pragma: no cover
         if threshold_mode not in {'rel', 'abs'}:
-            raise ValueError(f'threshold mode {threshold_mode} is unknown!')
+            Logger.critical(f'threshold mode {threshold_mode} is unknown!') # pragma: no cover
 
         if mode == 'min':
             self.mode_worse = float('inf')

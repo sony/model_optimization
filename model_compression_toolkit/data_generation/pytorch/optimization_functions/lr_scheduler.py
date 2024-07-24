@@ -16,6 +16,9 @@ from torch.optim.optimizer import Optimizer
 from torch import inf
 from typing import Union, List, Dict, Any
 
+from model_compression_toolkit.logger import Logger
+
+
 class ReduceLROnPlateauWithReset:
     """
     Reduce learning rate when a metric has stopped improving. This scheduler allows resetting
@@ -51,19 +54,19 @@ class ReduceLROnPlateauWithReset:
             verbose (bool): If True, prints a message to stdout for each update. Default: False.
         """
         if factor >= 1.0:
-            raise ValueError('Factor should be < 1.0.')
+            Logger.critical('Factor should be < 1.0.') # pragma: no cover
         self.factor = factor
 
         # Attach optimizer
         if not isinstance(optimizer, Optimizer):
-            raise TypeError('{} is not an Optimizer'.format(
-                type(optimizer).__name__))
+            Logger.critical('{} is not an Optimizer'.format(
+                type(optimizer).__name__)) # pragma: no cover
         self.optimizer = optimizer
 
         if isinstance(min_lr, (list, tuple)):
             if len(min_lr) != len(optimizer.param_groups):
-                raise ValueError("expected {} min_lrs, got {}".format(
-                    len(optimizer.param_groups), len(min_lr)))
+                Logger.critical("expected {} min_lrs, got {}".format(
+                    len(optimizer.param_groups), len(min_lr))) # pragma: no cover
             self.min_lrs = list(min_lr)
         else:
             self.min_lrs = [min_lr] * len(optimizer.param_groups)
@@ -187,9 +190,9 @@ class ReduceLROnPlateauWithReset:
             ValueError: If an unknown mode or threshold mode is provided.
         """
         if self.mode not in {'min', 'max'}:
-            raise ValueError('mode ' + self.mode + ' is unknown!')
+            Logger.critical('mode ' + self.mode + ' is unknown!') # pragma: no cover
         if self.threshold_mode not in {'rel', 'abs'}:
-            raise ValueError('threshold mode ' + self.threshold_mode + ' is unknown!')
+            Logger.critical('threshold mode ' + self.threshold_mode + ' is unknown!') # pragma: no cover
 
         if self.mode == 'min':
             self.mode_worse = float('inf')

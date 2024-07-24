@@ -59,7 +59,7 @@ class Smoothing(torch.nn.Module):
         if kernel is None:
             kernel = self.gaussian_kernel(size, sigma)
         if kernel.dim() != 2:
-            Logger.critical("Kernel must have 2 dimensions. Found {} dimensions.".format(kernel.dim()))
+            Logger.critical("Kernel must have 2 dimensions. Found {} dimensions.".format(kernel.dim())) # pragma: no cover
         kernel = kernel.view(1, 1, kernel.shape[0], kernel.shape[1])
         # Repeat for 3 color channels
         kernel = kernel.repeat(3, 1, 1, 1)
@@ -84,7 +84,7 @@ class Smoothing(torch.nn.Module):
         Returns:
             str: String representation of the Smoothing module.
         """
-        return f"{self.__class__.__name__}(kernel={self.kernel.shape[-1]})"
+        return f"{self.__class__.__name__}(kernel={self.kernel.shape[-1]})" # pragma: no cover
 
     @staticmethod
     def gaussian_kernel(size: int = 3, sigma: float = 1) -> torch.Tensor:

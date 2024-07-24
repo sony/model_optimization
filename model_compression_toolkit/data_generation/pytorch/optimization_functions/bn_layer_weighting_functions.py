@@ -57,7 +57,8 @@ def first_bn_multiplier_weighting_fn(orig_bn_stats_holder: OriginalBNStatsHolder
         Dict[str, float]: A dictionary containing layer names as keys and weightings as values.
     """
     layer_weighting_dict = {orig_bn_stats_holder.get_bn_layer_names()[0]: 10}
-    return layer_weighting_dict.update({bn_layer_name: 1  for bn_layer_name in orig_bn_stats_holder.get_bn_layer_names()[1:]})
+    layer_weighting_dict.update({bn_layer_name: 1 for bn_layer_name in orig_bn_stats_holder.get_bn_layer_names()[1:]})
+    return layer_weighting_dict
 
 
 # Dictionary of layer weighting functions
