@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 # Import required modules and classes
-from typing import Any, Tuple, Dict, Callable, List
+from typing import Any, Tuple, Dict, Callable, List, Union
 
 from model_compression_toolkit.data_generation.common.data_generation_config import DataGenerationConfig
 from model_compression_toolkit.data_generation.common.enums import ImagePipelineType, ImageNormalizationType, \
@@ -24,7 +24,7 @@ from model_compression_toolkit.logger import Logger
 
 def get_data_generation_classes(
         data_generation_config: DataGenerationConfig,
-        output_image_size: Tuple,
+        output_image_size: Union[int, Tuple[int, int]],
         n_images: int,
         image_pipeline_dict: Dict,
         image_normalization_dict: Dict,
@@ -38,7 +38,7 @@ def get_data_generation_classes(
 
     Args:
         data_generation_config (DataGenerationConfig): Configuration for data generation.
-        output_image_size (Tuple): The desired output image size.
+        output_image_size (Union[int, Tuple[int, int]]): The desired output image size.
         n_images (int): The number of random samples.
         image_pipeline_dict (Dict): Dictionary mapping ImagePipelineType to corresponding image pipeline classes.
         image_normalization_dict (Dict): Dictionary mapping ImageNormalizationType to corresponding
@@ -56,18 +56,6 @@ def get_data_generation_classes(
         output_loss_fn (Callable): Function to compute output loss.
         init_dataset (Any): The initial dataset used for image generation.
     """
-    # Get the image pipeline class corresponding to the specified type
-    image_pipeline = (
-        image_pipeline_dict.get(data_generation_config.image_pipeline_type)(
-            output_image_size=output_image_size,
-            extra_pixels=data_generation_config.extra_pixels))
-
-    # Check if the image pipeline type is valid
-    if image_pipeline is None:
-        Logger.critical(
-            f'Invalid image_pipeline_type {data_generation_config.image_pipeline_type}. '
-            f'Please select one from {ImagePipelineType.get_values()}.')
-
     # Get the normalization values corresponding to the specified type
     normalization = image_normalization_dict.get(data_generation_config.image_normalization_type)
 
@@ -75,7 +63,21 @@ def get_data_generation_classes(
     if normalization is None:
         Logger.critical(
             f'Invalid image_normalization_type {data_generation_config.image_normalization_type}. '
-            f'Please select one from {ImageNormalizationType.get_values()}.')
+            f'Please select one from {ImageNormalizationType.get_values()}.') # pragma: no cover
+
+    # Get the image pipeline class corresponding to the specified type
+    image_pipeline = (
+        image_pipeline_dict.get(data_generation_config.image_pipeline_type)(
+            output_image_size=output_image_size,
+            extra_pixels=data_generation_config.extra_pixels,
+            image_clipping=data_generation_config.image_clipping,
+            normalization=normalization))
+
+    # Check if the image pipeline type is valid
+    if image_pipeline is None:
+        Logger.critical(
+            f'Invalid image_pipeline_type {data_generation_config.image_pipeline_type}. '
+            f'Please select one from {ImagePipelineType.get_values()}.') # pragma: no cover
 
     # Get the layer weighting function corresponding to the specified type
     bn_layer_weighting_fn = bn_layer_weighting_function_dict.get(data_generation_config.layer_weighting_type)
@@ -83,7 +85,7 @@ def get_data_generation_classes(
     if bn_layer_weighting_fn is None:
         Logger.critical(
             f'Invalid layer_weighting_type {data_generation_config.layer_weighting_type}. '
-            f'Please select one from {BNLayerWeightingType.get_values()}.')
+            f'Please select one from {BNLayerWeightingType.get_values()}.') # pragma: no cover
 
     # Get the image initialization function corresponding to the specified type
     image_initialization_fn = image_initialization_function_dict.get(data_generation_config.data_init_type)
@@ -92,7 +94,7 @@ def get_data_generation_classes(
     if image_initialization_fn is None:
         Logger.critical(
             f'Invalid data_init_type {data_generation_config.data_init_type}. '
-            f'Please select one from {DataInitType.get_values()}.')
+            f'Please select one from {DataInitType.get_values()}.') # pragma: no cover
 
     # Get the BatchNorm alignment loss function corresponding to the specified type
     bn_alignment_loss_fn = bn_alignment_loss_function_dict.get(data_generation_config.bn_alignment_loss_type)
@@ -101,7 +103,7 @@ def get_data_generation_classes(
     if bn_alignment_loss_fn is None:
         Logger.critical(
             f'Invalid bn_alignment_loss_type {data_generation_config.bn_alignment_loss_type}. '
-            f'Please select one from {BatchNormAlignemntLossType.get_values()}.')
+            f'Please select one from {BatchNormAlignemntLossType.get_values()}.') # pragma: no cover
 
     # Get the output loss function corresponding to the specified type
     output_loss_fn = output_loss_function_dict.get(data_generation_config.output_loss_type)
@@ -110,7 +112,7 @@ def get_data_generation_classes(
     if output_loss_fn is None:
         Logger.critical(
             f'Invalid output_loss_type {data_generation_config.output_loss_type}. '
-            f'Please select one from {OutputLossType.get_values()}.')
+            f'Please select one from {OutputLossType.get_values()}.') # pragma: no cover
 
     # Initialize the dataset for data generation
     init_dataset = image_initialization_fn(

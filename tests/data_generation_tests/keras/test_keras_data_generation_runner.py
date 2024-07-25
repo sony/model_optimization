@@ -41,10 +41,12 @@ class KerasDataGenerationTestRunner(unittest.TestCase):
 
     def test_keras_image_pipeline_types(self):
         BaseKerasDataGenerationTest(self, image_pipeline_type=ImagePipelineType.IDENTITY).run_test()
-        BaseKerasDataGenerationTest(self, image_pipeline_type=ImagePipelineType.RANDOM_CROP_FLIP,
+        BaseKerasDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
                                     extra_pixels=0).run_test()
-        BaseKerasDataGenerationTest(self, image_pipeline_type=ImagePipelineType.RANDOM_CROP_FLIP,
-                                    extra_pixels=1).run_test()
+        BaseKerasDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
+                                    image_clipping=False, extra_pixels=1).run_test()
+        BaseKerasDataGenerationTest(self, image_pipeline_type=ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
+                                    image_clipping=True, extra_pixels=1).run_test()
 
     def test_keras_image_normalization_types(self):
         BaseKerasDataGenerationTest(self, image_normalization_type=ImageNormalizationType.KERAS_APPLICATIONS).run_test()
@@ -52,8 +54,9 @@ class KerasDataGenerationTestRunner(unittest.TestCase):
 
     def test_keras_output_loss_types(self):
         BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.NONE).run_test()
-        BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.MIN_MAX_DIFF).run_test()
-        BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.REGULARIZED_MIN_MAX_DIFF).run_test()
+        BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.NEGATIVE_MIN_MAX_DIFF, output_loss_multiplier=0.1).run_test()
+        BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.INVERSE_MIN_MAX_DIFF, output_loss_multiplier=0.1).run_test()
+        BaseKerasDataGenerationTest(self, output_loss_type=OutputLossType.REGULARIZED_MIN_MAX_DIFF, output_loss_multiplier=0.1).run_test()
 
     def test_keras_no_bn(self):
         with self.assertRaises(Exception) as e:

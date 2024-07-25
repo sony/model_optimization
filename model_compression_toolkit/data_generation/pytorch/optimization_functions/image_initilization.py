@@ -104,7 +104,7 @@ def diverse_sample(size: Tuple[int, ...]) -> Tensor:
 
 def default_data_init_fn(
         n_images: int = 1000,
-        size: tuple = (224, 224),
+        size: Union[int, Tuple[int, int]] = (224, 224),
         crop: int = 32,
         sample_fn: Callable = diverse_sample,
         batch_size: int = 50) -> Tuple[int, DataLoader]:
@@ -113,7 +113,7 @@ def default_data_init_fn(
 
     Args:
         n_images (int): The number of random samples.
-        size (Tuple[int, int]): The size of each sample.
+        size (Union[int, Tuple[int, int]]): The size of each sample.
         crop (int): The crop size.
         sample_fn (Callable): The function to generate a random sample.
         batch_size (int): The batch size.

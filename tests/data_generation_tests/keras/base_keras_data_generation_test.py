@@ -62,13 +62,14 @@ class BaseKerasDataGenerationTest:
                  initial_lr=1.0,
                  output_loss_multiplier=0.0001,
                  bn_alignment_loss_type: BatchNormAlignemntLossType = BatchNormAlignemntLossType.L2_SQUARE,
-                 output_loss_type: OutputLossType = OutputLossType.MIN_MAX_DIFF,
+                 output_loss_type: OutputLossType = OutputLossType.NONE,
                  data_init_type: DataInitType = DataInitType.Gaussian,
                  layer_weighting_type: BNLayerWeightingType = BNLayerWeightingType.AVERAGE,
                  image_granularity=ImageGranularity.BatchWise,
-                 image_pipeline_type: ImagePipelineType = ImagePipelineType.RANDOM_CROP_FLIP,
+                 image_pipeline_type: ImagePipelineType = ImagePipelineType.SMOOTHING_AND_AUGMENTATION,
                  image_normalization_type: ImageNormalizationType = ImageNormalizationType.KERAS_APPLICATIONS,
                  extra_pixels: int = 0,
+                 image_clipping: bool = False,
                  bn_layer_types: List = [BatchNormalization]
                  ):
         self.unit_test = unit_test
@@ -92,6 +93,7 @@ class BaseKerasDataGenerationTest:
         self.image_pipeline_type = image_pipeline_type
         self.image_normalization_type = image_normalization_type
         self.extra_pixels = extra_pixels
+        self.image_clipping = image_clipping
         self.bn_layer_types = bn_layer_types
 
     def run_test(self):
@@ -102,10 +104,12 @@ class BaseKerasDataGenerationTest:
             optimizer=self.optimizer,
             scheduler_type=self.scheduler_type,
             image_normalization_type=self.image_normalization_type,
+            image_pipeline_type=self.image_pipeline_type,
             layer_weighting_type=self.layer_weighting_type,
             image_granularity=self.image_granularity,
             data_init_type=self.data_init_type,
             extra_pixels=self.extra_pixels,
+            image_clipping=self.image_clipping,
             output_loss_type=self.output_loss_type,
             output_loss_multiplier=self.output_loss_multiplier)
 

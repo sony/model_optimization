@@ -1,11 +1,12 @@
 # Data Generation Library for Model Compression Toolkit (MCT)
 
-The Data Generation Library for the Model Compression Toolkit (MCT) is a powerful Python package designed to facilitate the generation of synthetic data. This library leverages the statistics stored in the model's batch normalization (BatchNorm) layers to create synthetic data that faithfully represent the model's training data characteristics. This generated data is valuable for various compression tasks where representative data of the model's training set is needed, such as quantization and pruning.
+The Data Generation Library for the Model Compression Toolkit (MCT) is a powerful Python package designed to generate synthetic data. This library supports both PyTorch and Keras. 
 
+The effectiveness of Post-Training Quantization (PTQ) depends on the availability of high-quality representative data. However, practical scenarios often limit access to such data due to privacy or security concerns. Zero-Shot Quantization (ZSQ) provides an alternative by enabling PTQ with synthetic data. We leverage the statistics stored in batch normalization (BN) layers within pre-trained models to generate synthetic data that faithfully represents the model's training data characteristics.
 
 ## Key Features
 
-- **Synthetic Data Generation**: Generate synthetic data based on the statistics from the model's BatchNorm layers.
+- **Synthetic Data Generation**: Generate synthetic data based on the statistics from the model's BN layers.
 - **Complementary to Compression Tasks**: Use the generated data to improve various compression tasks, including quantization and pruning of neural networks.
 - **User-Friendly Interface**: The library provides easy-to-use functions, making data generation seamless and accessible to researchers, developers, and engineers.
 - **Integrates with MCT**: The Data Generation Library seamlessly integrates with the Model Compression Toolkit, enhancing its capabilities for neural network optimization and deployment.
@@ -83,7 +84,6 @@ The `get_pytorch_data_generation_config()` and `get_keras_data_generation_config
 - **'extra_pixels'** (int):  The number of extra pixels added to the input image size during data generation.
 - **'bn_layer_types'** (List): List of BatchNorm layer types present in the model. Specifies the types of BatchNorm layers in the model that require alignment between original and generated statistics.
 - **'clip_images'** (bool):  Indicates whether the generated images should be clipped to a valid grid of pixel values. Controls whether the generated images are restricted to a valid range of pixel values. Clipping can improve image quality and avoid unrealistic pixel values.
-- **'reflection'** (bool): Indicates whether reflection is used during image clipping. Determines whether reflection is applied to the images during clipping. Reflection can help maintain image realism and continuity in certain cases.
 
 ## Results Using Generated Data
 ## PyTorch
@@ -91,10 +91,10 @@ The `get_pytorch_data_generation_config()` and `get_keras_data_generation_config
 ##### Quantization Algorithms
 Four quantization algorithms were utilized to evaluate the generated data:
 
-- **Regular Post Training Quantization (PTQ)** with 8 bit weights and activations.
+- **Post Training Quantization (PTQ)** with 8 bit weights and activations.
 - **Mixed Presicion (MP)**  with a total compression factor of x8.
-- **PTQ using a hardware-friendly Look-Up Table** for 4 bit weights, 8 bit activations.
-- **Gradient based Post Training Quantization (GPTQ)** using 4 bit weights, 8 bit activations.
+- **Quantization using a hardware-friendly Look-Up Table (LUT)** for 4 bit weights, 8 bit activations.
+- **Enhanced Post Training Quantization (EPTQ)** using 4 bit weights, 8 bit activations.
 
 All setups were tested with symmetric weights and uniform activation quantizers.
 
@@ -103,22 +103,125 @@ To ensure reliable results, all experiments were averaged over 5 different rando
 ##### Data Generations Parameters
 The evaluation was performed on the following neural network models:
 
-- Resnet18 and Mobilenet v2 from the torchvision library.
+- ResNet18, MobileNet V2, MobileNet V3, MNASNet and GoogleNet from the torchvision library.
 - Yolo-n from [ultralytics](https://github.com/ultralytics/ultralytics).
 
-The quantization algorithms were tested using three different data types as input: real data, random noise, and generated data.
-The generated data was produced using the default data generation configuration with 500 iterations (better results may be achieved with a larger iteration budget).
-- For Resnet18 and Mobilenet v2, 1024 images were generated using a data generation batch size of 32 or 128 and a resolution of 224x224. 
+The quantization algorithms were tested using real data and generated data.
+The generated data was produced using the default data generation configuration with 1000 iterations (better results may be achieved with a larger iteration budget).
+- For ResNet18, MobileNet V2, MobileNet V3, MNASNet and GoogleNet, 1024 images were generated using a data generation batch size of 128 and a resolution of 224x224. 
 - For Yolo-n, due to memory limitations, a batch size of 4 was used, and only 128 images were generated with a resolution of 640x640.
 
 Please note that the choice of quantization algorithms and data generation parameters can have a significant impact on the results. The experimental setup provides a foundation for comparing the performance of different models and quantization techniques using the generated data.
 
-|                    Model (float)                    |  Resnet18 (69.86)  |Resnet18 (69.86)     | Resnet18 (69.86)    | Resnet18 (69.86) |  Mobilenet v2 (71.89)  | Mobilenet v2 (71.89)  | Mobilenet v2 (71.89) | Mobilenet v2 (71.89) |  Yolo-v8-n (37.26)  |  Yolo-v8-n (37.26)   | Yolo-v8-n (37.26) |
-|:---------------------------------------------------:|:------------------:|:-------------------:|:-------------------:|:----------------:|:----------------------:|:---------------------:|:--------------------:|:--------------------:|:-------------------:|:--------------------:|:-----------------:|
-| Data type (rows) \ Quantization algorithm (columns) |      PTQ W8A8      | MP compression x 8  |    PTQ LUT W4A8     |    GPTQ W4A8     |        PTQ W8A8        | MP compression x 8    |  PTQ LUT W4A8        |      GPTQ W4A8       |      PTQ W8A8       |     PTQ LUT W4A8     |     GPTQ W4A8     |
-|                      Real Data                      |       69.49        |        58.48        |        66.24        |      69.30       |         71.168         |         64.52         |         64.4         |         70.6         |        36.23        |        29.79         |       25.82       |                  
-|                    Random Noise                     |        8.3         |        43.58        |        12.6         |      11.13       |          7.9           |         30.02         |         7.14         |        11.30         |        27.45        |         4.15         |       2.68        |                  
-|                  Image Generation                   |       69.51        |        58.57        |        65.70        |     69.07	    |         70.155         |         62.82         |        62.49         |        69.59         |        35.12        |        27.77         |       25.02       |                  
+[//]: # (|                    Model &#40;float&#41;                    |  Resnet18 &#40;69.86&#41;  |Resnet18 &#40;69.86&#41;     | Resnet18 &#40;69.86&#41;    | Resnet18 &#40;69.86&#41; |  Mobilenet v2 &#40;71.89&#41;  | Mobilenet v2 &#40;71.89&#41;  | Mobilenet v2 &#40;71.89&#41; | Mobilenet v2 &#40;71.89&#41; |  Yolo-v8-n &#40;37.26&#41;  |  Yolo-v8-n &#40;37.26&#41;   | Yolo-v8-n &#40;37.26&#41; |)
+
+[//]: # (|:---------------------------------------------------:|:------------------:|:-------------------:|:-------------------:|:----------------:|:----------------------:|:---------------------:|:--------------------:|:--------------------:|:-------------------:|:--------------------:|:-----------------:|)
+
+[//]: # (| Data type &#40;rows&#41; \ Quantization algorithm &#40;columns&#41; |      PTQ W8A8      | MP compression x 8  |    PTQ LUT W4A8     |    GPTQ W4A8     |        PTQ W8A8        | MP compression x 8    |  PTQ LUT W4A8        |      GPTQ W4A8       |      PTQ W8A8       |     PTQ LUT W4A8     |     GPTQ W4A8     |)
+
+[//]: # (|                      Real Data                      |       69.49        |        58.48        |        66.24        |      69.30       |         71.168         |         64.52         |         64.4         |         70.6         |        36.23        |        29.79         |       25.82       |                  )
+
+[//]: # (|                    Random Noise                     |        8.3         |        43.58        |        12.6         |      11.13       |          7.9           |         30.02         |         7.14         |        11.30         |        27.45        |         4.15         |       2.68        |                  )
+
+[//]: # (|                  Image Generation                   |       69.51        |        58.57        |        65.70        |     69.07	    |         70.155         |         62.82         |        62.49         |        69.59         |        35.12        |        27.77         |       25.02       |                  )
+
+<table>
+    <thead>
+        <tr>
+            <th rowspan="2" style="text-align:center;">Model (Float)</th>
+            <th rowspan="2" style="text-align:center;">Data Generation Time (Minutes)</th>
+            <th colspan="2" style="text-align:center;">PTQ W8A8</th>
+            <th colspan="2" style="text-align:center;">EPTQ W4A8</th>
+            <th colspan="2" style="text-align:center;">Mixed Precision Compression x8</th>
+            <th colspan="2" style="text-align:center;">Look Up Table W4A8</th>
+        </tr>
+        <tr>
+            <th style="text-align:center;">Real Data</th>
+            <th style="text-align:center;">Data Generation</th>
+            <th style="text-align:center;">Real Data</th>
+            <th style="text-align:center;">Data Generation</th>
+            <th style="text-align:center;">Real Data</th>
+            <th style="text-align:center;">Data Generation</th>
+            <th style="text-align:center;">Real Data</th>
+            <th style="text-align:center;">Data Generation</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="text-align:center;">ResNet18 (69.86)</td>
+            <td style="text-align:center;">12.5</td>
+            <td style="text-align:center;">69.6</td>
+            <td style="text-align:center;">69.57</td>
+            <td style="text-align:center;">68.906</td>
+            <td style="text-align:center;">68.64</td>
+            <td style="text-align:center;">62.464</td>
+            <td style="text-align:center;">61.834</td>
+            <td style="text-align:center;">66.209</td>
+            <td style="text-align:center;">64.739</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">MobileNetV2 (71.89)</td>
+            <td style="text-align:center;">26.5</td>
+            <td style="text-align:center;">71.142</td>
+            <td style="text-align:center;">71.388</td>
+            <td style="text-align:center;">69.333</td>
+            <td style="text-align:center;">68.599</td>
+            <td style="text-align:center;">64.319</td>
+            <td style="text-align:center;">66.355</td>
+            <td style="text-align:center;">63.963</td>
+            <td style="text-align:center;">64.136</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">MobileNet V3 (74.056)</td>
+            <td style="text-align:center;">22</td>
+            <td style="text-align:center;">73.592</td>
+            <td style="text-align:center;">73.628</td>
+            <td style="text-align:center;">71.644</td>
+            <td style="text-align:center;">70.581</td>
+            <td style="text-align:center;">66.748</td>
+            <td style="text-align:center;">65.358</td>
+            <td style="text-align:center;">63.364</td>
+            <td style="text-align:center;">63.292</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">MNASNet (73.412)</td>
+            <td style="text-align:center;">27</td>
+            <td style="text-align:center;">73.186</td>
+            <td style="text-align:center;">69.377</td>
+            <td style="text-align:center;">71.081</td>
+            <td style="text-align:center;">69.076</td>
+            <td style="text-align:center;">66.811</td>
+            <td style="text-align:center;">67.332</td>
+            <td style="text-align:center;">66.21</td>
+            <td style="text-align:center;">65.862</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">GoogleNet (69.758)</td>
+            <td style="text-align:center;">27.5</td>
+            <td style="text-align:center;">69.71</td>
+            <td style="text-align:center;">69.332</td>
+            <td style="text-align:center;">68.757</td>
+            <td style="text-align:center;">68.286</td>
+            <td style="text-align:center;">59.854</td>
+            <td style="text-align:center;">54.828</td>
+            <td style="text-align:center;">65.904</td>
+            <td style="text-align:center;">65.862</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">Yolo-v8-n (37.26)</td>
+            <td style="text-align:center;">50</td>
+            <td style="text-align:center;">36.23</td>
+            <td style="text-align:center;">35.12</td>
+            <td style="text-align:center;">25.82</td>
+            <td style="text-align:center;">25.02</td>
+            <td style="text-align:center;">-</td>
+            <td style="text-align:center;">-</td>
+            <td style="text-align:center;">29.79</td>
+            <td style="text-align:center;">27.77</td>
+        </tr>
+    </tbody>
+</table>
+
 
 
 ## Keras

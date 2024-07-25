@@ -25,6 +25,7 @@ from model_compression_toolkit.data_generation.common.optimization_utils import 
     BatchOptimizationHolder, AllImagesStatsHolder, BatchStatsHolder
 from model_compression_toolkit.data_generation.keras.constants import IMAGE_MIN_VAL, IMAGE_MAX_VAL, BATCH_AXIS, \
     H_AXIS, W_AXIS
+from model_compression_toolkit.data_generation.keras.image_operations import create_valid_grid
 from model_compression_toolkit.data_generation.keras.model_info_exctractors import KerasActivationExtractor, \
     KerasOriginalBNStatsHolder
 
@@ -64,11 +65,7 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
         # IMAGE_MIN_VAL( default set to 0) - IMAGE_MAX_VAL ( default set to 255) before normalization
         self.normalization_mean = normalization_mean
         self.normalization_std = normalization_std
-        self.valid_grid = []
-        for i, (mean, var) in enumerate(zip(self.normalization_mean, self.normalization_std)):
-            min_val = (IMAGE_MIN_VAL - mean) / var
-            max_val = (IMAGE_MAX_VAL - mean) / var
-            self.valid_grid.append((min_val, max_val))
+        self.valid_grid = create_valid_grid(self.normalization_mean, self.normalization_std)
 
         super(KerasImagesOptimizationHandler, self).__init__(model=model,
                                                              data_gen_batch_size=
@@ -83,8 +80,6 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
                                                              initial_lr=data_generation_config.initial_lr,
                                                              normalization_mean=self.normalization_mean,
                                                              normalization_std=self.normalization_std,
-                                                             clip_images=data_generation_config.clip_images,
-                                                             reflection=data_generation_config.reflection,
                                                              eps=eps)
 
         # Set the mean axis based on the image granularity
@@ -140,22 +135,14 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
         Returns:
             tf.Tensor: Clipped and reflected tensor.
         """
-        if self.clip_images:
-            images = z.numpy()
-            for i_ch in range(len(self.valid_grid)):
-                # Clip the values of the channel within the valid range.
-                clamp = tf.clip_by_value(t=z[:, :, :, i_ch], clip_value_min=self.valid_grid[i_ch][0],
-                                         clip_value_max=self.valid_grid[i_ch][1])
-                if self.reflection:
-                    # Reflect the values.
-                    images[:, :, :, i_ch] = 2 * clamp - z[:, :, :, i_ch]
-                else:
-                    images[:, :, :, i_ch] = clamp
-            # Assign the clipped reflected values back to `z`.
-            z.assign(images)
-            return z
-        else:
-            return z
+        images = z.numpy()
+        for i_ch in range(len(self.valid_grid)):
+            # Clip the values of the channel within the valid range.
+            clamp = tf.clip_by_value(t=z[:, :, :, i_ch], clip_value_min=self.valid_grid[i_ch][0],
+                                     clip_value_max=self.valid_grid[i_ch][1])
+        # Assign the clipped reflected values back to `z`.
+        z.assign(images)
+        return z
 
     def get_layer_accumulated_stats(self, layer_name: str) -> Tuple[tf.Tensor, tf.Tensor]:
         """
@@ -255,7 +242,7 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
                           images: tf.Tensor,
                           gradients: tf.Tensor,
                           loss: tf.Tensor,
-                          i_ter: int):
+                          i_iter: int):
         """
         Perform an optimization step.
 
@@ -264,7 +251,7 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
             images (tf.Tensor): The images to optimize for the batch.
             gradients (List[tf.Tensor]): The gradients calculated for the images.
             loss (tf.Tensor): Loss value.
-            i_ter (int): Current optimization iteration.
+            i_iter (int): Current optimization iteration.
         """
         # Get optimizer and scheduler for the specific batch index
         optimizer = self.get_optimizer_by_batch_index(batch_index=batch_index)
@@ -274,7 +261,7 @@ class KerasImagesOptimizationHandler(ImagesOptimizationHandler):
         optimizer.apply_gradients(zip(gradients, [images]))
 
         # Perform scheduler step
-        scheduler.on_epoch_end(loss=tf.reduce_mean(loss))
+        scheduler.on_epoch_end(epoch=i_iter, loss=tf.reduce_mean(loss))
 
     def get_finilized_data_loader(self) -> np.ndarray:
         """
@@ -321,8 +308,8 @@ class KerasBatchOptimizationHolder(BatchOptimizationHolder):
             initial_lr (float): The initial learning rate used by the optimizer.
         """
         self.images = images
-        self.optimizer = optimizer(lr=initial_lr)
-        self.scheduler = scheduler(optim_lr=self.optimizer)
+        self.optimizer = optimizer(learning_rate=initial_lr)
+        self.scheduler = scheduler(optimizer=self.optimizer)
 
 
 class KerasAllImagesStatsHolder(AllImagesStatsHolder):

@@ -15,16 +15,22 @@
 from typing import Dict, Callable
 
 from model_compression_toolkit.data_generation.common.enums import BNLayerWeightingType
-from model_compression_toolkit.data_generation.keras.model_info_exctractors import KerasOriginalBNStatsHolder
+from model_compression_toolkit.data_generation.keras.model_info_exctractors import KerasOriginalBNStatsHolder, \
+    KerasActivationExtractor
 
 
-def average_layer_weighting_fn(orig_bn_stats_holder: KerasOriginalBNStatsHolder, **kwargs) -> Dict[str, float]:
+def average_layer_weighting_fn(orig_bn_stats_holder: KerasOriginalBNStatsHolder,
+                               activation_extractor: KerasActivationExtractor,
+                               i_iter: int,
+                               n_iter: int) -> Dict[str, float]:
     """
     Calculate average weighting for each batch normalization layer.
 
     Args:
         orig_bn_stats_holder (KerasOriginalBNStatsHolder): Holder for original batch normalization statistics.
-        **kwargs: Additional arguments if needed.
+        activation_extractor (KerasActivationExtractor): The activation extractor for the model.
+        i_iter (int): Current optimization iteration.
+        n_iter (int): Total number of optimization iterations.
 
     Returns:
         Dict[str, float]: A dictionary containing layer names as keys and average weightings as values.
@@ -33,14 +39,18 @@ def average_layer_weighting_fn(orig_bn_stats_holder: KerasOriginalBNStatsHolder,
     return {bn_layer_name: 1 / num_bn_layers for bn_layer_name in orig_bn_stats_holder.get_bn_layer_names()}
 
 
-def first_bn_multiplier_weighting_fn(orig_bn_stats_holder: KerasOriginalBNStatsHolder, **kwargs) -> Dict[str, float]:
+def first_bn_multiplier_weighting_fn(orig_bn_stats_holder: KerasOriginalBNStatsHolder,
+                                     activation_extractor: KerasActivationExtractor,
+                                     i_iter: int,
+                                     n_iter: int) -> Dict[str, float]:
     """
     Calculate layer weightings with a higher multiplier for the first batch normalization layer.
 
     Args:
         orig_bn_stats_holder (KerasOriginalBNStatsHolder): Holder for original batch normalization statistics.
-        **kwargs: Additional arguments if needed.
-
+        activation_extractor (KerasActivationExtractor): The activation extractor for the model.
+        i_iter (int): Current optimization iteration.
+        n_iter (int): Total number of optimization iterations.
     Returns:
         Dict[str, float]: A dictionary containing layer names as keys and weightings as values.
     """

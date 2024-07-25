@@ -13,8 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 import torch
+from torch import Tensor
 import numpy as np
 from typing import Union
+
+from model_compression_toolkit.core.pytorch.constants import MAX_FLOAT16, MIN_FLOAT16
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.logger import Logger
 
@@ -83,3 +86,27 @@ def torch_tensor_to_numpy(tensor: Union[torch.Tensor, list, tuple]) -> Union[np.
         return tensor.cpu().detach().contiguous().numpy()
     else:
         Logger.critical(f'Unsupported type for conversion to Numpy array: {type(tensor)}.')
+
+
+def clip_inf_values_float16(tensor: Tensor) -> Tensor:
+    """
+    Clips +inf and -inf values in a float16 tensor to the maximum and minimum representable values.
+
+    Parameters:
+    tensor (Tensor): Input PyTorch tensor of dtype float16.
+
+    Returns:
+    Tensor: A tensor with +inf values replaced by the maximum float16 value,
+            and -inf values replaced by the minimum float16 value.
+    """
+    # Check if the tensor is of dtype float16
+    if tensor.dtype != torch.float16:
+        return tensor
+
+    # Create a mask for inf values (both positive and negative)
+    inf_mask = torch.isinf(tensor)
+
+    # Replace inf values with max float16 value
+    tensor[inf_mask] = MAX_FLOAT16 * torch.sign(tensor[inf_mask])
+
+    return tensor

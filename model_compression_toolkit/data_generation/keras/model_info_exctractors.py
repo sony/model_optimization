@@ -72,8 +72,6 @@ class KerasActivationExtractor(ActivationExtractor):
     def __init__(self,
                  model: tf.keras.Model,
                  layer_types_to_extract_inputs: List,
-                 image_granularity: ImageGranularity,
-                 image_input_manipulation: Callable,
                  linear_layers: Tuple = (Dense, Conv2D)):
         """
         Initializes the KerasActivationExtractor.
@@ -81,14 +79,10 @@ class KerasActivationExtractor(ActivationExtractor):
         Args:
             model (Model): Keras model to generate data for.
             layer_types_to_extract_inputs (List): Tuple or list of layer types.
-            image_granularity (ImageGranularity): The granularity of the images for optimization.
-            image_input_manipulation (Callable): Function for image input manipulation.
             linear_layers (Tuple): Tuple of linear layers types to retrieve the output of the last linear layer
 
         """
         self.model = model
-        self.image_input_manipulation = image_input_manipulation
-        self.image_granularity = image_granularity
         self.layer_types_to_extract_inputs = tuple(layer_types_to_extract_inputs)
         self.linear_layers = linear_layers
 
@@ -96,7 +90,6 @@ class KerasActivationExtractor(ActivationExtractor):
         self.bn_layer_names = [layer.name for layer in model.layers if isinstance(layer,
                                                                                   self.layer_types_to_extract_inputs)]
         self.num_layers = len(self.bn_layer_names)
-        Logger.info(f'Number of layers = {self.num_layers}')
 
         # Initialize stats containers
         self.activations = {}
@@ -206,9 +199,3 @@ class KerasActivationExtractor(ActivationExtractor):
                     last_layer = layer
                     break
         return last_layer
-
-    def remove(self):
-        """
-        Remove the stats containers.
-        """
-        self.activations = {}

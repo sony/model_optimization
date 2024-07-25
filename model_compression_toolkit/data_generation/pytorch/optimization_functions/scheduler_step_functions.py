@@ -17,6 +17,8 @@ from typing import Callable, Any, Dict, Tuple
 
 from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR
 from model_compression_toolkit.data_generation.common.enums import SchedulerType
+from model_compression_toolkit.data_generation.pytorch.optimization_functions.lr_scheduler import \
+    ReduceLROnPlateauWithReset
 
 
 def get_reduce_lr_on_plateau_scheduler(n_iter: int) -> Callable:
@@ -30,6 +32,18 @@ def get_reduce_lr_on_plateau_scheduler(n_iter: int) -> Callable:
         Callable: A partial function to create ReduceLROnPlateau scheduler with specified parameters.
     """
     return partial(ReduceLROnPlateau, min_lr=1e-4, factor=0.5, patience=int(n_iter / 50))
+
+def get_reduce_lr_on_plateau_with_reset_scheduler(n_iter: int) -> Callable:
+    """
+    Get a ReduceLROnPlateauWithReset scheduler.
+
+    Args:
+        n_iter (int): The number of iterations.
+
+    Returns:
+        Callable: A partial function to create ReduceLROnPlateauWithReset scheduler with specified parameters.
+    """
+    return partial(ReduceLROnPlateauWithReset, min_lr=1e-4, factor=0.5, patience=int(n_iter / 50))
 
 def get_step_lr_scheduler(n_iter: int) -> Callable:
     """
@@ -69,5 +83,6 @@ def scheduler_step_fn(scheduler: Any, i_iter: int, loss_value: float):
 # Dictionary of scheduler functions and their corresponding step functions
 scheduler_step_function_dict: Dict[SchedulerType, Tuple[Callable, Callable]] = {
     SchedulerType.REDUCE_ON_PLATEAU: (get_reduce_lr_on_plateau_scheduler, reduce_lr_on_platu_step_fn),
+    SchedulerType.REDUCE_ON_PLATEAU_WITH_RESET: (get_reduce_lr_on_plateau_with_reset_scheduler, reduce_lr_on_platu_step_fn),
     SchedulerType.STEP: (get_step_lr_scheduler, scheduler_step_fn),
 }
