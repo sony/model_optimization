@@ -53,6 +53,13 @@ class TargetPlatformModelingTest(unittest.TestCase):
             tp.TargetPlatformModel(test_qco)
         self.assertEqual('Default QuantizationConfigOptions must contain only one option', str(e.exception))
 
+    def test_tp_model_show(self):
+        tpm = tp.TargetPlatformModel(TEST_QCO)
+        with tpm:
+            a = tp.OperatorsSet("opA")
+
+        tpm.show()
+
 
 class OpsetTest(unittest.TestCase):
 

@@ -214,7 +214,7 @@ class TargetPlatformModel(ImmutableClass):
         Returns: Dictionary that summarizes the TargetPlatformModel properties (for display purposes).
 
         """
-        return {"Model name": self.name,  # pragma: no cover
+        return {"Model name": self.name,
                 "Default quantization config": self.get_default_config().get_info(),
                 "Operators sets": [o.get_info() for o in self.operator_set],
                 "Fusing patterns": [f.get_info() for f in self.fusing_patterns]
@@ -226,7 +226,7 @@ class TargetPlatformModel(ImmutableClass):
         Display the TargetPlatformModel.
 
         """
-        pprint.pprint(self.get_info(), sort_dicts=False)  # pragma: no cover
+        pprint.pprint(self.get_info(), sort_dicts=False)
 
     def set_simd_padding(self,
                          is_simd_padding: bool):
