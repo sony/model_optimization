@@ -61,7 +61,7 @@ class BaseTestEnd2EndPytorchXQuant(unittest.TestCase):
         from mct_quantizers import __version__ as mctq_version
         if mctq_version == '1.5.1':
             subprocess.check_call([sys.executable, "-m", "pip", "uninstall", '-y', 'mct-quantizers'])
-            subprocess.check_call([sys.executable, "-m", "pip", "install", 'mct-quantizers-nightly'])
+            subprocess.check_call([sys.executable, "-m", "pip", "install", 'mct-quantizers-nightly==1.5.1.20240728.post1314'])
         else:
             raise Exception(f"New mctq version was released, thus this patch should be removed!")
 
