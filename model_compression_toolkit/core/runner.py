@@ -183,13 +183,13 @@ def core_runner(in_model: Any,
 
     scheduler_info = None
     if core_config.debug_config.simulate_scheduler:
-        fused_graph = copy.deepcopy(tg)
-        fused_nodes_mapping = GraphFuser().create_fused_graph(fused_graph)
-        memory_graph = MemoryGraph(fused_graph)
+        graph_to_fuse = copy.deepcopy(tg)
+        fused_nodes_mapping = GraphFuser().create_fused_graph(graph_to_fuse)
+        memory_graph = MemoryGraph(graph_to_fuse)
         schedule, max_cut, cuts = compute_graph_max_cut(memory_graph)
         scheduler_info = SchedulerInfo(
             operators_scheduling=schedule,
-            max_cut=max_cut,
+            max_cut=float(max_cut),
             cuts=cuts,
             fused_nodes_mapping=fused_nodes_mapping
         )

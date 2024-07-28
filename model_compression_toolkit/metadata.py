@@ -73,9 +73,9 @@ def get_scheduler_metadata(scheduler_info: SchedulerInfo) -> Dict[str, Any]:
                 OP_RECORD: [op.name for op in cut.op_record],
                 MEM_ELEMENTS: [
                     {
-                        SHAPE: tensor.shape,
+                        SHAPE: list(tensor.shape),
                         NODE_NAME: tensor.node_name,
-                        TOTAL_SIZE: tensor.total_size,
+                        TOTAL_SIZE: float(tensor.total_size),
                         NODE_OUTPUT_INDEX: tensor.node_output_index
                     }
                     for tensor in cut.mem_elements.elements
