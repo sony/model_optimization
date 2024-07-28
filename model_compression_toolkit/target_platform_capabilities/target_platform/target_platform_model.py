@@ -96,7 +96,7 @@ class TargetPlatformModel(ImmutableClass):
         for op_set in self.operator_set:
             if operators_set_name == op_set.name:
                 return op_set.qc_options
-        return get_default_quantization_config_options()
+        return self.default_qco
 
     def get_default_op_quantization_config(self) -> OpQuantizationConfig:
         """
@@ -158,7 +158,7 @@ class TargetPlatformModel(ImmutableClass):
             self.fusing_patterns.append(tp_model_component)
         elif isinstance(tp_model_component, OperatorsSetBase):
             self.operator_set.append(tp_model_component)
-        else:
+        else:  # pragma: no cover
             Logger.critical(f'Attempted to append an unrecognized TargetPlatformModelComponent of type: {type(tp_model_component)}.')
 
     def __enter__(self):
@@ -214,7 +214,7 @@ class TargetPlatformModel(ImmutableClass):
         Returns: Dictionary that summarizes the TargetPlatformModel properties (for display purposes).
 
         """
-        return {"Model name": self.name,
+        return {"Model name": self.name,  # pragma: no cover
                 "Default quantization config": self.get_default_config().get_info(),
                 "Operators sets": [o.get_info() for o in self.operator_set],
                 "Fusing patterns": [f.get_info() for f in self.fusing_patterns]
@@ -226,7 +226,7 @@ class TargetPlatformModel(ImmutableClass):
         Display the TargetPlatformModel.
 
         """
-        pprint.pprint(self.get_info(), sort_dicts=False)
+        pprint.pprint(self.get_info(), sort_dicts=False)  # pragma: no cover
 
     def set_simd_padding(self,
                          is_simd_padding: bool):
