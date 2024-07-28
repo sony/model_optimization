@@ -43,7 +43,7 @@ deployment performance.
     <tr>
         <td> <a href="pytorch/pytorch_timm_classification_model_for_imx500.ipynb">regnetx_002.pycls_in1k</a></td>
         <td>PyTorch</td>
-        <td>MCT Model Garden</td>
+        <td>Timm</td>
         <td>ImageNet</td>
         <td>68.752</td>
         <td>68.652</td>
@@ -51,7 +51,7 @@ deployment performance.
     <tr>
         <td> <a href="pytorch/pytorch_timm_classification_model_for_imx500.ipynb">regnety_004.pycls_in1k</a></td>
         <td>PyTorch</td>
-        <td>MCT Model Garden</td>
+        <td>Timm</td>
         <td>ImageNet</td>
         <td>74.026</td>
         <td>73.72</td>
