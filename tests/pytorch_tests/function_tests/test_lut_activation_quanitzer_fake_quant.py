@@ -1,4 +1,4 @@
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,19 +15,22 @@
 
 import unittest
 
+import torch
 import numpy as np
 
 from model_compression_toolkit.constants import LUT_VALUES, THRESHOLD, SIGNED, \
     LUT_VALUES_BITWIDTH
-from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import activation_lut_kmean_quantizer
+from model_compression_toolkit.core.pytorch.quantizer.lut_fake_quant import activation_lut_kmean_quantizer
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
+from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 
-class TestLUTQuantizerFakeQuant(unittest.TestCase):
+class TestLUTQuantizerFakeQuantSigned(BasePytorchTest):
 
-    def test_signed_lut_activation_fake_quant(self):
+    def run_test(self, seed=0, **kwargs):
         threshold = 16
-        lut_values = np.array([-8.0, 0.0, 4.0])
-        tensor = np.linspace(-1*threshold, threshold, num=2*threshold+1)
+        lut_values = to_torch_tensor(np.array([-8.0, 0.0, 4.0]))
+        tensor = to_torch_tensor(np.linspace(-1 * threshold, threshold, num=2 * threshold + 1))
         quantization_params = {SIGNED: True,
                                LUT_VALUES: lut_values,
                                THRESHOLD: threshold}
@@ -43,19 +46,21 @@ class TestLUTQuantizerFakeQuant(unittest.TestCase):
         expected_unique_values = (lut_values / div_val_output) * threshold
 
         # Check expected unique values of the output
-        self.assertTrue((np.unique(output) == expected_unique_values).all())
+        self.unit_test.assertTrue((torch.unique(output) == expected_unique_values).all())
 
         # We expected each negative value in the input to be in the first center, each zero to be in the second
         # center and each positive value to be in the last center
-        input_sign = np.sign(tensor)
-        self.assertTrue((output[input_sign == -1] == expected_unique_values[0]).numpy().all())
-        self.assertTrue((output[input_sign == 0] == expected_unique_values[1]).numpy().all())
-        self.assertTrue((output[input_sign == 1] == expected_unique_values[2]).numpy().all())
+        input_sign = torch.sign(tensor)
+        self.unit_test.assertTrue((output[input_sign == -1] == expected_unique_values[0]).all())
+        self.unit_test.assertTrue((output[input_sign == 0] == expected_unique_values[1]).all())
+        self.unit_test.assertTrue((output[input_sign == 1] == expected_unique_values[2]).all())
 
-    def test_unsigned_lut_activation_fake_quant(self):
+class TestLUTQuantizerFakeQuantUnsigned(BasePytorchTest):
+
+    def run_test(self, seed=0, **kwargs):
         threshold = 8
-        lut_values = np.array([0.0, 256.0])
-        tensor = np.linspace(0, threshold, num=threshold+1)
+        lut_values = to_torch_tensor(np.array([0.0, 256.0]))
+        tensor = to_torch_tensor(np.linspace(0, threshold, num=threshold+1))
         quantization_params = {SIGNED: False,
                                LUT_VALUES: lut_values,
                                THRESHOLD: threshold}
@@ -71,12 +76,12 @@ class TestLUTQuantizerFakeQuant(unittest.TestCase):
         expected_unique_values = (lut_values / div_val_output) * threshold
 
         # Check expected unique values of the output
-        self.assertTrue((np.unique(output) == expected_unique_values).all())
+        self.unit_test.assertTrue((torch.unique(output) == expected_unique_values).all())
 
         # We expected each value that is lower or equal to 4 in the input to be in the first center and each value
         # bigger than that to be in the last center
-        self.assertTrue((output[tensor <= 4] == expected_unique_values[0]).numpy().all())
-        self.assertTrue((output[tensor > 4] == expected_unique_values[1]).numpy().all())
+        self.unit_test.assertTrue((output[tensor <= 4] == expected_unique_values[0]).all())
+        self.unit_test.assertTrue((output[tensor > 4] == expected_unique_values[1]).all())
 
 
 if __name__ == '__main__':
