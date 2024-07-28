@@ -22,10 +22,7 @@ from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeWeightsQuantizationConfig, \
     WeightsAttrQuantizationConfig
-
-# If the quantization config does not contain kernel channel mapping or the weights
-# quantization is not per-channel, we use a dummy channel mapping.
-dummy_channel_mapping = DefaultDict(default_value=(None, None))
+from model_compression_toolkit.logger import Logger
 
 
 def get_weights_qparams(weights_attr_values: np.ndarray,
@@ -64,29 +61,10 @@ def get_weights_qparams(weights_attr_values: np.ndarray,
             node=node,
             hessian_info_service=hessian_info_service,
             num_hessian_samples=num_hessian_samples)
-    else:
+    else:  # pragma: no cover
+        Logger.error(f"Requested weights quantization parameters computation for node {node.name} without providing a "
+                     f"weights_quantization_params_fn."
+                     f"Returning an empty dictionary since no quantization parameters were computed.")
         weights_params = {}
 
     return weights_params, output_channels_axis
-
-
-def _get_kernel_channels_mapping(fw_info:FrameworkInfo,
-                                use_dummy: bool) -> DefaultDict:
-    """
-    Get a kernel channel mapping from the framework info, or use dummy mapping (which returns a
-    tuple of Nones) if use_use_dummy is True.
-
-    Args:
-        fw_info: Framework info which contains a kernel channels mapping.
-        use_dummy: Whether to use a dummy mapping or not.
-
-    Returns:
-        Kernel channels mapping.
-    """
-
-    # Set a kernel channels mapping
-    if use_dummy:  # If kernel mapping is missing, we use a dummy channels mapping
-        kernel_channels_mapping = dummy_channel_mapping
-    else:
-        kernel_channels_mapping = fw_info.kernel_channels_mapping
-    return kernel_channels_mapping
