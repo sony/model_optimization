@@ -38,7 +38,7 @@ if FOUND_TF:
 
             super().__init__(quantization_config)
 
-else:
+else:  # pragma: no cover
     class BaseKerasQATTrainableQuantizer(BaseKerasTrainableQuantizer):
         def __init__(self,
                      quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
