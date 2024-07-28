@@ -127,10 +127,10 @@ def generate_custom_test_tp_model(name: str,
     with custom_tp_model:
         for op_set in base_tp_model.operator_set:
             # Add existing OperatorSets from base TP model
-            qc_options = op_set.qc_options if \
-                (operator_sets_dict is None or op_set.name not in operator_sets_dict) and \
-                (op_set.get_info().get(OPS_SET_LIST) is None) \
-                else operator_sets_dict[op_set.name]
+            if operator_sets_dict is not None and operator_sets_dict.get(op_set.name) is not None:
+                qc_options = operator_sets_dict[op_set.name]
+            else:
+                qc_options = op_set.qc_options
 
             tp.OperatorsSet(op_set.name, qc_options)
 
