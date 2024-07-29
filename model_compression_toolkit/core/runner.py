@@ -222,5 +222,6 @@ def _set_final_resource_utilization(graph: Graph,
 
     final_ru = ResourceUtilization()
     final_ru.set_resource_utilization_by_target(final_ru_dict)
+    print(final_ru)
     graph.user_info.final_resource_utilization = final_ru
     graph.user_info.mixed_precision_cfg = final_bit_widths_config

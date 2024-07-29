@@ -83,14 +83,17 @@ def get_weights_only_mp_tpc_keras(base_config, default_config, mp_bitwidth_candi
     return generate_keras_tpc(name=name, tp_model=mp_tp_model)
 
 
-def get_tpc_with_activation_mp_keras(base_config, default_config, mp_bitwidth_candidates_list, name):
+def get_tpc_with_activation_mp_keras(base_config, default_config, mp_bitwidth_candidates_list, name, custom_opsets={}):
     mp_tp_model = generate_tp_model_with_activation_mp(base_cfg=base_config,
                                                        default_config=default_config,
-                                                       mp_bitwidth_candidates_list=mp_bitwidth_candidates_list)
+                                                       mp_bitwidth_candidates_list=mp_bitwidth_candidates_list,
+                                                       custom_opsets=list(custom_opsets.keys()))
 
     op_sets_to_layer_add = {
         "Input": [InputLayer],
     }
+
+    op_sets_to_layer_add.update(custom_opsets)
 
     # we assume a standard tp model with standard operator sets names,
     # otherwise - need to generate the tpc per test and not with this generic function

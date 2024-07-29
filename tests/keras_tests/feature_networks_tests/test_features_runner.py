@@ -67,7 +67,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_t
     MixedPrecisionActivationSplitLayerTest, MixedPrecisionActivationOnlyWeightsDisabledTest, \
     MixedPrecisionActivationOnlyTest, MixedPrecisionActivationDepthwise4BitTest, MixedPrecisionActivationAddLayerTest, \
     MixedPrecisionActivationMultipleInputsTest, MixedPrecisionTotalMemoryUtilizationSearchTest, \
-    MixedPrecisionMultipleResourcesTightUtilizationSearchTest, MixedPrecisionReducedTotalMemorySearchTest
+    MixedPrecisionMultipleResourcesTightUtilizationSearchTest, MixedPrecisionReducedTotalMemorySearchTest, \
+    MixedPrecisionDistanceSigmoidTest, MixedPrecisionDistanceSoftmaxTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multi_head_attention_test import MultiHeadAttentionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multi_inputs_to_node_test import MultiInputsToNodeTest
 from tests.keras_tests.feature_networks_tests.feature_networks.multiple_inputs_model_test import MultipleInputsModelTest
@@ -275,6 +276,10 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_mixed_precision_activation_multiple_inputs(self):
         MixedPrecisionActivationMultipleInputsTest(self).run_test()
+
+    def test_mixed_precision_distance_functions(self):
+        MixedPrecisionDistanceSoftmaxTest(self).run_test()
+        MixedPrecisionDistanceSigmoidTest(self).run_test()
 
     def test_mixed_precision_total_memory_utilization(self):
         MixedPrecisionTotalMemoryUtilizationSearchTest(self).run_test()
