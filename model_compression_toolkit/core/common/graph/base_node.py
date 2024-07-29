@@ -565,7 +565,7 @@ class BaseNode:
         to the mappings from layers/LayerFilterParams to the OperatorsSet in the TargetPlatformModel.
 
         Args:
-            tpc: TPC to extract the QuantizationConfigOptions for the node
+            tpc: TPC to extract the QuantizationConfigOptions for the node.
 
         Returns:
             QuantizationConfigOptions of the node.

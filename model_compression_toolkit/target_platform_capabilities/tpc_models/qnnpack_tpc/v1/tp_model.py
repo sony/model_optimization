@@ -90,10 +90,12 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         attr_weights_configs_mapping={},
         activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
         activation_n_bits=8,
+        supported_input_activation_n_bits=8,
         enable_activation_quantization=True,
         quantization_preserving=False,
         fixed_scale=None,
         fixed_zero_point=None,
+        force_signedness=None,
         simd_size=32)
 
     # We define an 8-bit config for linear operations quantization, that include a kernel and bias attributes.
@@ -102,10 +104,12 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         default_weight_attr_config=default_weight_attr_config,
         attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config, BIAS_ATTR: bias_config},
         activation_n_bits=8,
+        supported_input_activation_n_bits=8,
         enable_activation_quantization=True,
         quantization_preserving=False,
         fixed_scale=None,
         fixed_zero_point=None,
+        force_signedness=None,
         simd_size=None
     )
 

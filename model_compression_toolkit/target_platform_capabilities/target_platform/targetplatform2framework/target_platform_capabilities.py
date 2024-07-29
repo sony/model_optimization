@@ -109,7 +109,6 @@ class TargetPlatformCapabilities(ImmutableClass):
             res.extend(itertools.product(*ops))
         return [list(x) for x in res]
 
-
     def get_info(self) -> Dict[str, Any]:
         """
 
@@ -170,7 +169,6 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         """
         return self.tp_model.get_default_op_quantization_config()
-
 
     def _get_config_options_mapping(self) -> Tuple[Dict[Any, QuantizationConfigOptions],
                                                    Dict[LayerFilterParams, QuantizationConfigOptions]]:

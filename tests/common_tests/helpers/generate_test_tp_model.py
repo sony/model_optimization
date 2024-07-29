@@ -30,6 +30,9 @@ BIAS_CONFIG = 'bias_config'
 
 
 def generate_test_tp_model(edit_params_dict, name=""):
+    # Add "supported_input_activation_n_bits" to match "activation_n_bits" if not defined.
+    if 'activation_n_bits' in edit_params_dict and 'supported_input_activation_n_bits' not in edit_params_dict:
+        edit_params_dict['supported_input_activation_n_bits'] = (edit_params_dict['activation_n_bits'],)
     base_config, op_cfg_list, default_config = get_op_quantization_configs()
 
     # separate weights attribute parameters from the requested param to edit
@@ -225,8 +228,10 @@ def generate_test_op_qc(default_weight_attr_config: tp.AttributeQuantizationConf
                                    attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config,
                                                                  BIAS_ATTR: bias_config},
                                    activation_n_bits=activation_n_bits,
+                                   supported_input_activation_n_bits=activation_n_bits,
                                    activation_quantization_method=activation_quantization_method,
                                    quantization_preserving=False,
                                    fixed_scale=None,
                                    fixed_zero_point=None,
+                                   force_signedness=None,
                                    simd_size=32)

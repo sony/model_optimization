@@ -49,7 +49,9 @@ def get_activations_qparams(activation_quant_cfg: NodeActivationQuantizationConf
                                                                     bins_counts)
     min_value, max_value = out_stats_container.get_min_max_values()
 
-    if nodes_prior_info.is_output_bounded():
+    if activation_quant_cfg.force_signedness is not None:
+        signed = activation_quant_cfg.force_signedness
+    elif nodes_prior_info.is_output_bounded():
         signed = min_value < 0
     else:
         signed = np.any(bins_values[:-1][bins_counts > 0] < 0)

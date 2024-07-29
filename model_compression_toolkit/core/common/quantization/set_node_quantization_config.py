@@ -64,6 +64,7 @@ def set_quantization_configuration_to_graph(graph: Graph,
 
     for n in graph.nodes:
         set_quantization_configs_to_node(node=n,
+                                         graph=graph,
                                          quant_config=quant_config,
                                          fw_info=graph.fw_info,
                                          tpc=graph.tpc,
@@ -72,6 +73,7 @@ def set_quantization_configuration_to_graph(graph: Graph,
 
 
 def set_quantization_configs_to_node(node: BaseNode,
+                                     graph: Graph,
                                      quant_config: QuantizationConfig,
                                      fw_info: FrameworkInfo,
                                      tpc: TargetPlatformCapabilities,
@@ -81,6 +83,7 @@ def set_quantization_configs_to_node(node: BaseNode,
 
     Args:
         node: Node to set its quantization configurations.
+        graph: Model's internal representation graph.
         quant_config: Quantization configuration to generate the node's configurations from.
         fw_info: Information needed for quantization about the specific framework.
         tpc: TargetPlatformCapabilities to get default OpQuantizationConfig.
@@ -95,6 +98,8 @@ def set_quantization_configs_to_node(node: BaseNode,
                                                                   weight_channel_axis,
                                                                   node_qc_options,
                                                                   node,
+                                                                  graph,
+                                                                  tpc,
                                                                   mixed_precision_enable=mixed_precision_enable)
 
     # sorting the candidates by kernel attribute weights number of bits first and then by activation number of bits
@@ -188,6 +193,8 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
                                weight_channel_axis: Tuple[int, int],
                                node_qc_options: QuantizationConfigOptions,
                                node: BaseNode,
+                               graph: Graph,
+                               tpc: TargetPlatformCapabilities,
                                mixed_precision_enable: bool = False) -> List[CandidateNodeQuantizationConfig]:
     """
     Create a list of candidates of weights and activation quantization configurations for a node.
@@ -198,17 +205,46 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
         weight_channel_axis: (Output, Input) channel index of the node's kernel.
         node_qc_options: QuantizationConfigOptions for the node with quantization candidates information.
         node: A node to set quantization configuration candidates to.
+        graph: Model's internal representation graph.
+        tpc: TargetPlatformCapabilities to get default OpQuantizationConfig.
         mixed_precision_enable: is mixed precision enabled
 
     Returns:
         List of candidates of weights quantization configurations to set for a node.
     """
 
+    # Filter quantization config options that don't match the graph.
+    _base_config = node_qc_options.base_config
+    _node_qc_options = node_qc_options.quantization_config_list
+    next_nodes = graph.get_next_nodes(node)
+    if len(next_nodes):
+        next_nodes_qc_options = [_node.get_qco(tpc) for _node in next_nodes]
+        next_nodes_supported_input_bitwidth = min([op_cfg.max_input_activation_n_bits
+                                                   for qc_opts in next_nodes_qc_options
+                                                   for op_cfg in qc_opts.quantization_config_list])
+
+        # Filter node's QC options that match next nodes input bit-width.
+        _node_qc_options = [_option for _option in _node_qc_options
+                            if _option.activation_n_bits <= next_nodes_supported_input_bitwidth]
+        if len(_node_qc_options) == 0:
+            Logger.critical(f"Graph doesn't match TPC bit configurations: {node} -> {next_nodes}")
+
+        # Verify base config match
+        if any([node_qc_options.base_config.activation_n_bits > qc_opt.base_config.max_input_activation_n_bits
+                for qc_opt in next_nodes_qc_options]):
+            # base_config activation bits doesn't match next node supported input bit-width -> replace with
+            # a qco from quantization_config_list with maximum activation bit-width.
+            if len(_node_qc_options) > 0:
+                output_act_bitwidth = {qco.activation_n_bits: i for i, qco in enumerate(_node_qc_options)}
+                _base_config = _node_qc_options[output_act_bitwidth[max(output_act_bitwidth)]]
+            else:
+                Logger.critical(f"Graph doesn't match TPC bit configurations: {node} -> {next_nodes}")
+
     candidates = []
     node_attrs_list = node.get_node_weights_attributes()
 
     if mixed_precision_enable:
-        for op_cfg in node_qc_options.quantization_config_list:
+        for op_cfg in _node_qc_options:
             candidate_qc = copy.deepcopy(qc)
             candidates.append(_create_node_single_candidate_qc(candidate_qc,
                                                                fw_info,
@@ -220,7 +256,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
         candidates.append(_create_node_single_candidate_qc(qc,
                                                            fw_info,
                                                            weight_channel_axis,
-                                                           node_qc_options.base_config,
+                                                           _base_config,
                                                            node_attrs_list))
 
     return candidates

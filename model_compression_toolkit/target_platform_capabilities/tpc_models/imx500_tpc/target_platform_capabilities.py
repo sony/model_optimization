@@ -29,6 +29,7 @@ if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v2_lut.tpc_keras import get_keras_tpc as get_keras_tpc_v2_lut
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tpc_keras import get_keras_tpc as get_keras_tpc_v3
     from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3_lut.tpc_keras import get_keras_tpc as get_keras_tpc_v3_lut
+    from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tpc_keras import get_keras_tpc as get_keras_tpc_v4
 
     # Keras: TPC versioning
     keras_tpc_models_dict = {'v1': get_keras_tpc_v1,
@@ -38,6 +39,7 @@ if FOUND_TF:
                              'v2_lut': get_keras_tpc_v2_lut,
                              'v3': get_keras_tpc_v3,
                              'v3_lut': get_keras_tpc_v3_lut,
+                             'v4': get_keras_tpc_v4,
                              LATEST: get_keras_tpc_latest}
 
 ###############################

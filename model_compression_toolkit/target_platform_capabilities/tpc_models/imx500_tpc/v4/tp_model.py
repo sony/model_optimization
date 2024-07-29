@@ -16,8 +16,7 @@ from typing import List, Tuple
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS, \
-    WEIGHTS_QUANTIZATION_METHOD
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS
 from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
     TargetPlatformModel
 from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import \
@@ -42,7 +41,7 @@ def get_tp_model() -> TargetPlatformModel:
     return generate_tp_model(default_config=default_config,
                              base_config=base_config,
                              mixed_precision_cfg_list=mixed_precision_cfg_list,
-                             name='imx500_lut_tp_model')
+                             name='imx500_tp_model')
 
 
 def get_op_quantization_configs() -> \
@@ -50,18 +49,23 @@ def get_op_quantization_configs() -> \
     """
     Creates a default configuration object for 8-bit quantization, to be used to set a default TargetPlatformModel.
     In addition, creates a default configuration objects list (with 8, 4 and 2 bit quantization) to be used as
-    default configuration for mixed-precision quantization with non-uniform quantizer for 2 and 4 bit candidates.
+    default configuration for mixed-precision quantization.
 
     Returns: An OpQuantizationConfig config object and a list of OpQuantizationConfig objects.
 
     """
 
-    # We define a default quantization config for all non-specified weights attributes.
+    # TODO: currently, we don't want to quantize any attribute but the kernel by default,
+    #  to preserve the current behavior of MCT, so quantization is disabled for all other attributes.
+    #  Other quantization parameters are set to what we eventually want to quantize by default
+    #  when we enable multi-attributes quantization - THIS NEED TO BE MODIFIED IN ALL TP MODELS!
+
+    # define a default quantization config for all non-specified weights attributes.
     default_weight_attr_config = AttributeQuantizationConfig(
         weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
         weights_n_bits=8,
         weights_per_channel_threshold=False,
-        enable_weights_quantization=False,
+        enable_weights_quantization=False,  # TODO: this will changed to True once implementing multi-attributes quantization
         lut_values_bitwidth=None)
 
     # define a quantization config to quantize the kernel (for layers where there is a kernel attribute).
@@ -72,7 +76,7 @@ def get_op_quantization_configs() -> \
         enable_weights_quantization=True,
         lut_values_bitwidth=None)
 
-    # We define a quantization config to quantize the bias (for layers where there is a bias attribute).
+    # define a quantization config to quantize the bias (for layers where there is a bias attribute).
     bias_config = AttributeQuantizationConfig(
         weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
         weights_n_bits=FLOAT_BITWIDTH,
@@ -118,15 +122,12 @@ def get_op_quantization_configs() -> \
     # In this example, we quantize some operations' weights
     # using 2, 4 or 8 bits, and when using 2 or 4 bits, it's possible
     # to quantize the operations' activations using LUT.
-    four_bits_lut = linear_eight_bits.clone_and_edit(
-        attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4,
-                                    WEIGHTS_QUANTIZATION_METHOD: tp.QuantizationMethod.LUT_SYM_QUANTIZER}},
-        simd_size=linear_eight_bits.simd_size * 2)
-    two_bits_lut = linear_eight_bits.clone_and_edit(
-        attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 2,
-                                    WEIGHTS_QUANTIZATION_METHOD: tp.QuantizationMethod.LUT_SYM_QUANTIZER}},
-        simd_size=linear_eight_bits.simd_size * 4)
-    mixed_precision_cfg_list = [linear_eight_bits, four_bits_lut, two_bits_lut]
+    four_bits = linear_eight_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}},
+                                                 simd_size=linear_eight_bits.simd_size * 2)
+    two_bits = linear_eight_bits.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 2}},
+                                                simd_size=linear_eight_bits.simd_size * 4)
+
+    mixed_precision_cfg_list = [linear_eight_bits, four_bits, two_bits]
 
     return linear_eight_bits, mixed_precision_cfg_list, eight_bits_default
 
@@ -166,6 +167,23 @@ def generate_tp_model(default_config: OpQuantizationConfig,
             weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO))
     const_configuration_options = tp.QuantizationConfigOptions([const_config])
 
+    # 16 bits inputs and outputs
+    default_config_input16 = default_config.clone_and_edit(
+        supported_input_activation_n_bits=(8, 16))
+    default_config_input16_output16 = default_config_input16.clone_and_edit(
+        activation_n_bits=16, force_signedness=True)
+    default_configuration_options_inout16 = tp.QuantizationConfigOptions([default_config_input16_output16,
+                                                                          default_config_input16],
+                                                                         base_config=default_config_input16)
+    # 16 bits inputs and outputs
+    const_config_input16 = const_config.clone_and_edit(
+        supported_input_activation_n_bits=(8, 16))
+    const_config_input16_output16 = const_config_input16.clone_and_edit(
+        activation_n_bits=16, force_signedness=True)
+    const_configuration_options_inout16 = tp.QuantizationConfigOptions([const_config_input16_output16,
+                                                                        const_config_input16],
+                                                                       base_config=const_config_input16)
+
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
@@ -180,10 +198,16 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # be used for operations that will be attached to this set's label.
         # Otherwise, it will be a configure-less set (used in fusing):
 
+        generated_tpm.set_simd_padding(is_simd_padding=True)
+
         # May suit for operations like: Dropout, Reshape, etc.
         default_qco = tp.get_default_quantization_config_options()
         tp.OperatorsSet("NoQuantization",
                         default_qco.clone_and_edit(enable_activation_quantization=False)
+                        .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+        tp.OperatorsSet("NoQuantization16",
+                        default_qco.clone_and_edit(enable_activation_quantization=False,
+                                                   activation_n_bits=16, supported_input_activation_n_bits=(8, 16))
                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))
 
         # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
@@ -197,9 +221,9 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # Define operations sets without quantization configuration
         # options (useful for creating fusing patterns, for example):
         any_relu = tp.OperatorsSet("AnyReLU")
-        add = tp.OperatorsSet("Add", const_configuration_options)
-        sub = tp.OperatorsSet("Sub", const_configuration_options)
-        mul = tp.OperatorsSet("Mul", const_configuration_options)
+        add = tp.OperatorsSet("Add", const_configuration_options_inout16)
+        sub = tp.OperatorsSet("Sub", const_configuration_options_inout16)
+        mul = tp.OperatorsSet("Mul", const_configuration_options_inout16)
         div = tp.OperatorsSet("Div", const_configuration_options)
         prelu = tp.OperatorsSet("PReLU")
         swish = tp.OperatorsSet("Swish")
