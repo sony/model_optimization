@@ -12,43 +12,53 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import numpy as np
-import tensorflow as tf
+from operator import mul
+import torch
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.constants import TENSORFLOW
+from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
-from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-
-keras = tf.keras
-layers = keras.layers
+from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 
 
 get_op_set = lambda x, x_list: [op_set for op_set in x_list if op_set.name == x][0]
 
 
-class Activation16BitTest(BaseKerasFeatureNetworkTest):
+class Activation16BitNet(torch.nn.Module):
+
+    def __init__(self):
+        super().__init__()
+        self.conv = torch.nn.Conv2d(3, 3, 1)
+        self.register_buffer('add_const', torch.rand((3, 1, 1)))
+        self.register_buffer('sub_const', torch.rand((3, 1, 1)))
+        self.register_buffer('div_const', 2*torch.ones((3, 1, 1)))
+
+    def forward(self, x):
+        x = torch.mul(x, x)
+        x1 = torch.add(x, self.add_const)
+        x = torch.sub(x, self.sub_const)
+        x = torch.mul(x, x1)
+        x = self.conv(x)
+        x = torch.divide(x, self.div_const)
+        return x
+
+
+class Activation16BitTest(BasePytorchFeatureNetworkTest):
 
     def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, 'v4')
+        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v4')
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
         mul_op_set.qc_options.base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
-        tpc.layer2qco[tf.multiply].base_config = mul_op_set.qc_options.base_config
+        tpc.layer2qco[torch.mul].base_config = mul_op_set.qc_options.base_config
+        tpc.layer2qco[mul].base_config = mul_op_set.qc_options.base_config
         return tpc
 
     def create_networks(self):
-        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = tf.multiply(inputs, inputs)
-        x = tf.add(x, np.ones((3,), dtype=np.float32))
-        x1 = tf.subtract(x, np.ones((3,), dtype=np.float32))
-        x = tf.multiply(x, x1)
-        x = tf.keras.layers.Conv2D(3, 1)(x)
-        outputs = tf.divide(x, 2*np.ones((3,), dtype=np.float32))
-        return keras.Model(inputs=inputs, outputs=outputs)
+        return Activation16BitNet()
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        mul1_act_quant = quantized_model.layers[3]
-        mul2_act_quant = quantized_model.layers[9]
+        mul1_act_quant = quantized_model.mul_activation_holder_quantizer
+        mul2_act_quant = quantized_model.mul_1_activation_holder_quantizer
         self.unit_test.assertTrue(mul1_act_quant.activation_holder_quantizer.num_bits == 16,
                                   "1st mul activation bits should be 16 bits because of following add node.")
         self.unit_test.assertTrue(mul1_act_quant.activation_holder_quantizer.signed == True,
@@ -60,16 +70,20 @@ class Activation16BitTest(BaseKerasFeatureNetworkTest):
 class Activation16BitMixedPrecisionTest(Activation16BitTest):
 
     def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, 'v4')
+        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v4')
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
         mul_op_set.qc_options.base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
-        tpc.layer2qco[tf.multiply].base_config = mul_op_set.qc_options.base_config
+        tpc.layer2qco[torch.mul].base_config = mul_op_set.qc_options.base_config
+        tpc.layer2qco[mul].base_config = mul_op_set.qc_options.base_config
         mul_op_set.qc_options.quantization_config_list.extend(
             [mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=4),
              mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[tf.multiply].quantization_config_list.extend([
-            tpc.layer2qco[tf.multiply].base_config.clone_and_edit(activation_n_bits=4),
-            tpc.layer2qco[tf.multiply].base_config.clone_and_edit(activation_n_bits=2)])
+        tpc.layer2qco[torch.mul].quantization_config_list.extend([
+            tpc.layer2qco[torch.mul].base_config.clone_and_edit(activation_n_bits=4),
+            tpc.layer2qco[torch.mul].base_config.clone_and_edit(activation_n_bits=2)])
+        tpc.layer2qco[mul].quantization_config_list.extend([
+            tpc.layer2qco[mul].base_config.clone_and_edit(activation_n_bits=4),
+            tpc.layer2qco[mul].base_config.clone_and_edit(activation_n_bits=2)])
 
         return tpc
 
@@ -77,8 +91,8 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
         return mct.core.ResourceUtilization(activation_memory=200)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        mul1_act_quant = quantized_model.layers[3]
-        mul2_act_quant = quantized_model.layers[9]
+        mul1_act_quant = quantized_model.mul_activation_holder_quantizer
+        mul2_act_quant = quantized_model.mul_1_activation_holder_quantizer
         self.unit_test.assertTrue(mul1_act_quant.activation_holder_quantizer.num_bits == 8,
                                   "1st mul activation bits should be 8 bits because of RU.")
         self.unit_test.assertTrue(mul1_act_quant.activation_holder_quantizer.signed == False,

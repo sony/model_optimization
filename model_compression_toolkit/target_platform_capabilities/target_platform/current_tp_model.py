@@ -14,10 +14,9 @@
 # ==============================================================================
 
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform.target_platform_model import TargetPlatformModel
 
 
-def get_current_tp_model() -> TargetPlatformModel:
+def get_current_tp_model():
     """
 
     Returns: The current TargetPlatformModel that is being used and accessed.
@@ -35,7 +34,7 @@ class CurrentTPModel:
         super(CurrentTPModel, self).__init__()
         self.tp_model = None
 
-    def get(self) -> TargetPlatformModel:
+    def get(self):
         """
 
         Returns: The current TargetPlatformModel that is being defined.
@@ -54,7 +53,7 @@ class CurrentTPModel:
         """
         self.tp_model = None
 
-    def set(self, tp_model: TargetPlatformModel):
+    def set(self, tp_model):
         """
         Set and wrap a TargetPlatformModel as the current TargetPlatformModel.
 

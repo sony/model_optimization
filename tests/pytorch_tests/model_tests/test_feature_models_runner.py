@@ -96,6 +96,8 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 from tests.pytorch_tests.model_tests.feature_models.const_quantization_test import ConstQuantizationTest, \
     AdvancedConstQuantizationTest
 from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import RemoveIdentityTest
+from tests.pytorch_tests.model_tests.feature_models.activation_16bit_test import Activation16BitTest, \
+    Activation16BitMixedPrecisionTest
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
@@ -647,6 +649,10 @@ class FeatureModelsTestRunner(unittest.TestCase):
         TpcTest(f'{C.IMX500_TP_MODEL}.v3_lut', self).run_test()
         TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
         TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
+
+    def test_16bit_activations(self):
+        Activation16BitTest(self).run_test()
+        Activation16BitMixedPrecisionTest(self).run_test()
 
 
 if __name__ == '__main__':

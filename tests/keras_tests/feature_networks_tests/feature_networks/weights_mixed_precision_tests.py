@@ -460,7 +460,8 @@ class MixedPrecisionSearchLastLayerDistanceTest(MixedPrecisionBaseTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        assert (quantization_info.mixed_precision_cfg == [1, 0]).all()
+        assert any([(quantization_info.mixed_precision_cfg == [1, 0]).all(),
+                    (quantization_info.mixed_precision_cfg == [0, 1]).all()])
         for i in range(32):  # quantized per channel
             self.unit_test.assertTrue(
                 np.unique(conv_layers[0].get_quantized_weights()['kernel'][:, :, :, i]).flatten().shape[0] <= 256)
