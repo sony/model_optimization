@@ -79,6 +79,8 @@ if found_tf:
     from tests.keras_tests.pruning_tests.feature_networks.test_pruning_feature_networks import PruningFeatureNetworksTest
     from tests.keras_tests.function_tests.test_hmse_error_method import TestParamSelectionWithHMSE
     from tests.data_generation_tests.keras.test_scheduler_step import TestReduceLROnPlateau
+    from tests.keras_tests.function_tests.test_node_quantization_configurations import \
+        TestNodeQuantizationConfigurations
 
 if found_pytorch:
     from tests.pytorch_tests.function_tests.test_activation_quantization_functions import TestActivationQuantizationFunctions as TestActivationQuantizationFunctionsPytorch
@@ -132,6 +134,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(ExporterTestsRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSensitivityMetricInterestPoints))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestQuantizationConfigurations))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestNodeQuantizationConfigurations))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(FeatureNetworkTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestLpSearchBitwidth))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestSearchBitwidthConfiguration))

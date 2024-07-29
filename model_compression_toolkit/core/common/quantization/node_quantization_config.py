@@ -436,7 +436,6 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
             if len(attrs_with_name) == 1:
                 attr_cfg = [v for v in attrs_with_name.values()][0]
             elif len(attrs_with_name) > 1:
-                # TODO: add a test for this case
                 Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
                                f"{list(attrs_with_name.keys())}. Looking for an attributes with the exact name.")
                 # If no attribute with the exact name then an error would be thrown
@@ -457,7 +456,6 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
 
         """
         if isinstance(attr_name, int):
-            # TODO: add a test for this case
             self.pos_attributes_config_mapping[attr_name] = attr_qc
         else:
             self.attributes_config_mapping[attr_name] = attr_qc
@@ -473,7 +471,6 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
 
         """
         if isinstance(attr_name, int):
-            # TODO: add a test for this case
             return self.pos_attributes_config_mapping.get(attr_name, False)
         else:
             saved_attr_name = self._extract_config_for_attributes_with_name(attr_name)
@@ -496,13 +493,12 @@ class NodeWeightsQuantizationConfig(BaseNodeQuantizationConfig):
         """
         attrs_with_name = {k: v for k, v in self.attributes_config_mapping.items() if attr_name in k}
         if len(attrs_with_name) > 1:
-            # TODO: add a test for this case
             Logger.warning(f"Found multiple weight attributes containing the name {attr_name}: "
                            f"{list(attrs_with_name.keys())}.")
         return attrs_with_name
 
-    def set_quant_config_attr(self, config_parameter_name: str, config_parameter_value: Any, attr_name: str = None,
-                              *args: List[Any], **kwargs: Dict[str, Any]):
+    def set_quant_config_attr(self, config_parameter_name: str, config_parameter_value: Any,
+                              attr_name: Union[str, int] = None, *args: List[Any], **kwargs: Dict[str, Any]):
         """
         This method overrides the parent class set_quant_config_attr to enable setting a specific weights
         attribute config parameter.
