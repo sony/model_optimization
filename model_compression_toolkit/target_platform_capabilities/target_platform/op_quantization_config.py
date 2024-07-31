@@ -96,7 +96,7 @@ class AttributeQuantizationConfig:
             Whether this configuration is equal to another object or not.
         """
         if not isinstance(other, AttributeQuantizationConfig):
-            return False
+            return False  # pragma: no cover
         return self.weights_quantization_method == other.weights_quantization_method and \
             self.weights_n_bits == other.weights_n_bits and \
             self.weights_per_channel_threshold == other.weights_per_channel_threshold and \
@@ -152,7 +152,7 @@ class OpQuantizationConfig:
         Returns: Info about the quantization configuration as a dictionary.
 
         """
-        return self.__dict__
+        return self.__dict__  # pragma: no cover
 
     def clone_and_edit(self, attr_to_edit: Dict[str, Dict[str, Any]] = {}, **kwargs):
         """
@@ -188,7 +188,7 @@ class OpQuantizationConfig:
             Whether this configuration is equal to another object or not.
         """
         if not isinstance(other, OpQuantizationConfig):
-            return False
+            return False  # pragma: no cover
         return self.default_weight_attr_config == other.default_weight_attr_config and \
             self.attr_weights_configs_mapping == other.attr_weights_configs_mapping and \
             self.activation_quantization_method == other.activation_quantization_method and \
@@ -279,12 +279,12 @@ class QuantizationConfigOptions:
             if attrs is None:
                 attrs_to_update = list(qc.attr_weights_configs_mapping.keys())
             else:
-                if not isinstance(attrs, List):
+                if not isinstance(attrs, List):  # pragma: no cover
                     Logger.critical(f"Expected a list of attributes but received {type(attrs)}.")
                 attrs_to_update = attrs
 
             for attr in attrs_to_update:
-                if qc.attr_weights_configs_mapping.get(attr) is None:
+                if qc.attr_weights_configs_mapping.get(attr) is None:  # pragma: no cover
                     Logger.critical(f'Editing attributes is only possible for existing attributes in the configuration\'s '
                                     f'weights config mapping; {attr} does not exist in {qc}.')
                 self.__edit_quantization_configuration(qc.attr_weights_configs_mapping[attr], kwargs)
@@ -310,6 +310,7 @@ class QuantizationConfigOptions:
         # If not, add base_config to the list of configurations to update
         cfgs_to_update = [cfg for cfg in qc_options.quantization_config_list]
         if not any(qc_options.base_config is cfg for cfg in cfgs_to_update):
+            # TODO: add test for this case
             cfgs_to_update.append(qc_options.base_config)
 
         for qc in cfgs_to_update:
@@ -319,7 +320,7 @@ class QuantizationConfigOptions:
                 new_attr_mapping = {}
                 for attr in list(qc.attr_weights_configs_mapping.keys()):
                     new_key = layer_attrs_mapping.get(attr)
-                    if new_key is None:
+                    if new_key is None:  # pragma: no cover
                         Logger.critical(f"Attribute \'{attr}\' does not exist in the provided attribute mapping.")
 
                     new_attr_mapping[new_key] = qc.attr_weights_configs_mapping.pop(attr)

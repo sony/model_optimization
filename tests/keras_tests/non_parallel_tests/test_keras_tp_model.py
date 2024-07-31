@@ -113,6 +113,7 @@ class TestKerasTPModel(unittest.TestCase):
             tp.OperationsSetToLayers('opsetA', opset_layers)
         self.assertEqual(fw_tp.get_layers_by_opset_name('opsetA'), opset_layers)
         self.assertEqual(fw_tp.get_layers_by_opset(op_obj), opset_layers)
+        self.assertEqual(fw_tp.get_layers_by_opset_name('nonExistingOpsetName'), None)
 
     def test_get_layers_by_opconcat(self):
         hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
@@ -237,6 +238,19 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual(len(p1), 2)
         self.assertEqual(p1[0], Conv2D)
         self.assertEqual(p1[1], LayerFilterParams(ReLU, Greater("max_value", 7), negative_slope=0))
+
+    def test_get_default_op_qc(self):
+        default_qco = tp.QuantizationConfigOptions([TEST_QC])
+        tpm = tp.TargetPlatformModel(default_qco)
+        with tpm:
+            a = tp.OperatorsSet("opA")
+
+        tpc = tp.TargetPlatformCapabilities(tpm)
+        with tpc:
+            tp.OperationsSetToLayers("opA", [Conv2D])
+
+        d_qco = tpc.get_default_op_qc()
+        self.assertEqual(d_qco, TEST_QC)
 
 
 class TestGetKerasTPC(unittest.TestCase):

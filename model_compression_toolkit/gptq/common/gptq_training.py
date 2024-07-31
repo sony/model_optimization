@@ -219,41 +219,6 @@ class GPTQTrainer(ABC):
 
         return hessian_approx_score_by_image
 
-    def _get_approximations_by_interest_point(self, approximations: Dict, image_idx: int) -> List:
-        """
-        Retrieves hessian approximations for a specific image index.
-
-        Args:
-            approximations (Dict): Hessian approximations.
-            image_idx (int): Image index.
-
-        Returns:
-            List: Hessian approximations for the given image index.
-        """
-        approx_by_interest_point = []
-        for target_node in self.compare_points:
-            hessian_approx_scores = approximations[target_node][image_idx]
-            self._validate_scores_approximation(hessian_approx_scores)
-            approx_by_interest_point.append(hessian_approx_scores[0])
-        return approx_by_interest_point
-
-    @staticmethod
-    def _validate_scores_approximation(hessian_approx_scores: List):
-        """
-        Validates the structure and length of the Hessian-approximation scores.
-
-        Args:
-            hessian_approx_scores: Scores to validate.
-        """
-        if not isinstance(hessian_approx_scores, list):
-            Logger.critical(f"Scores approximation was expected to be a list but is of type: {type(hessian_approx_scores)}.")   # pragma: no cover
-        if len(hessian_approx_scores) != 1:
-            Logger.critical(f"Scores approximation was expected to have a length of 1 "
-                            f"(for computations with granularity set to 'HessianInfoGranularity.PER_TENSOR') "
-                            f"but has a length of {len(hessian_approx_scores)}."
-            )   # pragma: no cover
-
-
     @abstractmethod
     def build_gptq_model(self):
         """

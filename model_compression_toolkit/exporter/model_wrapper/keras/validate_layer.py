@@ -24,7 +24,7 @@ if FOUND_TF:
     if version.parse(tf.__version__) >= version.parse("2.13"):
         from keras.src.engine.base_layer import Layer
         from keras.src.engine.input_layer import InputLayer
-    else:
+    else:  # pragma: no cover
         from keras.engine.base_layer import Layer
         from keras.engine.input_layer import InputLayer
 
@@ -57,7 +57,7 @@ if FOUND_TF:
                     f'KerasQuantizationWrapper must have a weights_quantizers but has a '
                     f'{type(layer.weights_quantizers)} object') # pragma: no cover
 
-            if len(layer.weights_quantizers) == 0:
+            if len(layer.weights_quantizers) == 0:  # pragma: no cover
                 Logger.critical(f'KerasQuantizationWrapper must have at least one weight quantizer, but found {len(layer.weights_quantizers)} quantizers. If layer is not quantized it should be a Keras layer.')
 
             for _, weights_quantizer in layer.weights_quantizers.items():

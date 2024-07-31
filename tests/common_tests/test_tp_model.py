@@ -53,6 +53,13 @@ class TargetPlatformModelingTest(unittest.TestCase):
             tp.TargetPlatformModel(test_qco)
         self.assertEqual('Default QuantizationConfigOptions must contain only one option', str(e.exception))
 
+    def test_tp_model_show(self):
+        tpm = tp.TargetPlatformModel(TEST_QCO)
+        with tpm:
+            a = tp.OperatorsSet("opA")
+
+        tpm.show()
+
 
 class OpsetTest(unittest.TestCase):
 
@@ -69,6 +76,8 @@ class OpsetTest(unittest.TestCase):
         self.assertTrue(hm.is_opset_in_model(opset_name))
         self.assertFalse(hm.is_opset_in_model("ShouldNotBeInModel"))
         self.assertEqual(hm.get_config_options_by_operators_set(opset_name), qco_3bit)
+        self.assertEqual(hm.get_config_options_by_operators_set("ShouldNotBeInModel"),
+                         hm.default_qco)
 
     def test_opset_concat(self):
         hm = tp.TargetPlatformModel(TEST_QCO, name='test')

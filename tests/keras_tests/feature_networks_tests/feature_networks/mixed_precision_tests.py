@@ -16,8 +16,10 @@
 
 import numpy as np
 import tensorflow as tf
+from keras.activations import sigmoid, softmax
 
 from mct_quantizers import KerasActivationQuantizationHolder
+from model_compression_toolkit.core.keras.constants import SIGMOID, SOFTMAX
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from keras import backend as K
@@ -112,15 +114,14 @@ class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
         super().__init__(unit_test, activation_layers_idx=[1, 2, 4])
 
     def get_resource_utilization(self):
-        # resource utilization is infinity -> should give best model - 8bits on all layers for both weights and activations
-        return ResourceUtilization(np.inf, np.inf)
+        return ResourceUtilization(weights_memory=17919, activation_memory=5407)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
-        self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
+        self.unit_test.assertTrue((activation_bits == [8, 4, 8]))
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[2, 3],
@@ -205,7 +206,7 @@ class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
         super().__init__(unit_test, activation_layers_idx=[1, 3])
 
     def get_resource_utilization(self):
-        return ResourceUtilization(np.inf, np.inf)
+        return ResourceUtilization(47, 767)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -220,7 +221,7 @@ class MixedPrecisionActivationDepthwiseTest(MixedPrecisionActivationBaseTest):
         # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
-        self.unit_test.assertTrue((activation_bits == [8, 8]))
+        self.unit_test.assertTrue((activation_bits == [4, 8]))
 
 
 class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest):
@@ -272,15 +273,14 @@ class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
         return model
 
     def get_resource_utilization(self):
-        # resource utilization is infinity -> should give best model - 8bits on all layers for both weights and activations
-        return ResourceUtilization(np.inf, np.inf)
+        return ResourceUtilization(3071, 2079)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
-        self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
+        self.unit_test.assertTrue((activation_bits == [8, 4, 4]))
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[3, 4],
@@ -313,15 +313,14 @@ class MixedPrecisionActivationOnlyTest(MixedPrecisionActivationBaseTest):
                                                 name="mixed_precision_activation_weights_disabled_test")
 
     def get_resource_utilization(self):
-        # resource utilization is infinity -> should give best model - 8bits on all layers for both weights and activations
-        return ResourceUtilization(np.inf, np.inf)
+        return ResourceUtilization(np.inf, 5407)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
-        self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
+        self.unit_test.assertTrue((activation_bits == [8, 4, 8]))
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[],
@@ -361,15 +360,14 @@ class MixedPrecisionActivationOnlyWeightsDisabledTest(MixedPrecisionActivationBa
                                                 name="mixed_precision_activation_weights_disabled_test")
 
     def get_resource_utilization(self):
-        # resource utilization is infinity -> should give best model - 8bits on all layers for both weights and activations
-        return ResourceUtilization(np.inf, np.inf)
+        return ResourceUtilization(np.inf, 5407)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         # verify chosen activation bitwidth config
         # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
-        self.unit_test.assertTrue((activation_bits == [8, 8, 8]))
+        self.unit_test.assertTrue((activation_bits == [8, 4, 8]))
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[],
@@ -413,7 +411,7 @@ class MixedPrecisionActivationMultipleInputsTest(MixedPrecisionActivationBaseTes
         self.val_batch_size = 2
 
     def get_resource_utilization(self):
-        return ResourceUtilization(np.inf, np.inf)
+        return ResourceUtilization(6143, 6817408)
 
     def get_input_shapes(self):
         return [[self.val_batch_size, 224, 244, 3] for _ in range(self.num_of_inputs)]
@@ -536,3 +534,78 @@ class MixedPrecisionReducedTotalMemorySearchTest(MixedPrecisionActivationBaseTes
             quantization_info.final_resource_utilization.weights_memory + quantization_info.final_resource_utilization.activation_memory,
             "Running weights and activation mixed-precision, "
             "final total memory should be equal to sum of weights and activation memory.")
+
+
+class MixedPrecisionDistanceSoftmaxTest(MixedPrecisionActivationBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test, activation_layers_idx=[1, 2, 4])
+
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf, 767)
+
+    def get_tpc(self):
+        eight_bits = generate_test_op_qc(**generate_test_attr_configs())
+
+        # sets all combinations of 2, 4, 8 bits for weights and activations
+        mixed_precision_candidates_list = get_base_mp_nbits_candidates()
+
+        default_config = eight_bits.clone_and_edit(attr_weights_configs_mapping={})
+
+        custom_opsets = {"Softmax": [layers.Softmax, tf.nn.softmax, softmax,
+                                     tp.LayerFilterParams(layers.Activation, activation=SOFTMAX)]}
+        return get_tpc_with_activation_mp_keras(base_config=eight_bits,
+                                                default_config=default_config,
+                                                mp_bitwidth_candidates_list=mixed_precision_candidates_list,
+                                                name="mixed_precision_activation_test",
+                                                custom_opsets=custom_opsets)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Softmax()(inputs)
+        x = tf.nn.softmax(x)
+        x = softmax(x)
+        x = layers.Activation(SOFTMAX)(x)
+        model = keras.Model(inputs=inputs, outputs=x)
+        return model
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        # verify chosen activation bitwidth config
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
+        self.unit_test.assertTrue((activation_bits == [4, 4, 4, 4, 4]))
+
+
+class MixedPrecisionDistanceSigmoidTest(MixedPrecisionActivationBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test, activation_layers_idx=[1, 2, 4])
+
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf, 767)
+
+    def get_tpc(self):
+        eight_bits = generate_test_op_qc(**generate_test_attr_configs())
+
+        # sets all combinations of 2, 4, 8 bits for weights and activations
+        mixed_precision_candidates_list = get_base_mp_nbits_candidates()
+
+        default_config = eight_bits.clone_and_edit(attr_weights_configs_mapping={})
+
+        return get_tpc_with_activation_mp_keras(base_config=eight_bits,
+                                                default_config=default_config,
+                                                mp_bitwidth_candidates_list=mixed_precision_candidates_list,
+                                                name="mixed_precision_activation_test")
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = sigmoid(inputs)
+        x = tf.nn.sigmoid(x)
+        x = layers.Activation(SIGMOID)(x)
+        model = keras.Model(inputs=inputs, outputs=x)
+        return model
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        # verify chosen activation bitwidth config
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in
+                           holder_layers]
+        self.unit_test.assertTrue((activation_bits == [4, 4, 4, 4]))
