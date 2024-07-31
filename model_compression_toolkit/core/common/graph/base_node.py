@@ -19,11 +19,11 @@ from typing import Dict, Any, Tuple, List, Type, Union
 import numpy as np
 
 from model_compression_toolkit.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECTED_BIAS_ATTRIBUTE, \
-    ACTIVATION_NBITS_ATTRIBUTE, FP32_BYTES_PER_PARAMETER
+    ACTIVATION_N_BITS_ATTRIBUTE, FP32_BYTES_PER_PARAMETER
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationConfigOptions, \
-    TargetPlatformCapabilities, LayerFilterParams
+    TargetPlatformCapabilities, LayerFilterParams, OpQuantizationConfig
 
 
 class BaseNode:
@@ -297,7 +297,6 @@ class BaseNode:
 
         return memory
 
-
     def get_unified_weights_candidates_dict(self, fw_info) -> Dict[str, Any]:
         """
         In Mixed-Precision, a node's kernel can have multiple candidates for weights quantization configuration.
@@ -343,7 +342,7 @@ class BaseNode:
         Returns: A dictionary containing information from node's activation quantization configuration candidates.
 
         """
-        shared_attributes = [ACTIVATION_NBITS_ATTRIBUTE]
+        shared_attributes = [ACTIVATION_N_BITS_ATTRIBUTE]
         attr = dict()
         if self.is_activation_quantization_enabled():
             attr = copy.deepcopy(self.candidates_quantization_cfg[0].activation_quantization_cfg.__dict__)
@@ -558,6 +557,52 @@ class BaseNode:
                 Logger.error('Found duplicate qco types!')
             return matching_qcos[0]
         return tpc.tp_model.default_qco
+
+    def filter_node_qco_by_graph(self, tpc: TargetPlatformCapabilities,
+                                 next_nodes: List, node_qc_options: QuantizationConfigOptions
+                                 ) -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig]]:
+        """
+        Filter quantization config options that don't match the graph.
+        A node may have several quantization config options with 'activation_n_bits' values, and
+        the next nodes in the graph may support different bit-width as input activation. This function
+        filters out quantization config that don't comply to these attributes.
+
+        Args:
+            tpc: TPC to extract the QuantizationConfigOptions for the next nodes.
+            next_nodes: Output nodes of current node.
+            node_qc_options: Node's QuantizationConfigOptions.
+
+        Returns:
+
+        """
+        # Filter quantization config options that don't match the graph.
+        _base_config = node_qc_options.base_config
+        _node_qc_options = node_qc_options.quantization_config_list
+        if len(next_nodes):
+            next_nodes_qc_options = [_node.get_qco(tpc) for _node in next_nodes]
+            next_nodes_supported_input_bitwidth = min([op_cfg.max_input_activation_n_bits
+                                                       for qc_opts in next_nodes_qc_options
+                                                       for op_cfg in qc_opts.quantization_config_list])
+
+            # Filter node's QC options that match next nodes input bit-width.
+            _node_qc_options = [_option for _option in _node_qc_options
+                                if _option.activation_n_bits <= next_nodes_supported_input_bitwidth]
+            if len(_node_qc_options) == 0:
+                Logger.critical(f"Graph doesn't match TPC bit configurations: {self} -> {next_nodes}.")  # pragma: no cover
+
+            # Verify base config match
+            if any([node_qc_options.base_config.activation_n_bits > qc_opt.base_config.max_input_activation_n_bits
+                    for qc_opt in next_nodes_qc_options]):
+                # base_config activation bits doesn't match next node supported input bit-width -> replace with
+                # a qco from quantization_config_list with maximum activation bit-width.
+                if len(_node_qc_options) > 0:
+                    output_act_bitwidth = {qco.activation_n_bits: i for i, qco in enumerate(_node_qc_options)}
+                    _base_config = _node_qc_options[output_act_bitwidth[max(output_act_bitwidth)]]
+                    Logger.warning(f"Node {self} base quantization config changed to match Graph and TPC configuration.\nCause: {self} -> {next_nodes}.")
+                else:
+                    Logger.critical(f"Graph doesn't match TPC bit configurations: {self} -> {next_nodes}.")  # pragma: no cover
+
+        return _base_config, _node_qc_options
 
     def is_match_type(self, _type: Type) -> bool:
         """

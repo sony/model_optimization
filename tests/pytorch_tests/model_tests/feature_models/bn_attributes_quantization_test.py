@@ -58,7 +58,6 @@ def _generate_bn_quantized_tpm(quantize_linear):
                                        quantization_preserving=False,
                                        fixed_scale=None,
                                        fixed_zero_point=None,
-                                       force_signedness=None,
                                        simd_size=32)
 
     default_op_qc = tp.OpQuantizationConfig(enable_activation_quantization=False,
@@ -70,7 +69,6 @@ def _generate_bn_quantized_tpm(quantize_linear):
                                             quantization_preserving=False,
                                             fixed_scale=None,
                                             fixed_zero_point=None,
-                                            force_signedness=None,
                                             simd_size=32)
 
     default_configuration_options = tp.QuantizationConfigOptions([default_op_qc])

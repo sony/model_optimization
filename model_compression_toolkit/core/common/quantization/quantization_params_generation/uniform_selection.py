@@ -16,7 +16,7 @@ import numpy as np
 from typing import Union, Tuple, Dict
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
-from model_compression_toolkit.constants import MIN_THRESHOLD, RANGE_MIN, RANGE_MAX, NUM_QPARAM_HESSIAN_SAMPLES
+from model_compression_toolkit.constants import MIN_THRESHOLD, RANGE_MIN, RANGE_MAX, NUM_QPARAM_HESSIAN_SAMPLES, SIGNED
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_search import \
     qparams_uniform_selection_tensor_search, qparams_uniform_selection_histogram_search
@@ -114,7 +114,8 @@ def uniform_selection_histogram(bins: np.ndarray,
                                 constrained: bool = True,
                                 n_iter: int = 20,
                                 min_threshold: float = MIN_THRESHOLD,
-                                quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
+                                quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE,
+                                is_signed: bool = None) -> Dict:
     """
     Compute the optimal quantization range based on the provided QuantizationErrorMethod
     to uniformly quantize the histogram.
@@ -131,6 +132,7 @@ def uniform_selection_histogram(bins: np.ndarray,
         n_iter: Number of iteration ot search for the threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small (not used for this method).
         quant_error_method: an error function to optimize the range parameters selection accordingly.
+        is_signed: Whether the quantization is signed or not. If None then compute SIGNED value.
 
     Returns:
         Optimal quantization range to quantize the histogram uniformly.
@@ -139,6 +141,7 @@ def uniform_selection_histogram(bins: np.ndarray,
     tensor_max = np.max(bins[1:][counts > 0])
     tensor_min_max = np.array([tensor_min, tensor_max])
 
+    signed = tensor_min < 0 if is_signed is None else is_signed
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         mm = tensor_min_max
     else:
@@ -150,7 +153,7 @@ def uniform_selection_histogram(bins: np.ndarray,
                                                         n_bits)
 
     return {RANGE_MIN: mm[0],
-            RANGE_MAX: mm[1]}
+            RANGE_MAX: mm[1], SIGNED: signed}
 
 
 def uniform_no_clipping_selection_min_max(bins: np.ndarray,
@@ -163,7 +166,8 @@ def uniform_no_clipping_selection_min_max(bins: np.ndarray,
                                           n_iter: int = 20,
                                           min_threshold: float = MIN_THRESHOLD,
                                           quant_error_method: qc.QuantizationErrorMethod =
-                                          qc.QuantizationErrorMethod.NOCLIPPING) -> dict:
+                                          qc.QuantizationErrorMethod.NOCLIPPING,
+                                          is_signed: bool = None) -> Dict:
     """
     Gets a quantization rage between min and max numbers.
 
@@ -179,5 +183,5 @@ def uniform_no_clipping_selection_min_max(bins: np.ndarray,
                                        constrained,
                                        n_iter,
                                        min_threshold=min_threshold,
-                                       quant_error_method=qc.QuantizationErrorMethod.NOCLIPPING)
-
+                                       quant_error_method=qc.QuantizationErrorMethod.NOCLIPPING,
+                                       is_signed=is_signed)

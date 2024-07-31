@@ -100,7 +100,6 @@ def get_op_quantization_configs() -> \
         quantization_preserving=False,
         fixed_scale=None,
         fixed_zero_point=None,
-        force_signedness=None,
         simd_size=32)
 
     # We define an 8-bit config for linear operations quantization, that include a kernel and bias attributes.
@@ -114,7 +113,6 @@ def get_op_quantization_configs() -> \
         quantization_preserving=False,
         fixed_scale=None,
         fixed_zero_point=None,
-        force_signedness=None,
         simd_size=32)
 
     # To quantize a model using mixed-precision, create
@@ -167,19 +165,11 @@ def generate_tp_model(default_config: OpQuantizationConfig,
             weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO))
     const_configuration_options = tp.QuantizationConfigOptions([const_config])
 
-    # 16 bits inputs and outputs
-    default_config_input16 = default_config.clone_and_edit(
-        supported_input_activation_n_bits=(8, 16))
-    default_config_input16_output16 = default_config_input16.clone_and_edit(
-        activation_n_bits=16, force_signedness=True)
-    default_configuration_options_inout16 = tp.QuantizationConfigOptions([default_config_input16_output16,
-                                                                          default_config_input16],
-                                                                         base_config=default_config_input16)
-    # 16 bits inputs and outputs
+    # 16 bits inputs and outputs. Currently, only defined for consts since with .....
     const_config_input16 = const_config.clone_and_edit(
         supported_input_activation_n_bits=(8, 16))
     const_config_input16_output16 = const_config_input16.clone_and_edit(
-        activation_n_bits=16, force_signedness=True)
+        activation_n_bits=16, is_signed=True)
     const_configuration_options_inout16 = tp.QuantizationConfigOptions([const_config_input16_output16,
                                                                         const_config_input16],
                                                                        base_config=const_config_input16)

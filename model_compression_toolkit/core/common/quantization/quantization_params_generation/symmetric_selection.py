@@ -16,7 +16,7 @@ import numpy as np
 from typing import Union, Tuple, Dict
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
-from model_compression_toolkit.constants import MIN_THRESHOLD, THRESHOLD, NUM_QPARAM_HESSIAN_SAMPLES
+from model_compression_toolkit.constants import MIN_THRESHOLD, THRESHOLD, NUM_QPARAM_HESSIAN_SAMPLES, SIGNED
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import \
     get_threshold_selection_tensor_error_function, get_threshold_selection_histogram_error_function, _kl_error_histogram
@@ -106,7 +106,8 @@ def symmetric_selection_histogram(bins: np.ndarray,
                                   constrained: bool = True,
                                   n_iter: int = 20,
                                   min_threshold: float = MIN_THRESHOLD,
-                                  quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> dict:
+                                  quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE,
+                                  is_signed: bool = None) -> Dict:
     """
     Compute the optimal threshold based on the provided QuantizationErrorMethod to quantize a histogram.
     Different search is applied, depends on the value of the selected QuantizationErrorMethod.
@@ -122,6 +123,7 @@ def symmetric_selection_histogram(bins: np.ndarray,
         n_iter: Number of iteration ot search for the threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small (used only for kl threshold selection).
         quant_error_method: an error function to optimize the parameters' selection accordingly.
+        is_signed: Whether the quantization is signed or not. If None then compute SIGNED value.
 
     Returns:
         Optimal threshold to quantize the histogram a symmetric manner.
@@ -129,23 +131,27 @@ def symmetric_selection_histogram(bins: np.ndarray,
     tensor_max = np.max(np.abs(bins)[1:][counts > 0])
     if quant_error_method == qc.QuantizationErrorMethod.NOCLIPPING:
         threshold = get_init_threshold(min_threshold, tensor_max)
+        # Resolve is_signed in case it is None.
+        signed = (bins<0).any() if is_signed is None else is_signed
     elif quant_error_method == qc.QuantizationErrorMethod.KL:
         # search for KL error is separated because the error method signature is different from the other error methods.
-        threshold = kl_qparams_symmetric_selection_histogram_search(_kl_error_histogram,
-                                                                    tensor_max,
-                                                                    bins,
-                                                                    counts,
-                                                                    n_bits,
-                                                                    min_threshold=min_threshold)
+        threshold, signed = kl_qparams_symmetric_selection_histogram_search(_kl_error_histogram,
+                                                                            tensor_max,
+                                                                            bins,
+                                                                            counts,
+                                                                            n_bits,
+                                                                            min_threshold=min_threshold,
+                                                                            is_signed=is_signed)
     else:
         error_function = get_threshold_selection_histogram_error_function(QuantizationMethod.SYMMETRIC, quant_error_method, p)
-        threshold = qparams_symmetric_selection_histogram_search(error_function,
-                                                                 tensor_max,
-                                                                 bins,
-                                                                 counts,
-                                                                 n_bits,
-                                                                 min_threshold=min_threshold)
-    return {THRESHOLD: threshold}
+        threshold, signed = qparams_symmetric_selection_histogram_search(error_function,
+                                                                         tensor_max,
+                                                                         bins,
+                                                                         counts,
+                                                                         n_bits,
+                                                                         min_threshold=min_threshold,
+                                                                         is_signed=is_signed)
+    return {THRESHOLD: threshold, SIGNED: signed}
 
 
 def symmetric_no_clipping_selection_min_max(bins: np.ndarray,
@@ -158,7 +164,8 @@ def symmetric_no_clipping_selection_min_max(bins: np.ndarray,
                                             n_iter: int = 20,
                                             min_threshold: float = MIN_THRESHOLD,
                                             quant_error_method: qc.QuantizationErrorMethod =
-                                            qc.QuantizationErrorMethod.NOCLIPPING) -> dict:
+                                            qc.QuantizationErrorMethod.NOCLIPPING,
+                                            is_signed: bool = None) -> Dict:
     """
     Gets a threshold between min and max numbers.
     If computed threshold is less than min_threshold, min_threshold is returned.
@@ -175,7 +182,8 @@ def symmetric_no_clipping_selection_min_max(bins: np.ndarray,
                                          constrained,
                                          n_iter,
                                          min_threshold=min_threshold,
-                                         quant_error_method=qc.QuantizationErrorMethod.NOCLIPPING)
+                                         quant_error_method=qc.QuantizationErrorMethod.NOCLIPPING,
+                                         is_signed=is_signed)
 
 
 def get_init_threshold(min_threshold: float, tensor_max: np.ndarray, per_channel: bool = False) -> np.ndarray:

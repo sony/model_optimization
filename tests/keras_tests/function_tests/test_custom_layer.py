@@ -71,7 +71,6 @@ def get_tpc():
                                        quantization_preserving=False,
                                        fixed_scale=1.0,
                                        fixed_zero_point=0,
-                                       force_signedness=None,
                                        simd_size=32)
 
     default_configuration_options = tp.QuantizationConfigOptions([base_cfg])

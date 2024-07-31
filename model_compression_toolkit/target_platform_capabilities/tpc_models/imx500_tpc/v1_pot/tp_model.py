@@ -94,7 +94,6 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         quantization_preserving=False,
         fixed_scale=None,
         fixed_zero_point=None,
-        force_signedness=None,
         simd_size=32)
 
     # We define an 8-bit config for linear operations quantization, that include a kernel and bias attributes.
@@ -108,7 +107,6 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         quantization_preserving=False,
         fixed_scale=None,
         fixed_zero_point=None,
-        force_signedness=None,
         simd_size=32)
 
     # To quantize a model using mixed-precision, create

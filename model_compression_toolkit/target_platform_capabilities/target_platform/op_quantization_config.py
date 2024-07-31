@@ -119,8 +119,8 @@ class OpQuantizationConfig:
                  quantization_preserving: bool,
                  fixed_scale: float,
                  fixed_zero_point: int,
-                 force_signedness: bool,
-                 simd_size: int
+                 simd_size: int,
+                 is_signed: bool = None
                  ):
         """
 
@@ -129,12 +129,12 @@ class OpQuantizationConfig:
             attr_weights_configs_mapping (Dict[str, AttributeQuantizationConfig]): A mapping between an op attribute name and its quantization configuration.
             activation_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for activation quantization.
             activation_n_bits (int): Number of bits to quantize the activations.
-            supported_input_activation_n_bits (int or Tuple[int]): Number of bits that operator may accept as input.
+            supported_input_activation_n_bits (int or Tuple[int]): Number of bits that operator accepts as input.
             enable_activation_quantization (bool): Whether to quantize the model activations or not.
             quantization_preserving (bool): Whether quantization parameters should be the same for an operator's input and output.
             fixed_scale (float): Scale to use for an operator quantization parameters.
             fixed_zero_point (int): Zero-point to use for an operator quantization parameters.
-            force_signedness (bool): Force activation quantization signedness (None means don't force).
+            is_signed (bool): Force activation quantization signedness (None means don't force).
             simd_size (int): Per op integer representing the Single Instruction, Multiple Data (SIMD) width of an operator. It indicates the number of data elements that can be fetched and processed simultaneously in a single instruction.
 
         """
@@ -144,17 +144,17 @@ class OpQuantizationConfig:
 
         self.activation_quantization_method = activation_quantization_method
         self.activation_n_bits = activation_n_bits
-        if isinstance(supported_input_activation_n_bits, (list, tuple)):
-            self.supported_input_activation_n_bits = tuple(supported_input_activation_n_bits)
+        if isinstance(supported_input_activation_n_bits, tuple):
+            self.supported_input_activation_n_bits = supported_input_activation_n_bits
         elif isinstance(supported_input_activation_n_bits, int):
             self.supported_input_activation_n_bits = (supported_input_activation_n_bits,)
         else:
-            Logger.critical(f"Supported_input_activation_n_bits only accepts int or tuple of ints, but got {type(supported_input_activation_n_bits)}")
+            Logger.critical(f"Supported_input_activation_n_bits only accepts int or tuple of ints, but got {type(supported_input_activation_n_bits)}")  # pragma: no cover
         self.enable_activation_quantization = enable_activation_quantization
         self.quantization_preserving = quantization_preserving
         self.fixed_scale = fixed_scale
         self.fixed_zero_point = fixed_zero_point
-        self.force_signedness = force_signedness
+        self.is_signed = is_signed
         self.simd_size = simd_size
 
     def get_info(self):
@@ -206,15 +206,15 @@ class OpQuantizationConfig:
             self.activation_n_bits == other.activation_n_bits and \
             self.supported_input_activation_n_bits == other.supported_input_activation_n_bits and \
             self.enable_activation_quantization == other.enable_activation_quantization and \
-            self.force_signedness == other.force_signedness and \
+            self.is_signed == other.is_signed and \
             self.simd_size == other.simd_size
 
     @property
     def max_input_activation_n_bits(self) -> int:
         """
-        Get maximum supported bit-width.
+        Get maximum supported input bit-width.
 
-        Returns: Maximum supported bit-width
+        Returns: Maximum supported input bit-width.
 
         """
         return max(self.supported_input_activation_n_bits)
