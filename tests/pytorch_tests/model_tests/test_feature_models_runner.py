@@ -47,7 +47,8 @@ from tests.pytorch_tests.model_tests.feature_models.residual_collapsing_test imp
 from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPrecisionActivationSearch8Bit, MixedPrecisionActivationSearch2Bit, MixedPrecisionActivationSearch4Bit, \
-    MixedPrecisionActivationSearch4BitFunctional, MixedPrecisionActivationMultipleInputs
+    MixedPrecisionActivationSearch4BitFunctional, MixedPrecisionActivationMultipleInputs, \
+    MixedPrecisionDistanceFunctions
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.scalar_tensor_test import ScalarTensorTest
@@ -534,6 +535,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         MixedPrecisionBopsAndTotalMemoryUtilizationTest(self).run_test()
         MixedPrecisionBopsWeightsActivationUtilizationTest(self).run_test()
         MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
+
+    def test_mixed_precision_distance_functions(self):
+        """
+        This test checks the Mixed Precision search with layers that use different distance functions during
+        the computation.
+        """
+        MixedPrecisionDistanceFunctions(self).run_test()
 
     def test_mha_layer_test(self):
         """

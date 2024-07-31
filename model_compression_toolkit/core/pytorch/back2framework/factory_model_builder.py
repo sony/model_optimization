@@ -37,10 +37,10 @@ def get_pytorch_model_builder(mode: ModelBuilderMode) -> type:
         PyTorch model builder for the given mode.
     """
 
-    if not isinstance(mode, ModelBuilderMode):
+    if not isinstance(mode, ModelBuilderMode):  # pragma: no cover
         Logger.critical(f"Expected a ModelBuilderMode type for 'mode' parameter; received {type(mode)} instead.")
-    if mode is None:
+    if mode is None:  # pragma: no cover
         Logger.critical(f"Received 'mode' parameter is None.")
-    if mode not in pytorch_model_builders.keys():
+    if mode not in pytorch_model_builders.keys():  # pragma: no cover
         Logger.critical(f"'mode' parameter {mode} is not supported by the PyTorch model builders factory.")
     return pytorch_model_builders.get(mode)

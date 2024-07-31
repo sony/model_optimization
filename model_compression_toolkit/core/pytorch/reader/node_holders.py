@@ -25,7 +25,7 @@ class DummyPlaceHolder(torch.nn.Module):
     """
 
     def __name__(self):
-        return PLACEHOLDER
+        return PLACEHOLDER  # pragma: no cover
 
     def forward(self, x):
         return x

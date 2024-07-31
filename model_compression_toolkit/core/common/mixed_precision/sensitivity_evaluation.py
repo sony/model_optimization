@@ -77,7 +77,8 @@ class SensitivityEvaluation:
         self.disable_activation_for_metric = disable_activation_for_metric
         if self.quant_config.use_hessian_based_scores:
             if not isinstance(hessian_info_service, HessianInfoService):
-                Logger.critical(f"When using Hessian-based approximations for sensitivity evaluation, a valid HessianInfoService object is required; found {type(hessian_info_service)}.")
+                Logger.critical(
+                    f"When using Hessian-based approximations for sensitivity evaluation, a valid HessianInfoService object is required; found {type(hessian_info_service)}.")
             self.hessian_info_service = hessian_info_service
 
         self.sorted_configurable_nodes_names = graph.get_configurable_sorted_nodes_names(self.fw_info)
@@ -94,7 +95,8 @@ class SensitivityEvaluation:
         self.ips_distance_fns, self.ips_axis = self._init_metric_points_lists(self.interest_points, use_normalized_mse)
 
         self.output_points = get_output_nodes_for_metric(graph)
-        self.out_ps_distance_fns, self.out_ps_axis = self._init_metric_points_lists(self.output_points, use_normalized_mse)
+        self.out_ps_distance_fns, self.out_ps_axis = self._init_metric_points_lists(self.output_points,
+                                                                                    use_normalized_mse)
 
         # Setting lists with relative position of the interest points
         # and output points in the list of all mp model activation tensors
@@ -130,7 +132,8 @@ class SensitivityEvaluation:
             self.interest_points_hessians = self._compute_hessian_based_scores()
             self.quant_config.distance_weighting_method = lambda d: self.interest_points_hessians
 
-    def _init_metric_points_lists(self, points: List[BaseNode], norm_mse: bool = False) -> Tuple[List[Callable], List[int]]:
+    def _init_metric_points_lists(self, points: List[BaseNode], norm_mse: bool = False) -> Tuple[
+        List[Callable], List[int]]:
         """
         Initiates required lists for future use when computing the sensitivity metric.
         Each point on which the metric is computed uses a dedicated distance function based on its type.
@@ -146,16 +149,12 @@ class SensitivityEvaluation:
         distance_fns_list = []
         axis_list = []
         for n in points:
-            axis = n.framework_attr.get(AXIS) if not isinstance(n, FunctionalNode) else n.op_call_kwargs.get(AXIS)
-            distance_fn = self.fw_impl.get_mp_node_distance_fn(
-                layer_class=n.layer_class,
-                framework_attrs=n.framework_attr,
-                compute_distance_fn=self.quant_config.compute_distance_fn,
-                axis=axis,
-                norm_mse=norm_mse)
+            distance_fn, axis = self.fw_impl.get_mp_node_distance_fn(n,
+                                                                     compute_distance_fn=self.quant_config.compute_distance_fn,
+                                                                     norm_mse=norm_mse)
             distance_fns_list.append(distance_fn)
             # Axis is needed only for KL Divergence calculation, otherwise we use per-tensor computation
-            axis_list.append(axis if distance_fn==compute_kl_divergence else None)
+            axis_list.append(axis if distance_fn == compute_kl_divergence else None)
         return distance_fns_list, axis_list
 
     def compute_metric(self,
@@ -300,7 +299,8 @@ class SensitivityEvaluation:
         node_name = sorted_configurable_nodes_names[node_idx_to_configure]
         layers_to_config = self.conf_node2layers.get(node_name, None)
         if layers_to_config is None:
-            Logger.critical(f"Matching layers for node {node_name} not found in the mixed precision model configuration.")  # pragma: no cover
+            Logger.critical(
+                f"Matching layers for node {node_name} not found in the mixed precision model configuration.")  # pragma: no cover
 
         for current_layer in layers_to_config:
             self.set_layer_to_bitwidth(current_layer, mp_model_configuration[node_idx_to_configure])

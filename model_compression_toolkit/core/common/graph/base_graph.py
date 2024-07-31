@@ -440,7 +440,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         output_nodes = [ot.node for ot in self.get_outputs()]  # get output nodes from namedtuples
         if node_to_remove in output_nodes:  # If node is in the graph's outputs, the outputs should be updated
-            if new_graph_outputs is None:
+            if new_graph_outputs is None:  # pragma: no cover
                 Logger.critical(
                     f"{node_to_remove.name} is among the graph outputs; however, it cannot be removed without providing a new output.")  # pragma: no cover
             self.set_outputs(new_graph_outputs)
@@ -505,28 +505,6 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         if sort_by_attr is not None:
             output_edges.sort(key=lambda e: getattr(e, sort_by_attr))
         return output_edges
-
-    def get_memory(self) -> float:
-        """
-
-        Returns: Total memory consumption of the graph in bytes.
-
-        """
-        memory = 0
-        for n in self.nodes:
-            memory += n.get_memory_bytes(self.fw_info)
-        return memory
-
-    def get_float_memory(self) -> float:
-        """
-
-        Returns: Total memory consumption of the float graph in bytes.
-
-        """
-        memory = 0
-        for n in self.nodes:
-            memory += n.get_float_memory_bytes(self.fw_info)
-        return memory
 
     def get_configurable_sorted_nodes_names(self,
                                             fw_info: FrameworkInfo,

@@ -297,18 +297,6 @@ class BaseNode:
 
         return memory
 
-    def get_float_memory_bytes(self, fw_info) -> float:
-        """
-        Compute the number of bytes the node's memory requires.
-
-        Args:
-            fw_info: Framework info to decide which attributes should be quantized.
-
-        Returns: Number of bytes the node's memory requires when in floating point (32 bit).
-
-        """
-        q_params, f_params = self.get_num_parameters(fw_info)
-        return (f_params + q_params) * FP32_BYTES_PER_PARAMETER
 
     def get_unified_weights_candidates_dict(self, fw_info) -> Dict[str, Any]:
         """
@@ -435,20 +423,6 @@ class BaseNode:
         output_shapes = [s[1:] for s in output_shapes]
 
         return sum([np.prod([x for x in output_shape if x is not None]) for output_shape in output_shapes])
-
-    def get_total_input_params(self) -> float:
-        """
-        Calculates the total parameters in the node's input tensors.
-
-        Returns: Input size (i.e., total number of parameters).
-        """
-
-        input_shapes = self.input_shape if isinstance(self.input_shape, List) else [self.input_shape]
-
-        # remove batch size (first element) from input shape
-        input_shapes = [s[1:] for s in input_shapes]
-
-        return sum([np.prod([x for x in input_shape if x is not None]) for input_shape in input_shapes])
 
     def find_min_candidates_indices(self) -> List[int]:
         """
@@ -644,10 +618,10 @@ class BaseNode:
         if len(simd_list) > 1:
             Logger.warning(f"More than one pruning SIMD option is available."
                            f" Min SIMD is used: {min(simd_list)}")
-        if len(simd_list) == 0:
+        if len(simd_list) == 0:  # pragma: no cover
             Logger.critical(f"No SIMD option is available for {self}")
         _simd = min(simd_list)
-        if _simd <= 0 or int(_simd) != _simd:
+        if _simd <= 0 or int(_simd) != _simd:  # pragma: no cover
             Logger.critical(f"SIMD is expected to be a non-positive integer but found: {_simd}")
         return _simd
 

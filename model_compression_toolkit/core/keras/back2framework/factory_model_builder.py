@@ -37,10 +37,10 @@ def get_keras_model_builder(mode: ModelBuilderMode) -> type:
         Keras model builder for the given mode.
     """
 
-    if not isinstance(mode, ModelBuilderMode):
+    if not isinstance(mode, ModelBuilderMode):  # pragma: no cover
         Logger.critical(f"Expected a ModelBuilderMode type for 'mode', but received {type(mode)} instead.")
-    if mode is None:
+    if mode is None:  # pragma: no cover
         Logger.critical(f"get_keras_model_builder received 'mode' is None")
-    if mode not in keras_model_builders.keys():
+    if mode not in keras_model_builders.keys():  # pragma: no cover
         Logger.critical(f"'mode' {mode} is not recognized in the Keras model builders factory.")
     return keras_model_builders.get(mode)

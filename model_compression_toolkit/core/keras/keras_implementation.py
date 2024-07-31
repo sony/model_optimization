@@ -21,6 +21,7 @@ from mct_quantizers import KerasQuantizationWrapper, KerasActivationQuantization
 from tensorflow.keras.models import Model
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
+from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianInfoService
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remove_identity import RemoveIdentity
 from model_compression_toolkit.core.keras.hessian.activation_hessian_scores_calculator_keras import \
@@ -421,44 +422,47 @@ class KerasImplementation(FrameworkImplementation):
 
         return False
 
-    def get_mp_node_distance_fn(self, layer_class: type,
-                             framework_attrs: Dict[str, Any],
-                             compute_distance_fn: Callable = None,
-                             axis: int = None,
-                             norm_mse: bool = False) -> Callable:
+    def get_mp_node_distance_fn(self, n: BaseNode,
+                                compute_distance_fn: Callable = None,
+                                norm_mse: bool = False) -> Tuple[Callable, int]:
         """
         A mapping between layers' types and a distance function for computing the distance between
         two tensors in mixed precision (for loss computation purposes). Returns a specific function if node of specific types is
         given, or a default (normalized MSE) function otherwise.
 
         Args:
-            layer_class: Class path of a model's layer.
-            framework_attrs: Framework attributes the layer had which the graph node holds.
+            n: Node to choose distance function for.
             compute_distance_fn: An optional distance function to use globally for all nodes.
-            axis: The axis on which the operation is preformed (if specified).
             norm_mse: whether to normalize mse distance function.
 
-        Returns: A distance function between two tensors.
+        Returns: A distance function between two tensors and a axis on which the distance is computed (if exists).
         """
 
+        axis = n.framework_attr.get(keras_constants.AXIS) \
+            if not isinstance(n, FunctionalNode) else n.op_call_kwargs.get(keras_constants.AXIS)
+
+        layer_class = n.layer_class
+        framework_attrs = n.framework_attr
+
         if compute_distance_fn is not None:
-            return compute_distance_fn
+            return compute_distance_fn, axis
 
         if layer_class == Activation:
             node_type_name = framework_attrs[ACTIVATION]
             if node_type_name == SOFTMAX and axis is not None:
-                return compute_kl_divergence
+                return compute_kl_divergence, axis
             elif node_type_name == SIGMOID:
-                return compute_cs
+                return compute_cs, axis
         elif axis is not None and (layer_class == tf.nn.softmax or layer_class == tf.keras.layers.Softmax
                                    or (layer_class == TFOpLambda and
                                        SOFTMAX in framework_attrs[keras_constants.FUNCTION])):
-            return compute_kl_divergence
-        elif layer_class == tf.nn.sigmoid:
-            return compute_cs
+            return compute_kl_divergence, axis
+        elif layer_class == tf.nn.sigmoid or (layer_class == TFOpLambda and
+                                              SIGMOID in framework_attrs[keras_constants.FUNCTION]):
+            return compute_cs, axis
         elif layer_class == Dense:
-            return compute_cs
-        return partial(compute_mse, norm=norm_mse)
+            return compute_cs, axis
+        return partial(compute_mse, norm=norm_mse), axis
 
     def get_hessian_scores_calculator(self,
                                       graph: Graph,

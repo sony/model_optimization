@@ -60,33 +60,6 @@ def calculate_delta(threshold: np.ndarray,
     return threshold / (2 ** (n_bits - int(signed)))
 
 
-def calculate_min_max_values(threshold: np.ndarray,
-                             n_bits: int = 8,
-                             signed: bool = False) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Compute the min/max values of a quantization range according to the threshold,
-    number of bits and whether its signed or unsigned.
-
-    Args:
-        threshold: Threshold of quantization range to compute its min/max values.
-        n_bits: Number of bits used in the quantization.
-        signed: Whether the quantization range is signed or not.
-
-    Returns:
-        Min/max values of quantization range.
-    """
-
-    delta = calculate_delta(threshold,
-                            n_bits=n_bits,
-                            signed=signed)
-
-    # If unsigned: min=0, otherwise its -threshold
-    min_value = int(signed) * -threshold
-    max_value = threshold - delta
-
-    return min_value, max_value
-
-
 def quantize_tensor(tensor_data: np.ndarray,
                     threshold: np.ndarray,
                     n_bits: int,
@@ -238,7 +211,7 @@ def get_tensor_max(tensor_data: np.ndarray,
 
     """
     if n_bits < 1:
-        Logger.critical(f"Parameter n_bits must be positive; however 'n_bits'={n_bits} was provided.")
+        Logger.critical(f"Parameter n_bits must be positive; however 'n_bits'={n_bits} was provided.")  # pragma: no cover
     if is_uniform_quantization:
         expansion_factor = 1.0
     elif n_bits == 1:
@@ -337,40 +310,3 @@ def get_output_shape(tensor_shape, channel_axis):
 
     """
     return [-1 if i is channel_axis else 1 for i in range(len(tensor_shape))]
-
-
-def get_range_bounds(tensor_min, tensor_max):
-    """
-    Gets bounds on the quantization range limits for the minimization process.
-    Calculates the bounds in a way that would leave a gap between the possible optimized values
-    and the tensor min-max values.
-
-    Args:
-        tensor_min: min value of a tensor.
-        tensor_max: max value of a tensor.
-
-    Returns: An array with (lbound, ubound) pairs on the quantization range limit values.
-
-    """
-    # choosing bounds that have some gap from the original tensor min/max values.
-    l_bound = tensor_min / 2 if tensor_min > 0 else tensor_min * 2
-    u_bound = tensor_max * 2 if tensor_max > 0 else tensor_min / 2
-    return [(l_bound, u_bound), (l_bound, u_bound)]
-
-
-def get_threshold_bounds(min_threshold, max_threshold):
-    """
-    Gets bounds on the threshold for the minimization process.
-    Calculates the bounds in a way that would leave a gap between the possible optimized threshold
-    and the tensor max values. We use min_threshold as lower-bound to prevent the selected threshold
-    from being zero or negative.
-
-    Args:
-        min_threshold: minimal threshold to use if threshold is too small (not used for this method).
-        max_threshold: maximal threshold to be used in quantization.
-
-    Returns: An array with a pair of (lbound, ubound) on the quantization threshold limit values.
-
-    """
-    max_threshold = max(min_threshold, max_threshold)
-    return [(min_threshold, 2 * max_threshold)]

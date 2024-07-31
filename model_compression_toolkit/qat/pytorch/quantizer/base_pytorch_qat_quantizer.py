@@ -39,7 +39,7 @@ if FOUND_TORCH:
             """
             super().__init__(quantization_config)
 
-else:
+else:  # pragma: no cover
     class BasePytorchQATTrainableQuantizer(BasePytorchTrainableQuantizer):
         def __init__(self,
                      quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):

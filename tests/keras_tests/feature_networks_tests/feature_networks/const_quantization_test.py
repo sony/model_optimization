@@ -17,7 +17,11 @@ import tensorflow as tf
 import numpy as np
 
 import model_compression_toolkit as mct
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tp_model import generate_tp_model, \
+    get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tpc_keras import generate_keras_tpc
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
+    generate_test_tp_model, generate_custom_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from mct_quantizers import KerasQuantizationWrapper, QuantizationMethod
@@ -33,7 +37,8 @@ tp = mct.target_platform
 class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test, layer, const, is_list_input=False, input_reverse_order=False, use_kwargs=False,
-                 qmethod: mct.core.QuantizationErrorMethod = mct.core.QuantizationErrorMethod.MSE,
+                 error_method: mct.core.QuantizationErrorMethod = mct.core.QuantizationErrorMethod.MSE,
+                 qmethod: tp.QuantizationMethod = tp.QuantizationMethod.POWER_OF_TWO,
                  input_shape=(32, 32, 16)):
         super(ConstQuantizationTest, self).__init__(unit_test=unit_test, input_shape=input_shape)
         self.layer = layer
@@ -41,6 +46,7 @@ class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
         self.is_list_input = is_list_input
         self.input_reverse_order = input_reverse_order
         self.use_kwargs = use_kwargs
+        self.error_method = error_method
         self.qmethod = qmethod
 
     def generate_inputs(self):
@@ -48,10 +54,34 @@ class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
         return [1 + np.random.random(in_shape) for in_shape in self.get_input_shapes()]
 
     def get_quantization_config(self):
-        return mct.core.QuantizationConfig(weights_error_method=self.qmethod)
+        return mct.core.QuantizationConfig(weights_error_method=self.error_method)
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v3")
+        name = "const_quant_tpc"
+        base_cfg, mp_op_cfg_list, default_cfg = get_op_quantization_configs()
+        base_tp_model = generate_tp_model(default_config=default_cfg,
+                                          base_config=base_cfg,
+                                          mixed_precision_cfg_list=mp_op_cfg_list,
+                                          name=name)
+
+        const_config = default_cfg.clone_and_edit(
+            default_weight_attr_config=default_cfg.default_weight_attr_config.clone_and_edit(
+                enable_weights_quantization=True, weights_per_channel_threshold=True,
+                weights_quantization_method=self.qmethod))
+        const_configuration_options = tp.QuantizationConfigOptions([const_config])
+
+        operator_sets_dict = {}
+        operator_sets_dict["Add"] = const_configuration_options
+        operator_sets_dict["Sub"] = const_configuration_options
+        operator_sets_dict["Mul"] = const_configuration_options
+        operator_sets_dict["Div"] = const_configuration_options
+
+        tp_model = generate_custom_test_tp_model(name=name,
+                                                 base_cfg=base_cfg,
+                                                 base_tp_model=base_tp_model,
+                                                 operator_sets_dict=operator_sets_dict)
+
+        return generate_keras_tpc(name="const_quant_tpc", tp_model=tp_model)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

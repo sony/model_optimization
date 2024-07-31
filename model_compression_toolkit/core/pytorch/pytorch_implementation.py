@@ -30,6 +30,7 @@ from model_compression_toolkit.core import QuantizationConfig, FrameworkInfo, Co
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
+from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
@@ -403,36 +404,36 @@ class PytorchImplementation(FrameworkImplementation):
             return True
         return False
 
-    def get_mp_node_distance_fn(self, layer_class: type,
-                             framework_attrs: Dict[str, Any],
-                             compute_distance_fn: Callable = None,
-                             axis: int = None,
-                             norm_mse: bool = False) -> Callable:
+    def get_mp_node_distance_fn(self, n: BaseNode,
+                                compute_distance_fn: Callable = None,
+                                norm_mse: bool = False) -> Tuple[Callable, int]:
         """
         A mapping between layers' types and a distance function for computing the distance between
         two tensors in mixed precision (for loss computation purposes). Returns a specific function if node of specific types is
         given, or a default (normalized MSE) function otherwise.
 
         Args:
-            layer_class: Class path of a model's layer.
-            framework_attrs: Framework attributes the layer had which the graph node holds.
+            n: Node to choose distance function for.
             compute_distance_fn: An optional distance function to use globally for all nodes.
-            axis: The axis on which the operation is preformed (if specified).
             norm_mse: whether to normalize mse distance function.
 
-        Returns: A distance function between two tensors.
+        Returns: A distance function between two tensors and a axis on which the distance is computed (if exists).
         """
+        axis = n.framework_attr.get(pytorch_constants.DIM) if not (
+            isinstance(n, FunctionalNode)) else n.op_call_kwargs.get(pytorch_constants.DIM)
+
+        layer_class = n.layer_class
 
         if compute_distance_fn is not None:
-            return compute_distance_fn
+            return compute_distance_fn, axis
 
         elif layer_class in [Softmax, softmax] and axis is not None:
-            return compute_kl_divergence
+            return compute_kl_divergence, axis
         elif layer_class in [Sigmoid, sigmoid]:
-            return compute_cs
+            return compute_cs, axis
         elif layer_class == Linear:
-            return compute_cs
-        return partial(compute_mse, norm=norm_mse)
+            return compute_cs, axis
+        return partial(compute_mse, norm=norm_mse), axis
 
     def is_output_node_compatible_for_hessian_score_computation(self,
                                                                 node: BaseNode) -> bool:

@@ -36,7 +36,7 @@ def to_tf_tensor(tensor):
         return (to_tf_tensor(t) for t in tensor)
     elif isinstance(tensor, np.ndarray):
         return tf.convert_to_tensor(tensor.astype(np.float32))
-    else:
+    else:  # pragma: no cover
         Logger.critical(f'Unsupported type for conversion to TF tensor: {type(tensor)}.')
 
 
@@ -69,5 +69,5 @@ def tf_tensor_to_numpy(tensor: Union[List, Tuple, np.ndarray, tf.Tensor, float],
         return np.array([np_tensor]) if np.isscalar(np_tensor) else np_tensor
     elif isinstance(tensor, float):
         return np.array([tensor])
-    else:
+    else:  # pragma: no cover
         Logger.critical(f'Unsupported type for conversion to Numpy array: {type(tensor)}.')
