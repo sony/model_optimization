@@ -50,6 +50,7 @@ class HessianScoresCalculatorPytorch(HessianScoresCalculator):
                                                              hessian_scores_request=hessian_scores_request,
                                                              num_iterations_for_approximation=num_iterations_for_approximation)
 
+
     def concat_tensors(self, tensors_to_concate: Union[torch.Tensor, List[torch.Tensor]]) -> torch.Tensor:
         """
         Concatenate model tensors into a single tensor.

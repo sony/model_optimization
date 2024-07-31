@@ -50,6 +50,7 @@ class OperatorsSet(OperatorsSetBase):
         is_fusing_set = qc_options is None
         self.is_default = _current_tp_model.get().default_qco == self.qc_options or is_fusing_set
 
+
     def get_info(self) -> Dict[str,Any]:
         """
 

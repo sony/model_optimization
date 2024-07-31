@@ -15,7 +15,6 @@
 
 from model_compression_toolkit.logger import Logger
 
-
 def get_current_tp_model():
     """
 
