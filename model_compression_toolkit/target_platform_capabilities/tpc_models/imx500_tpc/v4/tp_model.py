@@ -193,11 +193,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # May suit for operations like: Dropout, Reshape, etc.
         default_qco = tp.get_default_quantization_config_options()
         tp.OperatorsSet("NoQuantization",
-                        default_qco.clone_and_edit(enable_activation_quantization=False)
-                        .clone_and_edit_weight_attribute(enable_weights_quantization=False))
-        tp.OperatorsSet("NoQuantization16",
                         default_qco.clone_and_edit(enable_activation_quantization=False,
-                                                   activation_n_bits=16, supported_input_activation_n_bits=(8, 16))
+                                                   supported_input_activation_n_bits=(8, 16))
                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))
 
         # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects

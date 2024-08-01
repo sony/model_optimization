@@ -62,39 +62,37 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
 
     keras_tpc = tp.TargetPlatformCapabilities(tp_model, name=name, version=TPC_VERSION)
 
-    no_quant_list = [MaxPooling2D,
+    no_quant_list = [Identity,
+                     tf.identity,
+                     Reshape,
+                     tf.reshape,
+                     Permute,
+                     tf.transpose,
+                     Flatten,
+                     Cropping2D,
+                     ZeroPadding2D,
+                     Dropout,
+                     MaxPooling2D,
+                     tf.split,
                      tf.quantization.fake_quant_with_min_max_vars,
                      tf.math.argmax,
                      tf.shape,
                      tf.math.equal,
                      tf.gather,
                      tf.cast,
+                     tf.unstack,
                      tf.compat.v1.gather,
                      tf.nn.top_k,
+                     tf.__operators__.getitem,
+                     tf.strided_slice,
                      tf.image.combined_non_max_suppression,
                      tf.compat.v1.shape]
-
-    no_quant_16_list = [Identity,
-                        tf.identity,
-                        Reshape,
-                        tf.reshape,
-                        Permute,
-                        tf.transpose,
-                        Flatten,
-                        Cropping2D,
-                        ZeroPadding2D,
-                        Dropout,
-                        tf.split,
-                        tf.unstack,
-                        tf.strided_slice,
-                        tf.__operators__.getitem]
 
     if FOUND_SONY_CUSTOM_LAYERS:
         no_quant_list.append(SSDPostProcess)
 
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", no_quant_list)
-        tp.OperationsSetToLayers("NoQuantization16", no_quant_16_list)
         tp.OperationsSetToLayers("Conv",
                                  [Conv2D,
                                   DepthwiseConv2D,
