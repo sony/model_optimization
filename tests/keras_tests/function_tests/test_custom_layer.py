@@ -65,6 +65,7 @@ def get_tpc():
     base_cfg = tp.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
                                        enable_activation_quantization=True,
                                        activation_n_bits=32,
+                                       supported_input_activation_n_bits=32,
                                        default_weight_attr_config=attr_cfg[DEFAULT_WEIGHT_ATTR_CONFIG],
                                        attr_weights_configs_mapping={},
                                        quantization_preserving=False,

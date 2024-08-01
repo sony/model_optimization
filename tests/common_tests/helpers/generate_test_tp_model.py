@@ -15,7 +15,8 @@
 import copy
 from typing import Dict, List, Any
 
-from model_compression_toolkit.constants import FLOAT_BITWIDTH
+from model_compression_toolkit.constants import FLOAT_BITWIDTH, ACTIVATION_N_BITS_ATTRIBUTE, \
+    SUPPORTED_INPUT_ACTIVATION_NBITS_ATTRIBUTE
 from model_compression_toolkit.target_platform_capabilities.constants import OPS_SET_LIST, KERNEL_ATTR, BIAS_ATTR, \
     WEIGHTS_N_BITS
 from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, QuantizationConfigOptions
@@ -30,6 +31,9 @@ BIAS_CONFIG = 'bias_config'
 
 
 def generate_test_tp_model(edit_params_dict, name=""):
+    # Add "supported_input_activation_n_bits" to match "activation_n_bits" if not defined.
+    if ACTIVATION_N_BITS_ATTRIBUTE in edit_params_dict and SUPPORTED_INPUT_ACTIVATION_NBITS_ATTRIBUTE not in edit_params_dict:
+        edit_params_dict[SUPPORTED_INPUT_ACTIVATION_NBITS_ATTRIBUTE] = (edit_params_dict[ACTIVATION_N_BITS_ATTRIBUTE],)
     base_config, op_cfg_list, default_config = get_op_quantization_configs()
 
     # separate weights attribute parameters from the requested param to edit
@@ -225,6 +229,7 @@ def generate_test_op_qc(default_weight_attr_config: tp.AttributeQuantizationConf
                                    attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config,
                                                                  BIAS_ATTR: bias_config},
                                    activation_n_bits=activation_n_bits,
+                                   supported_input_activation_n_bits=activation_n_bits,
                                    activation_quantization_method=activation_quantization_method,
                                    quantization_preserving=False,
                                    fixed_scale=None,
