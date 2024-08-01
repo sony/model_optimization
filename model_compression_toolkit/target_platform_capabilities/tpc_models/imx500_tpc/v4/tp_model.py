@@ -165,7 +165,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
             weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO))
     const_configuration_options = tp.QuantizationConfigOptions([const_config])
 
-    # 16 bits inputs and outputs. Currently, only defined for consts since with .....
+    # 16 bits inputs and outputs. Currently, only defined for consts since they are used in operators that
+    # support 16 bit as input and output.
     const_config_input16 = const_config.clone_and_edit(
         supported_input_activation_n_bits=(8, 16))
     const_config_input16_output16 = const_config_input16.clone_and_edit(
