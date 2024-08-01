@@ -64,6 +64,7 @@ def set_quantization_configuration_to_graph(graph: Graph,
 
     for n in graph.nodes:
         set_quantization_configs_to_node(node=n,
+                                         graph=graph,
                                          quant_config=quant_config,
                                          fw_info=graph.fw_info,
                                          tpc=graph.tpc,
@@ -72,6 +73,7 @@ def set_quantization_configuration_to_graph(graph: Graph,
 
 
 def set_quantization_configs_to_node(node: BaseNode,
+                                     graph: Graph,
                                      quant_config: QuantizationConfig,
                                      fw_info: FrameworkInfo,
                                      tpc: TargetPlatformCapabilities,
@@ -81,19 +83,22 @@ def set_quantization_configs_to_node(node: BaseNode,
 
     Args:
         node: Node to set its quantization configurations.
+        graph: Model's internal representation graph.
         quant_config: Quantization configuration to generate the node's configurations from.
         fw_info: Information needed for quantization about the specific framework.
         tpc: TargetPlatformCapabilities to get default OpQuantizationConfig.
         mixed_precision_enable: is mixed precision enabled.
     """
     node_qc_options = node.get_qco(tpc)
+    base_config, node_qc_options_list = node.filter_node_qco_by_graph(tpc, graph.get_next_nodes(node), node_qc_options)
 
     # Create QC candidates for weights and activation combined
     weight_channel_axis = fw_info.kernel_channels_mapping.get(node.type)
     node.candidates_quantization_cfg = _create_node_candidates_qc(quant_config,
                                                                   fw_info,
                                                                   weight_channel_axis,
-                                                                  node_qc_options,
+                                                                  node_qc_options_list,
+                                                                  base_config,
                                                                   node,
                                                                   mixed_precision_enable=mixed_precision_enable)
 
@@ -186,7 +191,8 @@ def _create_node_single_candidate_qc(qc: QuantizationConfig,
 def _create_node_candidates_qc(qc: QuantizationConfig,
                                fw_info: FrameworkInfo,
                                weight_channel_axis: Tuple[int, int],
-                               node_qc_options: QuantizationConfigOptions,
+                               node_qc_options_list: List[OpQuantizationConfig],
+                               base_config: OpQuantizationConfig,
                                node: BaseNode,
                                mixed_precision_enable: bool = False) -> List[CandidateNodeQuantizationConfig]:
     """
@@ -196,7 +202,8 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
         qc: Quantization configuration the quantization process should follow.
         fw_info: Framework information (e.g., which layers should have their kernels' quantized).
         weight_channel_axis: (Output, Input) channel index of the node's kernel.
-        node_qc_options: QuantizationConfigOptions for the node with quantization candidates information.
+        node_qc_options_list: List of quantization configs of node.
+        base_config: Base quantization config for node.
         node: A node to set quantization configuration candidates to.
         mixed_precision_enable: is mixed precision enabled
 
@@ -208,7 +215,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
     node_attrs_list = node.get_node_weights_attributes()
 
     if mixed_precision_enable:
-        for op_cfg in node_qc_options.quantization_config_list:
+        for op_cfg in node_qc_options_list:
             candidate_qc = copy.deepcopy(qc)
             candidates.append(_create_node_single_candidate_qc(candidate_qc,
                                                                fw_info,
@@ -220,7 +227,7 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
         candidates.append(_create_node_single_candidate_qc(qc,
                                                            fw_info,
                                                            weight_channel_axis,
-                                                           node_qc_options.base_config,
+                                                           base_config,
                                                            node_attrs_list))
 
     return candidates

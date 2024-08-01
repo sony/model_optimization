@@ -69,7 +69,8 @@ FLOAT_BITWIDTH = 32
 # that are shared among different candidates:
 WEIGHTS_NBITS_ATTRIBUTE = 'weights_n_bits'
 CORRECTED_BIAS_ATTRIBUTE = 'corrected_bias'
-ACTIVATION_NBITS_ATTRIBUTE = 'activation_n_bits'
+ACTIVATION_N_BITS_ATTRIBUTE = 'activation_n_bits'
+SUPPORTED_INPUT_ACTIVATION_NBITS_ATTRIBUTE = 'supported_input_activation_n_bits'
 
 # Quantization Parameters Iterative Search Defaults:
 SYMMETRIC_TENSOR_N_ITER = 40

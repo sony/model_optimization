@@ -349,9 +349,15 @@ def shift_negative_function(graph: Graph,
                                    add_node.output_shape,
                                    pad_top, pad_btm, pad_left, pad_right)
 
+        # Insert a pad node between the add node to the op2d, and create statistics for the pad node
+        insert_node_before_node(graph,
+                                node_to_insert=pad_node,
+                                last_node=op2d_node)
+
         # Set quantization configuration to node, even though we do not quantize it:
         set_quantization_configs_to_node(fw_info=fw_info,
                                          node=pad_node,
+                                         graph=graph,
                                          quant_config=core_config.quantization_config,
                                          tpc=graph.tpc,
                                          mixed_precision_enable=core_config.mixed_precision_enable)
@@ -361,11 +367,6 @@ def shift_negative_function(graph: Graph,
             for attr in pad_node.get_node_weights_attributes():
                 candidate_qc.weights_quantization_cfg.get_attr_config(attr).enable_weights_quantization = False
 
-        # Insert a pad node between the add node to the op2d, and create statistics for the pad node
-        insert_node_before_node(graph,
-                                node_to_insert=pad_node,
-                                last_node=op2d_node)
-
         graph.set_out_stats_collector_to_node(pad_node,
                                               add_node_stats_collector)  # We ignore the padding effect on statistics
 
@@ -373,6 +374,7 @@ def shift_negative_function(graph: Graph,
 
     set_quantization_configs_to_node(fw_info=fw_info,
                                      node=add_node,
+                                     graph=graph,
                                      quant_config=core_config.quantization_config,
                                      tpc=graph.tpc,
                                      mixed_precision_enable=core_config.mixed_precision_enable)
