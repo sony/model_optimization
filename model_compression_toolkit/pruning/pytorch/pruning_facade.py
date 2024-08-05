@@ -20,6 +20,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.core.common.pruning.pruner import Pruner
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig
 from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo
+from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import set_quantization_configuration_to_graph
 from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 from model_compression_toolkit.logger import Logger
@@ -126,6 +127,7 @@ if FOUND_TORCH:
         # as it prepares the graph for the pruning process.
         float_graph_with_compression_config = set_quantization_configuration_to_graph(float_graph,
                                                                                       quant_config=DEFAULTCONFIG,
+                                                                                      bit_width_config=BitWidthConfig(),
                                                                                       mixed_precision_enable=False)
 
         # Create a Pruner object with the graph and configuration.

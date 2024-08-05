@@ -15,9 +15,10 @@
 
 
 import copy
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from model_compression_toolkit.core.common import BaseNode
+from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.graph.base_graph import Graph
@@ -37,19 +38,21 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.op_q
 
 def set_quantization_configuration_to_graph(graph: Graph,
                                             quant_config: QuantizationConfig,
+                                            bit_width_config: BitWidthConfig,
                                             mixed_precision_enable: bool = False,
                                             running_gptq: bool = False) -> Graph:
     """
     Add quantization configuration for each graph node.
 
     Args:
-        graph: Graph for which to add quantization info to each node.
-        quant_config: Quantization configuration containing parameters for how the graph should be quantized.
-        mixed_precision_enable: is mixed precision enabled.
-        running_gptq: Whether or not a GPTQ optimization is planned to run after the PTQ process.
+        graph (Graph): Graph for which to add quantization info to each node.
+        quant_config (QuantizationConfig): Quantization configuration containing parameters for how the graph should be quantized.
+        bit_width_config (BitWidthConfig): Configuration for bit width selection.
+        mixed_precision_enable (bool): Whether mixed precision is enabled. Defaults to False.
+        running_gptq (bool): Whether or not a GPTQ optimization is planned to run after the PTQ process. Defaults to False.
 
     Returns:
-        The graph with quantization configurations attached to each node in it.
+        Graph: The graph with quantization configurations attached to each node in it.
     """
 
     if quant_config.weights_error_method == QuantizationErrorMethod.HMSE:
@@ -62,13 +65,16 @@ def set_quantization_configuration_to_graph(graph: Graph,
             Logger.warning("Using the HMSE error method for weights quantization parameters search. "
                            "Note: This method may significantly increase runtime during the parameter search process.")
 
+    nodes_to_manipulate_bit_widths = bit_width_config.get_nodes_to_manipulate_bit_widths(graph)
+
     for n in graph.nodes:
         set_quantization_configs_to_node(node=n,
                                          graph=graph,
                                          quant_config=quant_config,
                                          fw_info=graph.fw_info,
                                          tpc=graph.tpc,
-                                         mixed_precision_enable=mixed_precision_enable)
+                                         mixed_precision_enable=mixed_precision_enable,
+                                         nodes_to_manipulate_bit_widths=nodes_to_manipulate_bit_widths)
     return graph
 
 
@@ -77,17 +83,19 @@ def set_quantization_configs_to_node(node: BaseNode,
                                      quant_config: QuantizationConfig,
                                      fw_info: FrameworkInfo,
                                      tpc: TargetPlatformCapabilities,
-                                     mixed_precision_enable: bool = False):
+                                     mixed_precision_enable: bool = False,
+                                     nodes_to_manipulate_bit_widths: Dict = {}):
     """
     Create and set quantization configurations to a node (for both weights and activation).
 
     Args:
-        node: Node to set its quantization configurations.
-        graph: Model's internal representation graph.
-        quant_config: Quantization configuration to generate the node's configurations from.
-        fw_info: Information needed for quantization about the specific framework.
-        tpc: TargetPlatformCapabilities to get default OpQuantizationConfig.
-        mixed_precision_enable: is mixed precision enabled.
+        node (BaseNode): Node to set its quantization configurations.
+        graph (Graph): Model's internal representation graph.
+        quant_config (QuantizationConfig): Quantization configuration to generate the node's configurations from.
+        fw_info (FrameworkInfo): Information needed for quantization about the specific framework.
+        tpc (TargetPlatformCapabilities): TargetPlatformCapabilities to get default OpQuantizationConfig.
+        mixed_precision_enable (bool): Whether mixed precision is enabled. Defaults to False.
+        nodes_to_manipulate_bit_widths (Dict): Dictionary of nodes to manipulate bit-widths. Defaults to {}.
     """
     node_qc_options = node.get_qco(tpc)
     base_config, node_qc_options_list = node.filter_node_qco_by_graph(tpc, graph.get_next_nodes(node), node_qc_options)
@@ -100,7 +108,8 @@ def set_quantization_configs_to_node(node: BaseNode,
                                                                   node_qc_options_list,
                                                                   base_config,
                                                                   node,
-                                                                  mixed_precision_enable=mixed_precision_enable)
+                                                                  mixed_precision_enable=mixed_precision_enable,
+                                                                  nodes_to_manipulate_bit_widths=nodes_to_manipulate_bit_widths)
 
     # sorting the candidates by kernel attribute weights number of bits first and then by activation number of bits
     # (in reversed order). since only kernel attribute is quantized in weights mixed precision,
@@ -194,25 +203,37 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
                                node_qc_options_list: List[OpQuantizationConfig],
                                base_config: OpQuantizationConfig,
                                node: BaseNode,
-                               mixed_precision_enable: bool = False) -> List[CandidateNodeQuantizationConfig]:
+                               mixed_precision_enable: bool = False,
+                               nodes_to_manipulate_bit_widths: Dict = None) -> List[CandidateNodeQuantizationConfig]:
     """
     Create a list of candidates of weights and activation quantization configurations for a node.
 
     Args:
-        qc: Quantization configuration the quantization process should follow.
-        fw_info: Framework information (e.g., which layers should have their kernels' quantized).
-        weight_channel_axis: (Output, Input) channel index of the node's kernel.
-        node_qc_options_list: List of quantization configs of node.
-        base_config: Base quantization config for node.
-        node: A node to set quantization configuration candidates to.
-        mixed_precision_enable: is mixed precision enabled
+        qc (QuantizationConfig): Quantization configuration the quantization process should follow.
+        fw_info (FrameworkInfo): Framework information (e.g., which layers should have their kernels quantized).
+        weight_channel_axis (Tuple[int, int]): (Output, Input) channel index of the node's kernel.
+        node_qc_options_list (List[OpQuantizationConfig]): List of quantization configs of node.
+        base_config (OpQuantizationConfig): Base quantization config for node.
+        node (BaseNode): A node to set quantization configuration candidates to.
+        mixed_precision_enable (bool): Whether mixed precision is enabled. Defaults to False.
+        nodes_to_manipulate_bit_widths (Dict): Dictionary of nodes to manipulate bit-widths. Defaults to None.
 
     Returns:
-        List of candidates of weights quantization configurations to set for a node.
+        List[CandidateNodeQuantizationConfig]: List of candidates of weights quantization configurations to set for a node.
     """
 
     candidates = []
     node_attrs_list = node.get_node_weights_attributes()
+
+    if node in nodes_to_manipulate_bit_widths.keys():
+        bit_width = nodes_to_manipulate_bit_widths.get(node)
+        node_qc_options_list = [op_cfg for op_cfg in node_qc_options_list if
+                                    bit_width == op_cfg.activation_n_bits]
+        base_config.activation_n_bits = bit_width
+        if len(node_qc_options_list) == 0 or base_config not in node_qc_options_list:
+            Logger.critical(f"Manually selected activation bit-width {bit_width} is invalid for node {node}.")
+        else:
+            Logger.info(f"Setting node {node} bit-width to manually selected bit-width: {bit_width} bits.")
 
     if mixed_precision_enable:
         for op_cfg in node_qc_options_list:
