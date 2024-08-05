@@ -42,6 +42,26 @@ from model_compression_toolkit.xquant.common.constants import OUTPUT_SIMILARITY_
     OUTPUT_SIMILARITY_METRICS_VAL, INTERMEDIATE_SIMILARITY_METRICS_REPR, INTERMEDIATE_SIMILARITY_METRICS_VAL, \
     XQUANT_REPR, XQUANT_VAL, CUT_MEMORY_ELEMENTS, CUT_TOTAL_SIZE
 
+import subprocess
+import json
+
+def get_installed_packages():
+    result = subprocess.run(['pip', 'list', '--format=json'], stdout=subprocess.PIPE)
+    return json.loads(result.stdout)
+
+def check_package_version(package_names, required_version):
+    installed_packages = get_installed_packages()
+    for package in installed_packages:
+        if package['name'] in package_names:
+            installed_version = package['version']
+            if installed_version == required_version:
+                print(f"Package '{package['name']}' is installed with the required version {required_version}.")
+                return True
+            else:
+                print(f"Package '{package['name']}' is installed, but the version is {installed_version}. Required version is {required_version}.")
+                return False
+    print(f"None of the packages {package_names} are installed.")
+    return False
 
 def random_data_gen(shape=(3, 8, 8), use_labels=False, num_inputs=1, batch_size=2, num_iter=2):
     if use_labels:
@@ -53,17 +73,17 @@ def random_data_gen(shape=(3, 8, 8), use_labels=False, num_inputs=1, batch_size=
 
 class BaseTestEnd2EndPytorchXQuant(unittest.TestCase):
 
-    # def tearDown(self) -> None:
-    #     subprocess.check_call([sys.executable, "-m", "pip", "uninstall", '-y', 'mct-quantizers-nightly'])
-    #     subprocess.check_call([sys.executable, "-m", "pip", "install", 'mct-quantizers==1.5.1'])
+    def tearDown(self) -> None:
+        subprocess.check_call([sys.executable, "-m", "pip", "uninstall", '-y', 'mct-quantizers-nightly'])
+        subprocess.check_call([sys.executable, "-m", "pip", "install", 'mct-quantizers==1.5.1'])
 
     def setUp(self):
         # from mct_quantizers import __version__ as mctq_version
-        # if mctq_version == '1.5.1':
-        #     subprocess.check_call([sys.executable, "-m", "pip", "uninstall", '-y', 'mct-quantizers'])
-        #     subprocess.check_call([sys.executable, "-m", "pip", "install", 'mct-quantizers-nightly==1.5.1.20240728.post1314'])
-        # else:
-        #     raise Exception(f"New mctq version was released, thus this patch should be removed!")
+        if check_package_version(['mct-quantizers'], '1.5.1'):
+            subprocess.check_call([sys.executable, "-m", "pip", "uninstall", '-y', 'mct-quantizers'])
+            subprocess.check_call([sys.executable, "-m", "pip", "install", 'mct-quantizers-nightly'])
+        else:
+            raise Exception(f"New mctq version was released, thus this patch should be removed!")
 
         self.float_model = self.get_model_to_test()
         self.repr_dataset = partial(random_data_gen, shape=self.get_input_shape())
