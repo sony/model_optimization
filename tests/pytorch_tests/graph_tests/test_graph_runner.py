@@ -25,25 +25,19 @@ class FunctionTestRunner(unittest.TestCase):
         # Check that the correct exception message was raised
         self.assertEqual(str(context.exception), "Manually selected activation bit-width 3 is invalid for node add:add.")
 
-    def test_conv2d_bn_info_collection(self):
+    def test_manual_bit_width_selection(self):
         """
-        This test checks the BatchNorm info collection with con2d -> bn model.
-        Checks that the bn prior info has been "folded" into the conv node.
+        This test checks the manual bit-width selection feature.
         """
         ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), 4).run_test()
         ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), 2).run_test()
         ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Linear), 4).run_test()
+        ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(operator.add), 4).run_test()
+        ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(operator.add), 2).run_test()
         ManualBitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d), NodeTypeFilter(torch.nn.Linear)], [2, 4]).run_test()
         ManualBitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d), NodeTypeFilter(torch.nn.Linear)], [4, 4]).run_test()
-        ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(operator.add), 4).run_test()
-        ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(operator.add), 2).run_test()
         ManualBitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d), NodeTypeFilter(operator.add)], [2, 4]).run_test()
-
-
-
-    def test_manual_bit_width_selection_functional_layer_test(self):
-        ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(operator.add), 4).run_test()
-        ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(operator.add), 2).run_test()
+        ManualBitWidthByLayerTypeTest(self, [NodeTypeFilter(operator.add), NodeTypeFilter(torch.nn.Conv2d)], [4, 4]).run_test()
 
 
 if __name__ == '__main__':
