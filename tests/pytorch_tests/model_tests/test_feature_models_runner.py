@@ -24,6 +24,7 @@ from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from model_compression_toolkit.target_platform_capabilities import constants as C
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_attributes_quantization_test import BNAttributesQuantization
+from tests.pytorch_tests.model_tests.feature_models.compute_max_cut_test import ComputeMaxCutTest
 from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import LayerNormNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
@@ -99,6 +100,12 @@ from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import 
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
+
+    def test_compute_max_cut(self):
+        """
+        This test checks the compute max cut of a model and the fused nodes information in the model metadata.
+        """
+        ComputeMaxCutTest(self).run_test()
 
     def test_remove_identity(self):
         """
