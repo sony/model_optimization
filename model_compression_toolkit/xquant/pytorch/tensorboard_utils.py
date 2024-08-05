@@ -13,8 +13,9 @@
 #  limitations under the License.
 #  ==============================================================================
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
+from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from typing import Dict, Any, Callable
+from typing import Dict, Any, Callable, List
 
 import torch
 
@@ -99,12 +100,12 @@ class PytorchTensorboardUtils(TensorboardUtils):
         return quant_graph
 
 
-def populate_fused_node_memory_elements(quantized_model_metadata):
+def populate_fused_node_memory_elements(quantized_model_metadata: Dict[str, Any]) -> Dict[str, list]:
     """
     Populate a dictionary mapping fused node names to their corresponding memory elements.
 
     Args:
-        quantized_model_metadata (dict): Metadata containing scheduling information for the quantized model.
+        quantized_model_metadata: Metadata containing scheduling information for the quantized model.
 
     Returns:
         dict: A dictionary with fused node names as keys and memory elements as values.
@@ -121,7 +122,7 @@ def populate_fused_node_memory_elements(quantized_model_metadata):
     return fused_node_to_memory_elements
 
 
-def assign_cut_info_to_node(node, memory_elements):
+def assign_cut_info_to_node(node: BaseNode, memory_elements: List[dict]):
     """
     Assign cut memory elements and total size to a node's framework attributes.
 
@@ -138,14 +139,14 @@ def assign_cut_info_to_node(node, memory_elements):
     )
 
 
-def process_node_cut_info(node, fused_node_to_memory_elements, quantized_model_metadata, quantized_model):
+def process_node_cut_info(node: BaseNode, fused_node_to_memory_elements: Dict[str, list], quantized_model_metadata: Dict[str, Any], quantized_model: torch.nn.Module):
     """
     Process and assign cut information for a given node based on metadata and fused nodes mapping.
 
     Args:
-        node (Node): The node to process.
-        fused_node_to_memory_elements (dict): Dictionary mapping fused nodes to memory elements.
-        quantized_model_metadata (dict): Metadata containing scheduling information for the quantized model.
+        node: The node to process.
+        fused_node_to_memory_elements: Dictionary mapping fused nodes to memory elements.
+        quantized_model_metadata: Metadata containing scheduling information for the quantized model.
         quantized_model: The quantized model.
     """
     node_name_without_suffix = node.name.removesuffix('_layer')
@@ -170,13 +171,15 @@ def process_node_cut_info(node, fused_node_to_memory_elements, quantized_model_m
         assign_cut_info_to_node(node, fused_node_to_memory_elements[original_node_name])
 
 
-def insert_cut_info_into_graph(quant_graph, quantized_model_metadata, quantized_model):
+def insert_cut_info_into_graph(quant_graph: Graph,
+                               quantized_model_metadata: Dict[str, Any],
+                               quantized_model: torch.nn.Module):
     """
     Insert information about cut tensors into the graph nodes based on the provided metadata.
 
     Args:
-        quant_graph (Graph): The graph representing the quantized model.
-        quantized_model_metadata (dict): Metadata containing scheduling information for the quantized model.
+        quant_graph: The graph representing the quantized model.
+        quantized_model_metadata: Metadata containing scheduling information for the quantized model.
         quantized_model: The quantized model.
     """
     # Populate the mapping of fused nodes to memory elements
