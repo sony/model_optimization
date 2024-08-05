@@ -107,7 +107,8 @@ def qparams_selection_histogram_search(error_function: Callable,
                                        n_bits: int,
                                        constrained: bool = True,
                                        n_iter: int = 10,
-                                       min_threshold: float = MIN_THRESHOLD):
+                                       min_threshold: float = MIN_THRESHOLD,
+                                       is_signed: bool = None) -> Tuple[np.ndarray, bool]:
     """
     Search for an optimal threshold to quantize a histogram of collected float values.
     The search_methods starts with the constrained no-clipping threshold by the bins' maximal value, and continues with
@@ -123,13 +124,14 @@ def qparams_selection_histogram_search(error_function: Callable,
         constrained: Whether the threshold should be constrained or not.
         n_iter: Number of searching iterations.
         min_threshold: Threshold to return if the computed threshold is smaller that min_threshold.
+        is_signed: Whether the quantization is signed or not. If None then compute SIGNED value.
 
     Returns:
         Optimal constrained threshold to quantize the tensor.
 
     """
 
-    signed = np.any(bins < 0)  # Whether histogram contains negative values or not.
+    signed = (bins < 0).any() if is_signed is None else is_signed  # Whether histogram contains negative values or not.
     tensor_data = np.abs(bins)
     tensor_max = np.max(tensor_data)
     if not constrained:
@@ -150,7 +152,7 @@ def qparams_selection_histogram_search(error_function: Callable,
         error_list.append(error)
 
     # Return the threshold with the minimal error.
-    return np.maximum(threshold_list[np.argmin(error_list)], min_threshold)
+    return np.maximum(threshold_list[np.argmin(error_list)], min_threshold), signed
 
 
 def qparams_symmetric_iterative_minimization(x0: np.ndarray,
@@ -537,7 +539,8 @@ def qparams_symmetric_selection_histogram_search(error_function: Callable,
                                                  counts: np.ndarray,
                                                  n_bits: int,
                                                  n_iter: int = SYMMETRIC_HISTOGRAM_N_ITER,
-                                                 min_threshold: float = MIN_THRESHOLD):
+                                                 min_threshold: float = MIN_THRESHOLD,
+                                                 is_signed: bool = None) -> Tuple[np.ndarray, bool]:
     """
     search for optimal threshold (per-channel or per-tensor) for symmetric quantization of a histogram,
     using the iterative optimizer method.
@@ -550,12 +553,13 @@ def qparams_symmetric_selection_histogram_search(error_function: Callable,
         n_bits: Number of bits to quantize the tensor.
         n_iter: Number of searching iterations.
         min_threshold: Threshold to return if the computed threshold is smaller that min_threshold.
+        is_signed: Whether the quantization is signed or not. If None then compute SIGNED value.
 
     Returns:
         Optimized threshold for quantifying the histogram.
 
     """
-    signed = np.any(bins[:-1][counts != 0] < 0)  # Whether histogram contains negative values or not.
+    signed = np.any(bins[:-1][counts != 0] < 0) if is_signed is None else is_signed  # Whether histogram contains negative values or not.
 
     res = qparams_symmetric_iterative_minimization(x0=get_init_threshold(min_threshold, tensor_max),
                                                    x=bins,
@@ -570,7 +574,7 @@ def qparams_symmetric_selection_histogram_search(error_function: Callable,
                                                    n_iter=SYMMETRIC_HISTOGRAM_N_ITER,
                                                    dec_freq=SYMMETRIC_HISTOGRAM_DEC_FREQ,
                                                    per_channel=False)
-    return max(min_threshold, res['param'])
+    return max(min_threshold, res['param']), signed
 
 
 def kl_qparams_symmetric_selection_histogram_search(error_function: Callable,
@@ -579,7 +583,8 @@ def kl_qparams_symmetric_selection_histogram_search(error_function: Callable,
                                                     counts: np.ndarray,
                                                     n_bits: int,
                                                     n_iter: int = SYMMETRIC_HISTOGRAM_N_ITER,
-                                                    min_threshold: float = MIN_THRESHOLD):
+                                                    min_threshold: float = MIN_THRESHOLD,
+                                                    is_signed: bool = None) -> Tuple[np.ndarray, bool]:
     """
     Search for optimal threshold (per-channel or per-tensor) for symmetric quantization of a histogram,
     with KL-Divergence loss function (needs a separate search function
@@ -599,7 +604,7 @@ def kl_qparams_symmetric_selection_histogram_search(error_function: Callable,
         Optimized threshold for quantifying the histogram.
 
     """
-    signed = np.any(bins[:-1][counts != 0] < 0)  # Whether histogram contains negative values or not.
+    signed = np.any(bins[:-1][counts != 0] < 0) if is_signed is None else is_signed  # Whether histogram contains negative values or not.
     res = qparams_symmetric_iterative_minimization(x0=get_init_threshold(min_threshold, tensor_max),
                                                    x=bins,
                                                    loss_fn=lambda x, q_x, t:
@@ -617,7 +622,7 @@ def kl_qparams_symmetric_selection_histogram_search(error_function: Callable,
                                                    n_iter=SYMMETRIC_HISTOGRAM_N_ITER,
                                                    dec_freq=SYMMETRIC_HISTOGRAM_DEC_FREQ,
                                                    per_channel=False)
-    return max(min_threshold, res['param'])
+    return max(min_threshold, res['param']), signed
 
 
 def qparams_uniform_selection_histogram_search(error_function: Callable,

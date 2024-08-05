@@ -142,6 +142,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.const_representat
 from tests.keras_tests.feature_networks_tests.feature_networks.concatination_threshold_update import ConcatThresholdtest
 from tests.keras_tests.feature_networks_tests.feature_networks.const_quantization_test import ConstQuantizationTest, \
     AdvancedConstQuantizationTest
+from tests.keras_tests.feature_networks_tests.feature_networks.activation_16bit_test import Activation16BitTest, \
+    Activation16BitMixedPrecisionTest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
 
 layers = tf.keras.layers
@@ -794,8 +796,13 @@ class FeatureNetworkTest(unittest.TestCase):
         TpcTest(f'{C.IMX500_TP_MODEL}.v2_lut', self).run_test()
         TpcTest(f'{C.IMX500_TP_MODEL}.v3', self).run_test()
         TpcTest(f'{C.IMX500_TP_MODEL}.v3_lut', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v4', self).run_test()
         TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
         TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
+
+    def test_16bit_activations(self):
+        Activation16BitTest(self).run_test()
+        Activation16BitMixedPrecisionTest(self).run_test()
 
 
 if __name__ == '__main__':

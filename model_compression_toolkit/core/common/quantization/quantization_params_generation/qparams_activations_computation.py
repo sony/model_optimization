@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
-from typing import Dict
+from typing import Dict, Union
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
@@ -25,7 +25,7 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 
 def get_activations_qparams(activation_quant_cfg: NodeActivationQuantizationConfig,
                             nodes_prior_info: NodePriorInfo,
-                            out_stats_container: BaseStatsCollector) -> Dict[str, float]:
+                            out_stats_container: BaseStatsCollector) -> Dict[str, Union[np.ndarray, float, bool]]:
     """
     Compute the activations params for a given node in a graph according to a params function.
 
@@ -49,7 +49,9 @@ def get_activations_qparams(activation_quant_cfg: NodeActivationQuantizationConf
                                                                     bins_counts)
     min_value, max_value = out_stats_container.get_min_max_values()
 
-    if nodes_prior_info.is_output_bounded():
+    if activation_quant_cfg.is_signed is not None:
+        signed = activation_quant_cfg.is_signed
+    elif nodes_prior_info.is_output_bounded():
         signed = min_value < 0
     else:
         signed = np.any(bins_values[:-1][bins_counts > 0] < 0)
@@ -65,14 +67,12 @@ def get_activations_qparams(activation_quant_cfg: NodeActivationQuantizationConf
             activation_quant_cfg.activation_quantization_params_fn = \
                 quantization_params_generation.uniform_no_clipping_selection_min_max
 
-    activation_params = activation_quant_cfg.activation_quantization_params_fn(bins_values,
-                                                                               bins_counts,
-                                                                               activation_quant_cfg.l_p_value,
-                                                                               activation_quant_cfg.activation_n_bits,
-                                                                               min_value,
-                                                                               max_value,
-                                                                               min_threshold=activation_quant_cfg.min_threshold,
-                                                                               quant_error_method=activation_quant_cfg.activation_error_method)
-    activation_params.update({SIGNED: signed})
-
-    return activation_params
+    return activation_quant_cfg.activation_quantization_params_fn(bins_values,
+                                                                  bins_counts,
+                                                                  activation_quant_cfg.l_p_value,
+                                                                  activation_quant_cfg.activation_n_bits,
+                                                                  min_value,
+                                                                  max_value,
+                                                                  min_threshold=activation_quant_cfg.min_threshold,
+                                                                  quant_error_method=activation_quant_cfg.activation_error_method,
+                                                                  is_signed=signed)
