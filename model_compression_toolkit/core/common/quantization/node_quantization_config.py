@@ -96,7 +96,7 @@ class NodeActivationQuantizationConfig(BaseNodeQuantizationConfig):
         self.activation_n_bits = op_cfg.activation_n_bits
         self.relu_bound_to_power_of_2 = qc.relu_bound_to_power_of_2
         self.enable_activation_quantization = op_cfg.enable_activation_quantization
-        self.is_signed = op_cfg.is_signed
+        self.signedness = op_cfg.signedness
         self.activation_channel_equalization = qc.activation_channel_equalization
         self.input_scaling = qc.input_scaling
         self.min_threshold = qc.min_threshold
