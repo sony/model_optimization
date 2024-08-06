@@ -19,7 +19,7 @@ from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS, \
     WEIGHTS_QUANTIZATION_METHOD
 from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
-    TargetPlatformModel
+    TargetPlatformModel, Signedness
 from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import \
     AttributeQuantizationConfig
 
@@ -94,7 +94,8 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         quantization_preserving=False,
         fixed_scale=None,
         fixed_zero_point=None,
-        simd_size=32)
+        simd_size=32,
+        signedness=Signedness.AUTO)
 
     # We define an 8-bit config for linear operations quantization, that include a kernel and bias attributes.
     linear_eight_bits = tp.OpQuantizationConfig(
@@ -107,7 +108,8 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         quantization_preserving=False,
         fixed_scale=None,
         fixed_zero_point=None,
-        simd_size=32)
+        simd_size=32,
+        signedness=Signedness.AUTO)
 
     # To quantize a model using mixed-precision, create
     # a list with more than one OpQuantizationConfig.

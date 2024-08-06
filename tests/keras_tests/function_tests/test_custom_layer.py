@@ -18,6 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.target_platform_capabilities.target_platform import Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
     KERNEL_BASE_CONFIG, BIAS_CONFIG
@@ -71,7 +72,8 @@ def get_tpc():
                                        quantization_preserving=False,
                                        fixed_scale=1.0,
                                        fixed_zero_point=0,
-                                       simd_size=32)
+                                       simd_size=32,
+                                       signedness=Signedness.AUTO)
 
     default_configuration_options = tp.QuantizationConfigOptions([base_cfg])
     tp_model = tp.TargetPlatformModel(default_configuration_options)
