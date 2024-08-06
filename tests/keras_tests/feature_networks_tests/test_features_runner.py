@@ -151,15 +151,7 @@ layers = tf.keras.layers
 class FeatureNetworkTest(unittest.TestCase):
 
     def test_compute_max_cut(self):
-        from mct_quantizers import __version__ as mctq_version
-        if mctq_version=='1.5':
-            subprocess.check_call([sys.executable, "-m", "pip", "uninstall", '-y', 'mct-quantizers'])
-            subprocess.check_call([sys.executable, "-m", "pip", "install", 'mct-quantizers-nightly'])
-            ComputeMaxCutTest(self).run_test()
-            subprocess.check_call([sys.executable, "-m", "pip", "uninstall", '-y', 'mct-quantizers-nightly'])
-            subprocess.check_call([sys.executable, "-m", "pip", "install", 'mct-quantizers==1.5'])
-        else:
-            raise Exception(f"New mctq version was released, thus this patch should be removed!")
+        ComputeMaxCutTest(self).run_test()
 
     def test_remove_identity(self):
         RemoveIdentityTest(self).run_test()
