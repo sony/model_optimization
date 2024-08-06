@@ -31,7 +31,7 @@ from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
-from model_compression_toolkit.metadata import get_versions_dict
+from model_compression_toolkit.metadata import get_versions_dict, create_model_metadata
 
 LR_DEFAULT = 1e-4
 LR_REST_DEFAULT = 1e-4
@@ -177,15 +177,15 @@ if FOUND_TORCH:
         # ---------------------- #
         # Core Runner
         # ---------------------- #
-        graph, bit_widths_config, hessian_info_service = core_runner(in_model=model,
-                                                                     representative_data_gen=representative_data_gen,
-                                                                     core_config=core_config,
-                                                                     fw_info=DEFAULT_PYTORCH_INFO,
-                                                                     fw_impl=fw_impl,
-                                                                     tpc=target_platform_capabilities,
-                                                                     target_resource_utilization=target_resource_utilization,
-                                                                     tb_w=tb_w,
-                                                                     running_gptq=True)
+        graph, bit_widths_config, hessian_info_service, scheduling_info = core_runner(in_model=model,
+                                                                                      representative_data_gen=representative_data_gen,
+                                                                                      core_config=core_config,
+                                                                                      fw_info=DEFAULT_PYTORCH_INFO,
+                                                                                      fw_impl=fw_impl,
+                                                                                      tpc=target_platform_capabilities,
+                                                                                      target_resource_utilization=target_resource_utilization,
+                                                                                      tb_w=tb_w,
+                                                                                      running_gptq=True)
 
         float_graph = copy.deepcopy(graph)
 
@@ -212,7 +212,9 @@ if FOUND_TORCH:
 
         exportable_model, user_info = get_exportable_pytorch_model(graph_gptq)
         if target_platform_capabilities.tp_model.add_metadata:
-            exportable_model = add_metadata(exportable_model, get_versions_dict(target_platform_capabilities))
+            exportable_model = add_metadata(exportable_model,
+                                            create_model_metadata(tpc=target_platform_capabilities,
+                                                                  scheduling_info=scheduling_info))
         return exportable_model, user_info
 
 
