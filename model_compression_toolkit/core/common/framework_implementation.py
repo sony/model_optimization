@@ -348,24 +348,20 @@ class FrameworkImplementation(ABC):
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s count_node_for_mixed_precision_interest_points method.')  # pragma: no cover
 
-    def get_mp_node_distance_fn(self, layer_class: type,
-                             framework_attrs: Dict[str, Any],
-                             compute_distance_fn: Callable = None,
-                             axis: int = None,
-                             norm_mse: bool = False) -> Callable:
+    def get_mp_node_distance_fn(self, n: BaseNode,
+                                compute_distance_fn: Callable = None,
+                                norm_mse: bool = False) -> Tuple[Callable, int]:
         """
         A mapping between layers' types and a distance function for computing the distance between
         two tensors in mixed precision (for loss computation purposes). Returns a specific function if node of specific types is
         given, or a default (normalized MSE) function otherwise.
 
         Args:
-            layer_class: Class path of a model's layer.
-            framework_attrs: Framework attributes the layer had which the graph node holds.
+            n: Node to choose distance function for.
             compute_distance_fn: An optional distance function to use globally for all nodes.
-            axis: The axis on which the operation is preformed (if specified).
             norm_mse: whether to normalize mse distance function.
 
-        Returns: A distance function between two tensors.
+        Returns: A distance function between two tensors and a axis on which the distance is computed (if exists).
         """
 
         raise NotImplemented(f'{self.__class__.__name__} have to implement the '

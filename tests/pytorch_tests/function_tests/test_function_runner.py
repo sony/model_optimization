@@ -31,6 +31,8 @@ from tests.pytorch_tests.function_tests.test_hessian_service import FetchActivat
     FetchHessianNotEnoughSamplesThrowTest, FetchHessianNotEnoughSamplesSmallBatchThrowTest, \
     FetchComputeBatchLargerThanReprBatchTest, FetchHessianRequiredZeroTest, FetchHessianMultipleNodesTest, \
     DoubleFetchHessianTest
+from tests.pytorch_tests.function_tests.test_lut_activation_quanitzer_fake_quant import TestLUTQuantizerFakeQuantSigned, \
+    TestLUTQuantizerFakeQuantUnsigned
 from tests.pytorch_tests.function_tests.test_sensitivity_eval_non_supported_output import \
     TestSensitivityEvalWithArgmaxNode
 from tests.pytorch_tests.function_tests.test_hessian_info_calculator import WeightsHessianTraceBasicModelTest, \
@@ -161,6 +163,13 @@ class FunctionTestRunner(unittest.TestCase):
         This test verifies failure on non-supported output nodes in mixed precision with Hessian-based scores.
         """
         TestSensitivityEvalWithArgmaxNode(self).run_test()
+
+    def test_lut_activation_quantizer(self):
+        """
+        Test LUT activation Quantizer fakely quantized function.
+        """
+        TestLUTQuantizerFakeQuantSigned(self).run_test()
+        TestLUTQuantizerFakeQuantUnsigned(self).run_test()
 
     def test_get_gptq_config(self):
         """

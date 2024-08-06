@@ -13,31 +13,61 @@
 # limitations under the License.
 # ==============================================================================
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Tuple, Union, Dict, List
+
+from model_compression_toolkit.data_generation import ImageNormalizationType
+from model_compression_toolkit.logger import Logger
 
 
 class BaseImagePipeline(ABC):
     def __init__(self,
-                 output_image_size: int,
-                 extra_pixels: int = 0):
+                 output_image_size: Union[int, Tuple[int, int]],
+                 extra_pixels: Union[int, Tuple[int, int]] = 0,
+                 image_clipping: bool = False,
+                 normalization: List[List[int]] = [[0, 0, 0], [1, 1, 1]]):
         """
         Base class for image pipeline.
 
         Args:
-            output_image_size (int): The desired output image size.
-            extra_pixels (int, optional): Extra pixels to add to the input image size. Defaults to 0.
+            output_image_size (Union[int, Tuple[int, int]]): The desired output image size.
+            extra_pixels (Union[int, Tuple[int, int]]): Extra pixels to add to the input image size. Defaults to 0.
+            image_clipping (bool): Whether to clip images during optimization.
+            normalization (List[List[float]]): The image normalization values for processing images during optimization.
         """
-        self.output_image_size = output_image_size
-        self.extra_pixels = extra_pixels
+        if isinstance(output_image_size, int):
+            self.output_image_size = (output_image_size, output_image_size)
+        elif isinstance(output_image_size, tuple) and len(output_image_size) == 1:
+            self.output_image_size = output_image_size + output_image_size # concatenate two tuples
+        elif isinstance(output_image_size, tuple) and len(output_image_size) == 2:
+            self.output_image_size = output_image_size
+        elif isinstance(output_image_size, tuple):
+            Logger.critical(f"'output_image_size' should a tuple of length 1 or 2. Got tuple of length {len(output_image_size)}") # pragma: no cover
+        else:
+            Logger.critical(f"'output_image_size' should be an int or tuple but type {type(output_image_size)} was received.") # pragma: no cover
+
+        if isinstance(extra_pixels, int):
+            self.extra_pixels = (extra_pixels, extra_pixels)
+        elif isinstance(extra_pixels, tuple) and len(extra_pixels) == 1:
+            self.extra_pixels = extra_pixels + extra_pixels # concatenate two tuples
+        elif isinstance(extra_pixels, tuple) and len(extra_pixels) == 2:
+            self.extra_pixels = extra_pixels
+        elif isinstance(extra_pixels, tuple):
+            Logger.critical(f"'extra_pixels' should a tuple of length 1 or 2. Got tuple of length {len(extra_pixels)}") # pragma: no cover
+        else:
+            Logger.critical(f"'extra_pixels' should be an int or tuple but type {type(extra_pixels)} was received.") # pragma: no cover
+
+        self.image_clipping = image_clipping
+        self.normalization = normalization
+
     @abstractmethod
-    def get_image_input_size(self) -> int:
+    def get_image_input_size(self) -> Tuple[int, int]:
         """
         Get the size of the input image for the image pipeline.
 
         Returns:
-            int: The input image size.
+            Tuple[int, int]: The input image size.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
 
     @abstractmethod
     def image_input_manipulation(self,
@@ -51,7 +81,7 @@ class BaseImagePipeline(ABC):
         Returns:
             Any: Manipulated images.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
 
     @abstractmethod
     def image_output_finalize(self,
@@ -65,4 +95,12 @@ class BaseImagePipeline(ABC):
         Returns:
             Any: Finalized images.
         """
-        raise NotImplemented
+        raise NotImplemented # pragma: no cover
+
+
+# Dictionary mapping ImageNormalizationType to corresponding normalization values
+image_normalization_dict: Dict[ImageNormalizationType, List[List[float]]] = {
+    ImageNormalizationType.TORCHVISION: [[0.485 * 255, 0.456 * 255, 0.406 * 255], [0.229 * 255, 0.224 * 255, 0.225 * 255]],
+    ImageNormalizationType.KERAS_APPLICATIONS: [[127.5, 127.5, 127.5], [127.5, 127.5, 127.5]],
+    ImageNormalizationType.NO_NORMALIZATION: [[0, 0, 0], [1, 1, 1]]
+}

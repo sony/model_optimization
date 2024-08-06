@@ -96,7 +96,7 @@ class TargetPlatformModel(ImmutableClass):
         for op_set in self.operator_set:
             if operators_set_name == op_set.name:
                 return op_set.qc_options
-        return get_default_quantization_config_options()
+        return self.default_qco
 
     def get_default_op_quantization_config(self) -> OpQuantizationConfig:
         """
@@ -158,7 +158,7 @@ class TargetPlatformModel(ImmutableClass):
             self.fusing_patterns.append(tp_model_component)
         elif isinstance(tp_model_component, OperatorsSetBase):
             self.operator_set.append(tp_model_component)
-        else:
+        else:  # pragma: no cover
             Logger.critical(f'Attempted to append an unrecognized TargetPlatformModelComponent of type: {type(tp_model_component)}.')
 
     def __enter__(self):

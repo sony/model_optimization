@@ -48,7 +48,8 @@ from tests.pytorch_tests.model_tests.feature_models.residual_collapsing_test imp
 from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPrecisionActivationSearch8Bit, MixedPrecisionActivationSearch2Bit, MixedPrecisionActivationSearch4Bit, \
-    MixedPrecisionActivationSearch4BitFunctional, MixedPrecisionActivationMultipleInputs
+    MixedPrecisionActivationSearch4BitFunctional, MixedPrecisionActivationMultipleInputs, \
+    MixedPrecisionDistanceFunctions
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.scalar_tensor_test import ScalarTensorTest
@@ -97,6 +98,8 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 from tests.pytorch_tests.model_tests.feature_models.const_quantization_test import ConstQuantizationTest, \
     AdvancedConstQuantizationTest
 from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import RemoveIdentityTest
+from tests.pytorch_tests.model_tests.feature_models.activation_16bit_test import Activation16BitTest, \
+    Activation16BitMixedPrecisionTest
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
@@ -540,6 +543,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         MixedPrecisionBopsWeightsActivationUtilizationTest(self).run_test()
         MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
+    def test_mixed_precision_distance_functions(self):
+        """
+        This test checks the Mixed Precision search with layers that use different distance functions during
+        the computation.
+        """
+        MixedPrecisionDistanceFunctions(self).run_test()
+
     def test_mha_layer_test(self):
         """
         This test checks the MultiHeadAttentionDecomposition feature.
@@ -654,6 +664,10 @@ class FeatureModelsTestRunner(unittest.TestCase):
         TpcTest(f'{C.IMX500_TP_MODEL}.v3_lut', self).run_test()
         TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
         TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
+
+    def test_16bit_activations(self):
+        Activation16BitTest(self).run_test()
+        Activation16BitMixedPrecisionTest(self).run_test()
 
 
 if __name__ == '__main__':

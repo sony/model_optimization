@@ -14,11 +14,25 @@
 # ==============================================================================
 
 import copy
-from typing import List, Dict, Union, Any
+from typing import List, Dict, Union, Any, Tuple
+from enum import Enum
 
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.logger import Logger
+
+
+class Signedness(Enum):
+    """
+    An enum for choosing the signedness of the quantization method:
+
+    AUTO - Signedness decided automatically by quantization.
+    SIGNED - Force signed quantization.
+    UNSIGNED - Force unsigned quantization.
+    """
+    AUTO = 0
+    SIGNED = 1
+    UNSIGNED = 2
 
 
 def clone_and_edit_object_params(obj: Any, **kwargs: Dict) -> Any:
@@ -96,7 +110,7 @@ class AttributeQuantizationConfig:
             Whether this configuration is equal to another object or not.
         """
         if not isinstance(other, AttributeQuantizationConfig):
-            return False
+            return False  # pragma: no cover
         return self.weights_quantization_method == other.weights_quantization_method and \
             self.weights_n_bits == other.weights_n_bits and \
             self.weights_per_channel_threshold == other.weights_per_channel_threshold and \
@@ -114,11 +128,13 @@ class OpQuantizationConfig:
                  attr_weights_configs_mapping: Dict[str, AttributeQuantizationConfig],
                  activation_quantization_method: QuantizationMethod,
                  activation_n_bits: int,
+                 supported_input_activation_n_bits: Union[int, Tuple[int]],
                  enable_activation_quantization: bool,
                  quantization_preserving: bool,
                  fixed_scale: float,
                  fixed_zero_point: int,
-                 simd_size: int
+                 simd_size: int,
+                 signedness: Signedness
                  ):
         """
 
@@ -127,11 +143,13 @@ class OpQuantizationConfig:
             attr_weights_configs_mapping (Dict[str, AttributeQuantizationConfig]): A mapping between an op attribute name and its quantization configuration.
             activation_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for activation quantization.
             activation_n_bits (int): Number of bits to quantize the activations.
+            supported_input_activation_n_bits (int or Tuple[int]): Number of bits that operator accepts as input.
             enable_activation_quantization (bool): Whether to quantize the model activations or not.
             quantization_preserving (bool): Whether quantization parameters should be the same for an operator's input and output.
             fixed_scale (float): Scale to use for an operator quantization parameters.
             fixed_zero_point (int): Zero-point to use for an operator quantization parameters.
             simd_size (int): Per op integer representing the Single Instruction, Multiple Data (SIMD) width of an operator. It indicates the number of data elements that can be fetched and processed simultaneously in a single instruction.
+            signedness (bool): Set activation quantization signedness.
 
         """
 
@@ -140,10 +158,17 @@ class OpQuantizationConfig:
 
         self.activation_quantization_method = activation_quantization_method
         self.activation_n_bits = activation_n_bits
+        if isinstance(supported_input_activation_n_bits, tuple):
+            self.supported_input_activation_n_bits = supported_input_activation_n_bits
+        elif isinstance(supported_input_activation_n_bits, int):
+            self.supported_input_activation_n_bits = (supported_input_activation_n_bits,)
+        else:
+            Logger.critical(f"Supported_input_activation_n_bits only accepts int or tuple of ints, but got {type(supported_input_activation_n_bits)}")  # pragma: no cover
         self.enable_activation_quantization = enable_activation_quantization
         self.quantization_preserving = quantization_preserving
         self.fixed_scale = fixed_scale
         self.fixed_zero_point = fixed_zero_point
+        self.signedness = signedness
         self.simd_size = simd_size
 
     def get_info(self):
@@ -152,7 +177,7 @@ class OpQuantizationConfig:
         Returns: Info about the quantization configuration as a dictionary.
 
         """
-        return self.__dict__
+        return self.__dict__  # pragma: no cover
 
     def clone_and_edit(self, attr_to_edit: Dict[str, Dict[str, Any]] = {}, **kwargs):
         """
@@ -188,13 +213,25 @@ class OpQuantizationConfig:
             Whether this configuration is equal to another object or not.
         """
         if not isinstance(other, OpQuantizationConfig):
-            return False
+            return False  # pragma: no cover
         return self.default_weight_attr_config == other.default_weight_attr_config and \
             self.attr_weights_configs_mapping == other.attr_weights_configs_mapping and \
             self.activation_quantization_method == other.activation_quantization_method and \
             self.activation_n_bits == other.activation_n_bits and \
+            self.supported_input_activation_n_bits == other.supported_input_activation_n_bits and \
             self.enable_activation_quantization == other.enable_activation_quantization and \
+            self.signedness == other.signedness and \
             self.simd_size == other.simd_size
+
+    @property
+    def max_input_activation_n_bits(self) -> int:
+        """
+        Get maximum supported input bit-width.
+
+        Returns: Maximum supported input bit-width.
+
+        """
+        return max(self.supported_input_activation_n_bits)
 
 
 class QuantizationConfigOptions:
@@ -279,12 +316,12 @@ class QuantizationConfigOptions:
             if attrs is None:
                 attrs_to_update = list(qc.attr_weights_configs_mapping.keys())
             else:
-                if not isinstance(attrs, List):
+                if not isinstance(attrs, List):  # pragma: no cover
                     Logger.critical(f"Expected a list of attributes but received {type(attrs)}.")
                 attrs_to_update = attrs
 
             for attr in attrs_to_update:
-                if qc.attr_weights_configs_mapping.get(attr) is None:
+                if qc.attr_weights_configs_mapping.get(attr) is None:  # pragma: no cover
                     Logger.critical(f'Editing attributes is only possible for existing attributes in the configuration\'s '
                                     f'weights config mapping; {attr} does not exist in {qc}.')
                 self.__edit_quantization_configuration(qc.attr_weights_configs_mapping[attr], kwargs)
@@ -310,6 +347,7 @@ class QuantizationConfigOptions:
         # If not, add base_config to the list of configurations to update
         cfgs_to_update = [cfg for cfg in qc_options.quantization_config_list]
         if not any(qc_options.base_config is cfg for cfg in cfgs_to_update):
+            # TODO: add test for this case
             cfgs_to_update.append(qc_options.base_config)
 
         for qc in cfgs_to_update:
@@ -319,7 +357,7 @@ class QuantizationConfigOptions:
                 new_attr_mapping = {}
                 for attr in list(qc.attr_weights_configs_mapping.keys()):
                     new_key = layer_attrs_mapping.get(attr)
-                    if new_key is None:
+                    if new_key is None:  # pragma: no cover
                         Logger.critical(f"Attribute \'{attr}\' does not exist in the provided attribute mapping.")
 
                     new_attr_mapping[new_key] = qc.attr_weights_configs_mapping.pop(attr)

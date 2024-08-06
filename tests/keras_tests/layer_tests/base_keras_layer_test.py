@@ -76,7 +76,7 @@ class BaseKerasLayerTest(BaseLayerTest):
             return get_quantization_disabled_keras_tpc("float_layer_test")
         elif self.current_mode == LayerTestMode.QUANTIZED_8_BITS:
             tp = generate_test_tp_model({'weights_n_bits': 8,
-                                          'activation_n_bits': 8})
+                                         'activation_n_bits': 8})
             return generate_keras_tpc(name="8bit_layer_test", tp_model=tp)
         else:
             raise NotImplemented

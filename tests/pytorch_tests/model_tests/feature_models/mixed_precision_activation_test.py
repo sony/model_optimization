@@ -14,9 +14,10 @@
 # ==============================================================================
 import torch
 import numpy as np
+from torch import softmax, sigmoid
+from torch.nn import Softmax, Sigmoid
 
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, ResourceUtilization, CoreConfig, \
-    MixedPrecisionQuantizationConfig
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, ResourceUtilization
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
@@ -201,3 +202,51 @@ class MixedPrecisionMultipleInputsNet(torch.nn.Module):
         x3 = self.conv3(z)
         x4 = self.conv4(w)
         return torch.concat([x1, x2, x3, x4], dim=1)
+
+
+class MixedPrecisionDistanceFunctionsNet(torch.nn.Module):
+    def __init__(self, input_shape):
+        super(MixedPrecisionDistanceFunctionsNet, self).__init__()
+        self.softmax = Softmax(dim=-1)
+        self.sigmoid = Sigmoid()
+
+    def forward(self, x):
+        x = self.softmax(x)
+        x = self.sigmoid(x)
+        x = softmax(x, dim=-1)
+        x = sigmoid(x)
+
+        return x
+
+
+class MixedPrecisionDistanceFunctions(MixedPrecisionActivationBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+        self.expected_config = [1, 1, 1, 1, 1]
+
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf, 3071)
+
+    def get_tpc(self):
+        base_config, _, default_config = get_op_quantization_configs()
+        custom_opsets_to_layer = {'Softmax': [softmax, Softmax]}
+        mp_list = [(8, 8), (8, 4), (8, 2),
+                   (4, 8), (4, 4), (4, 2),
+                   (2, 8), (2, 4), (2, 2)]
+
+        tp_model = generate_tp_model_with_activation_mp(
+            base_cfg=base_config,
+            default_config=default_config,
+            mp_bitwidth_candidates_list=mp_list,
+            custom_opsets=['Softmax'])
+
+        return get_mp_activation_pytorch_tpc_dict(tpc_model=tp_model,
+                                                  custom_opsets_to_layer=custom_opsets_to_layer,
+                                                  test_name='mixed_precision_activation_model',
+                                                  tpc_name='mixed_precision_distance_fn_test')
+
+    def create_feature_network(self, input_shape):
+        return MixedPrecisionDistanceFunctionsNet(input_shape)
+
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        self.verify_config(quantization_info.mixed_precision_cfg, self.expected_config)

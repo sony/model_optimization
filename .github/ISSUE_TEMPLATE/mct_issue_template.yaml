@@ -63,7 +63,6 @@ body:
       description:
       placeholder:
       value:
-      render: shell
     validations:
       required: true
   - type: textarea
@@ -73,7 +72,6 @@ body:
       description: What did you expect to happen?
       placeholder:
       value:
-      render: shell
     validations:
       required: false
   - type: textarea
@@ -83,7 +81,7 @@ body:
       description: Provide a code to generate the problem. Please provide a minimal snippet as possible to help us solve it efficiently. If possible, please share a link to Colab/Jupyter/any notebook.
       placeholder:
       value:
-      render: shell
+      render: python
     validations:
       required: true
   - type: textarea
@@ -91,4 +89,3 @@ body:
     attributes:
       label: Log output
       description: Please add any relevant log output.
-      render: shell

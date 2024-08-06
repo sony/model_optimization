@@ -20,15 +20,16 @@ from torch import Tensor
 from torch.nn import Module
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, Dataset
-from torchvision.transforms import Normalize
+from torch.cuda.amp import GradScaler
 
-from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, clip_inf_values_float16
 from model_compression_toolkit.data_generation.common.enums import ImageGranularity
 from model_compression_toolkit.data_generation.common.image_pipeline import BaseImagePipeline
 from model_compression_toolkit.data_generation.common.optimization_utils import BatchStatsHolder, AllImagesStatsHolder, \
     BatchOptimizationHolder, ImagesOptimizationHandler
 from model_compression_toolkit.data_generation.common.constants import IMAGE_INPUT
 from model_compression_toolkit.data_generation.pytorch.constants import BATCH_AXIS, H_AXIS, W_AXIS
+from model_compression_toolkit.data_generation.pytorch.image_operations import create_valid_grid
 from model_compression_toolkit.data_generation.pytorch.model_info_exctractors import ActivationExtractor
 
 
@@ -58,8 +59,7 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
                  initial_lr: float,
                  normalization_mean: List[float],
                  normalization_std: List[float],
-                 clip_images: bool,
-                 reflection: bool,
+                 device: str,
                  eps: float = 1e-6):
         """
         Constructor for the PytorchImagesOptimizationHandler class.
@@ -77,8 +77,7 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
             initial_lr (float): The initial learning rate used by the optimizer.
             normalization_mean (List[float]): The mean values for image normalization.
             normalization_std (List[float]): The standard deviation values for image normalization.
-            clip_images (bool): Whether to clip the images during optimization.
-            reflection (bool): Whether to use reflection during image clipping.
+            device (torch.device): The current device set for PyTorch operations.
             eps (float): A small value added for numerical stability.
         """
         super(PytorchImagesOptimizationHandler, self).__init__(model=model,
@@ -93,16 +92,12 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
                                                                   initial_lr=initial_lr,
                                                                   normalization_mean=normalization_mean,
                                                                   normalization_std=normalization_std,
-                                                                  clip_images=clip_images,
-                                                                  reflection=reflection,
                                                                   eps=eps)
 
-        self.device = get_working_device()
-        # Image valid grid, each image value can only be 0 - 255 before normalization
-        t = torch.from_numpy(np.array(list(range(256))).repeat(3).reshape(-1, 3) / 255)
-        self.valid_grid = Normalize(mean=normalization_mean,
-                                    std=normalization_std)(t.transpose(1, 0)[None, :, :, None]).squeeze().to(self.device)
-
+        # Initialize mixed-precision scaler
+        self.scaler = GradScaler()
+        self.device = device
+        self.valid_grid = create_valid_grid(normalization_mean, normalization_std)
 
         # Set the mean axis based on the image granularity
         if self.image_granularity == ImageGranularity.ImageWise:
@@ -155,42 +150,40 @@ class PytorchImagesOptimizationHandler(ImagesOptimizationHandler):
         total_mean, total_second_moment = 0, 0
         for i_batch in range(self.n_batches):
             mean, second_moment, std = self.all_imgs_stats_holder.get_stats(i_batch, layer_name)
-            total_mean += mean
-            total_second_moment += second_moment
+            if mean is not None:
+                total_mean += mean
+            if second_moment is not None:
+                total_second_moment += second_moment
 
         total_mean /= self.n_batches
         total_second_moment /= self.n_batches
-        total_var = total_second_moment - torch.pow(total_mean, 2)
+        total_var = to_torch_tensor(total_second_moment) - torch.pow(to_torch_tensor(total_mean), 2)
         total_std = torch.sqrt(total_var + self.eps)
         return total_mean, total_std
 
     def optimization_step(self,
                           batch_index: int,
                           loss: Tensor,
-                          i_ter: int):
+                          i_iter: int):
         """
         Perform an optimization step.
 
         Args:
             batch_index (int): Index of the batch.
             loss (Tensor): Loss value.
-            i_ter (int): Current optimization iteration.
+            i_iter (int): Current optimization iteration.
         """
         # Get optimizer and scheduler for the specific batch index
         optimizer = self.get_optimizer_by_batch_index(batch_index)
         scheduler = self.get_scheduler_by_batch_index(batch_index)
 
         # Backward pass
-        loss.backward()
-
-        # Update weights
-        optimizer.step()
+        self.scaler.scale(loss).backward()
+        self.scaler.step(optimizer)
+        self.scaler.update()
 
         # Perform scheduler step
-        self.scheduler_step_fn(scheduler, i_ter, loss.item())
-
-        if self.clip_images:
-            self.batch_opt_holders_list[batch_index].clip_images(self.valid_grid, reflection=self.reflection)
+        self.scheduler_step_fn(scheduler, i_iter, loss.item())
 
 
     def zero_grad(self, batch_index: int):
@@ -259,25 +252,6 @@ class PytorchBatchOptimizationHolder(BatchOptimizationHolder):
         self.optimizer = optimizer([self.images], lr=initial_lr)
         self.scheduler = scheduler(self.optimizer)
 
-    def clip_images(self,
-                    valid_grid: Tensor,
-                    reflection: bool = True):
-        """
-        Clip the images.
-
-        Args:
-            valid_grid (Tensor): A tensor containing valid values for image clipping.
-            reflection (bool): Whether to use reflection during image clipping. Defaults to True.
-        """
-        with torch.no_grad():
-            for i_ch in range(valid_grid.shape[0]):
-                clamp = torch.clamp(self.images[:, i_ch, :, :], valid_grid[i_ch, :].min(), valid_grid[i_ch, :].max())
-                if reflection:
-                    self.images[:, i_ch, :, :] = 2 * clamp - self.images[:, i_ch, :, :]
-                else:
-                    self.images[:, i_ch, :, :] = clamp
-        self.images.requires_grad = True
-
 
 class PytorchAllImagesStatsHolder(AllImagesStatsHolder):
     """
@@ -332,8 +306,9 @@ class PytorchBatchStatsHolder(BatchStatsHolder):
         """
         mean = self.get_mean(bn_layer_name)
         second_moment = self.get_second_moment(bn_layer_name)
-        var = second_moment - torch.pow(mean, 2.0)
-        return var
+        if mean is not None and second_moment is not None:
+            return second_moment - torch.pow(mean, 2.0)
+        return None
 
 
     def get_std(self, bn_layer_name: str) -> Tensor:
@@ -347,7 +322,9 @@ class PytorchBatchStatsHolder(BatchStatsHolder):
             Tensor: The standard deviation for the specified layer.
         """
         var = self.get_var(bn_layer_name)
-        return torch.sqrt(var + self.eps)
+        if var is not None:
+            return torch.sqrt(var + self.eps)
+        return None
 
     def calc_bn_stats_from_activations(self,
                                        input_imgs: Tensor,
@@ -374,12 +351,13 @@ class PytorchBatchStatsHolder(BatchStatsHolder):
         # Extract statistics of intermediate convolution outputs before the BatchNorm layers
         for bn_layer_name in activation_extractor.get_extractor_layer_names():
             bn_input_activations = activation_extractor.get_layer_input_activation(bn_layer_name)
-            if not to_differentiate:
-                bn_input_activations = bn_input_activations.detach()
+            if bn_input_activations is not None:
+                if not to_differentiate:
+                    bn_input_activations = bn_input_activations.detach()
 
-            collected_mean = torch.mean(bn_input_activations, dim=self.mean_axis)
-            collected_second_moment = torch.mean(torch.pow(bn_input_activations, 2.0), dim=self.mean_axis)
-            self.update_layer_stats(bn_layer_name, collected_mean, collected_second_moment)
+                collected_mean = torch.mean(bn_input_activations, dim=self.mean_axis)
+                collected_second_moment = clip_inf_values_float16(torch.mean(torch.pow(bn_input_activations, 2.0), dim=self.mean_axis))
+                self.update_layer_stats(bn_layer_name, collected_mean, collected_second_moment)
 
     def clear(self):
         """Clear the statistics."""

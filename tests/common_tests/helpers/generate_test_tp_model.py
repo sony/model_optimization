@@ -15,10 +15,11 @@
 import copy
 from typing import Dict, List, Any
 
-from model_compression_toolkit.constants import FLOAT_BITWIDTH
+from model_compression_toolkit.constants import FLOAT_BITWIDTH, ACTIVATION_N_BITS_ATTRIBUTE, \
+    SUPPORTED_INPUT_ACTIVATION_NBITS_ATTRIBUTE
 from model_compression_toolkit.target_platform_capabilities.constants import OPS_SET_LIST, KERNEL_ATTR, BIAS_ATTR, \
     WEIGHTS_N_BITS
-from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, QuantizationConfigOptions
+from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, QuantizationConfigOptions, Signedness
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_tp_model
 import model_compression_toolkit as mct
 
@@ -30,6 +31,9 @@ BIAS_CONFIG = 'bias_config'
 
 
 def generate_test_tp_model(edit_params_dict, name=""):
+    # Add "supported_input_activation_n_bits" to match "activation_n_bits" if not defined.
+    if ACTIVATION_N_BITS_ATTRIBUTE in edit_params_dict and SUPPORTED_INPUT_ACTIVATION_NBITS_ATTRIBUTE not in edit_params_dict:
+        edit_params_dict[SUPPORTED_INPUT_ACTIVATION_NBITS_ATTRIBUTE] = (edit_params_dict[ACTIVATION_N_BITS_ATTRIBUTE],)
     base_config, op_cfg_list, default_config = get_op_quantization_configs()
 
     # separate weights attribute parameters from the requested param to edit
@@ -127,10 +131,10 @@ def generate_custom_test_tp_model(name: str,
     with custom_tp_model:
         for op_set in base_tp_model.operator_set:
             # Add existing OperatorSets from base TP model
-            qc_options = op_set.qc_options if \
-                (operator_sets_dict is None or op_set.name not in operator_sets_dict) and \
-                (op_set.get_info().get(OPS_SET_LIST) is None) \
-                else operator_sets_dict[op_set.name]
+            if operator_sets_dict is not None and operator_sets_dict.get(op_set.name) is not None:
+                qc_options = operator_sets_dict[op_set.name]
+            else:
+                qc_options = op_set.qc_options
 
             tp.OperatorsSet(op_set.name, qc_options)
 
@@ -225,8 +229,10 @@ def generate_test_op_qc(default_weight_attr_config: tp.AttributeQuantizationConf
                                    attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config,
                                                                  BIAS_ATTR: bias_config},
                                    activation_n_bits=activation_n_bits,
+                                   supported_input_activation_n_bits=activation_n_bits,
                                    activation_quantization_method=activation_quantization_method,
                                    quantization_preserving=False,
                                    fixed_scale=None,
                                    fixed_zero_point=None,
-                                   simd_size=32)
+                                   simd_size=32,
+                                   signedness=Signedness.AUTO)

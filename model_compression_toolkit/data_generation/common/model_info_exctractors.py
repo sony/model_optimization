@@ -157,14 +157,6 @@ class ActivationExtractor:
         """
         raise NotImplemented # pragma: no cover
 
-    def get_num_extractor_layers(self) -> int:
-        """
-        Get the number of layers for which to extract input activations.
-
-        Returns:
-            int: Number of layers for which to extract input activations.
-        """
-        return self.num_layers
 
     @abstractmethod
     def get_extractor_layer_names(self) -> List:

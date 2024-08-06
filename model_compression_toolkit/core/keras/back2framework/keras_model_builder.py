@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from copy import copy
 
 import tensorflow as tf
 from keras.models import Model
@@ -19,6 +20,7 @@ from packaging import version
 
 from model_compression_toolkit.core.common.back2framework.base_model_builder import BaseModelBuilder
 from model_compression_toolkit.core.common.user_info import UserInformation
+from model_compression_toolkit.logger import Logger
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras import Input
@@ -271,15 +273,38 @@ class KerasModelBuilder(BaseModelBuilder):
                                                                            out_tensors_of_n_float)
         else:
             input_tensors = [tensor for tensor_list in input_tensors for tensor in tensor_list]  # flat list of lists
+            if isinstance(n, FunctionalNode):
+                op_call_kwargs = {} if n.op_call_kwargs is None else copy(n.op_call_kwargs)
             if not isinstance(op_func, KerasQuantizationWrapper):
                 # The KerasQuantizationWrapper will insert the quantized positional weights internally.
-                input_tensors = n.insert_positional_weights_to_input_list(input_tensors)
+                if isinstance(n, FunctionalNode):
+                    if n.tensor_input_allocs is not None:
+                        if n.inputs_as_list:
+                            input_tensors = n.insert_positional_weights_to_input_list(input_tensors)
+                        else:
+                            # If the were any const attributes in the layer's inputs, we retrieve them as kwargs
+                            # for the operator call.
+                            for pos, k in enumerate(n.tensor_input_allocs):
+                                if k not in op_call_kwargs:  # op_call_kwargs is initialized because we are under FunctionalNode
+                                    # If the argument is saved in tensor_input_allocs but does not exists in the node kwargs
+                                    # then it is expected to be either an input tensor or a positional weight of the node.
+                                    arg = n.weights.get(pos)
+                                    if arg is None:
+                                        if len(input_tensors) == 0:
+                                            Logger.critical(f"Couldn't find a weight or input tensor matching operator's "
+                                                            f"argument name '{k}' in location {pos} for node {n.name}.")
+                                        arg = input_tensors.pop(0)
+                                    op_call_kwargs.update({k: arg})
+                else:
+                    # If the operator is not a functional node then positional weights should be inserted
+                    # into the inputs list.
+                    input_tensors = n.insert_positional_weights_to_input_list(input_tensors)
             # Build a functional node using its args
             if isinstance(n, FunctionalNode):
                 if n.inputs_as_list:  # If the first argument should be a list of tensors:
-                    out_tensors_of_n_float = op_func(input_tensors, *n.op_call_args, **n.op_call_kwargs)
+                    out_tensors_of_n_float = op_func(input_tensors, *n.op_call_args, **op_call_kwargs)
                 else:  # If the input tensors should not be a list but iterated:
-                    out_tensors_of_n_float = op_func(*input_tensors, *n.op_call_args, **n.op_call_kwargs)
+                    out_tensors_of_n_float = op_func(*input_tensors, *n.op_call_args, **op_call_kwargs)
             else:
                 # If operator expects a single input tensor, it cannot be a list as it should
                 # have a dtype field.

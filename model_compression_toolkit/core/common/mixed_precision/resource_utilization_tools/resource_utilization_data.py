@@ -195,12 +195,12 @@ def compute_total_bops(graph: Graph, fw_info: FrameworkInfo, fw_impl: FrameworkI
 
 
 def requires_mixed_precision(in_model: Any,
-                            target_resource_utilization: ResourceUtilization,
-                            representative_data_gen: Callable,
-                            core_config: CoreConfig,
-                            tpc: TargetPlatformCapabilities,
-                            fw_info: FrameworkInfo,
-                            fw_impl: FrameworkImplementation) -> bool:
+                             target_resource_utilization: ResourceUtilization,
+                             representative_data_gen: Callable,
+                             core_config: CoreConfig,
+                             tpc: TargetPlatformCapabilities,
+                             fw_info: FrameworkInfo,
+                             fw_impl: FrameworkImplementation) -> bool:
     """
     The function checks whether the model requires mixed precision to meet the requested target resource utilization.
     This is determined by whether the target memory usage of the weights is less than the available memory,

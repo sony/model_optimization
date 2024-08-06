@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 80
     env:
-      COVERAGE_THRESHOLD: 97
+      COVERAGE_THRESHOLD: 98
     steps:
       - uses: actions/checkout@v2
       - name: Install Python 3

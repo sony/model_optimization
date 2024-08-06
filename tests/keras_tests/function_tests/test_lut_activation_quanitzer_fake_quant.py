@@ -19,7 +19,7 @@ import numpy as np
 
 from model_compression_toolkit.constants import LUT_VALUES, THRESHOLD, SIGNED, \
     LUT_VALUES_BITWIDTH
-from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import LUTFakeQuant
+from model_compression_toolkit.core.keras.quantizer.lut_fake_quant import activation_lut_kmean_quantizer
 
 
 class TestLUTQuantizerFakeQuant(unittest.TestCase):
@@ -36,7 +36,8 @@ class TestLUTQuantizerFakeQuant(unittest.TestCase):
         div_val_output = (2 ** (LUT_VALUES_BITWIDTH - 1))
 
         # Construct the FakeQuant
-        model = LUTFakeQuant(quantization_params)
+        model = activation_lut_kmean_quantizer(activation_n_bits=8,  # dummy, not used in this function
+                                               quantization_params=quantization_params)
         output = model(tensor)
 
         expected_unique_values = (lut_values / div_val_output) * threshold
@@ -63,7 +64,8 @@ class TestLUTQuantizerFakeQuant(unittest.TestCase):
         div_val_output = (2 ** LUT_VALUES_BITWIDTH)
 
         # Construct the FakeQuant
-        model = LUTFakeQuant(quantization_params)
+        model = activation_lut_kmean_quantizer(activation_n_bits=8,  # dummy, not used in this function
+                                               quantization_params=quantization_params)
         output = model(tensor)
 
         expected_unique_values = (lut_values / div_val_output) * threshold

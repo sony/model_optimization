@@ -48,8 +48,6 @@ class ImagesOptimizationHandler:
                  scheduler: Any,
                  normalization_mean: List[float],
                  normalization_std: List[float],
-                 clip_images: bool,
-                 reflection: bool,
                  initial_lr: float,
                  eps: float = 1e-6):
         """
@@ -67,8 +65,6 @@ class ImagesOptimizationHandler:
             scheduler (Any): The scheduler responsible for adjusting the learning rate of the optimizer over time.
             normalization_mean (List[float]): Mean values used for image normalization.
             normalization_std (List[float]): Standard deviation values used for image normalization.
-            clip_images (bool): Flag indicating whether to clip generated images during optimization.
-            reflection (bool): Flag indicating whether to use reflection during image generation.
             initial_lr (float): The initial learning rate used by the optimizer.
             eps (float, optional): A small value added for numerical stability. Defaults to 1e-6.
 
@@ -79,8 +75,6 @@ class ImagesOptimizationHandler:
         self.scheduler = scheduler
         self.scheduler_step_fn = scheduler_step_fn
         self.image_granularity = image_granularity
-        self.clip_images = clip_images
-        self.reflection = reflection
         self.eps = eps
         self.targets = []
         self.initial_lr = initial_lr
@@ -209,9 +203,11 @@ class ImagesOptimizationHandler:
                 imgs_layer_mean, imgs_layer_second_moment, imgs_layer_std = self.all_imgs_stats_holder.get_stats(
                     batch_index, layer_name)
 
-            # Accumulate the batchnorm alignment weighted by the layer weight
-            total_bn_loss += bn_layer_weight * bn_alignment_loss_fn(bn_layer_mean, imgs_layer_mean, bn_layer_std,
-                                                                    imgs_layer_std)
+            if imgs_layer_mean is not None and imgs_layer_std is not None:
+                bn_alignment_loss = bn_alignment_loss_fn(bn_layer_mean, imgs_layer_mean, bn_layer_std,
+                                     imgs_layer_std)
+                # Accumulate the batchnorm alignment weighted by the layer weight
+                total_bn_loss += bn_layer_weight * bn_alignment_loss
 
         return total_bn_loss
 
@@ -418,7 +414,7 @@ class BatchStatsHolder:
         Returns:
             Any: the mean for the specified layer.
         """
-        return self.bn_mean[bn_layer_name]
+        return self.bn_mean.get(bn_layer_name)
 
     def get_second_moment(self, bn_layer_name: str) -> Any:
         """
@@ -430,7 +426,7 @@ class BatchStatsHolder:
         Returns:
             Any: the second moment for the specified layer.
         """
-        return self.bn_second_moment[bn_layer_name]
+        return self.bn_second_moment.get(bn_layer_name)
 
     def get_var(self, bn_layer_name: str) -> Any:
         """

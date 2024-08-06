@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Any, List, Dict
+from copy import copy
+
+from typing import Any, List, Dict, Union, Tuple
 
 import tensorflow as tf
 from tensorflow.python.util import tf_inspect
@@ -41,7 +43,7 @@ layers = keras.layers
 
 REUSED_IDENTIFIER = '_reused_'
 
-is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray, float))
+is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray, tuple, list))
 is_tensor = lambda x: isinstance(x, KerasTensor)
 
 
@@ -62,35 +64,139 @@ def get_kwargs2index(tfoplambda_layer: TFOpLambda) -> Dict[str, int]:
     Positional weights are saved according to their index in the node's call arguments, so
     need to know the function arguments' names in case the weights are in the kwargs.
 
-    Note: the kwargs2index dictionary is initialized manually (and not with tf_inspect) so
-    it will only include the arguments that may contain constants. For example, we don't
-    want the transpose_a attribute of tf.matmul to be saved as a constant.
-
-    Every operation we add support to, needs to be added here.
-
     Args:
         tfoplambda_layer: TFOpLambda layer.
 
     Returns:
         A dictionary with argument number and index: {arg_name: arg_index}.
     """
-    kwargs2index = {tf.add: {'x': 0, 'y': 1},
-                    tf.subtract: {'x': 0, 'y': 1},
-                    tf.divide: {'x': 0, 'y': 1},
-                    tf.truediv: {'x': 0, 'y': 1},
-                    tf.multiply: {'x': 0, 'y': 1},
-                    tf.pow: {'x': 0, 'y': 1},
-                    tf.matmul: {'a': 0, 'b': 1}}.get(tfoplambda_layer.function)
-    if not kwargs2index:
-        # In TF 2.15 the function attribute is different and doesn't match the original
-        # operation object we use. Therefore, we extract kwargs2index with the symbol.
-        kwargs2index = {'__operators__.add': {'x': 0, 'y': 1},
-                        'math.add': {'x': 0, 'y': 1},
-                        'math.multiply': {'x': 0, 'y': 1},
-                        'linalg.matmul': {'a': 0, 'b': 1},
-                        'concat': {'values': 0}}.get(tfoplambda_layer.symbol, {})
 
-    return kwargs2index
+    full_args = tf_inspect.getfullargspec(tfoplambda_layer.function).args
+
+    return {arg_name: i for i, arg_name in enumerate(full_args)}
+
+
+def _extract_const_attrs_from_kwargs(op_call_kwargs: Dict[str, Any],
+                                     kwarg2index: Dict[str, int],
+                                     weights: Dict[Union[str, int], Any]) -> Dict[str, Any]:
+    """
+    Extract const weights of the layer from the operator's key arguments dictionary.
+    This function extracts the attributes, updates the nodes weights dictionary and removes them from the original
+    kwargs mapping.
+
+    Args:
+        op_call_kwargs: A mapping of the operator key arguments.
+        kwarg2index: A dictionary with argument number and index: {arg_name: arg_index}.
+        weights: Node weights mapping. This dictionary is modified by this function.
+
+    Returns: A modified operator key arguments mapping.
+
+    """
+
+    # read weights from call kwargs
+    for k, v in op_call_kwargs.items():
+        if is_const(v):
+            # if k in kwarg2index:
+            weights.update({kwarg2index[k]: to_numpy(v, is_single_tensor=True)})
+
+    # remove weights and KerasTensors from op_call_kwargs
+    op_call_kwargs = {k: v for k, v in op_call_kwargs.items()
+                      if not (kwarg2index.get(k) in weights or is_tensor(v))}
+
+    return op_call_kwargs
+
+
+def _build_arguments_alloc(n: KerasNode, inputs_as_list: bool, kwarg2index: Dict[str, int]) -> List:
+    """
+    Builds arguments allocation list.
+    In Keras, if there is any argument that is a constant, we convert all arguments and inputs to be
+    considered as op kwargs for simpler reconstruction of the model from the graph later.
+    Therefore, we build a location list that includes the argument names (keys).
+    If the input is a list, then we don't need to save the keys, since we can assume that all possible constant
+    arguments are within the first argument (the list) and are stored by their position in the list.
+
+    Args:
+        n: fx node.
+        inputs_as_list: Is node's inputs are a list.
+
+    Returns:
+        A list of argument allocations in the node's inputs.
+
+    """
+
+    tensor_input_alloc = []
+    op_call_args = list(n.call_args)
+    if not inputs_as_list:
+        sorted_kwargs_pos = sorted(kwarg2index.items(), key=lambda x: x[1])
+        tensor_input_alloc = [k for k, _ in sorted_kwargs_pos[:len(op_call_args)]]
+        for k, idx in sorted_kwargs_pos[len(op_call_args):]:
+            if k in n.call_kwargs:
+                tensor_input_alloc.append(k)
+
+    return tensor_input_alloc
+
+def _extract_const_attrs_from_args(op_call_args: List[Any],
+                                   op_call_kwargs: Dict[str, Any],
+                                   inputs_as_list: bool,
+                                   tensor_inputs_alloc: List,
+                                   weights: Dict[Union[str, int], Any]) -> Tuple:
+    """
+    Extract const weights of the layer from the operator's arguments list.
+    This function extracts the attributes, updates the nodes weights dictionary and removes them from the original
+    arguments list.
+
+    Args:
+        op_call_args: A list of the operator arguments.
+        op_call_kwargs: A mapping of key-arguments of the operator.
+        inputs_as_list: Whether the input of the layer is a list.
+        tensor_inputs_alloc: Allocation of argument inputs to the operator (if there are const inputs, otherwise None).
+        weights: Node weights mapping. This dictionary is modified by this function.
+
+    Returns: A modified operator arguments list.
+
+    """
+
+    move_args_to_kwargs = tensor_inputs_alloc is not None and len(tensor_inputs_alloc) > 0
+
+    # read weights from call args
+    for i, arg in enumerate(op_call_args[0] if inputs_as_list else op_call_args):
+        if is_const(arg):
+            weights.update({i: to_numpy(arg, is_single_tensor=True)})
+        else:
+            if not inputs_as_list:
+                if move_args_to_kwargs:
+                    # In this case we move all arguments and inputs to the kwargs
+                    op_call_kwargs.update({tensor_inputs_alloc[i]: arg})
+
+    # remove weights and KerasTensors from op_call_args
+    if inputs_as_list:
+        op_call_args = tuple(op_call_args[1:])
+    else:
+        op_call_args = tuple([a for i, a in enumerate(op_call_args)
+                              if not (i in weights or is_tensor(a) or (move_args_to_kwargs and tensor_inputs_alloc[i]
+                                                                       in op_call_kwargs))])
+
+    return op_call_args
+
+
+def _has_const_attributes(op_call_args: List, op_call_kwargs: Dict, input_as_list: bool) -> bool:
+    """
+    Returns whether the layer's input include a constant tensor (that we might want to quantize).
+
+    Args:
+        op_call_args: A list of arguments to the layer.
+        op_call_kwargs: A dictionary of key-arguments to the layer.
+        input_as_list: Whether the input to the layer is a list of tensors.
+
+    Returns: True if the input arguments include a constant tensor, False otherwise.
+
+    """
+    if input_as_list:
+        return any([is_const(a) for a in op_call_args[0]])
+    const_args = [a for a in op_call_args if is_const(a)]
+    const_kwargs = [k for k, v in op_call_kwargs.items() if is_const(v)]
+
+    return len(const_args) > 0 or len(const_kwargs) > 0
 
 
 def build_node(node: KerasNode,
@@ -110,8 +216,8 @@ def build_node(node: KerasNode,
     """
     keras_layer = node.layer  # get the layer the node represents.
     layer_config = keras_layer.get_config()  # layer configuration to reconstruct it.
-    op_call_args = node.call_args
-    op_call_kwargs = node.call_kwargs
+    op_call_args = copy(node.call_args)
+    op_call_kwargs = copy(node.call_kwargs)
     layer_class = type(keras_layer)  # class path to instantiating it in back2framework.
     weights = {v.name: v.numpy() for v in keras_layer.weights}  # layer's weights
 
@@ -136,10 +242,10 @@ def build_node(node: KerasNode,
     output_shape = keras_layer.get_output_shape_at(io_index)
 
     if layer_class in [TFOpLambda, SlicingOpLambda]:
-        # Some functional ops (such as tf.concat) should receive the input tensors as a list
-        # and some are not (such as tf.multiply), so each FunctionalNode holds
-        # a flag to indicate that.
-        inputs_as_list = __is_functional_inputs_a_list(op_call_args)
+        # Some functional ops should receive the input tensors as a list,
+        # so each FunctionalNode holds a flag to indicate that.
+        # Other functional ops can receive each argument as list, but in that case not all inputs appear in that list.
+        inputs_as_list = __is_functional_inputs_a_list(op_call_args, keras_layer)
 
         kwarg2index = get_kwargs2index(keras_layer)
 
@@ -152,32 +258,14 @@ def build_node(node: KerasNode,
         if len(weights) > 0:
             Logger.critical('Functional nodes are not expected to have weights in this framework.')
 
-        # read weights from call args
-        tf_function_symbols = get_tf_function_symbols()
-        for i, arg in enumerate(op_call_args[0] if inputs_as_list else op_call_args):
-            if is_const(arg) or (
-                    keras_layer.symbol in tf_function_symbols and
-                    isinstance(arg, (tuple, list))):
-                if inputs_as_list or i in kwarg2index.values():
-                    weights.update({i: to_numpy(arg, is_single_tensor=True)})
-        # remove weights and KerasTensors and weights from op_call_args
-        if inputs_as_list:
-            op_call_args = tuple(op_call_args[1:])
-        else:
-            op_call_args = tuple([a for i, a in enumerate(op_call_args)
-                                  if not (i in weights or is_tensor(a))])
+        # Build tensor_input_alloc required for the model builder. All inputs are received as a list in the builder,
+        # so tensor_input_alloc is used to allocate each input in the correct place in the node's args & kwargs.
+        tensor_input_alloc = None if not _has_const_attributes(op_call_args, op_call_kwargs, inputs_as_list) \
+            else _build_arguments_alloc(node, inputs_as_list, kwarg2index)
 
-        # read weights from call kwargs
-        weight_keys = []
-        for k, v in op_call_kwargs.items():
-            if is_const(v) or (keras_layer.symbol in tf_function_symbols and
-                               isinstance(v, (tuple, list))):
-                if k in kwarg2index:
-                    weights.update({kwarg2index[k]: to_numpy(v, is_single_tensor=True)})
-                    weight_keys.append(k)
-        # remove weights and KerasTensors and weights from op_call_kwargs
-        op_call_kwargs = {k: v for k, v in op_call_kwargs.items()
-                          if not (kwarg2index.get(k) in weights or is_tensor(v))}
+        op_call_args = _extract_const_attrs_from_args(op_call_args, op_call_kwargs, inputs_as_list,
+                                                      tensor_input_alloc, weights)
+        op_call_kwargs = _extract_const_attrs_from_kwargs(op_call_kwargs, kwarg2index, weights)
 
         node = FunctionalNode(node_name,
                               layer_config,
@@ -190,7 +278,8 @@ def build_node(node: KerasNode,
                               is_reused,
                               reuse_group,
                               functional_op=keras_layer.function,
-                              inputs_as_list=inputs_as_list)
+                              inputs_as_list=inputs_as_list,
+                              tensor_input_allocs=tensor_input_alloc)
     else:
         # Read constant weights from layers such as layers.Add
         if len(op_call_args) > 0 and isinstance(op_call_args[0], (list, tuple)):
@@ -212,21 +301,20 @@ def build_node(node: KerasNode,
     return node
 
 
-def __is_functional_inputs_a_list(op_call_args: Any) -> bool:
+def __is_functional_inputs_a_list(op_call_args: Any, keras_layer: Any) -> bool:
     """
     Check whether the input tensors should be passed as a list
-    or not.
+    or not. This is relevant only for specific TF operators that are specified in the function's condition.
 
     Args:
         op_call_args: Arguments list to check.
+        keras_layer: TFOpLambda layer.
 
     Returns:
         Whether the input tensors should be passed as a list or not.
     """
 
-    if len(op_call_args) > 0 and isinstance(op_call_args[0], list):
-        inputs_as_list = True
-        for arg in op_call_args[0]:
-            inputs_as_list = inputs_as_list and (is_tensor(arg) or is_const(arg))
-        return inputs_as_list
-    return False
+    return (keras_layer.symbol in
+            [TFOpLambda(tf.concat).symbol, TFOpLambda(tf.stack).symbol,TFOpLambda(tf.add_n).symbol] and
+            len(op_call_args) > 0 and
+            isinstance(op_call_args[0], list))

@@ -22,7 +22,7 @@ from model_compression_toolkit.data_generation.keras.model_info_exctractors impo
 
 # Function to calculate the regularized min-max difference loss
 def regularized_min_max_diff(
-        output_imgs: tf.Tensor,
+        model_outputs: tf.Tensor,
         activation_extractor: KerasActivationExtractor,
         tape: tf.GradientTape,
         eps: float = 1e-6,
@@ -33,7 +33,7 @@ def regularized_min_max_diff(
     This function calculates the regularized min-max difference loss based on the provided inputs.
 
     Args:
-        output_imgs (tf.Tensor): Output images or tensors.
+        model_outputs (tf.Tensor): Output images or tensors.
         activation_extractor (KerasActivationExtractor): Activation extractor object.
         tape (tf.GradientTape): TensorFlow tape for recording operations.
         eps (float, optional): Small constant to prevent division by zero.
@@ -82,38 +82,63 @@ def regularized_min_max_diff(
     return output_loss
 
 
-def min_max_diff(
-        output_imgs: tf.Tensor,
+def inverse_min_max_diff(
+        model_outputs: tf.Tensor,
         eps: float = 1e-6,
         **kwargs) -> tf.Tensor:
     """
-    Calculate the minimum-maximum difference of output images.
+    Calculate the inverse of the maximum - minimum difference of the model output on the input images.
 
     Args:
-        output_imgs (Tensor or List[Tensor]): The output of the model on images.
+        model_outputs (Tensor or List[Tensor]): The output of the model on images.
         eps (float): Small value for numerical stability.
         **kwargs: Additional keyword arguments.
 
     Returns:
         Tensor: The computed minimum-maximum difference loss.
     """
-    if not isinstance(output_imgs, (list, tuple)):
-        output_imgs = [output_imgs]
-    output_loss = 0
-    for output in output_imgs:
+    if not isinstance(model_outputs, (list, tuple)):
+        model_outputs = [model_outputs]
+    output_loss = tf.zeros(1)
+    for output in model_outputs:
         output = tf.reshape(output, [output.shape[0], -1])
         output_loss += 1 / (tf.reduce_max(output, 1) - tf.reduce_min(output, 1) + eps)
     return output_loss
 
+def negative_min_max_diff(
+        model_outputs: tf.Tensor,
+        eps: float = 1e-6,
+        **kwargs) -> tf.Tensor:
+    """
+    Calculate the inverse of the maximum - minimum difference of the model output on the input images.
+
+    Args:
+        model_outputs (Tensor or List[Tensor]): The output of the model on images.
+        eps (float): Small value for numerical stability.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        Tensor: The computed minimum-maximum difference loss.
+    """
+    if not isinstance(model_outputs, (list, tuple)):
+        model_outputs = [model_outputs]
+    output_loss = tf.zeros(1)
+    for output in model_outputs:
+        output = tf.reshape(output, [output.shape[0], -1])
+        out_max = tf.reduce_max(output, 1)
+        out_min = tf.reduce_min(output, 1)
+        output_loss += tf.reduce_mean(-(out_max - out_min))
+    return output_loss
+
 
 def no_output_loss(
-        output_imgs: tf.Tensor,
+        model_outputs: tf.Tensor,
         **kwargs) -> tf.Tensor:
     """
     Calculate no output loss.
 
     Args:
-        output_imgs (Tensor): The output of the model on images.
+        model_outputs (Tensor): The output of the model on images.
         **kwargs: Additional keyword arguments.
 
     Returns:
@@ -125,6 +150,7 @@ def no_output_loss(
 # Dictionary of output loss functions
 output_loss_function_dict: Dict[OutputLossType, Callable] = {
     OutputLossType.NONE: no_output_loss,
-    OutputLossType.MIN_MAX_DIFF: min_max_diff,
+    OutputLossType.NEGATIVE_MIN_MAX_DIFF: negative_min_max_diff,
+    OutputLossType.INVERSE_MIN_MAX_DIFF: inverse_min_max_diff,
     OutputLossType.REGULARIZED_MIN_MAX_DIFF: regularized_min_max_diff,
 }

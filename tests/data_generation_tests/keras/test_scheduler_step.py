@@ -17,23 +17,20 @@ import unittest
 import numpy as np
 from keras.src.optimizers import Adam
 
-from model_compression_toolkit.data_generation.keras.optimization_functions.scheduler_step_functions import \
-    CustomReduceLROnPlateau
+from model_compression_toolkit.data_generation.keras.optimization_functions.lr_scheduler import ReduceLROnPlateau
 
 
-class TestCustomReduceLROnPlateau(unittest.TestCase):
+class TestReduceLROnPlateau(unittest.TestCase):
     def setUp(self):
-        self.opt_lr = Adam(learning_rate=0.1)
-        self.scheduler = CustomReduceLROnPlateau(optim_lr=self.opt_lr)
+        self.optimizer = Adam(learning_rate=0.1)
+        self.scheduler = ReduceLROnPlateau(optimizer=self.optimizer)
 
     def test_initialization(self):
-        self.assertEqual(self.scheduler.factor, 0.5)
+        self.assertEqual(self.scheduler.factor, 0.1)
         self.assertEqual(self.scheduler.patience, 10)
-        self.assertEqual(self.scheduler.min_delta, 0.0001)
+        self.assertEqual(self.scheduler.threshold, 1e-4)
         self.assertEqual(self.scheduler.cooldown, 0)
-        self.assertEqual(self.scheduler.min_lr, 0.000001)
-        self.assertEqual(self.scheduler.sign_number, 4)
-        self.assertEqual(self.scheduler.wait, 0)
+        self.assertEqual(self.scheduler.min_lr, 0)
         self.assertEqual(self.scheduler.cooldown_counter, 0)
         self.assertEqual(self.scheduler.best, np.Inf)
 
@@ -41,36 +38,34 @@ class TestCustomReduceLROnPlateau(unittest.TestCase):
         self.scheduler._reset()
         self.assertEqual(self.scheduler.best, np.Inf)
         self.assertEqual(self.scheduler.cooldown_counter, 0)
-        self.assertEqual(self.scheduler.wait, 0)
 
     def test_in_cooldown(self):
         self.scheduler.cooldown_counter = 1
-        self.assertTrue(self.scheduler.in_cooldown())
+        self.assertTrue(self.scheduler.in_cooldown)
         self.scheduler.cooldown_counter = 0
-        self.assertFalse(self.scheduler.in_cooldown())
+        self.assertFalse(self.scheduler.in_cooldown)
 
     def test_learning_rate_reduction(self):
-        self.opt_lr.learning_rate = 0.1
+        self.optimizer.learning_rate = 0.1
         self.scheduler._reset()
-        self.scheduler.on_epoch_end(0.1)  # No improvement
-        for _ in range(self.scheduler.patience):
-            self.scheduler.on_epoch_end(0.1)
-        self.assertLess(float(self.opt_lr.learning_rate.numpy()), 0.1)
+        for p in range(self.scheduler.patience + 2):
+            self.scheduler.on_epoch_end(p, 0.1)
+        self.assertLess(float(self.optimizer.learning_rate.numpy()), 0.1)
         self.assertEqual(self.scheduler.cooldown_counter, self.scheduler.cooldown)
 
     def test_minimum_learning_rate(self):
-        self.opt_lr.learning_rate = 0.1
+        self.optimizer.learning_rate = 0.1
         self.scheduler._reset()
-        for _ in range(100):
-            self.scheduler.on_epoch_end(0.1)
-        self.assertGreaterEqual(float(self.opt_lr.learning_rate.numpy()), self.scheduler.min_lr)
+        for p in range(100):
+            self.scheduler.on_epoch_end(p, 0.1)
+        self.assertGreaterEqual(float(self.optimizer.learning_rate.numpy()), self.scheduler.min_lr)
 
     def test_immediate_improvement(self):
         initial_lr = 0.1
-        self.opt_lr.learning_rate = initial_lr
+        self.optimizer.learning_rate = initial_lr
         self.scheduler._reset()
-        self.scheduler.on_epoch_end(0.05)  # Immediate improvement
-        self.assertAlmostEqual(float(self.opt_lr.learning_rate.numpy()), initial_lr, places=7)
+        self.scheduler.on_epoch_end(1, 0.05)  # Immediate improvement
+        self.assertAlmostEqual(float(self.optimizer.learning_rate.numpy()), initial_lr, places=7)
 
 
 if __name__ == '__main__':

@@ -19,7 +19,7 @@ from sklearn.cluster import KMeans
 
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.constants import LUT_VALUES, MIN_THRESHOLD, SCALE_PER_CHANNEL, \
-    LUT_VALUES_BITWIDTH, THRESHOLD, NUM_QPARAM_HESSIAN_SAMPLES
+    LUT_VALUES_BITWIDTH, THRESHOLD, NUM_QPARAM_HESSIAN_SAMPLES, SIGNED
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import \
     max_power_of_two, int_quantization_with_threshold
@@ -110,7 +110,8 @@ def lut_kmeans_histogram(bins: np.ndarray,
                          constrained: bool = True,
                          n_iter: int = 20,
                          min_threshold: float = MIN_THRESHOLD,
-                         quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE) -> Dict:
+                         quant_error_method: qc.QuantizationErrorMethod = qc.QuantizationErrorMethod.MSE,
+                         is_signed: bool = None) -> Dict:
     """
     Finds quantization cluster points for non-uniform activation quantization.
     The quantizer first finds the closest power-of-two number to the max value of the given histogram,
@@ -129,6 +130,7 @@ def lut_kmeans_histogram(bins: np.ndarray,
         n_iter: Number of iteration ot search for the threshold (not used for this method).
         min_threshold: Minimal threshold to use if threshold is too small.
         quant_error_method: an error function to optimize the parameters' selection accordingly (not used for this method).
+        is_signed: Whether the quantization is signed or not. If None then compute SIGNED value.
 
     Returns:
         A dictionary containing the cluster assignments according to the k-means algorithm and
@@ -148,9 +150,9 @@ def lut_kmeans_histogram(bins: np.ndarray,
     tensor_max = np.max(bins_with_values)
     threshold = max_power_of_two(tensor_max, min_threshold)
 
-    signed = np.any(bins[:-1][counts != 0] < 0)  # Whether histogram contains negative values or not.
+    signed = np.any(bins[:-1][counts != 0] < 0) if is_signed is None else is_signed  # Whether histogram contains negative values or not.
     tensor_for_kmeans = int_quantization_with_threshold(data=bins, threshold=threshold, n_bits=LUT_VALUES_BITWIDTH, signed=signed)
     kmeans.fit(tensor_for_kmeans.reshape(-1, 1), sample_weight=np.insert(counts, 0, 0))
 
     return {LUT_VALUES: np.float32(np.round(kmeans.cluster_centers_)),
-            THRESHOLD: threshold}
+            THRESHOLD: threshold, SIGNED: signed}
