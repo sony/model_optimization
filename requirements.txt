@@ -10,4 +10,4 @@ PuLP
 matplotlib
 scipy
 protobuf
-mct-quantizers==1.5
+mct-quantizers==1.5.2
