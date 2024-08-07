@@ -128,6 +128,7 @@ def prepare_graph_set_bit_widths(in_model,
                                      fw_info=fw_info,
                                      fw_impl=fw_impl,
                                      tpc=tpc,
+                                     bit_width_config=core_config.bit_width_config,
                                      mixed_precision_enable=core_config.mixed_precision_enable)
 
     tg = quantization_preparation_runner(graph,
