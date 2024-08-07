@@ -553,7 +553,7 @@ class BaseNode:
         # Extract qco with is_match_type to overcome mismatch of function types in TF 2.15
         matching_qcos = [_qco for _type, _qco in tpc.layer2qco.items() if self.is_match_type(_type)]
         if matching_qcos:
-            if len(matching_qcos) > 1:
+            if len(matching_qcos) > 1 and matching_qcos[0] != tpc.tp_model.default_qco:
                 Logger.error('Found duplicate qco types!')
             return matching_qcos[0]
         return tpc.tp_model.default_qco
