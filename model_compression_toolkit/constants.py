@@ -19,9 +19,6 @@ import importlib
 TENSORFLOW = 'tensorflow'
 PYTORCH = 'pytorch'
 FOUND_TF = importlib.util.find_spec(TENSORFLOW) is not None
-if FOUND_TF:
-    if version.parse(tf.__version__) > version.parse("2.15"):
-        FOUND_TF = False
 FOUND_TORCH = importlib.util.find_spec("torch") is not None
 FOUND_TORCHVISION = importlib.util.find_spec("torchvision") is not None
 FOUND_ONNX = importlib.util.find_spec("onnx") is not None
