@@ -61,18 +61,6 @@ class FrameworkReportUtils:
         self.tb_utils = tb_utils
         self.get_metadata_fn = get_metadata_fn
 
-    def create_report_directory(self, dir_path: str):
-        """
-        Create a directory for saving reports.
-
-        Args:
-            dir_path (str): The path to the directory to create.
-
-        """
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path, exist_ok=True)
-            Logger.info(f"Directory created at: {dir_path}")
-
     def dump_report_to_json(self,
                             report_dir: str,
                             collected_data: Dict[str, Any]):
