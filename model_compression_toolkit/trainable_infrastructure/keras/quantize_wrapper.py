@@ -110,5 +110,6 @@ else:
                 layer: A keras layer.
                 weights_quantizers: A dictionary between a weight's name to its quantizer.
             """
-            Logger.critical("Tensorflow must be installed to use KerasTrainableQuantizationWrapper. "
-                            "The 'tensorflow' package is missing.")  # pragma: no cover
+            Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                            "KerasTrainableQuantizationWrapper. The 'tensorflow' package is missing "
+                            "or is installed with a version higher than 2.15.")  # pragma: no cover

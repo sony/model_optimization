@@ -89,5 +89,6 @@ else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use this function.
     def keras_resource_utilization_data(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use keras_resource_utilization_data. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "keras_resource_utilization_data. The 'tensorflow' package is either not installed or is "
+                        "installed with a version higher than 2.15.")  # pragma: no cover
