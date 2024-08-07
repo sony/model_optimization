@@ -16,17 +16,17 @@
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.target_platform_capabilities import \
-    get_tpc_dict_by_fw as imx500_tpc
+    get_tpc_dict_by_fw as get_imx500_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.tflite_tpc.target_platform_capabilities import \
-    get_tpc_dict_by_fw as tflite_tpc
+    get_tpc_dict_by_fw as get_tflite_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_tpc.target_platform_capabilities import \
-    get_tpc_dict_by_fw as qnnpack_tpc
+    get_tpc_dict_by_fw as get_qnnpack_tpc
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL,  LATEST
 
-tpc_dict = {DEFAULT_TP_MODEL: imx500_tpc,
-            IMX500_TP_MODEL: imx500_tpc,
-            TFLITE_TP_MODEL: tflite_tpc,
-            QNNPACK_TP_MODEL: qnnpack_tpc}
+tpc_dict = {DEFAULT_TP_MODEL: get_imx500_tpc,
+            IMX500_TP_MODEL: get_imx500_tpc,
+            TFLITE_TP_MODEL: get_tflite_tpc,
+            QNNPACK_TP_MODEL: get_qnnpack_tpc}
 
 
 def get_target_platform_capabilities(fw_name: str,
