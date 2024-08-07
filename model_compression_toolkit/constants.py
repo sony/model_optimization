@@ -131,3 +131,16 @@ MP_DEFAULT_NUM_SAMPLES = 32
 
 # Pruning constants
 PRUNING_NUM_SCORE_APPROXIMATIONS = 32
+
+# Scheduling information fields
+OPERATORS_SCHEDULING = 'operators_scheduling'
+MAX_CUT = 'max_cut'
+CUTS = 'cuts'
+FUSED_NODES_MAPPING = 'fused_nodes_mapping'
+OP_ORDER = 'op_order'
+OP_RECORD = 'op_record'
+MEM_ELEMENTS = 'mem_elements'
+SHAPE = 'shape'
+NODE_NAME = 'node_name'
+TOTAL_SIZE = 'total_size'
+NODE_OUTPUT_INDEX = 'node_output_index'

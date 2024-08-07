@@ -187,14 +187,14 @@ if FOUND_TF:
         fw_impl = KerasImplementation()
 
         # Ignore hessian service since is not used in QAT at the moment
-        tg, bit_widths_config, _ = core_runner(in_model=in_model,
-                                               representative_data_gen=representative_data_gen,
-                                               core_config=core_config,
-                                               fw_info=DEFAULT_KERAS_INFO,
-                                               fw_impl=fw_impl,
-                                               tpc=target_platform_capabilities,
-                                               target_resource_utilization=target_resource_utilization,
-                                               tb_w=tb_w)
+        tg, bit_widths_config, _, _ = core_runner(in_model=in_model,
+                                                  representative_data_gen=representative_data_gen,
+                                                  core_config=core_config,
+                                                  fw_info=DEFAULT_KERAS_INFO,
+                                                  fw_impl=fw_impl,
+                                                  tpc=target_platform_capabilities,
+                                                  target_resource_utilization=target_resource_utilization,
+                                                  tb_w=tb_w)
 
         tg = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_KERAS_INFO, fw_impl, tb_w)
 

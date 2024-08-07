@@ -352,13 +352,13 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
         fw_impl = PytorchImplementation()
 
         # Ignore hessian service as it is not used here
-        tg, bit_widths_config, _ = core_runner(in_model=in_model,
-                                               representative_data_gen=representative_data_gen,
-                                               core_config=core_config,
-                                               fw_info=fw_info,
-                                               fw_impl=fw_impl,
-                                               tpc=target_platform_capabilities,
-                                               tb_w=tb_w)
+        tg, bit_widths_config, _, _ = core_runner(in_model=in_model,
+                                                  representative_data_gen=representative_data_gen,
+                                                  core_config=core_config,
+                                                  fw_info=fw_info,
+                                                  fw_impl=fw_impl,
+                                                  tpc=target_platform_capabilities,
+                                                  tb_w=tb_w)
         graph_to_apply_second_moment = copy.deepcopy(tg)
         semi_quantized_model = quantized_model_builder_for_second_moment_correction(graph_to_apply_second_moment,
                                                                                     fw_info, fw_impl)

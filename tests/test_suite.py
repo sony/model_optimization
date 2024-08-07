@@ -34,6 +34,7 @@ found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util
     "torchvision") is not None
 
 if found_tf:
+    from tests.xquant_tests.keras_tests.test_xquant_end2end import BaseTestEnd2EndKerasXQuant
     from tests.keras_tests.function_tests.test_activation_quantization_functions import TestActivationQuantizationFunctions as TestActivationQuantizationFunctionsKeras
     from tests.keras_tests.function_tests.test_custom_layer import TestCustomLayer
     from tests.keras_tests.function_tests.test_hessian_info_calculator import TestHessianInfoCalculatorWeights, \
@@ -83,6 +84,7 @@ if found_tf:
         TestNodeQuantizationConfigurations
 
 if found_pytorch:
+    from tests.xquant_tests.pytorch_tests.test_xquant_end2end import BaseTestEnd2EndPytorchXQuant
     from tests.pytorch_tests.function_tests.test_activation_quantization_functions import TestActivationQuantizationFunctions as TestActivationQuantizationFunctionsPytorch
     from tests.pytorch_tests.function_tests.test_torch_utils import TestTorchUtils
     from tests.pytorch_tests.function_tests.test_device_manager import TestDeviceManager
@@ -120,6 +122,7 @@ if __name__ == '__main__':
 
     # Add TF tests only if tensorflow is installed
     if found_tf:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(BaseTestEnd2EndKerasXQuant))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationQuantizationFunctionsKeras))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestReduceLROnPlateau))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestReduceLROnPlateauWithReset))
@@ -164,6 +167,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestParamSelectionWithHMSE))
 
     if found_pytorch:
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(BaseTestEnd2EndPytorchXQuant))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationQuantizationFunctionsPytorch))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestTorchUtils))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestDeviceManager))

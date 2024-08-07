@@ -31,7 +31,7 @@ from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
-from model_compression_toolkit.metadata import get_versions_dict
+from model_compression_toolkit.metadata import get_versions_dict, create_model_metadata
 
 LR_DEFAULT = 0.15
 LR_REST_DEFAULT = 1e-4
@@ -208,15 +208,15 @@ if FOUND_TF:
 
         fw_impl = GPTQKerasImplemantation()
 
-        tg, bit_widths_config, hessian_info_service = core_runner(in_model=in_model,
-                                                                  representative_data_gen=representative_data_gen,
-                                                                  core_config=core_config,
-                                                                  fw_info=DEFAULT_KERAS_INFO,
-                                                                  fw_impl=fw_impl,
-                                                                  tpc=target_platform_capabilities,
-                                                                  target_resource_utilization=target_resource_utilization,
-                                                                  tb_w=tb_w,
-                                                                  running_gptq=True)
+        tg, bit_widths_config, hessian_info_service, scheduling_info = core_runner(in_model=in_model,
+                                                                                   representative_data_gen=representative_data_gen,
+                                                                                   core_config=core_config,
+                                                                                   fw_info=DEFAULT_KERAS_INFO,
+                                                                                   fw_impl=fw_impl,
+                                                                                   tpc=target_platform_capabilities,
+                                                                                   target_resource_utilization=target_resource_utilization,
+                                                                                   tb_w=tb_w,
+                                                                                   running_gptq=True)
 
         float_graph = copy.deepcopy(tg)
 
@@ -242,7 +242,9 @@ if FOUND_TF:
 
         exportable_model, user_info = get_exportable_keras_model(tg_gptq)
         if target_platform_capabilities.tp_model.add_metadata:
-            exportable_model = add_metadata(exportable_model, get_versions_dict(target_platform_capabilities))
+            exportable_model = add_metadata(exportable_model,
+                                            create_model_metadata(tpc=target_platform_capabilities,
+                                                                  scheduling_info=scheduling_info))
         return exportable_model, user_info
 
 else:
