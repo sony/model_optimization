@@ -21,7 +21,7 @@ from model_compression_toolkit.exporter.model_exporter.pytorch.export_serializat
 from model_compression_toolkit.logger import Logger
 
 
-DEFAULT_ONNX_OPSET_VERSION = 15
+DEFAULT_ONNX_OPSET_VERSION = 17
 
 
 if FOUND_TORCH:
