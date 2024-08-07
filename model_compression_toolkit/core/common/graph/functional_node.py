@@ -1,6 +1,5 @@
 from typing import Dict, Any, Tuple, Type, List, Union
 
-from model_compression_toolkit.constants import FOUND_TF
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 import numpy as np
 
@@ -85,5 +84,7 @@ class FunctionalNode(BaseNode):
             Whether _type matches the self node type
 
         """
-        names_match = _type.__name__ == self.type.__name__ if FOUND_TF else False
-        return super().is_match_type(_type) or names_match
+        is_match = super().is_match_type(_type)
+        if "tf" in self.name:
+            return is_match or _type.__name__ == self.type.__name__
+        return is_match
