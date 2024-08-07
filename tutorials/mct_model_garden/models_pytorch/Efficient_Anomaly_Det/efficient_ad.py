@@ -165,15 +165,10 @@ class UnifiedAnomalyDetectionModel(nn.Module):
         student_output_ae = student_output[:, self.out_channels:]
 
         # Calculate MSE between teacher-student and autoencoder-student
-        mse_st = torch.mean((teacher_output - student_output_st) * (teacher_output - student_output_st), dim=1, keepdim=True)
-        mse_ae = torch.mean((autoencoder_output - student_output_ae) * (autoencoder_output - student_output_ae), dim=1, keepdim=True)
-        if self.q_st_start is not None:
-            map_st = 0.1 * (map_st - self.q_st_start) / (self.q_st_end - self.q_st_start)
-        if self.q_ae_start is not None:
-            map_ae = 0.1 * (map_ae - self.q_ae_start) / (self.q_ae_end - self.q_ae_start)
-        # Combine the MSE maps
-        map_combined = 0.5 * mse_st + 0.5 * mse_ae
-        return map_combined
+        mse_st = (teacher_output - student_output_st) * (teacher_output - student_output_st)
+        mse_ae = (autoencoder_output - student_output_ae) * (autoencoder_output - student_output_ae)
+
+        return mse_st , mse_ae
 
     def save_model(self, filepath):
         """ Save the entire model including sub-models and parameters """
@@ -207,3 +202,26 @@ class UnifiedAnomalyDetectionModel(nn.Module):
         )
         model.load_state_dict(model_info['model_state_dict'])
         return model
+    
+
+
+"""Model taining example usage - google colab colab
+
+from tutorials.mct_model_garden.models_pytorch.Efficient_Anomaly_Det import get_pdn_small, get_autoencoder
+from tutorials.resources.utils.efficient_ad_utils import train_ad
+
+dataset_path = './mvtec_anomaly_detection'
+sub_dataset = 'bottle'
+train_steps = 70000
+out_channels = 384
+image_size = 256
+teacher_weights = 'drive/MyDrive/anom/teacher_final.pth'
+teacher = get_pdn_small(out_channels)
+student = get_pdn_small(2 * out_channels)
+loaded_model = torch.load(teacher_weights, map_location='cpu')
+# Extract the state_dict from the loaded model
+state_dict = loaded_model.state_dict()
+teacher.load_state_dict(state_dict)
+autoencoder = get_autoencoder(out_channels)
+
+train_ad(train_steps, dataset_path, sub_dataset, autoencoder, teacher, student)"""

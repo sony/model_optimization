@@ -59,7 +59,7 @@ class ImageFolderWithPath(datasets.ImageFolder):
         sample, target = super().__getitem__(index)
         return sample, target, path
 
-def InfiniteDataloader(loader):
+def infinite_dataloader(loader):
     """Create an infinite dataloader that cycles through the dataset."""
     for data in itertools.cycle(loader):
         yield data
@@ -85,7 +85,7 @@ def test(test_set, unified_model, test_output_dir=None, desc='Running inference'
         image = DEFAULT_TRANSFORM(image)[None]  # Add batch dimension
         if torch.cuda.is_available():
             image = image.cuda()
-        map_combined = unified_model(image)
+        map_combined = predict_combined(image, unified_model)
         map_combined = torch.nn.functional.interpolate(map_combined, (orig_height, orig_width), mode='bilinear')
         map_combined = map_combined[0, 0].detach().cpu().numpy()
         defect_class = os.path.basename(os.path.dirname(path))
@@ -159,7 +159,7 @@ def train_ad(train_steps, dataset_path, sub_dataset, autoencoder, teacher, stude
 
     train_loader = DataLoader(train_set, batch_size=1, shuffle=True, num_workers=4, pin_memory=True)
     validation_loader = DataLoader(validation_set, batch_size=1)
-    train_loader_infinite = InfiniteDataloader(train_loader)
+    train_loader_infinite = infinite_dataloader(train_loader)
 
     teacher.eval()
     student.train()
@@ -210,6 +210,15 @@ def predict(image, teacher, student, autoencoder, teacher_mean, teacher_std):
     autoencoder_output = autoencoder(image)
     map_st = torch.mean((teacher_output - student_output[:, :OUT_CHANNELS])**2, dim=1, keepdim=True)
     map_ae = torch.mean((autoencoder_output - student_output[:, OUT_CHANNELS:])**2, dim=1, keepdim=True)
+    map_combined = 0.5 * map_st + 0.5 * map_ae
+    return map_combined, map_st, map_ae
+
+@torch.no_grad()
+def predict_combined(image, unified_model):
+    """Predict using the trained models and calculate anomaly maps."""
+    map_st, map_ae = unified_model(image)
+    map_st = torch.mean(map_st, dim=1, keepdim=True)
+    map_ae = torch.mean(map_ae, dim=1, keepdim=True)
     map_combined = 0.5 * map_st + 0.5 * map_ae
     return map_combined, map_st, map_ae
 
