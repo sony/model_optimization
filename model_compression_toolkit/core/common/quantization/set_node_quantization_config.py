@@ -17,6 +17,7 @@
 import copy
 from typing import List, Tuple, Dict
 
+from mct_quantizers.common.constants import ACTIVATION_N_BITS
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.logger import Logger
@@ -229,11 +230,20 @@ def _create_node_candidates_qc(qc: QuantizationConfig,
         bit_width = nodes_to_manipulate_bit_widths.get(node)
         node_qc_options_list = [op_cfg for op_cfg in node_qc_options_list if
                                     bit_width == op_cfg.activation_n_bits]
-        base_config.activation_n_bits = bit_width
-        if len(node_qc_options_list) == 0 or base_config not in node_qc_options_list:
+
+        if len(node_qc_options_list) == 0:
             Logger.critical(f"Manually selected activation bit-width {bit_width} is invalid for node {node}.")
         else:
             Logger.info(f"Setting node {node} bit-width to manually selected bit-width: {bit_width} bits.")
+            updated_base_config = base_config.clone_and_edit({ACTIVATION_N_BITS, bit_width})
+            if updated_base_config not in node_qc_options_list:
+                base_config = node_qc_options_list[0]
+                if len(node_qc_options_list) > 0 and not mixed_precision_enable:
+                    Logger.info(
+                        f"Request received to select {bit_width} activation bits. However, the base configuration for layer type {node.type} is missing in the node_qc_options_list.") # pragma: no cover
+            else:
+                base_config = updated_base_config
+
 
     if mixed_precision_enable:
         for op_cfg in node_qc_options_list:

@@ -16,6 +16,7 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
+from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
 
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
@@ -100,5 +101,6 @@ class ModelFoldingUtils:
                                          fw_impl=self.fw_impl,
                                          fw_info=self.fw_info,
                                          quantization_config=DEFAULTCONFIG,
+                                         bit_width_config=BitWidthConfig(),
                                          tpc=self.fw_default_tpc)
         return graph

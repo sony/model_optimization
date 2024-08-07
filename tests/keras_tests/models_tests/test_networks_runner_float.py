@@ -22,6 +22,7 @@ from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
+from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
@@ -61,7 +62,8 @@ class NetworkTest(object):
         graph.set_fw_info(DEFAULT_KERAS_INFO)
         graph.set_tpc(keras_default_tpc)
         graph = set_quantization_configuration_to_graph(graph,
-                                                        copy.deepcopy(DEFAULTCONFIG))
+                                                        copy.deepcopy(DEFAULTCONFIG),
+                                                        bit_width_config=BitWidthConfig())
         ptq_model, _ = fw_impl.model_builder(graph,
                                              mode=ModelBuilderMode.FLOAT)
         self.compare(inputs_list, ptq_model)
@@ -74,7 +76,8 @@ class NetworkTest(object):
         graph = substitute(graph,
                            fw_impl.get_substitutions_pre_statistics_collection(copy.deepcopy(DEFAULTCONFIG)))
         graph = set_quantization_configuration_to_graph(graph,
-                                                        copy.deepcopy(DEFAULTCONFIG))
+                                                        copy.deepcopy(DEFAULTCONFIG),
+                                                        bit_width_config=BitWidthConfig())
 
         ptq_model, _ = fw_impl.model_builder(graph,
                                              mode=ModelBuilderMode.FLOAT)

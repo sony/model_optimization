@@ -20,6 +20,7 @@ from keras.applications.mobilenet_v2 import MobileNetV2
 
 from packaging import version
 
+from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
@@ -68,6 +69,7 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
     graph.set_tpc(tpc)
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=DEFAULTCONFIG,
+                                                    bit_width_config=BitWidthConfig(),
                                                     mixed_precision_enable=True)
 
     ips = get_mp_interest_points(graph=graph,

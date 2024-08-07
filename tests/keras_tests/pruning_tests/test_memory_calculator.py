@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import set_quantization_configuration_to_graph
 
 import unittest
@@ -61,6 +61,7 @@ class TestParameterCounter(unittest.TestCase):
         # as it prepares the graph for the pruning process.
         float_graph_with_compression_config = set_quantization_configuration_to_graph(float_graph,
                                                                                       quant_config=mct.core.DEFAULTCONFIG,
+                                                                                      bit_width_config=BitWidthConfig(),
                                                                                       mixed_precision_enable=False)
 
 

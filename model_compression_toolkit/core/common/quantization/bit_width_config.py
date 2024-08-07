@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List
+from typing import List, Union
 
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.matchers.node_matcher import BaseNodeMatcher
+from model_compression_toolkit.logger import Logger
 
 
 class ManualBitWidthSelection:
@@ -48,15 +49,27 @@ class BitWidthConfig:
         # Used for debugging, thus no cover.
         return str(self.__dict__)  # pragma: no cover
 
-    def set_manual_activation_bit_width(self, filter: BaseNodeMatcher, bit_width: int):
+    def set_manual_activation_bit_width(self,
+                                        filters: Union[List[BaseNodeMatcher], BaseNodeMatcher],
+                                        bit_widths: Union[List[int], int]):
         """
         Add a manual bit-width selection to the configuration.
 
         Args:
-            filter (BaseNodeMatcher): The filter used to select nodes for bit-width manipulation.
-            bit_width (int): The bit width to be applied to the selected nodes.
+            filter (Union[List[BaseNodeMatcher], BaseNodeMatcher]): The filters used to select nodes for bit-width manipulation.
+            bit_width (Union[List[int], int]): The bit widths to be applied to the selected nodes.
+            If a single value is given it will be applied to all the filters
         """
-        self.manual_bit_width_selection_list += [ManualBitWidthSelection(filter, bit_width)]
+        filters = [filters] if not isinstance(filters, list) else filters
+        bit_widths = [bit_widths] if not isinstance(bit_widths, list) else bit_widths
+        if len(bit_widths) > 1 and len(bit_widths) != len(filters):
+            Logger.critical(f"Configuration Error: The number of provided bit_width values {len(bit_widths)} "
+                            f"must match the number of filters {len(filters)}, or a single bit_width value "
+                            f"should be provided for all filters.")
+        elif len(bit_widths) == 1 and len(filters) > 1:
+            bit_widths = [bit_widths[0] for f in filters]
+        for bit_width, filter in zip (bit_widths, filters):
+            self.manual_bit_width_selection_list += [ManualBitWidthSelection(filter, bit_width)]
 
     def get_nodes_to_manipulate_bit_widths(self, graph: Graph):
         """
@@ -71,5 +84,8 @@ class BitWidthConfig:
         nodes_to_change_bit_width = {}
         for manual_bit_width_selection in self.manual_bit_width_selection_list:
             filtered_nodes = graph.filter(manual_bit_width_selection.filter)
+            if len(filtered_nodes) == 0:
+                Logger.critical(f"Node Filtering Error: No nodes found in the graph for filter {manual_bit_width_selection.filter.__dict__} "
+                                f"to change their bit width to {manual_bit_width_selection.bit_width}.")
             nodes_to_change_bit_width.update({n: manual_bit_width_selection.bit_width for n in filtered_nodes})
         return nodes_to_change_bit_width

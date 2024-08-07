@@ -20,6 +20,7 @@ import unittest
 from packaging import version
 import tensorflow as tf
 
+from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
@@ -118,6 +119,7 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
 
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=qc,
+                                                    bit_width_config=BitWidthConfig(),
                                                     mixed_precision_enable=True)
     graph = fusion(graph, tpc)
     graph = filter_nodes_candidates(graph)

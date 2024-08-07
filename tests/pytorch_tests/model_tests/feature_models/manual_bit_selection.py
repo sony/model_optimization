@@ -14,27 +14,32 @@
 # ==============================================================================
 import inspect
 
-import unittest
-
-import random
-from torch.fx import symbolic_trace
-
+from model_compression_toolkit.constants import PYTORCH
+from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
 from mct_quantizers.common.constants import ACTIVATION_HOLDER_QUANTIZER
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
-from model_compression_toolkit.core.pytorch.utils import set_model, to_torch_tensor, \
-    torch_tensor_to_numpy
 import model_compression_toolkit as mct
 import torch
-import numpy as np
-from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
-from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPrecisionActivationBaseTest
-from model_compression_toolkit.core.common.network_editors.node_filters import NodeTypeFilter, NodeNameFilter
 
+class Activation16BitNet(torch.nn.Module):
+
+    def __init__(self):
+        super().__init__()
+        self.conv = torch.nn.Conv2d(3, 3, 1)
+        self.register_buffer('add_const', torch.rand((3, 1, 1)))
+        self.register_buffer('sub_const', torch.rand((3, 1, 1)))
+        self.register_buffer('div_const', 2*torch.ones((3, 1, 1)))
+
+    def forward(self, x):
+        x = torch.mul(x, x)
+        x1 = torch.add(x, self.add_const)
+        x = torch.sub(x, self.sub_const)
+        x = torch.mul(x, x1)
+        x = self.conv(x)
+        x = torch.divide(x, self.div_const)
+        return x
 
 class NetForBitSelection(torch.nn.Module):
     def __init__(self, input_shape):
@@ -87,36 +92,29 @@ class BaseManualBitWidthSelectionTest(MixedPrecisionActivationBaseTest):
 class ManualBitWidthByLayerTypeTest(BaseManualBitWidthSelectionTest):
     def __init__(self, unit_test, filters, bit_widths):
         self.filters = filters
-        if not isinstance(self.filters, list):
-            self.filters = [self.filters]
         self.bit_widths = bit_widths
-        if not isinstance(self.bit_widths, list):
-            self.bit_widths = [self.bit_widths]
-        # self.node_types = [filter.node_type for filter in self.filters]
         self.layer_types = {}
         self.functional_names = {}
-        for filter, bit_width in zip(self.filters, self.bit_widths):
+
+        filters = [filters] if not isinstance(filters, list) else filters
+        bit_widths = [bit_widths] if not isinstance(bit_widths, list) else bit_widths
+        if len(bit_widths) < len(filters):
+            bit_widths = [bit_widths[0] for f in filters]
+        for filter, bit_width in zip(filters, bit_widths):
             if inspect.isclass(filter.node_type):
                 self.layer_types.update({filter.node_type: bit_width})
             else:
                 self.functional_names.update({filter.node_type.__name__: bit_width})
 
         super().__init__(unit_test)
-    # def get_tpc(self):
-    #     return {'all_8bit': generate_pytorch_tpc(name="8_quant_pytorch_test",
-    #                                      tp_model=generate_test_tp_model({'weights_n_bits': 8,
-    #                                                                       'activation_n_bits': 8,
-    #                                                                       'enable_weights_quantization': True,
-    #                                                                       'enable_activation_quantization': True
-    #                                                                       })),
-    #             }
+
     def get_core_configs(self):
         core_config = super().get_mp_core_config()
-        for filter, bit_width in zip(self.filters, self.bit_widths):
-            core_config.bit_width_config.set_manual_activation_bit_width(filter, bit_width)
+        core_config.bit_width_config.set_manual_activation_bit_width(self.filters, self.bit_widths)
         return {"mixed_precision_activation_model": core_config}
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        bit_widths = [self.bit_widths] if not isinstance(self.bit_widths, list) else self.bit_widths
         for model_name, quantized_model in quantized_models.items():
             for name, layer in quantized_model.named_modules():
                 if isinstance(layer, PytorchActivationQuantizationHolder):
@@ -129,20 +127,49 @@ class ManualBitWidthByLayerTypeTest(BaseManualBitWidthSelectionTest):
                                 bit_width = self.functional_names.get(k)
                         self.unit_test.assertTrue(layer.activation_holder_quantizer.num_bits == bit_width)
                     else:
-                        self.unit_test.assertFalse(layer.activation_holder_quantizer.num_bits in self.bit_widths, msg=f"name {name}, layer.activation_holder_quantizer.num_bits {layer.activation_holder_quantizer.num_bits }, {self.bit_widths}")
+                        self.unit_test.assertFalse(layer.activation_holder_quantizer.num_bits in bit_widths, msg=f"name {name}, layer.activation_holder_quantizer.num_bits {layer.activation_holder_quantizer.num_bits }, {self.bit_widths}")
 
 
-class ManualBitWidthByFunctionalLayerTest(ManualBitWidthByLayerTypeTest):
+class ManualBitWidthByLayerNameTest(BaseManualBitWidthSelectionTest):
+    def __init__(self, unit_test, filters, bit_widths):
+        self.filters = filters
+        self.bit_widths = bit_widths
+        self.layer_names = {}
+
+        filters = [filters] if not isinstance(filters, list) else filters
+        bit_widths = [bit_widths] if not isinstance(bit_widths, list) else bit_widths
+        if len(bit_widths) < len(filters):
+            bit_widths = [bit_widths[0] for f in filters]
+        for filter, bit_width in zip(filters, bit_widths):
+            self.layer_names.update({filter.node_name: bit_width})
+
+
+        super().__init__(unit_test)
+
+    def get_core_configs(self):
+        core_config = super().get_mp_core_config()
+        core_config.bit_width_config.set_manual_activation_bit_width(self.filters, self.bit_widths)
+        return {"mixed_precision_activation_model": core_config}
+
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        bit_widths = [self.bit_widths] if not isinstance(self.bit_widths, list) else self.bit_widths
         for model_name, quantized_model in quantized_models.items():
             for name, layer in quantized_model.named_modules():
                 if isinstance(layer, PytorchActivationQuantizationHolder):
-                    if any([n in name for n in self.functional_names]):
-                        for index , n in enumerate(self.functional_names):
-                            if n in name:
+                    if any([layer_name == name.split("_activation")[0] for layer_name in self.layer_names.keys()]):
+                        for layer_name, bit_width in self.layer_names.items():
+                            if layer_name == name.split("_activation")[0]:
                                 break
-                        self.unit_test.assertTrue(layer.activation_holder_quantizer.num_bits == self.bit_widths[index])
+                        self.unit_test.assertTrue(layer.activation_holder_quantizer.num_bits == bit_width)
                     else:
-                        self.unit_test.assertFalse(layer.activation_holder_quantizer.num_bits in self.bit_widths)
+                        self.unit_test.assertFalse(layer.activation_holder_quantizer.num_bits in bit_widths, msg=f"name {name}, layer.activation_holder_quantizer.num_bits {layer.activation_holder_quantizer.num_bits }, {self.bit_widths}")
 
-# class InvalidBitWidthSelectionTest(BaseManualBitWidthSelectionTest):
+
+class Manual16BitTest(ManualBitWidthByLayerNameTest):
+
+    def get_tpc(self):
+        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v4')
+        return {'mixed_precision_activation_model': tpc}
+
+    def create_feature_network(self, input_shape):
+        return Activation16BitNet()
