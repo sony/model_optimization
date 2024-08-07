@@ -15,12 +15,16 @@
 
 import importlib
 
+from packaging import version
+
 # Supported frameworks in MCT:
 TENSORFLOW = 'tensorflow'
 PYTORCH = 'pytorch'
 FOUND_TF = importlib.util.find_spec(TENSORFLOW) is not None
 if FOUND_TF:
-    if version.parse(tf.__version__) > version.parse("2.15"):
+    import tensorflow as tf
+    # MCT doesn't support TensorFlow version 2.16 or higher
+    if version.parse(tf.__version__) >= version.parse("2.16"):
         FOUND_TF = False
 FOUND_TORCH = importlib.util.find_spec("torch") is not None
 FOUND_TORCHVISION = importlib.util.find_spec("torchvision") is not None

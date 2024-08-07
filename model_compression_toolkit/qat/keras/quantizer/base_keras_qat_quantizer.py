@@ -44,5 +44,6 @@ else:  # pragma: no cover
                      quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
 
             super().__init__(quantization_config)
-            Logger.critical("Tensorflow must be installed to use BaseKerasQATTrainableQuantizer. "
-                            "The 'tensorflow' package is missing.")  # pragma: no cover
+            Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                            "BaseKerasQATTrainableQuantizer. The 'tensorflow' package is missing "
+                            "or is installed with a version higher than 2.15.")  # pragma: no cover

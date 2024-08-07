@@ -101,5 +101,6 @@ if FOUND_TF:
         return exporter.get_custom_objects()
 else:
     def keras_export_model(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use keras_export_model. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use keras_export_model."
+                        "The 'tensorflow' package is missing or is installed "
+                        "with a version higher than 2.15.")  # pragma: no cover

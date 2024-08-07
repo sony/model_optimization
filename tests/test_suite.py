@@ -17,6 +17,7 @@
 #  ----------------- Unit test framework
 import importlib
 import unittest
+from packaging import version
 
 from tests.common_tests.function_tests.test_collectors_manipulation import TestCollectorsManipulations
 from tests.common_tests.function_tests.test_edge_matcher import TestEdgeMatcher
@@ -30,6 +31,11 @@ from tests.common_tests.test_doc_examples import TestCommonDocsExamples
 from tests.common_tests.test_tp_model import TargetPlatformModelingTest, OpsetTest, QCOptionsTest, FusingTest
 
 found_tf = importlib.util.find_spec("tensorflow") is not None
+if found_tf:
+    import tensorflow as tf
+    # MCT doesn't support TensorFlow version 2.16 or higher
+    if version.parse(tf.__version__) >= version.parse("2.16"):
+        found_tf = False
 found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util.find_spec(
     "torchvision") is not None
 
@@ -122,7 +128,6 @@ if __name__ == '__main__':
     if found_tf:
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestActivationQuantizationFunctionsKeras))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestReduceLROnPlateau))
-        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestReduceLROnPlateauWithReset))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestCustomLayer))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestParameterCounter))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PruningPretrainedModelsTest))

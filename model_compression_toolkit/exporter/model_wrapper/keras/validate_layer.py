@@ -76,5 +76,6 @@ if FOUND_TF:
         return True
 else:
     def is_keras_layer_exportable(*args, **kwargs):  # pragma: no cover
-        Logger.critical("Tensorflow must be installed to use is_keras_layer_exportable. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "is_keras_layer_exportable. The 'tensorflow' package is missing or is installed with a "
+                        "version higher than 2.15.")  # pragma: no cover

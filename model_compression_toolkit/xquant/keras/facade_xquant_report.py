@@ -59,5 +59,6 @@ if FOUND_TF:
         return _collected_data
 else:
     def xquant_report_keras_experimental(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use xquant_report_keras_experimental. "
-                                     "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "xquant_report_keras_experimental. The 'tensorflow' package is missing "
+                        "or is installed with a version higher than 2.15.")  # pragma: no cover

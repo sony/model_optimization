@@ -148,5 +148,6 @@ else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
     def keras_pruning_experimental(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use keras_pruning_experimental. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "keras_pruning_experimental. The 'tensorflow' package is missing or is "
+                        "installed with a version higher than 2.15.")  # pragma: no cover

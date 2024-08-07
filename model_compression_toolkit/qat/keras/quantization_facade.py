@@ -20,12 +20,14 @@ from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import FOUND_TF
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
+    ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
+    TargetPlatformCapabilities
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 
@@ -52,7 +54,7 @@ if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from model_compression_toolkit.qat.keras.quantizer.quantization_builder import quantization_builder, \
-    get_activation_quantizer_holder
+        get_activation_quantizer_holder
     from model_compression_toolkit.qat.common.qat_config import QATConfig
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
@@ -169,9 +171,10 @@ if FOUND_TF:
 
          """
 
-        Logger.warning(f"keras_quantization_aware_training_init_experimental is experimental and is subject to future changes."
-                       f"If you encounter an issue, please open an issue in our GitHub "
-                       f"project https://github.com/sony/model_optimization")
+        Logger.warning(
+            f"keras_quantization_aware_training_init_experimental is experimental and is subject to future changes."
+            f"If you encounter an issue, please open an issue in our GitHub "
+            f"project https://github.com/sony/model_optimization")
 
         KerasModelValidation(model=in_model,
                              fw_info=DEFAULT_KERAS_INFO).validate()
@@ -179,8 +182,8 @@ if FOUND_TF:
         if core_config.mixed_precision_enable:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.critical("Given quantization config to mixed-precision facade is not of type "
-                             "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization API,"
-                             "or pass a valid mixed precision configuration.")
+                                "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization API,"
+                                "or pass a valid mixed precision configuration.")
 
         tb_w = init_tensorboard_writer(DEFAULT_KERAS_INFO)
 
@@ -202,11 +205,12 @@ if FOUND_TF:
         qat_model, user_info = KerasModelBuilder(graph=tg,
                                                  fw_info=DEFAULT_KERAS_INFO,
                                                  wrapper=_qat_wrapper,
-                                                 get_activation_quantizer_holder_fn=partial(get_activation_quantizer_holder,
-                                                                                            qat_config=qat_config)).build_model()
+                                                 get_activation_quantizer_holder_fn=partial(
+                                                     get_activation_quantizer_holder,
+                                                     qat_config=qat_config)).build_model()
 
         user_info.mixed_precision_cfg = bit_widths_config
-        #TODO: remove the last output after updating documentation.
+        # TODO: remove the last output after updating documentation.
         return qat_model, user_info, {}
 
 
@@ -291,10 +295,12 @@ else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
     def keras_quantization_aware_training_init_experimental(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use keras_quantization_aware_training_init_experimental. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "keras_quantization_aware_training_init_experimental. The 'tensorflow' package is missing "
+                        "or is installed with a version higher than 2.15.")  # pragma: no cover
 
 
     def keras_quantization_aware_training_finalize_experimental(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use keras_quantization_aware_training_finalize_experimental. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "keras_quantization_aware_training_finalize_experimental. The 'tensorflow' package is missing "
+                        "or is installed with a version higher than 2.15.")  # pragma: no cover
