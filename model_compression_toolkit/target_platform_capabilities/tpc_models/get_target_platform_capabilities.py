@@ -16,17 +16,17 @@
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.target_platform_capabilities import \
-    tpc_dict as imx500_tpc_dict
+    get_tpc_dict_by_fw as get_imx500_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.tflite_tpc.target_platform_capabilities import \
-    tpc_dict as tflite_tpc_dict
+    get_tpc_dict_by_fw as get_tflite_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_tpc.target_platform_capabilities import \
-    tpc_dict as qnnpack_tpc_dict
+    get_tpc_dict_by_fw as get_qnnpack_tpc
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL,  LATEST
 
-tpc_dict = {DEFAULT_TP_MODEL: imx500_tpc_dict,
-            IMX500_TP_MODEL: imx500_tpc_dict,
-            TFLITE_TP_MODEL: tflite_tpc_dict,
-            QNNPACK_TP_MODEL: qnnpack_tpc_dict}
+tpc_dict = {DEFAULT_TP_MODEL: get_imx500_tpc,
+            IMX500_TP_MODEL: get_imx500_tpc,
+            TFLITE_TP_MODEL: get_tflite_tpc,
+            QNNPACK_TP_MODEL: get_qnnpack_tpc}
 
 
 def get_target_platform_capabilities(fw_name: str,
@@ -47,13 +47,10 @@ def get_target_platform_capabilities(fw_name: str,
     """
     assert target_platform_name in tpc_dict, f'Target platform {target_platform_name} is not defined!'
     fw_tpc = tpc_dict.get(target_platform_name)
-    assert fw_name in fw_tpc, f'Framework {fw_name} is not supported in {target_platform_name}. Please make sure the relevant ' \
-                              f'packages are installed when using MCT for optimizing a {fw_name} model. ' \
-                              f'For Tensorflow, please install tensorflow. ' \
-                              f'For PyTorch, please install torch.'
-    tpc_versions = fw_tpc.get(fw_name)
+    tpc_versions = fw_tpc(fw_name)
     if target_platform_version is None:
         target_platform_version = LATEST
     else:
-        assert target_platform_version in tpc_versions, f'TPC version {target_platform_version} is not supported for framework {fw_name}.'
+        assert target_platform_version in tpc_versions, (f'TPC version {target_platform_version} is not supported for '
+                                                         f'framework {fw_name}.')
     return tpc_versions[target_platform_version]()
