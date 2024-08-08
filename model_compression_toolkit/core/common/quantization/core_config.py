@@ -34,7 +34,7 @@ class CoreConfig:
             quantization_config (QuantizationConfig): Config for quantization.
             mixed_precision_config (MixedPrecisionQuantizationConfig): Config for mixed precision quantization.
             If None, a default MixedPrecisionQuantizationConfig is used.
-            bit_width_config (BitWidthConfig): Config for bit-width selection.
+            bit_width_config (BitWidthConfig): Config for manual bit-width selection.
             debug_config (DebugConfig): Config for debugging and editing the network quantization process.
         """
         self.quantization_config = QuantizationConfig() if quantization_config is None else quantization_config

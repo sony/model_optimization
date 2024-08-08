@@ -52,7 +52,6 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
     graph.set_fw_info(fw_info)
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=mct.core.QuantizationConfig(),
-                                                    bit_width_config=BitWidthConfig(),
                                                     mixed_precision_enable=True)
     graph = fusion(graph, tpc)
 

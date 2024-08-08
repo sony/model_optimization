@@ -30,7 +30,7 @@ from tests.pytorch_tests.model_tests.feature_models.bn_attributes_quantization_t
 from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import LayerNormNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.manual_bit_selection import ManualBitWidthByLayerTypeTest, \
-    ManualBitWidthByLayerNameTest, Manual16BitTest
+    ManualBitWidthByLayerNameTest, Manual16BitTest, Manual16BitTestMixedPrecisionTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
     MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
     MixedPrecisionBopsAndWeightsMemoryUtilizationTest, MixedPrecisionBopsAndActivationMemoryUtilizationTest, MixedPrecisionBopsAndTotalMemoryUtilizationTest, \
@@ -684,8 +684,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
         self.assertEqual(str(context.exception), "Manually selected activation bit-width 3 is invalid for node ReLU:relu.")
 
     def test_mul_16_bit_manual_selection(self):
+        """
+        This test checks the execptions in the manual bit-width selection feature.
+        """
         # This "mul" can be configured to 16 bit
         Manual16BitTest(self, NodeNameFilter('mul'), 16).run_test()
+        Manual16BitTestMixedPrecisionTest(self, NodeNameFilter('mul'), 16).run_test()
 
         # This "mul" cannot be configured to 16 bit
         with self.assertRaises(Exception) as context:
@@ -693,7 +697,16 @@ class FeatureModelsTestRunner(unittest.TestCase):
         # Check that the correct exception message was raised
         self.assertEqual(str(context.exception), "Manually selected activation bit-width 16 is invalid for node mul:mul_1.")
 
+        # This "mul" cannot be configured to 16 bit
+        with self.assertRaises(Exception) as context:
+            Manual16BitTestMixedPrecisionTest(self, NodeNameFilter('mul_1'), 16).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception), "Manually selected activation bit-width 16 is invalid for node mul:mul_1.")
+
     def test_exceptions__manual_selection(self):
+        """
+        This test checks the execptions in the manual bit-width selection feature.
+        """
         # Node name doesn't exist in graph
         with self.assertRaises(Exception) as context:
             Manual16BitTest(self, NodeNameFilter('mul_3'), 16).run_test()
@@ -709,7 +722,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_manual_bit_width_selection_by_layer_type(self):
         """
-        This test checks the manual bit-width selection feature.
+        This test checks the manual bit-width selection feature by layer type filtering.
         """
         ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), 4).run_test()
         ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), 2).run_test()
@@ -729,7 +742,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_manual_bit_width_selection_by_layer_name(self):
         """
-        This test checks the manual bit-width selection feature.
+        This test checks the manual bit-width selection feature by layer name filtering.
         """
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('inp'), 4).run_test()
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('conv1'), 4).run_test()

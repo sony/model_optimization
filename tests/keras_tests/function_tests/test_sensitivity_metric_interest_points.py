@@ -69,7 +69,6 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
     graph.set_tpc(tpc)
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=DEFAULTCONFIG,
-                                                    bit_width_config=BitWidthConfig(),
                                                     mixed_precision_enable=True)
 
     ips = get_mp_interest_points(graph=graph,

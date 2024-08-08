@@ -119,7 +119,6 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
 
     graph = set_quantization_configuration_to_graph(graph=graph,
                                                     quant_config=qc,
-                                                    bit_width_config=BitWidthConfig(),
                                                     mixed_precision_enable=True)
     graph = fusion(graph, tpc)
     graph = filter_nodes_candidates(graph)

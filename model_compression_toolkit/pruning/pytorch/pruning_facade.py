@@ -127,7 +127,6 @@ if FOUND_TORCH:
         # as it prepares the graph for the pruning process.
         float_graph_with_compression_config = set_quantization_configuration_to_graph(float_graph,
                                                                                       quant_config=DEFAULTCONFIG,
-                                                                                      bit_width_config=BitWidthConfig(),
                                                                                       mixed_precision_enable=False)
 
         # Create a Pruner object with the graph and configuration.

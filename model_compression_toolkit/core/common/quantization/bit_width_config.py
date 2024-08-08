@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Union
+from typing import List, Union, Dict
 
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.matchers.node_matcher import BaseNodeMatcher
@@ -39,11 +39,11 @@ class BitWidthConfig:
     Class to manage manual bit-width configurations.
 
     Attributes:
-        manual_bit_width_selection_list (List[ManualBitWidthSelection]): A list of ManualBitWidthSelection objects defining manual bit-width configurations.
+        manual_activation_bit_width_selection_list (List[ManualBitWidthSelection]): A list of ManualBitWidthSelection objects defining manual bit-width configurations.
     """
     def __init__(self,
-                 manual_bit_width_selection_list: List[ManualBitWidthSelection] = None):
-        self.manual_bit_width_selection_list = [] if manual_bit_width_selection_list is None else manual_bit_width_selection_list
+                 manual_activation_bit_width_selection_list: List[ManualBitWidthSelection] = None):
+        self.manual_activation_bit_width_selection_list = [] if manual_activation_bit_width_selection_list is None else manual_activation_bit_width_selection_list
 
     def __repr__(self):
         # Used for debugging, thus no cover.
@@ -69,9 +69,9 @@ class BitWidthConfig:
         elif len(bit_widths) == 1 and len(filters) > 1:
             bit_widths = [bit_widths[0] for f in filters]
         for bit_width, filter in zip (bit_widths, filters):
-            self.manual_bit_width_selection_list += [ManualBitWidthSelection(filter, bit_width)]
+            self.manual_activation_bit_width_selection_list += [ManualBitWidthSelection(filter, bit_width)]
 
-    def get_nodes_to_manipulate_bit_widths(self, graph: Graph):
+    def get_nodes_to_manipulate_bit_widths(self, graph: Graph) -> Dict:
         """
         Retrieve nodes from the graph that need their bit-widths changed according to the manual bit-width selections.
 
@@ -79,10 +79,10 @@ class BitWidthConfig:
             graph (Graph): The graph containing the nodes to be filtered and manipulated.
 
         Returns:
-            dict: A dictionary mapping nodes to their new bit-widths.
+            Dict: A dictionary mapping nodes to their new bit-widths.
         """
         nodes_to_change_bit_width = {}
-        for manual_bit_width_selection in self.manual_bit_width_selection_list:
+        for manual_bit_width_selection in self.manual_activation_bit_width_selection_list:
             filtered_nodes = graph.filter(manual_bit_width_selection.filter)
             if len(filtered_nodes) == 0:
                 Logger.critical(f"Node Filtering Error: No nodes found in the graph for filter {manual_bit_width_selection.filter.__dict__} "

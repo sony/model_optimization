@@ -101,6 +101,5 @@ class ModelFoldingUtils:
                                          fw_impl=self.fw_impl,
                                          fw_info=self.fw_info,
                                          quantization_config=DEFAULTCONFIG,
-                                         bit_width_config=BitWidthConfig(),
                                          tpc=self.fw_default_tpc)
         return graph

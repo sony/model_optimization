@@ -232,7 +232,6 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
         graph.set_tpc(tpc)
         graph = set_quantization_configuration_to_graph(graph=graph,
                                                         quant_config=core_config.quantization_config,
-                                                        bit_width_config=BitWidthConfig(),
                                                         mixed_precision_enable=True)
 
         for node in graph.nodes:

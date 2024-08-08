@@ -56,7 +56,6 @@ def prepare_graph_with_configs(in_model,
                                      fw_info=fw_info,
                                      fw_impl=fw_impl,
                                      tpc=tpc,
-                                     bit_width_config=BitWidthConfig(),
                                      mixed_precision_enable=mixed_precision_enabled,
                                      running_gptq=running_gptq)
 
