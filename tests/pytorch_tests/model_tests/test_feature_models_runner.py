@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import operator
+
 import unittest
 from functools import partial
 
@@ -20,6 +22,7 @@ import torch
 from torch import nn
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
+from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from model_compression_toolkit.target_platform_capabilities import constants as C
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
@@ -27,6 +30,8 @@ from tests.pytorch_tests.model_tests.feature_models.bn_attributes_quantization_t
 from tests.pytorch_tests.model_tests.feature_models.compute_max_cut_test import ComputeMaxCutTest
 from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import LayerNormNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
+from tests.pytorch_tests.model_tests.feature_models.manual_bit_selection import ManualBitWidthByLayerTypeTest, \
+    ManualBitWidthByLayerNameTest, Manual16BitTest, Manual16BitTestMixedPrecisionTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
     MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
     MixedPrecisionBopsAndWeightsMemoryUtilizationTest, MixedPrecisionBopsAndActivationMemoryUtilizationTest, MixedPrecisionBopsAndTotalMemoryUtilizationTest, \
@@ -668,6 +673,95 @@ class FeatureModelsTestRunner(unittest.TestCase):
     def test_16bit_activations(self):
         Activation16BitTest(self).run_test()
         Activation16BitMixedPrecisionTest(self).run_test()
+
+    def test_invalid_bit_width_selection(self):
+        with self.assertRaises(Exception) as context:
+            ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), 7).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception), "Manually selected activation bit-width 7 is invalid for node Conv2d:conv1.")
+
+        with self.assertRaises(Exception) as context:
+            ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(operator.add), 3).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception), "Manually selected activation bit-width 3 is invalid for node add:add.")
+
+        with self.assertRaises(Exception) as context:
+            ManualBitWidthByLayerNameTest(self, NodeNameFilter('relu'), 3).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception), "Manually selected activation bit-width 3 is invalid for node ReLU:relu.")
+
+    def test_mul_16_bit_manual_selection(self):
+        """
+        This test checks the execptions in the manual bit-width selection feature.
+        """
+        # This "mul" can be configured to 16 bit
+        Manual16BitTest(self, NodeNameFilter('mul'), 16).run_test()
+        Manual16BitTestMixedPrecisionTest(self, NodeNameFilter('mul'), 16).run_test()
+
+        # This "mul" cannot be configured to 16 bit
+        with self.assertRaises(Exception) as context:
+            Manual16BitTest(self, NodeNameFilter('mul_1'), 16).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception), "Manually selected activation bit-width 16 is invalid for node mul:mul_1.")
+
+        # This "mul" cannot be configured to 16 bit
+        with self.assertRaises(Exception) as context:
+            Manual16BitTestMixedPrecisionTest(self, NodeNameFilter('mul_1'), 16).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception), "Manually selected activation bit-width 16 is invalid for node mul:mul_1.")
+
+    def test_exceptions__manual_selection(self):
+        """
+        This test checks the execptions in the manual bit-width selection feature.
+        """
+        # Node name doesn't exist in graph
+        with self.assertRaises(Exception) as context:
+            Manual16BitTest(self, NodeNameFilter('mul_3'), 16).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception), "Node Filtering Error: No nodes found in the graph for filter {'node_name': 'mul_3'} to change their bit width to 16.")
+
+        # Invalid inputs to API
+        with self.assertRaises(Exception) as context:
+            ManualBitWidthByLayerNameTest(self, [NodeNameFilter('relu'), NodeNameFilter('add'), NodeNameFilter('add_1')], [2, 4]).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception),
+                         "Configuration Error: The number of provided bit_width values 2 must match the number of filters 3, or a single bit_width value should be provided for all filters.")
+
+    def test_manual_bit_width_selection_by_layer_type(self):
+        """
+        This test checks the manual bit-width selection feature by layer type filtering.
+        """
+        ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), 4).run_test()
+        ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), 2).run_test()
+        ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Linear), 4).run_test()
+        ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(operator.add), 4).run_test()
+        ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(operator.add), 2).run_test()
+        ManualBitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d), NodeTypeFilter(torch.nn.Linear)],
+                                      [2, 4]).run_test()
+        ManualBitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d), NodeTypeFilter(torch.nn.Linear)],
+                                      [4, 4]).run_test()
+        ManualBitWidthByLayerTypeTest(self, [NodeTypeFilter(torch.nn.Conv2d), NodeTypeFilter(operator.add)],
+                                      [2, 4]).run_test()
+        ManualBitWidthByLayerTypeTest(self, [NodeTypeFilter(operator.add), NodeTypeFilter(torch.nn.Conv2d)],
+                                      [4, 4]).run_test()
+        ManualBitWidthByLayerTypeTest(self, [NodeTypeFilter(operator.add), NodeTypeFilter(torch.nn.Linear)],
+                                      4).run_test()
+
+    def test_manual_bit_width_selection_by_layer_name(self):
+        """
+        This test checks the manual bit-width selection feature by layer name filtering.
+        """
+        ManualBitWidthByLayerNameTest(self, NodeNameFilter('inp'), 4).run_test()
+        ManualBitWidthByLayerNameTest(self, NodeNameFilter('conv1'), 4).run_test()
+        ManualBitWidthByLayerNameTest(self, NodeNameFilter('fc'), 4).run_test()
+        ManualBitWidthByLayerNameTest(self, NodeNameFilter('add'), 4).run_test()
+        ManualBitWidthByLayerNameTest(self, NodeNameFilter('add_1'), 4).run_test()
+        ManualBitWidthByLayerNameTest(self, NodeNameFilter('bn_conv2'), 4).run_test()
+        ManualBitWidthByLayerNameTest(self, NodeNameFilter('relu'), 4).run_test()
+        ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1')], [2, 4]).run_test()
+        ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1')], 4).run_test()
+
+
 
 
 if __name__ == '__main__':

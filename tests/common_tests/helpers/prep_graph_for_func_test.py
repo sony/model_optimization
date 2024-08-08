@@ -18,6 +18,7 @@ from model_compression_toolkit.core import DEFAULTCONFIG, CoreConfig, DebugConfi
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.model_collector import ModelCollector
+from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
@@ -126,6 +127,7 @@ def prepare_graph_set_bit_widths(in_model,
                                      fw_info=fw_info,
                                      fw_impl=fw_impl,
                                      tpc=tpc,
+                                     bit_width_config=core_config.bit_width_config,
                                      mixed_precision_enable=core_config.mixed_precision_enable)
 
     tg = quantization_preparation_runner(graph,

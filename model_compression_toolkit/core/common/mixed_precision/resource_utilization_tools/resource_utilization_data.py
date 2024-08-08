@@ -67,6 +67,7 @@ def compute_resource_utilization_data(in_model: Any,
                                                      fw_info,
                                                      fw_impl,
                                                      tpc,
+                                                     bit_width_config=core_config.bit_width_config,
                                                      mixed_precision_enable=mixed_precision_enable)
 
     # Compute parameters sum
@@ -227,6 +228,7 @@ def requires_mixed_precision(in_model: Any,
                                                  fw_info,
                                                  fw_impl,
                                                  tpc,
+                                                 bit_width_config=core_config.bit_width_config,
                                                  mixed_precision_enable=False)
     # Compute max weights memory in bytes
     weights_memory_by_layer_bytes, _ = compute_nodes_weights_params(transformed_graph, fw_info)
