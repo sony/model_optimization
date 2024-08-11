@@ -266,10 +266,10 @@ class Detect(nn.Module):
 
         # box decoding
         lt, rb = dfl.chunk(2, 1)
-        y1 = self.relu1(self.anchors.unsqueeze(0)[:, 0, :] - lt[:, 0, :])
-        x1 = self.relu2(self.anchors.unsqueeze(0)[:, 1, :] - lt[:, 1, :])
-        y2 = self.relu3(self.anchors.unsqueeze(0)[:, 0, :] + rb[:, 0, :])
-        x2 = self.relu4(self.anchors.unsqueeze(0)[:, 1, :] + rb[:, 1, :])
+        y1 = self.anchors.unsqueeze(0)[:, 0, :] - lt[:, 0, :]
+        x1 = self.anchors.unsqueeze(0)[:, 1, :] - lt[:, 1, :]
+        y2 = self.anchors.unsqueeze(0)[:, 0, :] + rb[:, 0, :]
+        x2 = self.anchors.unsqueeze(0)[:, 1, :] + rb[:, 1, :]
         y_bb = torch.stack((x1, y1, x2, y2), 1).transpose(1, 2)
         return y_bb, y_cls
 
