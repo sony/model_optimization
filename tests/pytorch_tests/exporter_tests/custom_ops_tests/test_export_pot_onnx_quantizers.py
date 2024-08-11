@@ -22,7 +22,7 @@ from torchvision.models.mobilenetv2 import mobilenet_v2
 
 import mct_quantizers
 import model_compression_toolkit as mct
-from model_compression_toolkit.constants import FOUND_ONNX, FOUND_ONNXRUNTIME
+from model_compression_toolkit.verify_packages import FOUND_ONNXRUNTIME, FOUND_ONNX
 from model_compression_toolkit.exporter.model_exporter.pytorch.pytorch_export_facade import DEFAULT_ONNX_OPSET_VERSION
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \

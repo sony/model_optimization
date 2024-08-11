@@ -15,7 +15,7 @@
 
 import unittest
 
-from model_compression_toolkit.constants import FOUND_ONNXRUNTIME, FOUND_ONNX
+from model_compression_toolkit.verify_packages import FOUND_ONNXRUNTIME, FOUND_ONNX
 from tests.pytorch_tests.exporter_tests.custom_ops_tests.test_export_lut_symmetric_onnx_quantizers import \
     TestExportONNXWeightLUTSymmetric2BitsQuantizers, TestExportONNXWeightLUTPOT2BitsQuantizers
 from tests.pytorch_tests.exporter_tests.custom_ops_tests.test_export_pot_onnx_quantizers import \

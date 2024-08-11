@@ -16,7 +16,8 @@ import copy
 
 from typing import Callable
 from model_compression_toolkit.core import common
-from model_compression_toolkit.constants import FOUND_TORCH, ACT_HESSIAN_DEFAULT_BATCH_SIZE
+from model_compression_toolkit.constants import ACT_HESSIAN_DEFAULT_BATCH_SIZE
+from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
 from model_compression_toolkit.logger import Logger

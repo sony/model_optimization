@@ -17,7 +17,7 @@ from typing import Any
 import mct_quantizers
 from mct_quantizers.common.get_all_subclasses import get_all_subclasses
 
-from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.logger import Logger
 
 if FOUND_TF:

@@ -16,7 +16,7 @@ import time
 from typing import Callable, Tuple, List, Dict, Union
 from tqdm import tqdm
 
-from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.data_generation.common.constants import DEFAULT_N_ITER, DEFAULT_DATA_GEN_BS
 from model_compression_toolkit.data_generation.common.data_generation import get_data_generation_classes
 from model_compression_toolkit.data_generation.common.image_pipeline import image_normalization_dict

@@ -15,7 +15,7 @@
 
 from typing import Callable, Dict, Any
 
-from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.xquant.common.core_report_generator import core_report_generator
 from model_compression_toolkit.xquant import XQuantConfig
 from model_compression_toolkit.logger import Logger

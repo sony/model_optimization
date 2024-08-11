@@ -16,7 +16,8 @@
 from typing import Callable, Tuple
 
 from model_compression_toolkit import get_target_platform_capabilities
-from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
+from model_compression_toolkit.constants import TENSORFLOW
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.pruner import Pruner
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig

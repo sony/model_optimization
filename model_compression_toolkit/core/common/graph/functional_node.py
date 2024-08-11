@@ -1,6 +1,6 @@
 from typing import Dict, Any, Tuple, Type, List, Union
 
-from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 import numpy as np
 

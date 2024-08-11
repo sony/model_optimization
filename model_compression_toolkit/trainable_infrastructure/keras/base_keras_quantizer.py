@@ -15,7 +15,7 @@
 from typing import Dict, Any, Union, List
 
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer, VAR, GROUP
 from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig, \

@@ -13,7 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.constants import FOUND_TF, FOUND_TORCH, TENSORFLOW, PYTORCH
+from model_compression_toolkit.constants import TENSORFLOW, PYTORCH
+from model_compression_toolkit.verify_packages import FOUND_TORCH, FOUND_TF
 from model_compression_toolkit.target_platform_capabilities.constants import LATEST
 
 
