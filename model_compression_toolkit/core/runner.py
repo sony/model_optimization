@@ -115,6 +115,7 @@ def core_runner(in_model: Any,
                                      fw_info,
                                      fw_impl,
                                      tpc,
+                                     core_config.bit_width_config,
                                      tb_w,
                                      mixed_precision_enable=core_config.mixed_precision_enable,
                                      running_gptq=running_gptq)

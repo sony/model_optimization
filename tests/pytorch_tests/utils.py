@@ -17,6 +17,7 @@ from typing import Dict, Any
 import torch
 
 from mct_quantizers import PytorchQuantizationWrapper
+from mct_quantizers.common.constants import ACTIVATION_HOLDER_QUANTIZER
 from model_compression_toolkit.core.pytorch.constants import BIAS
 
 
@@ -112,3 +113,25 @@ def extract_model_weights(model: torch.nn.Module) -> Dict[str, Any]:
                                  for param_name, param in module.named_parameters(recurse=False)})
 
     return weights_dict
+
+
+def get_layer_type_from_activation_quantizer(model, layer_name):
+    """
+    Retrieves the type of layer corresponding to the given activation quantizer layer name from the model.
+
+    Args:
+        model (torch.nn.Module): The activation quantization wrapper containing the layer.
+        layer_name (str): The name of the activation quantizer layer.
+
+    Returns:
+        torch.nn.Module: The layer associated with the activation quantizer. If the layer is wrapped in a
+                         PytorchQuantizationWrapper, the inner layer is returned; otherwise, the layer itself is returned.
+    """
+    # Extract layer name
+    layer_for_act_quant_name = layer_name.split('_' + ACTIVATION_HOLDER_QUANTIZER)[0]
+    for name, layer in model.named_modules():
+        if name == layer_for_act_quant_name:
+            if isinstance(layer, PytorchQuantizationWrapper):
+                return layer.layer  # Return the inner layer if wrapped
+            else:
+                return layer  # Return the layer
