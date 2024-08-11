@@ -25,6 +25,7 @@ from model_compression_toolkit.xquant.keras.model_analyzer import KerasModelAnal
 
 from model_compression_toolkit.xquant.keras.similarity_functions import KerasSimilarityFunctions
 from model_compression_toolkit.xquant.keras.tensorboard_utils import KerasTensorboardUtils
+from mct_quantizers.keras.metadata import get_metadata
 
 
 class KerasReportUtils(FrameworkReportUtils):
@@ -57,4 +58,5 @@ class KerasReportUtils(FrameworkReportUtils):
                          similarity_calculator,
                          dataset_utils,
                          model_folding,
-                         tb_utils)
+                         tb_utils,
+                         get_metadata)

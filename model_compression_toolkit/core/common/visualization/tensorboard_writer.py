@@ -26,9 +26,11 @@ from tensorboard.compat.proto.event_pb2 import Event, TaggedRunMetadata
 from tensorboard.compat.proto.graph_pb2 import GraphDef
 from tensorboard.compat.proto.node_def_pb2 import NodeDef
 from tensorboard.compat.proto.step_stats_pb2 import StepStats, NodeExecStats, DeviceStepStats, AllocatorMemoryUsed
-from tensorboard.compat.proto.summary_pb2 import HistogramProto
+from tensorboard.compat.proto.summary_pb2 import HistogramProto, SummaryMetadata
 from tensorboard.compat.proto.summary_pb2 import Summary
+from tensorboard.compat.proto.tensor_pb2 import TensorProto
 from tensorboard.compat.proto.tensor_shape_pb2 import TensorShapeProto
+from tensorboard.plugins.text.plugin_data_pb2 import TextPluginData
 from tensorboard.summary.writer.event_file_writer import EventFileWriter
 from typing import List, Any, Dict
 from networkx import topological_sort
@@ -497,6 +499,32 @@ class TensorboardWriter(object):
         er.add_event(event)
         er.flush()
 
+    def add_text(self,
+                 text: str,
+                 main_tag_name: str):
+        """
+        Add a text summary to the TensorBoard log.
+
+        Args:
+            text: The text content to be added to the summary.
+            main_tag_name: The name of the tag under which the text will be grouped in TensorBoard.
+
+        """
+        plugin_data = SummaryMetadata.PluginData(
+            plugin_name="text", content=TextPluginData(version=0).SerializeToString()
+        )
+        smd = SummaryMetadata(plugin_data=plugin_data)
+        tensor = TensorProto(
+            dtype="DT_STRING",
+            string_val=[text.encode(encoding="utf_8")],
+            tensor_shape=TensorShapeProto(dim=[TensorShapeProto.Dim(size=1)]),
+        )
+        event = Event(summary=Summary(value=[Summary.Value(tag=main_tag_name, metadata=smd, tensor=tensor)]))
+
+        # Get the event writer for this tag name
+        er = self.__get_event_writer_by_tag_name(main_tag_name)
+        er.add_event(event)
+        er.flush()
 
 def init_tensorboard_writer(fw_info: FrameworkInfo) -> TensorboardWriter:
     """

@@ -15,9 +15,8 @@
 import numpy as np
 from typing import Dict, Union
 
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod, Signedness
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
-from model_compression_toolkit.constants import SIGNED
 from model_compression_toolkit.core.common.quantization import quantization_params_generation
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.quantization.node_quantization_config import NodeActivationQuantizationConfig
@@ -49,8 +48,8 @@ def get_activations_qparams(activation_quant_cfg: NodeActivationQuantizationConf
                                                                     bins_counts)
     min_value, max_value = out_stats_container.get_min_max_values()
 
-    if activation_quant_cfg.is_signed is not None:
-        signed = activation_quant_cfg.is_signed
+    if activation_quant_cfg.signedness in [Signedness.SIGNED, Signedness.UNSIGNED]:
+        signed = activation_quant_cfg.signedness == Signedness.SIGNED
     elif nodes_prior_info.is_output_bounded():
         signed = min_value < 0
     else:

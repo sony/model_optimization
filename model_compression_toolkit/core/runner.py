@@ -12,13 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from collections import namedtuple
 
+import copy
 
 from typing import Callable, Tuple, Any, List, Dict
 
 import numpy as np
 
 from model_compression_toolkit.core.common import FrameworkInfo
+from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
+
+from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import compute_graph_max_cut, \
+    SchedulerInfo
+from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import MemoryGraph
 from model_compression_toolkit.core.common.hessian.hessian_info_service import HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import \
     requires_mixed_precision
@@ -108,6 +115,7 @@ def core_runner(in_model: Any,
                                      fw_info,
                                      fw_impl,
                                      tpc,
+                                     core_config.bit_width_config,
                                      tb_w,
                                      mixed_precision_enable=core_config.mixed_precision_enable,
                                      running_gptq=running_gptq)
@@ -174,7 +182,20 @@ def core_runner(in_model: Any,
         if tb_w is not None:
             finalize_bitwidth_in_tb(tb_w, weights_conf_nodes_bitwidth, activation_conf_nodes_bitwidth)
 
-    return tg, bit_widths_config, hessian_info_service
+    scheduler_info = None
+    if core_config.debug_config.simulate_scheduler:
+        graph_to_fuse = copy.deepcopy(tg)
+        fused_nodes_mapping = GraphFuser().create_fused_graph(graph_to_fuse)
+        memory_graph = MemoryGraph(graph_to_fuse)
+        schedule, max_cut, cuts = compute_graph_max_cut(memory_graph)
+        scheduler_info = SchedulerInfo(
+            operators_scheduling=schedule,
+            max_cut=float(max_cut),
+            cuts=cuts,
+            fused_nodes_mapping=fused_nodes_mapping
+        )
+
+    return tg, bit_widths_config, hessian_info_service, scheduler_info
 
 
 def _set_final_resource_utilization(graph: Graph,

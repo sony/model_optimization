@@ -56,6 +56,8 @@ if FOUND_TF:
                                                 fw_report_utils=keras_report_utils,
                                                 xquant_config=xquant_config)
 
+        Logger.shutdown()
+
         return _collected_data
 else:
     def xquant_report_keras_experimental(*args, **kwargs):
