@@ -45,6 +45,9 @@ def core_report_generator(float_model: Any,
     Returns:
         Dict[str, Any]: A dictionary containing the collected similarity metrics and report data.
     """
+    # Get metadata from the quantized model
+    quantized_model_metadata = fw_report_utils.get_metadata_fn(quantized_model)
+
     # Collect histograms on the float model.
     float_graph = fw_report_utils.model_folding_utils.create_float_folded_graph(float_model, repr_dataset)
     mi = ModelCollector(float_graph, fw_report_utils.fw_impl, fw_report_utils.fw_info)
@@ -74,7 +77,12 @@ def core_report_generator(float_model: Any,
     # Add a graph of the quantized model with the similarity metrics to TensorBoard for visualization.
     fw_report_utils.tb_utils.add_graph_to_tensorboard(quantized_model,
                                                       similarity_metrics,
-                                                      repr_dataset)
+                                                      repr_dataset,
+                                                      quantized_model_metadata)
+
+    # Adds text information (like max cut and output similarity metrics) to the tensorboard writer.
+    fw_report_utils.tb_utils.add_text_information(similarity_metrics,
+                                                  quantized_model_metadata)
 
     # Save data to a json file.
     fw_report_utils.dump_report_to_json(report_dir=xquant_config.report_dir,

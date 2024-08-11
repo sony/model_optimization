@@ -54,6 +54,7 @@ def prepare_graph_for_first_network_editor(in_model, representative_data_gen, co
                                                  fw_info,
                                                  fw_impl,
                                                  tpc,
+                                                 core_config.bit_width_config,
                                                  tb_w,
                                                  mixed_precision_enable=core_config.mixed_precision_enable)
 

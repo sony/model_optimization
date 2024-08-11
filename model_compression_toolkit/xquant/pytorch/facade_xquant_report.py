@@ -54,6 +54,8 @@ if FOUND_TORCH:
                                                 fw_report_utils=pytorch_report_utils,
                                                 xquant_config=xquant_config)
 
+        Logger.shutdown()
+
         return _collected_data
 
 else:

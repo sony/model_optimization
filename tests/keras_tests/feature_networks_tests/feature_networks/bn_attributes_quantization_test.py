@@ -19,6 +19,7 @@ import model_compression_toolkit as mct
 from mct_quantizers import QuantizationMethod, KerasQuantizationWrapper
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core.keras.constants import GAMMA, BETA
+from model_compression_toolkit.target_platform_capabilities.target_platform import Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS, BIAS_ATTR
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, \
     DEFAULT_WEIGHT_ATTR_CONFIG, KERNEL_BASE_CONFIG, generate_test_op_qc, BIAS_CONFIG
@@ -60,7 +61,8 @@ def _generate_bn_quantized_tpm(quantize_linear):
                                        quantization_preserving=False,
                                        fixed_scale=None,
                                        fixed_zero_point=None,
-                                       simd_size=32)
+                                       simd_size=32,
+                                       signedness=Signedness.AUTO)
 
     default_op_qc = tp.OpQuantizationConfig(enable_activation_quantization=False,
                                             default_weight_attr_config=default_attr_cfg,
@@ -71,7 +73,8 @@ def _generate_bn_quantized_tpm(quantize_linear):
                                             quantization_preserving=False,
                                             fixed_scale=None,
                                             fixed_zero_point=None,
-                                            simd_size=32)
+                                            simd_size=32,
+                                            signedness=Signedness.AUTO)
 
     default_configuration_options = tp.QuantizationConfigOptions([default_op_qc])
     linear_configuration_options = tp.QuantizationConfigOptions([linear_op_qc])

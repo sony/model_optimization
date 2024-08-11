@@ -25,7 +25,8 @@ class DebugConfig:
     """
     def __init__(self,
                  analyze_similarity: bool = False,
-                 network_editor: List[EditRule] = []):
+                 network_editor: List[EditRule] = [],
+                 simulate_scheduler: bool = False):
         """
 
         Args:
@@ -33,6 +34,8 @@ class DebugConfig:
             analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is
              enabled) or not. Can be used to pinpoint problematic layers in the quantization process.
             network_editor (List[EditRule]): A list of rules and actions to edit the network for quantization.
+            simulate_scheduler (bool): Simulate scheduler behaviour to compute operators order and cuts.
         """
         self.analyze_similarity = analyze_similarity
         self.network_editor = network_editor
+        self.simulate_scheduler = simulate_scheduler
