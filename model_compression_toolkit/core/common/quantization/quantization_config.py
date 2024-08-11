@@ -56,7 +56,7 @@ class QuantizationConfig:
                  weights_second_moment_correction: bool = False,
                  input_scaling: bool = False,
                  softmax_shift: bool = False,
-                 shift_negative_activation_correction: bool = False,
+                 shift_negative_activation_correction: bool = True,
                  activation_channel_equalization: bool = False,
                  z_threshold: float = math.inf,
                  min_threshold: float = MIN_THRESHOLD,
