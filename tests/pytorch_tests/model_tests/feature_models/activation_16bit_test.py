@@ -26,8 +26,9 @@ get_op_set = lambda x, x_list: [op_set for op_set in x_list if op_set.name == x]
 
 class Activation16BitNet(torch.nn.Module):
 
-    def __init__(self):
+    def __init__(self, use_concat=True):
         super().__init__()
+        self.use_concat = use_concat
         self.conv = torch.nn.Conv2d(3, 3, 1)
         self.register_buffer('add_const', torch.rand((3, 1, 1)))
         self.register_buffer('sub_const', torch.rand((3, 1, 1)))
@@ -35,6 +36,8 @@ class Activation16BitNet(torch.nn.Module):
 
     def forward(self, x):
         x = torch.mul(x, x)
+        if self.use_concat:
+            x = torch.concat([x, x], dim=2)
         x1 = torch.add(x, self.add_const)
         x = torch.sub(x, self.sub_const)
         x = torch.mul(x, x1)
@@ -60,7 +63,7 @@ class Activation16BitTest(BasePytorchFeatureNetworkTest):
         mul1_act_quant = quantized_model.mul_activation_holder_quantizer
         mul2_act_quant = quantized_model.mul_1_activation_holder_quantizer
         self.unit_test.assertTrue(mul1_act_quant.activation_holder_quantizer.num_bits == 16,
-                                  "1st mul activation bits should be 16 bits because of following add node.")
+                                  "1st mul activation bits should be 16 bits because of following concat node.")
         self.unit_test.assertTrue(mul1_act_quant.activation_holder_quantizer.signed == True,
                                   "1st mul activation should be forced by TPC to be signed, even though activations as all positive.")
         self.unit_test.assertTrue(mul2_act_quant.activation_holder_quantizer.num_bits == 8,
@@ -89,6 +92,9 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
 
     def get_resource_utilization(self):
         return mct.core.ResourceUtilization(activation_memory=200)
+
+    def create_networks(self):
+        return Activation16BitNet(use_concat=False)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         mul1_act_quant = quantized_model.mul_activation_holder_quantizer
