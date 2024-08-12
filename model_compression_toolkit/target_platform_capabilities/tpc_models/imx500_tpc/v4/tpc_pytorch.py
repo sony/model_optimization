@@ -85,7 +85,8 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     topk,
                                                     squeeze,
                                                     MaxPool2d])
-        tp.OperationsSetToLayers("Default16BitInout", [torch.stack, torch.cat])
+        tp.OperationsSetToLayers("Default16BitInout",
+                                 [torch.stack, torch.cat, torch.concat, torch.concatenate])
 
         tp.OperationsSetToLayers("Conv", [Conv2d, ConvTranspose2d],
                                  attr_mapping=pytorch_linear_attr_mapping)
