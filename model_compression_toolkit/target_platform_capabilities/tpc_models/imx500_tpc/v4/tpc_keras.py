@@ -93,7 +93,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
 
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", no_quant_list)
-        tp.OperationsSetToLayers("Default16BitInput", [tf.stack,
+        tp.OperationsSetToLayers("Default16BitInout", [tf.stack,
                                                        tf.concat, Concatenate])
         tp.OperationsSetToLayers("Conv",
                                  [Conv2D,

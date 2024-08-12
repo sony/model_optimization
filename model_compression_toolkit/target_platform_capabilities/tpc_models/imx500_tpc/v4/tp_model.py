@@ -199,7 +199,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                         default_qco.clone_and_edit(enable_activation_quantization=False,
                                                    supported_input_activation_n_bits=(8, 16))
                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))
-        tp.OperatorsSet("Default16BitInput", const_configuration_options_inout16)
+        tp.OperatorsSet("Default16BitInout", const_configuration_options_inout16)
 
         # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
         mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
