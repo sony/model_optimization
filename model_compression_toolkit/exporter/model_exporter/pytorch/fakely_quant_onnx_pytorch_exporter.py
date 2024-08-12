@@ -18,7 +18,7 @@ from io import BytesIO
 import torch.nn
 
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
-from model_compression_toolkit.constants import FOUND_ONNX
+from model_compression_toolkit.verify_packages import FOUND_ONNX
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.exporter.model_exporter.pytorch.base_pytorch_exporter import BasePyTorchExporter

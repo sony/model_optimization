@@ -15,7 +15,7 @@
 
 from typing import Callable, Dict, Any
 
-from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.xquant.common.core_report_generator import core_report_generator
 from model_compression_toolkit.xquant import XQuantConfig
 from model_compression_toolkit.logger import Logger
@@ -61,5 +61,6 @@ if FOUND_TF:
         return _collected_data
 else:
     def xquant_report_keras_experimental(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use xquant_report_keras_experimental. "
-                                     "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "xquant_report_keras_experimental. The 'tensorflow' package is missing "
+                        "or is installed with a version higher than 2.15.")  # pragma: no cover

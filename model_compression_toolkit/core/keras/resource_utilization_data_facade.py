@@ -20,7 +20,7 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import compute_resource_utilization_data
-from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.verify_packages import FOUND_TF
 
 if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
@@ -89,5 +89,6 @@ else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use this function.
     def keras_resource_utilization_data(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use keras_resource_utilization_data. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "keras_resource_utilization_data. The 'tensorflow' package is either not installed or is "
+                        "installed with a version higher than 2.15.")  # pragma: no cover

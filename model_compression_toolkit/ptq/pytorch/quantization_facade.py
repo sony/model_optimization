@@ -18,7 +18,8 @@ from typing import Callable
 
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.constants import PYTORCH, FOUND_TORCH
+from model_compression_toolkit.constants import PYTORCH
+from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core import CoreConfig

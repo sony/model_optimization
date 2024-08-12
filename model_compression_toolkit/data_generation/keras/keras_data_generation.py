@@ -16,7 +16,7 @@ import time
 from typing import Callable, Tuple, List, Dict, Union
 from tqdm import tqdm
 
-from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.data_generation.common.constants import DEFAULT_N_ITER, DEFAULT_DATA_GEN_BS
 from model_compression_toolkit.data_generation.common.data_generation import get_data_generation_classes
 from model_compression_toolkit.data_generation.common.image_pipeline import image_normalization_dict
@@ -349,8 +349,12 @@ if FOUND_TF:
 else:
     def get_keras_data_generation_config(*args, **kwargs):
         Logger.critical(
-            "Tensorflow must be installed to use get_tensorflow_data_generation_config. The 'tensorflow' package is missing.")  # pragma: no cover
+            "Tensorflow must be installed with a version of 2.15 or lower to use "
+            "get_tensorflow_data_generation_config. The 'tensorflow' package is missing or is installed with a "
+            "version higher than 2.15.")  # pragma: no cover
 
 
     def keras_data_generation_experimental(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use tensorflow_data_generation_experimental. The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "tensorflow_data_generation_experimental. The 'tensorflow' package is missing or is installed "
+                        "with a version higher than 2.15.")  # pragma: no cover

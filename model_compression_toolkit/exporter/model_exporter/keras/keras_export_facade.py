@@ -14,7 +14,7 @@
 # ==============================================================================
 from typing import Callable, Dict
 
-from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.exporter.model_exporter.fw_agonstic.quantization_format import QuantizationFormat
 from model_compression_toolkit.logger import Logger
 
@@ -101,5 +101,6 @@ if FOUND_TF:
         return exporter.get_custom_objects()
 else:
     def keras_export_model(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use keras_export_model. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use keras_export_model."
+                        "The 'tensorflow' package is missing or is installed "
+                        "with a version higher than 2.15.")  # pragma: no cover

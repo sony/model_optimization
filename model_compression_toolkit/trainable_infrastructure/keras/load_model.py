@@ -17,7 +17,7 @@ from typing import Any
 import mct_quantizers
 from mct_quantizers.common.get_all_subclasses import get_all_subclasses
 
-from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.logger import Logger
 
 if FOUND_TF:
@@ -72,5 +72,6 @@ else:
         Returns: A keras Model
 
         """
-        Logger.critical("Tensorflow must be installed to use keras_load_quantized_model. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "keras_load_quantized_model. The 'tensorflow' package is missing "
+                        "or is installed with a version higher than 2.15.")  # pragma: no cover
