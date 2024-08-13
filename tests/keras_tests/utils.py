@@ -43,11 +43,8 @@ def get_layers_from_model_by_type(model:keras.Model,
 
     match_type = lambda l, t: type(l) == t or (isinstance(l, TFOpLambda) and l.symbol == TFOpLambda(t).symbol)
 
-    matched_layers = [layer for layer in model.layers if match_type(layer, layer_type)]
-    if include_wrapped_layers:
-        matched_layers.extend([layer for layer in model.layers if isinstance(layer, KerasQuantizationWrapper) and match_type(layer.layer, layer_type)])
-    return matched_layers
-
+    return [layer for layer in model.layers if match_type(layer, layer_type) or
+            include_wrapped_layers and isinstance(layer, KerasQuantizationWrapper) and match_type(layer.layer, layer_type)]
 
 
 
