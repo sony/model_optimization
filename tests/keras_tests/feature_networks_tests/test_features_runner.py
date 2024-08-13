@@ -146,6 +146,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.const_quantizatio
     AdvancedConstQuantizationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_16bit_test import Activation16BitTest, \
     Activation16BitMixedPrecisionTest
+from tests.keras_tests.feature_networks_tests.feature_networks.conv_func_substitutions_test import ConvSubstitutionsTest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
 
 layers = tf.keras.layers
@@ -804,6 +805,9 @@ class FeatureNetworkTest(unittest.TestCase):
         TpcTest(f'{C.IMX500_TP_MODEL}.v4', self).run_test()
         TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
         TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
+
+    def test_conv_func_substitutions(self):
+        ConvSubstitutionsTest(self).run_test()
 
     def test_16bit_activations(self):
         Activation16BitTest(self).run_test()

@@ -69,6 +69,8 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.acti
     ActivationDecomposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.matmul_substitution import \
     MatmulToDenseSubstitution
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.conv_funcs_to_layer import \
+    Conv2dFuncToConv2dLayer, DwConv2dFuncToDwConv2dLayer
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.softmax_shift import \
     keras_softmax_shift
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.batchnorm_folding import \
@@ -244,6 +246,8 @@ class KerasImplementation(FrameworkImplementation):
         """
         return [SeparableConvDecomposition(),
                 MatmulToDenseSubstitution(),
+                Conv2dFuncToConv2dLayer(),
+                DwConv2dFuncToDwConv2dLayer(),
                 MultiHeadAttentionDecomposition(),
                 ActivationDecomposition(),
                 DwconvToConv(),

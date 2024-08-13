@@ -23,7 +23,7 @@ else:
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher, NodeFrameworkAttrMatcher
 from model_compression_toolkit.core.common.substitutions.linear_collapsing import Conv2DCollapsing, Op2DAddConstCollapsing
-from model_compression_toolkit.core.keras.constants import KERNEL, KERNEL_SIZE, STRIDES, DILATIONS, LINEAR, \
+from model_compression_toolkit.core.keras.constants import KERNEL, KERNEL_SIZE, STRIDES, DILATION_RATE, LINEAR, \
     ACTIVATION, BIAS, USE_BIAS, LAYER_NAME, FILTERS, PADDING, GROUPS, DATA_FORMAT
 from model_compression_toolkit.logger import Logger
 
@@ -122,7 +122,7 @@ def keras_linear_collapsing() -> Conv2DCollapsing:
                             USE_BIAS,
                             STRIDES,
                             PADDING,
-                            DILATIONS,
+                            DILATION_RATE,
                             GROUPS,
                             FILTERS,
                             data_format_str=DATA_FORMAT,
