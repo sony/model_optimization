@@ -16,10 +16,10 @@ import copy
 
 from typing import Callable
 
-from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.constants import PYTORCH, FOUND_TORCH
+from model_compression_toolkit.constants import PYTORCH
+from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core import CoreConfig
@@ -29,8 +29,7 @@ from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
-from model_compression_toolkit.metadata import get_versions_dict
-
+from model_compression_toolkit.metadata import create_model_metadata
 
 if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
@@ -109,14 +108,14 @@ if FOUND_TORCH:
         fw_impl = PytorchImplementation()
 
         # Ignore hessian info service as it is not used here yet.
-        tg, bit_widths_config, _ = core_runner(in_model=in_module,
-                                               representative_data_gen=representative_data_gen,
-                                               core_config=core_config,
-                                               fw_info=fw_info,
-                                               fw_impl=fw_impl,
-                                               tpc=target_platform_capabilities,
-                                               target_resource_utilization=target_resource_utilization,
-                                               tb_w=tb_w)
+        tg, bit_widths_config, _, scheduling_info = core_runner(in_model=in_module,
+                                                                representative_data_gen=representative_data_gen,
+                                                                core_config=core_config,
+                                                                fw_info=fw_info,
+                                                                fw_impl=fw_impl,
+                                                                tpc=target_platform_capabilities,
+                                                                target_resource_utilization=target_resource_utilization,
+                                                                tb_w=tb_w)
 
         # At this point, tg is a graph that went through substitutions (such as BN folding) and is
         # ready for quantization (namely, it holds quantization params, etc.) but the weights are
@@ -143,7 +142,9 @@ if FOUND_TORCH:
 
         exportable_model, user_info = get_exportable_pytorch_model(graph_with_stats_correction)
         if target_platform_capabilities.tp_model.add_metadata:
-            exportable_model = add_metadata(exportable_model, get_versions_dict(target_platform_capabilities))
+            exportable_model = add_metadata(exportable_model,
+                                            create_model_metadata(tpc=target_platform_capabilities,
+                                                                  scheduling_info=scheduling_info))
         return exportable_model, user_info
 
 

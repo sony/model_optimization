@@ -15,7 +15,7 @@
 from typing import Dict, Any, Union, List
 
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer, VAR, GROUP
 from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig, \
@@ -83,5 +83,6 @@ if FOUND_TF:
 else:
     class BaseKerasTrainableQuantizer(BaseTrainableQuantizer):
         def __init__(self, *args, **kwargs):
-            Logger.critical("Tensorflow must be installed to use BaseKerasTrainableQuantizer. "
-                            "The 'tensorflow' package is missing.")  # pragma: no cover
+            Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                            "BaseKerasTrainableQuantizer. The 'tensorflow' package is missing "
+                            "or is installed with a version higher than 2.15.")  # pragma: no cover

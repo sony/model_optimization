@@ -21,14 +21,15 @@ from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
+from model_compression_toolkit.constants import TENSORFLOW
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.ptq.runner import ptq_runner
-from model_compression_toolkit.metadata import get_versions_dict
+from model_compression_toolkit.metadata import create_model_metadata
 
 if FOUND_TF:
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
@@ -134,14 +135,14 @@ if FOUND_TF:
         fw_impl = KerasImplementation()
 
         # Ignore returned hessian service as PTQ does not use it
-        tg, bit_widths_config, _ = core_runner(in_model=in_model,
-                                               representative_data_gen=representative_data_gen,
-                                               core_config=core_config,
-                                               fw_info=fw_info,
-                                               fw_impl=fw_impl,
-                                               tpc=target_platform_capabilities,
-                                               target_resource_utilization=target_resource_utilization,
-                                               tb_w=tb_w)
+        tg, bit_widths_config, _, scheduling_info = core_runner(in_model=in_model,
+                                                                representative_data_gen=representative_data_gen,
+                                                                core_config=core_config,
+                                                                fw_info=fw_info,
+                                                                fw_impl=fw_impl,
+                                                                tpc=target_platform_capabilities,
+                                                                target_resource_utilization=target_resource_utilization,
+                                                                tb_w=tb_w)
 
         # At this point, tg is a graph that went through substitutions (such as BN folding) and is
         # ready for quantization (namely, it holds quantization params, etc.) but the weights are
@@ -168,7 +169,9 @@ if FOUND_TF:
 
         exportable_model, user_info = get_exportable_keras_model(graph_with_stats_correction)
         if target_platform_capabilities.tp_model.add_metadata:
-            exportable_model = add_metadata(exportable_model, get_versions_dict(target_platform_capabilities))
+            exportable_model = add_metadata(exportable_model,
+                                            create_model_metadata(tpc=target_platform_capabilities,
+                                                                  scheduling_info=scheduling_info))
         return exportable_model, user_info
 
 
@@ -176,5 +179,6 @@ else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
     def keras_post_training_quantization(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use keras_post_training_quantization. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "keras_post_training_quantization. The 'tensorflow' package is missing or is "
+                        "installed with a version higher than 2.15.")  # pragma: no cover

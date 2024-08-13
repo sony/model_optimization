@@ -17,7 +17,7 @@ import operator
 
 import torch
 from torch import add, sub, mul, div, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, chunk, unbind, topk, \
-    gather, equal, transpose, permute, argmax, squeeze
+    gather, equal, transpose, permute, argmax, squeeze, multiply, subtract
 from torch.nn import Conv2d, Linear, ConvTranspose2d, MaxPool2d
 from torch.nn import Dropout, Flatten, Hardtanh, Identity
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, LeakyReLU
@@ -85,6 +85,8 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                     topk,
                                                     squeeze,
                                                     MaxPool2d])
+        tp.OperationsSetToLayers("Default16BitInout",
+                                 [torch.stack, torch.cat, torch.concat, torch.concatenate])
 
         tp.OperationsSetToLayers("Conv", [Conv2d, ConvTranspose2d],
                                  attr_mapping=pytorch_linear_attr_mapping)
@@ -101,8 +103,8 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                              tp.LayerFilterParams(hardtanh, min_val=0)])
 
         tp.OperationsSetToLayers("Add", [operator.add, add])
-        tp.OperationsSetToLayers("Sub", [operator.sub, sub])
-        tp.OperationsSetToLayers("Mul", [operator.mul, mul])
+        tp.OperationsSetToLayers("Sub", [operator.sub, sub, subtract])
+        tp.OperationsSetToLayers("Mul", [operator.mul, mul, multiply])
         tp.OperationsSetToLayers("Div", [operator.truediv, div])
         tp.OperationsSetToLayers("PReLU", [PReLU, prelu])
         tp.OperationsSetToLayers("Swish", [SiLU, silu, Hardswish, hardswish])

@@ -37,6 +37,13 @@ def simple_model(input_shape):
     return keras.Model(inputs=inputs, outputs=outputs)
 
 
+def residual_model(input_shape):
+    inputs = Input(shape=input_shape)
+    x = Conv2D(2, 3)(inputs)
+    x_bn = BatchNormalization()(x)
+    outputs = Add()([ReLU()(x_bn), x])
+    return keras.Model(inputs=inputs, outputs=outputs)
+
 def complex_model(input_shape):
     """
     This is a model that has all the different situations that define different structures for the memory graph
@@ -77,6 +84,19 @@ class TestGraphMaxCut(unittest.TestCase):
     def test_graph_max_cut_plain_graph_simple(self):
         input_shape = (8, 8, 3)
         model = simple_model(input_shape)
+        graph = model_reader(model)
+        memory_graph = MemoryGraph(graph)
+
+        schedule, max_cut_size, cuts = compute_graph_max_cut(memory_graph)
+        self.assertIsNotNone(schedule)
+        self.assertIsNotNone(cuts)
+        self.assertTrue(len(cuts) > 0)
+        self.assertTrue(max_cut_size >= memory_graph.memory_lbound_single_op)
+
+
+    def test_graph_max_cut_residual_graph(self):
+        input_shape = (8, 8, 3)
+        model = residual_model(input_shape)
         graph = model_reader(model)
         memory_graph = MemoryGraph(graph)
 

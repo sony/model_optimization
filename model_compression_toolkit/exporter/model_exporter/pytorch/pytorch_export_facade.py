@@ -14,7 +14,7 @@
 # ==============================================================================
 from typing import Callable
 
-from model_compression_toolkit.constants import FOUND_TORCH
+from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.exporter.model_exporter.fw_agonstic.quantization_format import QuantizationFormat
 from model_compression_toolkit.exporter.model_exporter.pytorch.export_serialization_format import \
     PytorchExportSerializationFormat

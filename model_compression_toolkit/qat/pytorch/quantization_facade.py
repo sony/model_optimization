@@ -16,7 +16,8 @@ import copy
 from typing import Callable
 from functools import partial
 
-from model_compression_toolkit.constants import FOUND_TORCH, PYTORCH
+from model_compression_toolkit.constants import PYTORCH
+from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core import common
@@ -154,14 +155,14 @@ if FOUND_TORCH:
         fw_impl = PytorchImplementation()
 
         # Ignore hessian scores service as we do not use it here
-        tg, bit_widths_config, _ = core_runner(in_model=in_model,
-                                               representative_data_gen=representative_data_gen,
-                                               core_config=core_config,
-                                               fw_info=DEFAULT_PYTORCH_INFO,
-                                               fw_impl=fw_impl,
-                                               tpc=target_platform_capabilities,
-                                               target_resource_utilization=target_resource_utilization,
-                                               tb_w=tb_w)
+        tg, bit_widths_config, _, _ = core_runner(in_model=in_model,
+                                                  representative_data_gen=representative_data_gen,
+                                                  core_config=core_config,
+                                                  fw_info=DEFAULT_PYTORCH_INFO,
+                                                  fw_impl=fw_impl,
+                                                  tpc=target_platform_capabilities,
+                                                  target_resource_utilization=target_resource_utilization,
+                                                  tb_w=tb_w)
 
         tg = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_PYTORCH_INFO, fw_impl, tb_w)
 

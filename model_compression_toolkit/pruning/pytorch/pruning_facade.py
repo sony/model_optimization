@@ -15,11 +15,13 @@
 
 from typing import Callable, Tuple
 from model_compression_toolkit import get_target_platform_capabilities
-from model_compression_toolkit.constants import FOUND_TORCH, PYTORCH
+from model_compression_toolkit.constants import PYTORCH
+from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.pruner import Pruner
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig
 from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo
+from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import set_quantization_configuration_to_graph
 from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 from model_compression_toolkit.logger import Logger

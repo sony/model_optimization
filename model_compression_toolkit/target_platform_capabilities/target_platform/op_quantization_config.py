@@ -15,10 +15,24 @@
 
 import copy
 from typing import List, Dict, Union, Any, Tuple
+from enum import Enum
 
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.logger import Logger
+
+
+class Signedness(Enum):
+    """
+    An enum for choosing the signedness of the quantization method:
+
+    AUTO - Signedness decided automatically by quantization.
+    SIGNED - Force signed quantization.
+    UNSIGNED - Force unsigned quantization.
+    """
+    AUTO = 0
+    SIGNED = 1
+    UNSIGNED = 2
 
 
 def clone_and_edit_object_params(obj: Any, **kwargs: Dict) -> Any:
@@ -120,7 +134,7 @@ class OpQuantizationConfig:
                  fixed_scale: float,
                  fixed_zero_point: int,
                  simd_size: int,
-                 is_signed: bool = None
+                 signedness: Signedness
                  ):
         """
 
@@ -134,8 +148,8 @@ class OpQuantizationConfig:
             quantization_preserving (bool): Whether quantization parameters should be the same for an operator's input and output.
             fixed_scale (float): Scale to use for an operator quantization parameters.
             fixed_zero_point (int): Zero-point to use for an operator quantization parameters.
-            is_signed (bool): Force activation quantization signedness (None means don't force).
             simd_size (int): Per op integer representing the Single Instruction, Multiple Data (SIMD) width of an operator. It indicates the number of data elements that can be fetched and processed simultaneously in a single instruction.
+            signedness (bool): Set activation quantization signedness.
 
         """
 
@@ -154,7 +168,7 @@ class OpQuantizationConfig:
         self.quantization_preserving = quantization_preserving
         self.fixed_scale = fixed_scale
         self.fixed_zero_point = fixed_zero_point
-        self.is_signed = is_signed
+        self.signedness = signedness
         self.simd_size = simd_size
 
     def get_info(self):
@@ -206,7 +220,7 @@ class OpQuantizationConfig:
             self.activation_n_bits == other.activation_n_bits and \
             self.supported_input_activation_n_bits == other.supported_input_activation_n_bits and \
             self.enable_activation_quantization == other.enable_activation_quantization and \
-            self.is_signed == other.is_signed and \
+            self.signedness == other.signedness and \
             self.simd_size == other.simd_size
 
     @property

@@ -16,11 +16,13 @@
 from typing import Callable, Tuple
 
 from model_compression_toolkit import get_target_platform_capabilities
-from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF
+from model_compression_toolkit.constants import TENSORFLOW
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.pruner import Pruner
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig
 from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo
+from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import set_quantization_configuration_to_graph
 from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 from model_compression_toolkit.logger import Logger
@@ -148,5 +150,6 @@ else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
     def keras_pruning_experimental(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use keras_pruning_experimental. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "keras_pruning_experimental. The 'tensorflow' package is missing or is "
+                        "installed with a version higher than 2.15.")  # pragma: no cover

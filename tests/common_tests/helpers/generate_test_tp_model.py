@@ -19,7 +19,7 @@ from model_compression_toolkit.constants import FLOAT_BITWIDTH, ACTIVATION_N_BIT
     SUPPORTED_INPUT_ACTIVATION_NBITS_ATTRIBUTE
 from model_compression_toolkit.target_platform_capabilities.constants import OPS_SET_LIST, KERNEL_ATTR, BIAS_ATTR, \
     WEIGHTS_N_BITS
-from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, QuantizationConfigOptions
+from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, QuantizationConfigOptions, Signedness
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_tp_model
 import model_compression_toolkit as mct
 
@@ -234,4 +234,5 @@ def generate_test_op_qc(default_weight_attr_config: tp.AttributeQuantizationConf
                                    quantization_preserving=False,
                                    fixed_scale=None,
                                    fixed_zero_point=None,
-                                   simd_size=32)
+                                   simd_size=32,
+                                   signedness=Signedness.AUTO)

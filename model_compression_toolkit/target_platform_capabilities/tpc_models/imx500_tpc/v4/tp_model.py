@@ -18,7 +18,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS
 from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
-    TargetPlatformModel
+    TargetPlatformModel, Signedness
 from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import \
     AttributeQuantizationConfig
 
@@ -100,7 +100,8 @@ def get_op_quantization_configs() -> \
         quantization_preserving=False,
         fixed_scale=None,
         fixed_zero_point=None,
-        simd_size=32)
+        simd_size=32,
+        signedness=Signedness.AUTO)
 
     # We define an 8-bit config for linear operations quantization, that include a kernel and bias attributes.
     linear_eight_bits = tp.OpQuantizationConfig(
@@ -113,7 +114,8 @@ def get_op_quantization_configs() -> \
         quantization_preserving=False,
         fixed_scale=None,
         fixed_zero_point=None,
-        simd_size=32)
+        simd_size=32,
+        signedness=Signedness.AUTO)
 
     # To quantize a model using mixed-precision, create
     # a list with more than one OpQuantizationConfig.
@@ -170,7 +172,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     const_config_input16 = const_config.clone_and_edit(
         supported_input_activation_n_bits=(8, 16))
     const_config_input16_output16 = const_config_input16.clone_and_edit(
-        activation_n_bits=16, is_signed=True)
+        activation_n_bits=16, signedness=Signedness.SIGNED)
     const_configuration_options_inout16 = tp.QuantizationConfigOptions([const_config_input16_output16,
                                                                         const_config_input16],
                                                                        base_config=const_config_input16)
@@ -197,6 +199,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                         default_qco.clone_and_edit(enable_activation_quantization=False,
                                                    supported_input_activation_n_bits=(8, 16))
                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+        tp.OperatorsSet("Default16BitInout", const_configuration_options_inout16)
 
         # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
         mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,

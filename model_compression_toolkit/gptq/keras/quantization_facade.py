@@ -21,7 +21,8 @@ from model_compression_toolkit.core.common.quantization.quantize_graph_weights i
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.constants import TENSORFLOW, FOUND_TF, ACT_HESSIAN_DEFAULT_BATCH_SIZE
+from model_compression_toolkit.constants import TENSORFLOW, ACT_HESSIAN_DEFAULT_BATCH_SIZE
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GPTQHessianScoresConfig
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
@@ -31,7 +32,7 @@ from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
-from model_compression_toolkit.metadata import get_versions_dict
+from model_compression_toolkit.metadata import get_versions_dict, create_model_metadata
 
 LR_DEFAULT = 0.15
 LR_REST_DEFAULT = 1e-4
@@ -208,15 +209,15 @@ if FOUND_TF:
 
         fw_impl = GPTQKerasImplemantation()
 
-        tg, bit_widths_config, hessian_info_service = core_runner(in_model=in_model,
-                                                                  representative_data_gen=representative_data_gen,
-                                                                  core_config=core_config,
-                                                                  fw_info=DEFAULT_KERAS_INFO,
-                                                                  fw_impl=fw_impl,
-                                                                  tpc=target_platform_capabilities,
-                                                                  target_resource_utilization=target_resource_utilization,
-                                                                  tb_w=tb_w,
-                                                                  running_gptq=True)
+        tg, bit_widths_config, hessian_info_service, scheduling_info = core_runner(in_model=in_model,
+                                                                                   representative_data_gen=representative_data_gen,
+                                                                                   core_config=core_config,
+                                                                                   fw_info=DEFAULT_KERAS_INFO,
+                                                                                   fw_impl=fw_impl,
+                                                                                   tpc=target_platform_capabilities,
+                                                                                   target_resource_utilization=target_resource_utilization,
+                                                                                   tb_w=tb_w,
+                                                                                   running_gptq=True)
 
         float_graph = copy.deepcopy(tg)
 
@@ -242,17 +243,21 @@ if FOUND_TF:
 
         exportable_model, user_info = get_exportable_keras_model(tg_gptq)
         if target_platform_capabilities.tp_model.add_metadata:
-            exportable_model = add_metadata(exportable_model, get_versions_dict(target_platform_capabilities))
+            exportable_model = add_metadata(exportable_model,
+                                            create_model_metadata(tpc=target_platform_capabilities,
+                                                                  scheduling_info=scheduling_info))
         return exportable_model, user_info
 
 else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
     def get_keras_gptq_config(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use get_keras_gptq_config. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "get_keras_gptq_config. The 'tensorflow' package is missing or is "
+                        "installed with a version higher than 2.15.")  # pragma: no cover
 
 
     def keras_gradient_post_training_quantization(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use keras_gradient_post_training_quantization. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "keras_gradient_post_training_quantization. The 'tensorflow' package is missing or is "
+                        "installed with a version higher than 2.15.")  # pragma: no cover

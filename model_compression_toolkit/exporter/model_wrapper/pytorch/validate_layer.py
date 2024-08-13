@@ -15,8 +15,7 @@
 from typing import Any
 
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.constants import FOUND_TORCH
-
+from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 if FOUND_TORCH:
     import torch.nn as nn

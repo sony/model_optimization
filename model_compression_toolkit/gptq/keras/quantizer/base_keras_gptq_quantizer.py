@@ -16,7 +16,7 @@ from abc import abstractmethod
 from typing import Union, Dict, List
 
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.gptq.common.gptq_constants import WEIGHTS_QUANTIZATION_PARAMS
 
 from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
@@ -105,5 +105,6 @@ if FOUND_TF:
 else:
     class BaseKerasGPTQTrainableQuantizer:  # pragma: no cover
         def __init__(self, *args, **kwargs):
-            Logger.critical("Tensorflow must be installed to use BaseKerasGPTQTrainableQuantizer. "
-                            "The 'tensorflow' package is missing.")  # pragma: no cover
+            Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                            "BaseKerasGPTQTrainableQuantizer. The 'tensorflow' package is missing or is "
+                            "installed with a version higher than 2.15.")  # pragma: no cover

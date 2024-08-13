@@ -20,6 +20,7 @@ from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.graph.base_graph import Graph
+from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.core.common.quantization.quantization_config import DEFAULTCONFIG
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
@@ -38,6 +39,7 @@ def graph_preparation_runner(in_model: Any,
                              fw_info: FrameworkInfo,
                              fw_impl: FrameworkImplementation,
                              tpc: TargetPlatformCapabilities,
+                             bit_width_config: BitWidthConfig = None,
                              tb_w: TensorboardWriter = None,
                              mixed_precision_enable: bool = False,
                              running_gptq: bool = False) -> Graph:
@@ -50,17 +52,18 @@ def graph_preparation_runner(in_model: Any,
         - Apply all necessary substitutions to finalize the graph for quantization.
 
     Args:
-        in_model: Model to quantize.
-        representative_data_gen: Dataset used for calibration.
-        quantization_config: QuantizationConfig containing parameters of how the model should be quantized.
-        fw_info: Information needed for quantization about the specific framework (e.g., kernel channels indices,
+        in_model (Any): Model to quantize.
+        representative_data_gen (Callable): Dataset used for calibration.
+        quantization_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be quantized.
+        fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g., kernel channels indices,
             groups of layers by how they should be quantized, etc.).
-        fw_impl: FrameworkImplementation object with a specific framework methods implementation.
-        tpc: TargetPlatformCapabilities object that models the inference target platform and
+        fw_impl (FrameworkImplementation): FrameworkImplementation object with a specific framework methods implementation.
+        tpc (TargetPlatformCapabilities): TargetPlatformCapabilities object that models the inference target platform and
             the attached framework operator's information.
-        tb_w: TensorboardWriter object for logging.
-        mixed_precision_enable: is mixed precision enabled.
-        running_gptq: Whether or not a GPTQ optimization is planned to run after the PTQ process.
+        bit_width_config (BitWidthConfig): Config for bit-width selection. Defaults to None.
+        tb_w (TensorboardWriter): TensorboardWriter object for logging.
+        mixed_precision_enable (bool): is mixed precision enabled.
+        running_gptq (bool): Whether or not a GPTQ optimization is planned to run after the PTQ process.
 
     Returns:
         An internal graph representation of the input model.
@@ -78,6 +81,7 @@ def graph_preparation_runner(in_model: Any,
     transformed_graph = get_finalized_graph(graph,
                                             tpc,
                                             quantization_config,
+                                            bit_width_config,
                                             fw_info,
                                             tb_w,
                                             fw_impl,
@@ -90,6 +94,7 @@ def graph_preparation_runner(in_model: Any,
 def get_finalized_graph(initial_graph: Graph,
                         tpc: TargetPlatformCapabilities,
                         quant_config: QuantizationConfig = DEFAULTCONFIG,
+                        bit_width_config: BitWidthConfig = None,
                         fw_info: FrameworkInfo = None,
                         tb_w: TensorboardWriter = None,
                         fw_impl: FrameworkImplementation = None,
@@ -104,6 +109,7 @@ def get_finalized_graph(initial_graph: Graph,
         tpc (TargetPlatformCapabilities): TargetPlatformCapabilities object that describes the desired inference target platform (includes fusing patterns MCT should handle).
         quant_config (QuantizationConfig): QuantizationConfig containing parameters of how the model should be
             quantized.
+        bit_width_config (BitWidthConfig): Config for bit-width selection. Defaults to None.
         fw_info (FrameworkInfo): Information needed for quantization about the specific framework (e.g.,
             kernel channels indices, groups of layers by how they should be quantized, etc.)
         tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
@@ -147,6 +153,7 @@ def get_finalized_graph(initial_graph: Graph,
     ######################################
     transformed_graph = set_quantization_configuration_to_graph(graph=transformed_graph,
                                                                 quant_config=quant_config,
+                                                                bit_width_config=bit_width_config,
                                                                 mixed_precision_enable=mixed_precision_enable,
                                                                 running_gptq=running_gptq)
 

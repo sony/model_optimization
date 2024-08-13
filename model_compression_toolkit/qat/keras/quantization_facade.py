@@ -19,7 +19,7 @@ from functools import partial
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.constants import FOUND_TF
+from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
@@ -187,14 +187,14 @@ if FOUND_TF:
         fw_impl = KerasImplementation()
 
         # Ignore hessian service since is not used in QAT at the moment
-        tg, bit_widths_config, _ = core_runner(in_model=in_model,
-                                               representative_data_gen=representative_data_gen,
-                                               core_config=core_config,
-                                               fw_info=DEFAULT_KERAS_INFO,
-                                               fw_impl=fw_impl,
-                                               tpc=target_platform_capabilities,
-                                               target_resource_utilization=target_resource_utilization,
-                                               tb_w=tb_w)
+        tg, bit_widths_config, _, _ = core_runner(in_model=in_model,
+                                                  representative_data_gen=representative_data_gen,
+                                                  core_config=core_config,
+                                                  fw_info=DEFAULT_KERAS_INFO,
+                                                  fw_impl=fw_impl,
+                                                  tpc=target_platform_capabilities,
+                                                  target_resource_utilization=target_resource_utilization,
+                                                  tb_w=tb_w)
 
         tg = ptq_runner(tg, representative_data_gen, core_config, DEFAULT_KERAS_INFO, fw_impl, tb_w)
 
@@ -291,10 +291,12 @@ else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
     def keras_quantization_aware_training_init_experimental(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use keras_quantization_aware_training_init_experimental. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "keras_quantization_aware_training_init_experimental. The 'tensorflow' package is missing "
+                        "or is installed with a version higher than 2.15.")  # pragma: no cover
 
 
     def keras_quantization_aware_training_finalize_experimental(*args, **kwargs):
-        Logger.critical("Tensorflow must be installed to use keras_quantization_aware_training_finalize_experimental. "
-                        "The 'tensorflow' package is missing.")  # pragma: no cover
+        Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
+                        "keras_quantization_aware_training_finalize_experimental. The 'tensorflow' package is missing "
+                        "or is installed with a version higher than 2.15.")  # pragma: no cover

@@ -21,7 +21,7 @@ import torch
 from torchvision.models.mobilenetv2 import mobilenet_v2
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.constants import FOUND_ONNX, FOUND_ONNXRUNTIME
+from model_compression_toolkit.verify_packages import FOUND_ONNXRUNTIME, FOUND_ONNX
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \

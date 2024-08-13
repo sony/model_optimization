@@ -17,7 +17,7 @@ from typing import Callable, Any, Tuple, List, Union
 
 from tqdm import tqdm
 
-from model_compression_toolkit.constants import FOUND_TORCH, FOUND_TORCHVISION
+from model_compression_toolkit.verify_packages import FOUND_TORCHVISION, FOUND_TORCH
 from model_compression_toolkit.core.pytorch.utils import set_model
 from model_compression_toolkit.data_generation.common.constants import DEFAULT_N_ITER, DEFAULT_DATA_GEN_BS
 from model_compression_toolkit.data_generation.common.data_generation import get_data_generation_classes

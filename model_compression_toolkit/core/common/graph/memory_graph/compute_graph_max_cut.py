@@ -12,13 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from collections import namedtuple
+
 from typing import Tuple, List
 
+from model_compression_toolkit.constants import OPERATORS_SCHEDULING, MAX_CUT, CUTS, FUSED_NODES_MAPPING
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.core.common.graph.memory_graph.cut import Cut
 from model_compression_toolkit.core.common.graph.memory_graph.max_cut_astar import MaxCutAstar
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import MemoryGraph
 
+SchedulerInfo = namedtuple('SchedulerInfo', [OPERATORS_SCHEDULING, MAX_CUT, CUTS, FUSED_NODES_MAPPING])
 
 def compute_graph_max_cut(memory_graph: MemoryGraph,
                           n_iter: int = 50,

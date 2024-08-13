@@ -15,7 +15,7 @@
 
 from typing import Callable
 
-from model_compression_toolkit.constants import FOUND_TORCH
+from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.xquant.common.core_report_generator import core_report_generator
 from model_compression_toolkit.xquant import XQuantConfig
 from model_compression_toolkit.logger import Logger
@@ -53,6 +53,8 @@ if FOUND_TORCH:
                                                 validation_dataset=validation_dataset,
                                                 fw_report_utils=pytorch_report_utils,
                                                 xquant_config=xquant_config)
+
+        Logger.shutdown()
 
         return _collected_data
 

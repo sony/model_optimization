@@ -13,17 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
-import importlib
 
 # Supported frameworks in MCT:
 TENSORFLOW = 'tensorflow'
 PYTORCH = 'pytorch'
-FOUND_TF = importlib.util.find_spec(TENSORFLOW) is not None
-FOUND_TORCH = importlib.util.find_spec("torch") is not None
-FOUND_TORCHVISION = importlib.util.find_spec("torchvision") is not None
-FOUND_ONNX = importlib.util.find_spec("onnx") is not None
-FOUND_ONNXRUNTIME = importlib.util.find_spec("onnxruntime") is not None
-FOUND_SONY_CUSTOM_LAYERS = importlib.util.find_spec('sony_custom_layers') is not None
 
 # Metadata fields
 MCT_VERSION = 'mct_version'
@@ -131,3 +124,16 @@ MP_DEFAULT_NUM_SAMPLES = 32
 
 # Pruning constants
 PRUNING_NUM_SCORE_APPROXIMATIONS = 32
+
+# Scheduling information fields
+OPERATORS_SCHEDULING = 'operators_scheduling'
+MAX_CUT = 'max_cut'
+CUTS = 'cuts'
+FUSED_NODES_MAPPING = 'fused_nodes_mapping'
+OP_ORDER = 'op_order'
+OP_RECORD = 'op_record'
+MEM_ELEMENTS = 'mem_elements'
+SHAPE = 'shape'
+NODE_NAME = 'node_name'
+TOTAL_SIZE = 'total_size'
+NODE_OUTPUT_INDEX = 'node_output_index'

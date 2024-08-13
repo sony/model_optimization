@@ -20,6 +20,7 @@ from keras.applications.mobilenet_v2 import MobileNetV2
 
 from packaging import version
 
+from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 
 if version.parse(tf.__version__) >= version.parse("2.13"):

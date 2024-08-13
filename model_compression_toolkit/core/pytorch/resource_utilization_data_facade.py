@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import compute_resource_utilization_data
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.constants import FOUND_TORCH
+from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
