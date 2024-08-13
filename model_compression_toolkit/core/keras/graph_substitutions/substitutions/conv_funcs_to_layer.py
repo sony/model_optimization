@@ -63,6 +63,31 @@ def extract_bias_node_data(_node: FunctionalNode, _graph: Graph) -> np.ndarray:
     return b
 
 
+def replace_conv_node(graph: Graph, new_node: BaseNode, old_node: FunctionalNode, remove_add_node: bool):
+    """
+    Replace in-place a functional conv node (and possibly subsequent add node) with Conv layer.
+    Args:
+        graph: model Graph.
+        new_node: Conv layer node.
+        old_node: conv function node.
+        remove_add_node: whether to remove subsequent add node or not.
+    """
+    graph.add_node(new_node)
+
+    # Replace functional conv node (and potentially add node) with Conv node.
+    graph.reconnect_in_edges(old_node, new_node)
+    if remove_add_node:
+        next_nodes = graph.get_next_nodes(old_node)
+        graph.reconnect_out_edges(next_nodes[0], new_node)
+        graph.replace_output_node(current_node=next_nodes[0], new_node=new_node)
+        graph.remove_edge(old_node, next_nodes[0])
+        graph.remove_node(next_nodes[0])
+    else:
+        graph.reconnect_out_edges(old_node, new_node)
+        graph.replace_output_node(current_node=old_node, new_node=new_node)
+    graph.remove_node(old_node)
+
+
 class Conv2dFuncToConv2dLayer(common.BaseSubstitution):
     """
     Substitutes tf.nn.conv2d, tf.compat.v1.nn.conv2d, tf.nn.convolution, tf.compat.v1.nn.convolution functions with a Conv2D layer.
@@ -143,21 +168,7 @@ class Conv2dFuncToConv2dLayer(common.BaseSubstitution):
         conv_node = BaseNode(conv_func_node.name, conv_fw_attr, conv_func_node.input_shape, conv_func_node.output_shape,
                              weights, Conv2D, **_reuse_params)
 
-        graph.add_node(conv_node)
-
-        # Replace functional conv node (and potentially add node) with Conv node.
-        graph.reconnect_in_edges(conv_func_node, conv_node)
-        if b is None:
-            graph.reconnect_out_edges(conv_func_node, conv_node)
-            graph.replace_output_node(current_node=conv_func_node, new_node=conv_node)
-        else:
-            next_nodes = graph.get_next_nodes(conv_func_node)
-            graph.reconnect_out_edges(next_nodes[0], conv_node)
-            graph.replace_output_node(current_node=next_nodes[0], new_node=conv_node)
-            graph.remove_edge(conv_func_node, next_nodes[0])
-            graph.remove_node(next_nodes[0])
-        graph.remove_node(conv_func_node)
-
+        replace_conv_node(graph, conv_node, conv_func_node, remove_add_node=b is not None)
         return graph
 
 
@@ -175,7 +186,7 @@ class DwConv2dFuncToDwConv2dLayer(common.BaseSubstitution):
 
     def substitute(self,
                    graph: Graph,
-                   dwconv_func_node: BaseNode) -> Graph:
+                   dwconv_func_node: FunctionalNode) -> Graph:
         """
         Substitutes dw-conv2d functions with a DepthwiseConv2D layer.
 
@@ -226,19 +237,5 @@ class DwConv2dFuncToDwConv2dLayer(common.BaseSubstitution):
         conv_node = BaseNode(dwconv_func_node.name, conv_fw_attr, dwconv_func_node.input_shape, dwconv_func_node.output_shape,
                              weights, DepthwiseConv2D, **_reuse_params)
 
-        graph.add_node(conv_node)
-
-        # Replace functional conv node (and potentially add node) with Conv node.
-        graph.reconnect_in_edges(dwconv_func_node, conv_node)
-        if b is None:
-            graph.reconnect_out_edges(dwconv_func_node, conv_node)
-            graph.replace_output_node(current_node=dwconv_func_node, new_node=conv_node)
-        else:
-            next_nodes = graph.get_next_nodes(dwconv_func_node)
-            graph.reconnect_out_edges(next_nodes[0], conv_node)
-            graph.replace_output_node(current_node=next_nodes[0], new_node=conv_node)
-            graph.remove_edge(dwconv_func_node, next_nodes[0])
-            graph.remove_node(next_nodes[0])
-        graph.remove_node(dwconv_func_node)
-
+        replace_conv_node(graph, conv_node, dwconv_func_node, remove_add_node=b is not None)
         return graph
