@@ -74,7 +74,7 @@ class MixedPrecisionActivationBaseTest(BasePytorchTest):
 class MixedPrecisionActivationSearch8Bit(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [1, 0, 0, 0]
+        self.expected_config = [1, 0, 0]
 
     def get_resource_utilization(self):
         return ResourceUtilization(np.inf, 3000)

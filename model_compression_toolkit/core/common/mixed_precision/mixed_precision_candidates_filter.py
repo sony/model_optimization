@@ -40,8 +40,11 @@ def filter_candidates_for_mixed_precision(graph: Graph,
 
     """
 
+    no_total_restrictions = (target_resource_utilization.total_memory == np.inf and
+                             target_resource_utilization.bops == np.inf)
+
     if target_resource_utilization.weights_memory < np.inf:
-        if target_resource_utilization.activation_memory == np.inf:
+        if target_resource_utilization.activation_memory == np.inf and no_total_restrictions:
             # Running mixed precision for weights compression only -
             # filter out candidates activation only configurable node
             weights_conf = graph.get_weights_configurable_nodes(fw_info)
@@ -58,7 +61,7 @@ def filter_candidates_for_mixed_precision(graph: Graph,
                     n.candidates_quantization_cfg = filtered_conf
 
     elif target_resource_utilization.activation_memory < np.inf:
-        if target_resource_utilization.weights_memory == np.inf:
+        if target_resource_utilization.weights_memory == np.inf and no_total_restrictions:
             # Running mixed precision for activation compression only -
             # filter out candidates weights only configurable node
             activation_conf = graph.get_activation_configurable_nodes()
