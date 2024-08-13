@@ -67,6 +67,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_t
     MixedPrecisionActivationSearchTest, MixedPrecisionActivationSearch4BitsAvgTest, \
     MixedPrecisionActivationSearch2BitsAvgTest, MixedPrecisionActivationDepthwiseTest, \
     MixedPrecisionActivationSplitLayerTest, MixedPrecisionActivationOnlyWeightsDisabledTest, \
+    MixedPrecisionActivationOnlyConfigurableWeightsTest, \
     MixedPrecisionActivationOnlyTest, MixedPrecisionActivationDepthwise4BitTest, MixedPrecisionActivationAddLayerTest, \
     MixedPrecisionActivationMultipleInputsTest, MixedPrecisionTotalMemoryUtilizationSearchTest, \
     MixedPrecisionMultipleResourcesTightUtilizationSearchTest, MixedPrecisionReducedTotalMemorySearchTest, \
@@ -132,7 +133,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.uniform_range_sel
     UniformRangeSelectionActivationTest, UniformRangeSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
     MixedPrecisionSearch4BitsAvgTest, MixedPrecisionSearch2BitsAvgTest, MixedPrecisionActivationDisabled, \
-    MixedPrecisionWithHessianScoresTest, MixedPrecisionSearchTest, \
+    MixedPrecisionWithHessianScoresTest, MixedPrecisionSearchTest, MixedPrecisionWeightsOnlyConfigurableActivationsTest, \
     MixedPrecisionSearchPartWeightsLayersTest, MixedPrecisionDepthwiseTest, MixedPrecisionSearchLastLayerDistanceTest, \
     MixedPrecisionSearchActivationNonConfNodesTest, MixedPrecisionSearchTotalMemoryNonConfNodesTest, \
     MixedPrecisionCombinedNMSTest
@@ -229,6 +230,9 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPrecisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
         MixedPrecisionWithHessianScoresTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
 
+    def test_mixed_precision_weights_only_activation_conf(self):
+        MixedPrecisionWeightsOnlyConfigurableActivationsTest(self).run_test()
+
     def test_requires_mixed_recision(self):
         RequiresMixedPrecisionWeights(self, weights_memory=True).run_test()
         RequiresMixedPrecision(self,activation_memory=True).run_test()
@@ -262,6 +266,9 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_mixed_precision_activation_only_weights_disabled(self):
         MixedPrecisionActivationOnlyWeightsDisabledTest(self).run_test()
+
+    def test_mixed_precision_activation_only_conf_weights(self):
+        MixedPrecisionActivationOnlyConfigurableWeightsTest(self).run_test()
 
     def test_mixed_precision_activation_search_4bits_avg(self):
         MixedPrecisionActivationSearch4BitsAvgTest(self).run_test()

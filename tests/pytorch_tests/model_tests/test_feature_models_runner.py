@@ -54,7 +54,7 @@ from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test imp
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPrecisionActivationSearch8Bit, MixedPrecisionActivationSearch2Bit, MixedPrecisionActivationSearch4Bit, \
     MixedPrecisionActivationSearch4BitFunctional, MixedPrecisionActivationMultipleInputs, \
-    MixedPrecisionDistanceFunctions
+    MixedPrecisionDistanceFunctions, MixedPrecisionActivationConfigurableWeights
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.scalar_tensor_test import ScalarTensorTest
@@ -79,7 +79,8 @@ from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LU
     LUTActivationQuantizerTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import MixedPrecisionSearch4Bit, \
     MixedPrecisionActivationDisabledTest, MixedPrecisionSearchLastLayerDistance, MixedPrecisionWithHessianScores, \
-    MixedPrecisionSearch8Bit, MixedPrecisionSearchPartWeightsLayers, MixedPrecisionSearch2Bit
+    MixedPrecisionSearch8Bit, MixedPrecisionSearchPartWeightsLayers, MixedPrecisionSearch2Bit, \
+    MixedPrecisionWeightsConfigurableActivations
 from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multiple_tensors_test import \
     MultipleOutputsMultipleTensorsNetTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_outputs_node_test import MultipleOutputsNetTest
@@ -521,6 +522,18 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the activation Mixed Precision search.
         """
         MixedPrecisionActivationSearch4Bit(self).run_test()
+
+    def test_mixed_precision_activation_only_conf_weights(self):
+        """
+        This test checks the Mixed Precision for activation only with configurable weights layers.
+        """
+        MixedPrecisionActivationConfigurableWeights(self).run_test()
+
+    def test_mixed_precision_weights_only_conf_activations(self):
+        """
+        This test checks the Mixed Precision for weights only with configurable activation layers.
+        """
+        MixedPrecisionWeightsConfigurableActivations(self).run_test()
 
     def test_mixed_precision_activation_4bit_functional(self):
         """
