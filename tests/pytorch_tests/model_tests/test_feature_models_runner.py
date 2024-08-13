@@ -620,42 +620,42 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the QAT feature.
         """
-        # QuantizationAwareTrainingTest(self).run_test()
-        # QuantizationAwareTrainingTest(self, finalize=True).run_test()
-        # _method = mct.target_platform.QuantizationMethod.SYMMETRIC
-        # QuantizationAwareTrainingTest(self,
-        #                               weights_quantization_method=_method,
-        #                               activation_quantization_method=_method
-        #                               ).run_test()
-        # QuantizationAwareTrainingTest(self,
-        #                               weights_quantization_method=_method,
-        #                               activation_quantization_method=_method,
-        #                               finalize=True).run_test()
-        # _method = mct.target_platform.QuantizationMethod.UNIFORM
-        # QuantizationAwareTrainingTest(self,
-        #                               weights_quantization_method=_method,
-        #                               activation_quantization_method=_method
-        #                               ).run_test()
-        # QuantizationAwareTrainingTest(self,
-        #                               weights_quantization_method=_method,
-        #                               activation_quantization_method=_method,
-        #                               finalize=True).run_test()
-        # QuantizationAwareTrainingTest(self,
-        #                               weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
-        #                               activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
-        #                               training_method=mct.qat.TrainingMethod.LSQ,
-        #                               finalize=True).run_test()
-        # QuantizationAwareTrainingTest(self,
-        #                               weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
-        #                               activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
-        #                               training_method=mct.qat.TrainingMethod.LSQ,
-        #                               finalize=True).run_test()
-        # QuantizationAwareTrainingTest(self,
-        #                               weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-        #                               activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-        #                               training_method=mct.qat.TrainingMethod.LSQ,
-        #                               finalize=True).run_test()
-        # QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
+        QuantizationAwareTrainingTest(self).run_test()
+        QuantizationAwareTrainingTest(self, finalize=True).run_test()
+        _method = mct.target_platform.QuantizationMethod.SYMMETRIC
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method
+                                      ).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method,
+                                      finalize=True).run_test()
+        _method = mct.target_platform.QuantizationMethod.UNIFORM
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method
+                                      ).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
+                                      activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
+                                      training_method=mct.qat.TrainingMethod.LSQ,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
+                                      activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
+                                      training_method=mct.qat.TrainingMethod.LSQ,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                      activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                      training_method=mct.qat.TrainingMethod.LSQ,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionRUCfgTest(self).run_test()
 
