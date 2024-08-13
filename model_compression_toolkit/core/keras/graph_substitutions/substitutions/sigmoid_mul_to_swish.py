@@ -29,8 +29,7 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNo
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher, EdgeMatcher
 from model_compression_toolkit.constants import REUSE, REUSE_GROUP
-from model_compression_toolkit.core.keras.constants import KERNEL, BIAS, USE_BIAS, FILTERS, PADDING, \
-    KERNEL_SIZE, DEPTH_MULTIPLIER, STRIDES, DILATIONS, DILATION_RATE, DEPTHWISE_KERNEL, RATE, FUNCTION, F_SWISH
+from model_compression_toolkit.core.keras.constants import FUNCTION, F_SWISH
 
 
 class MulSigmoidToSwish(common.BaseSubstitution):
