@@ -16,7 +16,7 @@ import keras
 
 from mct_quantizers import KerasQuantizationWrapper
 
-if tf.__version__ >= "2.13":
+if keras.__version__ >= "2.13":
     from keras.src.layers import TFOpLambda
 else:
     from keras.layers import TFOpLambda
