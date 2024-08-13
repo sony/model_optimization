@@ -678,7 +678,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), 7).run_test()
         # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception), "Manually selected activation bit-width 7 is invalid for node Conv2d:conv1.")
+        self.assertEqual(str(context.exception), "Manually selected activation bit-width 7 is invalid for node Conv2d:conv1_bn.")
 
         with self.assertRaises(Exception) as context:
             ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(operator.add), 3).run_test()
@@ -752,14 +752,14 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the manual bit-width selection feature by layer name filtering.
         """
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('inp'), 4).run_test()
-        ManualBitWidthByLayerNameTest(self, NodeNameFilter('conv1'), 4).run_test()
+        ManualBitWidthByLayerNameTest(self, NodeNameFilter('conv1_bn'), 4).run_test()
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('fc'), 4).run_test()
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('add'), 4).run_test()
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('add_1'), 4).run_test()
-        ManualBitWidthByLayerNameTest(self, NodeNameFilter('bn_conv2'), 4).run_test()
+        ManualBitWidthByLayerNameTest(self, NodeNameFilter('conv2_bn'), 4).run_test()
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('relu'), 4).run_test()
-        ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1')], [2, 4]).run_test()
-        ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1')], 4).run_test()
+        ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1_bn')], [2, 4]).run_test()
+        ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1_bn')], 4).run_test()
 
 
 
