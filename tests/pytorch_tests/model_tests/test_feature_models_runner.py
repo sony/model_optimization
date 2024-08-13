@@ -424,7 +424,8 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the shift negative activation feature.
         """
-        ShiftNegaviteActivationNetTest(self).run_test(seed=3)
+        for activation_layer in [torch.nn.Hardswish, torch.nn.GELU]:
+            ShiftNegaviteActivationNetTest(self, activation_layer=activation_layer).run_test(seed=3)
 
     def test_split_concat_net(self):
         """

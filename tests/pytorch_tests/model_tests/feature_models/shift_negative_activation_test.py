@@ -27,11 +27,11 @@ This test checks the shift negative activation feature.
 
 
 class ShiftNegaviteActivationNet(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, activation_layer):
         super(ShiftNegaviteActivationNet, self).__init__()
         self.conv1 = torch.nn.Conv2d(3, 4, kernel_size=(5,6), stride=2)
         self.conv2 = torch.nn.Conv2d(4, 5, kernel_size=(8,7), stride=2, bias=False)
-        self.activation = torch.nn.Hardswish()
+        self.activation = activation_layer()
 
     def forward(self, inp):
         x0 = self.conv1(inp)
@@ -45,8 +45,9 @@ class ShiftNegaviteActivationNetTest(BasePytorchTest):
     """
     This test checks the shift negative activation feature.
     """
-    def __init__(self, unit_test, float_reconstruction_error=1e-6):
+    def __init__(self, unit_test, float_reconstruction_error=1e-6, activation_layer=torch.nn.Hardswish):
         super().__init__(unit_test, float_reconstruction_error)
+        self.activation_layer = activation_layer
 
     @staticmethod
     def generate_inputs(input_shapes):
@@ -74,4 +75,9 @@ class ShiftNegaviteActivationNetTest(BasePytorchTest):
         return [[self.val_batch_size, 3, 224, 224]]
 
     def create_feature_network(self, input_shape):
-        return ShiftNegaviteActivationNet()
+        return ShiftNegaviteActivationNet(self.activation_layer)
+
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+        super()
+        q_nodes = quantized_models['all_8bit'].node_sort
+        assert "activation_post_add" in [n.name for n in q_nodes], "Add operator haven't been added after activation operator"
