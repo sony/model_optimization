@@ -23,7 +23,6 @@ if version.parse(tf.__version__) >= version.parse("2.13"):
 else:
     from keras.layers.core import TFOpLambda
     from keras.layers import Multiply
-from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNode, OutTensor
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode

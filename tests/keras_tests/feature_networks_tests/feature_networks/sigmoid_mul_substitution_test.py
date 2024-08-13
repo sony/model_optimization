@@ -19,9 +19,6 @@ if tf.__version__ >= "2.13":
 else:
     from keras.layers import Conv2D, Multiply
 
-import model_compression_toolkit as mct
-from model_compression_toolkit.constants import TENSORFLOW
-from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
@@ -30,9 +27,6 @@ from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
-
-
-# get_op_set = lambda x, x_list: [op_set for op_set in x_list if op_set.name == x][0]
 
 
 class SigMulSubstitutionTest(BaseKerasFeatureNetworkTest):
