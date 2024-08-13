@@ -43,7 +43,8 @@ layers = keras.layers
 
 REUSED_IDENTIFIER = '_reused_'
 
-is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray, tuple, list))
+is_const = lambda x: isinstance(x, (tf.Variable, tf.Tensor, np.ndarray)) or \
+                     (isinstance(x, (tuple, list)) and not isinstance(x[0], (int, dict)))
 is_tensor = lambda x: isinstance(x, KerasTensor)
 
 
