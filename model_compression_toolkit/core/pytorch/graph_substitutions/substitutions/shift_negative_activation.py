@@ -17,9 +17,9 @@ from typing import Tuple, Any, Callable
 
 import numpy as np
 import torch.nn.functional
-from torch.nn import Conv2d, Linear, PReLU, ELU, Hardswish, Dropout, ZeroPad2d, SiLU
+from torch.nn import Conv2d, Linear, PReLU, ELU, Hardswish, Dropout, ZeroPad2d, SiLU, GELU
 from torch import reshape
-from torch.nn.functional import hardswish, silu, prelu, elu
+from torch.nn.functional import hardswish, silu, prelu, elu, gelu
 from torch.nn.functional import avg_pool2d
 
 from model_compression_toolkit.core import CoreConfig, FrameworkInfo
@@ -68,7 +68,9 @@ def shift_negative_activation_node_matchers():
                NodeOperationMatcher(Hardswish) | \
                NodeOperationMatcher(hardswish) | \
                NodeOperationMatcher(SiLU) | \
-               NodeOperationMatcher(silu)
+               NodeOperationMatcher(silu) | \
+               NodeOperationMatcher(GELU) | \
+               NodeOperationMatcher(gelu)
 
     # Match linear layers where we can add a correction.
     linear_node = NodeOperationMatcher(Conv2d) | \
