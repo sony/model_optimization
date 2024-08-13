@@ -53,15 +53,17 @@ class NetForBitSelection(torch.nn.Module):
         b, in_channels, h, w = input_shape[0]
         self.conv1 = torch.nn.Conv2d(in_channels, in_channels, kernel_size=(1, 1))
         self.bn1 = torch.nn.BatchNorm2d(in_channels)
+        self.bn2 = torch.nn.BatchNorm2d(in_channels)
         self.conv2 = torch.nn.Conv2d(in_channels, in_channels, kernel_size=(1, 1))
         self.relu = torch.nn.ReLU()
         self.fc = torch.nn.Linear(in_channels * h * w, 5)
 
     def forward(self, inp):
-        out1 = self.conv1(inp)
-        out1 = out1 + 3
-        x = self.bn1(out1)
+        x = self.conv1(inp)
+        out1 = self.bn1(x)
+        x = out1 + 3
         x = self.conv2(x)
+        x = self.bn2(x)
         x = self.relu(x)
         x = x + out1
         # Flatten the tensor
@@ -84,6 +86,11 @@ class BaseManualBitWidthSelectionTest(MixedPrecisionActivationBaseTest):
         core_config = mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)
         return core_config
 
+    def get_core_configs(self):
+        # Configures the core settings including manual bit width adjustments.
+        core_config = self.get_mp_core_config()
+        core_config.bit_width_config.set_manual_activation_bit_width(self.filters, self.bit_widths)
+        return {"mixed_precision_activation_model": core_config}
 
 class ManualBitWidthByLayerTypeTest(BaseManualBitWidthSelectionTest):
     """
@@ -108,12 +115,6 @@ class ManualBitWidthByLayerTypeTest(BaseManualBitWidthSelectionTest):
                 self.functional_names.update({filter.node_type.__name__: bit_width})
 
         super().__init__(unit_test)
-
-    def get_core_configs(self):
-        # Configures the core settings including manual bit width adjustments.
-        core_config = super().get_mp_core_config()
-        core_config.bit_width_config.set_manual_activation_bit_width(self.filters, self.bit_widths)
-        return {"mixed_precision_activation_model": core_config}
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         # in the compare we need bit_widths to be a list
@@ -161,11 +162,6 @@ class ManualBitWidthByLayerNameTest(BaseManualBitWidthSelectionTest):
 
         super().__init__(unit_test)
 
-    def get_core_configs(self):
-        # Configures the core settings including manual bit width adjustments.
-        core_config = super().get_mp_core_config()
-        core_config.bit_width_config.set_manual_activation_bit_width(self.filters, self.bit_widths)
-        return {"mixed_precision_activation_model": core_config}
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         # in the compare we need bit_widths to be a list
@@ -186,10 +182,6 @@ class ManualBitWidthByLayerNameTest(BaseManualBitWidthSelectionTest):
 
 
 class Manual16BitTest(ManualBitWidthByLayerNameTest):
-
-    # def get_tpc(self):
-    #     tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v4')
-    #     return {'mixed_precision_activation_model': tpc}
 
     def get_tpc(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v4')
@@ -224,7 +216,7 @@ class Manual16BitTestMixedPrecisionTest(ManualBitWidthByLayerNameTest):
         return {'mixed_precision_activation_model': tpc}
 
     def get_resource_utilization(self):
-        return mct.core.ResourceUtilization(activation_memory=10000)
+        return mct.core.ResourceUtilization(activation_memory=6200)
 
 
     def create_feature_network(self, input_shape):
