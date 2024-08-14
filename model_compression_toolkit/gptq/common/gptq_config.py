@@ -32,6 +32,10 @@ class RoundingType(Enum):
     SoftQuantizer = 1
 
 
+class ActivationGradProp(Enum):
+    STE = "GPTQ_ACTIVATION_STE"
+
+
 class GPTQHessianScoresConfig:
     """
     Configuration to use for computing the Hessian-based scores for GPTQ loss metric.
