@@ -76,7 +76,8 @@ class KerasTensorboardUtils(TensorboardUtils):
         # Read the quantized model into a graph structure.
         quant_graph = model_reader(quantized_model)
 
-        insert_cut_info_into_graph(quant_graph, quantized_model_metadata)
+        if 'scheduling_info' in quantized_model_metadata:
+            insert_cut_info_into_graph(quant_graph, quantized_model_metadata)
 
         # Iterate over each node in the graph.
         for node in quant_graph.nodes:

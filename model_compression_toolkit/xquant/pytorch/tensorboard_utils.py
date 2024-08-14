@@ -79,7 +79,8 @@ class PytorchTensorboardUtils(TensorboardUtils):
                                    to_tensor=self.fw_impl.to_tensor,
                                    to_numpy=self.fw_impl.to_numpy)
 
-        insert_cut_info_into_graph(quant_graph, quantized_model_metadata, quantized_model)
+        if 'scheduling_info' in quantized_model_metadata:
+            insert_cut_info_into_graph(quant_graph, quantized_model_metadata, quantized_model)
 
         # Iterate through each node in the graph
         for node in quant_graph.nodes:

@@ -115,12 +115,14 @@ class TensorboardUtils:
             similarity_metrics (Dict[str, Dict[str, float]]): A dictionary containing similarity metrics between quantized and float models for both representative and validation datasets.
             quantized_model_metadata (Dict): Metadata from the quantized model.
         """
-        # Add the computed max cut
-        maxcut_str = f"MaxCut: {quantized_model_metadata['scheduling_info'][MAX_CUT]}"
-        self.tb_writer.add_text(maxcut_str, MAX_CUT)
-
         # Add output similarity between quantized and float models on representative and validation datasets
         output_similarity_repr = f"Similarity Metrics on outputs using representative dataset: \n" + "\n".join([f"{key}: {value:.4f}" for key, value in similarity_metrics[OUTPUT_SIMILARITY_METRICS_REPR].items()])
         output_similarity_val = f"Similarity Metrics on outputs using validation dataset: \n" + "\n".join([f"{key}: {value:.4f}" for key, value in similarity_metrics[OUTPUT_SIMILARITY_METRICS_VAL].items()])
         self.tb_writer.add_text(output_similarity_repr, OUTPUT_SIMILARITY_METRICS_REPR)
         self.tb_writer.add_text(output_similarity_val, OUTPUT_SIMILARITY_METRICS_VAL)
+
+        # Add the max cut if it was computed
+        if 'scheduling_info' in quantized_model_metadata:
+            maxcut_str = f"MaxCut: {quantized_model_metadata['scheduling_info'][MAX_CUT]}"
+            self.tb_writer.add_text(maxcut_str, MAX_CUT)
+
