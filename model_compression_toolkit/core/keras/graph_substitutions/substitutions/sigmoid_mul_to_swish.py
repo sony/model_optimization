@@ -19,16 +19,17 @@ import tensorflow as tf
 from packaging import version
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers.core import TFOpLambda
-    from keras.src.layers import Multiply
+    from keras.src.layers import Multiply, Activation
 else:
     from keras.layers.core import TFOpLambda
-    from keras.layers import Multiply
+    from keras.layers import Multiply, Activation
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.graph.base_graph import Graph, BaseNode, OutTensor
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
-from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher, EdgeMatcher
+from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher, \
+    EdgeMatcher, NodeFrameworkAttrMatcher
 from model_compression_toolkit.constants import REUSE, REUSE_GROUP
-from model_compression_toolkit.core.keras.constants import FUNCTION, F_SWISH
+from model_compression_toolkit.core.keras.constants import FUNCTION, F_SWISH, ACTIVATION, SIGMOID
 
 
 class MulSigmoidToSwish(common.BaseSubstitution):
@@ -41,7 +42,8 @@ class MulSigmoidToSwish(common.BaseSubstitution):
         Initializes the MulSigmoidToSwish substitution matcher instance.
         """
         mul_matcher = NodeOperationMatcher(tf.math.multiply) | NodeOperationMatcher(Multiply)
-        sigmoid_matcher = NodeOperationMatcher(tf.sigmoid)
+        activation_sigmoid = NodeOperationMatcher(Activation) & NodeFrameworkAttrMatcher(ACTIVATION, SIGMOID)
+        sigmoid_matcher = NodeOperationMatcher(tf.sigmoid) | activation_sigmoid
         super().__init__(matcher_instance=EdgeMatcher(sigmoid_matcher, mul_matcher))
 
     def substitute(self,
@@ -59,6 +61,10 @@ class MulSigmoidToSwish(common.BaseSubstitution):
         """
 
         sigmoid_node, mul_node, _ = sigmoid_mul_edge
+        if sigmoid_node in [o.node for o in graph.output_nodes]:
+            # Sigmoid node in outputs -> Skip substitution.
+            return graph
+
         input_node = graph.get_prev_nodes(sigmoid_node)[0]
         if len(graph.get_next_nodes(sigmoid_node)) > 1 or input_node not in graph.get_prev_nodes(mul_node):
             # Structure isn't mul(x, sigmoid(x)) -> Skip substitution.

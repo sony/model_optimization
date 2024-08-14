@@ -15,9 +15,11 @@
 import numpy as np
 import tensorflow as tf
 if tf.__version__ >= "2.13":
-    from keras.src.layers import Conv2D, Multiply
+    from keras.src.layers import Conv2D, Multiply, Activation
+    from keras.src.activations import sigmoid
 else:
-    from keras.layers import Conv2D, Multiply
+    from keras.layers import Conv2D, Multiply, Activation
+    from keras.activations import sigmoid
 
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
@@ -41,18 +43,21 @@ class SigMulSubstitutionTest(BaseKerasFeatureNetworkTest):
         x = Conv2D(4, 3, padding='same')(_in)
         x = tf.multiply(x, tf.sigmoid(x))  # This should be substituted.
         x = Conv2D(5, 3, padding='same')(x)
-        x = tf.multiply(tf.sigmoid(x), x)  # This should be substituted.
+        x = tf.multiply(sigmoid(x), x)  # This should be substituted.
         x = Conv2D(5, 3, padding='same')(x)
         x = Multiply()([tf.sigmoid(x), x])  # This should be substituted.
         x = Conv2D(5, 3, padding='same')(x)
-        x = Multiply()([x, tf.sigmoid(x)])  # This should be substituted.
+        x = Multiply()([x, Activation('sigmoid')(x)])  # This should be substituted.
         x = Conv2D(5, 3, padding='same')(x)
         x = Multiply()([x+1, tf.sigmoid(x)])  # This should not be substituted.
-        return tf.keras.Model(inputs=_in, outputs=x)
+        x = Conv2D(5, 3, padding='same')(x)
+        s = tf.sigmoid(x)
+        x = Multiply()([x, s])  # This should not be substituted.
+        return tf.keras.Model(inputs=_in, outputs=[x, s])
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        out_float = float_model(input_x)
-        out_quant = quantized_model(input_x)
+        out_float = float_model(input_x)[0]
+        out_quant = quantized_model(input_x)[0]
         cs = cosine_similarity(out_float.numpy(), out_quant.numpy())
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs}')
 
