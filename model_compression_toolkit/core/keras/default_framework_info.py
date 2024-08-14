@@ -29,7 +29,7 @@ from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.constants import SOFTMAX_THRESHOLD
 from model_compression_toolkit.core.keras.constants import SOFTMAX, LINEAR, RELU, SWISH, SIGMOID, IDENTITY, TANH, SELU, \
-    KERNEL, DEPTHWISE_KERNEL
+    KERNEL, DEPTHWISE_KERNEL, GELU
 from model_compression_toolkit.core.keras.quantizer.fake_quant_builder import power_of_two_quantization, symmetric_quantization, uniform_quantization
 
 """
@@ -75,7 +75,8 @@ ACTIVATION2MINMAX = {SOFTMAX: (0, SOFTMAX_THRESHOLD),
                      TANH: (-1, 1),
                      SWISH: (-0.279, None),
                      RELU: (0, None),
-                     SELU: (None, None),
+                     SELU: (-1.76, None),
+                     GELU: (-0.17, None),
                      }
 
 """

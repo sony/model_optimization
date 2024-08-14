@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from torch.nn import Hardsigmoid, ReLU, ReLU6, Softmax, Sigmoid
-from torch.nn.functional import hardsigmoid, relu, relu6, softmax
+from torch.nn import Hardsigmoid, ReLU, ReLU6, Softmax, Sigmoid, GELU, SELU
+from torch.nn.functional import hardsigmoid, relu, relu6, softmax, gelu, selu
 from torch.nn import Conv2d, ConvTranspose2d, Linear
 from torch import sigmoid
 
@@ -74,7 +74,12 @@ LAYER2MINMAX = {Softmax: (0, SOFTMAX_THRESHOLD),
                 ReLU: (0, None),
                 relu: (0, None),
                 ReLU6: (0, None),
-                relu6: (0, None)}
+                relu6: (0, None),
+                GELU: (-0.17, None),
+                gelu: (-0.17, None),
+                SELU: (-1.76, None),
+                selu: (-1.76, None),
+                }
 
 """
 Mapping from a QuantizationMethod to an activation quantizer function.
