@@ -73,6 +73,7 @@ F_MATMUL = 'matmul'
 F_STACK = 'stack'
 F_STRIDED_SLICE_BEGIN = 'begin_mask'
 F_STRIDED_SLICE_END = 'end_mask'
+F_SWISH = 'nn.silu'
 
 # Layers variables names:
 KERNEL: str = 'kernel'

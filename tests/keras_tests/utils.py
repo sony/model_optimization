@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import tensorflow as tf
 import keras
 
 from mct_quantizers import KerasQuantizationWrapper
 
-if tf.__version__ >= "2.13":
+if keras.__version__ >= "2.13":
     from keras.src.layers import TFOpLambda
 else:
     from keras.layers import TFOpLambda
@@ -45,7 +44,3 @@ def get_layers_from_model_by_type(model:keras.Model,
 
     return [layer for layer in model.layers if match_type(layer, layer_type) or
             include_wrapped_layers and isinstance(layer, KerasQuantizationWrapper) and match_type(layer.layer, layer_type)]
-
-
-
-

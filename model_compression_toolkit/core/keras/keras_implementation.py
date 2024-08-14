@@ -69,6 +69,7 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.acti
     ActivationDecomposition
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.matmul_substitution import \
     MatmulToDenseSubstitution
+from model_compression_toolkit.core.keras.graph_substitutions.substitutions.sigmoid_mul_to_swish import MulSigmoidToSwish
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.conv_funcs_to_layer import \
     Conv2dFuncToConv2dLayer, DwConv2dFuncToDwConv2dLayer
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.softmax_shift import \
@@ -244,7 +245,8 @@ class KerasImplementation(FrameworkImplementation):
         Returns: A list of the framework substitutions used to prepare the graph.
 
         """
-        return [SeparableConvDecomposition(),
+        return [MulSigmoidToSwish(),
+                SeparableConvDecomposition(),
                 MatmulToDenseSubstitution(),
                 Conv2dFuncToConv2dLayer(),
                 DwConv2dFuncToDwConv2dLayer(),
