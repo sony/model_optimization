@@ -15,8 +15,10 @@
 import unittest
 
 import torch
+from mct_quantizers import QuantizationTarget, QuantizationMethod
 from mct_quantizers.pytorch.quantizers import ActivationSymmetricInferableQuantizer, ActivationUniformInferableQuantizer
 
+from model_compression_toolkit.gptq.common.gptq_config import ActivationGradProp
 from model_compression_toolkit.gptq.pytorch.quantizer.activation.ste_activation import \
     STEActivationSymmetricGPTQTrainableQuantizer, STEActivationUniformGPTQTrainableQuantizer
 
@@ -26,18 +28,22 @@ class ActivationQuantTest(unittest.TestCase):
         kwargs = dict(num_bits=3, threshold=[1.5], signed=False)
         q_inferable = ActivationSymmetricInferableQuantizer(**kwargs)
         q = STEActivationSymmetricGPTQTrainableQuantizer(**kwargs)
-        self._run_test(q_inferable, q)
+        self._run_test(q_inferable, q, [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC])
 
     def test_uniform(self):
         kwargs = dict(num_bits=5, min_range=[-3], max_range=[1.5])
         q_inferable = ActivationUniformInferableQuantizer(**kwargs)
         q = STEActivationUniformGPTQTrainableQuantizer(**kwargs)
-        self._run_test(q_inferable, q)
+        self._run_test(q_inferable, q, [QuantizationMethod.UNIFORM])
 
-    def _run_test(self, q_infer, q):
+    def _run_test(self, q_infer, q, exp_q_method):
         x = torch.randn((5, 10, 20), requires_grad=True, generator=torch.Generator().manual_seed(42))
         y_infer = q_infer(x)
         y = q(x)
         self.assertTrue(torch.equal(y_infer, y))
         # if autograd cannot propagate, will crash
         torch.autograd.grad(y.mean(), x)
+
+        self.assertEquals(q.identifier, ActivationGradProp.STE)
+        self.assertEquals(q.quantization_target, QuantizationTarget.Activation)
+        self.assertEquals(q.quantization_method, exp_q_method)
