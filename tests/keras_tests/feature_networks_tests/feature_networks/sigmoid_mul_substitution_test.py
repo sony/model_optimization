@@ -52,7 +52,9 @@ class SigMulSubstitutionTest(BaseKerasFeatureNetworkTest):
         x = Multiply()([x+1, tf.sigmoid(x)])  # This should not be substituted.
         x = Conv2D(5, 3, padding='same')(x)
         s = tf.sigmoid(x)
-        x = Multiply()([x, s])  # This should not be substituted.
+        x = Multiply()([x, s])  # This should not be substituted because the sigmoid node is an output.
+        x = Conv2D(5, 3, padding='same')(x)
+        x = Multiply()([x, tf.sigmoid(x)])
         return tf.keras.Model(inputs=_in, outputs=[x, s])
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -61,5 +63,5 @@ class SigMulSubstitutionTest(BaseKerasFeatureNetworkTest):
         cs = cosine_similarity(out_float.numpy(), out_quant.numpy())
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs}')
 
-        self.unit_test.assertTrue(len(get_layers_from_model_by_type(quantized_model, tf.nn.silu)) == 4,
+        self.unit_test.assertTrue(len(get_layers_from_model_by_type(quantized_model, tf.nn.silu)) == 5,
                                   "Not all Sigmoid-Mul functions were substituted.")
