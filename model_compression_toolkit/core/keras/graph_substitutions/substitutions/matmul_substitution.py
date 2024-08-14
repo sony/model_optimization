@@ -66,6 +66,8 @@ class MatmulToDenseSubstitution(common.BaseSubstitution):
         # read const from matmul inputs
         w = matmul_node.weights.get(1)
         if w is None:
+            w = np.array(matmul_node.op_call_kwargs['b'], dtype=np.float32) if 'b' in matmul_node.op_call_kwargs else None
+        if w is None:
             Logger.critical(f"Matmul substitution failed: Unable to locate weight for node {matmul_node.name}.")  # pragma: no cover
 
         if len(w.shape) != 2:

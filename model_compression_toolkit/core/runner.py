@@ -27,6 +27,8 @@ from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_
     SchedulerInfo
 from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import MemoryGraph
 from model_compression_toolkit.core.common.hessian.hessian_info_service import HessianInfoService
+from model_compression_toolkit.core.common.mixed_precision.mixed_precision_candidates_filter import \
+    filter_candidates_for_mixed_precision
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import \
     requires_mixed_precision
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
@@ -137,6 +139,7 @@ def core_runner(in_model: Any,
     if core_config.mixed_precision_enable:
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
+            filter_candidates_for_mixed_precision(graph, target_resource_utilization, fw_info, tpc)
             bit_widths_config = search_bit_width(tg,
                                                  fw_info,
                                                  fw_impl,

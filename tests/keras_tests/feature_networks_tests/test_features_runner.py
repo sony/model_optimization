@@ -24,6 +24,7 @@ from tensorflow.keras.layers import PReLU, ELU
 
 from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
+from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq import RoundingType
 from model_compression_toolkit.target_platform_capabilities import constants as C
@@ -56,6 +57,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.linear_collapsing
     ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest, Op2DAddConstCollapsingTest
 from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTWeightsQuantizerTest, \
     LUTActivationQuantizerTest
+from tests.keras_tests.feature_networks_tests.feature_networks.manual_bit_selection import ManualBitWidthSelectionTest, \
+    Manual16BitWidthSelectionTest, Manual16BitWidthSelectionMixedPrecisionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision.requires_mixed_precision_test import \
     RequiresMixedPrecision, RequiresMixedPrecisionWeights
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_bops_test import \
@@ -67,6 +70,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_t
     MixedPrecisionActivationSearchTest, MixedPrecisionActivationSearch4BitsAvgTest, \
     MixedPrecisionActivationSearch2BitsAvgTest, MixedPrecisionActivationDepthwiseTest, \
     MixedPrecisionActivationSplitLayerTest, MixedPrecisionActivationOnlyWeightsDisabledTest, \
+    MixedPrecisionActivationOnlyConfigurableWeightsTest, \
     MixedPrecisionActivationOnlyTest, MixedPrecisionActivationDepthwise4BitTest, MixedPrecisionActivationAddLayerTest, \
     MixedPrecisionActivationMultipleInputsTest, MixedPrecisionTotalMemoryUtilizationSearchTest, \
     MixedPrecisionMultipleResourcesTightUtilizationSearchTest, MixedPrecisionReducedTotalMemorySearchTest, \
@@ -132,7 +136,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.uniform_range_sel
     UniformRangeSelectionActivationTest, UniformRangeSelectionBoundedActivationTest
 from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_precision_tests import \
     MixedPrecisionSearch4BitsAvgTest, MixedPrecisionSearch2BitsAvgTest, MixedPrecisionActivationDisabled, \
-    MixedPrecisionWithHessianScoresTest, MixedPrecisionSearchTest, \
+    MixedPrecisionWithHessianScoresTest, MixedPrecisionSearchTest, MixedPrecisionWeightsOnlyConfigurableActivationsTest, \
     MixedPrecisionSearchPartWeightsLayersTest, MixedPrecisionDepthwiseTest, MixedPrecisionSearchLastLayerDistanceTest, \
     MixedPrecisionSearchActivationNonConfNodesTest, MixedPrecisionSearchTotalMemoryNonConfNodesTest, \
     MixedPrecisionCombinedNMSTest
@@ -147,6 +151,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.const_quantizatio
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_16bit_test import Activation16BitTest, \
     Activation16BitMixedPrecisionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.sigmoid_mul_substitution_test import SigMulSubstitutionTest
+from tests.keras_tests.feature_networks_tests.feature_networks.conv_func_substitutions_test import ConvFuncSubstitutionsTest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
 
 layers = tf.keras.layers
@@ -230,6 +235,9 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPrecisionSearchTest(self, distance_metric=MpDistanceWeighting.LAST_LAYER).run_test()
         MixedPrecisionWithHessianScoresTest(self, distance_metric=MpDistanceWeighting.AVG).run_test()
 
+    def test_mixed_precision_weights_only_activation_conf(self):
+        MixedPrecisionWeightsOnlyConfigurableActivationsTest(self).run_test()
+
     def test_requires_mixed_recision(self):
         RequiresMixedPrecisionWeights(self, weights_memory=True).run_test()
         RequiresMixedPrecision(self,activation_memory=True).run_test()
@@ -263,6 +271,9 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_mixed_precision_activation_only_weights_disabled(self):
         MixedPrecisionActivationOnlyWeightsDisabledTest(self).run_test()
+
+    def test_mixed_precision_activation_only_conf_weights(self):
+        MixedPrecisionActivationOnlyConfigurableWeightsTest(self).run_test()
 
     def test_mixed_precision_activation_search_4bits_avg(self):
         MixedPrecisionActivationSearch4BitsAvgTest(self).run_test()
@@ -809,9 +820,102 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_sigmoid_mul_substitution(self):
         SigMulSubstitutionTest(self).run_test()
 
+    def test_conv_func_substitutions(self):
+        ConvFuncSubstitutionsTest(self).run_test()
+
     def test_16bit_activations(self):
         Activation16BitTest(self).run_test()
         Activation16BitMixedPrecisionTest(self).run_test()
+
+    def test_invalid_bit_width_selection(self):
+        with self.assertRaises(Exception) as context:
+            ManualBitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), 7).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception),
+                         "Manually selected activation bit-width 7 is invalid for node Conv2D:conv1.")
+
+        with self.assertRaises(Exception) as context:
+            ManualBitWidthSelectionTest(self, NodeTypeFilter(layers.Add), 3).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception),
+                         "Manually selected activation bit-width 3 is invalid for node Add:add2.")
+
+        with self.assertRaises(Exception) as context:
+            ManualBitWidthSelectionTest(self, NodeNameFilter('relu1'), 3).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception),
+                         "Manually selected activation bit-width 3 is invalid for node ReLU:relu1.")
+
+    def test_mul_16_bit_manual_selection(self):
+        """
+        This test checks the execptions in the manual bit-width selection feature.
+        """
+        # This "mul" can be configured to 16 bit
+        Manual16BitWidthSelectionTest(self, NodeNameFilter('mul1'), 16).run_test()
+        Manual16BitWidthSelectionMixedPrecisionTest(self, NodeNameFilter('mul1'), 16).run_test()
+
+        # This "mul" cannot be configured to 16 bit
+        with self.assertRaises(Exception) as context:
+            Manual16BitWidthSelectionTest(self, NodeNameFilter('mul2'), 16).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception),
+                         "Manually selected activation bit-width 16 is invalid for node Multiply:mul2.")
+
+        # This "mul" cannot be configured to 16 bit
+        with self.assertRaises(Exception) as context:
+            Manual16BitWidthSelectionMixedPrecisionTest(self, NodeNameFilter('mul2'), 16).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception),
+                         "Manually selected activation bit-width 16 is invalid for node Multiply:mul2.")
+
+    def test_exceptions_manual_selection(self):
+        """
+        This test checks the execptions in the manual bit-width selection feature.
+        """
+        # Node name doesn't exist in graph
+        with self.assertRaises(Exception) as context:
+            Manual16BitWidthSelectionTest(self, NodeNameFilter('mul_3'), 16).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception),
+                         "Node Filtering Error: No nodes found in the graph for filter {'node_name': 'mul_3'} to change their bit width to 16.")
+
+        # Invalid inputs to API
+        with self.assertRaises(Exception) as context:
+            ManualBitWidthSelectionTest(self,
+                                          [NodeNameFilter('relu1'), NodeNameFilter('add1'), NodeNameFilter('add2')],
+                                          [2, 4]).run_test()
+        # Check that the correct exception message was raised
+        self.assertEqual(str(context.exception),
+                         "Configuration Error: The number of provided bit_width values 2 must match the number of filters 3, or a single bit_width value should be provided for all filters.")
+
+    def test_manual_bit_width_selection(self):
+        """
+        This test checks the manual bit-width selection feature.
+        """
+        ManualBitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), 4).run_test()
+        ManualBitWidthSelectionTest(self, NodeTypeFilter(layers.Conv2D), 2).run_test()
+        ManualBitWidthSelectionTest(self, NodeTypeFilter(layers.Dense), 4).run_test()
+        ManualBitWidthSelectionTest(self, NodeTypeFilter(layers.Add), 4).run_test()
+        ManualBitWidthSelectionTest(self, NodeTypeFilter(layers.Add), 2).run_test()
+        ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Conv2D), NodeTypeFilter(layers.Dense)],
+                                      [2, 4]).run_test()
+        ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Conv2D), NodeTypeFilter(layers.Dense)],
+                                      [4, 4]).run_test()
+        ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Conv2D), NodeTypeFilter(layers.Add)],
+                                      [2, 4]).run_test()
+        ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Add), NodeTypeFilter(layers.Conv2D)],
+                                      [4, 4]).run_test()
+        ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Add), NodeTypeFilter(layers.Dense)],
+                                      4).run_test()
+        ManualBitWidthSelectionTest(self, NodeNameFilter('input'), 4).run_test()
+        ManualBitWidthSelectionTest(self, NodeNameFilter('conv1'), 4).run_test()
+        ManualBitWidthSelectionTest(self, NodeNameFilter('fc'), 4).run_test()
+        ManualBitWidthSelectionTest(self, NodeNameFilter('add1'), 4).run_test()
+        ManualBitWidthSelectionTest(self, NodeNameFilter('add2'), 4).run_test()
+        ManualBitWidthSelectionTest(self, NodeNameFilter('relu1'), 4).run_test()
+        ManualBitWidthSelectionTest(self, [NodeNameFilter('add1'), NodeNameFilter('conv1')], [2, 4]).run_test()
+        ManualBitWidthSelectionTest(self, [NodeNameFilter('add2'), NodeNameFilter('relu1')], 4).run_test()
+        ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Add), NodeNameFilter('add2')],[4, 2]).run_test()
 
 
 if __name__ == '__main__':

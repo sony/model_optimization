@@ -54,7 +54,7 @@ from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test imp
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPrecisionActivationSearch8Bit, MixedPrecisionActivationSearch2Bit, MixedPrecisionActivationSearch4Bit, \
     MixedPrecisionActivationSearch4BitFunctional, MixedPrecisionActivationMultipleInputs, \
-    MixedPrecisionDistanceFunctions
+    MixedPrecisionDistanceFunctions, MixedPrecisionActivationConfigurableWeights
 from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
     HardtanhBoundToPOTNetTest
 from tests.pytorch_tests.model_tests.feature_models.scalar_tensor_test import ScalarTensorTest
@@ -79,7 +79,8 @@ from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LU
     LUTActivationQuantizerTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import MixedPrecisionSearch4Bit, \
     MixedPrecisionActivationDisabledTest, MixedPrecisionSearchLastLayerDistance, MixedPrecisionWithHessianScores, \
-    MixedPrecisionSearch8Bit, MixedPrecisionSearchPartWeightsLayers, MixedPrecisionSearch2Bit
+    MixedPrecisionSearch8Bit, MixedPrecisionSearchPartWeightsLayers, MixedPrecisionSearch2Bit, \
+    MixedPrecisionWeightsConfigurableActivations
 from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multiple_tensors_test import \
     MultipleOutputsMultipleTensorsNetTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_outputs_node_test import MultipleOutputsNetTest
@@ -424,7 +425,8 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the shift negative activation feature.
         """
-        ShiftNegaviteActivationNetTest(self).run_test(seed=3)
+        for activation_layer in [torch.nn.Hardswish, torch.nn.GELU]:
+            ShiftNegaviteActivationNetTest(self, activation_layer=activation_layer).run_test(seed=3)
 
     def test_split_concat_net(self):
         """
@@ -521,6 +523,18 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the activation Mixed Precision search.
         """
         MixedPrecisionActivationSearch4Bit(self).run_test()
+
+    def test_mixed_precision_activation_only_conf_weights(self):
+        """
+        This test checks the Mixed Precision for activation only with configurable weights layers.
+        """
+        MixedPrecisionActivationConfigurableWeights(self).run_test()
+
+    def test_mixed_precision_weights_only_conf_activations(self):
+        """
+        This test checks the Mixed Precision for weights only with configurable activation layers.
+        """
+        MixedPrecisionWeightsConfigurableActivations(self).run_test()
 
     def test_mixed_precision_activation_4bit_functional(self):
         """
@@ -678,7 +692,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(torch.nn.Conv2d), 7).run_test()
         # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception), "Manually selected activation bit-width 7 is invalid for node Conv2d:conv1.")
+        self.assertEqual(str(context.exception), "Manually selected activation bit-width 7 is invalid for node Conv2d:conv1_bn.")
 
         with self.assertRaises(Exception) as context:
             ManualBitWidthByLayerTypeTest(self, NodeTypeFilter(operator.add), 3).run_test()
@@ -752,14 +766,14 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the manual bit-width selection feature by layer name filtering.
         """
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('inp'), 4).run_test()
-        ManualBitWidthByLayerNameTest(self, NodeNameFilter('conv1'), 4).run_test()
+        ManualBitWidthByLayerNameTest(self, NodeNameFilter('conv1_bn'), 4).run_test()
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('fc'), 4).run_test()
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('add'), 4).run_test()
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('add_1'), 4).run_test()
-        ManualBitWidthByLayerNameTest(self, NodeNameFilter('bn_conv2'), 4).run_test()
+        ManualBitWidthByLayerNameTest(self, NodeNameFilter('conv2_bn'), 4).run_test()
         ManualBitWidthByLayerNameTest(self, NodeNameFilter('relu'), 4).run_test()
-        ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1')], [2, 4]).run_test()
-        ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1')], 4).run_test()
+        ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1_bn')], [2, 4]).run_test()
+        ManualBitWidthByLayerNameTest(self, [NodeNameFilter('add'), NodeNameFilter('conv1_bn')], 4).run_test()
 
 
 

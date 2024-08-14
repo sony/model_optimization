@@ -17,6 +17,8 @@
 import numpy as np
 import tensorflow as tf
 
+from mct_quantizers import KerasQuantizationWrapper
+from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS
@@ -475,3 +477,72 @@ class MixedPrecisionSearchLastLayerDistanceTest(MixedPrecisionBaseTest):
             quantization_info.final_resource_utilization.total_memory,
             "Running weights mixed-precision with unconstrained Resource Utilization, "
             "final weights and activation memory sum should be equal to total memory.")
+
+
+class MixedPrecisionWeightsOnlyConfigurableActivationsTest(MixedPrecisionBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Conv2D(32, 4)(inputs)
+        x = layers.Add()([x, x])
+        outputs = layers.ReLU()(x)
+        model = keras.Model(inputs=inputs, outputs=outputs)
+        return model
+
+    def get_tpc(self):
+        cfg, mixed_precision_cfg_list, _ = get_op_quantization_configs()
+
+        act_eight_bit_cfg = cfg.clone_and_edit(activation_n_bits=8,
+                                               attr_weights_configs_mapping={})
+        act_four_bit_cfg = cfg.clone_and_edit(activation_n_bits=4,
+                                              attr_weights_configs_mapping={})
+        act_two_bit_cfg = cfg.clone_and_edit(activation_n_bits=2,
+                                             attr_weights_configs_mapping={})
+
+        mixed_precision_cfg_list = \
+            [c.clone_and_edit(enable_activation_quantization=False) for c in mixed_precision_cfg_list]
+        cfg = mixed_precision_cfg_list[0]
+
+        act_mixed_cfg = tp.QuantizationConfigOptions(
+            [act_eight_bit_cfg, act_four_bit_cfg, act_two_bit_cfg],
+            base_config=act_eight_bit_cfg,
+        )
+
+        weight_mixed_cfg = tp.QuantizationConfigOptions(
+            mixed_precision_cfg_list,
+            base_config=cfg,
+        )
+
+        tp_model = tp.TargetPlatformModel(tp.QuantizationConfigOptions([cfg], cfg),
+                                          name="mp_weights_conf_act_test")
+
+        with tp_model:
+            tp.OperatorsSet("Activations", act_mixed_cfg)
+            tp.OperatorsSet("Weights", weight_mixed_cfg)
+
+        keras_tpc = tp.TargetPlatformCapabilities(tp_model, name="mp_weights_conf_act_test")
+
+        with keras_tpc:
+            tp.OperationsSetToLayers(
+                "Weights",
+                [layers.Conv2D],
+                attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                              BIAS_ATTR: DefaultDict(default_value=BIAS)}
+            )
+
+            tp.OperationsSetToLayers(
+                "Activations",
+                [layers.ReLU, layers.Add]
+            )
+
+        return keras_tpc
+
+    def get_resource_utilization(self):
+        return ResourceUtilization(1535)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        wrapper_layers = get_layers_from_model_by_type(quantized_model, KerasQuantizationWrapper)
+        weights_bits = wrapper_layers[0].weights_quantizers[KERNEL].num_bits
+        self.unit_test.assertTrue(weights_bits == 4)
