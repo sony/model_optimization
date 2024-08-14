@@ -19,8 +19,11 @@ import tensorflow as tf
 from keras.activations import sigmoid, softmax
 
 from mct_quantizers import KerasActivationQuantizationHolder
-from model_compression_toolkit.core.keras.constants import SIGMOID, SOFTMAX
+from model_compression_toolkit import DefaultDict
+from model_compression_toolkit.core.keras.constants import SIGMOID, SOFTMAX, BIAS
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
+from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_op_quantization_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from keras import backend as K
 
@@ -609,3 +612,73 @@ class MixedPrecisionDistanceSigmoidTest(MixedPrecisionActivationBaseTest):
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in
                            holder_layers]
         self.unit_test.assertTrue((activation_bits == [4, 4, 4, 4]))
+
+
+class MixedPrecisionActivationOnlyConfigurableWeightsTest(MixedPrecisionActivationBaseTest):
+    def __init__(self, unit_test):
+        super().__init__(unit_test, activation_layers_idx=[3, 4])
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Conv2D(32, 4)(inputs)
+        x = layers.Add()([x, x])
+        outputs = layers.ReLU()(x)
+        model = keras.Model(inputs=inputs, outputs=outputs)
+        return model
+
+    def get_tpc(self):
+        cfg, mixed_precision_cfg_list, _ = get_op_quantization_configs()
+
+        act_eight_bit_cfg = cfg.clone_and_edit(activation_n_bits=8,
+                                               attr_weights_configs_mapping={})
+        act_four_bit_cfg = cfg.clone_and_edit(activation_n_bits=4,
+                                              attr_weights_configs_mapping={})
+        act_two_bit_cfg = cfg.clone_and_edit(activation_n_bits=2,
+                                             attr_weights_configs_mapping={})
+
+        mixed_precision_cfg_list = \
+            [c.clone_and_edit(enable_activation_quantization=False) for c in mixed_precision_cfg_list]
+        cfg = mixed_precision_cfg_list[0]
+
+        act_mixed_cfg = tp.QuantizationConfigOptions(
+            [act_eight_bit_cfg, act_four_bit_cfg, act_two_bit_cfg],
+            base_config=act_eight_bit_cfg,
+        )
+
+        weight_mixed_cfg = tp.QuantizationConfigOptions(
+            mixed_precision_cfg_list,
+            base_config=cfg,
+        )
+
+        tp_model = tp.TargetPlatformModel(tp.QuantizationConfigOptions([cfg], cfg),
+                                          name="mp_activation_conf_weights_test")
+
+        with tp_model:
+            tp.OperatorsSet("Activations", act_mixed_cfg)
+            tp.OperatorsSet("Weights", weight_mixed_cfg)
+
+        keras_tpc = tp.TargetPlatformCapabilities(tp_model, name="mp_activation_conf_weights_test")
+
+        with keras_tpc:
+            tp.OperationsSetToLayers(
+                "Weights",
+                [layers.Conv2D],
+                attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                              BIAS_ATTR: DefaultDict(default_value=BIAS)}
+            )
+
+            tp.OperationsSetToLayers(
+                "Activations",
+                [layers.ReLU, layers.Add]
+            )
+
+        return keras_tpc
+
+    def get_resource_utilization(self):
+        return ResourceUtilization(np.inf, 5407)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+
+        activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
+        self.unit_test.assertTrue(activation_bits == [4, 4])
