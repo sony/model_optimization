@@ -37,7 +37,7 @@ layers = keras.layers
 # get_op_set = lambda x, x_list: [op_set for op_set in x_list if op_set.name == x][0]
 
 
-class ConvSubstitutionsTest(BaseKerasFeatureNetworkTest):
+class ConvFuncSubstitutionsTest(BaseKerasFeatureNetworkTest):
 
     def get_tpc(self):
         tp = generate_test_tp_model({'enable_weights_quantization': False,

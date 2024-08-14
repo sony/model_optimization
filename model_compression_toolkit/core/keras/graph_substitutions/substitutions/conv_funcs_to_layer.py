@@ -1,4 +1,4 @@
-# Copyright 2024 Sony Semiconductors Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ def extract_bias_node_data(_node: FunctionalNode, _graph: Graph) -> np.ndarray:
     Check is can extract bias from next node.
 
     Args:
-        _node: conv node to check for subsequent bias node.
+        _node: conv node to check for subsequent add\bias_add node to extract bias from.
         _graph: model graph.
 
     Returns:
@@ -51,7 +51,7 @@ def extract_bias_node_data(_node: FunctionalNode, _graph: Graph) -> np.ndarray:
         if next_nodes[0].is_match_type(tf.add):
             b = next_nodes[0].weights.get(0, next_nodes[0].weights.get(1))
             if b is not None and len(b.shape) != 1:
-                # Add node constant shape not regular. Expecting a 1-D array.
+                # Constant input to Add node (bias) has irregular shape. Expecting a 1-D array.
                 b = None  # pragma: no cover
         elif next_nodes[0].is_match_type(tf.nn.bias_add):
             # In bias_add, weight is always 1-D array. Extract weight from weights or kwargs.
@@ -127,14 +127,14 @@ class Conv2dFuncToConv2dLayer(common.BaseSubstitution):
             # Conv dimension doesn't match conv2d dimension (K1 x K2 x Cin x Cout) -> skip substitution.
             return graph  # pragma: no cover
 
-        # Check is can extract bias from next node.
+        # Check if can extract bias from next node.
         b = extract_bias_node_data(conv_func_node, graph)
 
         weights = {KERNEL: k}
         # Create Conv2D layer attributes.
         conv_fw_attr = {FILTERS: k.shape[3], KERNEL_SIZE: k.shape[:2]}
         if len(conv_func_node.op_call_args) > 0:
-            Logger.critical(f"node {conv_func_node.name} expected to have only kwargs but got args={conv_func_node.op_call_args}.")
+            Logger.critical(f"node {conv_func_node.name} expected to have only kwargs but got args={conv_func_node.op_call_args}.")  # pragma: no cover
         if STRIDES in conv_func_node.op_call_kwargs:
             strides = conv_func_node.op_call_kwargs[STRIDES]
             if len(strides) == 4:
@@ -211,7 +211,7 @@ class DwConv2dFuncToDwConv2dLayer(common.BaseSubstitution):
         k_shape = k.shape
         conv_fw_attr = {DEPTH_MULTIPLIER: k_shape[3], KERNEL_SIZE: k_shape[:2]}
         if len(dwconv_func_node.op_call_args) > 0:
-            Logger.critical(f"node {dwconv_func_node.name} expected to have only kwargs but got args={dwconv_func_node.op_call_args}.")
+            Logger.critical(f"node {dwconv_func_node.name} expected to have only kwargs but got args={dwconv_func_node.op_call_args}.")  # pragma: no cover
         if STRIDES in dwconv_func_node.op_call_kwargs:
             strides = dwconv_func_node.op_call_kwargs[STRIDES]
             if strides[0] > 1 or strides[3] > 1:
