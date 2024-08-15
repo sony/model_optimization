@@ -29,7 +29,8 @@ from model_compression_toolkit.core.common.graph.functional_node import Function
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.constants import REUSE, REUSE_GROUP
 from model_compression_toolkit.core.keras.constants import KERNEL, BIAS, USE_BIAS, FILTERS, PADDING, \
-    KERNEL_SIZE, DEPTH_MULTIPLIER, STRIDES, DILATIONS, DILATION_RATE, DEPTHWISE_KERNEL, RATE
+    KERNEL_SIZE, DEPTH_MULTIPLIER, STRIDES, DILATIONS, DILATION_RATE, DEPTHWISE_KERNEL, RATE, \
+    ACTIVATION, LINEAR
 
 
 def extract_bias_node_data(_node: FunctionalNode, _graph: Graph) -> np.ndarray:
@@ -132,7 +133,7 @@ class Conv2dFuncToConv2dLayer(common.BaseSubstitution):
 
         weights = {KERNEL: k}
         # Create Conv2D layer attributes.
-        conv_fw_attr = {FILTERS: k.shape[3], KERNEL_SIZE: k.shape[:2]}
+        conv_fw_attr = {FILTERS: k.shape[3], KERNEL_SIZE: k.shape[:2], ACTIVATION: LINEAR}
         if len(conv_func_node.op_call_args) > 0:
             Logger.critical(f"node {conv_func_node.name} expected to have only kwargs but got args={conv_func_node.op_call_args}.")  # pragma: no cover
         if STRIDES in conv_func_node.op_call_kwargs:
@@ -209,7 +210,7 @@ class DwConv2dFuncToDwConv2dLayer(common.BaseSubstitution):
 
         weights = {DEPTHWISE_KERNEL: k}
         k_shape = k.shape
-        conv_fw_attr = {DEPTH_MULTIPLIER: k_shape[3], KERNEL_SIZE: k_shape[:2]}
+        conv_fw_attr = {DEPTH_MULTIPLIER: k_shape[3], KERNEL_SIZE: k_shape[:2], ACTIVATION: LINEAR}
         if len(dwconv_func_node.op_call_args) > 0:
             Logger.critical(f"node {dwconv_func_node.name} expected to have only kwargs but got args={dwconv_func_node.op_call_args}.")  # pragma: no cover
         if STRIDES in dwconv_func_node.op_call_kwargs:
