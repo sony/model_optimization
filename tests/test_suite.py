@@ -88,6 +88,7 @@ if found_tf:
     from tests.data_generation_tests.keras.test_scheduler_step import TestReduceLROnPlateau
     from tests.keras_tests.function_tests.test_node_quantization_configurations import \
         TestNodeQuantizationConfigurations
+    from tests.keras_tests.function_tests.test_quant_config_filtering import TestKerasQuantConfigFiltering
 
 if found_pytorch:
     from tests.xquant_tests.pytorch_tests.test_xquant_end2end import BaseTestEnd2EndPytorchXQuant
@@ -109,6 +110,7 @@ if found_pytorch:
     from tests.pytorch_tests.graph_tests.test_fx_errors import TestGraphReading
     from tests.pytorch_tests.pruning_tests.feature_networks.test_pruning_feature_networks import PruningFeatureNetworksTest
     from tests.pytorch_tests.exporter_tests.test_exporting_qat_models import TestExportingQATModelTorchscript
+    from tests.pytorch_tests.function_tests.test_quant_config_filtering import TestTorchQuantConfigFiltering
 
 if __name__ == '__main__':
     # -----------------  Load all the test cases
@@ -170,6 +172,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TFLayerTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(KerasDataGenerationTestRunner))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestParamSelectionWithHMSE))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestKerasQuantConfigFiltering))
 
     if found_pytorch:
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(BaseTestEnd2EndPytorchXQuant))
@@ -194,6 +197,7 @@ if __name__ == '__main__':
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestGraphReading))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(PruningFeatureNetworksTest))
         suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestExportingQATModelTorchscript))
+        suiteList.append(unittest.TestLoader().loadTestsFromTestCase(TestTorchQuantConfigFiltering))
 
     # ----------------   Join them together and run them
     comboSuite = unittest.TestSuite(suiteList)
