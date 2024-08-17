@@ -1,0 +1,47 @@
+nano:
+  depth: 0.33
+  width: 0.25
+  img_size: [416, 416]
+  num_classes: 80
+  act: "silu"
+  depthwise: True
+
+tiny:
+  depth: 0.33
+  width: 0.375
+  img_size: [416, 416]
+  num_classes: 80
+  act: "silu"
+  depthwise: False
+
+small:
+  depth: 0.33
+  width: 0.50
+  img_size: [640, 640]
+  num_classes: 80
+  act: "silu"
+  depthwise: False
+
+medium:
+  depth: 0.67
+  width: 0.75
+  img_size: [640, 640]
+  num_classes: 80
+  act: "silu"
+  depthwise: False
+
+large:
+  depth: 1.0
+  width: 1.0
+  img_size: [640, 640]
+  num_classes: 80
+  act: "silu"
+  depthwise: False
+
+xlarge:
+  depth: 1.33
+  width: 1.25
+  img_size: [640, 640]
+  num_classes: 80
+  act: "silu"
+  depthwise: False
