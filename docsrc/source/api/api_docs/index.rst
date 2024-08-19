@@ -49,6 +49,7 @@ core
 - :ref:`QuantizationConfig<ug-QuantizationConfig>`: Module to configure the quantization process.
 - :ref:`QuantizationErrorMethod<ug-QuantizationErrorMethod>`: Select a method for quantization parameters' selection.
 - :ref:`MixedPrecisionQuantizationConfig<ug-MixedPrecisionQuantizationConfig>`: Module to configure the quantization process when using mixed-precision PTQ.
+- :ref:`BitWidthConfig<ug-BitWidthConfig>`: Module to configure the bit-width manually.
 - :ref:`ResourceUtilization<ug-ResourceUtilization>`: Module to configure resources to use when searching for a configuration for the optimized model.
 - :ref:`MpDistanceWeighting<ug-MpDistanceWeighting>`: Mixed precision distance metric weighting methods.
 - :ref:`network_editor<ug-network_editor>`: Module to modify the optimization process for troubleshooting.
@@ -75,6 +76,13 @@ pruning
 - :ref:`PruningConfig<ug-PruningConfig>`: Configuration for the pruning process (experimental).
 - :ref:`PruningInfo<ug-PruningInfo>`: Information about the pruned model such as pruned channel indices, etc. (experimental).
 
+xquant
+===========
+
+- :ref:`xquant_report_pytorch_experimental<ug-xquant_report_pytorch_experimental>`: A function to generate an explainable quantization report for a quantized Pytorch model (experimental).
+- :ref:`xquant_report_keras_experimental<ug-xquant_report_keras_experimental>`: A function to generate an explainable quantization report for a quantized Keras model (experimental).
+
+- :ref:`XQuantConfig<ug-XQuantConfig>`: Configuration for the XQuant report (experimental).
 
 exporter
 =========
