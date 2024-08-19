@@ -53,7 +53,38 @@
 <dd><p>A list of ManualBitWidthSelection objects defining manual bit-width configurations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>List[ManualBitWidthSelection]</p>
+<dd class="field-odd"><p>List[<a class="reference internal" href="#model_compression_toolkit.core.common.quantization.bit_width_config.ManualBitWidthSelection" title="model_compression_toolkit.core.common.quantization.bit_width_config.ManualBitWidthSelection">ManualBitWidthSelection</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="manualbitwidthselection">
+<h1>ManualBitWidthSelection<a class="headerlink" href="#manualbitwidthselection" title="Permalink to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="model_compression_toolkit.core.common.quantization.bit_width_config.ManualBitWidthSelection">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.core.common.quantization.bit_width_config.</span></span><span class="sig-name descname"><span class="pre">ManualBitWidthSelection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bit_width</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.core.common.quantization.bit_width_config.ManualBitWidthSelection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to encapsulate the manual bit width selection configuration for a specific filter.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.core.common.quantization.bit_width_config.ManualBitWidthSelection.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><a class="headerlink" href="#model_compression_toolkit.core.common.quantization.bit_width_config.ManualBitWidthSelection.filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>The filter used to select nodes for bit width manipulation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>BaseNodeMatcher</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model_compression_toolkit.core.common.quantization.bit_width_config.ManualBitWidthSelection.bit_width">
+<span class="sig-name descname"><span class="pre">bit_width</span></span><a class="headerlink" href="#model_compression_toolkit.core.common.quantization.bit_width_config.ManualBitWidthSelection.bit_width" title="Permalink to this definition">¶</a></dt>
+<dd><p>The bit width to be applied to the selected nodes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
 </dd>
 </dl>
 </dd></dl>
@@ -69,6 +100,14 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">BitWidthConfig</a></li>
+<li><a class="reference internal" href="#manualbitwidthselection">ManualBitWidthSelection</a></li>
+</ul>
+
+  </div>
 <div id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
