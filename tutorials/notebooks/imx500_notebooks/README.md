@@ -98,7 +98,7 @@ deployment performance.
     <tr>
         <td>shufflenet_v2_x1_5</td>
         <td> <a href="pytorch/pytorch_torchvision_classification_model_for_imx500.ipynb">PyTorch</a></td>
-        <td><a href="https://pytorch.org/vision/stable/models/generated/torchvision.models.shufflenet_v2_x1_5.html#torchvision.models.ShuffleNet_V2_X1_5_Weights#torchvision.models.RegNet_Y_400MF_Weights">torchvision</a></td>
+        <td><a href="https://pytorch.org/vision/stable/models/generated/torchvision.models.shufflenet_v2_x1_5.html#torchvision.models.ShuffleNet_V2_X1_5_Weights">torchvision</a></td>
         <td></td>
         <td>ImageNet</td>
         <td>69.34</td>
