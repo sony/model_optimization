@@ -1,4 +1,4 @@
-name: Test pip install
+name: Test whl install
 on:
   workflow_dispatch: # Allow manual triggers
     inputs:
@@ -37,22 +37,3 @@ jobs:
           pip install $whl_file
           pip list
           python -c 'import model_compression_toolkit; print(model_compression_toolkit.__version__)'
-      - name: Remove MCT code
-        run: |
-          rm -rf model_compression_toolkit
-      - name: Install TF
-        run: |
-          pip install tensorflow==2.15.*
-      - name: Run Commom Tests
-        run: |
-          python -m unittest discover tests/common_tests --verbose
-      - name: Run Tensorflow Tests
-        run: |
-          python -m unittest discover tests/keras_tests --verbose
-      - name: Uninstall TF and install torch
-        run: |
-          pip uninstall tensorflow -y
-          pip install torch torchvision onnx onnxruntime onnxruntime-extensions
-      - name: Run Pytorch Tests
-        run: |
-          python -m unittest discover tests/pytorch_tests --verbose
