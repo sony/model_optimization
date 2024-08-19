@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>target_platform Module &#8212; MCT Documentation: ver 2.1.0</title>
+    <title>target_platform Module &#8212; MCT Documentation: ver 2.2.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.1.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>  
@@ -88,7 +88,7 @@ This diagram demonstrates the main components:</p>
 <h2>OpQuantizationConfig<a class="headerlink" href="#opquantizationconfig" title="Permalink to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.target_platform.OpQuantizationConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">OpQuantizationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">default_weight_attr_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr_weights_configs_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_activation_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantization_preserving</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_zero_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simd_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.OpQuantizationConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.target_platform.</span></span><span class="sig-name descname"><span class="pre">OpQuantizationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">default_weight_attr_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr_weights_configs_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_quantization_method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">activation_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supported_input_activation_n_bits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_activation_quantization</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantization_preserving</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_zero_point</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simd_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signedness</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.target_platform.OpQuantizationConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>OpQuantizationConfig is a class to configure the quantization parameters of an operator.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -97,11 +97,13 @@ This diagram demonstrates the main components:</p>
 <li><p><strong>attr_weights_configs_mapping</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="#model_compression_toolkit.target_platform.AttributeQuantizationConfig" title="model_compression_toolkit.target_platform.AttributeQuantizationConfig"><em>AttributeQuantizationConfig</em></a><em>]</em>) – A mapping between an op attribute name and its quantization configuration.</p></li>
 <li><p><strong>activation_quantization_method</strong> (<a class="reference internal" href="#model_compression_toolkit.target_platform.QuantizationMethod" title="model_compression_toolkit.target_platform.QuantizationMethod"><em>QuantizationMethod</em></a>) – Which method to use from QuantizationMethod for activation quantization.</p></li>
 <li><p><strong>activation_n_bits</strong> (<em>int</em>) – Number of bits to quantize the activations.</p></li>
+<li><p><strong>supported_input_activation_n_bits</strong> (<em>int</em><em> or </em><em>Tuple</em><em>[</em><em>int</em><em>]</em>) – Number of bits that operator accepts as input.</p></li>
 <li><p><strong>enable_activation_quantization</strong> (<em>bool</em>) – Whether to quantize the model activations or not.</p></li>
 <li><p><strong>quantization_preserving</strong> (<em>bool</em>) – Whether quantization parameters should be the same for an operator’s input and output.</p></li>
 <li><p><strong>fixed_scale</strong> (<em>float</em>) – Scale to use for an operator quantization parameters.</p></li>
 <li><p><strong>fixed_zero_point</strong> (<em>int</em>) – Zero-point to use for an operator quantization parameters.</p></li>
 <li><p><strong>simd_size</strong> (<em>int</em>) – Per op integer representing the Single Instruction, Multiple Data (SIMD) width of an operator. It indicates the number of data elements that can be fetched and processed simultaneously in a single instruction.</p></li>
+<li><p><strong>signedness</strong> (<em>bool</em>) – Set activation quantization signedness.</p></li>
 </ul>
 </dd>
 </dl>
@@ -336,7 +338,7 @@ hence no quantization is applied between them.</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.1.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">target_platform Module</a></li> 
       </ul>
     </div>
