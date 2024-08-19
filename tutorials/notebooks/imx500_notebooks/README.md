@@ -23,7 +23,7 @@ deployment performance.
     </tr>
     <!-- Classification Models (ImageNet) -->
     <tr>
-        <td rowspan="5">Classification</td>
+        <td rowspan="9">Classification</td>
         <td>MobilenetV2</td>
         <td> <a href="keras/example_keras_mobilenetv2_for_imx500.ipynb">Keras</a></td>
         <td><a href="https://keras.io/api/applications/mobilenet/">Keras Applications</a></td>
@@ -67,6 +67,42 @@ deployment performance.
         <td>ImageNet</td>
         <td>74.026</td>
         <td>73.72</td>
+    </tr>
+    <tr>
+        <td>mnasnet1_0</td>
+        <td> <a href="pytorch/pytorch_torchvision_classification_model_for_imx500.ipynb">PyTorch</a></td>
+        <td><a href="https://pytorch.org/vision/stable/models/generated/torchvision.models.mnasnet1_0.html#torchvision.models.MNASNet1_0_Weights">torchvision</a></td>
+        <td></td>
+        <td>ImageNet</td>
+        <td>73.47</td>
+        <td>73.16</td>
+    </tr>
+    <tr>
+        <td>mobilenet_v2</td>
+        <td> <a href="pytorch/pytorch_torchvision_classification_model_for_imx500.ipynb">PyTorch</a></td>
+        <td><a href="https://pytorch.org/vision/stable/models/generated/torchvision.models.mobilenet_v2.html#torchvision.models.MobileNet_V2_Weights">torchvision</a></td>
+        <td></td>
+        <td>ImageNet</td>
+        <td>72.01</td>
+        <td>71.25</td>
+    </tr>
+    <tr>
+        <td>regnet_y_400mf</td>
+        <td> <a href="pytorch/pytorch_torchvision_classification_model_for_imx500.ipynb">PyTorch</a></td>
+        <td><a href="https://pytorch.org/vision/stable/models/generated/torchvision.models.regnet_y_400mf.html#torchvision.models.RegNet_Y_400MF_Weights">torchvision</a></td>
+        <td></td>
+        <td>ImageNet</td>
+        <td>74.03</td>
+        <td>73.69</td>
+    </tr>
+    <tr>
+        <td>shufflenet_v2_x1_5</td>
+        <td> <a href="pytorch/pytorch_torchvision_classification_model_for_imx500.ipynb">PyTorch</a></td>
+        <td><a href="https://pytorch.org/vision/stable/models/generated/torchvision.models.shufflenet_v2_x1_5.html#torchvision.models.ShuffleNet_V2_X1_5_Weights">torchvision</a></td>
+        <td></td>
+        <td>ImageNet</td>
+        <td>69.34</td>
+        <td>69.04</td>
     </tr>
     <!-- Object Detection Models (COCO) -->
     <tr>
