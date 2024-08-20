@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Union, List, Any
 from inspect import signature
 
-from model_compression_toolkit.core import common
 from model_compression_toolkit.logger import Logger
 
 from mct_quantizers.common.base_inferable_quantizer import BaseInferableQuantizer, \
@@ -31,6 +30,7 @@ from mct_quantizers.common.constants import QUANTIZATION_METHOD, \
 VAR = 'var'
 GROUP = 'group'
 
+
 class VariableGroup(Enum):
     """
     An enum for choosing trainable variable group
@@ -41,7 +41,7 @@ class VariableGroup(Enum):
     QPARAMS = 1
 
 
-class BaseTrainableQuantizer(BaseInferableQuantizer):
+class BaseTrainableQuantizer(BaseInferableQuantizer, ABC):
     def __init__(self,
                  quantization_config: Union[TrainableQuantizerActivationConfig, TrainableQuantizerWeightsConfig]):
         """
@@ -90,6 +90,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
     def get_sig(cls):
         return signature(cls)
 
+    @abstractmethod
     def initialize_quantization(self,
                                 tensor_shape,
                                 name: str,
@@ -105,8 +106,9 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         Returns: None
 
         """
-        raise NotImplemented  # pragma: no cover
+        raise NotImplementedError()  # pragma: no cover
 
+    @abstractmethod
     def __call__(self,
                  input2quantize,
                  training: bool):
@@ -120,7 +122,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         Returns:
             The quantized tensor.
         """
-        raise NotImplemented  # pragma: no cover
+        raise NotImplementedError()  # pragma: no cover
 
     def activation_quantization(self) -> bool:
         """
@@ -162,7 +164,7 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         Returns:
             BaseInferableQuantizer object.
         """
-        raise NotImplemented  # pragma: no cover
+        raise NotImplementedError()  # pragma: no cover
 
     def add_quantizer_variable(self, name: str, variable: Any, group: VariableGroup = VariableGroup.WEIGHTS):
         """
@@ -185,7 +187,6 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         else:
             Logger.critical(f"Variable '{name}' does not exist in quantizer parameters.") # pragma: no cover
 
-
     @abstractmethod
     def get_trainable_variables(self, group: VariableGroup) -> List[Any]:
         """
@@ -197,4 +198,4 @@ class BaseTrainableQuantizer(BaseInferableQuantizer):
         Returns:
             List of trainable variables
         """
-        raise NotImplemented  # pragma: no cover
+        raise NotImplementedError()  # pragma: no cover

@@ -24,23 +24,14 @@ from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_qua
 
 if FOUND_TORCH:
 
-    class BasePytorchQATTrainableQuantizer(BasePytorchTrainableQuantizer):
+    class BasePytorchQATWeightTrainableQuantizer(BasePytorchTrainableQuantizer):
         """
-        A base class for trainable Keras quantizer for QAT.
+        A base class for trainable PyTorch weights quantizer for QAT.
         """
-
-        def __init__(self,
-                     quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
-            """
-            Initializes BasePytorchQATTrainableQuantizer object.
-
-            Args:
-                quantization_config: quantizer config class contains all the information about a quantizer configuration.
-            """
-            super().__init__(quantization_config)
+        pass
 
 else:  # pragma: no cover
-    class BasePytorchQATTrainableQuantizer(BasePytorchTrainableQuantizer):
+    class BasePytorchQATWeightTrainableQuantizer(BasePytorchTrainableQuantizer):
         def __init__(self,
                      quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
             super().__init__(quantization_config)

@@ -14,6 +14,11 @@
 # ==============================================================================
 
 from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
+from model_compression_toolkit.trainable_infrastructure.common.training_method import TrainingMethod
 from model_compression_toolkit.trainable_infrastructure.keras.base_keras_quantizer import BaseKerasTrainableQuantizer
-from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_quantizer import BasePytorchTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.keras.quantize_wrapper import KerasTrainableQuantizationWrapper
+from model_compression_toolkit.verify_packages import FOUND_TORCH
+
+if FOUND_TORCH:
+    from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_quantizer import BasePytorchTrainableQuantizer
+    from model_compression_toolkit.trainable_infrastructure.pytorch.activation import *

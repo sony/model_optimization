@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Tuple
+from typing import Tuple, Union
 import torch
+from torch import nn as nn
 
 
 def ste_round(x: torch.Tensor) -> torch.Tensor:
@@ -147,3 +148,60 @@ def uniform_quantizer(tensor_data: torch.Tensor,
     # Quantize the data between min/max of quantization range.
     q = delta_tensor * clipped_tensor + a
     return q
+
+
+def symmetric_lsq_quantizer(x: nn.Parameter,
+                          thresholds: nn.Parameter,
+                          num_bits: int,
+                          sign: bool,
+                          min_int: int,
+                          max_int: int,
+                          scale_factor: float) -> Union[nn.Parameter, torch.Tensor]:
+    """
+    Symmetric quantizer according to LSQ algorithm: https://arxiv.org/pdf/1902.08153.pdf
+    Args:
+        x: input to quantize
+        thresholds: thresholds of quantization levels
+        num_bits: number of bits for quantization
+        sign: whether x is signed or not
+        min_int: min clipping integer value
+        max_int: max clipping integer value
+        scale_factor: grad scale of LSQ algorithm
+    Returns:
+        A quantized tensor
+    """
+    delta = thresholds / (2 ** (num_bits - int(sign)))
+    delta_scaled = grad_scale(delta, scale_factor)
+    rounded = ste_round(x / delta_scaled)
+    clipped = torch.clip(rounded, min=min_int, max=max_int)
+    quantized = delta_scaled * clipped
+    return quantized
+
+
+def uniform_lsq_quantizer(x: nn.Parameter,
+                      min_range: nn.Parameter,
+                      max_range: nn.Parameter,
+                      num_bits: int,
+                      min_int: int,
+                      max_int: int,
+                      scale_factor: float) -> Union[nn.Parameter, torch.Tensor]:
+    """
+    Uniform quantizer according to LSQ algorithm: https://arxiv.org/pdf/1902.08153.pdf
+    Args:
+        x: input to quantize
+        min_range: min range of quantization values
+        max_range: min range of quantization values
+        num_bits: number of bits for quantization
+        min_int: min clipping integer value
+        max_int: max clipping integer value
+        scale_factor: grad scale of LSQ algorithm
+    Returns:
+        A quantized tensor
+    """
+    a, b = adjust_range_to_include_zero(min_range, max_range, num_bits)
+    delta = (b - a) / (2 ** num_bits - 1)
+    delta_scaled = grad_scale(delta, scale_factor)
+    rounded = ste_round((x - a) / delta_scaled)
+    clipped = torch.clip(rounded, min=min_int, max=max_int)
+    quantized = delta_scaled * clipped + a
+    return quantized

@@ -20,7 +20,7 @@ import tensorflow as tf
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.constants import SIGNED
 
-from model_compression_toolkit.qat import TrainingMethod
+from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper

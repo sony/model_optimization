@@ -27,7 +27,6 @@ from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.trainable_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_weights_config
-from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.common.get_quantizers import \
     get_trainable_quantizer_class
 
@@ -35,7 +34,7 @@ from model_compression_toolkit.trainable_infrastructure.common.get_quantizers im
 def quantization_builder(n: common.BaseNode,
                          gptq_config: GradientPTQConfig,
                          kernel_attr: str = None
-                         ) -> Tuple[Dict[str, BasePytorchQATTrainableQuantizer], List[BasePyTorchInferableQuantizer]]:
+                         ) -> Tuple[Dict[str, BasePytorchGPTQTrainableQuantizer], List[BasePyTorchInferableQuantizer]]:
     """
     Build quantizers for a node according to its quantization configuration and
     a global NoOpQuantizeConfig object.

@@ -48,7 +48,8 @@ by calling `pytorch_quantization_aware_training_init` method in [`pytorch/quanti
 with the following [`qat_config`](../../common/qat_config.py):
 
 ```python
-from model_compression_toolkit.qat.common.qat_config import QATConfig, TrainingMethod
+from model_compression_toolkit.qat.common.qat_config import QATConfig
+from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 
 qat_config = QATConfig(weight_training_method=TrainingMethod.MTM)
 ```

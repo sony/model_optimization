@@ -59,7 +59,7 @@ Assume that the quantizer has a new training method called `MyTrainig` which is 
 
 ```python
 NEW_PARAM = "new_param_name"
-from model_compression_toolkit.qat import TrainingMethod
+from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 from mct_quantizers import mark_quantizer, QuantizationTarget, QuantizationMethod
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
 

@@ -15,11 +15,13 @@
 
 import tensorflow as tf
 import numpy as np
+
+import model_compression_toolkit.trainable_infrastructure.common.training_method
 from mct_quantizers.common.get_all_subclasses import get_all_subclasses
 from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
 
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.qat import TrainingMethod
+from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder, KerasQuantizationWrapper
@@ -165,7 +167,7 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, layer, weight_bits=2, activation_bits=4, finalize=True,
                  weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
                  activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-                 training_method=mct.qat.TrainingMethod.STE,
+                 training_method=model_compression_toolkit.trainable_infrastructure.common.training_method.TrainingMethod.STE,
                  per_channel=True,
                  test_loading=False):
         self.layer = layer
