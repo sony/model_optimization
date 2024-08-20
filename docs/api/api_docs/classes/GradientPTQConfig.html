@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>GradientPTQConfig Class &#8212; MCT Documentation: ver 2.1.0</title>
+    <title>GradientPTQConfig Class &#8212; MCT Documentation: ver 2.2.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.1.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">GradientPTQConfig Class</a></li> 
       </ul>
     </div>  
@@ -78,7 +78,7 @@ accordingly. see example in multiple_tensors_mse_loss</p></li>
 <p><strong>The following API can be used to create a GPTQHessianScoresConfig instance which can be used to define necessary parameters for computing Hessian scores for the GPTQ loss function.</strong></p>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.gptq.GPTQHessianScoresConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.gptq.</span></span><span class="sig-name descname"><span class="pre">GPTQHessianScoresConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessians_num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_log_norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.gptq.GPTQHessianScoresConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.gptq.</span></span><span class="sig-name descname"><span class="pre">GPTQHessianScoresConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hessians_num_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">GPTQ_HESSIAN_NUM_SAMPLES</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm_scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_log_norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ACT_HESSIAN_DEFAULT_BATCH_SIZE</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.gptq.GPTQHessianScoresConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configuration to use for computing the Hessian-based scores for GPTQ loss metric.</p>
 <p>Initialize a GPTQHessianWeightsConfig.</p>
 <dl class="field-list simple">
@@ -88,6 +88,7 @@ accordingly. see example in multiple_tensors_mse_loss</p></li>
 <li><p><strong>norm_scores</strong> (<em>bool</em>) – Whether to normalize the returned scores of the weighted loss function (to get values between 0 and 1).</p></li>
 <li><p><strong>log_norm</strong> (<em>bool</em>) – Whether to use log normalization for the GPTQ Hessian-based scores.</p></li>
 <li><p><strong>scale_log_norm</strong> (<em>bool</em>) – Whether to scale the final vector of the Hessian-based scores.</p></li>
+<li><p><strong>hessian_batch_size</strong> (<em>int</em>) – The Hessian computation batch size. used only if using GPTQ with Hessian-based objective.</p></li>
 </ul>
 </dd>
 </dl>
@@ -142,7 +143,7 @@ accordingly. see example in multiple_tensors_mse_loss</p></li>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.1.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">GradientPTQConfig Class</a></li> 
       </ul>
     </div>

@@ -31,9 +31,7 @@ class XQuantConfig:
 
         Args:
             report_dir (str): Directory where the reports will be saved.
-            custom_similarity_metrics (Dict[str, Callable]): Custom similarity metrics to be computed between tensors
-            of the two models. The dictionary keys are similarity metric names and the values are callables that implement the
-            similarity metric computation.
+            custom_similarity_metrics (Dict[str, Callable]): Custom similarity metrics to be computed between tensors of the two models. The dictionary keys are similarity metric names and the values are callables that implement the similarity metric computation.
         """
         self.report_dir = report_dir
         self.custom_similarity_metrics = custom_similarity_metrics
