@@ -15,7 +15,7 @@
 
 import unittest
 import numpy as np
-from keras.src.optimizers import Adam
+from keras.optimizers import Adam
 
 from model_compression_toolkit.data_generation.keras.optimization_functions.lr_scheduler import ReduceLROnPlateau
 
