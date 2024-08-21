@@ -1,7 +1,9 @@
 # The following code was mostly duplicated from https://github.com/ultralytics/ultralytics
 # and changed to generate an equivalent PyTorch model suitable for quantization.
 # Main changes:
-#   * Modify layers to make them more suitable for quantization.
+#   * Modify layers to make them more suitable for quantization
+#       * torch.fx compatibility
+#       * Detect head (mainly the box decoding part that was optimized for model quantization)
 #   * Inheritance class from HuggingFace
 #   * Implement box decoding into Detect Layer
 # ==============================================================================
@@ -9,8 +11,17 @@
 Yolov8n Object Detection Model - PyTorch implementation
 
 This code contains a PyTorch implementation of Yolov8n object detection model, following
-https://github.com/ultralytics/ultralytics. This implementation includes a slightly modified version of yolov8
-detection-head (mainly the box decoding part) that was optimized for model quantization.
+https://github.com/ultralytics/ultralytics.
+
+Usage:
+  model, cfg_dict = yolov8_pytorch("yolov8n.yaml")
+  pretrained_weights = torch.load('/path/to/pretrained/yolov8n.pt')['model'].state_dict()
+  model.load_state_dict(pretrained_weights, strict=False)
+  model.eval()
+
+Notes and Limitations:
+- The model has been tested only with the default settings from Ultralytics, specifically using a 640x640 input resolution and 80 object classes.
+- Anchors and strides are hardcoded as constants within the model, meaning they are not included in the weights file from Ultralytics.
 
 The code is organized as follows:
 - Classes definitions of Yolov8n building blocks: Conv, Bottleneck, C2f, SPPF, Upsample, Concaat, DFL and Detect
@@ -242,12 +253,7 @@ class Detect(nn.Module):
         self.dfl = DFL(self.reg_max) if self.reg_max > 1 else nn.Identity()
         anchors, strides = (x.transpose(0, 1) for x in make_anchors(self.feat_sizes,
                                                                     self.stride, 0.5))
-        strides = strides / self.img_size
         anchors = anchors * strides
-        self.relu1 = nn.ReLU()
-        self.relu2 = nn.ReLU()
-        self.relu3 = nn.ReLU()
-        self.relu4 = nn.ReLU()
 
         self.register_buffer('anchors', anchors)
         self.register_buffer('strides', strides)
