@@ -6,11 +6,11 @@
 #   * Uninfied version of model combining the three subversions
 # ==============================================================================
 """
-Yolov8n Object Detection Model - PyTorch implementation
+Efficient Anomaly Detection Model - PyTorch implementation
 
 This code contains a PyTorch implementation of efficient ad model, following
 https://github.com/nelson1425/EfficientAD. This implementation includes a unified version of the model that combines the three submodels 
-into one to ease the process of quantisation and deployment. 
+into one to ease the process of quantization and deployment. 
 
 The code is organized as follows:
 - 

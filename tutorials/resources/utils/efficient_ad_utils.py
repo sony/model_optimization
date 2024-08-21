@@ -28,6 +28,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
+
 # Global constants
 IMAGE_SIZE = 256
 OUT_CHANNELS = 384
@@ -67,37 +68,6 @@ def infinite_dataloader(loader):
 def train_transform(image):
     """Apply transformations to the training images."""
     return DEFAULT_TRANSFORM(image), DEFAULT_TRANSFORM(TRANSFORM_AE(image))
-
-def benchmark(unified_model, name):
-    """Benchmark the model by testing it on a dataset and printing the AUC score."""
-    dataset_path = './mvtec_anomaly_detection'
-    test_output_dir = os.path.join('output', 'anomaly_maps', name, 'bottle', 'test')
-    test_set = ImageFolderWithPath(os.path.join(dataset_path, 'bottle', 'test'))
-    unified_model.eval()
-    auc = test(test_set=test_set, unified_model=unified_model, test_output_dir=test_output_dir, desc='Final inference')
-    print('Final image auc: {:.4f}'.format(auc))
-
-def test(test_set, unified_model, test_output_dir=None, desc='Running inference'):
-    """Test the model and calculate the AUC score."""
-    y_true, y_score = [], []
-    for image, target, path in tqdm(test_set, desc=desc):
-        orig_width, orig_height = image.size
-        image = DEFAULT_TRANSFORM(image)[None]  # Add batch dimension
-        if torch.cuda.is_available():
-            image = image.cuda()
-        map_combined = predict_combined(image, unified_model)
-        map_combined = torch.nn.functional.interpolate(map_combined, (orig_height, orig_width), mode='bilinear')
-        map_combined = map_combined[0, 0].detach().cpu().numpy()
-        defect_class = os.path.basename(os.path.dirname(path))
-        if test_output_dir:
-            img_nm = os.path.split(path)[1].split('.')[0]
-            defect_dir = os.path.join(test_output_dir, defect_class)
-            os.makedirs(defect_dir, exist_ok=True)
-            tifffile.imwrite(os.path.join(defect_dir, img_nm + '.tiff'), map_combined)
-        y_true.append(0 if defect_class == 'good' else 1)
-        y_score.append(np.max(map_combined))
-    auc = roc_auc_score(y_true=y_true, y_score=y_score)
-    return auc * 100
 
 def visualize_anomalies(unified_model, dataset_path, test_output_dir=None, desc='Running inference'):
     """Visualize anomalies by overlaying heatmaps on the original images."""
@@ -202,7 +172,8 @@ def train_ad(train_steps, dataset_path, sub_dataset, autoencoder, teacher, stude
     torch.save(autoencoder, os.path.join(train_output_dir, 'autoencoder_final.pth'))
 
 @torch.no_grad()
-def predict(image, teacher, student, autoencoder, teacher_mean, teacher_std):
+def predict(image, teacher, student, autoencoder, teacher_mean, teacher_std,
+            q_st_start=None, q_st_end=None, q_ae_start=None, q_ae_end=None):
     """Predict using the trained models and calculate anomaly maps."""
     teacher_output = teacher(image)
     teacher_output = (teacher_output - teacher_mean) / teacher_std
@@ -210,15 +181,23 @@ def predict(image, teacher, student, autoencoder, teacher_mean, teacher_std):
     autoencoder_output = autoencoder(image)
     map_st = torch.mean((teacher_output - student_output[:, :OUT_CHANNELS])**2, dim=1, keepdim=True)
     map_ae = torch.mean((autoencoder_output - student_output[:, OUT_CHANNELS:])**2, dim=1, keepdim=True)
+    if q_st_start is not None:
+        map_st = 0.1 * (map_st - q_st_start) / (q_st_end - q_st_start)
+    if q_ae_start is not None:
+        map_ae = 0.1 * (map_ae - q_ae_start) / (q_ae_end - q_ae_start)
     map_combined = 0.5 * map_st + 0.5 * map_ae
     return map_combined, map_st, map_ae
 
 @torch.no_grad()
-def predict_combined(image, unified_model):
+def predict_combined(image, unified_model, q_st_start=None, q_st_end=None, q_ae_start=None, q_ae_end=None):
     """Predict using the trained models and calculate anomaly maps."""
     map_st, map_ae = unified_model(image)
     map_st = torch.mean(map_st, dim=1, keepdim=True)
     map_ae = torch.mean(map_ae, dim=1, keepdim=True)
+    if q_st_start is not None:
+        map_st = 0.1 * (map_st - q_st_start) / (q_st_end - q_st_start)
+    if q_ae_start is not None:
+        map_ae = 0.1 * (map_ae - q_ae_start) / (q_ae_end - q_ae_start)
     map_combined = 0.5 * map_st + 0.5 * map_ae
     return map_combined, map_st, map_ae
 
