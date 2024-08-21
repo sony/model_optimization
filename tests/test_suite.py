@@ -80,14 +80,13 @@ if found_tf:
         KerasTrainableInfrastructureTestRunner
     from tests.keras_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as keras_gptq_soft_quantizer_test
     from tests.keras_tests.function_tests.test_activation_quantization_holder_gptq import TestGPTQModelBuilderWithActivationHolder
-    from tests.keras_tests.data_generation_tests import KerasDataGenerationTestRunner
+    from tests.keras_tests.data_generation_tests.test_keras_data_generation_runner import KerasDataGenerationTestRunner
     from tests.keras_tests.pruning_tests.test_memory_calculator import TestParameterCounter
     from tests.keras_tests.pruning_tests.test_pretrained_models import PruningPretrainedModelsTest
     from tests.keras_tests.pruning_tests.feature_networks.test_pruning_feature_networks import PruningFeatureNetworksTest
     from tests.keras_tests.function_tests.test_hmse_error_method import TestParamSelectionWithHMSE
-    from tests.keras_tests.data_generation_tests import TestReduceLROnPlateau
-    from tests.keras_tests.function_tests.test_node_quantization_configurations import \
-        TestNodeQuantizationConfigurations
+    from tests.keras_tests.data_generation_tests.test_scheduler_step import TestReduceLROnPlateau
+    from tests.keras_tests.function_tests.test_node_quantization_configurations import TestNodeQuantizationConfigurations
     from tests.keras_tests.function_tests.test_quant_config_filtering import TestKerasQuantConfigFiltering
 
 if found_pytorch:
@@ -100,8 +99,7 @@ if found_pytorch:
     # from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
     from tests.pytorch_tests.function_tests.test_pytorch_tp_model import TestPytorchTPModel
-    from tests.pytorch_tests.trainable_infrastructure_tests import \
-        PytorchTrainableInfrastructureTestRunner
+    from tests.pytorch_tests.trainable_infrastructure_tests.test_pytorch_trainable_infra_runner import PytorchTrainableInfrastructureTestRunner
     from tests.pytorch_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as pytorch_gptq_soft_quantier_test
     from tests.pytorch_tests.function_tests.test_activation_quantization_holder_gptq import \
         TestGPTQModelBuilderWithActivationHolder as TestGPTQModelBuilderWithActivationHolderPytorch
