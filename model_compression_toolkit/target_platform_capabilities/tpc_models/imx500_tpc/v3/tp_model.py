@@ -167,6 +167,16 @@ def generate_tp_model(default_config: OpQuantizationConfig,
             weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO))
     const_configuration_options = tp.QuantizationConfigOptions([const_config])
 
+    # 16 bits inputs and outputs. Currently, only defined for consts since they are used in operators that
+    # support 16 bit as input and output.
+    const_config_input16 = const_config.clone_and_edit(
+        supported_input_activation_n_bits=(8, 16))
+    const_config_input16_output16 = const_config_input16.clone_and_edit(
+        activation_n_bits=16, signedness=Signedness.SIGNED)
+    const_configuration_options_inout16 = tp.QuantizationConfigOptions([const_config_input16_output16,
+                                                                        const_config_input16],
+                                                                       base_config=const_config_input16)
+
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
@@ -186,8 +196,10 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # May suit for operations like: Dropout, Reshape, etc.
         default_qco = tp.get_default_quantization_config_options()
         tp.OperatorsSet("NoQuantization",
-                        default_qco.clone_and_edit(enable_activation_quantization=False)
+                        default_qco.clone_and_edit(enable_activation_quantization=False,
+                                                   supported_input_activation_n_bits=(8, 16))
                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+        tp.OperatorsSet("Default16BitInout", const_configuration_options_inout16)
 
         # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
         mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
@@ -200,9 +212,9 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # Define operations sets without quantization configuration
         # options (useful for creating fusing patterns, for example):
         any_relu = tp.OperatorsSet("AnyReLU")
-        add = tp.OperatorsSet("Add", const_configuration_options)
-        sub = tp.OperatorsSet("Sub", const_configuration_options)
-        mul = tp.OperatorsSet("Mul", const_configuration_options)
+        add = tp.OperatorsSet("Add", const_configuration_options_inout16)
+        sub = tp.OperatorsSet("Sub", const_configuration_options_inout16)
+        mul = tp.OperatorsSet("Mul", const_configuration_options_inout16)
         div = tp.OperatorsSet("Div", const_configuration_options)
         prelu = tp.OperatorsSet("PReLU")
         swish = tp.OperatorsSet("Swish")

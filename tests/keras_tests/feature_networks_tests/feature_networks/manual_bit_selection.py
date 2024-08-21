@@ -130,7 +130,7 @@ class Manual16BitWidthSelectionTest(ManualBitWidthSelectionTest):
     Uses the manual bit width API in the "get_core_configs" method.
     """
     def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, 'v4')
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, 'v3')
         # Force Mul base_config to 16bit only
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
         mul_op_set.qc_options.base_config = \
@@ -157,7 +157,7 @@ class Manual16BitWidthSelectionMixedPrecisionTest(Manual16BitWidthSelectionTest)
     Uses the manual bit width API in the "get_core_configs" method.
     """
     def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, 'v4')
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, 'v3')
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
         mul_op_set.qc_options.base_config = \
         [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]

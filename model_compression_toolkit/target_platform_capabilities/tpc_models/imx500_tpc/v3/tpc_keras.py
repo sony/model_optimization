@@ -26,11 +26,11 @@ if FOUND_SONY_CUSTOM_LAYERS:
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
-        Conv2DTranspose, Identity
+        Conv2DTranspose, Identity, Concatenate
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
-        Conv2DTranspose, Identity
+        Conv2DTranspose, Identity, Concatenate
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tp_model import get_tp_model
 import model_compression_toolkit as mct
@@ -84,6 +84,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                      tf.compat.v1.gather,
                      tf.nn.top_k,
                      tf.__operators__.getitem,
+                     tf.strided_slice,
                      tf.image.combined_non_max_suppression,
                      tf.compat.v1.shape]
 
@@ -92,6 +93,8 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
 
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", no_quant_list)
+        tp.OperationsSetToLayers("Default16BitInout", [tf.stack,
+                                                       tf.concat, Concatenate])
         tp.OperationsSetToLayers("Conv",
                                  [Conv2D,
                                   DepthwiseConv2D,
