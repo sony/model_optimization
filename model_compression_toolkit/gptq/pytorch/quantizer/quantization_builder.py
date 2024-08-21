@@ -25,8 +25,9 @@ from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
 from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
 
 from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.trainable_infrastructure import TrainingMethod, BasePytorchActivationTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.common.get_quantizer_config import \
-    get_trainable_quantizer_weights_config
+    get_trainable_quantizer_weights_config, get_trainable_quantizer_activation_config
 from model_compression_toolkit.trainable_infrastructure.common.get_quantizers import \
     get_trainable_quantizer_class
 
@@ -68,12 +69,11 @@ def quantization_builder(n: common.BaseNode,
 
         quant_method = n.final_activation_quantization_cfg.activation_quantization_method
 
-        quantizer_class = get_inferable_quantizer_class(quant_target=QuantizationTarget.Activation,
+        quantizer_class = get_trainable_quantizer_class(quant_target=QuantizationTarget.Activation,
+                                                        quantizer_id=TrainingMethod.STE,
                                                         quant_method=quant_method,
-                                                        quantizer_base_class=BasePyTorchInferableQuantizer)
-
-        kwargs = get_activation_inferable_quantizer_kwargs(n.final_activation_quantization_cfg)
-
-        activation_quantizers.append(quantizer_class(**kwargs))
+                                                        quantizer_base_class=BasePytorchActivationTrainableQuantizer)
+        cfg = get_trainable_quantizer_activation_config(n, None)
+        activation_quantizers.append(quantizer_class(cfg, freeze_quant_params=True))
 
     return weights_quantizers, activation_quantizers

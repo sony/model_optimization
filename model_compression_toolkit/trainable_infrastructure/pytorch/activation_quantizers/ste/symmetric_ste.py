@@ -18,7 +18,8 @@ import numpy as np
 import torch
 from torch import nn
 
-from mct_quantizers import mark_quantizer, QuantizationTarget, QuantizationMethod, PytorchQuantizationWrapper
+from mct_quantizers import mark_quantizer, QuantizationTarget, QuantizationMethod, PytorchQuantizationWrapper, \
+    PytorchActivationQuantizationHolder
 from mct_quantizers.pytorch.quantizers import ActivationPOTInferableQuantizer, ActivationSymmetricInferableQuantizer
 from model_compression_toolkit import constants as C
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
@@ -39,14 +40,15 @@ class STESymmetricActivationTrainableQuantizer(BasePytorchActivationTrainableQua
     Trainable constrained quantizer to quantize a layer activations.
     """
 
-    def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
+    def __init__(self, quantization_config: TrainableQuantizerActivationConfig, freeze_quant_params: bool = False):
         """
         Initialize a STESymmetricActivationTrainableQuantizer object with parameters to use for symmetric or power of two quantization.
 
         Args:
             quantization_config: trainable quantizer config class
+            freeze_quant_params: whether to freeze learnable quantization parameters
         """
-        super().__init__(quantization_config)
+        super().__init__(quantization_config, freeze_quant_params)
         self.power_of_two = quantization_config.activation_quantization_method == QuantizationMethod.POWER_OF_TWO
         self.sign = quantization_config.activation_quantization_params['is_signed']
         np_threshold_values = quantization_config.activation_quantization_params[C.THRESHOLD]
@@ -56,7 +58,7 @@ class STESymmetricActivationTrainableQuantizer(BasePytorchActivationTrainableQua
     def initialize_quantization(self,
                                 tensor_shape: torch.Size,
                                 name: str,
-                                layer: PytorchQuantizationWrapper):
+                                layer: PytorchActivationQuantizationHolder):
         """
         Add quantizer parameters to the quantizer parameters dictionary
 
@@ -66,7 +68,7 @@ class STESymmetricActivationTrainableQuantizer(BasePytorchActivationTrainableQua
             layer: Layer to quantize.
         """
         layer.register_parameter(name, nn.Parameter(to_torch_tensor(self.threshold_tensor),
-                                                    requires_grad=True))
+                                                    requires_grad=not self.freeze_quant_params))
 
         # save the quantizer added parameters for later calculations
         self.add_quantizer_variable(THRESHOLD_TENSOR, layer.get_parameter(name), VariableGroup.QPARAMS)
