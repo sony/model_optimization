@@ -16,7 +16,7 @@ import unittest
 
 from model_compression_toolkit.data_generation.common.enums import SchedulerType, BatchNormAlignemntLossType, \
     DataInitType, BNLayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
-from tests.data_generation_tests.keras.base_keras_data_generation_test import BaseKerasDataGenerationTest, \
+from tests.keras_tests.data_generation_tests.base_keras_data_generation_test import BaseKerasDataGenerationTest, \
     NoBNDataGenerationModel
 
 

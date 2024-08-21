@@ -20,7 +20,7 @@ from keras.models import Model
 
 from model_compression_toolkit.xquant.keras.model_analyzer import KerasModelAnalyzer
 import model_compression_toolkit as mct
-from tests.xquant_tests.keras_tests.test_xquant_end2end import random_data_gen
+from tests.keras_tests.xquant_tests.test_xquant_end2end import random_data_gen
 
 
 class TestKerasModelAnalyzer(unittest.TestCase):

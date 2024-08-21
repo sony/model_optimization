@@ -20,7 +20,7 @@ from model_compression_toolkit.data_generation.common.enums import SchedulerType
     DataInitType, BNLayerWeightingType, ImageGranularity, ImagePipelineType, ImageNormalizationType, OutputLossType
 from model_compression_toolkit.data_generation.pytorch.optimization_functions.lr_scheduler import \
     ReduceLROnPlateauWithReset
-from tests.data_generation_tests.pytorch.base_pytorch_data_generation_test import BasePytorchDataGenerationTest
+from tests.pytorch_tests.data_generation_tests.base_pytorch_data_generation_test import BasePytorchDataGenerationTest
 
 
 class PytorchDataGenerationTestRunner(unittest.TestCase):
