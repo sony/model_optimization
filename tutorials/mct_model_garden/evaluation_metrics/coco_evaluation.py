@@ -140,6 +140,7 @@ class CocoEval:
         h_model, w_model = output_resize['shape']
         preserve_aspect_ratio = output_resize['aspect_ratio_preservation']
         normalized_coords = output_resize.get('normalized_coords', True)
+        xyxy_bbox_format = output_resize.get('xyxy_bbox_format', False)
 
         if self.task == 'Detection':
             # Process model outputs and convert to detection format
@@ -149,6 +150,8 @@ class CocoEval:
                 labels = (coco80_to_coco91(
                     output[2].numpy())).squeeze()  # Convert COCO 80-class indices to COCO 91-class indices
                 boxes = output[0].numpy().squeeze()  # Extract bounding boxes
+                if xyxy_bbox_format:
+                    boxes[:, [0, 1, 2, 3]] = boxes[:, [1, 0, 3, 2]] # the evaluator assumes yxyx bbox format
                 boxes = scale_boxes(boxes, orig_img_dims[idx][0], orig_img_dims[idx][1], h_model, w_model,
                                     preserve_aspect_ratio, normalized_coords)
 
