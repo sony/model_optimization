@@ -155,7 +155,7 @@ def core_runner(in_model: Any,
         if (target_resource_utilization.activation_memory < np.inf or
                 target_resource_utilization.total_memory < np.inf):
             Logger.warning(
-                f"Running mixed precision for activation compression, Please note this feature is experimental and is "
+                f"Running mixed precision for activation compression, please note this feature is experimental and is "
                 f"subject to future changes. If you encounter an issue, please open an issue in our GitHub "
                 f"project https://github.com/sony/model_optimization")
     else:
