@@ -40,7 +40,7 @@ found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util
     "torchvision") is not None
 
 if found_tf:
-    from tests.keras_tests.keras_tests import BaseTestEnd2EndKerasXQuant
+    from tests.keras_tests.xquant_tests.test_xquant_end2end import BaseTestEnd2EndKerasXQuant
     from tests.keras_tests.function_tests.test_activation_quantization_functions import TestActivationQuantizationFunctions as TestActivationQuantizationFunctionsKeras
     from tests.keras_tests.function_tests.test_custom_layer import TestCustomLayer
     from tests.keras_tests.function_tests.test_hessian_info_calculator import TestHessianInfoCalculatorWeights, \
