@@ -242,12 +242,7 @@ class Detect(nn.Module):
         self.dfl = DFL(self.reg_max) if self.reg_max > 1 else nn.Identity()
         anchors, strides = (x.transpose(0, 1) for x in make_anchors(self.feat_sizes,
                                                                     self.stride, 0.5))
-        strides = strides / self.img_size
         anchors = anchors * strides
-        self.relu1 = nn.ReLU()
-        self.relu2 = nn.ReLU()
-        self.relu3 = nn.ReLU()
-        self.relu4 = nn.ReLU()
 
         self.register_buffer('anchors', anchors)
         self.register_buffer('strides', strides)
