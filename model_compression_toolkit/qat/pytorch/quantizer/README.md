@@ -4,16 +4,14 @@
 
 Several training methods may be applied by the user to train the QAT ready model
 created by `pytorch_quantization_aware_training_init` method in [`pytorch/quantization_facade`](../quantization_facade.py).
-Each `TrainingMethod` (an enum defined in the [`qat_config`](../../common/qat_config.py)) 
+Each [`TrainingMethod`](../../../trainable_infrastructure/common/training_method.py) 
 and [`QuantizationMethod`](../../../target_platform_capabilities/target_platform/op_quantization_config.py)
 selects a quantizer for weights and a quantizer for activations.
-
-Currently, only the STE (straight through estimator) training method is implemented by the MCT.
 
 ## Make your own training method
 
 Follow these steps in order to set the quantizers required by your training method:
-- Add your `TrainingMethod` enum in [`qat_config`](../../common/qat_config.py).
+- Add your enum to `TrainingMethod`
 - Add your quantizers for weights and activation as explained in [quantizer readme](../../../trainable_infrastructure/pytorch).
 - Import your quantizer package in the quantizer [`__init.py__`](./__init__.py) file.
 - Set your `TrainingMethod` in the `QATConfig` and generate the QAT ready model for training. 
@@ -23,7 +21,7 @@ Follow these steps in order to set the quantizers required by your training meth
 
 In this example we'll add a new quantization method, called MTM (my training method).
 
-First, we update the `TrainingMethod` enum in [`qat_config`](../../common/qat_config.py)
+First, we update the `TrainingMethod`(../../../trainable_infrastructure/common/training_method.py)
 ```python
 class TrainingMethod(Enum):
     """
