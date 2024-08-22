@@ -31,7 +31,7 @@ def benchmark(unified_model, name, q_st_start=None, q_st_end=None, q_ae_start=No
     auc = test(test_set=test_set, unified_model=unified_model, test_output_dir=test_output_dir, q_st_start=None, q_st_end=None, q_ae_start=None, q_ae_end=None, desc='Final inference')
     print('Final image auc: {:.4f}'.format(auc))
 
-def test(test_set, unified_model, test_output_dir=None, desc='Running inference'):
+def test(test_set, unified_model, test_output_dir=None, q_st_start=None, q_st_end=None, q_ae_start=None, q_ae_end=None, desc='Running inference'):
     """Test the model and calculate the AUC score."""
     y_true, y_score = [], []
     for image, target, path in tqdm(test_set, desc=desc):
@@ -39,7 +39,7 @@ def test(test_set, unified_model, test_output_dir=None, desc='Running inference'
         image = DEFAULT_TRANSFORM(image)[None]  # Add batch dimension
         if torch.cuda.is_available():
             image = image.cuda()
-        map_combined = predict_combined(image, unified_model, q_st_start=None, q_st_end=None, q_ae_start=None, q_ae_end=None)
+        map_combined , _, _ = predict_combined(image, unified_model, q_st_start=None, q_st_end=None, q_ae_start=None, q_ae_end=None)
         map_combined = torch.nn.functional.interpolate(map_combined, (orig_height, orig_width), mode='bilinear')
         map_combined = map_combined[0, 0].detach().cpu().numpy()
         defect_class = os.path.basename(os.path.dirname(path))
