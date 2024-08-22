@@ -23,13 +23,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install tensorflow==${{ inputs.tf-version }}
+          pip install tensorflow==${{ inputs.tf-version }} sony-custom-layers
       - name: Run unittests
         # Some tests are sensitive to memory because we use tf gradients on a multi-thread/process
         # CPU environment (https://github.com/tensorflow/tensorflow/issues/41718).
         # For this reason, if we run them in such an environment, we need to run them first non-parallel separately.
         run: |
-          python -m unittest discover tests/keras_tests/pruning_tests -v
-          python -m unittest discover tests/keras_tests/non_parallel_tests -v
-          for script in tests/xquant_tests/keras_tests tests/keras_tests/exporter_tests tests/keras_tests/feature_networks_tests tests/keras_tests/graph_tests tests/keras_tests/layer_tests; do python -m unittest discover $script -v & pids+=($!); done; for pid in ${pids[@]}; do wait $pid || exit 1; done          
+          python -m unittest discover tests/keras_tests -v
+          
 

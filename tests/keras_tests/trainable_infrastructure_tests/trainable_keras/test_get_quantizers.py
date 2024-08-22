@@ -15,7 +15,7 @@
 
 from model_compression_toolkit.trainable_infrastructure.common.get_quantizers import \
     get_trainable_quantizer_class
-from tests.trainable_infrastructure_tests.keras.base_keras_trainable_infra_test import \
+from tests.keras_tests.trainable_infrastructure_tests.base_keras_trainable_infra_test import \
     BaseKerasTrainableInfrastructureTest
 
 

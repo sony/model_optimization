@@ -16,7 +16,7 @@ from model_compression_toolkit.trainable_infrastructure.common.trainable_quantiz
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
     BasePytorchTrainableQuantizer
-from tests.trainable_infrastructure_tests.pytorch.base_pytorch_trainable_infra_test import \
+from tests.pytorch_tests.trainable_infrastructure_tests.base_pytorch_trainable_infra_test import \
     BasePytorchInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 

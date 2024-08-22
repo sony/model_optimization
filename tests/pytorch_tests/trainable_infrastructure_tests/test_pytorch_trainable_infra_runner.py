@@ -1,4 +1,4 @@
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2021 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,83 +12,85 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
+
 import unittest
-import tensorflow as tf
 
 from model_compression_toolkit.qat import TrainingMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from mct_quantizers import QuantizationTarget
-from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEWeightQATQuantizer, \
+from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEWeightQATQuantizer, \
     STEActivationQATQuantizer
-from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformWeightQATQuantizer, \
+from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.uniform_ste import STEUniformWeightQATQuantizer, \
     STEUniformActivationQATQuantizer
-from model_compression_toolkit.qat.keras.quantizer.lsq.uniform_lsq import LSQUniformActivationQATQuantizer, LSQUniformWeightQATQuantizer
-from model_compression_toolkit.qat.keras.quantizer.lsq.symmetric_lsq import LSQActivationQATQuantizer, LSQWeightQATQuantizer
-from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
-from tests.trainable_infrastructure_tests.keras.trainable_keras.test_get_quantizers import \
+from model_compression_toolkit.qat.pytorch.quantizer.lsq.symmetric_lsq import LSQWeightQATQuantizer, \
+    LSQActivationQATQuantizer
+from model_compression_toolkit.qat.pytorch.quantizer.lsq.uniform_lsq import LSQUniformWeightQATQuantizer, \
+    LSQUniformActivationQATQuantizer
+from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
+    BasePytorchTrainableQuantizer
+from tests.pytorch_tests.trainable_infrastructure_tests.trainable_pytorch.test_pytorch_base_quantizer import \
+    TestPytorchBaseWeightsQuantizer, TestPytorchBaseActivationQuantizer, TestPytorchQuantizerWithoutMarkDecorator
+from tests.pytorch_tests.trainable_infrastructure_tests.trainable_pytorch.test_pytorch_get_quantizers import \
     TestGetTrainableQuantizer
-from tests.trainable_infrastructure_tests.keras.trainable_keras.test_keras_base_quantizer import TestKerasBaseWeightsQuantizer, \
-    TestKerasBaseActivationsQuantizer, TestKerasQuantizerWithoutMarkDecorator
-
-layers = tf.keras.layers
 
 
-class KerasTrainableInfrastructureTestRunner(unittest.TestCase):
+class PytorchTrainableInfrastructureTestRunner(unittest.TestCase):
 
-    def test_keras_base_quantizer(self):
-        TestKerasBaseWeightsQuantizer(self).run_test()
-        TestKerasBaseActivationsQuantizer(self).run_test()
-        TestKerasQuantizerWithoutMarkDecorator(self).run_test()
+    def test_pytorch_base_quantizer(self):
+        TestPytorchBaseWeightsQuantizer(self).run_test()
+        TestPytorchBaseActivationQuantizer(self).run_test()
+        TestPytorchQuantizerWithoutMarkDecorator(self).run_test()
 
-    def test_get_quantizers(self):
+    def test_pytorch_get_quantizers(self):
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
                                   quant_method=QuantizationMethod.POWER_OF_TWO,
-                                  quantizer_base_class=BaseKerasTrainableQuantizer,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_id=TrainingMethod.STE,
                                   expected_quantizer_class=STEWeightQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
                                   quant_method=QuantizationMethod.SYMMETRIC,
-                                  quantizer_base_class=BaseKerasTrainableQuantizer,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_id=TrainingMethod.STE,
                                   expected_quantizer_class=STEWeightQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
                                   quant_method=QuantizationMethod.UNIFORM,
-                                  quantizer_base_class=BaseKerasTrainableQuantizer,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_id=TrainingMethod.STE,
                                   expected_quantizer_class=STEUniformWeightQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.POWER_OF_TWO,
-                                  quantizer_base_class=BaseKerasTrainableQuantizer,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_id=TrainingMethod.STE,
                                   expected_quantizer_class=STEActivationQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.SYMMETRIC,
-                                  quantizer_base_class=BaseKerasTrainableQuantizer,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_id=TrainingMethod.STE,
                                   expected_quantizer_class=STEActivationQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.UNIFORM,
-                                  quantizer_base_class=BaseKerasTrainableQuantizer,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_id=TrainingMethod.STE,
                                   expected_quantizer_class=STEUniformActivationQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
                                   quant_method=QuantizationMethod.SYMMETRIC,
-                                  quantizer_base_class=BaseKerasTrainableQuantizer,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_id=TrainingMethod.LSQ,
                                   expected_quantizer_class=LSQWeightQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
                                   quant_method=QuantizationMethod.UNIFORM,
-                                  quantizer_base_class=BaseKerasTrainableQuantizer,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_id=TrainingMethod.LSQ,
                                   expected_quantizer_class=LSQUniformWeightQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.SYMMETRIC,
-                                  quantizer_base_class=BaseKerasTrainableQuantizer,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_id=TrainingMethod.LSQ,
                                   expected_quantizer_class=LSQActivationQATQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.UNIFORM,
-                                  quantizer_base_class=BaseKerasTrainableQuantizer,
+                                  quantizer_base_class=BasePytorchTrainableQuantizer,
                                   quantizer_id=TrainingMethod.LSQ,
                                   expected_quantizer_class=LSQUniformActivationQATQuantizer).run_test()
 

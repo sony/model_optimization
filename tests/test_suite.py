@@ -40,7 +40,7 @@ found_pytorch = importlib.util.find_spec("torch") is not None and importlib.util
     "torchvision") is not None
 
 if found_tf:
-    from tests.xquant_tests.keras_tests.test_xquant_end2end import BaseTestEnd2EndKerasXQuant
+    from tests.keras_tests.xquant_tests.test_xquant_end2end import BaseTestEnd2EndKerasXQuant
     from tests.keras_tests.function_tests.test_activation_quantization_functions import TestActivationQuantizationFunctions as TestActivationQuantizationFunctionsKeras
     from tests.keras_tests.function_tests.test_custom_layer import TestCustomLayer
     from tests.keras_tests.function_tests.test_hessian_info_calculator import TestHessianInfoCalculatorWeights, \
@@ -76,22 +76,21 @@ if found_tf:
     from tests.keras_tests.exporter_tests.test_runner import ExporterTestsRunner
     from tests.keras_tests.function_tests.test_get_gptq_config import TestGetGPTQConfig
     from tests.keras_tests.function_tests.test_gptq_loss_functions import TestGPTQLossFunctions
-    from tests.trainable_infrastructure_tests.keras.test_keras_trainable_infra_runner import \
+    from tests.keras_tests.trainable_infrastructure_tests.test_keras_trainable_infra_runner import \
         KerasTrainableInfrastructureTestRunner
     from tests.keras_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as keras_gptq_soft_quantizer_test
     from tests.keras_tests.function_tests.test_activation_quantization_holder_gptq import TestGPTQModelBuilderWithActivationHolder
-    from tests.data_generation_tests.keras.test_keras_data_generation_runner import KerasDataGenerationTestRunner
+    from tests.keras_tests.data_generation_tests.test_keras_data_generation_runner import KerasDataGenerationTestRunner
     from tests.keras_tests.pruning_tests.test_memory_calculator import TestParameterCounter
     from tests.keras_tests.pruning_tests.test_pretrained_models import PruningPretrainedModelsTest
     from tests.keras_tests.pruning_tests.feature_networks.test_pruning_feature_networks import PruningFeatureNetworksTest
     from tests.keras_tests.function_tests.test_hmse_error_method import TestParamSelectionWithHMSE
-    from tests.data_generation_tests.keras.test_scheduler_step import TestReduceLROnPlateau
-    from tests.keras_tests.function_tests.test_node_quantization_configurations import \
-        TestNodeQuantizationConfigurations
+    from tests.keras_tests.data_generation_tests.test_scheduler_step import TestReduceLROnPlateau
+    from tests.keras_tests.function_tests.test_node_quantization_configurations import TestNodeQuantizationConfigurations
     from tests.keras_tests.function_tests.test_quant_config_filtering import TestKerasQuantConfigFiltering
 
 if found_pytorch:
-    from tests.xquant_tests.pytorch_tests.test_xquant_end2end import BaseTestEnd2EndPytorchXQuant
+    from tests.pytorch_tests.xquant_tests.test_xquant_end2end import BaseTestEnd2EndPytorchXQuant
     from tests.pytorch_tests.function_tests.test_activation_quantization_functions import TestActivationQuantizationFunctions as TestActivationQuantizationFunctionsPytorch
     from tests.pytorch_tests.function_tests.test_torch_utils import TestTorchUtils
     from tests.pytorch_tests.function_tests.test_device_manager import TestDeviceManager
@@ -100,13 +99,12 @@ if found_pytorch:
     # from tests.pytorch_tests.model_tests.test_models_runner import ModelTest
     from tests.pytorch_tests.function_tests.test_function_runner import FunctionTestRunner
     from tests.pytorch_tests.function_tests.test_pytorch_tp_model import TestPytorchTPModel
-    from tests.trainable_infrastructure_tests.pytorch.test_pytorch_trainable_infra_runner import \
-        PytorchTrainableInfrastructureTestRunner
+    from tests.pytorch_tests.trainable_infrastructure_tests.test_pytorch_trainable_infra_runner import PytorchTrainableInfrastructureTestRunner
     from tests.pytorch_tests.function_tests.test_gptq_soft_quantizer import TestGPTQSoftQuantizer as pytorch_gptq_soft_quantier_test
     from tests.pytorch_tests.function_tests.test_activation_quantization_holder_gptq import \
         TestGPTQModelBuilderWithActivationHolder as TestGPTQModelBuilderWithActivationHolderPytorch
     from tests.pytorch_tests.exporter_tests.test_runner import PytorchExporterTestsRunner
-    from tests.data_generation_tests.pytorch.test_pytorch_data_generation_runner import PytorchDataGenerationTestRunner
+    from tests.pytorch_tests.data_generation_tests.test_pytorch_data_generation_runner import PytorchDataGenerationTestRunner
     from tests.pytorch_tests.graph_tests.test_fx_errors import TestGraphReading
     from tests.pytorch_tests.pruning_tests.feature_networks.test_pruning_feature_networks import PruningFeatureNetworksTest
     from tests.pytorch_tests.exporter_tests.test_exporting_qat_models import TestExportingQATModelTorchscript

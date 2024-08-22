@@ -18,7 +18,7 @@ import unittest
 from model_compression_toolkit.core.pytorch.utils import get_working_device, to_torch_tensor
 
 from model_compression_toolkit.xquant.pytorch.model_analyzer import PytorchModelAnalyzer
-from tests.xquant_tests.pytorch_tests.test_xquant_end2end import random_data_gen
+from tests.pytorch_tests.xquant_tests.test_xquant_end2end import random_data_gen
 import model_compression_toolkit as mct
 from torch import nn
 class TestPytorchModelAnalyzer(unittest.TestCase):
