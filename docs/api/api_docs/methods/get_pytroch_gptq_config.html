@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Get GradientPTQConfig for Pytorch Models &#8212; MCT Documentation: ver 2.1.0</title>
+    <title>Get GradientPTQConfig for Pytorch Models &#8212; MCT Documentation: ver 2.2.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.1.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Get GradientPTQConfig for Pytorch Models</a></li> 
       </ul>
     </div>  
@@ -45,7 +45,7 @@
 <span id="ug-get-pytorch-gptq-config"></span><h1>Get GradientPTQConfig for Pytorch Models<a class="headerlink" href="#get-gradientptqconfig-for-pytorch-models" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="model_compression_toolkit.gptq.get_pytorch_gptq_config">
-<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.gptq.</span></span><span class="sig-name descname"><span class="pre">get_pytorch_gptq_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_epochs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Adam([torch.Tensor([])],</span> <span class="pre">lr=LR_DEFAULT)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_rest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Adam([torch.Tensor([])],</span> <span class="pre">lr=LR_REST_DEFAULT)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">multiple_tensors_mse_loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_hessian_based_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">REG_DEFAULT</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.gptq.get_pytorch_gptq_config" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.gptq.</span></span><span class="sig-name descname"><span class="pre">get_pytorch_gptq_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_epochs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Adam([torch.Tensor([])],</span> <span class="pre">lr=LR_DEFAULT)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_rest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Adam([torch.Tensor([])],</span> <span class="pre">lr=LR_REST_DEFAULT)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">multiple_tensors_mse_loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_hessian_based_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularization_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">REG_DEFAULT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hessian_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ACT_HESSIAN_DEFAULT_BATCH_SIZE</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.gptq.get_pytorch_gptq_config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a GradientPTQConfigV2 instance for Pytorch models.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -57,6 +57,7 @@
 <li><p><strong>log_function</strong> (<em>Callable</em>) – Function to log information about the gptq process.</p></li>
 <li><p><strong>use_hessian_based_weights</strong> (<em>bool</em>) – Whether to use Hessian-based weights for weighted average loss.</p></li>
 <li><p><strong>regularization_factor</strong> (<em>float</em>) – A floating point number that defines the regularization factor.</p></li>
+<li><p><strong>hessian_batch_size</strong> (<em>int</em>) – Batch size for Hessian computation in Hessian-based weights GPTQ.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -111,7 +112,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.1.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Get GradientPTQConfig for Pytorch Models</a></li> 
       </ul>
     </div>

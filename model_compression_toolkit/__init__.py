@@ -27,4 +27,4 @@ from model_compression_toolkit import data_generation
 from model_compression_toolkit import pruning
 from model_compression_toolkit.trainable_infrastructure.keras.load_model import keras_load_quantized_model
 
-__version__ = "2.1.0"
+__version__ = "2.2.0"
