@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
-    <title>Data Generation Configuration &#8212; MCT Documentation: ver 2.1.0</title>
+    <title>Data Generation Configuration &#8212; MCT Documentation: ver 2.2.0</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.1.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Data Generation Configuration</a></li> 
       </ul>
     </div>  
@@ -45,7 +45,7 @@
 <span id="ug-datagenerationconfig"></span><h1>Data Generation Configuration<a class="headerlink" href="#data-generation-configuration" title="Permalink to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.data_generation.DataGenerationConfig">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.data_generation.</span></span><span class="sig-name descname"><span class="pre">DataGenerationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_gen_batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_lr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_loss_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_granularity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ImageGranularity.AllImages</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bn_alignment_loss_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_loss_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_init_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_weighting_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_pipeline_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_normalization_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_pixels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bn_layer_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_layer_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clip_images</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reflection</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.data_generation.DataGenerationConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.data_generation.</span></span><span class="sig-name descname"><span class="pre">DataGenerationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_gen_batch_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_lr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_loss_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_granularity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ImageGranularity.AllImages</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bn_alignment_loss_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_loss_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_init_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_weighting_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_pipeline_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_normalization_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_pixels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bn_layer_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_layer_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_clipping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.data_generation.DataGenerationConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Configuration class for data generation.</p>
 <p>Initialize the DataGenerationConfig.</p>
 <dl class="field-list simple">
@@ -64,11 +64,10 @@
 <li><p><strong>layer_weighting_type</strong> (<a class="reference internal" href="#model_compression_toolkit.data_generation.BNLayerWeightingType" title="model_compression_toolkit.data_generation.BNLayerWeightingType"><em>BNLayerWeightingType</em></a>) – Type of layer weighting. Defaults to None.</p></li>
 <li><p><strong>image_pipeline_type</strong> (<a class="reference internal" href="#model_compression_toolkit.data_generation.ImagePipelineType" title="model_compression_toolkit.data_generation.ImagePipelineType"><em>ImagePipelineType</em></a>) – Type of image pipeline. Defaults to None.</p></li>
 <li><p><strong>image_normalization_type</strong> (<a class="reference internal" href="#model_compression_toolkit.data_generation.ImageNormalizationType" title="model_compression_toolkit.data_generation.ImageNormalizationType"><em>ImageNormalizationType</em></a>) – Type of image normalization. Defaults to None.</p></li>
-<li><p><strong>extra_pixels</strong> (<em>int</em>) – Extra pixels to add to the input image size. Defaults to 0.</p></li>
+<li><p><strong>extra_pixels</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>Tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Extra pixels to add to the input image size. Defaults to 0.</p></li>
 <li><p><strong>bn_layer_types</strong> (<em>List</em>) – List of BatchNorm layer types. Defaults to [].</p></li>
 <li><p><strong>last_layer_types</strong> (<em>List</em>) – List of layer types. Defaults to [].</p></li>
-<li><p><strong>clip_images</strong> (<em>bool</em>) – Flag to enable image clipping. Defaults to True.</p></li>
-<li><p><strong>reflection</strong> (<em>bool</em>) – Flag to enable reflection. Defaults to True.</p></li>
+<li><p><strong>image_clipping</strong> (<em>bool</em>) – Flag to enable image clipping. Defaults to True.</p></li>
 </ul>
 </dd>
 </dl>
@@ -112,10 +111,11 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="model_compression_toolkit.data_generation.OutputLossType">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.data_generation.</span></span><span class="sig-name descname"><span class="pre">OutputLossType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.data_generation.OutputLossType" title="Permalink to this definition">¶</a></dt>
-<dd><p>An enum for choosing the output loss type:</p>
-<p>NONE - No output loss is applied.</p>
-<p>MIN_MAX_DIFF - Use min-max difference as the output loss.</p>
-<p>REGULARIZED_MIN_MAX_DIFF - Use regularized min-max difference as the output loss.</p>
+<dd><p>An enum for choosing the output loss type:
+NONE - No output loss is applied.
+NEGATIVE_MIN_MAX_DIFF - Use the mean of the negative min-max difference as the output loss.
+INVERSE_MIN_MAX_DIFF - Use mean of the 1/(min-max) difference as the output loss.
+REGULARIZED_MIN_MAX_DIFF - Use regularized min-max difference as the output loss.</p>
 </dd></dl>
 
 </section>
@@ -148,8 +148,7 @@
 <dt class="sig sig-object py" id="model_compression_toolkit.data_generation.ImagePipelineType">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.data_generation.</span></span><span class="sig-name descname"><span class="pre">ImagePipelineType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.data_generation.ImagePipelineType" title="Permalink to this definition">¶</a></dt>
 <dd><p>An enum for choosing the image pipeline type for image manipulation:</p>
-<p>RANDOM_CROP - Crop the images.</p>
-<p>RANDOM_CROP_FLIP - Crop and flip the images.</p>
+<p>SMOOTHING_AND_AUGMENTATION - Apply a smoothing filter, then crop and flip the images.</p>
 <p>IDENTITY - Do not apply any manipulation (identity transformation).</p>
 </dd></dl>
 
@@ -212,7 +211,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.1.0</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.0</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Data Generation Configuration</a></li> 
       </ul>
     </div>
