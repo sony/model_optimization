@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.core.pytorch.pytorch_device_config import DeviceManager
+from model_compression_toolkit.core.pytorch.pytorch_device_config import set_working_device
