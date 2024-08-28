@@ -20,7 +20,7 @@ from typing import Union
 from model_compression_toolkit.core.pytorch.constants import MAX_FLOAT16, MIN_FLOAT16
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.logger import Logger
-
+from model_compression_toolkit.core.pytorch.constants import CPU
 
 def set_model(model: torch.nn.Module, train_mode: bool = False):
     """
@@ -38,7 +38,10 @@ def set_model(model: torch.nn.Module, train_mode: bool = False):
         model.eval()
 
     device = get_working_device()
-    model.to(device)
+    if device.type == CPU:
+        model.cpu()
+    else:
+        model.cuda()
 
 
 def to_torch_tensor(tensor,
