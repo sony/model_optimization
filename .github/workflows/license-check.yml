@@ -1,0 +1,51 @@
+name: License Violation Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  license-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Java
+      uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+        distribution: 'adopt'
+
+    - name: Install ORT
+      run: |
+        wget https://github.com/oss-review-toolkit/ort/releases/download/v2.4.0/ort-2.4.0.jar
+        echo '#!/bin/sh' > ort
+        echo 'java -jar ort-2.4.0.jar "$@"' >> ort
+        chmod +x ort
+
+    - name: Run ORT analyzer
+      run: ./ort analyze -i . -o analyzer-output
+
+    - name: Run ORT evaluator
+      run: ./ort evaluate -i analyzer-output/analyzer-result.yml -o evaluator-output
+
+    - name: Generate report
+      run: ./ort report -i evaluator-output/evaluation-result.yml -o report-output -f StaticHtml
+
+    - name: Upload report
+      uses: actions/upload-artifact@v2
+      with:
+        name: ort-report
+        path: report-output/evaluation-report.html
+
+    - name: Check for rule violations
+      run: |
+        if grep -q "Rule violation" report-output/evaluation-report.html; then
+          echo "License violations found. Check the report for details."
+          exit 1
+        else
+          echo "No license violations found."
+        fi
