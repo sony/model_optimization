@@ -21,6 +21,8 @@ import copy
 import torch
 
 from model_compression_toolkit.core.common.hessian import HessianInfoService
+from model_compression_toolkit.gptq.pytorch.quantizer.gradual_activation_quantization import \
+    get_gradual_activation_quantizer_wrapper_factory
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
@@ -36,6 +38,7 @@ from model_compression_toolkit.gptq.pytorch.graph_info import get_gptq_trainable
 from model_compression_toolkit.gptq.pytorch.quantizer.quantization_builder import quantization_builder
 from model_compression_toolkit.gptq.pytorch.quantizer.regularization_factory import get_regularization
 from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
+from model_compression_toolkit.trainable_infrastructure.pytorch.util import get_total_grad_steps
 
 
 class PytorchGPTQTrainer(GPTQTrainer):
@@ -66,6 +69,13 @@ class PytorchGPTQTrainer(GPTQTrainer):
             representative_data_gen: Dataset to use for inputs of the models.
             hessian_info_service: HessianInfoService to fetch info based on the hessian approximation of the float model.
         """
+        def _get_total_grad_steps():
+            return get_total_grad_steps(representative_data_gen) * gptq_config.n_epochs
+
+        # must be set prior to model building in the base class constructor
+        self.gradual_act_quantizer_wrapper_factory = get_gradual_activation_quantizer_wrapper_factory(
+            gptq_config, _get_total_grad_steps)
+
         super().__init__(graph_float,
                          graph_quant,
                          gptq_config,
@@ -98,7 +108,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
         self.weights_for_average_loss = to_torch_tensor(self.compute_hessian_based_weights())
 
-        self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
+        self.reg_func = get_regularization(self.gptq_config, _get_total_grad_steps)
 
     def _is_gptq_weights_trainable(self,
                                    node: BaseNode) -> bool:
@@ -145,7 +155,6 @@ class PytorchGPTQTrainer(GPTQTrainer):
     def get_activation_quantizer_holder(self, n: BaseNode) -> Callable:
         """
         Retrieve a PytorchActivationQuantizationHolder layer to use for activation quantization of a node.
-        If the layer is not supposed to be wrapped with an activation quantizer - return None.
         Args:
             n: Node to attach a PytorchActivationQuantizationHolder to its output.
         Returns:
@@ -153,13 +162,13 @@ class PytorchGPTQTrainer(GPTQTrainer):
         """
         _, activation_quantizers = quantization_builder(n, self.gptq_config)
         # Holder by definition uses a single quantizer for the activation quantization
-        # thus we make sure this is the only possible case (unless it's a node we no activation
-        # quantization, which in this case has an empty list).
-        if len(activation_quantizers) == 1:
-            return PytorchActivationQuantizationHolder(activation_quantizers[0])
-        Logger.critical(f"'PytorchActivationQuantizationHolder' requires exactly one quantizer, "
-                        f"but {len(activation_quantizers)} were found for node {n.name}. "
-                        f"Ensure the node is configured with a single activation quantizer.")
+        # thus we make sure this is the only possible case
+        if len(activation_quantizers) != 1:
+            Logger.critical(f"'PytorchActivationQuantizationHolder' requires exactly one quantizer, "
+                            f"but {len(activation_quantizers)} were found for node {n.name}. "
+                            f"Ensure the node is configured with a single activation quantizer.")
+        quantizer = self.gradual_act_quantizer_wrapper_factory(activation_quantizers[0])
+        return PytorchActivationQuantizationHolder(quantizer)
 
     def build_gptq_model(self):
         """
