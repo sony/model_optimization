@@ -14,5 +14,5 @@ The [`@mark_quantizer`](https://github.com/sony/mct_quantizers/blob/main/mct_qua
 Note that the `@mark_quantizer` decorator, and the `QuantizationTarget` and `QuantizationMethod` enums are provided by the external [MCT Quantizers](https://github.com/sony/mct_quantizers/) package.
 
 ## Examples and Fully implementation quantizers
-Examples of Trainable Activation quantizers can be found here [Activation Quantizers](./activation) and Trainable Weight quantizers here
+Examples of Trainable Activation quantizers can be found here [Activation Quantizers](./activation_quantizers) and Trainable Weight quantizers here
 [QAT Weight Quantizers](../../qat/pytorch/quantizer)

@@ -3,7 +3,7 @@
 ## Introduction
 All available training types for QAT are defined in the Enum [`TrainingMethod`](../../trainable_infrastructure/common/training_method.py).
 A trainable quantizer can be Weights Quantizer or Activation Quantizer.
-Any Activation Quantizer defined in [Activation Quantizers](../../trainable_infrastructure/pytorch/activation) can be used for QAT.
+Any Activation Quantizer defined in [Activation Quantizers](../../trainable_infrastructure/pytorch/activation_quantizers) can be used for QAT.
 
 
 ## Make your own Pytorch trainable quantizers

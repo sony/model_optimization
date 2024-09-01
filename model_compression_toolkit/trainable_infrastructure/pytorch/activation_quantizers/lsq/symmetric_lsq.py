@@ -16,20 +16,21 @@ from typing import Union
 
 import numpy as np
 import torch
-from torch import nn as nn
+from torch import nn
 
 from mct_quantizers import mark_quantizer, QuantizationTarget, QuantizationMethod, PytorchQuantizationWrapper
 from mct_quantizers.pytorch.quantizers import ActivationPOTInferableQuantizer, ActivationSymmetricInferableQuantizer
 from model_compression_toolkit import constants as C
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from model_compression_toolkit.trainable_infrastructure.pytorch.quantizer_utils import symmetric_lsq_quantizer
-from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerActivationConfig
+from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerActivationConfig, TrainingMethod
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 from model_compression_toolkit.trainable_infrastructure.common.constants import THRESHOLD_TENSOR
-from model_compression_toolkit.trainable_infrastructure import TrainingMethod
-from model_compression_toolkit.trainable_infrastructure.pytorch.activation import BasePytorchActivationTrainableQuantizer
+from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers import \
+    BasePytorchActivationTrainableQuantizer
+from model_compression_toolkit.trainable_infrastructure.pytorch.quantizer_utils import symmetric_lsq_quantizer
 
 
+# moved (and renamed) from model_compression_toolkit/qat/pytorch/quantizer/lsq/symmetric_lsq.py
 @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 identifier=TrainingMethod.LSQ)

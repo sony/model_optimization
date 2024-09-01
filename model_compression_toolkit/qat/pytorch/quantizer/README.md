@@ -11,7 +11,7 @@ selects a quantizer for weights and a quantizer for activations.
 ## Make your own training method
 
 Follow these steps in order to set the quantizers required by your training method:
-- Add your enum to `TrainingMethod`
+- Add your training method to the `TrainingMethod` enum.
 - Add your quantizers for weights and activation as explained in [quantizer readme](../../../trainable_infrastructure/pytorch).
 - Import your quantizer package in the quantizer [`__init.py__`](./__init__.py) file.
 - Set your `TrainingMethod` in the `QATConfig` and generate the QAT ready model for training. 

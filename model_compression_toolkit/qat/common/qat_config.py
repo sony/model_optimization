@@ -14,10 +14,8 @@
 # ==============================================================================
 
 from typing import Dict
-from enum import Enum
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 
 

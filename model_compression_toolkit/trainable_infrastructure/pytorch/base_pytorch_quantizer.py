@@ -27,6 +27,9 @@ if FOUND_TORCH:
     import torch
 
     class BasePytorchTrainableQuantizer(BaseTrainableQuantizer, ABC):
+        """
+        Base class for PyTorch trainable quantizers
+        """
 
         def get_trainable_variables(self, group: VariableGroup) -> List[torch.Tensor]:
             """

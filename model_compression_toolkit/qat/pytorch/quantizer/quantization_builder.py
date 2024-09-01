@@ -25,7 +25,7 @@ from model_compression_toolkit.trainable_infrastructure.common.get_quantizer_con
 from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_weight_quantizer import BasePytorchQATWeightTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.common.get_quantizers import \
     get_trainable_quantizer_class
-from model_compression_toolkit.trainable_infrastructure.pytorch.activation.base_activation_quantizer import \
+from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers.base_activation_quantizer import \
     BasePytorchActivationTrainableQuantizer
 
 

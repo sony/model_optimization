@@ -14,14 +14,16 @@
 # ==============================================================================
 from typing import Tuple, Union
 import torch
-from torch import nn as nn
+from torch import nn
 
 
 def ste_round(x: torch.Tensor) -> torch.Tensor:
     """
     Calculate the rounded values of a tensor
+
     Args:
         x: input variable
+
     Returns:
         rounded value
     """
@@ -31,10 +33,12 @@ def ste_round(x: torch.Tensor) -> torch.Tensor:
 def ste_clip(x: torch.Tensor, min_val=-1.0, max_val=1.0) -> torch.Tensor:
     """
     Clip a variable between fixed values such that min_val<=output<=max_val
+
     Args:
         x: input variable
         min_val: minimum value for clipping
         max_val: maximum value for clipping
+
     Returns:
         clipped variable
     """
@@ -44,9 +48,11 @@ def ste_clip(x: torch.Tensor, min_val=-1.0, max_val=1.0) -> torch.Tensor:
 def grad_scale(x: torch.Tensor, scale=1.0) -> torch.Tensor:
     """
     Gradient scale
+
     Args:
         x: input variable
         scale: scale factor
+
     Returns:
         x in forward and x*scale in backward (for scaling the gradients).
     """
@@ -61,11 +67,14 @@ def adjust_range_to_include_zero(range_min: torch.Tensor,
     Adjusting the quantization range to include representation of 0.0 in the quantization grid.
     If quantization per-channel, then range_min and range_max should be tensors in the specific shape that allows
     quantization along the channel_axis.
+
     Args:
         range_min: min bound of the quantization range (before adjustment).
         range_max: max bound of the quantization range (before adjustment).
         n_bits: Number of bits to quantize the tensor.
-    Returns: adjusted quantization range
+
+    Returns:
+        adjusted quantization range
     """
     min_positive = range_min > 0
     max_negative = range_max < 0
@@ -90,11 +99,13 @@ def symmetric_quantizer(tensor_data: torch.Tensor,
     """
     Quantize a tensor according to the number of bits and threshold.
     Symmetric quantization.
+
     Args:
         tensor_data: Tensor values to quantize.
         threshold: threshold for quantization.
         n_bits: Number of bits to quantize the tensor.
         sign: sign of tensor_data
+
     Returns:
         Quantized data.
     """
@@ -125,11 +136,13 @@ def uniform_quantizer(tensor_data: torch.Tensor,
     """
     Quantize a tensor according to given range (min, max) and number of bits.
     Uniform quantization.
+
     Args:
         tensor_data: Tensor values to quantize.
         range_min: minimum bound of the range for quantization (or array of min values per channel).
         range_max: maximum bound of the range for quantization (or array of max values per channel).
         n_bits: Number of bits to quantize the tensor.
+
     Returns:
         Quantized data.
     """
@@ -150,6 +163,7 @@ def uniform_quantizer(tensor_data: torch.Tensor,
     return q
 
 
+# moved from model_compression_toolkit/qat/pytorch/quantizer/lsq/symmetric_lsq.py
 def symmetric_lsq_quantizer(x: nn.Parameter,
                           thresholds: nn.Parameter,
                           num_bits: int,
@@ -159,6 +173,7 @@ def symmetric_lsq_quantizer(x: nn.Parameter,
                           scale_factor: float) -> Union[nn.Parameter, torch.Tensor]:
     """
     Symmetric quantizer according to LSQ algorithm: https://arxiv.org/pdf/1902.08153.pdf
+
     Args:
         x: input to quantize
         thresholds: thresholds of quantization levels
@@ -167,6 +182,7 @@ def symmetric_lsq_quantizer(x: nn.Parameter,
         min_int: min clipping integer value
         max_int: max clipping integer value
         scale_factor: grad scale of LSQ algorithm
+
     Returns:
         A quantized tensor
     """
@@ -178,6 +194,7 @@ def symmetric_lsq_quantizer(x: nn.Parameter,
     return quantized
 
 
+# moved from model_compression_toolkit/qat/pytorch/quantizer/lsq/uniform_lsq.py
 def uniform_lsq_quantizer(x: nn.Parameter,
                       min_range: nn.Parameter,
                       max_range: nn.Parameter,
@@ -187,6 +204,7 @@ def uniform_lsq_quantizer(x: nn.Parameter,
                       scale_factor: float) -> Union[nn.Parameter, torch.Tensor]:
     """
     Uniform quantizer according to LSQ algorithm: https://arxiv.org/pdf/1902.08153.pdf
+
     Args:
         x: input to quantize
         min_range: min range of quantization values
@@ -195,6 +213,7 @@ def uniform_lsq_quantizer(x: nn.Parameter,
         min_int: min clipping integer value
         max_int: max clipping integer value
         scale_factor: grad scale of LSQ algorithm
+
     Returns:
         A quantized tensor
     """

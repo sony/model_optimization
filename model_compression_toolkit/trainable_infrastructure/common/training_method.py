@@ -16,6 +16,16 @@ from enum import Enum
 
 
 class TrainingMethod(Enum):
-    STE = "STE"    # Standard straight-through estimator
-    DQA = "DQA"    # DNN Quantization with Attention. Includes a smooth quantization introduced by DQA method
-    LSQ = "LSQ"    # Learned Step size Quantization. https://arxiv.org/pdf/1902.08153.pdf
+    """
+    An enum for selecting a training method
+
+    STE - Standard straight-through estimator. Includes PowerOfTwo, symmetric & uniform quantizers
+
+    DQA -  DNN Quantization with Attention. Includes a smooth quantization introduces by DQA method
+
+    LSQ - Learned Step size Quantization. Includes PowerOfTwo, symmetric & uniform quantizers: https://arxiv.org/pdf/1902.08153.pdf
+
+    """
+    STE = "STE",
+    DQA = "DQA",
+    LSQ = "LSQ"

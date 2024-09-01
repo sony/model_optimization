@@ -21,4 +21,4 @@ from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 if FOUND_TORCH:
     from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_quantizer import BasePytorchTrainableQuantizer
-    from model_compression_toolkit.trainable_infrastructure.pytorch.activation import *
+    from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers import *

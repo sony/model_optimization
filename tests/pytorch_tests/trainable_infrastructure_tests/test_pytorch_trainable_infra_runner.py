@@ -20,16 +20,16 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 from mct_quantizers import QuantizationTarget
 from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.symmetric_ste import STEWeightQATQuantizer
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod
-from model_compression_toolkit.trainable_infrastructure.pytorch.activation.lsq.symmetric_lsq import \
+from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers.lsq.symmetric_lsq import \
     LSQSymmetricActivationTrainableQuantizer
-from model_compression_toolkit.trainable_infrastructure.pytorch.activation.ste.symmetric_ste import \
+from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers.ste.symmetric_ste import \
     STESymmetricActivationTrainableQuantizer
 from model_compression_toolkit.qat.pytorch.quantizer.ste_rounding.uniform_ste import STEUniformWeightQATQuantizer
-from model_compression_toolkit.trainable_infrastructure.pytorch.activation.ste.uniform_ste import \
+from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers.ste.uniform_ste import \
     STEUniformActivationTrainableQuantizer
 from model_compression_toolkit.qat.pytorch.quantizer.lsq.symmetric_lsq import LSQWeightQATQuantizer
 from model_compression_toolkit.qat.pytorch.quantizer.lsq.uniform_lsq import LSQUniformWeightQATQuantizer
-from model_compression_toolkit.trainable_infrastructure.pytorch.activation.lsq.uniform_lsq import \
+from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers.lsq.uniform_lsq import \
     LSQUniformActivationTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
     BasePytorchTrainableQuantizer
