@@ -69,7 +69,7 @@ def train_transform(image):
     """Apply transformations to the training images."""
     return DEFAULT_TRANSFORM(image), DEFAULT_TRANSFORM(TRANSFORM_AE(image))
 
-def visualize_anomalies(unified_model, dataset_path, test_output_dir=None, desc='Running inference'):
+def visualize_anomalies(unified_model, dataset_path, test_output_dir=None, q_st_start=None, q_st_end=None, q_ae_start=None, q_ae_end=None, desc='Running inference'):
     """Visualize anomalies by overlaying heatmaps on the original images."""
     test_set = ImageFolderWithPath(os.path.join(dataset_path, 'bottle', 'test'))
     images_to_display = random.sample(list(test_set), 10)  # Randomly select 10 images to display
@@ -78,7 +78,7 @@ def visualize_anomalies(unified_model, dataset_path, test_output_dir=None, desc=
     for image, target, path in tqdm(images_to_display, desc=desc):
         orig_width, orig_height = image.size
         image_tensor = DEFAULT_TRANSFORM(image)[None]  # Add batch dimension
-        map_combined = unified_model(image_tensor)
+        map_combined , _, _ = predict_combined(image_tensor, unified_model, q_st_start=None, q_st_end=None, q_ae_start=None, q_ae_end=None)
         map_combined = torch.nn.functional.interpolate(map_combined, (orig_height, orig_width), mode='bilinear')
         map_combined = map_combined[0, 0].detach().cpu().numpy()
 
