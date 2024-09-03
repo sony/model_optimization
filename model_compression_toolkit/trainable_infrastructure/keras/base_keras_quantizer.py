@@ -81,8 +81,8 @@ if FOUND_TF:
 
 
 else:
-    class BaseKerasTrainableQuantizer(BaseTrainableQuantizer):
+    class BaseKerasTrainableQuantizer(BaseTrainableQuantizer):     # pragma: no cover
         def __init__(self, *args, **kwargs):
             Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
                             "BaseKerasTrainableQuantizer. The 'tensorflow' package is missing "
-                            "or is installed with a version higher than 2.15.")  # pragma: no cover
+                            "or is installed with a version higher than 2.15.")
