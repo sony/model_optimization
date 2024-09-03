@@ -1,24 +1,22 @@
 import copy
-
 import unittest
-import torch
-from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 
-from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
-from torch.nn import Conv2d
-from torch.fx import symbolic_trace
 import numpy as np
+import torch
+from torch.nn import Conv2d
 
 import model_compression_toolkit as mct
+from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.gptq.pytorch.gptq_pytorch_implementation import GPTQPytorchImplemantation
 from model_compression_toolkit.gptq.pytorch.gptq_training import PytorchGPTQTrainer
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod
-from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers import STESymmetricActivationTrainableQuantizer
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
+from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers import \
+    STESymmetricActivationTrainableQuantizer
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
-
 
 INPUT_SHAPE = [3, 8, 8]
 

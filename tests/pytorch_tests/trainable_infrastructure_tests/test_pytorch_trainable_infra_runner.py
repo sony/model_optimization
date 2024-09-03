@@ -34,7 +34,8 @@ from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quant
 from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
     BasePytorchTrainableQuantizer
 from tests.pytorch_tests.trainable_infrastructure_tests.trainable_pytorch.test_pytorch_base_quantizer import \
-    TestPytorchBaseWeightsQuantizer, TestPytorchBaseActivationQuantizer, TestPytorchQuantizerWithoutMarkDecorator
+    TestPytorchBaseWeightsQuantizer, TestPytorchBaseActivationQuantizer, TestPytorchQuantizerWithoutMarkDecorator, \
+    TestPytorchSTEActivationQuantizerQParamFreeze
 from tests.pytorch_tests.trainable_infrastructure_tests.trainable_pytorch.test_pytorch_get_quantizers import \
     TestGetTrainableQuantizer
 
@@ -45,6 +46,9 @@ class PytorchTrainableInfrastructureTestRunner(unittest.TestCase):
         TestPytorchBaseWeightsQuantizer(self).run_test()
         TestPytorchBaseActivationQuantizer(self).run_test()
         TestPytorchQuantizerWithoutMarkDecorator(self).run_test()
+
+    def test_pytorch_ste_activation_quantizers_qparams_freeze(self):
+        TestPytorchSTEActivationQuantizerQParamFreeze(self).run_test()
 
     def test_pytorch_get_quantizers(self):
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
