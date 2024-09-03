@@ -14,10 +14,9 @@
 # ==============================================================================
 
 from typing import Dict
-from enum import Enum
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 
 
 def is_qat_applicable(node: common.BaseNode,
@@ -36,23 +35,6 @@ def is_qat_applicable(node: common.BaseNode,
     kernel_attr = fw_info.get_kernel_op_attributes(node.type)[0]
     return (kernel_attr is not None and node.is_weights_quantization_enabled(kernel_attr)) \
             or node.is_activation_quantization_enabled()
-
-
-
-class TrainingMethod(Enum):
-    """
-    An enum for selecting a QAT training method
-
-    STE - Standard straight-through estimator. Includes PowerOfTwo, symmetric & uniform quantizers
-
-    DQA -  DNN Quantization with Attention. Includes a smooth quantization introduces by DQA method
-
-    LSQ - Learned Step size Quantization. Includes PowerOfTwo, symmetric & uniform quantizers: https://arxiv.org/pdf/1902.08153.pdf
-
-    """
-    STE = "STE",
-    DQA = "DQA",
-    LSQ = "LSQ"
 
 
 class QATConfig:

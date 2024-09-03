@@ -17,16 +17,17 @@ from typing import List, Dict, Tuple, Callable
 from mct_quantizers import PytorchActivationQuantizationHolder, QuantizationTarget
 
 from model_compression_toolkit.core import common
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.qat.common.qat_config import QATConfig
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.trainable_infrastructure.common.get_quantizer_config import \
     get_trainable_quantizer_quantization_candidates, get_trainable_quantizer_weights_config, \
     get_trainable_quantizer_activation_config
-from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
+from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_weight_quantizer import BasePytorchQATWeightTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.common.get_quantizers import \
     get_trainable_quantizer_class
+from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers.base_activation_quantizer import \
+    BasePytorchActivationTrainableQuantizer
+
 
 def get_activation_quantizer_holder(n: common.BaseNode,
                                     qat_config: QATConfig) -> Callable:
@@ -55,8 +56,8 @@ def get_activation_quantizer_holder(n: common.BaseNode,
 def quantization_builder(n: common.BaseNode,
                          qat_config: QATConfig,
                          kernel_attr: str = None,
-                         ) -> Tuple[Dict[str, BasePytorchQATTrainableQuantizer],
-                                    List[BasePytorchQATTrainableQuantizer]]:
+                         ) -> Tuple[Dict[str, BasePytorchQATWeightTrainableQuantizer],
+                                    List[BasePytorchActivationTrainableQuantizer]]:
     """
     Build quantizers for a node according to its quantization configuration.
 
@@ -82,7 +83,7 @@ def quantization_builder(n: common.BaseNode,
         quantizer_class = get_trainable_quantizer_class(QuantizationTarget.Weights,
                                                         qat_config.weight_training_method,
                                                         quant_method,
-                                                        BasePytorchQATTrainableQuantizer)
+                                                        BasePytorchQATWeightTrainableQuantizer)
 
         weight_quantizers.update({kernel_attr: quantizer_class(get_trainable_quantizer_weights_config(n,
                                                                                                attr_name=kernel_attr,
@@ -95,7 +96,7 @@ def quantization_builder(n: common.BaseNode,
         quantizer_class = get_trainable_quantizer_class(QuantizationTarget.Activation,
                                                         qat_config.activation_training_method,
                                                         quant_method,
-                                                        BasePytorchQATTrainableQuantizer)
+                                                        BasePytorchActivationTrainableQuantizer)
 
         activation_quantizers = [quantizer_class(get_trainable_quantizer_activation_config(n, aq_cand),
                                                  **qat_config.activation_quantizer_params_override)]

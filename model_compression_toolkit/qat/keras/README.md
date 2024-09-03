@@ -21,7 +21,7 @@ Assume that the quantizer has a new training method called `MyTrainig` which is 
 
 ```python
 import tensorflow as tf
-from model_compression_toolkit.qat import TrainingMethod
+from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 from mct_quantizers import mark_quantizer, QuantizationMethod, QuantizationTarget
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
 
@@ -67,7 +67,7 @@ Assume that the quantizer has a new training method called `MyTrainig` which is 
 import tensorflow as tf
 
 NEW_PARAM = "new_param_name"
-from model_compression_toolkit.qat import TrainingMethod
+from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from mct_quantizers import mark_quantizer, QuantizationTarget
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer

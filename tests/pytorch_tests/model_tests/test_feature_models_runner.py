@@ -25,6 +25,7 @@ from model_compression_toolkit.core.common.mixed_precision.distance_weighting im
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from model_compression_toolkit.target_platform_capabilities import constants as C
+from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_attributes_quantization_test import BNAttributesQuantization
 from tests.pytorch_tests.model_tests.feature_models.compute_max_cut_test import ComputeMaxCutTest
@@ -644,17 +645,17 @@ class FeatureModelsTestRunner(unittest.TestCase):
         QuantizationAwareTrainingTest(self,
                                       weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
                                       activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
-                                      training_method=mct.qat.TrainingMethod.LSQ,
+                                      training_method=TrainingMethod.LSQ,
                                       finalize=True).run_test()
         QuantizationAwareTrainingTest(self,
                                       weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
                                       activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
-                                      training_method=mct.qat.TrainingMethod.LSQ,
+                                      training_method=TrainingMethod.LSQ,
                                       finalize=True).run_test()
         QuantizationAwareTrainingTest(self,
                                       weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
                                       activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-                                      training_method=mct.qat.TrainingMethod.LSQ,
+                                      training_method=TrainingMethod.LSQ,
                                       finalize=True).run_test()
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()

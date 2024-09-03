@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import List, Any
 
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 from model_compression_toolkit.trainable_infrastructure.keras.config_serialization import config_serialization, \
@@ -93,6 +95,15 @@ class TestKerasBaseActivationsQuantizer(BaseKerasTrainableInfrastructureTest):
 class _TestQuantizer(BaseKerasTrainableQuantizer):
     def __init__(self, quantizer_config: TrainableQuantizerWeightsConfig):
         super().__init__(quantizer_config)
+
+    def get_trainable_variables(self, group: VariableGroup) -> List[Any]:
+        pass
+
+    def __call__(self, input2quantize, training: bool):
+        pass
+
+    def initialize_quantization(self, tensor_shape, name: str, layer):
+        pass
 
 
 class TestKerasQuantizerWithoutMarkDecorator(BaseKerasTrainableInfrastructureTest):

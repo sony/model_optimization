@@ -23,10 +23,10 @@ from torch import Tensor
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from mct_quantizers import QuantizationTarget, PytorchQuantizationWrapper, mark_quantizer
 from model_compression_toolkit.constants import RANGE_MAX, RANGE_MIN
-from model_compression_toolkit.qat import TrainingMethod
-from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_quantizer import BasePytorchQATTrainableQuantizer
+from model_compression_toolkit.trainable_infrastructure import TrainingMethod
+from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_weight_quantizer import BasePytorchQATWeightTrainableQuantizer
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from model_compression_toolkit.qat.pytorch.quantizer.quantizer_utils import uniform_quantizer
+from model_compression_toolkit.trainable_infrastructure.pytorch.quantizer_utils import uniform_quantizer
 from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig
 from model_compression_toolkit.trainable_infrastructure.common.constants import FQ_MIN, FQ_MAX
 
@@ -34,7 +34,7 @@ from model_compression_toolkit.trainable_infrastructure.common.constants import 
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.UNIFORM],
                 identifier=TrainingMethod.DQA)
-class DQAUniformWeightQuantizer(BasePytorchQATTrainableQuantizer):
+class DQAUniformWeightQuantizer(BasePytorchQATWeightTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.
     """

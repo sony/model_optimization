@@ -13,30 +13,26 @@
 # limitations under the License.
 # ==============================================================================
 
-import tensorflow as tf
-import numpy as np
-from mct_quantizers.common.get_all_subclasses import get_all_subclasses
-from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
+import os
 
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.qat import TrainingMethod
-from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
-from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
+import numpy as np
+import tensorflow as tf
+
+import model_compression_toolkit as mct
 from mct_quantizers import QuantizationTarget, KerasActivationQuantizationHolder, KerasQuantizationWrapper
 from mct_quantizers.common.base_inferable_quantizer import QuantizerID
-
-from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
+from mct_quantizers.common.get_all_subclasses import get_all_subclasses
+from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
+from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
+from model_compression_toolkit.trainable_infrastructure import TrainingMethod, KerasTrainableQuantizationWrapper, \
+    BaseKerasTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.keras.load_model import \
     keras_load_quantized_model
+from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_tests import \
     MixedPrecisionActivationBaseTest
 from tests.keras_tests.tpc_keras import get_tpc
-from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
-import model_compression_toolkit as mct
-
-import os
-from model_compression_toolkit.core.keras.default_framework_info import KERNEL
 from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
@@ -165,7 +161,7 @@ class QATWrappersTest(BaseKerasFeatureNetworkTest):
     def __init__(self, unit_test, layer, weight_bits=2, activation_bits=4, finalize=True,
                  weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
                  activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-                 training_method=mct.qat.TrainingMethod.STE,
+                 training_method=TrainingMethod.STE,
                  per_channel=True,
                  test_loading=False):
         self.layer = layer

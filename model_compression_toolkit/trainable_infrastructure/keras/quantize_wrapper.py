@@ -101,7 +101,7 @@ if FOUND_TF:
             return inferable_quantizers_wrapper
 
 else:
-    class KerasTrainableQuantizationWrapper:
+    class KerasTrainableQuantizationWrapper:    # pragma: no cover
         def __init__(self, *args, **kwargs):
             """
             Keras Quantization Wrapper takes a keras layer and quantizers and infer a quantized layer.
@@ -112,4 +112,4 @@ else:
             """
             Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
                             "KerasTrainableQuantizationWrapper. The 'tensorflow' package is missing "
-                            "or is installed with a version higher than 2.15.")  # pragma: no cover
+                            "or is installed with a version higher than 2.15.")
