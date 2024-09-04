@@ -25,7 +25,7 @@ deployment performance.
     <tr>
         <td rowspan="9">Classification</td>
         <td>MobilenetV2</td>
-        <td> <a href="keras/example_keras_mobilenetv2_for_imx500.ipynb">Keras</a></td>
+        <td> <a href="keras/example_keras_mobilenetv2_for_imx500.ipynb">ipynb (Keras)</a></td>
         <td><a href="https://keras.io/api/applications/mobilenet/">Keras Applications</a></td>
         <td></td>
         <td>ImageNet</td>
@@ -34,7 +34,7 @@ deployment performance.
     </tr>
     <tr>
         <td>MobileVit</td>
-        <td> <a href="pytorch/pytorch_mobilevit_xs_for_imx500.ipynb">PyTorch</a></td>
+        <td> <a href="pytorch/pytorch_mobilevit_xs_for_imx500.ipynb">ipynb (PyTorch)</a></td>
         <td><a href="https://github.com/huggingface/pytorch-image-models">Timm</a></td>
         <td><a href="https://huggingface.co/SSI-DNN/pytorch_mobilevit_xs">mct-model-garden</a></td>
         <td>ImageNet</td>
@@ -43,7 +43,7 @@ deployment performance.
     </tr>
     <tr>
         <td>regnety_002.pycls_in1k</td>
-        <td> <a href="pytorch/pytorch_timm_classification_model_for_imx500.ipynb">PyTorch</a></td>
+        <td rowspan="3"> <a href="pytorch/pytorch_timm_classification_model_for_imx500.ipynb">ipynb (PyTorch)</a></td>
         <td><a href="https://github.com/huggingface/pytorch-image-models">Timm</a></td>
         <td></td>
         <td>ImageNet</td>
@@ -52,7 +52,6 @@ deployment performance.
     </tr>
     <tr>
         <td>regnetx_002.pycls_in1k</td>
-        <td> <a href="pytorch/pytorch_timm_classification_model_for_imx500.ipynb">PyTorch</a></td>
         <td><a href="https://github.com/huggingface/pytorch-image-models">Timm</a></td>
         <td></td>
         <td>ImageNet</td>
@@ -61,7 +60,6 @@ deployment performance.
     </tr>
     <tr>
         <td>regnety_004.pycls_in1k</td>
-        <td> <a href="pytorch/pytorch_timm_classification_model_for_imx500.ipynb">PyTorch</a></td>
         <td><a href="https://github.com/huggingface/pytorch-image-models">Timm</a></td>
         <td></td>
         <td>ImageNet</td>
@@ -70,7 +68,7 @@ deployment performance.
     </tr>
     <tr>
         <td>mnasnet1_0</td>
-        <td> <a href="pytorch/pytorch_torchvision_classification_model_for_imx500.ipynb">PyTorch</a></td>
+        <td rowspan="4"> <a href="pytorch/pytorch_torchvision_classification_model_for_imx500.ipynb">ipynb (PyTorch)</a></td>
         <td><a href="https://pytorch.org/vision/stable/models/generated/torchvision.models.mnasnet1_0.html#torchvision.models.MNASNet1_0_Weights">torchvision</a></td>
         <td></td>
         <td>ImageNet</td>
@@ -79,7 +77,6 @@ deployment performance.
     </tr>
     <tr>
         <td>mobilenet_v2</td>
-        <td> <a href="pytorch/pytorch_torchvision_classification_model_for_imx500.ipynb">PyTorch</a></td>
         <td><a href="https://pytorch.org/vision/stable/models/generated/torchvision.models.mobilenet_v2.html#torchvision.models.MobileNet_V2_Weights">torchvision</a></td>
         <td></td>
         <td>ImageNet</td>
@@ -88,7 +85,6 @@ deployment performance.
     </tr>
     <tr>
         <td>regnet_y_400mf</td>
-        <td> <a href="pytorch/pytorch_torchvision_classification_model_for_imx500.ipynb">PyTorch</a></td>
         <td><a href="https://pytorch.org/vision/stable/models/generated/torchvision.models.regnet_y_400mf.html#torchvision.models.RegNet_Y_400MF_Weights">torchvision</a></td>
         <td></td>
         <td>ImageNet</td>
@@ -97,7 +93,6 @@ deployment performance.
     </tr>
     <tr>
         <td>shufflenet_v2_x1_5</td>
-        <td> <a href="pytorch/pytorch_torchvision_classification_model_for_imx500.ipynb">PyTorch</a></td>
         <td><a href="https://pytorch.org/vision/stable/models/generated/torchvision.models.shufflenet_v2_x1_5.html#torchvision.models.ShuffleNet_V2_X1_5_Weights">torchvision</a></td>
         <td></td>
         <td>ImageNet</td>
@@ -108,7 +103,7 @@ deployment performance.
     <tr>
         <td rowspan="4">Object Detection</td>
         <td>YOLOv8n</td>
-        <td> <a href="keras/keras_yolov8n_for_imx500.ipynb">Keras</a></td>
+        <td> <a href="keras/keras_yolov8n_for_imx500.ipynb">ipynb (Keras)</a></td>
         <td><a href="https://github.com/ultralytics">Ultralytics</a></td>
         <td><a href="https://huggingface.co/SSI-DNN/keras_yolov8n_640x640_pp">mct-model-garden</a></td>
         <td>COCO</td>
@@ -117,7 +112,7 @@ deployment performance.
     </tr>
     <tr>
         <td>YOLOv8n</td>
-        <td> <a href="pytorch/pytorch_yolov8n_for_imx500.ipynb">PyTorch</a></td>
+        <td> <a href="pytorch/pytorch_yolov8n_for_imx500.ipynb">ipynb (PyTorch)</a></td>
         <td><a href="https://github.com/ultralytics">Ultralytics</a></td>
         <td><a href="https://huggingface.co/SSI-DNN/pytorch_yolov8n_640x640_bb_decoding">mct-model-garden</a></td>
         <td>COCO</td>
@@ -126,7 +121,7 @@ deployment performance.
     </tr>
     <tr>
         <td>NanoDet-Plus-m-416</td>
-        <td> <a href="keras/example_keras_nanodet_plus_for_imx500.ipynb">Keras</a></td>
+        <td> <a href="keras/example_keras_nanodet_plus_for_imx500.ipynb">ipynb (Keras)</a></td>
         <td><a href="https://github.com/RangiLyu/nanodet">Nanodet</a></td>
         <td><a href="https://huggingface.co/SSI-DNN/keras_nanodet_plus_x1.5_416x416">mct-model-garden</a></td>
         <td>COCO</td>
@@ -135,7 +130,7 @@ deployment performance.
     </tr>
     <tr>
         <td>EfficientDet-lite0</td>
-        <td> <a href="keras/example_keras_effdet_lite0_for_imx500.ipynb">Keras</a></td>
+        <td> <a href="keras/example_keras_effdet_lite0_for_imx500.ipynb">ipynb (Keras)</a></td>
         <td> <a href="https://github.com/rwightman/efficientdet-pytorch">efficientdet-pytorch</a></td>
         <td><a href="https://github.com/sony/model_optimization/blob/main/tutorials/mct_model_garden/models_keras/efficientdet/effdet_keras.py">mct-model-garden</a></td>
         <td>COCO</td>
@@ -145,7 +140,7 @@ deployment performance.
     <tr>
         <td>Semantic Segmentation</td>
         <td>Deeplabv3plus</td>
-        <td> <a href="keras/keras_deeplabv3plus_for_imx500.ipynb">Keras</a></td>
+        <td> <a href="keras/keras_deeplabv3plus_for_imx500.ipynb">ipynb (Keras)</a></td>
         <td> <a href="https://github.com/bonlime/keras-deeplab-v3-plus">bonlime</a></td>
         <td><a href="https://huggingface.co/SSI-DNN/keras_deeplabv3_plus_320">mct-model-garden</a></td>
         <td>PASCAL VOC</td>        
@@ -155,7 +150,7 @@ deployment performance.
     <tr>
         <td >Instance Segmentation</td>
         <td>YOLOv8n-seg</td>
-        <td> <a href="pytorch/pytorch_yolov8n_seg_for_imx500.ipynb">PyTorch</a></td>
+        <td> <a href="pytorch/pytorch_yolov8n_seg_for_imx500.ipynb">ipynb (PyTorch)</a></td>
         <td><a href="https://github.com/ultralytics">Ultralytics</a></td>
         <td><a href="https://huggingface.co/SSI-DNN/pytorch_yolov8n_inst_seg_640x640">mct-model-garden</a></td>
         <td>COCO</td>        
@@ -165,7 +160,7 @@ deployment performance.
     <tr>
         <td>Pose Estimation</td>
         <td>YOLOv8n-pose</td>
-        <td> <a href="pytorch/pytorch_yolov8n_pose_for_imx500.ipynb">PyTorch</a></td>
+        <td> <a href="pytorch/pytorch_yolov8n_pose_for_imx500.ipynb">ipynb (PyTorch)</a></td>
         <td><a href="https://github.com/ultralytics">Ultralytics</a></td>
         <td><a href="https://huggingface.co/SSI-DNN/pytorch_yolov8n_640x640">mct-model-garden</a></td>
         <td>COCO</td>
@@ -175,8 +170,8 @@ deployment performance.
     <tr>
         <td>Anomaly Detection</td>
         <td>Efficient AD</td>
-        <td> <a href="pytorch/pytorch_efficient_anomaly_detection.ipynb">PyTorch</a></td>
-        <td><a href="https://arxiv.org/pdf/2303.08730v3">Ultralytics</a></td>
+        <td> <a href="pytorch/pytorch_efficient_anomaly_detection.ipynb">ipynb (PyTorch)</a></td>
+        <td><a href="https://arxiv.org/pdf/2303.08730v3">*EfficientAD paper</a></td>
         <td><a href="https://huggingface.co/SSI-DNN/Efficient_Anomaly_Detection">mct-model-garden</a></td>
         <td>MvTech</td>
         <td>98.56</td>
