@@ -12,41 +12,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from dataclasses import dataclass, field
+from typing import Optional
+
 from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.debug_config import DebugConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
 
 
+@dataclass
 class CoreConfig:
     """
-    A class to hold the configurations classes of the MCT-core.
-    """
-    def __init__(self,
-                 quantization_config: QuantizationConfig = None,
-                 mixed_precision_config: MixedPrecisionQuantizationConfig = None,
-                 bit_width_config: BitWidthConfig = None,
-                 debug_config: DebugConfig = None
-                 ):
-        """
+    A dataclass to hold the configurations classes of the MCT-core.
 
-        Args:
-            quantization_config (QuantizationConfig): Config for quantization.
-            mixed_precision_config (MixedPrecisionQuantizationConfig): Config for mixed precision quantization.
+    Args:
+        quantization_config (QuantizationConfig): Config for quantization.
+        mixed_precision_config (MixedPrecisionQuantizationConfig): Config for mixed precision quantization.
             If None, a default MixedPrecisionQuantizationConfig is used.
-            bit_width_config (BitWidthConfig): Config for manual bit-width selection.
-            debug_config (DebugConfig): Config for debugging and editing the network quantization process.
-        """
-        self.quantization_config = QuantizationConfig() if quantization_config is None else quantization_config
-        self.bit_width_config = BitWidthConfig() if bit_width_config is None else bit_width_config
-        self.debug_config = DebugConfig() if debug_config is None else debug_config
+        bit_width_config (BitWidthConfig): Config for manual bit-width selection.
+        debug_config (DebugConfig): Config for debugging and editing the network quantization process.
+    """
 
-        if mixed_precision_config is None:
+    quantization_config: QuantizationConfig = field(default_factory=QuantizationConfig)
+    mixed_precision_config: Optional[MixedPrecisionQuantizationConfig] = None
+    bit_width_config: BitWidthConfig = field(default_factory=BitWidthConfig)
+    debug_config: DebugConfig = field(default_factory=DebugConfig)
+
+    def __post_init__(self):
+        # Initialize mixed_precision_config with a default instance if it was set to None
+        if self.mixed_precision_config is None:
             self.mixed_precision_config = MixedPrecisionQuantizationConfig()
-        else:
-            self.mixed_precision_config = mixed_precision_config
 
     @property
-    def mixed_precision_enable(self):
-        return self.mixed_precision_config is not None and self.mixed_precision_config.mixed_precision_enable
+    def mixed_precision_enable(self) -> bool:
+        """
+        A property that indicates whether mixed precision is enabled.
+        """
+        return bool(self.mixed_precision_config and self.mixed_precision_config.mixed_precision_enable)
 
