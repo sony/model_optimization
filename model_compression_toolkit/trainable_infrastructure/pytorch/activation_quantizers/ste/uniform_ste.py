@@ -36,14 +36,15 @@ class STEUniformActivationTrainableQuantizer(BasePytorchActivationTrainableQuant
     Trainable constrained quantizer to quantize a layer activations.
     """
 
-    def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
+    def __init__(self, quantization_config: TrainableQuantizerActivationConfig, freeze_quant_params: bool = False):
         """
         Initialize a STEUniformActivationTrainableQuantizer object with parameters to use for uniform quantization.
 
         Args:
-            quantization_config: trainable quantizer config class
+            quantization_config: trainable quantizer config class.
+            freeze_quant_params: whether to freeze learnable quantization parameters.
         """
-        super().__init__(quantization_config)
+        super().__init__(quantization_config, freeze_quant_params)
 
         np_min_range = quantization_config.activation_quantization_params[C.RANGE_MIN]
         np_max_range = quantization_config.activation_quantization_params[C.RANGE_MAX]
@@ -56,7 +57,7 @@ class STEUniformActivationTrainableQuantizer(BasePytorchActivationTrainableQuant
                                 name: str,
                                 layer: PytorchQuantizationWrapper):
         """
-        Add quantizer parameters to the quantizer parameters dictionary
+        Add quantizer parameters to the quantizer parameters dictionary.
 
         Args:
             tensor_shape: tensor shape of the quantized tensor.
@@ -64,9 +65,9 @@ class STEUniformActivationTrainableQuantizer(BasePytorchActivationTrainableQuant
             layer: Layer to quantize.
         """
         layer.register_parameter(name+"_"+FQ_MIN, nn.Parameter(to_torch_tensor(self.min_range_tensor),
-                                                               requires_grad=True))
+                                                               requires_grad=not self.freeze_quant_params))
         layer.register_parameter(name+"_"+FQ_MAX, nn.Parameter(to_torch_tensor(self.max_range_tensor),
-                                                               requires_grad=True))
+                                                               requires_grad=not self.freeze_quant_params))
 
         # Save the quantizer parameters for later calculations
         self.add_quantizer_variable(FQ_MIN, layer.get_parameter(name+"_"+FQ_MIN), VariableGroup.QPARAMS)

@@ -23,26 +23,26 @@ import torch.utils.data as data
 from torch import Tensor
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.trainable_infrastructure.common.training_method
 from mct_quantizers import PytorchActivationQuantizationHolder, QuantizationTarget, PytorchQuantizationWrapper
+from mct_quantizers.common.base_inferable_quantizer import QuantizerID
 from mct_quantizers.common.get_all_subclasses import get_all_subclasses
 from mct_quantizers.pytorch.quantizers import BasePyTorchInferableQuantizer
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
-from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_weight_quantizer import BasePytorchQATWeightTrainableQuantizer
+from model_compression_toolkit.qat.pytorch.quantizer.base_pytorch_qat_weight_quantizer import \
+    BasePytorchQATWeightTrainableQuantizer
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc, \
+    get_op_quantization_configs
+from model_compression_toolkit.trainable_infrastructure import TrainingMethod
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers.base_activation_quantizer import \
     BasePytorchActivationTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers.ste.symmetric_ste import \
     STESymmetricActivationTrainableQuantizer
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
-    get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model, \
     generate_tp_model_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.pytorch_tests.tpc_pytorch import get_mp_activation_pytorch_tpc_dict
-from mct_quantizers.common.base_inferable_quantizer import QuantizerID
-from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 
 
 def dummy_train(qat_ready_model, x, y):
@@ -179,6 +179,10 @@ class QuantizationAwareTrainingTest(BasePytorchFeatureNetworkTest):
                      and self.activation_quantization_method in _q.quantization_method]
                 self.unit_test.assertTrue(len(q) == 1)
                 self.unit_test.assertTrue(isinstance(layer.activation_holder_quantizer, q[0]))
+                # quantization params in qat should be trainable (not frozen)
+                self.unit_test.assertFalse(layer.activation_holder_quantizer.freeze_quant_params)
+                trainable_params = layer.activation_holder_quantizer.get_trainable_variables(VariableGroup.QPARAMS)
+                self.unit_test.assertTrue(len(trainable_params) > 0)
             elif isinstance(layer, PytorchQuantizationWrapper) and isinstance(layer.layer, nn.Conv2d):
                 q = [_q for _q in all_qat_weight_quantizers if _q.identifier == self.training_method
                      and _q.quantization_target == QuantizationTarget.Weights

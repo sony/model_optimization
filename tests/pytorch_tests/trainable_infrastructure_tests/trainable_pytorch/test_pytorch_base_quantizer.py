@@ -14,7 +14,10 @@
 # ==============================================================================
 from typing import List, Any
 
-from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
+import torch
+
+from mct_quantizers import PytorchActivationQuantizationHolder
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup, VAR
 from model_compression_toolkit.trainable_infrastructure.common.trainable_quantizer_config import \
     TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
 from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_quantizer import \
@@ -22,6 +25,8 @@ from model_compression_toolkit.trainable_infrastructure.pytorch.base_pytorch_qua
 from tests.pytorch_tests.trainable_infrastructure_tests.base_pytorch_trainable_infra_test import \
     BasePytorchInfrastructureTest, ZeroWeightsQuantizer, ZeroActivationsQuantizer
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers import (
+    STESymmetricActivationTrainableQuantizer, STEUniformActivationTrainableQuantizer)
 
 
 class TestPytorchBaseWeightsQuantizer(BasePytorchInfrastructureTest):
@@ -51,6 +56,8 @@ class TestPytorchBaseWeightsQuantizer(BasePytorchInfrastructureTest):
         weight_quantization_config = super(TestPytorchBaseWeightsQuantizer, self).get_weights_quantization_config()
         quantizer = ZeroWeightsQuantizer(weight_quantization_config)
         self.unit_test.assertTrue(quantizer.quantization_config == weight_quantization_config)
+        # unless implemented explicitly, by default quant params should not be frozen
+        self.unit_test.assertTrue(quantizer.freeze_quant_params is False)
 
 
 class TestPytorchBaseActivationQuantizer(BasePytorchInfrastructureTest):
@@ -78,6 +85,30 @@ class TestPytorchBaseActivationQuantizer(BasePytorchInfrastructureTest):
         activation_quantization_config = super(TestPytorchBaseActivationQuantizer, self).get_activation_quantization_config()
         quantizer = ZeroActivationsQuantizer(activation_quantization_config)
         self.unit_test.assertTrue(quantizer.quantization_config == activation_quantization_config)
+        # unless implemented explicitly, by default quant params should not be frozen
+        self.unit_test.assertTrue(quantizer.freeze_quant_params is False)
+
+
+class TestPytorchSTEActivationQuantizerQParamFreeze(BasePytorchInfrastructureTest):
+    def run_test(self):
+        sym_qparams = {'is_signed': True, 'threshold': [1]}
+        self._run_test(STESymmetricActivationTrainableQuantizer, False, QuantizationMethod.POWER_OF_TWO, sym_qparams)
+        self._run_test(STESymmetricActivationTrainableQuantizer, True, QuantizationMethod.SYMMETRIC, sym_qparams)
+
+        uniform_qparams = {'range_min': 0, 'range_max': 5}
+        self._run_test(STEUniformActivationTrainableQuantizer, False, QuantizationMethod.UNIFORM, uniform_qparams)
+        self._run_test(STEUniformActivationTrainableQuantizer, True, QuantizationMethod.UNIFORM, uniform_qparams)
+
+    def _run_test(self, activation_quantizer_cls, freeze, quant_method, activation_quant_params):
+        quant_config = self.get_activation_quantization_config(quant_method=quant_method,
+                                                               activation_quant_params=activation_quant_params)
+        quantizer = activation_quantizer_cls(quant_config, freeze_quant_params=freeze)
+        holder = PytorchActivationQuantizationHolder(quantizer)
+        quantizer.initialize_quantization(torch.Size((5,)), 'foo', holder)
+        self.unit_test.assertTrue(quantizer.freeze_quant_params is freeze)
+        self.unit_test.assertTrue(quantizer.quantizer_parameters)
+        for p in quantizer.quantizer_parameters.values():
+            self.unit_test.assertTrue(p[VAR].requires_grad is not freeze)
 
 
 class _TestQuantizer(BasePytorchTrainableQuantizer):
