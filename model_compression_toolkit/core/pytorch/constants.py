@@ -66,6 +66,10 @@ NUM_PARAMETERS = 'num_parameters'
 IN_FEATURES = 'in_features'
 OUT_FEATURES = 'out_features'
 
+# # Reserved layer names
+RESERVED_NAME_TO = 'to'
+RESERVED_NAME_SUFFIX = 'node'
+
 # torch devices
 CUDA = 'cuda'
 CPU = 'cpu'
