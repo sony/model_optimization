@@ -46,7 +46,7 @@ def prepare_graph_for_first_network_editor(in_model, representative_data_gen, co
                                            tpc, target_resource_utilization=None, tb_w=None):
 
     if target_resource_utilization is not None:
-        core_config.mixed_precision_enable.set_mixed_precision_enable()
+        core_config.mixed_precision_config.set_mixed_precision_enable()
 
     transformed_graph = graph_preparation_runner(in_model,
                                                  representative_data_gen,
@@ -56,7 +56,7 @@ def prepare_graph_for_first_network_editor(in_model, representative_data_gen, co
                                                  tpc,
                                                  core_config.bit_width_config,
                                                  tb_w,
-                                                 mixed_precision_enable=core_config.mixed_precision_enable)
+                                                 mixed_precision_enable=core_config.is_mixed_precision_enabled)
 
 
     ######################################
@@ -97,7 +97,7 @@ def prepare_graph_for_second_network_editor(in_model, representative_data_gen, c
                                                                tb_w=tb_w)
 
     if target_resource_utilization is not None:
-        core_config.mixed_precision_enable.set_mixed_precision_enable()
+        core_config.mixed_precision_config.set_mixed_precision_enable()
 
     ######################################
     # Calculate quantization params
@@ -142,7 +142,7 @@ def prepare_graph_for_second_network_editor(in_model, representative_data_gen, c
     # Finalize bit widths
     ######################################
     if target_resource_utilization is not None:
-        assert core_config.mixed_precision_enable
+        assert core_config.is_mixed_precision_enabled
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
             bit_widths_config = search_bit_width(tg_with_bias,
@@ -157,7 +157,7 @@ def prepare_graph_for_second_network_editor(in_model, representative_data_gen, c
     else:
         bit_widths_config = []
 
-    tg = set_bit_widths(core_config.mixed_precision_enable,
+    tg = set_bit_widths(core_config.is_mixed_precision_enabled,
                         tg_with_bias,
                         bit_widths_config)
 

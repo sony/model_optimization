@@ -124,7 +124,7 @@ if FOUND_TF:
         KerasModelValidation(model=in_model,
                              fw_info=fw_info).validate()
 
-        if core_config.mixed_precision_enable:
+        if core_config.is_mixed_precision_enabled:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.critical("Given quantization config to mixed-precision facade is not of type "
                                 "MixedPrecisionQuantizationConfig. Please use keras_post_training_quantization "

@@ -119,7 +119,7 @@ def core_runner(in_model: Any,
                                      tpc,
                                      core_config.bit_width_config,
                                      tb_w,
-                                     mixed_precision_enable=core_config.mixed_precision_enable,
+                                     mixed_precision_enable=core_config.is_mixed_precision_enabled,
                                      running_gptq=running_gptq)
 
     hessian_info_service = HessianInfoService(graph=graph, representative_dataset_gen=representative_data_gen,
@@ -136,7 +136,7 @@ def core_runner(in_model: Any,
     ######################################
     # Finalize bit widths
     ######################################
-    if core_config.mixed_precision_enable:
+    if core_config.is_mixed_precision_enabled:
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
             filter_candidates_for_mixed_precision(graph, target_resource_utilization, fw_info, tpc)
@@ -161,7 +161,7 @@ def core_runner(in_model: Any,
     else:
         bit_widths_config = []
 
-    tg = set_bit_widths(core_config.mixed_precision_enable,
+    tg = set_bit_widths(core_config.is_mixed_precision_enabled,
                         tg,
                         bit_widths_config)
 
@@ -175,7 +175,7 @@ def core_runner(in_model: Any,
                                     fw_info=fw_info,
                                     fw_impl=fw_impl)
 
-    if core_config.mixed_precision_enable:
+    if core_config.is_mixed_precision_enabled:
         # Retrieve lists of tuples (node, node's final weights/activation bitwidth)
         weights_conf_nodes_bitwidth = tg.get_final_weights_config(fw_info)
         activation_conf_nodes_bitwidth = tg.get_final_activation_config()

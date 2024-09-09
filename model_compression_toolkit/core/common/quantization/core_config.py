@@ -40,9 +40,9 @@ class CoreConfig:
     debug_config: DebugConfig = field(default_factory=DebugConfig)
 
     @property
-    def mixed_precision_enable(self) -> bool:
+    def is_mixed_precision_enabled(self) -> bool:
         """
         A property that indicates whether mixed precision is enabled.
         """
-        return bool(self.mixed_precision_config and self.mixed_precision_config.mixed_precision_enable)
+        return bool(self.mixed_precision_config and self.mixed_precision_config.is_mixed_precision_enabled)
 

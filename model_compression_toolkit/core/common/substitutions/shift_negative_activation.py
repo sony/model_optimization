@@ -360,7 +360,7 @@ def shift_negative_function(graph: Graph,
                                          graph=graph,
                                          quant_config=core_config.quantization_config,
                                          tpc=graph.tpc,
-                                         mixed_precision_enable=core_config.mixed_precision_enable)
+                                         mixed_precision_enable=core_config.is_mixed_precision_enabled)
 
         for candidate_qc in pad_node.candidates_quantization_cfg:
             candidate_qc.activation_quantization_cfg.enable_activation_quantization = False
@@ -377,7 +377,7 @@ def shift_negative_function(graph: Graph,
                                      graph=graph,
                                      quant_config=core_config.quantization_config,
                                      tpc=graph.tpc,
-                                     mixed_precision_enable=core_config.mixed_precision_enable)
+                                     mixed_precision_enable=core_config.is_mixed_precision_enabled)
 
     original_non_linear_activation_nbits = non_linear_node_cfg_candidate.activation_n_bits
     # The non-linear node's output should be float, so we approximate it by using 16bits quantization.
