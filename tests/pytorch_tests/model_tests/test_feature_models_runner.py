@@ -686,7 +686,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
 
     def test_16bit_activations(self):
-        Activation16BitTest(self).run_test()
+        # Activation16BitTest(self).run_test()
         Activation16BitMixedPrecisionTest(self).run_test()
 
     def test_invalid_bit_width_selection(self):

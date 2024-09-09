@@ -17,6 +17,7 @@ import torch
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import PYTORCH
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 
@@ -95,6 +96,9 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
 
     def create_networks(self):
         return Activation16BitNet(use_concat=False)
+
+    def get_mixed_precision_config(self):
+        return MixedPrecisionQuantizationConfig()
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         mul1_act_quant = quantized_model.mul_activation_holder_quantizer

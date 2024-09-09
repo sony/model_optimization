@@ -35,14 +35,9 @@ class CoreConfig:
     """
 
     quantization_config: QuantizationConfig = field(default_factory=QuantizationConfig)
-    mixed_precision_config: Optional[MixedPrecisionQuantizationConfig] = None
+    mixed_precision_config: MixedPrecisionQuantizationConfig = field(default_factory=MixedPrecisionQuantizationConfig)
     bit_width_config: BitWidthConfig = field(default_factory=BitWidthConfig)
     debug_config: DebugConfig = field(default_factory=DebugConfig)
-
-    def __post_init__(self):
-        # Initialize mixed_precision_config with a default instance if it was set to None
-        if self.mixed_precision_config is None:
-            self.mixed_precision_config = MixedPrecisionQuantizationConfig()
 
     @property
     def mixed_precision_enable(self) -> bool:

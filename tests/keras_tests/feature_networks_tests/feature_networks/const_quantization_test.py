@@ -17,6 +17,7 @@ import tensorflow as tf
 import numpy as np
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tp_model import generate_tp_model, \
     get_op_quantization_configs
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tpc_keras import generate_keras_tpc
@@ -131,6 +132,9 @@ class AdvancedConstQuantizationTest(BaseKerasFeatureNetworkTest):
 
     def get_resource_utilization(self):
         return mct.core.ResourceUtilization(9e3)
+
+    def get_mixed_precision_config(self):
+        return MixedPrecisionQuantizationConfig()
 
     def generate_inputs(self):
         # need positive inputs so won't divide with zero or take root of negative number

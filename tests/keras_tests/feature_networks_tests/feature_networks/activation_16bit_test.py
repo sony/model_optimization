@@ -17,6 +17,7 @@ import tensorflow as tf
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import TENSORFLOW
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 
@@ -77,6 +78,9 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
 
     def get_resource_utilization(self):
         return mct.core.ResourceUtilization(activation_memory=200)
+
+    def get_mixed_precision_config(self):
+        return MixedPrecisionQuantizationConfig()
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
