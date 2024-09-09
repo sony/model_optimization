@@ -49,21 +49,20 @@ class QuantizationErrorMethod(Enum):
 @dataclass
 class QuantizationConfig:
     """
-    Class to wrap all different parameters the library quantize the input model according to.
+    A class that encapsulates all the different parameters used by the library to quantize a model.
 
     Examples:
-        One may create a quantization configuration to quantize a model according to.
-        For example, to quantize a model's weights and activation using thresholds, such that
-        weights threshold selection is done using MSE, activation threshold selection is done using NOCLIPPING (min/max),
-        enabling relu_bound_to_power_of_2, weights_bias_correction,
-        one can instantiate a quantization configuration:
+        You can create a quantization configuration to apply to a model. For example, to quantize a model's weights and
+        activations using thresholds, with weight threshold selection based on MSE and activation threshold selection
+        using NOCLIPPING (min/max), while enabling relu_bound_to_power_of_2 and weights_bias_correction,
+        you can instantiate a quantization configuration like this:
 
         >>> import model_compression_toolkit as mct
         >>> qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING, weights_error_method=mct.core.QuantizationErrorMethod.MSE, relu_bound_to_power_of_2=True, weights_bias_correction=True)
 
 
-        The QuantizationConfig instanse can then be passed to
-        :func:`~model_compression_toolkit.ptq.keras_post_training_quantization`
+        The QuantizationConfig instance can then be used in the quantization workflow,
+        such as with Keras in the function: :func:~model_compression_toolkit.ptq.keras_post_training_quantization`.
 
     """
 
