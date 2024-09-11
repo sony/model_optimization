@@ -8,7 +8,7 @@ updates:
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "sunday"
-      time: "08:00"
-      
+      interval: "daily"
+    reviewers:
+      - "ofirgo"      
+      - "reuvenperetz"
