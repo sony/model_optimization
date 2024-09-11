@@ -111,7 +111,7 @@ if FOUND_TORCH:
             gradual_quant_config = gradual_activation_quantization
         else:
             raise TypeError(f'gradual_activation_quantization argument should be bool or '
-                            f'GradualActivationQuantizationConfig, received {type(gradual_activation_quantization)}')
+                            f'GradualActivationQuantizationConfig, received {type(gradual_activation_quantization)}')    # pragma: no cover
 
         return GradientPTQConfig(n_epochs, optimizer, optimizer_rest=optimizer_rest, loss=loss,
                                  log_function=log_function, train_bias=True, optimizer_bias=bias_optimizer,
@@ -242,11 +242,11 @@ if FOUND_TORCH:
 else:
     # If torch is not installed,
     # we raise an exception when trying to use these functions.
-    def get_pytorch_gptq_config(*args, **kwargs):
+    def get_pytorch_gptq_config(*args, **kwargs):    # pragma: no cover
         Logger.critical("PyTorch must be installed to use 'get_pytorch_gptq_config'. "
-                        "The 'torch' package is missing.")  # pragma: no cover
+                        "The 'torch' package is missing.")
 
 
-    def pytorch_gradient_post_training_quantization(*args, **kwargs):
+    def pytorch_gradient_post_training_quantization(*args, **kwargs):    # pragma: no cover
         Logger.critical("PyTorch must be installed to use 'pytorch_gradient_post_training_quantization'. "
-                        "The 'torch' package is missing.")  # pragma: no cover
+                        "The 'torch' package is missing.")

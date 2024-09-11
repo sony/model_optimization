@@ -64,12 +64,12 @@ class LinearAnnealingConfig:
 
     def __post_init__(self):
         if not (0 <= self.target_factor < self.initial_factor <= 1):
-            raise ValueError(f'Expected 0 < target factor < initial factor <= 1, '
-                             f'received initial factor {self.initial_factor} and target factor {self.target_factor}')
+            raise ValueError(f'Expected 0 <= target_factor < initial_factor <= 1, '
+                             f'received initial_factor {self.initial_factor} and target_factor {self.target_factor}')
         if self.start_step < 0:
             raise ValueError(f'Expected start_step >= 0. received {self.start_step}')
         if self.end_step is not None and self.end_step <= self.start_step:
-            raise ValueError('Expected end_step > start_step, '
+            raise ValueError('Expected start_step < end_step, '
                              'received end_step {self.end_step} and start_step {self.start_stap}')
 
 
