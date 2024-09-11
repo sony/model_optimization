@@ -1,0 +1,11 @@
+
+allow-licenses:
+  - Apache-2.0
+  - MIT
+  - BSD-3-Clause
+  - BSD-2-Clause
+  - MPL-2.0
+  - HPND
+  - PSF-2.0
+
+fail-on-severity: low
