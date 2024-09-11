@@ -62,8 +62,8 @@ class Activation16BitTest(BasePytorchFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         x = torch.from_numpy(input_x[0].astype('float32'))
         out_f = float_model(x)
-        quantized_model = quantized_model.to('cuda')
-        out_q = quantized_model(x.to('cuda'))
+        quantized_model = quantized_model.to('cpu')
+        out_q = quantized_model(x.to('cpu'))
         self.unit_test.assertTrue(out_f.shape == out_q.shape, "Output shape mismatch.")
 
         mul1_act_quant = quantized_model.mul_activation_holder_quantizer
