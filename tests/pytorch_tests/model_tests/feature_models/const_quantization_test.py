@@ -17,6 +17,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import model_compression_toolkit as mct
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
@@ -117,6 +118,9 @@ class AdvancedConstQuantizationTest(BasePytorchFeatureNetworkTest):
 
     def get_tpc(self):
         return mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v3")
+
+    def get_mixed_precision_config(self):
+        return MixedPrecisionQuantizationConfig()
 
     def create_networks(self):
         return AdvancedConstQuantizationNet(self.const)

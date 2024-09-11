@@ -128,7 +128,7 @@ def prepare_graph_set_bit_widths(in_model,
                                      fw_impl=fw_impl,
                                      tpc=tpc,
                                      bit_width_config=core_config.bit_width_config,
-                                     mixed_precision_enable=core_config.mixed_precision_enable)
+                                     mixed_precision_enable=core_config.is_mixed_precision_enabled)
 
     tg = quantization_preparation_runner(graph,
                                          _representative_data_gen,
@@ -140,7 +140,7 @@ def prepare_graph_set_bit_widths(in_model,
     ######################################
     # Finalize bit widths
     ######################################
-    if core_config.mixed_precision_enable:
+    if core_config.is_mixed_precision_enabled:
 
         if core_config.mixed_precision_config.configuration_overwrite is None:
 
@@ -156,7 +156,7 @@ def prepare_graph_set_bit_widths(in_model,
     else:
         bit_widths_config = []
 
-    tg = set_bit_widths(core_config.mixed_precision_enable,
+    tg = set_bit_widths(core_config.is_mixed_precision_enabled,
                         tg,
                         bit_widths_config)
 

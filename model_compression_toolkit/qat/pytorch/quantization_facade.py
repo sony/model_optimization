@@ -145,7 +145,7 @@ if FOUND_TORCH:
             f"If you encounter an issue, please open an issue in our GitHub "
             f"project https://github.com/sony/model_optimization")
 
-        if core_config.mixed_precision_enable:
+        if core_config.is_mixed_precision_enabled:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.critical("Given quantization config to mixed-precision facade is not of type "
                              "MixedPrecisionQuantizationConfig. Please use pytorch_post_training_quantization API,"

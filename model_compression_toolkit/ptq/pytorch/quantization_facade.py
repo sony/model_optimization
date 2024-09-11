@@ -96,7 +96,7 @@ if FOUND_TORCH:
 
         fw_info = DEFAULT_PYTORCH_INFO
 
-        if core_config.mixed_precision_enable:
+        if core_config.is_mixed_precision_enabled:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.critical("Given quantization config to mixed-precision facade is not of type "
                                 "MixedPrecisionQuantizationConfig. Please use "

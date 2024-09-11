@@ -165,7 +165,7 @@ if FOUND_TORCH:
 
         """
 
-        if core_config.mixed_precision_enable:
+        if core_config.is_mixed_precision_enabled:
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.critical("Given quantization config for mixed-precision is not of type 'MixedPrecisionQuantizationConfig'. "
                                 "Ensure usage of the correct API for 'pytorch_gradient_post_training_quantization' "

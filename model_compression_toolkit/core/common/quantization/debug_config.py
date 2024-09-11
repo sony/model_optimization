@@ -13,29 +13,24 @@
 # limitations under the License.
 # ==============================================================================
 
-
+from dataclasses import dataclass, field
 from typing import List
 
 from model_compression_toolkit.core.common.network_editors.edit_network import EditRule
 
 
+@dataclass
 class DebugConfig:
     """
-    A class for MCT core debug information.
+    A dataclass for MCT core debug information.
+
+    Args:
+        analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is
+         enabled) or not. Can be used to pinpoint problematic layers in the quantization process.
+        network_editor (List[EditRule]): A list of rules and actions to edit the network for quantization.
+        simulate_scheduler (bool): Simulate scheduler behavior to compute operators' order and cuts.
     """
-    def __init__(self,
-                 analyze_similarity: bool = False,
-                 network_editor: List[EditRule] = [],
-                 simulate_scheduler: bool = False):
-        """
 
-        Args:
-
-            analyze_similarity (bool): Whether to plot similarity figures within TensorBoard (when logger is
-             enabled) or not. Can be used to pinpoint problematic layers in the quantization process.
-            network_editor (List[EditRule]): A list of rules and actions to edit the network for quantization.
-            simulate_scheduler (bool): Simulate scheduler behaviour to compute operators order and cuts.
-        """
-        self.analyze_similarity = analyze_similarity
-        self.network_editor = network_editor
-        self.simulate_scheduler = simulate_scheduler
+    analyze_similarity: bool = False
+    network_editor: List[EditRule] = field(default_factory=list)
+    simulate_scheduler: bool = False

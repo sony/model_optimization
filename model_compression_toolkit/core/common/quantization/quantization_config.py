@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-
+from dataclasses import dataclass, field
 import math
 from enum import Enum
 
@@ -46,86 +46,44 @@ class QuantizationErrorMethod(Enum):
     HMSE = 6
 
 
+@dataclass
 class QuantizationConfig:
+    """
+    A class that encapsulates all the different parameters used by the library to quantize a model.
 
-    def __init__(self,
-                 activation_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE,
-                 weights_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE,
-                 relu_bound_to_power_of_2: bool = False,
-                 weights_bias_correction: bool = True,
-                 weights_second_moment_correction: bool = False,
-                 input_scaling: bool = False,
-                 softmax_shift: bool = False,
-                 shift_negative_activation_correction: bool = True,
-                 activation_channel_equalization: bool = False,
-                 z_threshold: float = math.inf,
-                 min_threshold: float = MIN_THRESHOLD,
-                 l_p_value: int = 2,
-                 linear_collapsing: bool = True,
-                 residual_collapsing: bool = True,
-                 shift_negative_ratio: float = 0.05,
-                 shift_negative_threshold_recalculation: bool = False,
-                 shift_negative_params_search: bool = False,
-                 concat_threshold_update: bool = False):
-        """
-        Class to wrap all different parameters the library quantize the input model according to.
+    Examples:
+        You can create a quantization configuration to apply to a model. For example, to quantize a model's weights and
+        activations using thresholds, with weight threshold selection based on MSE and activation threshold selection
+        using NOCLIPPING (min/max), while enabling relu_bound_to_power_of_2 and weights_bias_correction,
+        you can instantiate a quantization configuration like this:
 
-        Args:
-            activation_error_method (QuantizationErrorMethod): Which method to use from QuantizationErrorMethod for activation quantization threshold selection.
-            weights_error_method (QuantizationErrorMethod): Which method to use from QuantizationErrorMethod for activation quantization threshold selection.
-            relu_bound_to_power_of_2 (bool): Whether to use relu to power of 2 scaling correction or not.
-            weights_bias_correction (bool): Whether to use weights bias correction or not.
-            weights_second_moment_correction (bool): Whether to use weights second_moment correction or not.
-            input_scaling (bool): Whether to use input scaling or not.
-            softmax_shift (bool): Whether to use softmax shift or not.
-            shift_negative_activation_correction (bool): Whether to use shifting negative activation correction or not.
-            activation_channel_equalization (bool): Whether to use activation channel equalization correction or not.
-            z_threshold (float): Value of z score for outliers removal.
-            min_threshold (float): Minimum threshold to use during thresholds selection.
-            l_p_value (int): The p value of L_p norm threshold selection.
-            block_collapsing (bool): Whether to collapse block one to another in the input network
-            shift_negative_ratio (float): Value for the ratio between the minimal negative value of a non-linearity output to its activation threshold, which above it - shifting negative activation should occur if enabled.
-            shift_negative_threshold_recalculation (bool): Whether or not to recompute the threshold after shifting negative activation.
-            shift_negative_params_search (bool): Whether to search for optimal shift and threshold in shift negative activation.
-
-        Examples:
-            One may create a quantization configuration to quantize a model according to.
-            For example, to quantize a model's weights and activation using thresholds, such that
-            weights threshold selection is done using MSE, activation threshold selection is done using NOCLIPPING (min/max),
-            enabling relu_bound_to_power_of_2, weights_bias_correction,
-            one can instantiate a quantization configuration:
-
-            >>> import model_compression_toolkit as mct
-            >>> qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING, weights_error_method=mct.core.QuantizationErrorMethod.MSE, relu_bound_to_power_of_2=True, weights_bias_correction=True)
+        >>> import model_compression_toolkit as mct
+        >>> qc = mct.core.QuantizationConfig(activation_error_method=mct.core.QuantizationErrorMethod.NOCLIPPING, weights_error_method=mct.core.QuantizationErrorMethod.MSE, relu_bound_to_power_of_2=True, weights_bias_correction=True)
 
 
-            The QuantizationConfig instanse can then be passed to
-            :func:`~model_compression_toolkit.ptq.keras_post_training_quantization`
+        The QuantizationConfig instance can then be used in the quantization workflow,
+        such as with Keras in the function: :func:~model_compression_toolkit.ptq.keras_post_training_quantization`.
 
-        """
+    """
 
-        self.activation_error_method = activation_error_method
-        self.weights_error_method = weights_error_method
-        self.relu_bound_to_power_of_2 = relu_bound_to_power_of_2
-        self.weights_bias_correction = weights_bias_correction
-        self.weights_second_moment_correction = weights_second_moment_correction
-        self.activation_channel_equalization = activation_channel_equalization
-        self.input_scaling = input_scaling
-        self.softmax_shift = softmax_shift
-        self.min_threshold = min_threshold
-        self.shift_negative_activation_correction = shift_negative_activation_correction
-        self.z_threshold = z_threshold
-        self.l_p_value = l_p_value
-        self.linear_collapsing = linear_collapsing
-        self.residual_collapsing = residual_collapsing
-        self.shift_negative_ratio = shift_negative_ratio
-        self.shift_negative_threshold_recalculation = shift_negative_threshold_recalculation
-        self.shift_negative_params_search = shift_negative_params_search
-        self.concat_threshold_update = concat_threshold_update
-
-    def __repr__(self):
-        # Used for debugging, thus no cover.
-        return str(self.__dict__)  # pragma: no cover
+    activation_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE
+    weights_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE
+    relu_bound_to_power_of_2: bool = False
+    weights_bias_correction: bool = True
+    weights_second_moment_correction: bool = False
+    input_scaling: bool = False
+    softmax_shift: bool = False
+    shift_negative_activation_correction: bool = True
+    activation_channel_equalization: bool = False
+    z_threshold: float = math.inf
+    min_threshold: float = MIN_THRESHOLD
+    l_p_value: int = 2
+    linear_collapsing: bool = True
+    residual_collapsing: bool = True
+    shift_negative_ratio: float = 0.05
+    shift_negative_threshold_recalculation: bool = False
+    shift_negative_params_search: bool = False
+    concat_threshold_update: bool = False
 
 
 # Default quantization configuration the library use.
