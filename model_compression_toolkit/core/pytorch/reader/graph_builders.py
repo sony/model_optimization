@@ -80,6 +80,8 @@ def _build_input_alloc_and_call_args(n: Node, input_tensors_in_node_kwargs: Dict
     tensor_input_alloc = []
     op_call_args = list(n.args)
     if inputs_as_list:
+        # input tensors are a list in the first argument -> remove from op_call_args and go over
+        # the tensors in that list.
         _args = op_call_args.pop(0)
     else:
         _args = n.args
