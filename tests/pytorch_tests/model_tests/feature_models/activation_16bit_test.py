@@ -19,6 +19,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
+from model_compression_toolkit.core.pytorch.constants import CPU
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 
 
@@ -61,6 +62,12 @@ class Activation16BitTest(BasePytorchFeatureNetworkTest):
         return Activation16BitNet()
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        x = torch.from_numpy(input_x[0].astype('float32'))
+        out_f = float_model(x)
+        quantized_model = quantized_model.to(CPU)
+        out_q = quantized_model(x.to(CPU))
+        self.unit_test.assertTrue(out_f.shape == out_q.shape, "Output shape mismatch.")
+
         mul1_act_quant = quantized_model.mul_activation_holder_quantizer
         mul2_act_quant = quantized_model.mul_1_activation_holder_quantizer
         self.unit_test.assertTrue(mul1_act_quant.activation_holder_quantizer.num_bits == 16,
