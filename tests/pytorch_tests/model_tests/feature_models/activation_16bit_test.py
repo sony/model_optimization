@@ -19,7 +19,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
-from model_compression_toolkit.core.pytorch.constants import CPU
+from model_compression_toolkit.core.pytorch.utils import get_working_device
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 
 
@@ -43,6 +43,8 @@ class Activation16BitNet(torch.nn.Module):
         x1 = torch.add(x, self.add_const)
         x = torch.sub(x, self.sub_const)
         x = torch.mul(x, x1)
+        x = torch.reshape(x, (-1, 3, 2*(1+int(self.use_concat)), 4, 8))
+        x = torch.reshape(x, (-1, 3, 8*(1+int(self.use_concat)), 8))
         x = self.conv(x)
         x = torch.divide(x, self.div_const)
         return x
@@ -51,7 +53,7 @@ class Activation16BitNet(torch.nn.Module):
 class Activation16BitTest(BasePytorchFeatureNetworkTest):
 
     def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
+        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v4')
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
         mul_op_set.qc_options.base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
         tpc.layer2qco[torch.mul].base_config = mul_op_set.qc_options.base_config
@@ -62,10 +64,9 @@ class Activation16BitTest(BasePytorchFeatureNetworkTest):
         return Activation16BitNet()
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        x = torch.from_numpy(input_x[0].astype('float32'))
-        out_f = float_model(x)
-        quantized_model = quantized_model.to(CPU)
-        out_q = quantized_model(x.to(CPU))
+        x = torch.from_numpy(input_x[0].astype('float32')).to(get_working_device())
+        out_f = float_model.to(get_working_device())(x)
+        out_q = quantized_model(x)
         self.unit_test.assertTrue(out_f.shape == out_q.shape, "Output shape mismatch.")
 
         mul1_act_quant = quantized_model.mul_activation_holder_quantizer

@@ -31,7 +31,7 @@ get_op_set = lambda x, x_list: [op_set for op_set in x_list if op_set.name == x]
 class Activation16BitTest(BaseKerasFeatureNetworkTest):
 
     def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, 'v3')
+        tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, 'v4')
         # Force Mul base_config to 16bit only
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
         mul_op_set.qc_options.base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
@@ -45,6 +45,8 @@ class Activation16BitTest(BaseKerasFeatureNetworkTest):
         x = tf.add(x, np.ones((3,), dtype=np.float32))
         x1 = tf.subtract(x, np.ones((3,), dtype=np.float32))
         x = tf.multiply(x, x1)
+        x = tf.reshape(x, (-1, 4, 4, 8, 3))
+        x = tf.reshape(x, (-1, 16, 8, 3))
         x = tf.keras.layers.Conv2D(3, 1)(x)
         outputs = tf.divide(x, 2*np.ones((3,), dtype=np.float32))
         return keras.Model(inputs=inputs, outputs=outputs)
