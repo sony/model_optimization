@@ -80,9 +80,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                tf.compat.v1.gather,
                                tf.__operators__.getitem,
                                tf.strided_slice]
-    quantization_preserving_list_16bit_input = [Identity,
-                                                tf.identity,
-                                                Reshape,
+    quantization_preserving_list_16bit_input = [Reshape,
                                                 tf.reshape,
                                                 Permute,
                                                 tf.transpose,

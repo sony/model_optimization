@@ -79,8 +79,10 @@ def set_quantization_configuration_to_graph(graph: Graph,
     return graph
 
 
-def filter_node_qco_by_graph(node: BaseNode, tpc: TargetPlatformCapabilities,
-                             graph: Graph, node_qc_options: QuantizationConfigOptions
+def filter_node_qco_by_graph(node: BaseNode,
+                             tpc: TargetPlatformCapabilities,
+                             graph: Graph,
+                             node_qc_options: QuantizationConfigOptions
                              ) -> Tuple[OpQuantizationConfig, List[OpQuantizationConfig]]:
     """
     Filter quantization config options that don't match the graph.
@@ -95,6 +97,8 @@ def filter_node_qco_by_graph(node: BaseNode, tpc: TargetPlatformCapabilities,
         node_qc_options: Node's QuantizationConfigOptions.
 
     Returns:
+        A base config (OpQuantizationConfig) and a config options list (list of OpQuantizationConfig)
+        that are compatible with next nodes supported input bit-widths.
 
     """
     # Filter quantization config options that don't match the graph.
@@ -124,7 +128,7 @@ def filter_node_qco_by_graph(node: BaseNode, tpc: TargetPlatformCapabilities,
         _node_qc_options = [_option for _option in _node_qc_options
                             if _option.activation_n_bits <= next_nodes_supported_input_bitwidth]
         if len(_node_qc_options) == 0:
-            Logger.critical(f"Graph doesn't match TPC bit configurations: {node} -> {next_nodes}.")  # pragma: no cover
+            Logger.critical(f"Graph doesn't match TPC bit configurations: {node} -> {next_nodes}.")
 
         # Verify base config match
         if any([node_qc_options.base_config.activation_n_bits > qc_opt.base_config.max_input_activation_n_bits

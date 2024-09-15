@@ -76,8 +76,7 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                             unbind,
                                                             gather,
                                                             MaxPool2d])
-        tp.OperationsSetToLayers("QuantizationPreserving16BitInout", [Identity,
-                                                                      Flatten,
+        tp.OperationsSetToLayers("QuantizationPreserving16BitInout", [Flatten,
                                                                       flatten,
                                                                       operator.getitem,
                                                                       reshape,
