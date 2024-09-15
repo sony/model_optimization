@@ -178,6 +178,9 @@ def nodes_builder(model: GraphModule,
     consts_dict = {}
     used_consts = set()
 
+    # Dictionary to track seen targets and their corresponding nodes to mark reused nodes
+    seen_targets = {}
+
     # Init parameters & buffers dictionary of the entire model. We later extract the constants values from this dictionary.
     model_parameters_and_buffers = _extract_parameters_and_buffers(model, to_numpy)
 
@@ -237,6 +240,17 @@ def nodes_builder(model: GraphModule,
         # Extract input and output shapes of the node.
         input_shape, output_shape = _extract_input_and_output_shapes(node)
 
+        # Check if this node's target has been seen before
+        reuse = False
+        reuse_group = None
+        if node.target in seen_targets:
+            reuse = True
+            reuse_group = str(node.target)
+            # Update the 'base/main' node with the reuse group as all other nodes in its group.
+            fx_node_2_graph_node[seen_targets[node.target]].reuse_group = reuse_group
+        else:
+            seen_targets[node.target] = node
+
         # Initiate graph nodes.
         if node.op in [CALL_METHOD, CALL_FUNCTION]:
             graph_node_type = FunctionalNode
@@ -291,6 +305,8 @@ def nodes_builder(model: GraphModule,
                                      weights=weights,
                                      layer_class=node_type,
                                      has_activation=node_has_activation,
+                                     reuse=reuse,
+                                     reuse_group=reuse_group,
                                      **kwargs)
 
         # Generate graph inputs list.
