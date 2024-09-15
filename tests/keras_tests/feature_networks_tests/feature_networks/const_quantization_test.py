@@ -35,6 +35,39 @@ layers = keras.layers
 tp = mct.target_platform
 
 
+def create_const_quant_tpc(qmethod):
+    name = "const_quant_tpc"
+    base_cfg, mp_op_cfg_list, default_cfg = get_op_quantization_configs()
+    base_tp_model = generate_tp_model(default_config=default_cfg,
+                                      base_config=base_cfg,
+                                      mixed_precision_cfg_list=mp_op_cfg_list,
+                                      name=name)
+
+    const_config = default_cfg.clone_and_edit(
+        default_weight_attr_config=default_cfg.default_weight_attr_config.clone_and_edit(
+            enable_weights_quantization=True, weights_per_channel_threshold=True,
+            weights_n_bits=16, weights_quantization_method=qmethod))
+    const_configuration_options = tp.QuantizationConfigOptions([const_config])
+    const_merge_config = default_cfg.clone_and_edit(
+        default_weight_attr_config=default_cfg.default_weight_attr_config.clone_and_edit(
+            weights_per_channel_threshold=False))
+    const_merge_configuration_options = tp.QuantizationConfigOptions([const_merge_config])
+
+    operator_sets_dict = {}
+    operator_sets_dict["Add"] = const_configuration_options
+    operator_sets_dict["Sub"] = const_configuration_options
+    operator_sets_dict["Mul"] = const_configuration_options
+    operator_sets_dict["Div"] = const_configuration_options
+    operator_sets_dict["Default16BitInout"] = const_merge_configuration_options
+
+    tp_model = generate_custom_test_tp_model(name=name,
+                                             base_cfg=base_cfg,
+                                             base_tp_model=base_tp_model,
+                                             operator_sets_dict=operator_sets_dict)
+
+    return generate_keras_tpc(name="const_quant_tpc", tp_model=tp_model)
+
+
 class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
 
     def __init__(self, unit_test, layer, const, is_list_input=False, input_reverse_order=False, use_kwargs=False,
@@ -58,31 +91,7 @@ class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
         return mct.core.QuantizationConfig(weights_error_method=self.error_method)
 
     def get_tpc(self):
-        name = "const_quant_tpc"
-        base_cfg, mp_op_cfg_list, default_cfg = get_op_quantization_configs()
-        base_tp_model = generate_tp_model(default_config=default_cfg,
-                                          base_config=base_cfg,
-                                          mixed_precision_cfg_list=mp_op_cfg_list,
-                                          name=name)
-
-        const_config = default_cfg.clone_and_edit(
-            default_weight_attr_config=default_cfg.default_weight_attr_config.clone_and_edit(
-                enable_weights_quantization=True, weights_per_channel_threshold=True,
-                weights_quantization_method=self.qmethod))
-        const_configuration_options = tp.QuantizationConfigOptions([const_config])
-
-        operator_sets_dict = {}
-        operator_sets_dict["Add"] = const_configuration_options
-        operator_sets_dict["Sub"] = const_configuration_options
-        operator_sets_dict["Mul"] = const_configuration_options
-        operator_sets_dict["Div"] = const_configuration_options
-
-        tp_model = generate_custom_test_tp_model(name=name,
-                                                 base_cfg=base_cfg,
-                                                 base_tp_model=base_tp_model,
-                                                 operator_sets_dict=operator_sets_dict)
-
-        return generate_keras_tpc(name="const_quant_tpc", tp_model=tp_model)
+        return create_const_quant_tpc(self.qmethod)
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -159,3 +168,31 @@ class AdvancedConstQuantizationTest(BaseKerasFeatureNetworkTest):
                                   msg='TFOpLambda should be quantized')
         self.unit_test.assertTrue((quantized_model.layers[5].weight_values[1] == self.const).all(),
                                   msg='Constant value should not change')
+
+
+class ConstQuantizationMultiInputTest(BaseKerasFeatureNetworkTest):
+
+    def __init__(self, unit_test, input_shape=(32, 32, 16)):
+        super(ConstQuantizationMultiInputTest, self).__init__(unit_test=unit_test, input_shape=input_shape)
+
+    def get_tpc(self):
+        return create_const_quant_tpc(tp.QuantizationMethod.POWER_OF_TWO)
+
+    def create_networks(self):
+        as_const = lambda v: np.random.random(v.shape.as_list()).astype(np.float32)
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Concatenate()([inputs, np.random.random((1, 32, 32, 3)),
+                                  inputs, np.random.random((1, 32, 32, 3))])
+        x1 = layers.Add()([np.random.random((1, x.shape[-1])), x, np.random.random((1, x.shape[-1]))])
+        x2 = layers.Multiply()([x, np.random.random((1, x.shape[-1])), x, np.random.random((1, x.shape[-1]))])
+        x3 = tf.add_n([x1, as_const(x), x2])
+        x1 = tf.reshape(tf.stack([as_const(x1), x1, as_const(x1)], axis=1), (-1, 3*x1.shape[1], x1.shape[2], x1.shape[3]))
+        x = tf.concat([x1, x2, as_const(x3), x3], 1)
+        return tf.keras.models.Model(inputs=inputs, outputs=x)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        y = float_model.predict(input_x)
+        y_hat = quantized_model.predict(input_x)
+        self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
+        cs = cosine_similarity(y, y_hat)
+        self.unit_test.assertTrue(np.isclose(cs, 1, atol=1e-3), msg=f'fail cosine similarity check:{cs}')

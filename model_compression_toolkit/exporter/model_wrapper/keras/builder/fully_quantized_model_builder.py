@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Tuple, Callable
+from typing import Tuple, Callable, Union
 from model_compression_toolkit.core import common
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.verify_packages import FOUND_TF
@@ -25,10 +25,12 @@ if FOUND_TF:
     import tensorflow as tf
     from tensorflow.keras.layers import Layer
     from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
+    from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
     from mct_quantizers import KerasQuantizationWrapper
     from mct_quantizers import KerasActivationQuantizationHolder
+    from mct_quantizers.common.constants import OP_CALL_ARGS, OP_CALL_KWARGS
 
-    def _get_wrapper(node: common.BaseNode,
+    def _get_wrapper(node: Union[common.BaseNode, FunctionalNode],
                      layer: Layer,
                      fw_impl=None) -> Layer:
         """
@@ -45,9 +47,16 @@ if FOUND_TF:
             # for positional weights we need to extract the weight's value.
             weights_values = {attr: node.get_weights_by_keys(attr)
                               for attr in weights_quantizers if isinstance(attr, int)}
+            # When warpping functional nodes, need to set call args\kwargs in wrapper, beacuse they
+            # are used during wrapper call method.
+            func_node_kwargs = {OP_CALL_ARGS: node.op_call_args,
+                                OP_CALL_KWARGS: node.op_call_kwargs
+                                } if isinstance(node, FunctionalNode) else {}
             return KerasQuantizationWrapper(layer,
                                             weights_quantizers,
-                                            weights_values)
+                                            weights_values,
+                                            is_inputs_as_list=node.inputs_as_list,
+                                            **func_node_kwargs)
         return layer
 
 

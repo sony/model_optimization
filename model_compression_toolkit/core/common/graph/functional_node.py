@@ -55,13 +55,13 @@ class FunctionalNode(BaseNode):
                          layer_class,
                          reuse,
                          reuse_group,
+                         inputs_as_list,
                          quantization_attr,
                          has_activation=has_activation)
 
         self.op_call_kwargs = op_call_kwargs
         self.op_call_args = list(op_call_args)
         self.functional_op = functional_op
-        self.inputs_as_list = inputs_as_list
         self.tensor_input_allocs = [] if tensor_input_allocs is None else tensor_input_allocs
 
     @property
