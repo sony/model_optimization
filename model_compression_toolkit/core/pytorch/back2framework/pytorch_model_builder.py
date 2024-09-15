@@ -277,8 +277,7 @@ class PytorchModel(torch.nn.Module):
 
     def _add_modules(self):
         """
-        Build and add the modules and functional nodes from node_sort list as attributes to PytorchModel,
-        handling reused nodes
+        Build and add the modules and functional nodes from node_sort list as attributes to PytorchModel
         """
         for node in self.node_sort:
             if node.reuse:
