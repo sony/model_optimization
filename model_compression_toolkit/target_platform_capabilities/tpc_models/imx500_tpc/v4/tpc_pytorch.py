@@ -76,7 +76,7 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                             unbind,
                                                             gather,
                                                             MaxPool2d])
-        tp.OperationsSetToLayers("QuantizationPreserving16BitInout", [Flatten,
+        tp.OperationsSetToLayers("DimensionManipulationOps", [Flatten,
                                                                       flatten,
                                                                       operator.getitem,
                                                                       reshape,
@@ -84,7 +84,7 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                                       squeeze,
                                                                       permute,
                                                                       transpose])
-        tp.OperationsSetToLayers("Default16BitInout",
+        tp.OperationsSetToLayers("MergeOps",
                                  [torch.stack, torch.cat, torch.concat, torch.concatenate])
 
         tp.OperationsSetToLayers("Conv", [Conv2d, ConvTranspose2d],

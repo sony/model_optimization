@@ -92,8 +92,8 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", no_quant_list)
         tp.OperationsSetToLayers("QuantizationPreserving", quantization_preserving)
-        tp.OperationsSetToLayers("QuantizationPreserving16BitInout", quantization_preserving_list_16bit_input)
-        tp.OperationsSetToLayers("Default16BitInout", [tf.stack, tf.concat, Concatenate])
+        tp.OperationsSetToLayers("DimensionManipulationOps", quantization_preserving_list_16bit_input)
+        tp.OperationsSetToLayers("MergeOps", [tf.stack, tf.concat, Concatenate])
         tp.OperationsSetToLayers("Conv",
                                  [Conv2D,
                                   DepthwiseConv2D,

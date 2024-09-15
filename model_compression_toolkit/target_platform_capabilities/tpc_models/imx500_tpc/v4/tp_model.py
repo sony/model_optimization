@@ -214,12 +214,12 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                         default_qco.clone_and_edit(enable_activation_quantization=False,
                                                    quantization_preserving=True)
                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))
-        tp.OperatorsSet("QuantizationPreserving16BitInout",
+        tp.OperatorsSet("DimensionManipulationOps",
                         default_qco.clone_and_edit(enable_activation_quantization=False,
                                                    quantization_preserving=True,
                                                    supported_input_activation_n_bits=(8, 16))
                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))
-        tp.OperatorsSet("Default16BitInout", const_configuration_options_inout16_per_tensor)
+        tp.OperatorsSet("MergeOps", const_configuration_options_inout16_per_tensor)
 
         # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
         mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
