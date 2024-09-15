@@ -177,6 +177,18 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                                                                         const_config_input16],
                                                                        base_config=const_config_input16)
 
+    const_config_input16_per_tensor = const_config.clone_and_edit(
+        supported_input_activation_n_bits=(8, 16),
+        default_weight_attr_config=default_config.default_weight_attr_config.clone_and_edit(
+            enable_weights_quantization=True, weights_per_channel_threshold=True,
+            weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO)
+    )
+    const_config_input16_output16_per_tensor = const_config_input16_per_tensor.clone_and_edit(
+        activation_n_bits=16, signedness=Signedness.SIGNED)
+    const_configuration_options_inout16_per_tensor = tp.QuantizationConfigOptions([const_config_input16_output16_per_tensor,
+                                                                                   const_config_input16_per_tensor],
+                                                                                  base_config=const_config_input16_per_tensor)
+
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
@@ -207,7 +219,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                                                    quantization_preserving=True,
                                                    supported_input_activation_n_bits=(8, 16))
                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))
-        tp.OperatorsSet("Default16BitInout", const_configuration_options_inout16)
+        tp.OperatorsSet("Default16BitInout", const_configuration_options_inout16_per_tensor)
 
         # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
         mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
