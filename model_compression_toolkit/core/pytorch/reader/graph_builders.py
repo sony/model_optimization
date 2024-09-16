@@ -232,10 +232,17 @@ def nodes_builder(model: GraphModule,
 
         # Add constants to weights dictionary.
         if node.op != PLACEHOLDER:
-            for input_node in node.all_input_nodes:
-                # go over all args to find all duplicates
-                for i, input_arg in enumerate(node.args[0] if isinstance(node.args[0], (list, tuple)) else node.args):
-                    if input_node is input_arg and input_node in consts_dict:
+            if len(node.args) and isinstance(node.args[0], (list, tuple)):
+                # handle weights in nodes with list input. Especially when there's a duplicate of a tensor
+                # in the input list (e.g. torch.concat([const1, x, const2, x, const3], 1)).
+                for input_node in node.all_input_nodes:
+                    for i, input_arg in enumerate(node.args[0]):
+                        if input_node is input_arg and input_node in consts_dict:
+                            used_consts.add(input_node)
+                            weights.update({i: consts_dict[input_node]})
+            else:
+                for i, input_node in enumerate(node.all_input_nodes):
+                    if input_node in consts_dict:
                         used_consts.add(input_node)
                         weights.update({i: consts_dict[input_node]})
 
