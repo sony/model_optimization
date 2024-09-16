@@ -113,8 +113,7 @@ class reused_model(torch.nn.Module):
 
     def forward(self, inp):
         x = self.conv1(inp)
-        x1 = self.bn1(x)
-        x1 = self.relu(x1)
+        x1 = self.relu(x)
         x_split = torch.split(x1, split_size_or_sections=4, dim=-1)
         x1 = self.conv1(x_split[0])
         x2 = x_split[1]
