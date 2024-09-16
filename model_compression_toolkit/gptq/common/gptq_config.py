@@ -53,29 +53,48 @@ class GPTQHessianScoresConfig:
 
 
 @dataclass
-class LinearAnnealingConfig:
+class QFractionLinearAnnealingConfig:
     """
-    Config for Gradual Activation Quantization factor annealing. Factor refers to the weight of the float tensor.
+    Config for the quantized fraction linear scheduler of Gradual Activation Quantization.
+
+    Args:
+         initial_q_fraction: initial quantized fraction
+         target_q_fraction: target quantized fraction
+         start_step: gradient step to begin annealing
+         end_step: gradient step to complete annealing. None means last step.
     """
-    initial_factor: float = 1
-    target_factor: float = 0
-    start_step: int = 0    # gradient step to begin annealing
-    end_step: Optional[int] = None      # gradient step to complete annealing. None means the last step.
+    initial_q_fraction: float
+    target_q_fraction: float
+    start_step: int
+    end_step: Optional[int]
 
     def __post_init__(self):
-        if not (0 <= self.target_factor < self.initial_factor <= 1):
-            raise ValueError(f'Expected 0 <= target_factor < initial_factor <= 1, '
-                             f'received initial_factor {self.initial_factor} and target_factor {self.target_factor}')
+        if not (0 <= self.initial_q_fraction < self.target_q_fraction <= 1):
+            raise ValueError(f'0 <= self.initial_q_fraction < self.target_q_fraction <= 1, received initial_q_fraction '
+                             f'{self.initial_q_fraction} and target_q_fraction {self.target_q_fraction}.')
         if self.start_step < 0:
-            raise ValueError(f'Expected start_step >= 0. received {self.start_step}')
+            raise ValueError(f'Expected start_step >= 0. received {self.start_step}.')
         if self.end_step is not None and self.end_step <= self.start_step:
             raise ValueError('Expected start_step < end_step, '
-                             'received end_step {self.end_step} and start_step {self.start_stap}')
+                             'received end_step {self.end_step} and start_step {self.start_stap}.')
 
 
 @dataclass
 class GradualActivationQuantizationConfig:
-    annealing_policy: LinearAnnealingConfig = field(default_factory=LinearAnnealingConfig)
+    """ Configuration for Gradual Activation Quantization.
+
+        By default, the quantized fraction increases linearly from 0 to 1 throughout the training.
+
+        Args:
+            q_fraction_scheduler_policy: config for the scheduling of the quantized fraction.
+                Only linear annealing is currently supported.
+    """
+    q_fraction_scheduler_policy: QFractionLinearAnnealingConfig = field(
+        default_factory=lambda: QFractionLinearAnnealingConfig(initial_q_fraction=0,
+                                                               target_q_fraction=1,
+                                                               start_step=0,
+                                                               end_step=None)
+    )
 
 
 @dataclass

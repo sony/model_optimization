@@ -9,7 +9,7 @@ import model_compression_toolkit as mct
 from mct_quantizers import PytorchActivationQuantizationHolder, PytorchQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-from model_compression_toolkit.gptq import GradualActivationQuantizationConfig, LinearAnnealingConfig
+from model_compression_toolkit.gptq import GradualActivationQuantizationConfig, QFractionLinearAnnealingConfig
 from model_compression_toolkit.gptq.pytorch.gptq_pytorch_implementation import GPTQPytorchImplemantation
 from model_compression_toolkit.gptq.pytorch.gptq_training import PytorchGPTQTrainer
 from model_compression_toolkit.gptq.pytorch.quantizer.gradual_activation_quantization import \
@@ -21,6 +21,7 @@ from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quant
     STESymmetricActivationTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import LinearAnnealingScheduler
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
+from tests.pytorch_tests.utils import get_layers_from_model_by_type
 
 INPUT_SHAPE = [3, 8, 8]
 
@@ -112,7 +113,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
 
     def test_adding_holder_with_gradual_act_quantization(self):
         gradual_act_quant_cfg = GradualActivationQuantizationConfig(
-            LinearAnnealingConfig(initial_factor=0.9, target_factor=0.1, start_step=100, end_step=500)
+            QFractionLinearAnnealingConfig(initial_q_fraction=0.1, target_q_fraction=0.9, start_step=100, end_step=500)
         )
         gptq_cfg = mct.gptq.get_pytorch_gptq_config(1, use_hessian_based_weights=False,
                                                     gradual_activation_quantization=gradual_act_quant_cfg)
@@ -122,12 +123,12 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         for a in activation_holders:
             self.assertTrue(isinstance(a.activation_holder_quantizer, GradualActivationQuantizerWrapper))
             # check that quantizer wrapper's scheduler was created according to gptq config
-            factor_scheduler = a.activation_holder_quantizer.factor_scheduler
+            factor_scheduler = a.activation_holder_quantizer.q_fraction_scheduler
             self.assertTrue(isinstance(factor_scheduler, LinearAnnealingScheduler))
             self.assertEqual(factor_scheduler.t_start, 100)
             self.assertEqual(factor_scheduler.t_end, 500)
-            self.assertEqual(factor_scheduler.initial_val, 0.9)
-            self.assertEqual(factor_scheduler.target_val, 0.1)
+            self.assertEqual(factor_scheduler.initial_val, 0.1)
+            self.assertEqual(factor_scheduler.target_val, 0.9)
             # check the wrapped quantizer is correct and frozen
             quantizer = a.activation_holder_quantizer.quantizer
             self.assertTrue(isinstance(quantizer, STESymmetricActivationTrainableQuantizer))
@@ -136,12 +137,11 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
 
     def _get_holders_with_validation(self, gptq_model, exp_n_holders):
         last_module = list(gptq_model.named_modules())[-1][1]
-        activation_quantization_holders_in_model = [m[1] for m in gptq_model.named_modules() if
-                                                    isinstance(m[1], PytorchActivationQuantizationHolder)]
+        activation_quantization_holders = get_layers_from_model_by_type(gptq_model, PytorchActivationQuantizationHolder)
         # the last module should be an activation quantization holder
         self.assertTrue(isinstance(last_module, PytorchActivationQuantizationHolder))
-        self.assertTrue(len(activation_quantization_holders_in_model) == exp_n_holders)
-        return activation_quantization_holders_in_model
+        self.assertTrue(len(activation_quantization_holders) == exp_n_holders)
+        return activation_quantization_holders
 
     def _get_gptq_model(self, input_shape, in_model, gptq_cfg=None):
         pytorch_impl = GPTQPytorchImplemantation()

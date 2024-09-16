@@ -1,4 +1,4 @@
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 from functools import partial
 from typing import Callable
 
-from model_compression_toolkit.gptq import GradientPTQConfig, LinearAnnealingConfig
+from model_compression_toolkit.gptq import GradientPTQConfig, QFractionLinearAnnealingConfig
 from model_compression_toolkit.trainable_infrastructure import BasePytorchTrainableQuantizer
 
 from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import LinearAnnealingScheduler
@@ -37,41 +37,42 @@ def get_gradual_activation_quantizer_wrapper_factory(gptq_config: GradientPTQCon
     if gptq_config.gradual_activation_quantization_config is None:
         return lambda q: q
 
-    annealing_cfg = gptq_config.gradual_activation_quantization_config.annealing_policy
-    if isinstance(annealing_cfg, LinearAnnealingConfig):
+    annealing_cfg = gptq_config.gradual_activation_quantization_config.q_fraction_scheduler_policy
+    if isinstance(annealing_cfg, QFractionLinearAnnealingConfig):
         t_end = annealing_cfg.end_step or get_total_grad_steps_fn()
         factor_scheduler = LinearAnnealingScheduler(t_start=annealing_cfg.start_step, t_end=t_end,
-                                                    initial_val=annealing_cfg.initial_factor,
-                                                    target_val=annealing_cfg.target_factor)
+                                                    initial_val=annealing_cfg.initial_q_fraction,
+                                                    target_val=annealing_cfg.target_q_fraction)
     else:
         raise ValueError(f'Unknown annealing policy {annealing_cfg}')
 
-    return partial(GradualActivationQuantizerWrapper, factor_scheduler=factor_scheduler)
+    return partial(GradualActivationQuantizerWrapper, q_fraction_scheduler=factor_scheduler)
 
 
 class GradualActivationQuantizerWrapper:
+    # TODO update paper's url
     """
     Quantizer wrapper for Gradual Activation Quantization training (https://arxiv.org/abs/2309.11531).
 
     It computes the weighted sum of the float activation 'x' and the quantized activation 'q(x)':
 
-      out = p * x + (1 - p) * q(x)
+      out = (1 - q_fraction) * x + q_fraction * q(x)
 
-    where 'p' is a decreasing factor in the range [0, 1] provided by a factor scheduler.
+    where 'q_fraction' is a tensor fraction to quantize in the range [0, 1] provided by a scheduler.
 
     Args:
         quantizer: quantizer to wrap.
-        factor_scheduler: a callable that accepts a gradient step and returns the corresponding factor.
+        q_fraction_scheduler: a callable that accepts a gradient step and returns the corresponding quantized fraction.
     """
-    def __init__(self, quantizer: BasePytorchTrainableQuantizer, factor_scheduler: Callable[[int], float]):
+    def __init__(self, quantizer: BasePytorchTrainableQuantizer, q_fraction_scheduler: Callable[[int], float]):
         self.quantizer = quantizer
-        self.factor_scheduler = factor_scheduler
+        self.q_fraction_scheduler = q_fraction_scheduler
         self.step_cnt = 0
 
     def __call__(self, x, training: bool = True):
-        drop_factor = self.factor_scheduler(self.step_cnt)
+        q_fraction = self.q_fraction_scheduler(self.step_cnt)
         out_q = self.quantizer(x, training)
-        out = drop_factor * x + (1 - drop_factor) * out_q
+        out = (1 - q_fraction) * x + q_fraction * out_q
         self.step_cnt += 1
         return out
 

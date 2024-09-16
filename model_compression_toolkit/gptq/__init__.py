@@ -18,7 +18,7 @@ from model_compression_toolkit.gptq.common.gptq_config import (
     RoundingType,
     GPTQHessianScoresConfig,
     GradualActivationQuantizationConfig,
-    LinearAnnealingConfig
+    QFractionLinearAnnealingConfig
 )
 
 from model_compression_toolkit.verify_packages import FOUND_TF, FOUND_TORCH

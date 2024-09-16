@@ -19,7 +19,7 @@ import torch
 
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import LinearAnnealingScheduler
-from model_compression_toolkit.gptq import GradientPTQConfig, GradualActivationQuantizationConfig, LinearAnnealingConfig
+from model_compression_toolkit.gptq import GradientPTQConfig, GradualActivationQuantizationConfig, QFractionLinearAnnealingConfig
 from model_compression_toolkit.gptq.pytorch.quantizer.gradual_activation_quantization import (
     GradualActivationQuantizerWrapper, get_gradual_activation_quantizer_wrapper_factory)
 
@@ -39,7 +39,7 @@ class TestGradualActivationQuantization:
 
     def test_gradual_act_quant_wrapper(self, x):
         quantizer = Quantizer()
-        qw = GradualActivationQuantizerWrapper(quantizer, factor_scheduler=lambda t: 1 / (t + 1))
+        qw = GradualActivationQuantizerWrapper(quantizer, q_fraction_scheduler=lambda t: t / (t + 1))
 
         y0, y1, y2 = [qw(x) for _ in range(3)]
         assert torch.equal(y0, x)  # t=0
@@ -57,7 +57,7 @@ class TestGradualActivationQuantization:
     @pytest.mark.parametrize('end_step', (20, None))
     def test_factory_linear(self, x, end_step):
         qdrop_cfg = GradualActivationQuantizationConfig(
-            LinearAnnealingConfig(initial_factor=0.7, target_factor=0.2, start_step=10, end_step=end_step)
+            QFractionLinearAnnealingConfig(initial_q_fraction=0.3, target_q_fraction=0.8, start_step=10, end_step=end_step)
         )
 
         def get_total_steps():
@@ -67,13 +67,13 @@ class TestGradualActivationQuantization:
 
         quantizer_wrapper, quantizer = self._run_factory_test(qdrop_cfg, get_total_steps)
 
-        scheduler = quantizer_wrapper.factor_scheduler
+        scheduler = quantizer_wrapper.q_fraction_scheduler
         assert isinstance(scheduler, LinearAnnealingScheduler)
         exp_end_step = 50 if end_step is None else end_step
         assert scheduler.t_start == 10
         assert scheduler.t_end == exp_end_step
-        assert scheduler.initial_val == 0.7
-        assert scheduler.target_val == 0.2
+        assert scheduler.initial_val == 0.3
+        assert scheduler.target_val == 0.8
 
         y = [quantizer_wrapper(x) for _ in range(exp_end_step+1)]
         assert torch.allclose(y[9], 0.7 * x + 0.3 * quantizer(x, True))
@@ -83,7 +83,7 @@ class TestGradualActivationQuantization:
     def test_factory_linear_common_case(self, x):
         # validate that we actually implemented the right thing - on first call float input, on last call fully quantized
         qdrop_cfg = GradualActivationQuantizationConfig(
-            LinearAnnealingConfig(initial_factor=1, target_factor=0, start_step=0, end_step=None)
+            QFractionLinearAnnealingConfig(initial_q_fraction=0, target_q_fraction=1, start_step=0, end_step=None)
         )
         quantizer_wrapper, quantizer = self._run_factory_test(qdrop_cfg, lambda: 15)
         y0, *_, y_last = [quantizer_wrapper(x) for _ in range(16)]
