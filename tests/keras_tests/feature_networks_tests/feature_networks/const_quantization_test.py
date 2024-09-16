@@ -18,13 +18,14 @@ import numpy as np
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tp_model import generate_tp_model, \
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import generate_tp_model, \
     get_op_quantization_configs
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tpc_keras import generate_keras_tpc
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tpc_keras import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
     generate_test_tp_model, generate_custom_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from tests.keras_tests.utils import get_layers_from_model_by_type
 from mct_quantizers import KerasQuantizationWrapper, QuantizationMethod
 
 from model_compression_toolkit.constants import TENSORFLOW
@@ -58,7 +59,7 @@ def create_const_quant_tpc(qmethod):
     operator_sets_dict["Sub"] = const_configuration_options
     operator_sets_dict["Mul"] = const_configuration_options
     operator_sets_dict["Div"] = const_configuration_options
-    operator_sets_dict["Default16BitInout"] = const_merge_configuration_options
+    operator_sets_dict["MergeOps"] = const_merge_configuration_options
 
     tp_model = generate_custom_test_tp_model(name=name,
                                              base_cfg=base_cfg,
@@ -176,7 +177,7 @@ class ConstQuantizationMultiInputTest(BaseKerasFeatureNetworkTest):
         super(ConstQuantizationMultiInputTest, self).__init__(unit_test=unit_test, input_shape=input_shape)
 
     def get_tpc(self):
-        return create_const_quant_tpc(tp.QuantizationMethod.POWER_OF_TWO)
+        return mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v4")
 
     def create_networks(self):
         as_const = lambda v: np.random.random(v.shape.as_list()).astype(np.float32)
@@ -196,3 +197,9 @@ class ConstQuantizationMultiInputTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
         cs = cosine_similarity(y, y_hat)
         self.unit_test.assertTrue(np.isclose(cs, 1, atol=1e-2), msg=f'fail cosine similarity check:{cs}')
+
+        # check quantization layers:
+        for op in [tf.concat, tf.stack, layers.Add, layers.Multiply, layers.Concatenate]:
+            for qlayer in get_layers_from_model_by_type(quantized_model, op):
+                self.unit_test.assertTrue(isinstance(qlayer, KerasQuantizationWrapper),
+                                          msg=f"{op} should be quantized.")

@@ -232,10 +232,12 @@ def nodes_builder(model: GraphModule,
 
         # Add constants to weights dictionary.
         if node.op != PLACEHOLDER:
-            for i, input_node in enumerate(node.all_input_nodes):
-                if input_node in consts_dict:
-                    used_consts.add(input_node)
-                    weights.update({i: consts_dict[input_node]})
+            for input_node in node.all_input_nodes:
+                # go over all args to find all duplicates
+                for i, input_arg in enumerate(node.args[0] if isinstance(node.args[0], (list, tuple)) else node.args):
+                    if input_node is input_arg and input_node in consts_dict:
+                        used_consts.add(input_node)
+                        weights.update({i: consts_dict[input_node]})
 
         # Extract input and output shapes of the node.
         input_shape, output_shape = _extract_input_and_output_shapes(node)

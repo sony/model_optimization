@@ -24,7 +24,9 @@ import model_compression_toolkit.core as C
 if FOUND_TORCH:
     import torch
     from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
+    from mct_quantizers.common.constants import OP_CALL_ARGS, OP_CALL_KWARGS
     from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
+    from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 
 
     def fully_quantized_wrapper(node: common.BaseNode,
@@ -46,7 +48,14 @@ if FOUND_TORCH:
             # for positional weights we need to extract the weight's value.
             weights_values = {attr: fw_impl.to_tensor(node.get_weights_by_keys(attr))
                               for attr in weight_quantizers if isinstance(attr, int)}
-            return PytorchQuantizationWrapper(module, weight_quantizers, weights_values)
+            # When wrapping functional nodes, need to set call args\kwargs in wrapper, because they
+            # are used during wrapper call method.
+            func_node_kwargs = {OP_CALL_ARGS: node.op_call_args,
+                                OP_CALL_KWARGS: node.op_call_kwargs
+                                } if isinstance(node, FunctionalNode) else {}
+            return PytorchQuantizationWrapper(module, weight_quantizers, weights_values,
+                                              is_inputs_as_list=node.inputs_as_list,
+                                              **func_node_kwargs)
         return module
 
 

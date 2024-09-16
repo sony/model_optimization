@@ -47,7 +47,7 @@ if FOUND_TF:
             # for positional weights we need to extract the weight's value.
             weights_values = {attr: node.get_weights_by_keys(attr)
                               for attr in weights_quantizers if isinstance(attr, int)}
-            # When warpping functional nodes, need to set call args\kwargs in wrapper, beacuse they
+            # When wrapping functional nodes, need to set call args\kwargs in wrapper, because they
             # are used during wrapper call method.
             func_node_kwargs = {OP_CALL_ARGS: node.op_call_args,
                                 OP_CALL_KWARGS: node.op_call_kwargs
