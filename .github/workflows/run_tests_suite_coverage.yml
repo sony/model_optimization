@@ -24,6 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install coverage
+          pip install pytest
       - name: Prepare TF env
         run: pip install tensorflow==2.13.*
       - name: Run tensorflow testsuite
@@ -32,6 +33,8 @@ jobs:
         run: pip uninstall tensorflow -y && pip install torch==2.0.* torchvision onnx onnxruntime onnxruntime-extensions
       - name: Run torch testsuite
         run: coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" unittest tests/test_suite.py -v
+      - name: Run torch pytest
+        run: coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/pytorch
       - name: Combine Multiple Coverage Files
         run: coverage combine
       - name: Run Coverage HTML
