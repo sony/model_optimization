@@ -243,7 +243,9 @@ def nodes_builder(model: GraphModule,
         # Check if this node's target has been seen before
         reuse = False
         reuse_group = None
-        if node.target in seen_targets:
+        # We mark nodes as reused only if there are multiple nodes in the graph with same
+        # 'target' and it has some weights.
+        if node.target in seen_targets and len(weights) > 0:
             reuse = True
             reuse_group = str(node.target)
             # Update the 'base/main' node with the reuse group as all other nodes in its group.
