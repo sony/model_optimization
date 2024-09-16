@@ -18,23 +18,23 @@ from model_compression_toolkit.gptq import QFractionLinearAnnealingConfig
 
 
 def test_linear_annealing_cfg_validation():
-    with pytest.raises(ValueError, match='Expected.* initial_factor <= 1'):
-        QFractionLinearAnnealingConfig(initial_factor=1.1, target_factor=0.1, start_step=0, end_step=None)
+    with pytest.raises(ValueError, match='Expected.* target_q_fraction <= 1'):
+        QFractionLinearAnnealingConfig(initial_q_fraction=0.1, target_q_fraction=1.1, start_step=0, end_step=None)
 
-    with pytest.raises(ValueError, match='Expected.* 0 <= target_factor'):
-        QFractionLinearAnnealingConfig(initial_factor=0.9, target_factor=-0.1, start_step=0, end_step=100)
+    with pytest.raises(ValueError, match='Expected.* 0 <= initial_q_fraction'):
+        QFractionLinearAnnealingConfig(initial_q_fraction=-0.1, target_q_fraction=-0.9, start_step=0, end_step=100)
 
-    with pytest.raises(ValueError, match='Expected.* target_factor < initial_factor'):
-        QFractionLinearAnnealingConfig(initial_factor=0.1, target_factor=0.1, start_step=0, end_step=100)
+    with pytest.raises(ValueError, match='Expected.* initial_q_fraction < target_q_fraction'):
+        QFractionLinearAnnealingConfig(initial_q_fraction=0.1, target_q_fraction=0.1, start_step=0, end_step=100)
 
-    with pytest.raises(ValueError, match='Expected.* target_factor < initial_factor'):
-        QFractionLinearAnnealingConfig(initial_factor=0.1, target_factor=0.2, start_step=0, end_step=100)
+    with pytest.raises(ValueError, match='Expected.* initial_q_fraction < target_q_fraction'):
+        QFractionLinearAnnealingConfig(initial_q_fraction=0.2, target_q_fraction=0.1, start_step=0, end_step=100)
 
     with pytest.raises(ValueError, match='Expected.* start_step >= 0'):
-        QFractionLinearAnnealingConfig(initial_factor=1, target_factor=0, start_step=-1, end_step=100)
+        QFractionLinearAnnealingConfig(initial_q_fraction=0, target_q_fraction=1, start_step=-1, end_step=100)
 
     with pytest.raises(ValueError, match='Expected.* start_step < end_step'):
-        QFractionLinearAnnealingConfig(initial_factor=1, target_factor=0, start_step=100, end_step=100)
+        QFractionLinearAnnealingConfig(initial_q_fraction=0, target_q_fraction=1, start_step=100, end_step=100)
 
     with pytest.raises(ValueError, match='Expected.* start_step < end_step'):
-        QFractionLinearAnnealingConfig(initial_factor=1, target_factor=0, start_step=100, end_step=99)
+        QFractionLinearAnnealingConfig(initial_q_fraction=0, target_q_fraction=1, start_step=100, end_step=99)

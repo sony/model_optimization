@@ -91,6 +91,7 @@ class TestGradualActivationQuantization:
         assert torch.allclose(y_last, quantizer(x, True))
 
     def _run_factory_test(self, qdrop_cfg, get_grad_steps_fn):
+        # Mocks are used to just pass anything
         gptq_cfg = GradientPTQConfig(n_epochs=5, optimizer=Mock(), loss=Mock(),
                                      gradual_activation_quantization_config=qdrop_cfg)
         factory = get_gradual_activation_quantizer_wrapper_factory(gptq_cfg, get_grad_steps_fn)

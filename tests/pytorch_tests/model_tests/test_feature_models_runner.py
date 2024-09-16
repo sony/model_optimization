@@ -617,7 +617,10 @@ class FeatureModelsTestRunner(unittest.TestCase):
                               weights_quant_method=QuantizationMethod.UNIFORM,
                               params_learning=False).run_test()  # TODO: When params learning is True, the uniform quantizer gets a min value  > max value
 
-        # gradual activation quantization
+    def test_gptq_with_gradual_activation(self):
+        """
+        This test checks the GPTQ feature with gradual activation quantization.
+        """
         GPTQAccuracyTest(self, gradual_activation_quantization=True).run_test()
         GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
                          gradual_activation_quantization=True).run_test()

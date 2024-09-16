@@ -20,6 +20,8 @@ from model_compression_toolkit.gptq.pytorch.quantizer.soft_rounding.soft_quantiz
 from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import LinearAnnealingScheduler
 
 
+WARMUP_STEP_FRACTION = 0.2
+
 def get_regularization(gptq_config: GradientPTQConfig, get_total_grad_steps_fn: Callable[[], int]) -> Callable:
     """
     Returns a function that computes the regularization term for GPTQ training based on the given
@@ -35,7 +37,7 @@ def get_regularization(gptq_config: GradientPTQConfig, get_total_grad_steps_fn: 
     """
     if gptq_config.rounding_type == RoundingType.SoftQuantizer:
         total_gradient_steps = get_total_grad_steps_fn()
-        t_start = int(0.2 * total_gradient_steps)
+        t_start = int(WARMUP_STEP_FRACTION * total_gradient_steps)
         scheduler = LinearAnnealingScheduler(t_start=t_start, t_end=total_gradient_steps, initial_val=20, target_val=2)
         return SoftQuantizerRegularization(scheduler)
     else:

@@ -70,7 +70,7 @@ class QFractionLinearAnnealingConfig:
 
     def __post_init__(self):
         if not (0 <= self.initial_q_fraction < self.target_q_fraction <= 1):
-            raise ValueError(f'0 <= self.initial_q_fraction < self.target_q_fraction <= 1, received initial_q_fraction '
+            raise ValueError(f'Expected 0 <= initial_q_fraction < target_q_fraction <= 1, received initial_q_fraction '
                              f'{self.initial_q_fraction} and target_q_fraction {self.target_q_fraction}.')
         if self.start_step < 0:
             raise ValueError(f'Expected start_step >= 0. received {self.start_step}.')
