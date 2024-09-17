@@ -103,7 +103,7 @@ from tests.pytorch_tests.model_tests.feature_models.const_representation_test im
     ConstRepresentationCodeTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from tests.pytorch_tests.model_tests.feature_models.const_quantization_test import ConstQuantizationTest, \
-    AdvancedConstQuantizationTest
+    AdvancedConstQuantizationTest, ConstQuantizationMultiInputTest
 from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import RemoveIdentityTest
 from tests.pytorch_tests.model_tests.feature_models.activation_16bit_test import Activation16BitTest, \
     Activation16BitMixedPrecisionTest
@@ -263,6 +263,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
             ConstQuantizationTest(self, func, 5, input_reverse_order=True).run_test()
 
         AdvancedConstQuantizationTest(self).run_test()
+        ConstQuantizationMultiInputTest(self).run_test()
 
     def test_const_representation(self):
         for const_dtype in [np.float32, np.int64, np.int32]:
