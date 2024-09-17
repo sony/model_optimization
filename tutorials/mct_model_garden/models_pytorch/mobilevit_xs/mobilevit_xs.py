@@ -1,3 +1,13 @@
+# ---------------------------------------------------------------
+#    Copyright 2019 Ross Wightman
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+# ---------------------------------------------------------------
+#
 # The following code was mostly duplicated from https://github.com/huggingface/pytorch-image-models
 # and changed to generate an equivalent PyTorch model suitable for quantization.
 # Main changes:
