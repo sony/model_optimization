@@ -7,15 +7,7 @@
 #
 #        http://www.apache.org/licenses/LICENSE-2.0
 # ---------------------------------------------------------------
-#
-# The following code was mostly duplicated from https://github.com/huggingface/pytorch-image-models
-# and changed to generate an equivalent PyTorch model suitable for quantization.
-# Main changes:
-#   * Adjust the Attention layer to enhance compatibility for quantization (renamed as ModifiedAttention).
-#   * Rearrange the input structure for every Attention layer to make it suitable for quantization.
-#   * Inheritance class from HuggingFace
-#   * Simplification of model initialization procedures.
-# ==============================================================================
+
 """
 MobileViT (extra small-sized model) - PyTorch implementation
 
@@ -23,15 +15,21 @@ This code contains a PyTorch implementation of mobilevit-xs model, following
 https://github.com/huggingface/pytorch-image-models. This implementation includes a slightly modified version of
 MobileViT attention that was optimized for model quantization.
 
+Main changes:
+  - Adjust the Attention layer to enhance compatibility for quantization (renamed as ModifiedAttention).
+  - Rearrange the input structure for every Attention layer to make it suitable for quantization.
+  - Inheritance class from HuggingFace
+  - Simplification of model initialization procedures.
+
 The code is organized as follows:
-- Helper functions of timm building blocks, including: get_act_layer, _create_act, _create_fc, get_norm_act_layer,
+  - Helper functions of timm building blocks, including: get_act_layer, _create_act, _create_fc, get_norm_act_layer,
     create_conv2d_pad, create_conv2d, update_block_kwargs, create_block, create_byob_stages, create_byob_stem,
     create_classifier and more.
-- Configurations of MobileViT-XS model and building blocks: ByoModelCfg, ByoBlockCfg, _inverted_residual_block,
+  - Configurations of MobileViT-XS model and building blocks: ByoModelCfg, ByoBlockCfg, _inverted_residual_block,
     _mobilevit_block and model_cfgs.
-- Classes definitions of MobileViT-XS building blocks: BatchNormAct2d, ConvNormAct, BottleneckBlock,
+  - Classes definitions of MobileViT-XS building blocks: BatchNormAct2d, ConvNormAct, BottleneckBlock,
     Attention (ModifiedAttention), Mlp, TransformerBlock, MobileVitBlock, SelectAdaptivePool2d and ClassifierHead.
-- Classification Model definition: MobileViTXSPyTorch
+  - Classification Model definition: MobileViTXSPyTorch
 
 For more details on the mobilevit-xs model, refer to the original repository:
 https://github.com/huggingface/pytorch-image-models
