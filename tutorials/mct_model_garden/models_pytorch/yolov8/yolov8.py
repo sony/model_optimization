@@ -1,12 +1,21 @@
-# The following code was mostly duplicated from https://github.com/ultralytics/ultralytics
-# and changed to generate an equivalent PyTorch model suitable for quantization.
-# Main changes:
-#   * Modify layers to make them more suitable for quantization
-#       * torch.fx compatibility
-#       * Detect head (mainly the box decoding part that was optimized for model quantization)
-#   * Inheritance class from HuggingFace
-#   * Implement box decoding into Detect Layer
-# ==============================================================================
+# ------------------------------------------------------------------------------
+# This file contains code from the Ultralytics repository (YOLOv8)
+# Copyright (C) 2024  Ultralytics
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# ------------------------------------------------------------------------------
+
 """
 Yolov8n Object Detection Model - PyTorch implementation
 
@@ -18,6 +27,13 @@ Usage:
   pretrained_weights = torch.load('/path/to/pretrained/yolov8n.pt')['model'].state_dict()
   model.load_state_dict(pretrained_weights, strict=False)
   model.eval()
+
+Main changes:
+  Modify layers to make them more suitable for quantization
+  torch.fx compatibility
+  Detect head (mainly the box decoding part that was optimized for model quantization)
+  Inheritance class from HuggingFace
+  Implement box decoding into Detect Layer
 
 Notes and Limitations:
 - The model has been tested only with the default settings from Ultralytics, specifically using a 640x640 input resolution and 80 object classes.
