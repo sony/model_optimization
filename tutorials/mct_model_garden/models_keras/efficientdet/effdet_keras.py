@@ -1,10 +1,21 @@
-# The following code was mostly duplicated from https://github.com/rwightman/efficientdet-pytorch
-# and changed to generate an equivalent Keras model.
-# Main changes:
-#   * Torch layers replaced with Keras layers
-#   * removed class inheritance from torch.nn.Module
-#   * changed "forward" class methods with "__call__"
-# ==============================================================================
+# ---------------------------------------------------------------
+#    Copyright 2019 Ross Wightman
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+# ---------------------------------------------------------------
+
+"""
+The following code was mostly duplicated from https://github.com/rwightman/efficientdet-pytorch
+and changed to generate an equivalent Keras model.
+Main changes:
+  * Torch layers replaced with Keras layers
+  * removed class inheritance from torch.nn.Module
+  * changed "forward" class methods with "__call__"
+"""
 
 import logging
 from collections import OrderedDict
