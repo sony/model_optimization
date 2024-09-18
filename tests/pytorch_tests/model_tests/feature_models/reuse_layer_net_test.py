@@ -32,6 +32,8 @@ class ReuseLayerNet(torch.nn.Module):
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv2(x)
         return x
 
 
@@ -60,10 +62,19 @@ class ReuseLayerNetTest(BasePytorchTest):
         self.unit_test.assertEqual([p.data_ptr() for p in quant_model.conv1.parameters()],
                                    [p.data_ptr() for p in quant_model.conv1_1.parameters()],
                                    f"Shared parameters between reused layers should have identical memory addresses")
+        self.unit_test.assertEqual([p.data_ptr() for p in quant_model.conv2.parameters()],
+                                   [p.data_ptr() for p in quant_model.conv2_1.parameters()],
+                                   f"Shared parameters between reused layers should have identical memory addresses")
+        self.unit_test.assertEqual([p.data_ptr() for p in quant_model.conv2.parameters()],
+                                   [p.data_ptr() for p in quant_model.conv2_2.parameters()],
+                                   f"Shared parameters between reused layers should have identical memory addresses")
+        self.unit_test.assertNotEqual([p.data_ptr() for p in quant_model.conv1.parameters()],
+                                      [p.data_ptr() for p in quant_model.conv2.parameters()],
+                                      f"Parameters between different layers should have different memory addresses")
 
         #########################################################################################
 
-        # Verify that 'conv1' is called twice (thus reused) and 'conv2' is called once
+        # Verify that 'conv1' is called twice (thus reused) and 'conv2' is called three times
         layer_calls = {}
         def hook_fn(module, input, output):
             layer_name = [name for name, layer in quant_model.named_modules() if layer is module][0]
@@ -81,6 +92,6 @@ class ReuseLayerNetTest(BasePytorchTest):
             hook.remove()
 
         self.unit_test.assertEqual(layer_calls['conv1'], 2, "conv1 should be called twice")
-        self.unit_test.assertEqual(layer_calls['conv2'], 1, "conv2 should be called once")
+        self.unit_test.assertEqual(layer_calls['conv2'], 3, "conv2 should be called three times")
 
         #########################################################################################
