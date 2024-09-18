@@ -20,6 +20,7 @@ import onnxruntime
 from onnx import numpy_helper
 
 import model_compression_toolkit as mct
+from mct_quantizers import get_ort_session_options
 from model_compression_toolkit.exporter.model_exporter.pytorch.pytorch_export_facade import DEFAULT_ONNX_OPSET_VERSION
 
 from tests.pytorch_tests.exporter_tests.base_pytorch_export_test import BasePytorchExportTest
@@ -40,16 +41,29 @@ class BasePytorchONNXExportTest(BasePytorchExportTest):
         onnx.checker.check_model(filepath)
         return onnx.load(filepath)
 
-    def infer(self, model, images):
-        ort_session = onnxruntime.InferenceSession(model.SerializeToString())
+    def infer(self, model, inputs):
+        ort_session = onnxruntime.InferenceSession(
+            model.SerializeToString(),
+            get_ort_session_options(),
+            providers=['CUDAExecutionProvider', 'CPUExecutionProvider']
+        )
 
         def to_numpy(tensor):
             return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
 
-        # compute ONNX Runtime output prediction
-        ort_inputs = {ort_session.get_inputs()[0].name: to_numpy(images)}
-        onnx_output = ort_session.run(None, ort_inputs)
-        return onnx_output[0]
+        # Prepare inputs
+        if isinstance(inputs, list):
+            ort_inputs = {input.name: to_numpy(tensor) for input, tensor in zip(ort_session.get_inputs(), inputs)}
+        elif isinstance(inputs, dict):
+            ort_inputs = {name: to_numpy(tensor) for name, tensor in inputs.items()}
+        else:
+            raise ValueError("Inputs must be a list or a dictionary")
+
+        output_names = [output.name for output in ort_session.get_outputs()]
+        onnx_outputs = ort_session.run(output_names, ort_inputs)
+        output_dict = dict(zip(output_names, onnx_outputs))
+
+        return output_dict
 
     def _get_onnx_node_by_type(self, onnx_model, op_type):
         return [n for n in onnx_model.graph.node if n.op_type == op_type]

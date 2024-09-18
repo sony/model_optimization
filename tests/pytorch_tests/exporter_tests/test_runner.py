@@ -24,6 +24,10 @@ from tests.pytorch_tests.exporter_tests.custom_ops_tests.test_export_symmetric_o
     TestExportONNXWeightSymmetric2BitsQuantizers
 from tests.pytorch_tests.exporter_tests.custom_ops_tests.test_export_uniform_onnx_quantizers import \
     TestExportONNXWeightUniform2BitsQuantizers
+from tests.pytorch_tests.exporter_tests.test_onnx_multiple_inputs import TestExportONNXMultipleInputs
+from tests.pytorch_tests.exporter_tests.test_onnx_multiple_inputs_and_outputs import \
+    TestExportONNXMultipleInputsAndOutputs
+from tests.pytorch_tests.exporter_tests.test_onnx_multiple_outputs import TestExportONNXMultipleOutputs
 
 
 class PytorchExporterTestsRunner(unittest.TestCase):
@@ -55,4 +59,12 @@ class PytorchExporterTestsRunner(unittest.TestCase):
         TestExportONNXWeightLUTSymmetric2BitsQuantizers().run_test()
         TestExportONNXWeightLUTSymmetric2BitsQuantizers(onnx_opset_version=16).run_test()
 
+    def test_multiple_inputs_onnx(self):
+        TestExportONNXMultipleInputs().run_test()
+
+    def test_multiple_outputs_onnx(self):
+        TestExportONNXMultipleOutputs().run_test()
+
+    def test_multiple_inputs_and_outputs_onnx(self):
+        TestExportONNXMultipleInputsAndOutputs().run_test()
 
