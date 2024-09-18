@@ -30,10 +30,12 @@ if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers.core import TFOpLambda, SlicingOpLambda
     from keras.src.engine.keras_tensor import KerasTensor
     from keras.src.engine.node import Node as KerasNode
+    from keras.src.layers.merging.base_merge import _Merge
 else:
     from keras.layers.core import TFOpLambda, SlicingOpLambda
     from keras.engine.keras_tensor import KerasTensor
     from keras.engine.node import Node as KerasNode
+    from keras.layers.merging.base_merge import _Merge
 
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
@@ -287,6 +289,7 @@ def build_node(node: KerasNode,
             for i, arg in enumerate(op_call_args[0]):
                 if is_const(arg):
                     weights.update({i: to_numpy(arg, is_single_tensor=True)})
+        inputs_as_list = __is_node_inputs_a_list(op_call_args, keras_layer)
 
         node = BaseNode(node_name,
                         layer_config,
@@ -296,6 +299,7 @@ def build_node(node: KerasNode,
                         layer_class,
                         is_reused,
                         reuse_group,
+                        inputs_as_list,
                         is_custom=is_keras_custom_layer(layer_class))
 
     node_name_to_node[node_name] = node
@@ -316,6 +320,24 @@ def __is_functional_inputs_a_list(op_call_args: Any, keras_layer: Any) -> bool:
     """
 
     return (keras_layer.symbol in
-            [TFOpLambda(tf.concat).symbol, TFOpLambda(tf.stack).symbol,TFOpLambda(tf.add_n).symbol] and
+            [TFOpLambda(tf.concat).symbol, TFOpLambda(tf.stack).symbol, TFOpLambda(tf.add_n).symbol] and
             len(op_call_args) > 0 and
             isinstance(op_call_args[0], list))
+
+
+def __is_node_inputs_a_list(op_call_args: Any, keras_layer: Any) -> bool:
+    """
+    Check whether the input tensors should be passed as a list or not. This is relevant
+    only for layers that inherit from _Merge such as Concatenate and Add.
+
+    Args:
+        op_call_args: Arguments list to check.
+        keras_layer: Keras layer.
+
+    Returns:
+        Whether the input tensors should be passed as a list or not.
+    """
+
+    return (isinstance(keras_layer, _Merge) and
+            len(op_call_args) > 0 and
+            isinstance(op_call_args[0], (list, tuple)))

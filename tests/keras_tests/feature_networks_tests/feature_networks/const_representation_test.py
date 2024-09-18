@@ -153,12 +153,14 @@ class ConstRepresentationMultiInputTest(BaseKerasFeatureNetworkTest):
         return generate_keras_tpc(name="const_representation_test", tp_model=tp)
 
     def create_networks(self):
+        as_const = lambda v: np.random.random(v.shape.as_list()).astype(np.float32)
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Concatenate()([inputs, np.random.random((1, 32, 32, 3)), inputs, np.random.random((1, 32, 32, 3))])
         x1 = layers.Add()([np.random.random((1, x.shape[-1])), x, np.random.random((1, x.shape[-1]))])
         x2 = layers.Multiply()([x, np.random.random((1, x.shape[-1])), x, np.random.random((1, x.shape[-1]))])
-        x3 = tf.add_n([x1, np.random.random(x.shape.as_list()).astype(np.float32), x2])
-        x = tf.concat([x1, x2, np.random.random(x3.shape.as_list()).astype(np.float32), x3], 1)
+        x3 = tf.add_n([x1, as_const(x), x2])
+        x1 = tf.reshape(tf.stack([as_const(x1), x1, as_const(x1)], axis=1), (-1, 3*x1.shape[1], x1.shape[2], x1.shape[3]))
+        x = tf.concat([x1, x2, as_const(x3), x3], 1)
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):

@@ -308,7 +308,7 @@ class KerasModelBuilder(BaseModelBuilder):
             else:
                 # If operator expects a single input tensor, it cannot be a list as it should
                 # have a dtype field.
-                if len(input_tensors) == 1:
+                if len(input_tensors) == 1 and not n.inputs_as_list:
                     input_tensors = input_tensors[0]
                 out_tensors_of_n_float = op_func(input_tensors)
 

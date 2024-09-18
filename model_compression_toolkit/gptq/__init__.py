@@ -13,8 +13,20 @@
 # limitations under the License.
 # ==============================================================================
 
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType, GPTQHessianScoresConfig
-from model_compression_toolkit.gptq.keras.quantization_facade import keras_gradient_post_training_quantization
-from model_compression_toolkit.gptq.keras.quantization_facade import get_keras_gptq_config
-from model_compression_toolkit.gptq.pytorch.quantization_facade import pytorch_gradient_post_training_quantization
-from model_compression_toolkit.gptq.pytorch.quantization_facade import get_pytorch_gptq_config
+from model_compression_toolkit.gptq.common.gptq_config import (
+    GradientPTQConfig,
+    RoundingType,
+    GPTQHessianScoresConfig,
+    GradualActivationQuantizationConfig,
+    QFractionLinearAnnealingConfig
+)
+
+from model_compression_toolkit.verify_packages import FOUND_TF, FOUND_TORCH
+
+if FOUND_TF:
+    from model_compression_toolkit.gptq.keras.quantization_facade import keras_gradient_post_training_quantization
+    from model_compression_toolkit.gptq.keras.quantization_facade import get_keras_gptq_config
+
+if FOUND_TORCH:
+    from model_compression_toolkit.gptq.pytorch.quantization_facade import pytorch_gradient_post_training_quantization
+    from model_compression_toolkit.gptq.pytorch.quantization_facade import get_pytorch_gptq_config
