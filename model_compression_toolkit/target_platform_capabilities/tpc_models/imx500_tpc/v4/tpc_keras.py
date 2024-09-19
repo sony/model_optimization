@@ -74,10 +74,8 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                Dropout,
                                MaxPooling2D,
                                tf.split,
-                               tf.gather,
                                tf.cast,
                                tf.unstack,
-                               tf.compat.v1.gather,
                                tf.__operators__.getitem,
                                tf.strided_slice]
     quantization_preserving_list_16bit_input = [Reshape,
@@ -93,6 +91,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
         tp.OperationsSetToLayers("NoQuantization", no_quant_list)
         tp.OperationsSetToLayers("QuantizationPreserving", quantization_preserving)
         tp.OperationsSetToLayers("DimensionManipulationOps", quantization_preserving_list_16bit_input)
+        tp.OperationsSetToLayers("DimensionManipulationOpsWithWeights", [tf.gather, tf.compat.v1.gather])
         tp.OperationsSetToLayers("MergeOps", [tf.stack, tf.concat, Concatenate])
         tp.OperationsSetToLayers("Conv",
                                  [Conv2D,

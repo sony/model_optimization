@@ -189,6 +189,10 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                                                                                    const_config_input16_per_tensor],
                                                                                   base_config=const_config_input16_per_tensor)
 
+    qpreserving_const_config = const_config.clone_and_edit(enable_activation_quantization=False,
+                                                           quantization_preserving=True)
+    qpreserving_const_config_options = tp.QuantizationConfigOptions([qpreserving_const_config])
+
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
@@ -214,6 +218,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                         default_qco.clone_and_edit(enable_activation_quantization=False,
                                                    quantization_preserving=True)
                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+        tp.OperatorsSet("DimensionManipulationOpsWithWeights", qpreserving_const_config_options)
         tp.OperatorsSet("DimensionManipulationOps",
                         default_qco.clone_and_edit(enable_activation_quantization=False,
                                                    quantization_preserving=True,
