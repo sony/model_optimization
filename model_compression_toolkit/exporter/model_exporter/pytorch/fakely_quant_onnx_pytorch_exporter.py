@@ -89,12 +89,12 @@ if FOUND_ONNX:
             else:
                 Logger.info(f"Exporting fake-quant onnx model: {self.save_model_path}")
 
-            model_input = to_torch_tensor(next(self.repr_dataset())[0])
+            model_input = to_torch_tensor(next(self.repr_dataset()))
 
             if hasattr(self.model, 'metadata'):
                 onnx_bytes = BytesIO()
                 torch.onnx.export(self.model,
-                                  model_input,
+                                  tuple(model_input) if isinstance(model_input, list) else model_input,
                                   onnx_bytes,
                                   opset_version=self._onnx_opset_version,
                                   verbose=False,
@@ -107,7 +107,7 @@ if FOUND_ONNX:
                 onnx.save_model(onnx_model, self.save_model_path)
             else:
                 torch.onnx.export(self.model,
-                                  model_input,
+                                  tuple(model_input) if isinstance(model_input, list) else model_input,
                                   self.save_model_path,
                                   opset_version=self._onnx_opset_version,
                                   verbose=False,
