@@ -191,7 +191,7 @@ class ConstQuantizationMultiInputTest(BaseKerasFeatureNetworkTest):
         x = tf.concat([x1, x2, as_const(x3), x3], 1)
 
         inds = tf.reshape(tf.argmax(tf.reshape(x, (-1, 192 * 32, 38)), axis=1), (-1, 1, 1, 38))
-        b = tf.gather(np.random.random((100,)).astype(np.float32), inds)
+        b = tf.gather(np.random.random((192 * 32,)).astype(np.float32), inds)
         x = tf.add(x, b)
 
         return tf.keras.models.Model(inputs=inputs, outputs=x)
