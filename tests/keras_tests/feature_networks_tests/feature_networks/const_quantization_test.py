@@ -201,7 +201,9 @@ class ConstQuantizationMultiInputTest(BaseKerasFeatureNetworkTest):
         y_hat = quantized_model.predict(input_x)
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
         cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1, atol=1e-2), msg=f'fail cosine similarity check:{cs}')
+        # atol is rather high because there's a potential large difference between the float and quantized indices tensor
+        # that goes to the tf.argmax.
+        self.unit_test.assertTrue(np.isclose(cs, 1, atol=0.1), msg=f'fail cosine similarity check:{cs}')
 
         # check quantization layers:
         for op in [tf.concat, tf.stack, layers.Add, layers.Multiply, layers.Concatenate, tf.gather, tf.compat.v1.gather]:
