@@ -70,6 +70,7 @@ from tests.pytorch_tests.model_tests.feature_models.constant_conv_substitution_t
     ConstantConvReuseSubstitutionTest, ConstantConvTransposeSubstitutionTest
 from tests.pytorch_tests.model_tests.feature_models.multi_head_attention_test import MHALayerNetTest, \
     MHALayerNetFeatureTest
+from tests.pytorch_tests.model_tests.feature_models.scaled_dot_product_attention_test import ScaledDotProductAttentionTest
 from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test import \
     ScaleEqualizationWithZeroPadNetTest, ScaleEqualizationNetTest, \
     ScaleEqualizationReluFuncNetTest, ScaleEqualizationReluFuncWithZeroPadNetTest, \
@@ -585,6 +586,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
                             kv_seq_len[iter], kdim[iter], vdim[iter], bias=False).run_test()
         MHALayerNetFeatureTest(self, num_heads[0], q_seq_len[0], qdim[0] * num_heads[0],
                                kv_seq_len[0], kdim[0], vdim[0], bias=True, add_bias_kv=True).run_test()
+
+    def test_scaled_dot_product_attention_layer(self):
+        """
+        This test checks the ScaledDotProductDecomposition substitution feature.
+        """
+        ScaledDotProductAttentionTest(self).run_test(seed=3)
+        # ScaledDotProductAttentionTest(self, dropout_p=0.1).run_test(seed=3) # todo: comment in
 
     def test_gptq(self):
         """
