@@ -40,6 +40,7 @@ class BaseNode:
                  layer_class: type,
                  reuse: bool = False,
                  reuse_group: str = None,
+                 inputs_as_list: bool = False,
                  quantization_attr: Dict[str, Any] = None,
                  has_activation: bool = True,
                  is_custom: bool = False
@@ -58,6 +59,7 @@ class BaseNode:
             layer_class: Class path of the layer this node represents.
             reuse: Whether this node was duplicated and represents a reused layer.
             reuse_group: Name of group of nodes from the same reused layer.
+            inputs_as_list: Whether to pass the node its input tensors as a list or not when calling the layer.
             quantization_attr: Attributes the node holds regarding how it should be quantized.
             has_activation: Whether the node has activations that we might want to quantize.
             is_custom: Whether the node is custom layer or not.
@@ -71,6 +73,7 @@ class BaseNode:
         self.layer_class = layer_class
         self.reuse = reuse
         self.reuse_group = reuse_group
+        self.inputs_as_list = inputs_as_list
         self.final_weights_quantization_cfg = None
         self.final_activation_quantization_cfg = None
         self.candidates_quantization_cfg = None

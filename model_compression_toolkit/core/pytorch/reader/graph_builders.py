@@ -79,16 +79,19 @@ def _build_input_alloc_and_call_args(n: Node, input_tensors_in_node_kwargs: Dict
     tensor_input_alloc = []
     op_call_args = list(n.args)
     if inputs_as_list:
-        op_call_args.pop(0)
+        # input tensors are a list in the first argument -> remove from op_call_args and go over
+        # the tensors in that list.
+        _args = op_call_args.pop(0)
     else:
-        for in_node in n.all_input_nodes:
-            # The extra for loop is used to tackle the case of the same input tensor for this node (e.g. torch.add(x, x)).
-            for i, arg in enumerate(n.args):
-                if arg == in_node:
-                    tensor_input_alloc.append(i)
-            for k, arg in input_tensors_in_node_kwargs.items():
-                if arg == in_node:
-                    tensor_input_alloc.append(k)
+        _args = n.args
+    for in_node in n.all_input_nodes:
+        # The extra for loop is used to tackle the case of the same input tensor for this node (e.g. torch.add(x, x)).
+        for i, arg in enumerate(_args):
+            if arg == in_node:
+                tensor_input_alloc.append(i)
+        for k, arg in input_tensors_in_node_kwargs.items():
+            if arg == in_node:
+                tensor_input_alloc.append(k)
 
     return op_call_args, tensor_input_alloc
 
@@ -229,10 +232,19 @@ def nodes_builder(model: GraphModule,
 
         # Add constants to weights dictionary.
         if node.op != PLACEHOLDER:
-            for i, input_node in enumerate(node.all_input_nodes):
-                if input_node in consts_dict:
-                    used_consts.add(input_node)
-                    weights.update({i: consts_dict[input_node]})
+            if len(node.args) and isinstance(node.args[0], (list, tuple)):
+                # handle weights in nodes with list input. Especially when there's a duplicate of a tensor
+                # in the input list (e.g. torch.concat([const1, x, const2, x, const3], 1)).
+                for input_node in node.all_input_nodes:
+                    for i, input_arg in enumerate(node.args[0]):
+                        if input_node is input_arg and input_node in consts_dict:
+                            used_consts.add(input_node)
+                            weights.update({i: consts_dict[input_node]})
+            else:
+                for i, input_node in enumerate(node.all_input_nodes):
+                    if input_node in consts_dict:
+                        used_consts.add(input_node)
+                        weights.update({i: consts_dict[input_node]})
 
         # Extract input and output shapes of the node.
         input_shape, output_shape = _extract_input_and_output_shapes(node)
@@ -278,11 +290,8 @@ def nodes_builder(model: GraphModule,
                     node_kwargs[k] = v
 
             # Check if node's first input argument is a list of input fx nodes, such as torch.cat:
-            is_first_input_list_of_nodes = is_instance_first_arg(node, (list, tuple)) and all(
+            inputs_as_list = is_instance_first_arg(node, (list, tuple)) and all(
                 [isinstance(n, Node) for n in node.args[0]])
-            is_placeholder_a_list = is_instance_first_arg(node, Node) and \
-                     node.args[0].op == PLACEHOLDER and node.args[0].meta[TYPE] in (list, tuple)
-            inputs_as_list = is_first_input_list_of_nodes or is_placeholder_a_list
 
             # Build tensor_input_alloc required for the model builder. All input nodes are received as a list in the builder,
             # so tensor_input_alloc is used to allocate each input tensor in the correct place in the node's args & kwargs.
@@ -360,7 +369,12 @@ def edges_builder(model: GraphModule,
                 if input_node in fx_node_2_graph_node:
                     # n_edges_for_input_node is for the case that the input node appears more than
                     # once as the input of the node, for example add(x, x)
-                    n_edges_for_input_node = sum([1 for a in node.args if input_node == a])
+                    if node in fx_node_2_graph_node and isinstance(fx_node_2_graph_node[node], FunctionalNode) and \
+                            fx_node_2_graph_node[node].inputs_as_list:
+                        _args = node.args[0]
+                    else:
+                        _args = node.args
+                    n_edges_for_input_node = sum([1 for a in _args if input_node == a])
                     n_edges_for_input_node = max(n_edges_for_input_node, 1)
 
                     dst_index = node.all_input_nodes.index(input_node)

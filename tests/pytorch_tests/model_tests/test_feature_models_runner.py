@@ -104,7 +104,7 @@ from tests.pytorch_tests.model_tests.feature_models.const_representation_test im
     ConstRepresentationCodeTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from tests.pytorch_tests.model_tests.feature_models.const_quantization_test import ConstQuantizationTest, \
-    AdvancedConstQuantizationTest
+    AdvancedConstQuantizationTest, ConstQuantizationMultiInputTest
 from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import RemoveIdentityTest
 from tests.pytorch_tests.model_tests.feature_models.activation_16bit_test import Activation16BitTest, \
     Activation16BitMixedPrecisionTest
@@ -264,6 +264,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
             ConstQuantizationTest(self, func, 5, input_reverse_order=True).run_test()
 
         AdvancedConstQuantizationTest(self).run_test()
+        ConstQuantizationMultiInputTest(self).run_test()
 
     def test_const_representation(self):
         for const_dtype in [np.float32, np.int64, np.int32]:
@@ -608,7 +609,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
                          per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
         GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
         GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
-
         GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
                          weights_quant_method=QuantizationMethod.UNIFORM).run_test()
         GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
@@ -620,6 +620,16 @@ class FeatureModelsTestRunner(unittest.TestCase):
         GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer,
                               weights_quant_method=QuantizationMethod.UNIFORM,
                               params_learning=False).run_test()  # TODO: When params learning is True, the uniform quantizer gets a min value  > max value
+
+    def test_gptq_with_gradual_activation(self):
+        """
+        This test checks the GPTQ feature with gradual activation quantization.
+        """
+        GPTQAccuracyTest(self, gradual_activation_quantization=True).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         gradual_activation_quantization=True).run_test()
+        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer,
+                              gradual_activation_quantization=True).run_test()
 
     def test_qat(self):
         """
@@ -685,6 +695,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         TpcTest(f'{C.IMX500_TP_MODEL}.v2_lut', self).run_test()
         TpcTest(f'{C.IMX500_TP_MODEL}.v3', self).run_test()
         TpcTest(f'{C.IMX500_TP_MODEL}.v3_lut', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v4', self).run_test()
         TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
         TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
 

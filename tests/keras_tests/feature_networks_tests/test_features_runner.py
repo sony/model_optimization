@@ -147,7 +147,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.const_representat
     ConstRepresentationMultiInputTest, ConstRepresentationMatMulTest, ConstRepresentationListTypeArgsTest
 from tests.keras_tests.feature_networks_tests.feature_networks.concatination_threshold_update import ConcatThresholdtest
 from tests.keras_tests.feature_networks_tests.feature_networks.const_quantization_test import ConstQuantizationTest, \
-    AdvancedConstQuantizationTest
+    AdvancedConstQuantizationTest, ConstQuantizationMultiInputTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_16bit_test import Activation16BitTest, \
     Activation16BitMixedPrecisionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.sigmoid_mul_substitution_test import SigMulSubstitutionTest
@@ -588,6 +588,7 @@ class FeatureNetworkTest(unittest.TestCase):
                     ConstQuantizationTest(self, func, 5.1, input_reverse_order=True, qmethod=qmethod, error_method=error_method).run_test()
 
         AdvancedConstQuantizationTest(self).run_test()
+        ConstQuantizationMultiInputTest(self).run_test()
 
     def test_const_representation(self):
         c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32)
@@ -813,6 +814,7 @@ class FeatureNetworkTest(unittest.TestCase):
         TpcTest(f'{C.IMX500_TP_MODEL}.v2_lut', self).run_test()
         TpcTest(f'{C.IMX500_TP_MODEL}.v3', self).run_test()
         TpcTest(f'{C.IMX500_TP_MODEL}.v3_lut', self).run_test()
+        TpcTest(f'{C.IMX500_TP_MODEL}.v4', self).run_test()
         TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
         TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
 

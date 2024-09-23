@@ -21,6 +21,7 @@ from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
+from tests.pytorch_tests.utils import get_layers_from_model_by_type
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from model_compression_toolkit.constants import PYTORCH
 from mct_quantizers import PytorchQuantizationWrapper
@@ -138,3 +139,56 @@ class AdvancedConstQuantizationTest(BasePytorchFeatureNetworkTest):
                 self.unit_test.assertTrue((list(m.weight_values.values())[0].detach().cpu().numpy() ==
                                            self.const).all(),
                                           msg=f'Expected PytorchQuantizationWrapper const value to match float const.')
+
+
+class MultiInputConstQuantizationNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.register_buffer('cat_const_1', to_torch_tensor(np.random.randint(-128, 127, size=(1, 16, 1, 32))))
+        self.register_buffer('cat_const_2', to_torch_tensor(np.random.randint(-128, 127, size=(1, 16, 3, 32))))
+        self.register_buffer('concat_const_1', to_torch_tensor(np.random.randint(-128, 127, size=(1, 16, 36, 4))))
+        self.register_buffer('concatenate_const_1', to_torch_tensor(np.random.randint(-128, 127, size=(1, 1, 36, 36))))
+        self.register_buffer('concatenate_const_2', to_torch_tensor(np.random.randint(-128, 127, size=(1, 2, 36, 36))))
+        self.register_buffer('concatenate_const_3', to_torch_tensor(np.random.randint(-128, 127, size=(1, 3, 36, 36))))
+        self.register_buffer('stack_const_1', to_torch_tensor(np.random.randint(-128, 127, size=(1, 39, 36, 36))))
+        self.register_buffer('stack_const_2', to_torch_tensor(np.random.randint(-128, 127, size=(1, 39, 36, 36))))
+
+    def forward(self, x):
+        x = torch.cat([self.cat_const_1, x, self.cat_const_2], dim=2)
+        x = torch.concat([self.concat_const_1, x], dim=3)
+        x = torch.concatenate([self.concatenate_const_1, x,
+                               self.concatenate_const_2, x,
+                               self.concatenate_const_3, self.concatenate_const_1], dim=1)
+        x = torch.stack([self.stack_const_1, x, self.stack_const_2], dim=1)
+        x = torch.reshape(x, (1, 3*39, 36, 36))
+        return x
+
+
+class ConstQuantizationMultiInputTest(BasePytorchFeatureNetworkTest):
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test=unit_test, input_shape=(16, 32, 32))
+
+    def generate_inputs(self):
+        return [np.random.randint(-128, 127, size=in_shape) for in_shape in self.get_input_shapes()]
+
+    def get_tpc(self):
+        return mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v4")
+
+    def create_networks(self):
+        return MultiInputConstQuantizationNet()
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        in_torch_tensor = to_torch_tensor(input_x[0])
+        set_model(float_model)
+        y = float_model(in_torch_tensor)
+        y_hat = quantized_model(in_torch_tensor)
+        self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
+        cs = cosine_similarity(torch_tensor_to_numpy(y), torch_tensor_to_numpy(y_hat))
+        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs}')
+
+        # check quantization layers:
+        for op in [torch.cat, torch.concat, torch.concatenate, torch.stack]:
+            for qlayer in get_layers_from_model_by_type(quantized_model, op):
+                self.unit_test.assertTrue(isinstance(qlayer, PytorchQuantizationWrapper),
+                                          msg=f"{op} should be quantized.")

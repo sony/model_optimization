@@ -26,7 +26,7 @@ from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEA
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 import model_compression_toolkit as mct
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GradientPTQConfig, RoundingType, \
-    GPTQHessianScoresConfig
+    GPTQHessianScoresConfig, GradualActivationQuantizationConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from model_compression_toolkit.gptq.pytorch.gptq_loss import multiple_tensors_mse_loss
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
@@ -57,7 +57,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
     def __init__(self, unit_test, weights_bits=8, weights_quant_method=QuantizationMethod.SYMMETRIC,
                  rounding_type=RoundingType.STE, per_channel=True,
                  hessian_weights=True, log_norm_weights=True, scaled_log_norm=False, params_learning=True,
-                 num_calibration_iter=GPTQ_HESSIAN_NUM_SAMPLES):
+                 num_calibration_iter=GPTQ_HESSIAN_NUM_SAMPLES, gradual_activation_quantization=False):
         super().__init__(unit_test, input_shape=(3, 16, 16), num_calibration_iter=num_calibration_iter)
         self.seed = 0
         self.rounding_type = rounding_type
@@ -70,6 +70,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         self.override_params = {QUANT_PARAM_LEARNING_STR: params_learning} if \
             rounding_type == RoundingType.SoftQuantizer else {MAX_LSB_STR: DefaultDict(default_value=1)} \
             if rounding_type == RoundingType.STE else None
+        self.gradual_activation_quantization = gradual_activation_quantization
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
@@ -113,11 +114,13 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
 
         # Compare
         self.gptq_compare(ptq_model, gptq_model, input_x=x)
+        return gptq_model
 
 
 class GPTQAccuracyTest(GPTQBaseTest):
 
     def get_gptq_config(self):
+        gradual_act_cfg = GradualActivationQuantizationConfig() if self.gradual_activation_quantization else None
         return GradientPTQConfig(5, optimizer=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
                                  optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=1e-4),
                                  loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
@@ -125,7 +128,8 @@ class GPTQAccuracyTest(GPTQBaseTest):
                                  optimizer_bias=torch.optim.Adam([torch.Tensor([])], lr=0.4),
                                  hessian_weights_config=GPTQHessianScoresConfig(log_norm=self.log_norm_weights,
                                                                                 scale_log_norm=self.scaled_log_norm),
-                                 gptq_quantizer_params_override=self.override_params)
+                                 gptq_quantizer_params_override=self.override_params,
+                                 gradual_activation_quantization_config=gradual_act_cfg)
 
     def gptq_compare(self, ptq_model, gptq_model, input_x=None):
         ptq_weights = torch_tensor_to_numpy(list(ptq_model.parameters()))
@@ -137,9 +141,11 @@ class GPTQAccuracyTest(GPTQBaseTest):
 class GPTQWeightsUpdateTest(GPTQBaseTest):
 
     def get_gptq_config(self):
+        gradual_act_cfg = GradualActivationQuantizationConfig() if self.gradual_activation_quantization else None
         return GradientPTQConfig(50, optimizer=torch.optim.Adam([torch.Tensor([])], lr=0.5),
                                  optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=0.5),
                                  loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
+                                 gradual_activation_quantization_config=gradual_act_cfg,
                                  gptq_quantizer_params_override=self.override_params)
 
     def compare(self, ptq_model, gptq_model, input_x=None, max_change=None):
@@ -158,9 +164,11 @@ class GPTQWeightsUpdateTest(GPTQBaseTest):
 class GPTQLearnRateZeroTest(GPTQBaseTest):
 
     def get_gptq_config(self):
+        gradual_act_cfg = GradualActivationQuantizationConfig() if self.gradual_activation_quantization else None
         return GradientPTQConfig(5, optimizer=torch.optim.Adam([torch.Tensor([])], lr=0),
                                  optimizer_rest=torch.optim.Adam([torch.Tensor([])], lr=0),
                                  loss=multiple_tensors_mse_loss, train_bias=False, rounding_type=self.rounding_type,
+                                 gradual_activation_quantization_config=gradual_act_cfg,
                                  gptq_quantizer_params_override=self.override_params)
 
     def gptq_compare(self, ptq_model, gptq_model, input_x=None):
