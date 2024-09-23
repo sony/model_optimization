@@ -536,11 +536,12 @@ def seg_model_predict(model: Any,
         List: List containing tensors of predictions.
     """
     input_tensor = torch.from_numpy(inputs).unsqueeze(0)  # Add batch dimension
-
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    input_tensor = input_tensor.to(device)
     # Run the model
     with torch.no_grad():
         outputs = model(input_tensor)
-
+    outputs = [output.cpu() for output in outputs]
     return outputs
 
 def yolov8_pytorch(model_yaml: str) -> (nn.Module, Dict):
