@@ -30,8 +30,7 @@ from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlac
 from model_compression_toolkit.logger import Logger
 
 
-def _extract_parameters_and_buffers(module: Union[torch.nn.Module, GraphModule],
-                                    to_numpy: Callable) -> Dict[str, np.ndarray]:
+def _extract_parameters_and_buffers(module: Union[torch.nn.Module, GraphModule]) -> Dict[str, np.ndarray]:
     """
     Extract parameters & buffers from input module to a dictionary.
     Args:
@@ -41,8 +40,8 @@ def _extract_parameters_and_buffers(module: Union[torch.nn.Module, GraphModule],
         Dictionary containing module parameters and buffers by name.
     """
 
-    named_parameters = {name: to_numpy(parameter) for name, parameter in module.named_parameters()}
-    named_buffers = {name: to_numpy(buffer) for name, buffer in module.named_buffers()}
+    named_parameters = {name: parameter for name, parameter in module.named_parameters()}
+    named_buffers = {name: buffer for name, buffer in module.named_buffers()}
 
     return {**named_parameters, **named_buffers}
 
@@ -94,14 +93,12 @@ def _build_input_alloc_and_call_args(n: Node, input_tensors_in_node_kwargs: Dict
     return op_call_args, tensor_input_alloc
 
 
-def _extract_torch_layer_data(node_module: torch.nn.Module,
-                              to_numpy: Callable) -> Tuple[Any, Dict[str, np.ndarray], Dict]:
+def _extract_torch_layer_data(node_module: torch.nn.Module) -> Tuple[Any, Dict[str, np.ndarray], Dict]:
     """
     Extract required data from a non-functional node to rebuild the PyTorch layer.
 
     Args:
         node_module: Torch layer, such as nn.Conv2d, nn.Linear, etc.
-        to_numpy: Function to convert framework's tensor to a Numpy array.
 
     Returns:
         Node layer class.
@@ -121,7 +118,7 @@ def _extract_torch_layer_data(node_module: torch.nn.Module,
         framework_attr[BIAS] = False if node_module.bias is None else True
 
     # Extract layer weights and named buffers.
-    weights = {n: w for n, w in _extract_parameters_and_buffers(node_module, to_numpy).items() if len(w.shape) > 0}
+    weights = {n: w for n, w in _extract_parameters_and_buffers(node_module).items() if len(w.shape) > 0}
     return node_type, weights, framework_attr
 
 
@@ -182,7 +179,7 @@ def nodes_builder(model: GraphModule,
     seen_targets = {}
 
     # Init parameters & buffers dictionary of the entire model. We later extract the constants values from this dictionary.
-    model_parameters_and_buffers = _extract_parameters_and_buffers(model, to_numpy)
+    model_parameters_and_buffers = _extract_parameters_and_buffers(model)
 
     for node in model.graph.nodes:
 
@@ -195,7 +192,7 @@ def nodes_builder(model: GraphModule,
 
         if node.target in module_dict.keys():
             # PyTorch module node, such as nn.Conv2d or nn.Linear.
-            node_type, weights, framework_attr = _extract_torch_layer_data(module_dict[node.target], to_numpy)
+            node_type, weights, framework_attr = _extract_torch_layer_data(module_dict[node.target])
 
         elif node.op == CALL_FUNCTION:
             # Node is a function that handle a parameter\buffer in the model.
@@ -243,15 +240,27 @@ def nodes_builder(model: GraphModule,
         # Check if this node's target has been seen before
         reuse = False
         reuse_group = None
+        node_group_key = create_reuse_group(node.target, generate_weight_signature(weights))
         # We mark nodes as reused only if there are multiple nodes in the graph with same
         # 'target' and it has some weights.
-        if node.target in seen_targets and len(weights) > 0:
+        if node_group_key in seen_targets and len(weights) > 0:
             reuse = True
-            reuse_group = str(node.target)
+            reuse_group = node_group_key
             # Update the 'base/main' node with the reuse group as all other nodes in its group.
-            fx_node_2_graph_node[seen_targets[node.target]].reuse_group = reuse_group
+            fx_node_2_graph_node[seen_targets[node_group_key]].reuse_group = reuse_group
         else:
-            seen_targets[node.target] = node
+            seen_targets[node_group_key] = node
+
+        # Convert weights to numpy arrays after reuse marking
+        # We delay this conversion to preserve the original tensor instances during the reuse identification process.
+        # This is crucial for correctly identifying identical weight instances in reused functional layers.
+        # By keeping the original PyTorch tensors until this point, we ensure that:
+        # 1. Reused layers with the same weight instances are correctly marked as reused.
+        # 2. The instance-based weight signature generation works as intended, using the memory
+        # addresses of the original tensors.
+        # Only after all reuse marking is complete do we convert to numpy arrays.
+        for weight_name, weight_value in weights.items():
+            weights[weight_name] = to_numpy(weight_value)
 
         # Initiate graph nodes.
         if node.op in [CALL_METHOD, CALL_FUNCTION]:
@@ -369,3 +378,64 @@ def edges_builder(model: GraphModule,
                     Edge(fx_node_2_graph_node[node], fx_node_2_graph_node[out_node], src_index, dst_index))
 
     return edges
+
+from typing import Dict, Tuple, Optional, Any, Set
+
+def generate_weight_signature(weights: Dict[str, Any]) -> Optional[Tuple[int, ...]]:
+    """
+    Create a unique signature for the weights based on their instance IDs.
+
+    This function generates a tuple of sorted weight IDs, which serves as a unique
+    signature for a set of weights. This is useful for identifying identical weight
+    instances, particularly in the case of reused functional layers.
+
+    Args:
+        weights (Dict[str, Any]): A dictionary of weight names to weight values.
+                                  The values can be any type (typically tensors or arrays).
+
+    Returns:
+        Optional[Tuple[int, ...]]: A tuple of sorted weight IDs if weights are present,
+                                   or None if the weights dictionary is empty.
+    """
+    if not weights:
+        return None
+    weight_ids = tuple(sorted(id(weight) for weight in weights.values()))
+    return weight_ids
+
+def create_reuse_group(target: Any, weight_signature: Optional[Tuple[int, ...]]) -> str:
+    """
+    Combine target and weight signature to create a unique reuse group identifier.
+
+    This function creates a unique string identifier for a reuse group by combining
+    the target (typically a layer or operation name) with the weight signature.
+
+    Args:
+        target (Any): The target of the node, typically a string or callable representing
+                      a layer or operation.
+        weight_signature (Optional[Tuple[int, ...]]): The weight signature generated by
+                                                      generate_weight_signature function.
+
+    Returns:
+        str: A unique string identifier for the reuse group.
+    """
+    if weight_signature is None:
+        return str(target)
+    return f"{target}_{weight_signature}"
+
+def is_node_reusable(reuse_group: str, seen_targets: Set[str]) -> bool:
+    """
+    Determine if the node is reusable based on its reuse group.
+
+    This function checks if a node's reuse group has been seen before, indicating
+    that the node is potentially reusable.
+
+    Args:
+        reuse_group (str): The reuse group identifier for the node, created by
+                           the create_reuse_group function.
+        seen_targets (Set[str]): A set of previously seen reuse group identifiers.
+
+    Returns:
+        bool: True if the node is reusable (its reuse group has been seen before),
+              False otherwise.
+    """
+    return reuse_group in seen_targets

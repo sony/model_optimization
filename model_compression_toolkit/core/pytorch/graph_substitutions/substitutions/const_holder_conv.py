@@ -80,7 +80,9 @@ class FunctionalConvSubstitution(common.BaseSubstitution):
                             output_shape=func_node.output_shape,
                             weights={KERNEL: weight} if bias is None else {KERNEL: weight, BIAS: bias},
                             layer_class=new_layer,
-                            has_activation=func_node.has_activation)
+                            has_activation=func_node.has_activation,
+                            reuse=func_node.reuse,
+                            reuse_group=func_node.reuse_group)
         graph.add_node(new_node)
         graph.reconnect_out_edges(current_node=func_node, new_node=new_node)
         graph.reconnect_in_edges(current_node=func_node, new_node=new_node)
