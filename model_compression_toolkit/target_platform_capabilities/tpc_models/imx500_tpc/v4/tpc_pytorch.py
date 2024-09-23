@@ -29,6 +29,10 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import get_tp_model
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4 import __version__ as TPC_VERSION
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import OPSET_NO_QUANTIZATION, \
+    OPSET_QUANTIZATION_PRESERVING, OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS, OPSET_DIMENSION_MANIPULATION_OPS, \
+    OPSET_MERGE_OPS, OPSET_CONV, OPSET_FULLY_CONNECTED, OPSET_ANY_RELU, OPSET_ADD, OPSET_SUB, OPSET_MUL, OPSET_DIV, \
+    OPSET_PRELU, OPSET_SWISH, OPSET_SIGMOID, OPSET_TANH
 
 tp = mct.target_platform
 
@@ -65,49 +69,49 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                    BIAS_ATTR: DefaultDict(default_value=BIAS)}
 
     with pytorch_tpc:
-        tp.OperationsSetToLayers("NoQuantization", [torch.Tensor.size,
-                                                    equal,
-                                                    argmax,
-                                                    topk])
-        tp.OperationsSetToLayers("QuantizationPreserving", [Dropout,
-                                                            dropout,
-                                                            split,
-                                                            chunk,
-                                                            unbind,
-                                                            gather,
-                                                            MaxPool2d])
-        tp.OperationsSetToLayers("DimensionManipulationOps", [Flatten,
-                                                                      flatten,
-                                                                      operator.getitem,
-                                                                      reshape,
-                                                                      unsqueeze,
-                                                                      squeeze,
-                                                                      permute,
-                                                                      transpose])
-        tp.OperationsSetToLayers("MergeOps",
+        tp.OperationsSetToLayers(OPSET_NO_QUANTIZATION, [torch.Tensor.size,
+                                                         equal,
+                                                         argmax,
+                                                         topk])
+        tp.OperationsSetToLayers(OPSET_QUANTIZATION_PRESERVING, [Dropout,
+                                                                 dropout,
+                                                                 split,
+                                                                 chunk,
+                                                                 unbind,
+                                                                 gather,
+                                                                 MaxPool2d])
+        tp.OperationsSetToLayers(OPSET_DIMENSION_MANIPULATION_OPS, [Flatten,
+                                                                    flatten,
+                                                                    operator.getitem,
+                                                                    reshape,
+                                                                    unsqueeze,
+                                                                    squeeze,
+                                                                    permute,
+                                                                    transpose])
+        tp.OperationsSetToLayers(OPSET_MERGE_OPS,
                                  [torch.stack, torch.cat, torch.concat, torch.concatenate])
 
-        tp.OperationsSetToLayers("Conv", [Conv2d, ConvTranspose2d],
+        tp.OperationsSetToLayers(OPSET_CONV, [Conv2d, ConvTranspose2d],
                                  attr_mapping=pytorch_linear_attr_mapping)
-        tp.OperationsSetToLayers("FullyConnected", [Linear],
+        tp.OperationsSetToLayers(OPSET_FULLY_CONNECTED, [Linear],
                                  attr_mapping=pytorch_linear_attr_mapping)
-        tp.OperationsSetToLayers("AnyReLU", [torch.relu,
-                                             ReLU,
-                                             ReLU6,
-                                             LeakyReLU,
-                                             relu,
-                                             relu6,
-                                             leaky_relu,
-                                             tp.LayerFilterParams(Hardtanh, min_val=0),
-                                             tp.LayerFilterParams(hardtanh, min_val=0)])
+        tp.OperationsSetToLayers(OPSET_ANY_RELU, [torch.relu,
+                                                  ReLU,
+                                                  ReLU6,
+                                                  LeakyReLU,
+                                                  relu,
+                                                  relu6,
+                                                  leaky_relu,
+                                                  tp.LayerFilterParams(Hardtanh, min_val=0),
+                                                  tp.LayerFilterParams(hardtanh, min_val=0)])
 
-        tp.OperationsSetToLayers("Add", [operator.add, add])
-        tp.OperationsSetToLayers("Sub", [operator.sub, sub, subtract])
-        tp.OperationsSetToLayers("Mul", [operator.mul, mul, multiply])
-        tp.OperationsSetToLayers("Div", [operator.truediv, div, divide])
-        tp.OperationsSetToLayers("PReLU", [PReLU, prelu])
-        tp.OperationsSetToLayers("Swish", [SiLU, silu, Hardswish, hardswish])
-        tp.OperationsSetToLayers("Sigmoid", [Sigmoid, sigmoid])
-        tp.OperationsSetToLayers("Tanh", [Tanh, tanh])
+        tp.OperationsSetToLayers(OPSET_ADD, [operator.add, add])
+        tp.OperationsSetToLayers(OPSET_SUB, [operator.sub, sub, subtract])
+        tp.OperationsSetToLayers(OPSET_MUL, [operator.mul, mul, multiply])
+        tp.OperationsSetToLayers(OPSET_DIV, [operator.truediv, div, divide])
+        tp.OperationsSetToLayers(OPSET_PRELU, [PReLU, prelu])
+        tp.OperationsSetToLayers(OPSET_SWISH, [SiLU, silu, Hardswish, hardswish])
+        tp.OperationsSetToLayers(OPSET_SIGMOID, [Sigmoid, sigmoid])
+        tp.OperationsSetToLayers(OPSET_TANH, [Tanh, tanh])
 
     return pytorch_tpc

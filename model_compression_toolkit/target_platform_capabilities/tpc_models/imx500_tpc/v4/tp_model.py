@@ -24,6 +24,23 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.op_q
 
 tp = mct.target_platform
 
+OPSET_NO_QUANTIZATION = "NoQuantization"
+OPSET_QUANTIZATION_PRESERVING = "QuantizationPreserving"
+OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS = "DimensionManipulationOpsWithWeights"
+OPSET_DIMENSION_MANIPULATION_OPS = "DimensionManipulationOps"
+OPSET_MERGE_OPS = "MergeOps"
+OPSET_CONV = "Conv"
+OPSET_FULLY_CONNECTED = "FullyConnected"
+OPSET_ANY_RELU = "AnyReLU"
+OPSET_ADD = "Add"
+OPSET_SUB = "Sub"
+OPSET_MUL = "Mul"
+OPSET_DIV = "Div"
+OPSET_PRELU = "PReLU"
+OPSET_SWISH = "Swish"
+OPSET_SIGMOID = "Sigmoid"
+OPSET_TANH = "Tanh"
+
 
 def get_tp_model() -> TargetPlatformModel:
     """
@@ -211,40 +228,40 @@ def generate_tp_model(default_config: OpQuantizationConfig,
 
         # May suit for operations like: Dropout, Reshape, etc.
         default_qco = tp.get_default_quantization_config_options()
-        tp.OperatorsSet("NoQuantization",
+        tp.OperatorsSet(OPSET_NO_QUANTIZATION,
                         default_qco.clone_and_edit(enable_activation_quantization=False)
                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))
-        tp.OperatorsSet("QuantizationPreserving",
+        tp.OperatorsSet(OPSET_QUANTIZATION_PRESERVING,
                         default_qco.clone_and_edit(enable_activation_quantization=False,
                                                    quantization_preserving=True)
                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))
-        tp.OperatorsSet("DimensionManipulationOpsWithWeights", qpreserving_const_config_options)
-        tp.OperatorsSet("DimensionManipulationOps",
+        tp.OperatorsSet(OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS, qpreserving_const_config_options)
+        tp.OperatorsSet(OPSET_DIMENSION_MANIPULATION_OPS,
                         default_qco.clone_and_edit(enable_activation_quantization=False,
                                                    quantization_preserving=True,
                                                    supported_input_activation_n_bits=(8, 16))
                         .clone_and_edit_weight_attribute(enable_weights_quantization=False))
-        tp.OperatorsSet("MergeOps", const_configuration_options_inout16_per_tensor)
+        tp.OperatorsSet(OPSET_MERGE_OPS, const_configuration_options_inout16_per_tensor)
 
         # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
         mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
                                                                              base_config=base_config)
 
         # Define operator sets that use mixed_precision_configuration_options:
-        conv = tp.OperatorsSet("Conv", mixed_precision_configuration_options)
-        fc = tp.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
+        conv = tp.OperatorsSet(OPSET_CONV, mixed_precision_configuration_options)
+        fc = tp.OperatorsSet(OPSET_FULLY_CONNECTED, mixed_precision_configuration_options)
 
         # Define operations sets without quantization configuration
         # options (useful for creating fusing patterns, for example):
-        any_relu = tp.OperatorsSet("AnyReLU")
-        add = tp.OperatorsSet("Add", const_configuration_options_inout16)
-        sub = tp.OperatorsSet("Sub", const_configuration_options_inout16)
-        mul = tp.OperatorsSet("Mul", const_configuration_options_inout16)
-        div = tp.OperatorsSet("Div", const_configuration_options)
-        prelu = tp.OperatorsSet("PReLU")
-        swish = tp.OperatorsSet("Swish")
-        sigmoid = tp.OperatorsSet("Sigmoid")
-        tanh = tp.OperatorsSet("Tanh")
+        any_relu = tp.OperatorsSet(OPSET_ANY_RELU)
+        add = tp.OperatorsSet(OPSET_ADD, const_configuration_options_inout16)
+        sub = tp.OperatorsSet(OPSET_SUB, const_configuration_options_inout16)
+        mul = tp.OperatorsSet(OPSET_MUL, const_configuration_options_inout16)
+        div = tp.OperatorsSet(OPSET_DIV, const_configuration_options)
+        prelu = tp.OperatorsSet(OPSET_PRELU)
+        swish = tp.OperatorsSet(OPSET_SWISH)
+        sigmoid = tp.OperatorsSet(OPSET_SIGMOID)
+        tanh = tp.OperatorsSet(OPSET_TANH)
 
         # Combine multiple operators into a single operator to avoid quantization between
         # them. To do this we define fusing patterns using the OperatorsSets that were created.
