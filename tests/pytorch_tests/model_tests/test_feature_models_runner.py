@@ -592,7 +592,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the ScaledDotProductDecomposition substitution feature.
         """
         ScaledDotProductAttentionTest(self).run_test(seed=3)
-        # ScaledDotProductAttentionTest(self, dropout_p=0.1).run_test(seed=3) # todo: comment in
+        ScaledDotProductAttentionTest(self, dropout_p=0.5).run_test(seed=3)
 
     def test_gptq(self):
         """

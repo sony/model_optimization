@@ -101,27 +101,33 @@ class ScaledDotProductDecomposition(BaseSubstitution):
                                 layer_class=nn.Softmax)
         graph.add_node_with_in_edges(softmax_node, [scale_node])
 
-        transpose_v_node = self._get_transpose_node(attention_node, v_node)
-        graph.add_node_with_in_edges(transpose_v_node, [v_node])
+        dropout_name = f'{attention_node.name}_dropout'
+        dropout_node = BaseNode(name=dropout_name,
+                                framework_attr={"p": attention_node.op_call_kwargs['dropout_p']},
+                                input_shape=softmax_node.output_shape,
+                                output_shape=softmax_node.output_shape,
+                                weights={},
+                                layer_class=nn.Dropout)
+        graph.add_node_with_in_edges(dropout_node, [softmax_node])
 
-        matmul2_output_shape = list(copy(softmax_node.output_shape))
-        matmul2_output_shape[-2] = softmax_node.output_shape[-2]
-        matmul2_output_shape[-1] = transpose_v_node.output_shape[-1]
+        matmul2_output_shape = list(copy(dropout_node.output_shape))
+        matmul2_output_shape[-2] = dropout_node.output_shape[-2]
+        matmul2_output_shape[-1] = v_node.output_shape[0][-1]
 
-        matmul_name = f'{attention_node.name}_matmul2'
-        matmul_node2 = FunctionalNode(name=matmul_name,
+        matmul2_name = f'{attention_node.name}_matmul2'
+        matmul_node2 = FunctionalNode(name=matmul2_name,
                                      framework_attr={},
-                                     input_shape=(tuple(softmax_node.output_shape), tuple(transpose_v_node.output_shape)),
+                                     input_shape=(tuple(dropout_node.output_shape), tuple(v_node.output_shape[0])),
                                      output_shape=tuple(matmul2_output_shape),
                                      weights={},
                                      layer_class=torch.matmul,
                                      op_call_args=[],
                                      op_call_kwargs={},
                                      functional_op=torch.matmul)
-        graph.add_node_with_in_edges(matmul_node2, [softmax_node, v_node])
+        graph.add_node_with_in_edges(matmul_node2, [dropout_node, v_node])
 
         graph.remove_edge(q_node, attention_node)
         graph.remove_edge(k_node, attention_node)
         graph.remove_edge(v_node, attention_node)
-        graph.remove_node(attention_node, new_graph_outputs=[OutTensor(matmul_node, 0)])
+        graph.remove_node(attention_node, new_graph_outputs=[OutTensor(matmul_node2, 0)])
         return graph
