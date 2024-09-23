@@ -283,7 +283,8 @@ class PytorchModel(torch.nn.Module):
             if node.reuse:
                 # If the node is reused, retrieve the original module
                 if node.reuse_group not in self.reuse_groups:
-                    raise ValueError(f"Reuse group {node.reuse_group} not found for node {node.name}")
+                    Logger.critical(f"Reuse group {node.reuse_group} not found for node {node.name}")
+
                 node_op = self.reuse_groups[node.reuse_group]
             else:
                 # If it's not reused, create a new module
