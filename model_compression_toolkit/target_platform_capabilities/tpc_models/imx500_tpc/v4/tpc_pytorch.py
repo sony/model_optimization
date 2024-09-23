@@ -78,7 +78,6 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                                  split,
                                                                  chunk,
                                                                  unbind,
-                                                                 gather,
                                                                  MaxPool2d])
         tp.OperationsSetToLayers(OPSET_DIMENSION_MANIPULATION_OPS, [Flatten,
                                                                     flatten,
@@ -88,6 +87,7 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                                                     squeeze,
                                                                     permute,
                                                                     transpose])
+        tp.OperationsSetToLayers(OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS, [gather])
         tp.OperationsSetToLayers(OPSET_MERGE_OPS,
                                  [torch.stack, torch.cat, torch.concat, torch.concatenate])
 

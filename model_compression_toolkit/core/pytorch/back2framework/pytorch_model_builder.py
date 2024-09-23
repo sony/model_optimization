@@ -145,9 +145,14 @@ def _run_operation(n: BaseNode,
         else:
             out_tensors_of_n_float = op_func(input_tensors, *op_call_args, **functional_kwargs)
     else:
-        merged_inputs, functional_kwargs = _merge_inputs(n, input_tensors, op_call_args, functional_kwargs.copy(),
-                                                         tensor_input_allocs=_tensor_input_allocs)
-        out_tensors_of_n_float = op_func(*merged_inputs, **functional_kwargs)
+        if isinstance(op_func, PytorchQuantizationWrapper) and isinstance(n, FunctionalNode) and n.functional_op is not torch.gather:
+            # in wrapped nodes, the op args & kwargs are already in the PytorchQuantizationWrapper.
+            # Temporary patch: for torch.gather this is not the case, so need to merge inputs.
+            out_tensors_of_n_float = op_func(*input_tensors)
+        else:
+            merged_inputs, functional_kwargs = _merge_inputs(n, input_tensors, op_call_args, functional_kwargs.copy(),
+                                                             tensor_input_allocs=_tensor_input_allocs)
+            out_tensors_of_n_float = op_func(*merged_inputs, **functional_kwargs)
 
     # Add a fake quant node if the node has an activation threshold.
     out_tensors_of_n = out_tensors_of_n_float

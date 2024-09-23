@@ -86,12 +86,16 @@ class ConstRepresentationMultiInputNet(nn.Module):
         self.const1 = to_torch_tensor(np.random.random((32,)))
         self.const2 = to_torch_tensor(np.random.random((32,)))
         self.const3 = to_torch_tensor(np.random.random((1, 5, 32, 32)))
+        self.gather_const = to_torch_tensor(np.random.random((1, 2000)))
 
     def forward(self, x):
         x1 = sum(
             [self.const1, x, self.const2])  # not really a 3-input add operation, but just in case torch will support it
         x = torch.cat([x1, self.const3, x], dim=1)
-        return x
+
+        inds = torch.argmax(torch.reshape(x, (-1, 37*32, 32)), dim=1)
+        b = torch.reshape(torch.gather(self.gather_const, 1, inds), (-1, 1, 1, 32))
+        return x + b
 
 
 class ConstRepresentationMultiInputTest(ConstRepresentationTest):

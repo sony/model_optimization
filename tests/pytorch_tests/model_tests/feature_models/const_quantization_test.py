@@ -152,6 +152,7 @@ class MultiInputConstQuantizationNet(nn.Module):
         self.register_buffer('concatenate_const_3', to_torch_tensor(np.random.randint(-128, 127, size=(1, 3, 36, 36))))
         self.register_buffer('stack_const_1', to_torch_tensor(np.random.randint(-128, 127, size=(1, 39, 36, 36))))
         self.register_buffer('stack_const_2', to_torch_tensor(np.random.randint(-128, 127, size=(1, 39, 36, 36))))
+        self.register_buffer('gather_const', to_torch_tensor(np.random.randint(-128, 127, size=(1, 2*36*36))))
 
     def forward(self, x):
         x = torch.cat([self.cat_const_1, x, self.cat_const_2], dim=2)
@@ -161,7 +162,10 @@ class MultiInputConstQuantizationNet(nn.Module):
                                self.concatenate_const_3, self.concatenate_const_1], dim=1)
         x = torch.stack([self.stack_const_1, x, self.stack_const_2], dim=1)
         x = torch.reshape(x, (1, 3*39, 36, 36))
-        return x
+
+        inds = torch.argmax(torch.reshape(x, (-1, 117, 36*36)), dim=2)
+        b = torch.reshape(torch.gather(self.gather_const, 1, inds), (-1, 117, 1, 1))
+        return x + b
 
 
 class ConstQuantizationMultiInputTest(BasePytorchFeatureNetworkTest):
@@ -185,7 +189,7 @@ class ConstQuantizationMultiInputTest(BasePytorchFeatureNetworkTest):
         y_hat = quantized_model(in_torch_tensor)
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
         cs = cosine_similarity(torch_tensor_to_numpy(y), torch_tensor_to_numpy(y_hat))
-        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs}')
+        self.unit_test.assertTrue(np.isclose(cs, 1, atol=1e-3), msg=f'fail cosine similarity check: {cs}')
 
         # check quantization layers:
         for op in [torch.cat, torch.concat, torch.concatenate, torch.stack]:
