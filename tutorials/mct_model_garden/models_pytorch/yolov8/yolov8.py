@@ -536,7 +536,7 @@ def seg_model_predict(model: Any,
         List: List containing tensors of predictions.
     """
     input_tensor = torch.from_numpy(inputs).unsqueeze(0)  # Add batch dimension
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = get_working_device()
     input_tensor = input_tensor.to(device)
     # Run the model
     with torch.no_grad():
