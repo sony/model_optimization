@@ -108,6 +108,7 @@ from tests.pytorch_tests.model_tests.feature_models.const_quantization_test impo
 from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import RemoveIdentityTest
 from tests.pytorch_tests.model_tests.feature_models.activation_16bit_test import Activation16BitTest, \
     Activation16BitMixedPrecisionTest
+from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
@@ -591,14 +592,10 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the ScaledDotProductDecomposition substitution feature.
         """
-        # ScaledDotProductAttentionTest(self).run_test(seed=3)
-        ScaledDotProductAttentionTest(self, dropout_p=0.5).run_test(seed=3)
-
-        from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
-        # attn_mask = torch.zeros(13, 21).to(get_working_device())
-        # ScaledDotProductAttentionTest(self, attn_mask=attn_mask, is_causal=False).run_test(seed=3)
-        # ScaledDotProductAttentionTest(self, attn_mask=None, is_causal=True).run_test(seed=3)
-        #todo: add scale argument
+        ScaledDotProductAttentionTest(self).run_test(seed=3)
+        ScaledDotProductAttentionTest(self, dropout_p=0.0, scale=5).run_test(seed=3)
+        attn_mask = torch.zeros(13, 21).to(get_working_device())
+        ScaledDotProductAttentionTest(self, attn_mask=attn_mask).run_test(seed=3)
 
     def test_gptq(self):
         """

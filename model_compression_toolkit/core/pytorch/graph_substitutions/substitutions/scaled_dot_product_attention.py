@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch
 import math
 from copy import copy
+import numpy as np
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common import BaseSubstitution
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
@@ -22,6 +23,13 @@ class ScaledDotProductDecomposition(BaseSubstitution):
         """
         super().__init__(matcher_instance=NodeOperationMatcher(nn.functional.scaled_dot_product_attention))
         self.device = get_working_device()
+
+    def _get_input_by_name(self, attention_node, input_name, input_index, default_value):
+        if input_name in attention_node.op_call_kwargs:
+            return attention_node.op_call_kwargs[input_name]
+        elif len(attention_node.op_call_args) > input_index:  # input order: [attn_mask, dropout_p, is_causal, scale]
+            return attention_node.op_call_args[input_index]
+        return default_value
 
     def _get_attention_input_nodes(self, graph: Graph, attention_node: BaseNode) -> dict:
         q, k, v = 0, 1, 2
@@ -48,30 +56,25 @@ class ScaledDotProductDecomposition(BaseSubstitution):
     def _get_scale_node(self, attention_node, q_node, matmul_node):
         scale_name = f'{attention_node.name}_scale'
         q_embd_axis = -1
-        scale_factor = math.sqrt(q_node.output_shape[0][q_embd_axis])  # todo: validate the dimention is correct
+        input_scale = self._get_input_by_name(attention_node, "scale", 3, None)
+        scale_factor = input_scale if input_scale else (1 / math.sqrt(q_node.output_shape[0][q_embd_axis]))
         scale_node = FunctionalNode(name=scale_name,
                                      framework_attr={},
                                      input_shape=(matmul_node.output_shape),
                                      output_shape=matmul_node.output_shape,
                                      weights={},
-                                     layer_class=torch.div,
+                                     layer_class=torch.mul,
                                      op_call_args=[scale_factor],
                                      op_call_kwargs={},
-                                     functional_op=torch.div)
+                                     functional_op=torch.mul)
         return scale_node
 
     def _get_matmul_node(self, attention_node: BaseNode, q_node: BaseNode, k_node: BaseNode) -> BaseNode:
-        q_batch_axis = 0
-        q_and_k_embd_axis = -1  # d_k == d
-        k_seq_axis = -2
-        q_seq_axis = -2
-
         matmul1_output_shape = copy(q_node.output_shape[0])
-        matmul1_output_shape[-2] = q_node.output_shape[0][q_seq_axis]
+        matmul1_output_shape[-2] = q_node.output_shape[0][-2]
         matmul1_output_shape[-1] = k_node.output_shape[-1]
-
         matmul_name = f'{attention_node.name}_matmul1'
-        matmul_node = FunctionalNode(name=matmul_name,
+        return FunctionalNode(name=matmul_name,
                                      framework_attr={},
                                      input_shape=(tuple(q_node.output_shape[0]), tuple(k_node.output_shape)),
                                      output_shape=tuple(matmul1_output_shape),
@@ -80,10 +83,9 @@ class ScaledDotProductDecomposition(BaseSubstitution):
                                      op_call_args=[],
                                      op_call_kwargs={},
                                      functional_op=torch.matmul)
-        return matmul_node
 
-    def _get_mask_node(self, attention_node, q_node, k_node, scale_node):
-        attention_mask_tensor = self._get_attention_mask_tensor(attention_node, q_node, k_node)
+    def _get_mask_node(self, attention_node, scale_node):
+        attention_mask_tensor = self._get_attention_mask_tensor(attention_node)
         if attention_mask_tensor is None:
             return None
         mask_node_name = f'{attention_node.name}_mask'
@@ -121,51 +123,36 @@ class ScaledDotProductDecomposition(BaseSubstitution):
                             op_call_kwargs={},
                             functional_op=torch.matmul)
 
-    def _get_attention_mask_tensor(self, attention_node, q_node, k_node):
-        target_seq_len = q_node.output_shape[0][-2]
-        source_seq_len = k_node.output_shape[0][-2]
-        attn_bias = torch.zeros(target_seq_len, source_seq_len).to(self.device) # todo: check if need to add dtype=query.dtype
-        # attn_mask = attention_node.op_call_kwargs['attn_mask']
-        is_causal = attention_node.op_call_kwargs.get('is_causal', False)
+    def _get_attention_mask_tensor(self, attention_node):
+        is_causal = self._get_input_by_name(attention_node, "is_causal", 2, False)
         if is_causal:
             raise NotImplementedError("scaled_dot_product_attention is_causal feature is not implemented.")
         input_weights = list(attention_node.weights.values())
         attn_mask = input_weights[0] if len(input_weights) > 0 else None
-        # if is_causal:
-        #     assert attn_mask is None, "In case 'is_causal' is set to True, 'attn_mask' must be None"
-        #     temp_mask = torch.ones(target_seq_len, source_seq_len, dtype=torch.bool).tril(diagonal=0).to(self.device)
-        #     attn_bias.masked_fill_(temp_mask.logical_not(), float("-inf")).to(self.device)
-        #     attn_bias.to(torch.float32)
-        #
-        # if attn_mask is not None:
-        #     if attn_mask.dtype == torch.bool:
-        #         attn_bias.masked_fill_(attn_mask.logical_not(), float("-inf"))
-        #     else:
-        # attn_bias += torch.from_numpy(attn_mask).to(self.device) # todo: ask why attn_mask have changed to numpy ndarray
-        return attn_mask
+        if attn_mask is not None and (attn_mask.dtype == "bool"):
+            raise NotImplementedError("scaled_dot_product_attention attn_mask is of type boolean, which is not supported.")
+        if attn_mask is not None and (not np.isfinite(attn_mask).all()):
+            raise NotImplementedError("scaled_dot_product_attention attn_mask contains infinite value, which is not supported.")
+        return torch.from_numpy(attn_mask).to(self.device) if attn_mask is not None else None
 
     def _get_dropout_node(self, attention_node, in_out_shape):
-        dropout_p = attention_node.op_call_kwargs['dropout_p']
-        if dropout_p == 0:
-            return None
+        dropout_p = attention_node.op_call_kwargs.get('dropout_p', 0)
         dropout_name = f'{attention_node.name}_dropout'
         return BaseNode(name=dropout_name,
-                                framework_attr={"p": attention_node.op_call_kwargs['dropout_p']},
-                                input_shape=in_out_shape,
-                                output_shape=in_out_shape,
-                                weights={},
-                                layer_class=nn.Dropout)
+                framework_attr={"p": dropout_p},
+                input_shape=in_out_shape,
+                output_shape=in_out_shape,
+                weights={},
+                layer_class=nn.Dropout)
 
-    def substitute(self,
-                   graph: Graph,
-                   attention_node: BaseNode) -> Graph:
+    def substitute(self, graph: Graph, attention_node: BaseNode) -> Graph:
 
         input_nodes = self._get_attention_input_nodes(graph, attention_node)
         q_node, k_node, v_node = input_nodes["q"], input_nodes["k"], input_nodes["v"]
         transpose_k_node = self._get_transpose_node(attention_node, k_node)
         matmul_node = self._get_matmul_node(attention_node, q_node, transpose_k_node)
         scale_node = self._get_scale_node(attention_node, q_node, matmul_node)
-        mask_node = self._get_mask_node(attention_node, q_node, k_node, scale_node)
+        mask_node = self._get_mask_node(attention_node, scale_node)
         softmax_node = self._get_softmax_node(attention_node, matmul_node.output_shape)
         dropout_node = self._get_dropout_node(attention_node, softmax_node.output_shape)
         matmul2_node = self._get_matmul2_node(attention_node, softmax_node, v_node)
@@ -176,12 +163,12 @@ class ScaledDotProductDecomposition(BaseSubstitution):
         if mask_node:
             graph.add_node_with_in_edges(mask_node, [scale_node])
         graph.add_node_with_in_edges(softmax_node, [mask_node if mask_node else scale_node])
-        if dropout_node:
-            graph.add_node_with_in_edges(dropout_node, [softmax_node])
+        graph.add_node_with_in_edges(dropout_node, [softmax_node])
         graph.add_node_with_in_edges(matmul2_node, [dropout_node if dropout_node else softmax_node, v_node])
 
         graph.remove_edge(q_node, attention_node)
         graph.remove_edge(k_node, attention_node)
         graph.remove_edge(v_node, attention_node)
         graph.remove_node(attention_node, new_graph_outputs=[OutTensor(matmul2_node, 0)])
+
         return graph
