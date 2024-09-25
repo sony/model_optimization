@@ -594,7 +594,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         ScaledDotProductAttentionTest(self).run_test(seed=3)
         ScaledDotProductAttentionTest(self, dropout_p=0.0, scale=5).run_test(seed=3)
-        attn_mask = torch.zeros(13, 21).to(get_working_device())
+        attn_mask = torch.ones(13, 21).to(get_working_device())
         ScaledDotProductAttentionTest(self, attn_mask=attn_mask).run_test(seed=3)
 
     def test_gptq(self):
