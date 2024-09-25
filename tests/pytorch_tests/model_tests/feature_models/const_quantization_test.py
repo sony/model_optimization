@@ -251,7 +251,6 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
 
         tpc = tp.TargetPlatformCapabilities(tp_model)
         with tpc:
-            # No need to quantize Flatten and Dropout layers
             tp.OperationsSetToLayers("WeightQuant", [torch.Tensor.expand, torch.cat])
 
         return tpc
