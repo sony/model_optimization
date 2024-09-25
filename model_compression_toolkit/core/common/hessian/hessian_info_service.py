@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import hashlib
 
 import numpy as np
 from functools import partial
 from tqdm import tqdm
-from typing import Callable, List, Dict, Any, Tuple
+from typing import Callable, List, Dict, Any, Tuple, TYPE_CHECKING
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.hessian.hessian_scores_request import HessianScoresRequest, \
     HessianScoresGranularity, HessianMode
 from model_compression_toolkit.logger import Logger
+if TYPE_CHECKING:
+    from model_compression_toolkit.core.common import BaseNode
 
 
 class HessianInfoService:
@@ -228,10 +231,55 @@ class HessianInfoService:
         return next_iter_remain_samples if next_iter_remain_samples is not None and len(next_iter_remain_samples) > 0 \
         and len(next_iter_remain_samples[0]) > 0 else None
 
+    def _compute_trackable_per_sample_hessian(self,
+                                              hessian_scores_request: HessianScoresRequest,
+                                              representative_dataset_gen) -> Dict[str, Dict['BaseNode', np.ndarray]]:
+        """
+        Compute hessian score per image hash.
+
+        Args:
+            hessian_scores_request: hessian scores request
+            representative_dataset_gen: representative dataset generator
+
+        Returns:
+            A dict of Hessian scores per image hash per layer {image hash: {layer: score}}
+        """
+        topo_sorted_nodes_names = [x.name for x in self.graph.get_topo_sorted_nodes()]
+        hessian_scores_request.target_nodes.sort(key=lambda x: topo_sorted_nodes_names.index(x.name))
+
+        hessian_score_by_image_hash = {}
+
+        for inputs_batch in representative_dataset_gen:
+            if not isinstance(inputs_batch, list):
+                raise TypeError('Expected representative data generator to yield a list of inputs')
+            if len(inputs_batch) > 1:
+                raise NotImplementedError('Per sample hessian computation is not supported for networks with multiple inputs')
+            # Get the framework-specific calculator Hessian-approximation scores
+            fw_hessian_calculator = self.fw_impl.get_hessian_scores_calculator(graph=self.graph,
+                                                                               input_images=inputs_batch,
+                                                                               hessian_scores_request=hessian_scores_request,
+                                                                               num_iterations_for_approximation=self.num_iterations_for_approximation)
+            hessian_scores = fw_hessian_calculator.compute()
+            for b in range(inputs_batch[0].shape[0]):
+                img_hash = self.calc_image_hash(inputs_batch[0][b])
+                hessian_score_by_image_hash[img_hash] = {
+                    node: score for node, score in zip(hessian_scores_request.target_nodes, hessian_scores)
+                }
+
+        return hessian_score_by_image_hash
+
+    @staticmethod
+    def calc_image_hash(image):
+        if len(image.shape) != 3:
+            raise ValueError(f'Expected 3d image (without batch) for image hash calculation, got {len(image.shape)}')
+        image_bytes = image.astype(np.float32).tobytes()
+        return hashlib.md5(image_bytes).hexdigest()
+
     def fetch_hessian(self,
                       hessian_scores_request: HessianScoresRequest,
                       required_size: int,
-                      batch_size: int = 1) -> List[List[np.ndarray]]:
+                      batch_size: int = 1,
+                      per_sample_hash: bool = False) -> List[List[np.ndarray]]:
         """
         Fetches the computed approximations of the Hessian-based scores for the given
         request and required size.
@@ -240,6 +288,7 @@ class HessianInfoService:
             hessian_scores_request: Configuration for which to fetch the approximation.
             required_size: Number of approximations required.
             batch_size: The Hessian computation batch size.
+            per_sample_hash: Whether to compute hessian per sample hash.
 
         Returns:
             List[List[np.ndarray]]: For each target node, returns a list of computed approximations.
@@ -247,7 +296,6 @@ class HessianInfoService:
             The inner list length dependent on the granularity (1 for per-tensor, 
             OC for per-output-channel when the requested node has OC output-channels, etc.)
         """
-
         if len(hessian_scores_request.target_nodes) == 0:
             return []
 
@@ -262,6 +310,32 @@ class HessianInfoService:
             self._get_representing_of_reuse_group(node) if node.reuse else node
             for node in hessian_scores_request.target_nodes
         ]
+
+        if per_sample_hash:
+            if required_size is not None:
+                raise ValueError('required_size cannot be specified with per_sample_hash')
+
+            def gen_single(orig_gen):
+                # convert original generator into generator that yields sample by sample
+                for batch in orig_gen:
+                    for i in range(batch[0].shape[0]):
+                        yield [inp[i] for inp in batch]
+
+            def gen_new_batch():
+                # convert sample by sample generator into the required batch
+                samples = []
+                for sample in gen_single(self.representative_dataset_gen()):
+                    samples.append(sample)
+                    if len(samples) == batch_size:
+                        yield [np.stack(d, axis=0) for d in zip(*samples)]
+                        samples = []
+                if samples:
+                    yield [np.stack(d, axis=0) for d in zip(*samples)]
+
+            return self._compute_trackable_per_sample_hessian(hessian_scores_request, gen_new_batch())
+
+        if required_size is None:
+            raise ValueError('required_size must be specified if per_sample_hash is False')
 
         # Ensure the saved info has the required number of approximations
         self._populate_saved_info_to_size(hessian_scores_request, required_size, batch_size)

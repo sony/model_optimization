@@ -21,7 +21,8 @@ import numpy as np
 
 from model_compression_toolkit.constants import MIN_HESSIAN_ITER, HESSIAN_COMP_TOLERANCE, HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianScoresGranularity
+from model_compression_toolkit.core.common.hessian import (HessianScoresRequest, HessianScoresGranularity,
+                                                           HessianEstimationDistribution)
 from model_compression_toolkit.core.pytorch.back2framework.float_model_builder import FloatPyTorchModelBuilder
 from model_compression_toolkit.core.pytorch.hessian.hessian_scores_calculator_pytorch import \
     HessianScoresCalculatorPytorch
@@ -55,6 +56,52 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
                                                                        hessian_scores_request=hessian_scores_request,
                                                                        num_iterations_for_approximation=num_iterations_for_approximation)
 
+    def forward_pass(self):
+        model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
+
+        if len([n for n in self.hessian_request.target_nodes if n in model_output_nodes]) > 0:
+            Logger.critical("Activation Hessian approximation cannot be computed for model outputs. "
+                            "Exclude output nodes from Hessian request targets.")
+
+        grad_model_outputs = self.hessian_request.target_nodes + model_output_nodes
+        model, _ = FloatPyTorchModelBuilder(graph=self.graph, append2output=grad_model_outputs).build_model()
+        model.eval()
+
+        # Run model inference
+        # Set inputs to track gradients during inference
+        for input_tensor in self.input_images:
+            input_tensor.requires_grad_()
+            input_tensor.retain_grad()
+
+        outputs = model(*self.input_images)
+
+        if len(outputs) != len(grad_model_outputs):  # pragma: no cover
+            Logger.critical(f"Mismatch in expected and actual model outputs for activation Hessian approximation. "
+                            f"Expected {len(grad_model_outputs)} outputs, received {len(outputs)}.")
+
+        # Extracting the intermediate activation tensors and the model real output.
+        # Note that we do not allow computing Hessian for output nodes, so there shouldn't be an overlap.
+        num_target_nodes = len(self.hessian_request.target_nodes)
+        # Extract activation tensors of nodes for which we want to compute Hessian
+        target_activation_tensors = outputs[:num_target_nodes]
+        # Extract the model outputs
+        output_tensors = outputs[num_target_nodes:]
+        device = output_tensors[0].device
+
+        # Concat outputs
+        # First, we need to unfold all outputs that are given as list, to extract the actual output tensors
+        output = self.concat_tensors(output_tensors)
+        return output, target_activation_tensors
+
+    def _generate_random_vector(self, shape, distribution: HessianEstimationDistribution, device):
+        if distribution == HessianEstimationDistribution.GAUSSIAN:
+            return torch.randn(shape, device=device)
+
+        if distribution == HessianEstimationDistribution.RADEMACHER:
+            return torch.where(torch.randint(0, 2, shape), 1, -1).to(device)
+
+        raise ValueError(f'Unknown distribution {distribution}')
+
     def compute(self) -> List[np.ndarray]:
         """
         Compute the scores that are based on the approximation of the Hessian w.r.t the requested target nodes' activations.
@@ -62,91 +109,126 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
         Returns:
             List[np.ndarray]: Scores based on the approximated Hessian for the requested nodes.
         """
+        output, target_activation_tensors = self.forward_pass()
+
         if self.hessian_request.granularity == HessianScoresGranularity.PER_TENSOR:
+            hessian_scores = self._compute_per_tensor(output, target_activation_tensors)
+        elif self.hessian_request.granularity == HessianScoresGranularity.PER_OUTPUT_CHANNEL:
+            hessian_scores = self._compute_per_channel(output, target_activation_tensors)
+        else:
+            raise NotImplementedError(f'{HessianScoresGranularity.PER_ELEMENT} is not supported')
 
-            model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
+        # Convert results to list of numpy arrays
+        hessian_results = [torch_tensor_to_numpy(h) for h in hessian_scores]
+        return hessian_results
 
-            if len([n for n in self.hessian_request.target_nodes if n in model_output_nodes]) > 0:
-                Logger.critical("Activation Hessian approximation cannot be computed for model outputs. "
-                                "Exclude output nodes from Hessian request targets.")
+    def _compute_per_tensor(self, output, target_activation_tensors):
+        assert self.hessian_request.granularity == HessianScoresGranularity.PER_TENSOR
+        ipts_hessian_approx_scores = [torch.tensor([0.0], requires_grad=True, device=output.device)
+                                      for _ in range(len(target_activation_tensors))]
+        prev_mean_results = None
+        for j in tqdm(range(self.num_iterations_for_approximation), "Hessian random iterations"):  # Approximation iterations
+            # Getting a random vector with normal distribution
+            v = self._generate_random_vector(output.shape, self.hessian_request.distribution, output.device)
+            f_v = torch.sum(v * output)
+            for i, ipt_tensor in enumerate(target_activation_tensors):  # Per Interest point activation tensor
+                # Computing the hessian-approximation scores by getting the gradient of (output * v)
+                hess_v = autograd.grad(outputs=f_v,
+                                       inputs=ipt_tensor,
+                                       retain_graph=True,
+                                       allow_unused=True)[0]
 
-            grad_model_outputs = self.hessian_request.target_nodes + model_output_nodes
-            model, _ = FloatPyTorchModelBuilder(graph=self.graph, append2output=grad_model_outputs).build_model()
-            model.eval()
+                if hess_v is None:
+                    # In case we have an output node, which is an interest point, but it is not differentiable,
+                    # we consider its Hessian to be the initial value 0.
+                    continue  # pragma: no cover
 
-            # Run model inference
-            # Set inputs to track gradients during inference
-            for input_tensor in self.input_images:
-                input_tensor.requires_grad_()
-                input_tensor.retain_grad()
+                # Mean over all dims but the batch (CXHXW for conv)
+                hessian_approx_scores = torch.sum(hess_v ** 2.0, dim=tuple(d for d in range(1, len(hess_v.shape))))
 
-            outputs = model(*self.input_images)
+                # Update node Hessian approximation mean over random iterations
+                ipts_hessian_approx_scores[i] = (j * ipts_hessian_approx_scores[i] + hessian_approx_scores) / (j + 1)
 
-            if len(outputs) != len(grad_model_outputs):  # pragma: no cover
-                Logger.critical(f"Mismatch in expected and actual model outputs for activation Hessian approximation. "
-                                f"Expected {len(grad_model_outputs)} outputs, received {len(outputs)}.")
+            # If the change to the maximal mean Hessian approximation is insignificant we stop the calculation
+            if j > MIN_HESSIAN_ITER:
+                if prev_mean_results is not None:
+                    new_mean_res = torch.mean(torch.stack(ipts_hessian_approx_scores), dim=1)
+                    relative_delta_per_node = (torch.abs(new_mean_res - prev_mean_results) /
+                                               (torch.abs(new_mean_res) + 1e-6))
+                    max_delta = torch.max(relative_delta_per_node)
+                    if max_delta < HESSIAN_COMP_TOLERANCE:
+                        break
+            prev_mean_results = torch.mean(torch.stack(ipts_hessian_approx_scores), dim=1)
 
-            # Extracting the intermediate activation tensors and the model real output.
-            # Note that we do not allow computing Hessian for output nodes, so there shouldn't be an overlap.
-            num_target_nodes = len(self.hessian_request.target_nodes)
-            # Extract activation tensors of nodes for which we want to compute Hessian
-            target_activation_tensors = outputs[:num_target_nodes]
-            # Extract the model outputs
-            output_tensors = outputs[num_target_nodes:]
-            device = output_tensors[0].device
+        # add extra dimension to preserve previous behaviour
+        ipts_hessian_approx_scores = [torch.unsqueeze(t, -1) for t in ipts_hessian_approx_scores]
+        return ipts_hessian_approx_scores
 
-            # Concat outputs
-            # First, we need to unfold all outputs that are given as list, to extract the actual output tensors
-            output = self.concat_tensors(output_tensors)
+    def _compute_per_channel(self, output, target_activation_tensors):
+        assert self.hessian_request.granularity == HessianScoresGranularity.PER_OUTPUT_CHANNEL
+        ipts_hessian_approx_scores = [torch.tensor(0.0, requires_grad=True, device=output.device)
+                                      for _ in range(len(target_activation_tensors))]
 
-            ipts_hessian_approx_scores = [torch.tensor([0.0],
-                                                      requires_grad=True,
-                                                      device=device)
-                                         for _ in range(len(target_activation_tensors))]
-            prev_mean_results = None
-            for j in tqdm(range(self.num_iterations_for_approximation), "Hessian random iterations"):  # Approximation iterations
-                # Getting a random vector with normal distribution
-                v = torch.randn(output.shape, device=device)
-                f_v = torch.sum(v * output)
-                for i, ipt_tensor in enumerate(target_activation_tensors):  # Per Interest point activation tensor
-                    # Computing the hessian-approximation scores by getting the gradient of (output * v)
-                    hess_v = autograd.grad(outputs=f_v,
-                                           inputs=ipt_tensor,
-                                           retain_graph=True,
-                                           allow_unused=True)[0]
+        for j in tqdm(range(self.num_iterations_for_approximation), "Hessian random iterations"):  # Approximation iterations
+            # Getting a random vector with normal distribution
+            v = self._generate_random_vector(output.shape, self.hessian_request.distribution, output.device)
+            f_v = torch.sum(v * output)
+            for i, ipt_tensor in enumerate(target_activation_tensors):  # Per Interest point activation tensor
+                # Computing the hessian-approximation scores by getting the gradient of (output * v)
+                hess_v = autograd.grad(outputs=f_v,
+                                       inputs=ipt_tensor,
+                                       retain_graph=True,
+                                       allow_unused=True)[0]
 
-                    if hess_v is None:
-                        # In case we have an output node, which is an interest point, but it is not differentiable,
-                        # we consider its Hessian to be the initial value 0.
-                        continue  # pragma: no cover
+                hessian_approx_scores = hess_v ** 2
+                rank = len(hess_v.shape)
+                if rank > 2:
+                    hessian_approx_scores = torch.mean(hess_v, dim=tuple(range(2, rank)))
 
-                    # Mean over all dims but the batch (CXHXW for conv)
-                    hessian_approx_scores = torch.sum(hess_v ** 2.0, dim=tuple(d for d in range(1, len(hess_v.shape))))
+                # Update node Hessian approximation mean over random iterations
+                ipts_hessian_approx_scores[i] = (j * ipts_hessian_approx_scores[i] + hessian_approx_scores) / (j + 1)
 
-                    # Update node Hessian approximation mean over random iterations
-                    ipts_hessian_approx_scores[i] = (j * ipts_hessian_approx_scores[i] + hessian_approx_scores) / (j + 1)
+        return ipts_hessian_approx_scores
 
-                # If the change to the maximal mean Hessian approximation is insignificant we stop the calculation
-                if j > MIN_HESSIAN_ITER:
-                    if prev_mean_results is not None:
-                        new_mean_res = torch.mean(torch.stack(ipts_hessian_approx_scores), dim=1)
-                        relative_delta_per_node = (torch.abs(new_mean_res - prev_mean_results) /
-                                                   (torch.abs(new_mean_res) + 1e-6))
-                        max_delta = torch.max(relative_delta_per_node)
-                        if max_delta < HESSIAN_COMP_TOLERANCE:
-                            break
-                prev_mean_results = torch.mean(torch.stack(ipts_hessian_approx_scores), dim=1)
 
-            # Convert results to list of numpy arrays
-            hessian_results = [torch_tensor_to_numpy(h) for h in ipts_hessian_approx_scores]
-            # Extend the Hessian tensors shape to align with expected return type
-            # TODO: currently, only per-tensor Hessian is available for activation.
-            #  Once implementing per-channel or per-element, this alignment needs to be verified and handled separately.
-            hessian_results = [h[..., np.newaxis] for h in hessian_results]
+class SampleLayerHessianScoresCalculatorPytorch(ActivationHessianScoresCalculatorPytorch):
 
-            return hessian_results
+    def compute(self) -> List[np.ndarray]:
+        """
+        Compute the scores that are based on the approximation of the Hessian w.r.t the requested target nodes' activations.
 
-        else:  # pragma: no cover
-            Logger.critical(f"PyTorch activation Hessian's approximation scores does not support "
-                            f"{self.hessian_request.granularity} granularity.")
+        Returns:
+            List[np.ndarray]: List of approximated Hessian scores of shape (n_samples X n_channels)
+                for the requested nodes.
+        """
+        output, target_activation_tensors = self.forward_pass()
+        device = output.device
 
+        # Score is initialize to a scalar. Upon first update it will get the correct shape.
+        ipts_hessian_approx_scores = [torch.tensor(0., requires_grad=True, device=device)
+                                      for _ in range(len(target_activation_tensors))]
+
+        for j in tqdm(range(self.num_iterations_for_approximation),
+                      "Hessian random iterations"):  # Approximation iterations
+            v = torch.randint_like(output, high=2, device=device)
+            v[v == 0] = -1
+            out_v = torch.sum(v * output)
+            for i, ipt_tensor in enumerate(target_activation_tensors):  # Per Interest point activation tensor
+                # Computing the hessian-approximation scores by getting the gradient of (output * v)
+                hess_v = autograd.grad(outputs=out_v,
+                                       inputs=ipt_tensor,
+                                       retain_graph=True,
+                                       allow_unused=True)[0]
+
+                hessian_approx_scores = hess_v**2
+
+                rank = len(hess_v.shape)
+                if rank > 2:
+                    hessian_approx_scores = torch.mean(hess_v, dim=range(2, rank))
+
+                # Update node Hessian approximation mean over random iterations
+                ipts_hessian_approx_scores[i] = (j * ipts_hessian_approx_scores[i] + hessian_approx_scores) / (j + 1)
+
+        # Convert results to list of numpy arrays
+        hessian_results = [torch_tensor_to_numpy(h) for h in ipts_hessian_approx_scores]
+        return hessian_results

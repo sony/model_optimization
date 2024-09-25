@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Tuple, Union, Dict
 
 import numpy as np
 from torch.nn import Module
@@ -105,8 +105,16 @@ class PytorchGPTQTrainer(GPTQTrainer):
         self.optimizer_with_param = self.get_optimizer_with_param(trainable_weights,
                                                                   trainable_bias,
                                                                   trainable_threshold)
-
-        self.weights_for_average_loss = to_torch_tensor(self.compute_hessian_based_weights())
+        hessian_cfg = self.gptq_config.hessian_weights_config
+        self.weights_for_average_loss = None    # for fixed layer weights
+        self.hessian_score_per_image_per_layer = None    # for sample-layer attention
+        if hessian_cfg.per_sample:
+            assert (hessian_cfg.norm_scores is False and hessian_cfg.log_norm is False and
+                    hessian_cfg.scale_log_norm is False), hessian_cfg
+            # self.hessian_score_per_image_per_layer = self._fetch_hessian_approximations()
+            self.hessian_score_per_image_per_layer = self._compute_sample_layer_attention_scores()
+        else:
+            self.weights_for_average_loss = to_torch_tensor(self.compute_hessian_based_weights())
 
         self.reg_func = get_regularization(self.gptq_config, _get_total_grad_steps)
 
@@ -210,13 +218,15 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
     def compute_gradients(self,
                           y_float: List[torch.Tensor],
-                          input_tensors: List[torch.Tensor]) -> Tuple[torch.Tensor, List[np.ndarray]]:
+                          input_tensors: List[torch.Tensor],
+                          weights_for_average_loss) -> Tuple[torch.Tensor, List[np.ndarray]]:
         """
         Get outputs from both teacher and student networks. Compute the observed error,
         and use it to compute the gradients and applying them to the student weights.
         Args:
             y_float: A list of reference tensor from the floating point network.
             input_tensors: A list of Input tensors to pass through the networks.
+            weights_for_average_loss: Weights for loss. Either per layer, or per layer per sample.
         Returns:
             Loss and gradients.
         """
@@ -231,7 +241,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                            self.flp_weights_list,
                                            self.compare_points_mean,
                                            self.compare_points_std,
-                                           self.weights_for_average_loss)
+                                           weights_for_average_loss)
 
         reg_value = self.reg_func(self.fxp_model, self.gptq_config.regularization_factor)
 
@@ -264,7 +274,9 @@ class PytorchGPTQTrainer(GPTQTrainer):
                         input_data = [d * self.input_scale for d in data]
                         input_tensor = to_torch_tensor(input_data)
                         y_float = self.float_model(input_tensor)  # running float model
-                        loss_value, grads = self.compute_gradients(y_float, input_tensor)
+                        # weights are either (layers,) or (batch X layers X channels)
+                        weights = to_torch_tensor(self._get_samples_weights_for_loss(input_tensor))
+                        loss_value, grads = self.compute_gradients(y_float, input_tensor, weights)
                         # Run one step of gradient descent by updating the value of the variables to minimize the loss.
                         for (optimizer, _) in self.optimizer_with_param:
                             optimizer.step()
@@ -275,6 +287,24 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                                           torch_tensor_to_numpy(self.optimizer_with_param[0][-1]))
                         self.loss_list.append(loss_value.item())
                         Logger.debug(f'last loss value: {self.loss_list[-1]}')
+
+    # TODO move to common after ctor refactor
+    def _get_samples_weights_for_loss(self, input_tensors: List[torch.Tensor]):
+        if self.hessian_score_per_image_per_layer is None:
+            assert self.weights_for_average_loss is not None
+            return self.weights_for_average_loss
+
+        if len(input_tensors) > 1:
+            raise NotImplementedError('Sample-Layer attention is not currently supported for networks with multiple inputs')
+
+        scores = []
+        batch = input_tensors[0].detach().cpu().numpy()
+        img_hashes = [self.hessian_service.calc_image_hash(img) for img in batch]
+        for img_hash in img_hashes:
+            img_scores_per_layer: Dict[BaseNode, np.ndarray] = self.hessian_score_per_image_per_layer[img_hash]
+            img_scores = np.stack(list(img_scores_per_layer.values()), axis=0)
+            scores.append(img_scores)
+        return np.stack(scores, axis=0)
 
     def update_graph(self) -> Graph:
         """

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import copy
+import hashlib
 from abc import ABC, abstractmethod
 import numpy as np
 from typing import Callable, List, Any, Dict
@@ -143,7 +144,12 @@ class GPTQTrainer(ABC):
             return np.asarray([1 / num_nodes for _ in range(num_nodes)])
 
         # Fetch hessian approximations for each target node
-        compare_point_to_hessian_approx_scores = self._fetch_hessian_approximations()
+        # TODO this smells like a bug. In hessian calculation target nodes are topo sorted and results are returned
+        # in the same order. Maybe topo sort doesn't do anything and it works?
+        # TODO also target nodes are replaced for reuse. Does this work correctly?
+        approximations = self._fetch_hessian_approximations(HessianScoresGranularity.PER_TENSOR)
+        compare_point_to_hessian_approx_scores = {node: score for node, score in zip(self.compare_points, approximations)}
+
         # Process the fetched hessian approximations to gather them per images
         hessian_approx_score_by_image = (
             self._process_hessian_approximations(compare_point_to_hessian_approx_scores))
@@ -172,29 +178,40 @@ class GPTQTrainer(ABC):
             # If log normalization is not enabled, return the mean of the approximations across images
             return np.mean(hessian_approx_score_by_image, axis=0)
 
-    def _fetch_hessian_approximations(self) -> Dict[BaseNode, List[List[float]]]:
+    def _compute_sample_layer_attention_scores(self) -> Dict[str, Dict[BaseNode, np.ndarray]]:
+        """
+        Compute sample layer attention scores per image hash per layer.
+
+        Returns:
+            A dictionary {img_hash: {layer: score}} where score is the
+
+        """
+        hessian_score_per_image_per_layer = self._fetch_hessian_approximations(HessianScoresGranularity.PER_OUTPUT_CHANNEL)
+        for layers_score in hessian_score_per_image_per_layer.values():
+            for k, t in layers_score.items():
+                layers_score[k] = t.max(axis=1)
+        return hessian_score_per_image_per_layer
+
+    def _fetch_hessian_approximations(self, granularity: HessianScoresGranularity) -> Dict[BaseNode, List[List[float]]]:
         """
         Fetches hessian approximations for each target node.
 
         Returns:
             Mapping of target nodes to their hessian approximations.
         """
-        approximations = {}
         hessian_scores_request = HessianScoresRequest(
             mode=HessianMode.ACTIVATION,
-            granularity=HessianScoresGranularity.PER_TENSOR,
-            target_nodes=self.compare_points
+            granularity=granularity,
+            target_nodes=self.compare_points,
+            distribution=self.gptq_config.hessian_weights_config.estimator_distribution
         )
         node_approximations = self.hessian_service.fetch_hessian(
             hessian_scores_request=hessian_scores_request,
             required_size=self.gptq_config.hessian_weights_config.hessians_num_samples,
-            batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size
+            batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size,
+            per_sample_hash=self.gptq_config.hessian_weights_config.per_sample
         )
-
-        for i, target_node in enumerate(self.compare_points):
-            approximations[target_node] = node_approximations[i]
-
-        return approximations
+        return node_approximations
 
     def _process_hessian_approximations(self, approximations: Dict[BaseNode, List[List[float]]]) -> List:
         """

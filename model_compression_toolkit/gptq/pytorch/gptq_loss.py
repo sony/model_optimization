@@ -13,7 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 from typing import List
+
 import torch
+
 
 def mse_loss(y: torch.Tensor, x: torch.Tensor, normalized: bool = True) -> torch.Tensor:
     """
@@ -25,7 +27,7 @@ def mse_loss(y: torch.Tensor, x: torch.Tensor, normalized: bool = True) -> torch
     Returns:
         The MSE of two tensors.
     """
-    loss = torch.nn.MSELoss()(x,y)
+    loss = torch.nn.MSELoss()(x, y)
     return loss / torch.mean(torch.square(x)) if normalized else loss
 
 
@@ -62,3 +64,34 @@ def multiple_tensors_mse_loss(y_list: List[torch.Tensor],
     else:
         return torch.mean(torch.stack(loss_values_list))
 
+
+def sample_layer_attention_loss(y_list: List[torch.Tensor],
+                                x_list: List[torch.Tensor],
+                                fxp_w_list,
+                                flp_w_list,
+                                act_bn_mean,
+                                act_bn_std,
+                                loss_weights: torch.Tensor) -> torch.Tensor:
+    """
+    Compute Sample Layer Attention loss between two lists of tensors.
+
+    Args:
+        y_list: First list of tensors.
+        x_list: Second list of tensors.
+        fxp_w_list, flp_w_list, act_bn_mean, act_bn_std: unused (needed to comply with the interface).
+        loss_weights: A list of weights for each layer. Each weight is a vector of shape (batch,)
+
+    Returns:
+        Sample Layer Attention loss (a scalar).
+    """
+    loss = 0
+    layers_mean_w = []
+
+    for i, (y, x, w) in enumerate(zip(y_list, x_list, loss_weights)):
+        norm = (y - x).pow(2).sum(1)
+        if len(norm.shape) > 1:
+            norm = norm.flatten(1).mean(1)
+        loss += torch.mean(w * norm)
+        layers_mean_w.append(w.mean())
+    loss = loss / torch.stack(layers_mean_w).max()
+    return loss

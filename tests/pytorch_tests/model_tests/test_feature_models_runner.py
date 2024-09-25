@@ -24,6 +24,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
+from model_compression_toolkit.gptq.pytorch.gptq_loss import sample_layer_attention_loss
 from model_compression_toolkit.target_platform_capabilities import constants as C
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
@@ -653,6 +654,14 @@ class FeatureModelsTestRunner(unittest.TestCase):
                          gradual_activation_quantization=True).run_test()
         GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer,
                               gradual_activation_quantization=True).run_test()
+
+    def test_gptq_with_sample_layer_attention(self):
+        kwargs = dict(sample_layer_attention=True, loss=sample_layer_attention_loss,
+                      hessian_weights=True, rounding_type=RoundingType.SoftQuantizer,
+                      hessian_num_samples=None, norm_scores=False, log_norm_weights=False, scaled_log_norm=False)
+        GPTQAccuracyTest(self, **kwargs).run_test()
+        GPTQAccuracyTest(self, hessian_batch_size=16, **kwargs).run_test()
+        GPTQAccuracyTest(self, hessian_batch_size=5, gradual_activation_quantization=True, **kwargs).run_test()
 
     def test_qat(self):
         """
