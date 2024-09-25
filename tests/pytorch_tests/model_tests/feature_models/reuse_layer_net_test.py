@@ -15,6 +15,7 @@
 
 from mct_quantizers import PytorchQuantizationWrapper
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
+import model_compression_toolkit as mct
 
 import torch
 import torch.nn as nn
@@ -49,6 +50,10 @@ class ReuseFunctionalLayerNet(nn.Module):
         x = F.conv2d(x, self.conv1_weight, self.conv1_bias, stride=1, groups=1)
         x = F.conv2d(x, self.conv2_weight, self.conv2_bias, stride=1, groups=1)
         x = F.conv2d(x, self.conv2_weight, self.conv2_bias, stride=1, groups=1)
+
+        # Not reused layer
+        x = F.conv2d(x, self.conv1_weight, self.conv2_bias, stride=1, groups=1)
+        x = F.conv2d(x, self.conv2_weight, self.conv1_bias, stride=1, groups=1)
         return x
 
 
@@ -104,6 +109,9 @@ class ReuseFunctionalLayerNetTest(BasePytorchTest):
     def create_feature_network(self, input_shape):
         return ReuseFunctionalLayerNet()
 
+    def get_quantization_config(self):
+        return mct.core.QuantizationConfig(linear_collapsing=False)
+
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         model = quantized_models['all_4bit']
         self.unit_test.assertEqual(
@@ -125,6 +133,44 @@ class ReuseFunctionalLayerNetTest(BasePytorchTest):
         layer_calls = count_layer_calls(model, input_x)
         self.unit_test.assertEqual(layer_calls['conv2d'], 2, "conv2d should be called twice")
         self.unit_test.assertEqual(layer_calls['conv2d_2'], 2, "conv2d_2 should be called twice")
+
+        # Check the two layers that are not reused:
+        self.unit_test.assertEqual(layer_calls['conv2d_4'], 1, "conv2d_4 should be called twice")
+        self.unit_test.assertEqual(layer_calls['conv2d_5'], 1, "conv2d_5 should be called twice")
+
+        # Check that conv2d_4 is not considered reused with all other conv layers
+        self.unit_test.assertNotEqual(
+            [p.data_ptr() for p in model.conv2d_4.parameters()],
+            [p.data_ptr() for p in model.conv2d.parameters()],
+            f"Parameters between conv2d_4 and conv2d layers should have different memory addresses"
+        )
+        self.unit_test.assertNotEqual(
+            [p.data_ptr() for p in model.conv2d_4.parameters()],
+            [p.data_ptr() for p in model.conv2d_2.parameters()],
+            f"Parameters between conv2d_4 and conv2d_2 layers should have different memory addresses"
+        )
+        self.unit_test.assertNotEqual(
+            [p.data_ptr() for p in model.conv2d_4.parameters()],
+            [p.data_ptr() for p in model.conv2d_5.parameters()],
+            f"Parameters between conv2d_4 and conv2d_5 layers should have different memory addresses"
+        )
+
+        # Check that conv2d_5 is not considered reused with all other conv layers
+        self.unit_test.assertNotEqual(
+            [p.data_ptr() for p in model.conv2d_5.parameters()],
+            [p.data_ptr() for p in model.conv2d.parameters()],
+            f"Parameters between conv2d_5 and conv2d layers should have different memory addresses"
+        )
+        self.unit_test.assertNotEqual(
+            [p.data_ptr() for p in model.conv2d_5.parameters()],
+            [p.data_ptr() for p in model.conv2d_2.parameters()],
+            f"Parameters between conv2d_5 and conv2d_2 layers should have different memory addresses"
+        )
+        self.unit_test.assertNotEqual(
+            [p.data_ptr() for p in model.conv2d_5.parameters()],
+            [p.data_ptr() for p in model.conv2d_4.parameters()],
+            f"Parameters between conv2d_5 and conv2d_4 layers should have different memory addresses"
+        )
 
 
 class ReuseModuleAndFunctionalLayersTest(BasePytorchTest):
