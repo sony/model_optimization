@@ -207,7 +207,9 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                                                                                   base_config=const_config_input16_per_tensor)
 
     qpreserving_const_config = const_config.clone_and_edit(enable_activation_quantization=False,
-                                                           quantization_preserving=True)
+                                                           quantization_preserving=True,
+                                                           default_weight_attr_config=const_config.default_weight_attr_config.clone_and_edit(
+                                                               weights_per_channel_threshold=False))
     qpreserving_const_config_options = tp.QuantizationConfigOptions([qpreserving_const_config])
 
     # Create a TargetPlatformModel and set its default quantization config.
