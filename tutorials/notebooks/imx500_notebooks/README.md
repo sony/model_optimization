@@ -167,16 +167,6 @@ deployment performance.
         <td>50.4</td>
         <td>47.1</td>
     </tr>
-    <tr>
-        <td>Anomaly Detection</td>
-        <td>Efficient AD</td>
-        <td> <a href="pytorch/pytorch_efficient_anomaly_detection.ipynb">ipynb (PyTorch)</a></td>
-        <td><a href="https://arxiv.org/pdf/2303.08730v3">*EfficientAD paper</a></td>
-        <td><a href="https://huggingface.co/SSI-DNN/Efficient_Anomaly_Detection">mct-model-garden</a></td>
-        <td>MvTech</td>
-        <td>98.56</td>
-        <td>97.85</td>
-    </tr>
 
 </table>
 
