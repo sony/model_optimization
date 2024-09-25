@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+
 import time
 from typing import Callable, Any, Tuple, List, Union
 
@@ -179,8 +181,11 @@ if FOUND_TORCH and FOUND_TORCHVISION:
         # get the model device
         device = get_working_device()
 
+        # copy model for data generation
+        model_for_data_gen = copy.deepcopy(model)
+
         # get a static graph representation of the model using torch.fx
-        fx_model = symbolic_trace(model)
+        fx_model = symbolic_trace(model_for_data_gen)
 		
 		# Get Data Generation functions and classes
         image_pipeline, normalization, bn_layer_weighting_fn, bn_alignment_loss_fn, output_loss_fn, \
@@ -208,23 +213,23 @@ if FOUND_TORCH and FOUND_TORCHVISION:
         scheduler = scheduler_get_fn(data_generation_config.n_iter)
 
         # Set the current model
-        set_model(model)
+        set_model(model_for_data_gen)
 
         # Create an activation extractor object to extract activations from the model
         activation_extractor = PytorchActivationExtractor(
-            model,
+            model_for_data_gen,
             fx_model,
             data_generation_config.bn_layer_types,
             data_generation_config.last_layer_types)
 
         # Create an orig_bn_stats_holder object to hold original BatchNorm statistics
-        orig_bn_stats_holder = PytorchOriginalBNStatsHolder(model, data_generation_config.bn_layer_types)
+        orig_bn_stats_holder = PytorchOriginalBNStatsHolder(model_for_data_gen, data_generation_config.bn_layer_types)
         if orig_bn_stats_holder.get_num_bn_layers() == 0:
             Logger.critical(
                 f'Data generation requires a model with at least one BatchNorm layer.') # pragma: no cover
 
         # Create an ImagesOptimizationHandler object for handling optimization
-        all_imgs_opt_handler = PytorchImagesOptimizationHandler(model=model,
+        all_imgs_opt_handler = PytorchImagesOptimizationHandler(model=model_for_data_gen,
                                                                 data_gen_batch_size=data_generation_config.data_gen_batch_size,
                                                                 init_dataset=init_dataset,
                                                                 optimizer=data_generation_config.optimizer,
