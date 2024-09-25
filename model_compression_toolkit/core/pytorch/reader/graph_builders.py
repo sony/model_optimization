@@ -397,6 +397,9 @@ def edges_builder(model: GraphModule,
 def create_reuse_group(target: Any, weights: Dict[str, Any]) -> str:
     """
     Combine target and weights to create a unique reuse group identifier.
+    We consider the weights as part of the group identifier because they are not part of
+    the module in functional layers, but if a functional layer is using the same weights multiple
+    times it is considered to be reused.
 
     This function creates a unique string identifier for a reuse group by combining
     the target (typically a layer or operation name) with the weights IDs.
