@@ -160,7 +160,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         AddNetTest(self).run_test()
 
-    def test_layer_norm_net(self):
+    def test_layer_norm_net(self):  # yoyo
         """
         These tests check the nn.functional.layer_norm operations.
         """
@@ -362,7 +362,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         ScalarTensorTest(self).run_test()
 
-    def test_layer_name(self):
+    def test_layer_name(self):  # yoyo
         """
         This test checks that we build a correct graph and correctly reconstruct the model
         given the fact that we reuse nodes and abuse the naming convention of fx (if we resuse
@@ -418,7 +418,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         ParameterNetTest(self).run_test()
 
-    def test_reuse_layer_net(self):
+    def test_reuse_layer_net(self):  # yoyo
         """
         This test checks:
         The reuse of a layer in a model.
