@@ -38,9 +38,11 @@ def get_layers_from_model_by_type(model: torch.nn.Module,
     Returns:
         List of layers of type layer_type from the model.
     """
+    match_layer_type = lambda _layer: layer_type in [type(_layer), _layer]
     if include_wrapped_layers:
-        return [layer[1] for layer in model.named_children() if type(layer[1])==layer_type or (isinstance(layer[1], PytorchQuantizationWrapper) and type(layer[1].layer)==layer_type)]
-    return [layer[1] for layer in model.named_children() if type(layer[1])==layer_type]
+        return [layer[1] for layer in model.named_children() if match_layer_type(layer[1]) or
+                (isinstance(layer[1], PytorchQuantizationWrapper) and match_layer_type(layer[1].layer))]
+    return [layer[1] for layer in model.named_children() if match_layer_type(layer[1])]
 
 
 def count_model_prunable_params(model: torch.nn.Module) -> int:

@@ -17,11 +17,13 @@ import torch
 import torch.nn as nn
 import numpy as np
 import model_compression_toolkit as mct
+from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import Signedness
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.pytorch_tests.utils import get_layers_from_model_by_type
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from model_compression_toolkit.constants import PYTORCH
 from mct_quantizers import PytorchQuantizationWrapper
@@ -193,6 +195,81 @@ class ConstQuantizationMultiInputTest(BasePytorchFeatureNetworkTest):
 
         # check quantization layers:
         for op in [torch.cat, torch.concat, torch.concatenate, torch.stack]:
+            for qlayer in get_layers_from_model_by_type(quantized_model, op):
+                self.unit_test.assertTrue(isinstance(qlayer, PytorchQuantizationWrapper),
+                                          msg=f"{op} should be quantized.")
+
+
+class ExpandConstQuantizationNet(nn.Module):
+    def __init__(self, batch_size):
+        super().__init__()
+        self.register_buffer('cat_const', to_torch_tensor(np.random.randint(-128, 127, size=(batch_size, 3, 32, 32)).astype(np.float32)))
+        self.register_parameter('expand_const',
+                                nn.Parameter(to_torch_tensor(np.random.randint(-128, 127, size=(1, 2, 32, 1)).astype(np.float32)),
+                                             requires_grad=False))
+
+    def forward(self, x):
+        expanded_const = self.expand_const.expand(x.shape[0], -1, -1, 32)
+        x = torch.cat([expanded_const, self.cat_const, x], dim=1)
+        return x
+
+
+class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test=unit_test, input_shape=(16, 32, 32), val_batch_size=5)
+
+    def generate_inputs(self):
+        return [np.random.randint(-128, 127, size=in_shape).astype(np.float32) for in_shape in self.get_input_shapes()]
+
+    def get_tpc(self):
+        tp = mct.target_platform
+        attr_cfg = generate_test_attr_configs()
+        base_cfg = tp.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+                                           enable_activation_quantization=True,
+                                           activation_n_bits=32,
+                                           supported_input_activation_n_bits=32,
+                                           default_weight_attr_config=attr_cfg[DEFAULT_WEIGHT_ATTR_CONFIG],
+                                           attr_weights_configs_mapping={},
+                                           quantization_preserving=False,
+                                           fixed_scale=1.0,
+                                           fixed_zero_point=0,
+                                           simd_size=32,
+                                           signedness=Signedness.AUTO)
+
+        default_configuration_options = tp.QuantizationConfigOptions([base_cfg])
+
+        const_config = base_cfg.clone_and_edit(enable_activation_quantization=False,
+                                               default_weight_attr_config=base_cfg.default_weight_attr_config.clone_and_edit(
+                                                   enable_weights_quantization=True, weights_per_channel_threshold=False,
+                                                   weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO))
+        const_configuration_options = tp.QuantizationConfigOptions([const_config])
+
+        tp_model = tp.TargetPlatformModel(default_configuration_options)
+        with tp_model:
+            tp.OperatorsSet("WeightQuant", const_configuration_options)
+
+        tpc = tp.TargetPlatformCapabilities(tp_model)
+        with tpc:
+            # No need to quantize Flatten and Dropout layers
+            tp.OperationsSetToLayers("WeightQuant", [torch.Tensor.expand, torch.cat])
+
+        return tpc
+
+    def create_networks(self):
+        return ExpandConstQuantizationNet(self.val_batch_size)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        in_torch_tensor = to_torch_tensor(input_x[0])
+        set_model(float_model)
+        y = float_model(in_torch_tensor)
+        y_hat = quantized_model(in_torch_tensor)
+        self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
+        cs = cosine_similarity(torch_tensor_to_numpy(y), torch_tensor_to_numpy(y_hat))
+        self.unit_test.assertTrue(np.isclose(cs, 1, atol=1e-3), msg=f'fail cosine similarity check: {cs}')
+
+        # check quantization layers:
+        for op in [torch.cat, torch.Tensor.expand]:
             for qlayer in get_layers_from_model_by_type(quantized_model, op):
                 self.unit_test.assertTrue(isinstance(qlayer, PytorchQuantizationWrapper),
                                           msg=f"{op} should be quantized.")
