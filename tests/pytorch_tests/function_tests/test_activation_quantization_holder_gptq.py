@@ -102,14 +102,10 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         for name, module in gptq_model.named_modules():
             if isinstance(module, PytorchQuantizationWrapper):
                 self.assertTrue(len(module.weights_quantizers) > 0)
-        # Test that two holders are getting inputs from reused conv2d (the layer that is wrapped)
 
-        # FIXME there is no reuse support and the test doesn't test what it says it tests. It doesn't even look
-        # at correct layers. After moving to trainable quantizer the test makes even less sense since now fx traces
-        # all quantization operations instead of fake_quant layer.
-        # fx_model = symbolic_trace(gptq_model)
-        # self.assertTrue(list(fx_model.graph.nodes)[3].all_input_nodes[0] == list(fx_model.graph.nodes)[2])
-        # self.assertTrue(list(fx_model.graph.nodes)[6].all_input_nodes[0] == list(fx_model.graph.nodes)[5])
+        self.assertEqual([p.data_ptr() for p in gptq_model.conv.parameters()],
+                         [p.data_ptr() for p in gptq_model.conv_1.parameters()],
+                         f"Shared parameters between reused layers should have identical memory addresses")
 
     def test_adding_holder_with_gradual_act_quantization(self):
         gradual_act_quant_cfg = GradualActivationQuantizationConfig(

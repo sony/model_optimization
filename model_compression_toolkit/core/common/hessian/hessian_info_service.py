@@ -258,12 +258,10 @@ class HessianInfoService:
                     f"{hessian_scores_request.target_nodes}.")
 
         # Replace node in reused target nodes with a representing node from the 'reuse group'.
-        for n in hessian_scores_request.target_nodes:
-            if n.reuse_group:
-                rep_node = self._get_representing_of_reuse_group(n)
-                hessian_scores_request.target_nodes.remove(n)
-                if rep_node not in hessian_scores_request.target_nodes:
-                    hessian_scores_request.target_nodes.append(rep_node)
+        hessian_scores_request.target_nodes = [
+            self._get_representing_of_reuse_group(node) if node.reuse else node
+            for node in hessian_scores_request.target_nodes
+        ]
 
         # Ensure the saved info has the required number of approximations
         self._populate_saved_info_to_size(hessian_scores_request, required_size, batch_size)
