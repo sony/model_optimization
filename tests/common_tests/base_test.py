@@ -16,8 +16,8 @@ class BaseTest:
                  use_fuzzy_validation=False
                  ):
         """
-        :param use_fuzzy_validation: Allow similar (instead of exact) float output when comparing to original float
-        model against the no_quantization output model
+        :param use_fuzzy_validation: Allow similar (instead of exact) outputs when comparing the original float
+        model output against the no_quantization model output.
         """
 
         self.unit_test = unit_test

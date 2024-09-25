@@ -15,14 +15,14 @@ class ScaledDotProductAttentionNet(nn.Module):
                                                        attn_mask=self.attn_mask,
                                                        dropout_p=self.dropout_p,
                                                        is_causal=self.is_causal,
-                                                       scale=self.scale
+                                                       # scale=self.scale
                                                        )
         return x
 
 
 class ScaledDotProductAttentionTest(BasePytorchTest):
     """
-    This test checks the MultiHeadAttention as a single layer with add_bias_kv feature.
+    This test checks the scaled_dot_product_attention (SDPA) substitution using a single SDPA layer.
     """
     def __init__(self, unit_test, dropout_p=0.0, scale=None, attn_mask=None, is_causal=False):
         super().__init__(unit_test)
@@ -47,9 +47,8 @@ class ScaledDotProductAttentionTest(BasePytorchTest):
 
     def _test_substitution_structure_output(self, post_substitution_nodes):
         """
-        :param orig_graph: The original float model graph before substitution
-        :param new_graph: The post substitutions graph
-        :return: True if the new graph after scaled_dot_product_attention substitution is in the correct structure.
+        :param post_substitution_nodes: The graph nodes after the SDPA substitution
+        raise Exception if case the post_substitution_nodes doesn't match the expected_nodes_counter
         """
         expected_nodes_counter = {
             'DummyPlaceHolder': 3,
