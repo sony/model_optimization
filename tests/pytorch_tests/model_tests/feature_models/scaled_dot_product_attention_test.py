@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from torch import nn
 from packaging import version
