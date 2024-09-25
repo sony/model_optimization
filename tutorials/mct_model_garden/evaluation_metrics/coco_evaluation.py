@@ -23,7 +23,7 @@ import random
 from pycocotools import mask as mask_utils
 from tqdm import tqdm
 
-from ..models_pytorch.yolov8.yolov8_postprocess import scale_boxes, scale_coords
+from tutorials.mct_model_garden.evaluation_metrics.coco_evaluation_utils import scale_boxes, scale_coords
 from ..models_pytorch.yolov8.yolov8_preprocess import yolov8_preprocess_chw_transpose
 from ..models_pytorch.yolov8.postprocess_yolov8_seg import process_masks, postprocess_yolov8_inst_seg
 
@@ -140,6 +140,7 @@ class CocoEval:
         h_model, w_model = output_resize['shape']
         preserve_aspect_ratio = output_resize['aspect_ratio_preservation']
         normalized_coords = output_resize.get('normalized_coords', True)
+        align_center = output_resize.get('align_center', True)
 
         if self.task == 'Detection':
             # Process model outputs and convert to detection format
@@ -150,7 +151,7 @@ class CocoEval:
                     output[2].numpy())).squeeze()  # Convert COCO 80-class indices to COCO 91-class indices
                 boxes = output[0].numpy().squeeze()  # Extract bounding boxes
                 boxes = scale_boxes(boxes, orig_img_dims[idx][0], orig_img_dims[idx][1], h_model, w_model,
-                                    preserve_aspect_ratio, normalized_coords)
+                                    preserve_aspect_ratio, align_center, normalized_coords)
 
                 for score, label, box in zip(scores, labels, boxes):
                     detection = {
