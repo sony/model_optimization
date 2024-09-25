@@ -87,8 +87,8 @@ def scale_boxes(boxes: np.ndarray, h_image: int, w_image: int, h_model: int, w_m
         h_model (int): Model output height.
         w_model (int): Model output width.
         preserve_aspect_ratio (bool): Whether to preserve image aspect ratio during scaling
-        align_center (bool): Whether to keep the center during image rescaling
-        normalized (bool): Whether the output coordinates are normalized to the range of [0,1]
+        align_center (bool): Whether to center the bounding boxes after scaling
+        normalized (bool): Whether treats bounding box coordinates as normalized (i.e., in the range [0, 1])
 
     Returns:
         numpy.ndarray: Scaled and offset bounding boxes.
