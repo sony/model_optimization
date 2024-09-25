@@ -15,7 +15,8 @@
 
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from torch import nn
-
+from packaging import version
+import torch
 
 class ScaledDotProductAttentionNet(nn.Module):
     def __init__(self, dropout_p=0.0, scale=None, attn_mask=None, is_causal=False):
@@ -57,10 +58,17 @@ class ScaledDotProductAttentionTest(BasePytorchTest):
         self.is_causal = is_causal
 
     def create_feature_network(self, input_shape):
-        return ScaledDotProductAttentionNet(dropout_p=self.dropout_p,
-                                            attn_mask=self.attn_mask,
-                                            is_causal=self.is_causal,
-                                            scale=self.scale)
+
+        if version.parse(torch.__version__) >= version.parse("2.1"):
+            return ScaledDotProductAttentionNet(dropout_p=self.dropout_p,
+                                                attn_mask=self.attn_mask,
+                                                is_causal=self.is_causal,
+                                                scale=self.scale)
+
+        else:  # older torch versions don't have scale argument
+            return ScaledDotProductAttentionNet(dropout_p=self.dropout_p,
+                                                attn_mask=self.attn_mask,
+                                                is_causal=self.is_causal)
 
     def create_inputs_shape(self):
         q_shape = [self.batch_size, self.target_seq_len, self.q_and_k_embd_size]
