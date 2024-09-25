@@ -87,7 +87,7 @@ def scale_boxes(boxes: np.ndarray, h_image: int, w_image: int, h_model: int, w_m
         h_model (int): Model output height.
         w_model (int): Model output width.
         preserve_aspect_ratio (bool): Whether to preserve image aspect ratio during scaling
-        align_center (bool): Whether to keep the center during image rescaling (usually set to True)
+        align_center (bool): Whether to keep the center during image rescaling
         normalized (bool): Whether the output coordinates are normalized to the range of [0,1]
 
     Returns:
@@ -101,7 +101,8 @@ def scale_boxes(boxes: np.ndarray, h_image: int, w_image: int, h_model: int, w_m
         scale_H = scale_W = max(h_image / H, w_image / W)
         H_tag = int(np.round(h_image / scale_H))
         W_tag = int(np.round(w_image / scale_W))
-        deltaH, deltaW = int((H - H_tag) / 2), int((W - W_tag) / 2) if align_center else (0, 0)
+        if align_center:
+            deltaH, deltaW = int((H - H_tag) / 2), int((W - W_tag) / 2)
 
     nh, nw = (H, W) if normalized else (1, 1)
 
