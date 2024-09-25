@@ -189,6 +189,13 @@ class ConstQuantizationMultiInputTest(BaseKerasFeatureNetworkTest):
         x3 = tf.add_n([x1, as_const(x), x2])
         x1 = tf.reshape(tf.stack([as_const(x1), x1, as_const(x1)], axis=1), (-1, 3*x1.shape[1], x1.shape[2], x1.shape[3]))
         x = tf.concat([x1, x2, as_const(x3), x3], 1)
+        ind_select_const = np.zeros((192*32, 38))
+        ind_select_const[4, :] = 100
+        x1 = tf.add(x, ind_select_const.reshape((192, 32, 38)))
+        inds = tf.argmax(tf.reshape(x1, (-1, 192 * 32, 38)), axis=1)
+        b = tf.reshape(tf.gather(np.random.random((192 * 32 * 38,)).astype(np.float32), inds), (-1, 1, 1, 38))
+        x = tf.add(x, b)
+
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -196,10 +203,12 @@ class ConstQuantizationMultiInputTest(BaseKerasFeatureNetworkTest):
         y_hat = quantized_model.predict(input_x)
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
         cs = cosine_similarity(y, y_hat)
-        self.unit_test.assertTrue(np.isclose(cs, 1, atol=1e-2), msg=f'fail cosine similarity check:{cs}')
+        # atol is rather high because there's a potential large difference between the float and quantized indices tensor
+        # that goes to the tf.argmax.
+        self.unit_test.assertTrue(np.isclose(cs, 1, atol=0.01), msg=f'fail cosine similarity check:{cs}')
 
         # check quantization layers:
-        for op in [tf.concat, tf.stack, layers.Add, layers.Multiply, layers.Concatenate]:
+        for op in [tf.concat, tf.stack, layers.Add, layers.Multiply, layers.Concatenate, tf.gather, tf.compat.v1.gather]:
             for qlayer in get_layers_from_model_by_type(quantized_model, op):
                 self.unit_test.assertTrue(isinstance(qlayer, KerasQuantizationWrapper),
                                           msg=f"{op} should be quantized.")

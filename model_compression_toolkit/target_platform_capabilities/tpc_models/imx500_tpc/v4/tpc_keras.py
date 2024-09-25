@@ -35,6 +35,10 @@ else:
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import get_tp_model
 import model_compression_toolkit as mct
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4 import __version__ as TPC_VERSION
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import OPSET_NO_QUANTIZATION, \
+    OPSET_QUANTIZATION_PRESERVING, OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS, OPSET_DIMENSION_MANIPULATION_OPS, \
+    OPSET_MERGE_OPS, OPSET_CONV, OPSET_FULLY_CONNECTED, OPSET_ANY_RELU, OPSET_ADD, OPSET_SUB, OPSET_MUL, OPSET_DIV, \
+    OPSET_PRELU, OPSET_SWISH, OPSET_SIGMOID, OPSET_TANH
 
 tp = mct.target_platform
 
@@ -74,10 +78,8 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                Dropout,
                                MaxPooling2D,
                                tf.split,
-                               tf.gather,
                                tf.cast,
                                tf.unstack,
-                               tf.compat.v1.gather,
                                tf.__operators__.getitem,
                                tf.strided_slice]
     quantization_preserving_list_16bit_input = [Reshape,
@@ -90,11 +92,12 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
         no_quant_list.append(SSDPostProcess)
 
     with keras_tpc:
-        tp.OperationsSetToLayers("NoQuantization", no_quant_list)
-        tp.OperationsSetToLayers("QuantizationPreserving", quantization_preserving)
-        tp.OperationsSetToLayers("DimensionManipulationOps", quantization_preserving_list_16bit_input)
-        tp.OperationsSetToLayers("MergeOps", [tf.stack, tf.concat, Concatenate])
-        tp.OperationsSetToLayers("Conv",
+        tp.OperationsSetToLayers(OPSET_NO_QUANTIZATION, no_quant_list)
+        tp.OperationsSetToLayers(OPSET_QUANTIZATION_PRESERVING, quantization_preserving)
+        tp.OperationsSetToLayers(OPSET_DIMENSION_MANIPULATION_OPS, quantization_preserving_list_16bit_input)
+        tp.OperationsSetToLayers(OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS, [tf.gather, tf.compat.v1.gather])
+        tp.OperationsSetToLayers(OPSET_MERGE_OPS, [tf.stack, tf.concat, Concatenate])
+        tp.OperationsSetToLayers(OPSET_CONV,
                                  [Conv2D,
                                   DepthwiseConv2D,
                                   Conv2DTranspose,
@@ -111,23 +114,23 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                          DepthwiseConv2D: KERAS_DEPTHWISE_KERNEL,
                                          tf.nn.depthwise_conv2d: KERAS_DEPTHWISE_KERNEL}, default_value=KERAS_KERNEL),
                                      BIAS_ATTR: DefaultDict(default_value=BIAS)})
-        tp.OperationsSetToLayers("FullyConnected", [Dense],
+        tp.OperationsSetToLayers(OPSET_FULLY_CONNECTED, [Dense],
                                  attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
                                                BIAS_ATTR: DefaultDict(default_value=BIAS)})
-        tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
-                                             tf.nn.relu6,
-                                             tf.nn.leaky_relu,
-                                             ReLU,
-                                             LeakyReLU,
-                                             tp.LayerFilterParams(Activation, activation="relu"),
-                                             tp.LayerFilterParams(Activation, activation="leaky_relu")])
-        tp.OperationsSetToLayers("Add", [tf.add, Add])
-        tp.OperationsSetToLayers("Sub", [tf.subtract, Subtract])
-        tp.OperationsSetToLayers("Mul", [tf.math.multiply, Multiply])
-        tp.OperationsSetToLayers("Div", [tf.math.divide, tf.math.truediv])
-        tp.OperationsSetToLayers("PReLU", [PReLU])
-        tp.OperationsSetToLayers("Swish", [tf.nn.swish, tp.LayerFilterParams(Activation, activation="swish")])
-        tp.OperationsSetToLayers("Sigmoid", [tf.nn.sigmoid, tp.LayerFilterParams(Activation, activation="sigmoid")])
-        tp.OperationsSetToLayers("Tanh", [tf.nn.tanh, tp.LayerFilterParams(Activation, activation="tanh")])
+        tp.OperationsSetToLayers(OPSET_ANY_RELU, [tf.nn.relu,
+                                                  tf.nn.relu6,
+                                                  tf.nn.leaky_relu,
+                                                  ReLU,
+                                                  LeakyReLU,
+                                                  tp.LayerFilterParams(Activation, activation="relu"),
+                                                  tp.LayerFilterParams(Activation, activation="leaky_relu")])
+        tp.OperationsSetToLayers(OPSET_ADD, [tf.add, Add])
+        tp.OperationsSetToLayers(OPSET_SUB, [tf.subtract, Subtract])
+        tp.OperationsSetToLayers(OPSET_MUL, [tf.math.multiply, Multiply])
+        tp.OperationsSetToLayers(OPSET_DIV, [tf.math.divide, tf.math.truediv])
+        tp.OperationsSetToLayers(OPSET_PRELU, [PReLU])
+        tp.OperationsSetToLayers(OPSET_SWISH, [tf.nn.swish, tp.LayerFilterParams(Activation, activation="swish")])
+        tp.OperationsSetToLayers(OPSET_SIGMOID, [tf.nn.sigmoid, tp.LayerFilterParams(Activation, activation="sigmoid")])
+        tp.OperationsSetToLayers(OPSET_TANH, [tf.nn.tanh, tp.LayerFilterParams(Activation, activation="tanh")])
 
     return keras_tpc

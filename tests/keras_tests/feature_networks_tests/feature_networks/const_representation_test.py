@@ -155,7 +155,10 @@ class ConstRepresentationMultiInputTest(BaseKerasFeatureNetworkTest):
     def create_networks(self):
         as_const = lambda v: np.random.random(v.shape.as_list()).astype(np.float32)
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = layers.Concatenate()([inputs, np.random.random((1, 32, 32, 3)), inputs, np.random.random((1, 32, 32, 3))])
+        inds = tf.reshape(tf.argmax(tf.reshape(inputs, (-1, 32 * 32, 16)), axis=1), (-1, 1, 1, 16))
+        b = tf.gather(np.random.random((2000,)).astype(np.float32), inds)
+        x = tf.add(inputs, b)
+        x = layers.Concatenate()([x, np.random.random((1, 32, 32, 3)), x, np.random.random((1, 32, 32, 3))])
         x1 = layers.Add()([np.random.random((1, x.shape[-1])), x, np.random.random((1, x.shape[-1]))])
         x2 = layers.Multiply()([x, np.random.random((1, x.shape[-1])), x, np.random.random((1, x.shape[-1]))])
         x3 = tf.add_n([x1, as_const(x), x2])

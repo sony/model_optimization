@@ -50,9 +50,11 @@ if FOUND_TORCH:
                               for attr in weight_quantizers if isinstance(attr, int)}
             # When wrapping functional nodes, need to set call args\kwargs in wrapper, because they
             # are used during wrapper call method.
+            # Temporary patch: for torch.gather this is not the case, so args & kwargs shouldn't be
+            # saved in the warpper.
             func_node_kwargs = {OP_CALL_ARGS: node.op_call_args,
                                 OP_CALL_KWARGS: node.op_call_kwargs
-                                } if isinstance(node, FunctionalNode) else {}
+                                } if isinstance(node, FunctionalNode) and not node.functional_op is torch.gather else {}
             return PytorchQuantizationWrapper(module, weight_quantizers, weights_values,
                                               is_inputs_as_list=node.inputs_as_list,
                                               **func_node_kwargs)
