@@ -1,3 +1,18 @@
+# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from torch import nn
 
@@ -24,9 +39,18 @@ class ScaledDotProductAttentionTest(BasePytorchTest):
     """
     This test checks the scaled_dot_product_attention (SDPA) substitution using a single SDPA layer.
     """
-    def __init__(self, unit_test, dropout_p=0.0, scale=None, attn_mask=None, is_causal=False):
+
+    def __init__(self, unit_test, batch_size: int, q_and_k_embd_size: int, v_embd_size: int, source_seq_len: int,
+                 target_seq_len: int, dropout_p: float = 0.0, scale: float = None, attn_mask: float = None,
+                 is_causal: bool = False):
+
         super().__init__(unit_test)
-        self.use_fuzzy_validation = True  # because SDPA contains sqrt operation which leads to sightly different output values compared to original torch model
+        self.batch_size = batch_size
+        self.q_and_k_embd_size = q_and_k_embd_size
+        self.v_embd_size = v_embd_size
+        self.source_seq_len = source_seq_len
+        self.target_seq_len = target_seq_len
+        self.use_is_close_validation = True  # because SDPA contains sqrt operation which leads to sightly different output values compared to original torch model
         self.dropout_p = dropout_p
         self.scale = scale
         self.attn_mask = attn_mask
@@ -39,10 +63,9 @@ class ScaledDotProductAttentionTest(BasePytorchTest):
                                             scale=self.scale)
 
     def create_inputs_shape(self):
-        batch_size, q_and_k_embd_size, v_embd_size, source_seq_len, target_seq_len = 3, 8, 19, 21, 13
-        q_shape = [batch_size, target_seq_len, q_and_k_embd_size]
-        k_shape = [batch_size, source_seq_len, q_and_k_embd_size]
-        v_shape = [batch_size, source_seq_len, v_embd_size]
+        q_shape = [self.batch_size, self.target_seq_len, self.q_and_k_embd_size]
+        k_shape = [self.batch_size, self.source_seq_len, self.q_and_k_embd_size]
+        v_shape = [self.batch_size, self.source_seq_len, self.v_embd_size]
         return [q_shape, k_shape, v_shape]
 
     def _test_substitution_structure_output(self, post_substitution_nodes):

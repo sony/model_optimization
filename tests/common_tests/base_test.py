@@ -13,10 +13,10 @@ class BaseTest:
                  num_calibration_iter=1,
                  num_of_inputs=1,
                  input_shape=(8, 8, 3),
-                 use_fuzzy_validation=False
+                 use_is_close_validation=False
                  ):
         """
-        :param use_fuzzy_validation: Allow similar (instead of exact) outputs when comparing the original float
+        :param use_is_close_validation: Allow similar (instead of exact) outputs when comparing the original float
         model output against the no_quantization model output.
         """
 
@@ -25,7 +25,7 @@ class BaseTest:
         self.num_calibration_iter = num_calibration_iter
         self.num_of_inputs = num_of_inputs
         self.input_shape = (val_batch_size,) + input_shape
-        self.use_fuzzy_validation = use_fuzzy_validation
+        self.use_is_close_validation = use_is_close_validation
 
     def generate_inputs(self):
         return [np.random.randn(*in_shape) for in_shape in self.get_input_shapes()]

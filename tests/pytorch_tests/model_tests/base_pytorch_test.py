@@ -97,7 +97,7 @@ class BasePytorchTest(BaseFeatureNetworkTest):
                     # Decomposition is not exactly like the sqrt in the C implementation of PyTorch.
                     float_model_operators = [type(module) for name, module in float_model.named_modules()]
                     if (torch.nn.BatchNorm2d in float_model_operators or
-                        torch.nn.MultiheadAttention in float_model_operators or self.use_fuzzy_validation):
+                        torch.nn.MultiheadAttention in float_model_operators or self.use_is_close_validation):
                          self.unit_test.assertTrue(np.all(np.isclose(torch_tensor_to_numpy(f), torch_tensor_to_numpy(q),
                                                                     atol=self.float_reconstruction_error)))
                     else:

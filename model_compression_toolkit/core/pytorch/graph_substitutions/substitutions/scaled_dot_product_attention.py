@@ -1,3 +1,18 @@
+# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+
 import torch.nn as nn
 import torch
 import math
@@ -45,14 +60,12 @@ class ScaledDotProductDecomposition(BaseSubstitution):
         q, k, v = 0, 1, 2
         prev_nodes = graph.get_prev_nodes(attention_node)
         q_node, k_node, v_node = prev_nodes[q], prev_nodes[k], prev_nodes[v]
-        assert q_node.name == "q" and k_node.name == "k" and v_node.name == "v", \
-            "Bad assumption on attention input nodes order"
         return {"q": q_node, "k": k_node, "v": v_node}
 
-    def _get_transpose_node(self, attention_node: BaseNode, node: BaseNode) -> BaseNode:
-        input_shape, output_shape = copy(node.output_shape[0]), copy(node.output_shape[0])
+    def _get_transpose_k_node(self, attention_node: BaseNode, key_node: BaseNode) -> BaseNode:
+        input_shape, output_shape = copy(key_node.output_shape[0]), copy(key_node.output_shape[0])
         output_shape[-2], output_shape[-1] = input_shape[-1], input_shape[-2]
-        transpose_node = FunctionalNode(name=f"{attention_node.name}_{node.name}_transpose",
+        transpose_node = FunctionalNode(name=f"{attention_node.name}_{key_node.name}_transpose",
                                         framework_attr={},
                                         input_shape=input_shape,
                                         output_shape=output_shape,
@@ -118,11 +131,11 @@ class ScaledDotProductDecomposition(BaseSubstitution):
                         weights={},
                         layer_class=nn.Softmax)
 
-    def _get_matmul2_node(self, attention_node, softmax_node, v_node):
+    def _get_matmul2_node(self, attention_node_name, softmax_node, v_node):
         matmul2_output_shape = list(copy(softmax_node.output_shape))
         matmul2_output_shape[-2] = softmax_node.output_shape[-2]
         matmul2_output_shape[-1] = v_node.output_shape[0][-1]
-        matmul2_name = f'{attention_node.name}_matmul2'
+        matmul2_name = f'{attention_node_name}_matmul2'
         return FunctionalNode(name=matmul2_name,
                               framework_attr={},
                               input_shape=(tuple(softmax_node.output_shape), tuple(v_node.output_shape[0])),
@@ -162,13 +175,13 @@ class ScaledDotProductDecomposition(BaseSubstitution):
 
         input_nodes = self._get_attention_input_nodes(graph, attention_node)
         q_node, k_node, v_node = input_nodes["q"], input_nodes["k"], input_nodes["v"]
-        transpose_k_node = self._get_transpose_node(attention_node, k_node)
+        transpose_k_node = self._get_transpose_k_node(attention_node, k_node)
         matmul_node = self._get_matmul_node(attention_node, q_node, transpose_k_node)
         scale_node = self._get_scale_node(attention_node, q_node, matmul_node)
         mask_node = self._get_mask_node(attention_node, scale_node)
         softmax_node = self._get_softmax_node(attention_node, matmul_node.output_shape)
         dropout_node = self._get_dropout_node(attention_node, softmax_node.output_shape)
-        matmul2_node = self._get_matmul2_node(attention_node, softmax_node, v_node)
+        matmul2_node = self._get_matmul2_node(attention_node.name, softmax_node, v_node)
 
         graph.add_node_with_in_edges(transpose_k_node, [k_node])
         graph.add_node_with_in_edges(matmul_node, [q_node, transpose_k_node])

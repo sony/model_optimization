@@ -419,7 +419,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         ParameterNetTest(self).run_test()
 
-    def test_reuse_layer_net(self):  # yoyo
+    def test_reuse_layer_net(self):
         """
         This test checks:
         The reuse of a layer in a model.
@@ -595,10 +595,21 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the ScaledDotProductDecomposition substitution feature.
         """
-        ScaledDotProductAttentionTest(self).run_test(seed=3)
-        ScaledDotProductAttentionTest(self, dropout_p=0.0, scale=5).run_test(seed=3)
-        attn_mask = torch.ones(13, 21).to(get_working_device())
-        ScaledDotProductAttentionTest(self, attn_mask=attn_mask).run_test(seed=3)
+
+        batch_size = [3, 1, 5]
+        q_and_k_embd_size = [8, 9, 3]
+        v_embd_size = [19, 2, 6]
+        source_seq_len = [21, 4, 15]
+        target_seq_len = [13, 12, 9]
+        for i in range(len(batch_size)):
+            ScaledDotProductAttentionTest(self, batch_size[i], q_and_k_embd_size[i], v_embd_size[i], source_seq_len[i],
+                                          target_seq_len[i]).run_test(seed=3)
+            ScaledDotProductAttentionTest(self, batch_size[i], q_and_k_embd_size[i], v_embd_size[i], source_seq_len[i],
+                                          target_seq_len[i], dropout_p=0.0, scale=5).run_test(seed=3)
+            attn_mask = torch.ones(target_seq_len[i], source_seq_len[i]).to(get_working_device())
+            ScaledDotProductAttentionTest(self, batch_size[i], q_and_k_embd_size[i], v_embd_size[i], source_seq_len[i],
+                                          target_seq_len[i], attn_mask=attn_mask).run_test(seed=3)
+
 
     def test_gptq(self):
         """
