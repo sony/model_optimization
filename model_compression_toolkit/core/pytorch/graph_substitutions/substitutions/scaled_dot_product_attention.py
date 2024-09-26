@@ -44,7 +44,8 @@ class ScaledDotProductDecomposition(BaseSubstitution):
         """
         super().__init__(matcher_instance=NodeOperationMatcher(nn.functional.scaled_dot_product_attention))
 
-    def _get_input_by_name(self, attention_node: FunctionalNode, input_name: str, input_index: int, default_value: any):
+    def _get_input_by_name(self, attention_node: FunctionalNode, input_name: str,
+                           input_index: int, default_value: any) -> any:
         """
         Search for attention_node input value in op_call_kwargs (using input_name) and op_call_args (using input_index).
         In case the input is not given, returns its default_value.
@@ -76,7 +77,7 @@ class ScaledDotProductDecomposition(BaseSubstitution):
                                         functional_op=torch.transpose)
         return transpose_node
 
-    def _get_scale_node(self, attention_node: FunctionalNode, q_node: BaseNode, matmul_node: BaseNode):
+    def _get_scale_node(self, attention_node: FunctionalNode, q_node: BaseNode, matmul_node: BaseNode) -> FunctionalNode:
         """
         :return: multiplication node that represents multiplication by the scale factor
         """
@@ -110,7 +111,7 @@ class ScaledDotProductDecomposition(BaseSubstitution):
                               op_call_kwargs={},
                               functional_op=torch.matmul)
 
-    def _get_mask_node(self, attention_node: FunctionalNode, scale_node: FunctionalNode):
+    def _get_mask_node(self, attention_node: FunctionalNode, scale_node: FunctionalNode) -> FunctionalNode:
         """
         :return: Add operator node with the mask tensor as input. In case there is no mask tensor, returns None.
         """
@@ -128,7 +129,7 @@ class ScaledDotProductDecomposition(BaseSubstitution):
                               op_call_kwargs={'other': attention_mask_tensor},
                               functional_op=torch.add)
 
-    def _get_softmax_node(self, attention_node_name: str, in_out_shape: tuple):
+    def _get_softmax_node(self, attention_node_name: str, in_out_shape: tuple) -> BaseNode:
         softmax_name = f'{attention_node_name}_softmax'
         return BaseNode(name=softmax_name,
                         framework_attr={DIM: -1},
@@ -137,7 +138,7 @@ class ScaledDotProductDecomposition(BaseSubstitution):
                         weights={},
                         layer_class=nn.Softmax)
 
-    def _get_matmul2_node(self, attention_node_name: str, softmax_node: BaseNode, v_node: BaseNode):
+    def _get_matmul2_node(self, attention_node_name: str, softmax_node: BaseNode, v_node: BaseNode) -> FunctionalNode:
         matmul2_output_shape = list(copy(softmax_node.output_shape))
         matmul2_output_shape[-2] = softmax_node.output_shape[-2]
         matmul2_output_shape[-1] = v_node.output_shape[0][-1]
@@ -152,7 +153,7 @@ class ScaledDotProductDecomposition(BaseSubstitution):
                               op_call_kwargs={},
                               functional_op=torch.matmul)
 
-    def _get_attention_mask_tensor(self, attention_node: FunctionalNode):
+    def _get_attention_mask_tensor(self, attention_node: FunctionalNode) -> torch.Tensor:
         """
         :return: mask tensor given as part of attention node input.
         Since MCT doesn't support infinite values, we don't support is_causal (torch.nn.scale_dot_product_attention
@@ -172,7 +173,7 @@ class ScaledDotProductDecomposition(BaseSubstitution):
                 "scaled_dot_product_attention attn_mask contains infinite value, which is not supported.")
         return torch.from_numpy(attn_mask).to(device) if attn_mask is not None else None
 
-    def _get_dropout_node(self, attention_node: FunctionalNode, in_out_shape: tuple):
+    def _get_dropout_node(self, attention_node: FunctionalNode, in_out_shape: tuple) -> BaseNode:
         dropout_p = attention_node.op_call_kwargs.get('dropout_p', 0)
         dropout_name = f'{attention_node.name}_dropout'
         return BaseNode(name=dropout_name,

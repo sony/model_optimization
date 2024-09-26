@@ -56,7 +56,7 @@ class ScaledDotProductAttentionTest(BasePytorchTest):
         self.attn_mask = attn_mask
         self.is_causal = is_causal
 
-    def create_feature_network(self, input_shape):
+    def create_feature_network(self, input_shape) -> nn.Module:
 
         if version.parse(torch.__version__) >= version.parse("2.1"):
             return ScaledDotProductAttentionNet(dropout_p=self.dropout_p,
@@ -69,13 +69,13 @@ class ScaledDotProductAttentionTest(BasePytorchTest):
                                                 attn_mask=self.attn_mask,
                                                 is_causal=self.is_causal)
 
-    def create_inputs_shape(self):
+    def create_inputs_shape(self) -> list:
         q_shape = [self.batch_size, self.target_seq_len, self.q_and_k_embd_size]
         k_shape = [self.batch_size, self.source_seq_len, self.q_and_k_embd_size]
         v_shape = [self.batch_size, self.source_seq_len, self.v_embd_size]
         return [q_shape, k_shape, v_shape]
 
-    def _test_substitution_structure_output(self, post_substitution_nodes):
+    def _test_substitution_structure_output(self, post_substitution_nodes) -> None:
         """
         :param post_substitution_nodes: The graph nodes after the SDPA substitution
         raise Exception if case the post_substitution_nodes doesn't match the expected_nodes_counter
@@ -100,7 +100,7 @@ class ScaledDotProductAttentionTest(BasePytorchTest):
         if not (len(counter_results) == 1 and 0 in counter_results):  # validate that all values are zeros
             raise Exception(f"Post substitution graph contains unexpected nodes: {[k for k, v in expected_nodes_counter.items() if v != 0]}")
 
-    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
+    def compare(self, quantized_models, float_model, input_x=None, quantization_info=None) -> None:
         super().compare(quantized_models, float_model, input_x, quantization_info)
         post_substitution_nodes = quantized_models['no_quantization'].node_sort
         self._test_substitution_structure_output(post_substitution_nodes)
