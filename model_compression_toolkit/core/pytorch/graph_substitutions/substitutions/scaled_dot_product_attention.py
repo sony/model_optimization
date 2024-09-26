@@ -59,7 +59,7 @@ class ScaledDotProductDecomposition(BaseSubstitution):
 
     def _get_attention_input_nodes(self, graph: Graph, attention_node: FunctionalNode) -> dict:
         q, k, v = 0, 1, 2
-        prev_nodes = graph.get_prev_nodes(attention_node)
+        prev_nodes = graph.get_prev_nodes(attention_node, sink_index_sorted=True)
         q_node, k_node, v_node = prev_nodes[q], prev_nodes[k], prev_nodes[v]
         return {"q": q_node, "k": k_node, "v": v_node}
 
@@ -96,14 +96,14 @@ class ScaledDotProductDecomposition(BaseSubstitution):
                                     functional_op=torch.mul)
         return scale_node
 
-    def _get_matmul_node(self, attention_node_name: str, q_node: BaseNode, k_node: BaseNode) -> BaseNode:
+    def _get_matmul_node(self, attention_node_name: str, q_node: BaseNode, transposed_k_node: BaseNode) -> BaseNode:
         matmul1_output_shape = copy(q_node.output_shape[0])
         matmul1_output_shape[-2] = q_node.output_shape[0][-2]
-        matmul1_output_shape[-1] = k_node.output_shape[-1]
+        matmul1_output_shape[-1] = transposed_k_node.output_shape[-1]
         matmul_name = f'{attention_node_name}_matmul1'
         return FunctionalNode(name=matmul_name,
                               framework_attr={},
-                              input_shape=(tuple(q_node.output_shape[0]), tuple(k_node.output_shape)),
+                              input_shape=(tuple(q_node.output_shape[0]), tuple(transposed_k_node.output_shape)),
                               output_shape=tuple(matmul1_output_shape),
                               weights={},
                               layer_class=torch.matmul,
