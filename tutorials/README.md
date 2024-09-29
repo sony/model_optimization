@@ -7,7 +7,7 @@ Access interactive Jupyter notebooks for hands-on learning.
 ## Getting started
 Learn how to quickly quantize pre-trained models using MCT's post-training quantization technique for both Keras and PyTorch models.
 - [Post training quantization with Keras](notebooks/imx500_notebooks/keras/example_keras_mobilenetv2_for_imx500.ipynb)
-- [Post training quantization with PyTorch](notebooks/mct_features_notebooks/pytorch/example_pytorch_ptq_mnist.ipynb)
+- [Post training quantization with PyTorch](notebooks/mct_features_notebooks/pytorch/example_pytorch_post_training_quantization.ipynb)
 
 ## MCT Features
 This set of tutorials covers all the quantization tools provided by MCT. 
