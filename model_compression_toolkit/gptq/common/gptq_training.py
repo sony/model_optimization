@@ -178,7 +178,7 @@ class GPTQTrainer(ABC):
             # If log normalization is not enabled, return the mean of the approximations across images
             return np.mean(hessian_approx_score_by_image, axis=0)
 
-    def _compute_sample_layer_attention_scores(self) -> Dict[str, Dict[BaseNode, np.ndarray]]:
+    def _compute_sample_layer_attention_scores(self, inputs_batch) -> Dict[str, Dict[BaseNode, np.ndarray]]:
         """
         Compute sample layer attention scores per image hash per layer.
 
@@ -186,10 +186,21 @@ class GPTQTrainer(ABC):
             A dictionary {img_hash: {layer: score}} where score is the
 
         """
-        hessian_score_per_image_per_layer = self._fetch_hessian_approximations(HessianScoresGranularity.PER_OUTPUT_CHANNEL)
+        request = self._build_hessian_request(HessianScoresGranularity.PER_OUTPUT_CHANNEL)
+        hessian_batch_size = self.gptq_config.hessian_weights_config.hessian_batch_size
+
+        hessian_score_per_image_per_layer = {}
+        # TODO Is it really needed if we compute on the fly per batch? Also if hessian batch is larger its ignored.
+        # If hessian batch is smaller than inputs batch, split it to hessian batches.
+        for i in range(0, inputs_batch[0].shape[0], hessian_batch_size):
+            inputs = [t[i: i+hessian_batch_size] for t in inputs_batch]
+            hessian_score_per_image_per_layer.update(
+                self.hessian_service.compute_trackable_per_sample_hessian(request, inputs)
+            )
+        # hessian_score_per_image_per_layer = self._fetch_hessian_approximations(HessianScoresGranularity.PER_OUTPUT_CHANNEL)
         for layers_score in hessian_score_per_image_per_layer.values():
             for k, t in layers_score.items():
-                layers_score[k] = t.max(axis=1)
+                layers_score[k] = t.max(axis=0)    # layer score is (channels,)
         return hessian_score_per_image_per_layer
 
     def _fetch_hessian_approximations(self, granularity: HessianScoresGranularity) -> Dict[BaseNode, List[List[float]]]:
@@ -199,12 +210,8 @@ class GPTQTrainer(ABC):
         Returns:
             Mapping of target nodes to their hessian approximations.
         """
-        hessian_scores_request = HessianScoresRequest(
-            mode=HessianMode.ACTIVATION,
-            granularity=granularity,
-            target_nodes=self.compare_points,
-            distribution=self.gptq_config.hessian_weights_config.estimator_distribution
-        )
+        hessian_scores_request = self._build_hessian_request(granularity)
+
         node_approximations = self.hessian_service.fetch_hessian(
             hessian_scores_request=hessian_scores_request,
             required_size=self.gptq_config.hessian_weights_config.hessians_num_samples,
@@ -212,6 +219,14 @@ class GPTQTrainer(ABC):
             per_sample_hash=self.gptq_config.hessian_weights_config.per_sample
         )
         return node_approximations
+
+    def _build_hessian_request(self, granularity):
+        return HessianScoresRequest(
+            mode=HessianMode.ACTIVATION,
+            granularity=granularity,
+            target_nodes=self.compare_points,
+            distribution=self.gptq_config.hessian_weights_config.estimator_distribution
+        )
 
     def _process_hessian_approximations(self, approximations: Dict[BaseNode, List[List[float]]]) -> List:
         """

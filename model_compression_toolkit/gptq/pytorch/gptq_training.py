@@ -111,8 +111,10 @@ class PytorchGPTQTrainer(GPTQTrainer):
         if hessian_cfg.per_sample:
             assert (hessian_cfg.norm_scores is False and hessian_cfg.log_norm is False and
                     hessian_cfg.scale_log_norm is False), hessian_cfg
-            # self.hessian_score_per_image_per_layer = self._fetch_hessian_approximations()
-            self.hessian_score_per_image_per_layer = self._compute_sample_layer_attention_scores()
+            # TODO if a representative dataset is fixed (same images in each epoch) we can precalculate.
+            # However if images differ between epochs, we have to calculate their hessians each time and pre-calculation
+            # will be a waste. Currently it is calculated on-demand during the training loop.
+            self.hessian_score_per_image_per_layer = {}
         else:
             self.weights_for_average_loss = to_torch_tensor(self.compute_hessian_based_weights())
 
@@ -271,11 +273,10 @@ class PytorchGPTQTrainer(GPTQTrainer):
             for _ in epochs_pbar:
                 with tqdm(data_function(), position=1, leave=False) as data_pbar:
                     for data in data_pbar:
+                        weights = to_torch_tensor(self._get_samples_weights_for_loss(data))
                         input_data = [d * self.input_scale for d in data]
                         input_tensor = to_torch_tensor(input_data)
                         y_float = self.float_model(input_tensor)  # running float model
-                        # weights are either (layers,) or (batch X layers X channels)
-                        weights = to_torch_tensor(self._get_samples_weights_for_loss(input_tensor))
                         loss_value, grads = self.compute_gradients(y_float, input_tensor, weights)
                         # Run one step of gradient descent by updating the value of the variables to minimize the loss.
                         for (optimizer, _) in self.optimizer_with_param:
@@ -290,21 +291,25 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
     # TODO move to common after ctor refactor
     def _get_samples_weights_for_loss(self, input_tensors: List[torch.Tensor]):
-        if self.hessian_score_per_image_per_layer is None:
-            assert self.weights_for_average_loss is not None
+        if self.weights_for_average_loss is not None:
+            assert self.hessian_score_per_image_per_layer is None
             return self.weights_for_average_loss
 
+        # assert self.hessian_score_per_image_per_layer
         if len(input_tensors) > 1:
             raise NotImplementedError('Sample-Layer attention is not currently supported for networks with multiple inputs')
 
         scores = []
-        batch = input_tensors[0].detach().cpu().numpy()
+        batch = input_tensors[0]
         img_hashes = [self.hessian_service.calc_image_hash(img) for img in batch]
         for img_hash in img_hashes:
+            if img_hash not in self.hessian_score_per_image_per_layer:
+                score_per_image_layer_per = self._compute_sample_layer_attention_scores(input_tensors)
+                self.hessian_score_per_image_per_layer.update(score_per_image_layer_per)
             img_scores_per_layer: Dict[BaseNode, np.ndarray] = self.hessian_score_per_image_per_layer[img_hash]
             img_scores = np.stack(list(img_scores_per_layer.values()), axis=0)
             scores.append(img_scores)
-        return np.stack(scores, axis=0)
+        return np.stack(scores, axis=1)    # layers X images
 
     def update_graph(self) -> Graph:
         """

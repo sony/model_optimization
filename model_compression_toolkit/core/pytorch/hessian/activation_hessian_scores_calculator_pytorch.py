@@ -98,7 +98,7 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
             return torch.randn(shape, device=device)
 
         if distribution == HessianEstimationDistribution.RADEMACHER:
-            return torch.where(torch.randint(0, 2, shape), 1, -1).to(device)
+            return torch.where(torch.randint(0, 2, shape, device=device).to(torch.bool), 1, -1).to(device)
 
         raise ValueError(f'Unknown distribution {distribution}')
 
@@ -177,8 +177,7 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
                 # Computing the hessian-approximation scores by getting the gradient of (output * v)
                 hess_v = autograd.grad(outputs=f_v,
                                        inputs=ipt_tensor,
-                                       retain_graph=True,
-                                       allow_unused=True)[0]
+                                       retain_graph=True)[0]
 
                 hessian_approx_scores = hess_v ** 2
                 rank = len(hess_v.shape)
@@ -189,46 +188,3 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
                 ipts_hessian_approx_scores[i] = (j * ipts_hessian_approx_scores[i] + hessian_approx_scores) / (j + 1)
 
         return ipts_hessian_approx_scores
-
-
-class SampleLayerHessianScoresCalculatorPytorch(ActivationHessianScoresCalculatorPytorch):
-
-    def compute(self) -> List[np.ndarray]:
-        """
-        Compute the scores that are based on the approximation of the Hessian w.r.t the requested target nodes' activations.
-
-        Returns:
-            List[np.ndarray]: List of approximated Hessian scores of shape (n_samples X n_channels)
-                for the requested nodes.
-        """
-        output, target_activation_tensors = self.forward_pass()
-        device = output.device
-
-        # Score is initialize to a scalar. Upon first update it will get the correct shape.
-        ipts_hessian_approx_scores = [torch.tensor(0., requires_grad=True, device=device)
-                                      for _ in range(len(target_activation_tensors))]
-
-        for j in tqdm(range(self.num_iterations_for_approximation),
-                      "Hessian random iterations"):  # Approximation iterations
-            v = torch.randint_like(output, high=2, device=device)
-            v[v == 0] = -1
-            out_v = torch.sum(v * output)
-            for i, ipt_tensor in enumerate(target_activation_tensors):  # Per Interest point activation tensor
-                # Computing the hessian-approximation scores by getting the gradient of (output * v)
-                hess_v = autograd.grad(outputs=out_v,
-                                       inputs=ipt_tensor,
-                                       retain_graph=True,
-                                       allow_unused=True)[0]
-
-                hessian_approx_scores = hess_v**2
-
-                rank = len(hess_v.shape)
-                if rank > 2:
-                    hessian_approx_scores = torch.mean(hess_v, dim=range(2, rank))
-
-                # Update node Hessian approximation mean over random iterations
-                ipts_hessian_approx_scores[i] = (j * ipts_hessian_approx_scores[i] + hessian_approx_scores) / (j + 1)
-
-        # Convert results to list of numpy arrays
-        hessian_results = [torch_tensor_to_numpy(h) for h in ipts_hessian_approx_scores]
-        return hessian_results

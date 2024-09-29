@@ -231,15 +231,16 @@ class HessianInfoService:
         return next_iter_remain_samples if next_iter_remain_samples is not None and len(next_iter_remain_samples) > 0 \
         and len(next_iter_remain_samples[0]) > 0 else None
 
-    def _compute_trackable_per_sample_hessian(self,
-                                              hessian_scores_request: HessianScoresRequest,
-                                              representative_dataset_gen) -> Dict[str, Dict['BaseNode', np.ndarray]]:
+    def compute_trackable_per_sample_hessian(self,
+                                             hessian_scores_request: HessianScoresRequest,
+                                             inputs_batch: List[np.ndarray]) -> Dict[str, Dict['BaseNode', np.ndarray]]:
         """
-        Compute hessian score per image hash.
+        Compute hessian score per image hash. We compute the score directly for images rather than via data generator,
+        as data generator might yield different images each time, depending on how it was defined,
 
         Args:
             hessian_scores_request: hessian scores request
-            representative_dataset_gen: representative dataset generator
+            inputs_batch: a list containing a batch of inputs.
 
         Returns:
             A dict of Hessian scores per image hash per layer {image hash: {layer: score}}
@@ -249,22 +250,22 @@ class HessianInfoService:
 
         hessian_score_by_image_hash = {}
 
-        for inputs_batch in representative_dataset_gen:
-            if not isinstance(inputs_batch, list):
-                raise TypeError('Expected representative data generator to yield a list of inputs')
-            if len(inputs_batch) > 1:
-                raise NotImplementedError('Per sample hessian computation is not supported for networks with multiple inputs')
-            # Get the framework-specific calculator Hessian-approximation scores
-            fw_hessian_calculator = self.fw_impl.get_hessian_scores_calculator(graph=self.graph,
-                                                                               input_images=inputs_batch,
-                                                                               hessian_scores_request=hessian_scores_request,
-                                                                               num_iterations_for_approximation=self.num_iterations_for_approximation)
-            hessian_scores = fw_hessian_calculator.compute()
-            for b in range(inputs_batch[0].shape[0]):
-                img_hash = self.calc_image_hash(inputs_batch[0][b])
-                hessian_score_by_image_hash[img_hash] = {
-                    node: score for node, score in zip(hessian_scores_request.target_nodes, hessian_scores)
-                }
+        if not isinstance(inputs_batch, list):
+            raise TypeError('Expected a list of inputs')
+        if len(inputs_batch) > 1:
+            raise NotImplementedError('Per-sample hessian computation is not supported for networks with multiple inputs')
+
+        # Get the framework-specific calculator Hessian-approximation scores
+        fw_hessian_calculator = self.fw_impl.get_hessian_scores_calculator(graph=self.graph,
+                                                                           input_images=inputs_batch,
+                                                                           hessian_scores_request=hessian_scores_request,
+                                                                           num_iterations_for_approximation=self.num_iterations_for_approximation)
+        hessian_scores = fw_hessian_calculator.compute()
+        for b in range(inputs_batch[0].shape[0]):
+            img_hash = self.calc_image_hash(inputs_batch[0][b])
+            hessian_score_by_image_hash[img_hash] = {
+                node: score[b] for node, score in zip(hessian_scores_request.target_nodes, hessian_scores)
+            }
 
         return hessian_score_by_image_hash
 

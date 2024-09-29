@@ -88,10 +88,14 @@ def sample_layer_attention_loss(y_list: List[torch.Tensor],
     layers_mean_w = []
 
     for i, (y, x, w) in enumerate(zip(y_list, x_list, loss_weights)):
-        norm = (y - x).pow(2).sum(1)
+        # norm = (y - x).pow(2).sum(1)
+        norm = (y - x).pow(2).mean(1)
         if len(norm.shape) > 1:
             norm = norm.flatten(1).mean(1)
         loss += torch.mean(w * norm)
         layers_mean_w.append(w.mean())
+
+    # loss = loss / len(x_list)
     loss = loss / torch.stack(layers_mean_w).max()
     return loss
+
