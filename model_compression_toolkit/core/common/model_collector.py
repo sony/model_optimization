@@ -158,7 +158,7 @@ class ModelCollector:
         for td, sc in zip(tensor_data, self.stats_containers_list):
             if isinstance(sc, (list, tuple)):
                 if not isinstance(td, (list, tuple)):
-                    Logger.critical('\'tensor_data\' must be a list or a tuple if \'stats_containers_list\' contains lists or tuples.') # pragma: no cover
+                    Logger.critical(f"\'tensor_data\' is of type {type(td)} but must be of the same type as \'stats_containers_list\', which is of type {type(sc)}") # pragma: no cover
                 if len(sc) != len(td):
                     Logger.critical('\'tensor_data\' and \'stats_containers_list\' must have matching lengths') # pragma: no cover
                 for tdi, sci in zip(td, sc):

@@ -70,6 +70,7 @@ from tests.pytorch_tests.model_tests.feature_models.constant_conv_substitution_t
     ConstantConvReuseSubstitutionTest, ConstantConvTransposeSubstitutionTest
 from tests.pytorch_tests.model_tests.feature_models.multi_head_attention_test import MHALayerNetTest, \
     MHALayerNetFeatureTest
+from tests.pytorch_tests.model_tests.feature_models.scaled_dot_product_attention_test import ScaledDotProductAttentionTest
 from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test import \
     ScaleEqualizationWithZeroPadNetTest, ScaleEqualizationNetTest, \
     ScaleEqualizationReluFuncNetTest, ScaleEqualizationReluFuncWithZeroPadNetTest, \
@@ -108,6 +109,7 @@ from tests.pytorch_tests.model_tests.feature_models.const_quantization_test impo
 from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import RemoveIdentityTest
 from tests.pytorch_tests.model_tests.feature_models.activation_16bit_test import Activation16BitTest, \
     Activation16BitMixedPrecisionTest
+from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
@@ -159,7 +161,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         AddNetTest(self).run_test()
 
-    def test_layer_norm_net(self):
+    def test_layer_norm_net(self):  # yoyo
         """
         These tests check the nn.functional.layer_norm operations.
         """
@@ -362,7 +364,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         ScalarTensorTest(self).run_test()
 
-    def test_layer_name(self):
+    def test_layer_name(self):  # yoyo
         """
         This test checks that we build a correct graph and correctly reconstruct the model
         given the fact that we reuse nodes and abuse the naming convention of fx (if we resuse
@@ -589,6 +591,26 @@ class FeatureModelsTestRunner(unittest.TestCase):
                             kv_seq_len[iter], kdim[iter], vdim[iter], bias=False).run_test()
         MHALayerNetFeatureTest(self, num_heads[0], q_seq_len[0], qdim[0] * num_heads[0],
                                kv_seq_len[0], kdim[0], vdim[0], bias=True, add_bias_kv=True).run_test()
+
+    def test_scaled_dot_product_attention_layer(self):
+        """
+        This test checks the ScaledDotProductDecomposition substitution feature.
+        """
+
+        batch_size = [3, 1, 5]
+        q_and_k_embd_size = [8, 9, 3]
+        v_embd_size = [19, 2, 6]
+        source_seq_len = [21, 4, 15]
+        target_seq_len = [13, 12, 9]
+        for i in range(len(batch_size)):
+            ScaledDotProductAttentionTest(self, batch_size[i], q_and_k_embd_size[i], v_embd_size[i], source_seq_len[i],
+                                          target_seq_len[i]).run_test(seed=3)
+            ScaledDotProductAttentionTest(self, batch_size[i], q_and_k_embd_size[i], v_embd_size[i], source_seq_len[i],
+                                          target_seq_len[i], dropout_p=0.0, scale=5).run_test(seed=3)
+            attn_mask = torch.ones(target_seq_len[i], source_seq_len[i]).to(get_working_device())
+            ScaledDotProductAttentionTest(self, batch_size[i], q_and_k_embd_size[i], v_embd_size[i], source_seq_len[i],
+                                          target_seq_len[i], attn_mask=attn_mask).run_test(seed=3)
+
 
     def test_gptq(self):
         """

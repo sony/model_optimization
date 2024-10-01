@@ -59,6 +59,7 @@ class LayerNormNetTest(BasePytorchTest):
         super().__init__(unit_test)
         self.has_weight = has_weight
         self.has_bias = has_bias
+        self.use_is_close_validation = True
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 32, 32]]

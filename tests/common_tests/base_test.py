@@ -12,13 +12,20 @@ class BaseTest:
                  val_batch_size=1,
                  num_calibration_iter=1,
                  num_of_inputs=1,
-                 input_shape=(8, 8, 3)):
+                 input_shape=(8, 8, 3),
+                 use_is_close_validation=False
+                 ):
+        """
+        :param use_is_close_validation: Allow similar (instead of exact) outputs when comparing the original float
+        model output against the no_quantization model output.
+        """
 
         self.unit_test = unit_test
         self.val_batch_size = val_batch_size
         self.num_calibration_iter = num_calibration_iter
         self.num_of_inputs = num_of_inputs
         self.input_shape = (val_batch_size,) + input_shape
+        self.use_is_close_validation = use_is_close_validation
 
     def generate_inputs(self):
         return [np.random.randn(*in_shape) for in_shape in self.get_input_shapes()]

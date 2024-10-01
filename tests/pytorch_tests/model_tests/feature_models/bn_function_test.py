@@ -44,6 +44,7 @@ class BNFNetTest(BasePytorchTest):
 
     def __init__(self, unit_test):
         super().__init__(unit_test)
+        self.use_is_close_validation = True  # because the net contains BN layer
 
     def create_inputs_shape(self):
         return [[self.val_batch_size, 3, 32, 32], [self.val_batch_size, 3, 32, 32]]

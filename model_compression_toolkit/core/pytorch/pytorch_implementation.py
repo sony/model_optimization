@@ -53,6 +53,8 @@ from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.li
     pytorch_linear_collapsing
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.multi_head_attention_decomposition \
     import MultiHeadAttentionDecomposition
+from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.scaled_dot_product_attention import \
+    ScaledDotProductDecomposition
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.transform_function_call_method import \
     TransformFunctionCallMethod
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.const_holder_conv import \
@@ -237,6 +239,7 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return [ReshapeWithStaticShapes(),
                 MultiHeadAttentionDecomposition(),
+                ScaledDotProductDecomposition(),
                 TransformFunctionCallMethod(),
                 FunctionalConvSubstitution(fw_info),
                 FunctionalBatchNorm(),
