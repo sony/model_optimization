@@ -279,8 +279,7 @@ class HessianInfoService:
     def fetch_hessian(self,
                       hessian_scores_request: HessianScoresRequest,
                       required_size: int,
-                      batch_size: int = 1,
-                      per_sample_hash: bool = False) -> List[List[np.ndarray]]:
+                      batch_size: int = 1) -> List[List[np.ndarray]]:
         """
         Fetches the computed approximations of the Hessian-based scores for the given
         request and required size.
@@ -289,7 +288,6 @@ class HessianInfoService:
             hessian_scores_request: Configuration for which to fetch the approximation.
             required_size: Number of approximations required.
             batch_size: The Hessian computation batch size.
-            per_sample_hash: Whether to compute hessian per sample hash.
 
         Returns:
             List[List[np.ndarray]]: For each target node, returns a list of computed approximations.
@@ -297,6 +295,7 @@ class HessianInfoService:
             The inner list length dependent on the granularity (1 for per-tensor, 
             OC for per-output-channel when the requested node has OC output-channels, etc.)
         """
+
         if len(hessian_scores_request.target_nodes) == 0:
             return []
 
@@ -311,32 +310,6 @@ class HessianInfoService:
             self._get_representing_of_reuse_group(node) if node.reuse else node
             for node in hessian_scores_request.target_nodes
         ]
-
-        if per_sample_hash:
-            if required_size is not None:
-                raise ValueError('required_size cannot be specified with per_sample_hash')
-
-            def gen_single(orig_gen):
-                # convert original generator into generator that yields sample by sample
-                for batch in orig_gen:
-                    for i in range(batch[0].shape[0]):
-                        yield [inp[i] for inp in batch]
-
-            def gen_new_batch():
-                # convert sample by sample generator into the required batch
-                samples = []
-                for sample in gen_single(self.representative_dataset_gen()):
-                    samples.append(sample)
-                    if len(samples) == batch_size:
-                        yield [np.stack(d, axis=0) for d in zip(*samples)]
-                        samples = []
-                if samples:
-                    yield [np.stack(d, axis=0) for d in zip(*samples)]
-
-            return self._compute_trackable_per_sample_hessian(hessian_scores_request, gen_new_batch())
-
-        if required_size is None:
-            raise ValueError('required_size must be specified if per_sample_hash is False')
 
         # Ensure the saved info has the required number of approximations
         self._populate_saved_info_to_size(hessian_scores_request, required_size, batch_size)

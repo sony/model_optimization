@@ -93,12 +93,25 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
         output = self.concat_tensors(output_tensors)
         return output, target_activation_tensors
 
-    def _generate_random_vector(self, shape, distribution: HessianEstimationDistribution, device):
+    def _generate_random_vectors_batch(self, shape, distribution: HessianEstimationDistribution, device) -> torch.Tensor:
+        """
+        Generate a batch of random vectors for Hutchinson estimation
+
+        Args:
+            shape: target shape
+            distribution: distribution to sample from
+            device: target device
+
+        Returns:
+            Random tensor
+        """
         if distribution == HessianEstimationDistribution.GAUSSIAN:
             return torch.randn(shape, device=device)
 
         if distribution == HessianEstimationDistribution.RADEMACHER:
-            return torch.where(torch.randint(0, 2, shape, device=device).to(torch.bool), 1, -1).to(device)
+            v = torch.randint(high=2, size=shape, device=device)
+            v[v == 0] = -1
+            return v
 
         raise ValueError(f'Unknown distribution {distribution}')
 
@@ -116,7 +129,7 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
         elif self.hessian_request.granularity == HessianScoresGranularity.PER_OUTPUT_CHANNEL:
             hessian_scores = self._compute_per_channel(output, target_activation_tensors)
         else:
-            raise NotImplementedError(f'{HessianScoresGranularity.PER_ELEMENT} is not supported')
+            raise NotImplementedError(f'{self.hessian_request.granularity} is not supported')
 
         # Convert results to list of numpy arrays
         hessian_results = [torch_tensor_to_numpy(h) for h in hessian_scores]
@@ -129,7 +142,7 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
         prev_mean_results = None
         for j in tqdm(range(self.num_iterations_for_approximation), "Hessian random iterations"):  # Approximation iterations
             # Getting a random vector with normal distribution
-            v = self._generate_random_vector(output.shape, self.hessian_request.distribution, output.device)
+            v = self._generate_random_vectors_batch(output.shape, self.hessian_request.distribution, output.device)
             f_v = torch.sum(v * output)
             for i, ipt_tensor in enumerate(target_activation_tensors):  # Per Interest point activation tensor
                 # Computing the hessian-approximation scores by getting the gradient of (output * v)
@@ -170,19 +183,16 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
                                       for _ in range(len(target_activation_tensors))]
 
         for j in tqdm(range(self.num_iterations_for_approximation), "Hessian random iterations"):  # Approximation iterations
-            # Getting a random vector with normal distribution
-            v = self._generate_random_vector(output.shape, self.hessian_request.distribution, output.device)
+            v = self._generate_random_vectors_batch(output.shape, self.hessian_request.distribution, output.device)
             f_v = torch.sum(v * output)
             for i, ipt_tensor in enumerate(target_activation_tensors):  # Per Interest point activation tensor
-                # Computing the hessian-approximation scores by getting the gradient of (output * v)
                 hess_v = autograd.grad(outputs=f_v,
                                        inputs=ipt_tensor,
                                        retain_graph=True)[0]
-
                 hessian_approx_scores = hess_v ** 2
                 rank = len(hess_v.shape)
                 if rank > 2:
-                    hessian_approx_scores = torch.mean(hess_v, dim=tuple(range(2, rank)))
+                    hessian_approx_scores = torch.mean(hessian_approx_scores, dim=tuple(range(2, rank)))
 
                 # Update node Hessian approximation mean over random iterations
                 ipts_hessian_approx_scores[i] = (j * ipts_hessian_approx_scores[i] + hessian_approx_scores) / (j + 1)

@@ -41,4 +41,4 @@ def get_regularization(gptq_config: GradientPTQConfig, get_total_grad_steps_fn: 
         scheduler = LinearAnnealingScheduler(t_start=t_start, t_end=total_gradient_steps, initial_val=20, target_val=2)
         return SoftQuantizerRegularization(scheduler)
     else:
-        return lambda m, e_reg: 0
+        return lambda *args, **kwargs: 0

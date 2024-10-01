@@ -40,32 +40,36 @@ class SoftQuantizerRegularization:
 
         self.count_iter = 0
 
-    def __call__(self, model: nn.Module, entropy_reg: float):
+    def __call__(self, model: nn.Module, entropy_reg: float, layer_weights: torch.Tensor = None):
         """
         Returns the soft quantizer regularization value for SoftRounding.
 
         Args:
             model: A model to be quantized with SoftRounding.
             entropy_reg: Entropy value to scale the quantizer regularization.
+            layer_weights: a vector of layer weights. If None, each layers has a weight of 1.
 
         Returns: Regularization value.
         """
+        layers = [m for m in model.modules() if isinstance(m, PytorchQuantizationWrapper)]
 
-        soft_reg_aux: List[torch.Tensor] = []
+        if layer_weights is None:
+            layer_weights = torch.ones((len(layers),))
+        if len(layer_weights.shape) != 1 or layer_weights.shape[0] != len(layers):
+            raise ValueError(f'Expected weights to be a vector of length {len(layers)}, received {layer_weights.shape}.')
+        max_w = layer_weights.max()
+
         b = self.beta_scheduler(self.count_iter)
-        for layer in model.modules():
-            if isinstance(layer, PytorchQuantizationWrapper):
-                kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
-                                                                      fw_info=DEFAULT_PYTORCH_INFO)
-
-                st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
-                soft_reg_aux.append((1 - torch.pow(torch.abs(st - .5) * 2, b)).sum())
-
         reg = 0
+        for layer, w in zip(layers, layer_weights):
+            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
+                                                                  fw_info=DEFAULT_PYTORCH_INFO)
 
-        for sq in soft_reg_aux:
-            reg += sq
+            st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
+            soft_loss = (1 - torch.pow(torch.abs(st - .5) * 2, b)).sum()
+            reg += w * soft_loss
 
+        reg = reg / max_w
         self.count_iter += 1
 
         return entropy_reg * reg

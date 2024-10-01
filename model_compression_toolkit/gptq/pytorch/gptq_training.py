@@ -106,17 +106,16 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                                                   trainable_bias,
                                                                   trainable_threshold)
         hessian_cfg = self.gptq_config.hessian_weights_config
-        self.weights_for_average_loss = None    # for fixed layer weights
+        self.use_sample_layer_attention = hessian_cfg.per_sample
+        self.hessian_score_per_layer = None    # for fixed layer weights
         self.hessian_score_per_image_per_layer = None    # for sample-layer attention
-        if hessian_cfg.per_sample:
+        if self.use_sample_layer_attention:
             assert (hessian_cfg.norm_scores is False and hessian_cfg.log_norm is False and
                     hessian_cfg.scale_log_norm is False), hessian_cfg
-            # TODO if a representative dataset is fixed (same images in each epoch) we can precalculate.
-            # However if images differ between epochs, we have to calculate their hessians each time and pre-calculation
-            # will be a waste. Currently it is calculated on-demand during the training loop.
+            # Per sample hessian scores are calculated on-demand during the training loop
             self.hessian_score_per_image_per_layer = {}
         else:
-            self.weights_for_average_loss = to_torch_tensor(self.compute_hessian_based_weights())
+            self.hessian_score_per_layer = to_torch_tensor(self.compute_hessian_based_weights())
 
         self.reg_func = get_regularization(self.gptq_config, _get_total_grad_steps)
 
@@ -221,14 +220,16 @@ class PytorchGPTQTrainer(GPTQTrainer):
     def compute_gradients(self,
                           y_float: List[torch.Tensor],
                           input_tensors: List[torch.Tensor],
-                          weights_for_average_loss) -> Tuple[torch.Tensor, List[np.ndarray]]:
+                          distill_loss_weights: torch.Tensor,
+                          round_reg_weights: torch.Tensor) -> Tuple[torch.Tensor, List[np.ndarray]]:
         """
         Get outputs from both teacher and student networks. Compute the observed error,
         and use it to compute the gradients and applying them to the student weights.
         Args:
             y_float: A list of reference tensor from the floating point network.
             input_tensors: A list of Input tensors to pass through the networks.
-            weights_for_average_loss: Weights for loss. Either per layer, or per layer per sample.
+            distill_loss_weights: Weights for the distillation loss.
+            round_reg_weights: Weight for the rounding regularization loss.
         Returns:
             Loss and gradients.
         """
@@ -243,9 +244,8 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                            self.flp_weights_list,
                                            self.compare_points_mean,
                                            self.compare_points_std,
-                                           weights_for_average_loss)
-
-        reg_value = self.reg_func(self.fxp_model, self.gptq_config.regularization_factor)
+                                           distill_loss_weights)
+        reg_value = self.reg_func(self.fxp_model, self.gptq_config.regularization_factor, round_reg_weights)
 
         loss_value += reg_value
 
@@ -273,11 +273,11 @@ class PytorchGPTQTrainer(GPTQTrainer):
             for _ in epochs_pbar:
                 with tqdm(data_function(), position=1, leave=False) as data_pbar:
                     for data in data_pbar:
-                        weights = to_torch_tensor(self._get_samples_weights_for_loss(data))
+                        distill_weights, reg_weights = to_torch_tensor(self._get_loss_weights(data))
                         input_data = [d * self.input_scale for d in data]
                         input_tensor = to_torch_tensor(input_data)
                         y_float = self.float_model(input_tensor)  # running float model
-                        loss_value, grads = self.compute_gradients(y_float, input_tensor, weights)
+                        loss_value, grads = self.compute_gradients(y_float, input_tensor, distill_weights, reg_weights)
                         # Run one step of gradient descent by updating the value of the variables to minimize the loss.
                         for (optimizer, _) in self.optimizer_with_param:
                             optimizer.step()
@@ -289,13 +289,22 @@ class PytorchGPTQTrainer(GPTQTrainer):
                         self.loss_list.append(loss_value.item())
                         Logger.debug(f'last loss value: {self.loss_list[-1]}')
 
-    # TODO move to common after ctor refactor
-    def _get_samples_weights_for_loss(self, input_tensors: List[torch.Tensor]):
-        if self.weights_for_average_loss is not None:
-            assert self.hessian_score_per_image_per_layer is None
-            return self.weights_for_average_loss
+    def _get_loss_weights(self, input_tensors: List[torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Fetches weights for distillation and round regularization parts of loss.
 
-        # assert self.hessian_score_per_image_per_layer
+        Args:
+            input_tensors: list containing a batch of inputs.
+
+        Returns:
+            A tuple of two tensors:
+            - weights for distillation loss
+            - weights for rounding regularization loss
+
+        """
+        if self.use_sample_layer_attention is False:
+            return self.hessian_score_per_layer, torch.ones_like(self.hessian_score_per_layer)
+
         if len(input_tensors) > 1:
             raise NotImplementedError('Sample-Layer attention is not currently supported for networks with multiple inputs')
 
@@ -309,7 +318,10 @@ class PytorchGPTQTrainer(GPTQTrainer):
             img_scores_per_layer: Dict[BaseNode, np.ndarray] = self.hessian_score_per_image_per_layer[img_hash]
             img_scores = np.stack(list(img_scores_per_layer.values()), axis=0)
             scores.append(img_scores)
-        return np.stack(scores, axis=1)    # layers X images
+
+        layer_sample_weights = np.stack(scores, axis=1)    # layers X images
+        layer_weights = layer_sample_weights.mean(axis=1)
+        return layer_sample_weights, layer_weights
 
     def update_graph(self) -> Graph:
         """

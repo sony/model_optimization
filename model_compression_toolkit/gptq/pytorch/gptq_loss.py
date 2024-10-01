@@ -79,7 +79,7 @@ def sample_layer_attention_loss(y_list: List[torch.Tensor],
         y_list: First list of tensors.
         x_list: Second list of tensors.
         fxp_w_list, flp_w_list, act_bn_mean, act_bn_std: unused (needed to comply with the interface).
-        loss_weights: A list of weights for each layer. Each weight is a vector of shape (batch,)
+        loss_weights: layer-sample weights tensor of shape (layers, batch)
 
     Returns:
         Sample Layer Attention loss (a scalar).
@@ -88,14 +88,12 @@ def sample_layer_attention_loss(y_list: List[torch.Tensor],
     layers_mean_w = []
 
     for i, (y, x, w) in enumerate(zip(y_list, x_list, loss_weights)):
-        # norm = (y - x).pow(2).sum(1)
-        norm = (y - x).pow(2).mean(1)
+        norm = (y - x).pow(2).sum(1)
         if len(norm.shape) > 1:
             norm = norm.flatten(1).mean(1)
         loss += torch.mean(w * norm)
         layers_mean_w.append(w.mean())
 
-    # loss = loss / len(x_list)
     loss = loss / torch.stack(layers_mean_w).max()
     return loss
 

@@ -144,8 +144,7 @@ class GPTQTrainer(ABC):
             return np.asarray([1 / num_nodes for _ in range(num_nodes)])
 
         # Fetch hessian approximations for each target node
-        # TODO this smells like a bug. In hessian calculation target nodes are topo sorted and results are returned
-        # in the same order. Maybe topo sort doesn't do anything and it works?
+        # TODO this smells like a potential bug. In hessian calculation target nodes are topo sorted and results are returned
         # TODO also target nodes are replaced for reuse. Does this work correctly?
         approximations = self._fetch_hessian_approximations(HessianScoresGranularity.PER_TENSOR)
         compare_point_to_hessian_approx_scores = {node: score for node, score in zip(self.compare_points, approximations)}
@@ -182,25 +181,26 @@ class GPTQTrainer(ABC):
         """
         Compute sample layer attention scores per image hash per layer.
 
+        Args:
+            inputs_batch: a list containing a batch of inputs.
+
         Returns:
-            A dictionary {img_hash: {layer: score}} where score is the
+            A dictionary with a structure {img_hash: {layer: score}}.
 
         """
         request = self._build_hessian_request(HessianScoresGranularity.PER_OUTPUT_CHANNEL)
         hessian_batch_size = self.gptq_config.hessian_weights_config.hessian_batch_size
 
         hessian_score_per_image_per_layer = {}
-        # TODO Is it really needed if we compute on the fly per batch? Also if hessian batch is larger its ignored.
-        # If hessian batch is smaller than inputs batch, split it to hessian batches.
+        # If hessian batch is smaller than inputs batch, split it to hessian batches. If hessian batch is larger,
+        # it's currently ignored (TODO)
         for i in range(0, inputs_batch[0].shape[0], hessian_batch_size):
             inputs = [t[i: i+hessian_batch_size] for t in inputs_batch]
             hessian_score_per_image_per_layer.update(
                 self.hessian_service.compute_trackable_per_sample_hessian(request, inputs)
             )
-        # hessian_score_per_image_per_layer = self._fetch_hessian_approximations(HessianScoresGranularity.PER_OUTPUT_CHANNEL)
-        for layers_score in hessian_score_per_image_per_layer.values():
-            for k, t in layers_score.items():
-                layers_score[k] = t.max(axis=0)    # layer score is (channels,)
+        for img_hash, v in hessian_score_per_image_per_layer.items():
+            hessian_score_per_image_per_layer[img_hash] = {k: t.max(axis=0) for k, t in v.items()}
         return hessian_score_per_image_per_layer
 
     def _fetch_hessian_approximations(self, granularity: HessianScoresGranularity) -> Dict[BaseNode, List[List[float]]]:
@@ -215,8 +215,7 @@ class GPTQTrainer(ABC):
         node_approximations = self.hessian_service.fetch_hessian(
             hessian_scores_request=hessian_scores_request,
             required_size=self.gptq_config.hessian_weights_config.hessians_num_samples,
-            batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size,
-            per_sample_hash=self.gptq_config.hessian_weights_config.per_sample
+            batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size
         )
         return node_approximations
 

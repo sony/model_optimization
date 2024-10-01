@@ -657,11 +657,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
 
     def test_gptq_with_sample_layer_attention(self):
         kwargs = dict(sample_layer_attention=True, loss=sample_layer_attention_loss,
-                      hessian_weights=True, rounding_type=RoundingType.SoftQuantizer,
-                      hessian_num_samples=None, norm_scores=False, log_norm_weights=False, scaled_log_norm=False)
+                      hessian_weights=True, hessian_num_samples=None,
+                      norm_scores=False, log_norm_weights=False, scaled_log_norm=False)
         GPTQAccuracyTest(self, **kwargs).run_test()
-        GPTQAccuracyTest(self, hessian_batch_size=16, **kwargs).run_test()
-        GPTQAccuracyTest(self, hessian_batch_size=5, gradual_activation_quantization=True, **kwargs).run_test()
+        GPTQAccuracyTest(self, hessian_batch_size=16, rounding_type=RoundingType.SoftQuantizer, **kwargs).run_test()
+        GPTQAccuracyTest(self, hessian_batch_size=5, rounding_type=RoundingType.SoftQuantizer,
+                         gradual_activation_quantization=True, **kwargs).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.STE, **kwargs)
 
     def test_qat(self):
         """
