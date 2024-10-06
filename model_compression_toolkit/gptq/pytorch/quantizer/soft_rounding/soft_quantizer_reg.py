@@ -40,21 +40,19 @@ class SoftQuantizerRegularization:
 
         self.count_iter = 0
 
-    def __call__(self, model: nn.Module, entropy_reg: float, layer_weights: torch.Tensor = None):
+    def __call__(self, model: nn.Module, entropy_reg: float, layer_weights: torch.Tensor):
         """
         Returns the soft quantizer regularization value for SoftRounding.
 
         Args:
             model: A model to be quantized with SoftRounding.
             entropy_reg: Entropy value to scale the quantizer regularization.
-            layer_weights: a vector of layer weights. If None, each layers has a weight of 1.
+            layer_weights: a vector of layer weights.
 
         Returns: Regularization value.
         """
         layers = [m for m in model.modules() if isinstance(m, PytorchQuantizationWrapper)]
 
-        if layer_weights is None:
-            layer_weights = torch.ones((len(layers),))
         if len(layer_weights.shape) != 1 or layer_weights.shape[0] != len(layers):
             raise ValueError(f'Expected weights to be a vector of length {len(layers)}, received {layer_weights.shape}.')    # pragma: no cover
         max_w = layer_weights.max()

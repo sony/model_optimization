@@ -93,7 +93,8 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
         output = self.concat_tensors(output_tensors)
         return output, target_activation_tensors
 
-    def _generate_random_vectors_batch(self, shape, distribution: HessianEstimationDistribution, device) -> torch.Tensor:
+    def _generate_random_vectors_batch(self, shape: tuple, distribution: HessianEstimationDistribution,
+                                       device: torch.device) -> torch.Tensor:
         """
         Generate a batch of random vectors for Hutchinson estimation
 

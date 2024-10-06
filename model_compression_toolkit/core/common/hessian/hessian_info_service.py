@@ -250,8 +250,8 @@ class HessianInfoService:
 
         hessian_score_by_image_hash = {}
 
-        if not isinstance(inputs_batch, list):
-            raise TypeError('Expected a list of inputs')    # pragma: no cover
+        if not inputs_batch or not isinstance(inputs_batch, list):
+            raise TypeError('Expected a non-empty list of inputs')    # pragma: no cover
         if len(inputs_batch) > 1:
             raise NotImplementedError('Per-sample hessian computation is not supported for networks with multiple inputs')    # pragma: no cover
 
@@ -261,17 +261,27 @@ class HessianInfoService:
                                                                            hessian_scores_request=hessian_scores_request,
                                                                            num_iterations_for_approximation=self.num_iterations_for_approximation)
         hessian_scores = fw_hessian_calculator.compute()
-        for b in range(inputs_batch[0].shape[0]):
-            img_hash = self.calc_image_hash(inputs_batch[0][b])
+        for i in range(inputs_batch[0].shape[0]):
+            img_hash = self.calc_image_hash(inputs_batch[0][i])
             hessian_score_by_image_hash[img_hash] = {
-                node: score[b] for node, score in zip(hessian_scores_request.target_nodes, hessian_scores)
+                node: score[i] for node, score in zip(hessian_scores_request.target_nodes, hessian_scores)
             }
 
         return hessian_score_by_image_hash
 
     @staticmethod
     def calc_image_hash(image):
-        if len(image.shape) != 3:    # pragma: no cover
+        """
+        Calculates hash for an input image.
+
+        Args:
+            image: input 3d image (without batch).
+
+        Returns:
+            Image hash.
+
+        """
+        if not len(image.shape) == 3:    # pragma: no cover
             raise ValueError(f'Expected 3d image (without batch) for image hash calculation, got {len(image.shape)}')
         image_bytes = image.astype(np.float32).tobytes()
         return hashlib.md5(image_bytes).hexdigest()
