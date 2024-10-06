@@ -21,6 +21,7 @@ import torch.nn as nn
 import mct_quantizers
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.constants import GPTQ_HESSIAN_NUM_SAMPLES
+from model_compression_toolkit.core.common.hessian import HessianEstimationDistribution
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
@@ -59,7 +60,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
                  hessian_weights=True, norm_scores=True, log_norm_weights=True, scaled_log_norm=False, params_learning=True,
                  num_calibration_iter=GPTQ_HESSIAN_NUM_SAMPLES, gradual_activation_quantization=False,
                  hessian_num_samples=GPTQ_HESSIAN_NUM_SAMPLES, sample_layer_attention=False,
-                 loss=multiple_tensors_mse_loss, hessian_batch_size=1):
+                 loss=multiple_tensors_mse_loss, hessian_batch_size=1, estimator_distribution=HessianEstimationDistribution.GAUSSIAN):
         super().__init__(unit_test, input_shape=(3, 16, 16), num_calibration_iter=num_calibration_iter)
         self.seed = 0
         self.rounding_type = rounding_type
@@ -78,6 +79,7 @@ class GPTQBaseTest(BasePytorchFeatureNetworkTest):
         self.sample_layer_attention = sample_layer_attention
         self.loss = loss
         self.hessian_batch_size = hessian_batch_size
+        self.estimator_distribution = estimator_distribution
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.NOCLIPPING,
@@ -154,7 +156,8 @@ class GPTQAccuracyTest(GPTQBaseTest):
                                                                                 norm_scores=self.norm_scores,
                                                                                 per_sample=self.sample_layer_attention,
                                                                                 hessians_num_samples=self.hessian_num_samples,
-                                                                                hessian_batch_size=self.hessian_batch_size),
+                                                                                hessian_batch_size=self.hessian_batch_size,
+                                                                                estimator_distribution=self.estimator_distribution),
 
 
                                  gptq_quantizer_params_override=self.override_params,

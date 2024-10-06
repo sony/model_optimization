@@ -109,8 +109,9 @@ if FOUND_TORCH:
         bias_optimizer = torch.optim.SGD([torch.Tensor([])], lr=LR_BIAS_DEFAULT, momentum=GPTQ_MOMENTUM)
 
         if use_hessian_sample_attention:
-            if not use_hessian_based_weights:
+            if not use_hessian_based_weights:    # pragma: no cover
                 raise ValueError('use_hessian_based_weights must be set to True in order to use Sample Layer Attention.')
+
             hessian_weights_config = GPTQHessianScoresConfig(
                 hessians_num_samples=None,
                 norm_scores=False,
@@ -129,9 +130,9 @@ if FOUND_TORCH:
             gradual_quant_config = GradualActivationQuantizationConfig() if gradual_activation_quantization else None
         elif isinstance(gradual_activation_quantization, GradualActivationQuantizationConfig):
             gradual_quant_config = gradual_activation_quantization
-        else:
+        else:    # pragma: no cover
             raise TypeError(f'gradual_activation_quantization argument should be bool or '
-                            f'GradualActivationQuantizationConfig, received {type(gradual_activation_quantization)}')    # pragma: no cover
+                            f'GradualActivationQuantizationConfig, received {type(gradual_activation_quantization)}')
 
         return GradientPTQConfig(n_epochs, optimizer, optimizer_rest=optimizer_rest, loss=loss,
                                  log_function=log_function, train_bias=True, optimizer_bias=bias_optimizer,
@@ -205,11 +206,11 @@ if FOUND_TORCH:
 
         """
 
-        if core_config.is_mixed_precision_enabled:
+        if core_config.is_mixed_precision_enabled:    # pragma: no cover
             if not isinstance(core_config.mixed_precision_config, MixedPrecisionQuantizationConfig):
                 Logger.critical("Given quantization config for mixed-precision is not of type 'MixedPrecisionQuantizationConfig'. "
                                 "Ensure usage of the correct API for 'pytorch_gradient_post_training_quantization' "
-                                "or provide a valid mixed-precision configuration.")  # pragma: no cover
+                                "or provide a valid mixed-precision configuration.")
 
         tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
 

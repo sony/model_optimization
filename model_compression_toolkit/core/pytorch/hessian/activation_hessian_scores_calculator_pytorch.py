@@ -113,7 +113,7 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
             v[v == 0] = -1
             return v
 
-        raise ValueError(f'Unknown distribution {distribution}')
+        raise ValueError(f'Unknown distribution {distribution}')    # pragma: no cover
 
     def compute(self) -> List[np.ndarray]:
         """
@@ -129,7 +129,7 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
         elif self.hessian_request.granularity == HessianScoresGranularity.PER_OUTPUT_CHANNEL:
             hessian_scores = self._compute_per_channel(output, target_activation_tensors)
         else:
-            raise NotImplementedError(f'{self.hessian_request.granularity} is not supported')
+            raise NotImplementedError(f'{self.hessian_request.granularity} is not supported')    # pragma: no cover
 
         # Convert results to list of numpy arrays
         hessian_results = [torch_tensor_to_numpy(h) for h in hessian_scores]

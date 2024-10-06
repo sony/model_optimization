@@ -56,7 +56,7 @@ class SoftQuantizerRegularization:
         if layer_weights is None:
             layer_weights = torch.ones((len(layers),))
         if len(layer_weights.shape) != 1 or layer_weights.shape[0] != len(layers):
-            raise ValueError(f'Expected weights to be a vector of length {len(layers)}, received {layer_weights.shape}.')
+            raise ValueError(f'Expected weights to be a vector of length {len(layers)}, received {layer_weights.shape}.')    # pragma: no cover
         max_w = layer_weights.max()
 
         b = self.beta_scheduler(self.count_iter)

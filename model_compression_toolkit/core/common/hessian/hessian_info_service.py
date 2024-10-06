@@ -23,7 +23,7 @@ from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.hessian.hessian_scores_request import HessianScoresRequest, \
     HessianScoresGranularity, HessianMode
 from model_compression_toolkit.logger import Logger
-if TYPE_CHECKING:
+if TYPE_CHECKING:    # pragma: no cover
     from model_compression_toolkit.core.common import BaseNode
 
 
@@ -251,9 +251,9 @@ class HessianInfoService:
         hessian_score_by_image_hash = {}
 
         if not isinstance(inputs_batch, list):
-            raise TypeError('Expected a list of inputs')
+            raise TypeError('Expected a list of inputs')    # pragma: no cover
         if len(inputs_batch) > 1:
-            raise NotImplementedError('Per-sample hessian computation is not supported for networks with multiple inputs')
+            raise NotImplementedError('Per-sample hessian computation is not supported for networks with multiple inputs')    # pragma: no cover
 
         # Get the framework-specific calculator Hessian-approximation scores
         fw_hessian_calculator = self.fw_impl.get_hessian_scores_calculator(graph=self.graph,
@@ -271,7 +271,7 @@ class HessianInfoService:
 
     @staticmethod
     def calc_image_hash(image):
-        if len(image.shape) != 3:
+        if len(image.shape) != 3:    # pragma: no cover
             raise ValueError(f'Expected 3d image (without batch) for image hash calculation, got {len(image.shape)}')
         image_bytes = image.astype(np.float32).tobytes()
         return hashlib.md5(image_bytes).hexdigest()
@@ -296,7 +296,7 @@ class HessianInfoService:
             OC for per-output-channel when the requested node has OC output-channels, etc.)
         """
 
-        if len(hessian_scores_request.target_nodes) == 0:
+        if len(hessian_scores_request.target_nodes) == 0:    # pragma: no cover
             return []
 
         if required_size == 0:
