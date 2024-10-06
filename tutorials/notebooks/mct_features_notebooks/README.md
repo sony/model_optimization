@@ -15,7 +15,6 @@ These techniques are essential for further optimizing models and achieving super
   | [MobileNetV2](../imx500_notebooks/keras/example_keras_mobilenetv2_for_imx500.ipynb)  | &#x2705; PTQ                                                                                        |
   | [Mixed-Precision MobileNetV2](keras/example_keras_mobilenet_mixed_precision.ipynb) | &#x2705; PTQ <br/> &#x2705; Mixed-Precision                                                         |
   | [Nanodet-Plus](../imx500_notebooks/keras/example_keras_nanodet_plus_for_imx500.ipynb)             | &#x2705; PTQ                                                                                        |
-  | [YoloV8-nano](keras/example_keras_yolov8n.ipynb)              | &#x2705; PTQ                                                                                        |
   | [EfficientDetLite0](../imx500_notebooks/keras/example_keras_effdet_lite0_for_imx500.ipynb) | &#x2705; PTQ <br/> &#x2705; [sony-custom-layers](https://github.com/sony/custom_layers) integration |
 
 </details>
