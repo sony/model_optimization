@@ -25,9 +25,13 @@ from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
+from model_compression_toolkit.gptq.common.gradual_activation_quantization import \
+    get_gradual_activation_quantizer_wrapper_factory
 from model_compression_toolkit.gptq.keras.quantizer.quantization_builder import quantization_builder
 from model_compression_toolkit.logger import Logger
 from mct_quantizers import KerasActivationQuantizationHolder
+from model_compression_toolkit.trainable_infrastructure.common.util import get_total_grad_steps
+from model_compression_toolkit.trainable_infrastructure.keras.annealing_schedulers import LinearAnnealingScheduler
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.engine.base_layer import TensorFlowOpLayer
@@ -77,6 +81,15 @@ class KerasGPTQTrainer(GPTQTrainer):
             hessian_info_service: HessianScoresService for fetching and computing Hessian's approximation scores.
 
         """
+
+        def _get_total_grad_steps():
+            return get_total_grad_steps(representative_data_gen) * gptq_config.n_epochs
+
+        # must be set prior to model building in the base class constructor. TODO: why?
+        self.gradual_act_quantizer_wrapper_factory = get_gradual_activation_quantizer_wrapper_factory(
+            gptq_config, _get_total_grad_steps, LinearAnnealingScheduler)
+
+
         super().__init__(graph_float,
                          graph_quant,
                          gptq_config,
@@ -117,7 +130,7 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         self.weights_for_average_loss = self.compute_hessian_based_weights()
 
-        self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
+        self.reg_func = get_regularization(self.gptq_config, _get_total_grad_steps)
 
     def _is_gptq_weights_trainable(self,
                                    node: common.BaseNode) -> bool:
@@ -173,15 +186,13 @@ class KerasGPTQTrainer(GPTQTrainer):
         _, activation_quantizers = quantization_builder(n, self.gptq_config) # TODO: split quantizers building into two functions: for weights and activations
 
         # Holder by definition uses a single quantizer for the activation quantization
-        # thus we make sure this is the only possible case (unless it's a node with no activation
-        # quantization, which in this case has an empty list).
-        if len(activation_quantizers) == 1:
-            return KerasActivationQuantizationHolder(activation_quantizers[0])
-
-        Logger.critical(f"'KerasActivationQuantizationHolder' is designed to support a single quantizer, "
-                        f"but {len(activation_quantizers)} quantizers were found for node '{n}'. "
-                        f"Ensure only one quantizer is configured for each node's activation.")
-
+        # thus we make sure this is the only possible case.
+        if len(activation_quantizers) != 1:
+            Logger.critical(f"'KerasActivationQuantizationHolder' is designed to support a single quantizer, "
+                            f"but {len(activation_quantizers)} quantizers were found for node '{n}'. "
+                            f"Ensure only one quantizer is configured for each node's activation.")
+        quantizer = self.gradual_act_quantizer_wrapper_factory(activation_quantizers[0])
+        return KerasActivationQuantizationHolder(quantizer)
 
     def build_gptq_model(self) -> Tuple[Model, UserInformation]:
         """
