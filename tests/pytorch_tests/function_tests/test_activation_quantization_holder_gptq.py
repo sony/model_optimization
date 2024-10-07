@@ -12,7 +12,7 @@ from model_compression_toolkit.core.pytorch.default_framework_info import DEFAUL
 from model_compression_toolkit.gptq import GradualActivationQuantizationConfig, QFractionLinearAnnealingConfig
 from model_compression_toolkit.gptq.pytorch.gptq_pytorch_implementation import GPTQPytorchImplemantation
 from model_compression_toolkit.gptq.pytorch.gptq_training import PytorchGPTQTrainer
-from model_compression_toolkit.gptq.pytorch.quantizer.gradual_activation_quantization import \
+from model_compression_toolkit.gptq.common.gradual_activation_quantization import \
     GradualActivationQuantizerWrapper
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod

@@ -20,7 +20,7 @@ import torch
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import LinearAnnealingScheduler
 from model_compression_toolkit.gptq import GradientPTQConfig, GradualActivationQuantizationConfig, QFractionLinearAnnealingConfig
-from model_compression_toolkit.gptq.pytorch.quantizer.gradual_activation_quantization import (
+from model_compression_toolkit.gptq.common.gradual_activation_quantization import (
     GradualActivationQuantizerWrapper, get_gradual_activation_quantizer_wrapper_factory)
 
 
@@ -94,7 +94,7 @@ class TestGradualActivationQuantization:
         # Mocks are used to just pass anything
         gptq_cfg = GradientPTQConfig(n_epochs=5, optimizer=Mock(), loss=Mock(),
                                      gradual_activation_quantization_config=qdrop_cfg)
-        factory = get_gradual_activation_quantizer_wrapper_factory(gptq_cfg, get_grad_steps_fn)
+        factory = get_gradual_activation_quantizer_wrapper_factory(gptq_cfg, get_grad_steps_fn, LinearAnnealingScheduler)
         quantizer = Quantizer()
         quantizer_wrapper = factory(quantizer)
         return quantizer_wrapper, quantizer
