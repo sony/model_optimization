@@ -38,7 +38,7 @@ from model_compression_toolkit.gptq.pytorch.graph_info import get_gptq_trainable
 from model_compression_toolkit.gptq.pytorch.quantizer.quantization_builder import quantization_builder
 from model_compression_toolkit.gptq.pytorch.quantizer.regularization_factory import get_regularization
 from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
-from model_compression_toolkit.trainable_infrastructure.pytorch.util import get_total_grad_steps
+from model_compression_toolkit.trainable_infrastructure.common.util import get_total_grad_steps
 
 
 class PytorchGPTQTrainer(GPTQTrainer):
