@@ -14,7 +14,7 @@
 # ==============================================================================
 import copy
 
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Union
 from packaging import version
 
 from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
@@ -24,7 +24,8 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, ACT_HESSIAN_DEFAULT_BATCH_SIZE
 from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GPTQHessianScoresConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GPTQHessianScoresConfig, \
+    GradualActivationQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import CoreConfig
@@ -62,17 +63,18 @@ if FOUND_TF:
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
-
+    # TODO: Add usage example for gradual activation quantization
     def get_keras_gptq_config(n_epochs: int,
-                              optimizer: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT),
-                              optimizer_rest: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_REST_DEFAULT),
+                              optimizer: OptimizerV2 = None,
+                              optimizer_rest: OptimizerV2 = None,
                               loss: Callable = GPTQMultipleTensorsLoss(),
                               log_function: Callable = None,
                               use_hessian_based_weights: bool = True,
                               regularization_factor: float = REG_DEFAULT,
-                              hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE) -> GradientPTQConfig:
+                              hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE,
+                              gradual_activation_quantization: Union[bool, GradualActivationQuantizationConfig] = False) -> GradientPTQConfig:
         """
-        Create a GradientPTQConfigV2 instance for Keras models.
+        Create a GradientPTQConfig instance for Keras models.
 
         args:
             n_epochs (int): Number of epochs for running the representative dataset for fine-tuning.
@@ -83,9 +85,10 @@ if FOUND_TF:
             use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
             regularization_factor (float): A floating point number that defines the regularization factor.
             hessian_batch_size (int): Batch size for Hessian computation in Hessian-based weights GPTQ.
+            gradual_activation_quantization (bool, GradualActivationQuantizationConfig): If False, GradualActivationQuantization is disabled. If True, GradualActivationQuantization is enabled with the default settings. GradualActivationQuantizationConfig object can be passed to use non-default settings.
 
         returns:
-            a GradientPTQConfigV2 object to use when fine-tuning the quantized model using gptq.
+            a GradientPTQConfig object to use when fine-tuning the quantized model using gptq.
 
         Examples:
 
@@ -94,7 +97,7 @@ if FOUND_TF:
             >>> import model_compression_toolkit as mct
             >>> import tensorflow as tf
 
-            Create a GradientPTQConfigV2 to run for 5 epochs:
+            Create a GradientPTQConfig to run for 5 epochs:
 
             >>> gptq_conf = mct.gptq.get_keras_gptq_config(n_epochs=5)
 
@@ -105,8 +108,20 @@ if FOUND_TF:
             The configuration can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization` in order to quantize a keras model using gptq.
 
         """
+        optimizer = optimizer or tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT)
+        optimizer_rest = optimizer_rest or tf.keras.optimizers.Adam(learning_rate=LR_REST_DEFAULT)
+
         bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT,
                                                  momentum=GPTQ_MOMENTUM)
+
+        if isinstance(gradual_activation_quantization, bool):
+            gradual_quant_config = GradualActivationQuantizationConfig() if gradual_activation_quantization else None
+        elif isinstance(gradual_activation_quantization, GradualActivationQuantizationConfig):
+            gradual_quant_config = gradual_activation_quantization
+        else:
+            raise TypeError(f'gradual_activation_quantization argument should be bool or '
+                            f'GradualActivationQuantizationConfig, received {type(gradual_activation_quantization)}')
+
         return GradientPTQConfig(n_epochs,
                                  optimizer,
                                  optimizer_rest=optimizer_rest,
@@ -116,7 +131,8 @@ if FOUND_TF:
                                  optimizer_bias=bias_optimizer,
                                  use_hessian_based_weights=use_hessian_based_weights,
                                  regularization_factor=regularization_factor,
-                                 hessian_weights_config=GPTQHessianScoresConfig(hessian_batch_size=hessian_batch_size))
+                                 hessian_weights_config=GPTQHessianScoresConfig(hessian_batch_size=hessian_batch_size),
+                                 gradual_activation_quantization_config=gradual_quant_config)
 
 
     def keras_gradient_post_training_quantization(in_model: Model, representative_data_gen: Callable,
