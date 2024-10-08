@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List
+from typing import Callable, Iterable, Sequence, Optional
+import dataclasses
 
 from enum import Enum
 
@@ -48,6 +49,7 @@ class HessianEstimationDistribution(str, Enum):
     RADEMACHER = 'rademacher'
 
 
+@dataclasses.dataclass
 class HessianScoresRequest:
     """
     Request configuration for the Hessian-approximation scores.
@@ -55,36 +57,28 @@ class HessianScoresRequest:
     This class defines the parameters for the scores based on the Hessian matrix approximation.
     It specifies the mode (weights/activations), granularity (element/channel/tensor), and the target node.
 
-    Note: This does not compute scores using the actual Hessian matrix but an approximation.
+    Attributes:
+        mode: Mode of Hessian-approximation score (w.r.t weights or activations).
+        granularity: Granularity level for the approximation.
+        target_nodes: The node names in the float graph for which the Hessian's approximation scores is targeted.
+        data_loader: Data loader to compute hessian approximations on. Should reflect the desired batch size for
+            the computation. Can be None if all hessians for the request are expected to be pre-computed previously.
+        n_samples: The number of samples to fetch hessian estimations for. If None, fetch hessians for a full pass
+            of the data loader.
+        distribution: Distribution to use in Hutchinson estimation.
     """
+    mode: HessianMode
+    granularity: HessianScoresGranularity
+    target_nodes: Sequence['BaseNode']
+    data_loader: Optional[Iterable]
+    n_samples: Optional[int]
+    distribution: HessianEstimationDistribution = HessianEstimationDistribution.GAUSSIAN
 
-    def __init__(self,
-                 mode: HessianMode,
-                 granularity: HessianScoresGranularity,
-                 target_nodes: List,
-                 distribution: HessianEstimationDistribution = HessianEstimationDistribution.GAUSSIAN):
-        """
-        Attributes:
-            mode (HessianMode): Mode of Hessian-approximation score (w.r.t weights or activations).
-            granularity (HessianScoresGranularity): Granularity level for the approximation.
-            target_nodes (List[BaseNode]): The node in the float graph for which the Hessian's approximation scores is targeted.
-        """
+    def __post_init__(self):
+        if self.data_loader is None and self.n_samples is None:
+            raise ValueError('Data loader and the number of samples cannot both be None.')
 
-        self.mode = mode  # w.r.t activations or weights
-        self.granularity = granularity  # per element, per layer, per channel
-        self.target_nodes = target_nodes
-        self.distribution = distribution
+    def clone(self, **kwargs):
+        """ Create a clone with optional overrides """
+        return dataclasses.replace(self, **kwargs)
 
-    def __eq__(self, other):
-        # Checks if the other object is an instance of HessianScoresRequest
-        # and then checks if all attributes are equal.
-        return isinstance(other, HessianScoresRequest) and \
-               self.mode == other.mode and \
-               self.granularity == other.granularity and \
-               self.target_nodes == other.target_nodes and \
-               self.distribution == other.distribution
-
-    def __hash__(self):
-        # Computes the hash based on the attributes.
-        # The use of a tuple here ensures that the hash is influenced by all the attributes.
-        return hash((self.mode, self.granularity, tuple(self.target_nodes), self.distribution))
