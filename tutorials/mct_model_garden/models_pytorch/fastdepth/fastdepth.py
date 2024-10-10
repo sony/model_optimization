@@ -114,10 +114,9 @@ class MobileNetBackbone(nn.Module):
         )
 
 class FastDepth(nn.Module, PyTorchModelHubMixin):
-    def __init__(self, output_size):
+    def __init__(self):
 
         super(FastDepth, self).__init__()
-        self.output_size = output_size
         mobilenet = MobileNetBackbone()
 
         for i in range(14):
