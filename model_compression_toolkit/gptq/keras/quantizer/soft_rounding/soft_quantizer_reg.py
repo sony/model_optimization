@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List
+from typing import List, Callable
 
 import tensorflow as tf
 from keras import Model
@@ -22,61 +22,21 @@ from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribut
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 
 
-class LinearTempDecay:
-    """
-    Annealing process for the soft quantizer regularization temperature term.
-    """
-
-    def __init__(self, t_max: int, rel_start_decay: float = 0.2, start_b: int = 20, end_b: int = 2):
-        """
-        Initializes a LinearTempDecay object.
-
-        Args:
-            t_max: maximal time step.
-            rel_start_decay: Decay step size at the beginning of the process.
-            start_b: Starting value of the regularization term.
-            end_b: Target value of the regularization term.
-        """
-
-        self.t_max = t_max
-        self.start_decay = rel_start_decay * t_max
-        self.start_b = start_b
-        self.end_b = end_b
-
-    def __call__(self, t: int) -> float:
-        """
-        Cosine annealing scheduler for soft quantizer regularization temperature term.
-
-        Args:
-            t: The current time step.
-
-        Returns: Scheduled temperature.
-        """
-
-        is_before_start_decay = tf.cast(t < self.start_decay, tf.float32)
-
-        rel_t = (t - self.start_decay) / (self.t_max - self.start_decay)
-
-        return self.start_b * is_before_start_decay + \
-               (1 - is_before_start_decay) * \
-               (self.end_b + (self.start_b - self.end_b) * tf.math.maximum(0.0, (1 - rel_t)))
-
 
 class SoftQuantizerRegularization:
     """
     A class to handle the computation of soft quantizer regularization for GPTQ training.
     """
 
-    def __init__(self, total_gradient_steps: int):
+    def __init__(self, beta_scheduler: Callable[[int], float]):
         """
         Initializes the regularization computation object with a LinearDecay object.
 
         Args:
-            total_gradient_steps: The number of gradient steps during optimization.
+            beta_scheduler: a callable that accepts current time step and returns a corresponding beta value.
         """
         # Initializing the temperature decay according to the number of expected gradient steps
-        self.linear_decay = LinearTempDecay(total_gradient_steps)
-
+        self.beta_scheduler = beta_scheduler
         self.count_iter = tf.Variable(0.)
 
 
@@ -91,7 +51,7 @@ class SoftQuantizerRegularization:
         Returns: Regularization value.
         """
         soft_reg_aux: List[tf.Tensor] = []
-        b = self.linear_decay(self.count_iter.value())
+        b = self.beta_scheduler(self.count_iter.value())
         for layer in model.layers:
             if isinstance(layer, KerasTrainableQuantizationWrapper):
                 kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
