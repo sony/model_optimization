@@ -33,14 +33,14 @@ from model_compression_toolkit.trainable_infrastructure.keras.activation_quantiz
 @mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.UNIFORM],
                 identifier=TrainingMethod.STE)
-class STEUniformActivationQATQuantizer(BaseKerasActivationTrainableQuantizer):
+class STEUniformActivationTrainableQuantizer(BaseKerasActivationTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer outputs.
     """
 
     def __init__(self, quantization_config: TrainableQuantizerActivationConfig, freeze_quant_params: bool = False):
         """
-        Initialize a STEUniformActivationQATQuantizer object with parameters to use
+        Initialize a STEUniformActivationTrainableQuantizer object with parameters to use
         for the quantization.
 
         Args:
