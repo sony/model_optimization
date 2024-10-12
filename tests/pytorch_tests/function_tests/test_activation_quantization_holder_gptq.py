@@ -19,7 +19,7 @@ from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 from model_compression_toolkit.trainable_infrastructure.pytorch.activation_quantizers import \
     STESymmetricActivationTrainableQuantizer
-from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import LinearAnnealingScheduler
+from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import PytorchLinearAnnealingScheduler
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
 from tests.pytorch_tests.utils import get_layers_from_model_by_type
 
@@ -120,7 +120,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
             self.assertTrue(isinstance(a.activation_holder_quantizer, GradualActivationQuantizerWrapper))
             # check that quantizer wrapper's scheduler was created according to gptq config
             factor_scheduler = a.activation_holder_quantizer.q_fraction_scheduler
-            self.assertTrue(isinstance(factor_scheduler, LinearAnnealingScheduler))
+            self.assertTrue(isinstance(factor_scheduler, PytorchLinearAnnealingScheduler))
             self.assertEqual(factor_scheduler.t_start, 100)
             self.assertEqual(factor_scheduler.t_end, 500)
             self.assertEqual(factor_scheduler.initial_val, 0.1)
