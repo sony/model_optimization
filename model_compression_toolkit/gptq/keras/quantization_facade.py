@@ -63,7 +63,6 @@ if FOUND_TF:
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
-    # TODO: Add usage example for gradual activation quantization
     def get_keras_gptq_config(n_epochs: int,
                               optimizer: OptimizerV2 = None,
                               optimizer_rest: OptimizerV2 = None,
@@ -105,7 +104,13 @@ if FOUND_TF:
 
             >>> gptq_conf = mct.gptq.get_keras_gptq_config(n_epochs=3, optimizer=tf.keras.optimizers.Nadam())
 
-            The configuration can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization` in order to quantize a keras model using gptq.
+            To enable Gradual Activation Quantization with non-default settings build GradualActivationQuantizationConfig:
+
+            >>> gradual_act_conf = mct.gptq.GradualActivationQuantizationConfig(mct.gptq.QFractionLinearAnnealingConfig(initial_q_fraction=0.2))
+            >>> gptq_conf = mct.gptq.get_keras_gptq_config(n_epochs=3, gradual_activation_quantization=gradual_act_conf)
+
+            The configuration can be passed to :func:`~model_compression_toolkit.keras_gradient_post_training_quantization` in order to quantize a keras model using gptq.
+
 
         """
         optimizer = optimizer or tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT)
