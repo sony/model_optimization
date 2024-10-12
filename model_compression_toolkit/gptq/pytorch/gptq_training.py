@@ -22,6 +22,7 @@ import torch
 
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.gptq.common.gradual_activation_quantization import get_gradual_activation_quantizer_wrapper_factory
+from model_compression_toolkit.gptq.common.regularization_factory import get_regularization
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
@@ -35,11 +36,12 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_mo
 from model_compression_toolkit.gptq.pytorch.graph_info import get_gptq_trainable_parameters, \
     get_weights_for_loss
 from model_compression_toolkit.gptq.pytorch.quantizer.quantization_builder import quantization_builder
-from model_compression_toolkit.gptq.pytorch.quantizer.regularization_factory import get_regularization
+
 from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
 from model_compression_toolkit.trainable_infrastructure.common.util import get_total_grad_steps
 from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import \
     PytorchLinearAnnealingScheduler
+from model_compression_toolkit.gptq.pytorch.quantizer.soft_rounding.soft_quantizer_reg import SoftQuantizerRegularization as PytorchSoftQuantizerRegularization
 
 
 class PytorchGPTQTrainer(GPTQTrainer):
@@ -109,7 +111,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
         self.weights_for_average_loss = to_torch_tensor(self.compute_hessian_based_weights())
 
-        self.reg_func = get_regularization(self.gptq_config, _get_total_grad_steps)
+        self.reg_func = get_regularization(self.gptq_config, _get_total_grad_steps, PytorchSoftQuantizerRegularization, PytorchLinearAnnealingScheduler)
 
     def _is_gptq_weights_trainable(self,
                                    node: BaseNode) -> bool:

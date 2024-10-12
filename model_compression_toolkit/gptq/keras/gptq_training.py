@@ -50,7 +50,7 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 import numpy as np
 import copy
 from model_compression_toolkit.core.keras.constants import BIAS, USE_BIAS
-
+from model_compression_toolkit.gptq.keras.quantizer.soft_rounding.soft_quantizer_reg import SoftQuantizerRegularization
 
 class KerasGPTQTrainer(GPTQTrainer):
     """
@@ -130,7 +130,7 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         self.weights_for_average_loss = self.compute_hessian_based_weights()
 
-        self.reg_func = get_regularization(self.gptq_config, _get_total_grad_steps)
+        self.reg_func = get_regularization(self.gptq_config, _get_total_grad_steps, SoftQuantizerRegularization, KerasLinearAnnealingScheduler)
 
     def _is_gptq_weights_trainable(self,
                                    node: common.BaseNode) -> bool:
