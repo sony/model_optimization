@@ -31,7 +31,7 @@ from model_compression_toolkit.gptq.keras.quantizer.quantization_builder import 
 from model_compression_toolkit.logger import Logger
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.trainable_infrastructure.common.util import get_total_grad_steps
-from model_compression_toolkit.trainable_infrastructure.keras.annealing_schedulers import LinearAnnealingScheduler
+from model_compression_toolkit.trainable_infrastructure.keras.annealing_schedulers import KerasLinearAnnealingScheduler
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.engine.base_layer import TensorFlowOpLayer
@@ -87,7 +87,7 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         # must be set prior to model building in the base class constructor. TODO: why?
         self.gradual_act_quantizer_wrapper_factory = get_gradual_activation_quantizer_wrapper_factory(
-            gptq_config, _get_total_grad_steps, LinearAnnealingScheduler)
+            gptq_config, _get_total_grad_steps, KerasLinearAnnealingScheduler)
 
 
         super().__init__(graph_float,

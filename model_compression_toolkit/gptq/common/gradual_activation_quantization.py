@@ -21,7 +21,7 @@ from model_compression_toolkit.gptq import GradientPTQConfig, QFractionLinearAnn
 
 def get_gradual_activation_quantizer_wrapper_factory(gptq_config: GradientPTQConfig,
                                                      get_total_grad_steps_fn: Callable[[], int],
-                                                     fw_linear_annealing_scheduler) \
+                                                     fw_linear_annealing_scheduler: type) \
         -> Callable[[Any], 'GradualActivationQuantizerWrapper']:
     """
     Get a factory for 'GradualActivationQuantizerWrapper'.
@@ -29,7 +29,7 @@ def get_gradual_activation_quantizer_wrapper_factory(gptq_config: GradientPTQCon
     Args:
         gptq_config: GPTQ configuration.
         get_total_grad_steps_fn: a callable to obtain the total expected number of gradient steps.
-        fw_linear_annealing_scheduler: LinearAnnealingScheduler class of the framework.
+        fw_linear_annealing_scheduler: LinearAnnealingScheduler implementation of the framework (tf/pytorch).
 
     Returns:
         A factory function to build 'GradualActivationQuantizerWrapper' from Quantizer.

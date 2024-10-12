@@ -38,7 +38,8 @@ from model_compression_toolkit.gptq.pytorch.quantizer.quantization_builder impor
 from model_compression_toolkit.gptq.pytorch.quantizer.regularization_factory import get_regularization
 from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
 from model_compression_toolkit.trainable_infrastructure.common.util import get_total_grad_steps
-from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import LinearAnnealingScheduler
+from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import \
+    PytorchLinearAnnealingScheduler
 
 
 class PytorchGPTQTrainer(GPTQTrainer):
@@ -74,7 +75,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
         # must be set prior to model building in the base class constructor
         self.gradual_act_quantizer_wrapper_factory = get_gradual_activation_quantizer_wrapper_factory(
-            gptq_config, _get_total_grad_steps, LinearAnnealingScheduler)
+            gptq_config, _get_total_grad_steps, PytorchLinearAnnealingScheduler)
 
         super().__init__(graph_float,
                          graph_quant,
