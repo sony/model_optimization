@@ -14,26 +14,19 @@
 # ==============================================================================
 import tensorflow as tf
 
-# TODO: Create base class for this and pytorch scheduler
-class LinearAnnealingScheduler:
-    def __init__(self, t_start: int, t_end: int, initial_val: float, target_val: float):
+from model_compression_toolkit.trainable_infrastructure.common.annealing_schedulers import BaseLinearAnnealingScheduler
+
+
+class KerasLinearAnnealingScheduler(BaseLinearAnnealingScheduler):
+    def _compute_factor(self, t: int) -> float:
         """
-        Linear annealing scheduler. Returns the corresponding annealed value per time step.
+        Computes the annealing factor for Keras models.
 
         Args:
-            t_start: time step to begin annealing.
-            t_end: time step to complete annealing.
-            initial_val: initial value.
-            target_val: target value.
+            t: Current time step.
+
+        Returns:
+            float: Clipped annealing factor between 0 and 1.
         """
-        if not (0 <= t_start < t_end):
-            raise ValueError(f'Expected 0 <= t_start < t_end, actual {t_end=} {t_start=}')
-
-        self.t_start = t_start
-        self.t_end = t_end
-        self.initial_val = initial_val
-        self.target_val = target_val
-
-    def __call__(self, t: int) -> float:
-        factor = tf.clip_by_value((t - self.t_start) / (self.t_end - self.t_start), 0, 1)
-        return self.initial_val + factor * (self.target_val - self.initial_val)
+        factor = (t - self.t_start) / (self.t_end - self.t_start)
+        return tf.clip_by_value(factor, 0, 1)
