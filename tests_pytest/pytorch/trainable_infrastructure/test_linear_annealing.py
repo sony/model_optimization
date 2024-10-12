@@ -15,11 +15,11 @@
 import torch
 import pytest
 
-from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import LinearAnnealingScheduler
+from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import PytorchLinearAnnealingScheduler
 
 
 def test_linear_annealing():
-    scheduler = LinearAnnealingScheduler(t_start=10, t_end=35, initial_val=3.4, target_val=-1.6)
+    scheduler = PytorchLinearAnnealingScheduler(t_start=10, t_end=35, initial_val=3.4, target_val=-1.6)
     for t in [0, 9, 10]:
         assert _isclose(scheduler(t), 3.4)
 
@@ -32,7 +32,7 @@ def test_linear_annealing():
 
 
 def test_linear_annealing_ascending():
-    scheduler = LinearAnnealingScheduler(t_start=0, t_end=5, initial_val=-0.5, target_val=1.5)
+    scheduler = PytorchLinearAnnealingScheduler(t_start=0, t_end=5, initial_val=-0.5, target_val=1.5)
     assert _isclose(scheduler(0), -0.5)
     assert _isclose(scheduler(1), -0.1)
     assert _isclose(scheduler(4), 1.1)
@@ -42,7 +42,7 @@ def test_linear_annealing_ascending():
 @pytest.mark.parametrize('start', [5, -1])
 def test_invalid(start):
     with pytest.raises(ValueError):
-        LinearAnnealingScheduler(t_start=start, t_end=4, initial_val=1, target_val=0)
+        PytorchLinearAnnealingScheduler(t_start=start, t_end=4, initial_val=1, target_val=0)
 
 
 def _isclose(x, y):

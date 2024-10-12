@@ -13,26 +13,26 @@
 # limitations under the License.
 # ==============================================================================
 from unittest.mock import Mock
-
 import pytest
-import torch
+import numpy as np
+import tensorflow as tf
 
-from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
-from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import PytorchLinearAnnealingScheduler
+from model_compression_toolkit.gptq.common.gradual_activation_quantization import GradualActivationQuantizerWrapper, \
+    get_gradual_activation_quantizer_wrapper_factory
+from model_compression_toolkit.trainable_infrastructure.keras.annealing_schedulers import KerasLinearAnnealingScheduler
 from model_compression_toolkit.gptq import GradientPTQConfig, GradualActivationQuantizationConfig, QFractionLinearAnnealingConfig
-from model_compression_toolkit.gptq.common.gradual_activation_quantization import (
-    GradualActivationQuantizerWrapper, get_gradual_activation_quantizer_wrapper_factory)
+
 
 
 @pytest.fixture
 def x():
-    return torch.randn((2, 5, 6, 7), generator=torch.Generator().manual_seed(42)).to(device=get_working_device())
+    return tf.random.normal((2, 5, 6, 7), seed=42, dtype=tf.float32)
 
 
 class Quantizer:
     def __call__(self, x, training):
         self.training = training
-        return 3*x + 1
+        return 3 * x + 1
 
 
 class TestGradualActivationQuantization:
@@ -41,13 +41,13 @@ class TestGradualActivationQuantization:
         quantizer = Quantizer()
         qw = GradualActivationQuantizerWrapper(quantizer, q_fraction_scheduler=lambda t: t / (t + 1))
 
-        y0, y1, y2 = [qw(x) for _ in range(3)]
-        assert torch.equal(y0, x)  # t=0
-        assert torch.allclose(y1, 0.5 * x + (1.5 * x + 0.5))  # t=1
-        assert torch.allclose(y2, x / 3 + (2 * x + 2 / 3))  # t=2
+        y0, y1, y2 = [qw(x, training=True) for _ in range(3)]
+        np.testing.assert_array_almost_equal(y0.numpy(), x.numpy())  # t=0
+        np.testing.assert_allclose(y1.numpy(), 0.5 * x.numpy() + (1.5 * x.numpy() + 0.5), rtol=1e-5, atol=1e-8)  # t=1
+        np.testing.assert_allclose(y2.numpy(), x.numpy() / 3 + (2 * x.numpy() + 2 / 3), rtol=1e-5, atol=1e-8) # t=2
         assert quantizer.training is True
 
-        _ = qw(x, False)
+        _ = qw(x, training=False)
         assert quantizer.training is False  # correct flag was propagated
 
     def test_factory_no_qdrop(self):
@@ -57,7 +57,8 @@ class TestGradualActivationQuantization:
     @pytest.mark.parametrize('end_step', (20, None))
     def test_factory_linear(self, x, end_step):
         qdrop_cfg = GradualActivationQuantizationConfig(
-            QFractionLinearAnnealingConfig(initial_q_fraction=0.3, target_q_fraction=0.8, start_step=10, end_step=end_step)
+            QFractionLinearAnnealingConfig(initial_q_fraction=0.3, target_q_fraction=0.8, start_step=10,
+                                           end_step=end_step)
         )
 
         def get_total_steps():
@@ -68,17 +69,18 @@ class TestGradualActivationQuantization:
         quantizer_wrapper, quantizer = self._run_factory_test(qdrop_cfg, get_total_steps)
 
         scheduler = quantizer_wrapper.q_fraction_scheduler
-        assert isinstance(scheduler, PytorchLinearAnnealingScheduler)
+        assert isinstance(scheduler, KerasLinearAnnealingScheduler)
         exp_end_step = 50 if end_step is None else end_step
         assert scheduler.t_start == 10
         assert scheduler.t_end == exp_end_step
         assert scheduler.initial_val == 0.3
         assert scheduler.target_val == 0.8
 
-        y = [quantizer_wrapper(x) for _ in range(exp_end_step+1)]
-        assert torch.allclose(y[9], 0.7 * x + 0.3 * quantizer(x, True))
-        assert torch.allclose(y[10], 0.7 * x + 0.3 * quantizer(x, True))
-        assert torch.allclose(y[-1], 0.2 * x + 0.8 * quantizer(x, True))
+        y = [quantizer_wrapper(x, training=True) for _ in range(exp_end_step + 1)]
+
+        np.testing.assert_allclose(y[9].numpy(), 0.7 * x.numpy() + 0.3 * quantizer(x, training=True).numpy(), rtol=1e-5, atol=1e-8)
+        np.testing.assert_allclose(y[10].numpy(), 0.7 * x.numpy() + 0.3 * quantizer(x, training=True).numpy(), rtol=1e-5, atol=1e-8)
+        np.testing.assert_allclose(y[-1].numpy(), 0.2 * x.numpy() + 0.8 * quantizer(x, training=True).numpy(), rtol=1e-5, atol=1e-8)
 
     def test_factory_linear_common_case(self, x):
         # validate that we actually implemented the right thing - on first call float input, on last call fully quantized
@@ -86,15 +88,15 @@ class TestGradualActivationQuantization:
             QFractionLinearAnnealingConfig(initial_q_fraction=0, target_q_fraction=1, start_step=0, end_step=None)
         )
         quantizer_wrapper, quantizer = self._run_factory_test(qdrop_cfg, lambda: 15)
-        y0, *_, y_last = [quantizer_wrapper(x) for _ in range(16)]
-        assert torch.equal(y0, x)
-        assert torch.allclose(y_last, quantizer(x, True))
+        y0, *_, y_last = [quantizer_wrapper(x, training=True) for _ in range(16)]
+        np.testing.assert_array_almost_equal(y0.numpy(), x.numpy())
+        np.testing.assert_allclose(y_last.numpy(), quantizer(x, training=True).numpy())
 
     def _run_factory_test(self, qdrop_cfg, get_grad_steps_fn):
         # Mocks are used to just pass anything
         gptq_cfg = GradientPTQConfig(n_epochs=5, optimizer=Mock(), loss=Mock(),
                                      gradual_activation_quantization_config=qdrop_cfg)
-        factory = get_gradual_activation_quantizer_wrapper_factory(gptq_cfg, get_grad_steps_fn, PytorchLinearAnnealingScheduler)
+        factory = get_gradual_activation_quantizer_wrapper_factory(gptq_cfg, get_grad_steps_fn, KerasLinearAnnealingScheduler)
         quantizer = Quantizer()
         quantizer_wrapper = factory(quantizer)
         return quantizer_wrapper, quantizer
