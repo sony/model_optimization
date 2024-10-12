@@ -27,6 +27,7 @@ from model_compression_toolkit.core.keras.back2framework.keras_model_builder imp
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.common.gradual_activation_quantization import \
     get_gradual_activation_quantizer_wrapper_factory
+from model_compression_toolkit.gptq.common.regularization_factory import get_regularization
 from model_compression_toolkit.gptq.keras.quantizer.quantization_builder import quantization_builder
 from model_compression_toolkit.logger import Logger
 from mct_quantizers import KerasActivationQuantizationHolder
@@ -129,7 +130,10 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         self.weights_for_average_loss = self.compute_hessian_based_weights()
 
-        self.reg_func = get_regularization(self.gptq_config, _get_total_grad_steps, SoftQuantizerRegularization, KerasLinearAnnealingScheduler)
+        self.reg_func = get_regularization(self.gptq_config,
+                                           _get_total_grad_steps,
+                                           SoftQuantizerRegularization,
+                                           KerasLinearAnnealingScheduler)
 
     def _is_gptq_weights_trainable(self,
                                    node: common.BaseNode) -> bool:
