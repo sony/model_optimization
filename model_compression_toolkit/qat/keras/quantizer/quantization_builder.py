@@ -26,6 +26,8 @@ from model_compression_toolkit.trainable_infrastructure.common.get_quantizer_con
     get_trainable_quantizer_quantization_candidates
 from model_compression_toolkit.trainable_infrastructure.common.get_quantizers import \
     get_trainable_quantizer_class
+from model_compression_toolkit.trainable_infrastructure.keras.activation_quantizers import \
+    BaseKerasActivationTrainableQuantizer
 
 
 def get_activation_quantizer_holder(n: common.BaseNode,
@@ -98,7 +100,7 @@ def quantization_builder(n: common.BaseNode,
         quantizer_class = get_trainable_quantizer_class(QuantizationTarget.Activation,
                                                         qat_config.activation_training_method,
                                                         quant_method,
-                                                        BaseKerasQATTrainableQuantizer)
+                                                        BaseKerasActivationTrainableQuantizer)
 
         activation_quantizers = [quantizer_class(get_trainable_quantizer_activation_config(n, aq_cand),
                                                  **qat_config.activation_quantizer_params_override)] * len(output_shapes)
