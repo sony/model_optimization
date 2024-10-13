@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
 from .base_activation_quantizer import BaseKerasActivationTrainableQuantizer
 from .ste.symmetric_ste import STESymmetricActivationTrainableQuantizer
 from .ste.uniform_ste import STEUniformActivationTrainableQuantizer
