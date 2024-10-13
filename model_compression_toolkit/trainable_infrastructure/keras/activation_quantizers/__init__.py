@@ -15,3 +15,5 @@
 from .base_activation_quantizer import BaseKerasActivationTrainableQuantizer
 from .ste.symmetric_ste import STESymmetricActivationTrainableQuantizer
 from .ste.uniform_ste import STEUniformActivationTrainableQuantizer
+from .lsq.symmetric_lsq import LSQSymmetricActivationTrainableQuantizer
+from .lsq.uniform_lsq import LSQUniformActivationTrainableQuantizer

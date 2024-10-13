@@ -28,7 +28,7 @@ from mct_quantizers import QuantizationTarget, mark_quantizer
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
 from model_compression_toolkit import constants as C
 
-from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
+from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_weight_quantizer import BaseKerasQATWeightTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig
 from mct_quantizers.keras.quantizers import WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
@@ -37,7 +37,7 @@ from model_compression_toolkit.trainable_infrastructure.common.base_trainable_qu
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 identifier=TrainingMethod.STE)
-class STEWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
+class STEWeightQATQuantizer(BaseKerasQATWeightTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize a layer inputs.
     """
