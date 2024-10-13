@@ -24,6 +24,7 @@ from model_compression_toolkit.core.common.hessian import HessianInfoService
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
+from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.keras.quantizer.quantization_builder import quantization_builder
 from model_compression_toolkit.logger import Logger
@@ -115,7 +116,9 @@ class KerasGPTQTrainer(GPTQTrainer):
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
-        self.weights_for_average_loss = self.compute_hessian_based_weights()
+        dataloader = data_gen_to_dataloader(representative_data_gen,
+                                            batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size)
+        self.weights_for_average_loss = self.compute_hessian_based_weights(dataloader)
 
         self.reg_func = get_regularization(self.gptq_config, representative_data_gen)
 
