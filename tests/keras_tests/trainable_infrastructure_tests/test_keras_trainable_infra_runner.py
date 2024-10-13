@@ -18,12 +18,14 @@ import tensorflow as tf
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from mct_quantizers import QuantizationTarget
-from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEWeightQATQuantizer, \
-    STEActivationQATQuantizer
-from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformWeightQATQuantizer, \
-    STEUniformActivationQATQuantizer
-from model_compression_toolkit.qat.keras.quantizer.lsq.uniform_lsq import LSQUniformActivationQATQuantizer, LSQUniformWeightQATQuantizer
-from model_compression_toolkit.qat.keras.quantizer.lsq.symmetric_lsq import LSQActivationQATQuantizer, LSQWeightQATQuantizer
+from model_compression_toolkit.qat.keras.quantizer.ste_rounding.symmetric_ste import STEWeightQATQuantizer
+from model_compression_toolkit.qat.keras.quantizer.ste_rounding.uniform_ste import STEUniformWeightQATQuantizer
+from model_compression_toolkit.trainable_infrastructure.keras.activation_quantizers import \
+    STESymmetricActivationTrainableQuantizer, STEUniformActivationTrainableQuantizer, \
+    LSQUniformActivationTrainableQuantizer, LSQSymmetricActivationTrainableQuantizer
+
+from model_compression_toolkit.qat.keras.quantizer.lsq.uniform_lsq import LSQUniformWeightQATQuantizer
+from model_compression_toolkit.qat.keras.quantizer.lsq.symmetric_lsq import LSQWeightQATQuantizer
 from model_compression_toolkit.trainable_infrastructure import BaseKerasTrainableQuantizer
 from tests.keras_tests.trainable_infrastructure_tests.trainable_keras.test_get_quantizers import \
     TestGetTrainableQuantizer
@@ -60,17 +62,17 @@ class KerasTrainableInfrastructureTestRunner(unittest.TestCase):
                                   quant_method=QuantizationMethod.POWER_OF_TWO,
                                   quantizer_base_class=BaseKerasTrainableQuantizer,
                                   quantizer_id=TrainingMethod.STE,
-                                  expected_quantizer_class=STEActivationQATQuantizer).run_test()
+                                  expected_quantizer_class=STESymmetricActivationTrainableQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.SYMMETRIC,
                                   quantizer_base_class=BaseKerasTrainableQuantizer,
                                   quantizer_id=TrainingMethod.STE,
-                                  expected_quantizer_class=STEActivationQATQuantizer).run_test()
+                                  expected_quantizer_class=STESymmetricActivationTrainableQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.UNIFORM,
                                   quantizer_base_class=BaseKerasTrainableQuantizer,
                                   quantizer_id=TrainingMethod.STE,
-                                  expected_quantizer_class=STEUniformActivationQATQuantizer).run_test()
+                                  expected_quantizer_class=STEUniformActivationTrainableQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Weights,
                                   quant_method=QuantizationMethod.SYMMETRIC,
                                   quantizer_base_class=BaseKerasTrainableQuantizer,
@@ -85,12 +87,12 @@ class KerasTrainableInfrastructureTestRunner(unittest.TestCase):
                                   quant_method=QuantizationMethod.SYMMETRIC,
                                   quantizer_base_class=BaseKerasTrainableQuantizer,
                                   quantizer_id=TrainingMethod.LSQ,
-                                  expected_quantizer_class=LSQActivationQATQuantizer).run_test()
+                                  expected_quantizer_class=LSQSymmetricActivationTrainableQuantizer).run_test()
         TestGetTrainableQuantizer(self, quant_target=QuantizationTarget.Activation,
                                   quant_method=QuantizationMethod.UNIFORM,
                                   quantizer_base_class=BaseKerasTrainableQuantizer,
                                   quantizer_id=TrainingMethod.LSQ,
-                                  expected_quantizer_class=LSQUniformActivationQATQuantizer).run_test()
+                                  expected_quantizer_class=LSQUniformActivationTrainableQuantizer).run_test()
 
 
 

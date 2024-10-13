@@ -22,24 +22,14 @@ from model_compression_toolkit.trainable_infrastructure import TrainableQuantize
 
 if FOUND_TF:
 
-    class BaseKerasQATTrainableQuantizer(BaseKerasTrainableQuantizer):
+    class BaseKerasQATWeightTrainableQuantizer(BaseKerasTrainableQuantizer):
         """
         A base class for trainable Keras quantizer for QAT.
         """
-
-        def __init__(self,
-                     quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
-            """
-            Initializes BaseKerasQATTrainableQuantizer object.
-
-            Args:
-                quantization_config: quantizer config class contains all the information about a quantizer configuration.
-            """
-
-            super().__init__(quantization_config)
+        pass
 
 else:  # pragma: no cover
-    class BaseKerasQATTrainableQuantizer(BaseKerasTrainableQuantizer):
+    class BaseKerasQATWeightTrainableQuantizer(BaseKerasTrainableQuantizer):
         def __init__(self,
                      quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
 

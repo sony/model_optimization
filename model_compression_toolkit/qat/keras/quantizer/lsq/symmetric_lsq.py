@@ -28,7 +28,7 @@ from mct_quantizers import QuantizationTarget, mark_quantizer
 from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
 from model_compression_toolkit import constants as C
 
-from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_quantizer import BaseKerasQATTrainableQuantizer
+from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_weight_quantizer import BaseKerasQATWeightTrainableQuantizer
 from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig, \
     TrainableQuantizerActivationConfig
 from mct_quantizers.keras.quantizers import WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, \
@@ -68,7 +68,7 @@ def symmetric_lsq_quantizer(x: tf.Tensor,
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,
                 quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
                 identifier=TrainingMethod.LSQ)
-class LSQWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
+class LSQWeightQATQuantizer(BaseKerasQATWeightTrainableQuantizer):
     """
     Trainable constrained quantizer to quantize layer's weights.
     """
@@ -159,95 +159,3 @@ class LSQWeightQATQuantizer(BaseKerasQATTrainableQuantizer):
                                                       input_rank=len(self.threshold_shape))
 
 
-@mark_quantizer(quantization_target=QuantizationTarget.Activation,
-                quantization_method=[QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC],
-                identifier=TrainingMethod.LSQ)
-class LSQActivationQATQuantizer(BaseKerasQATTrainableQuantizer):
-    """
-    Trainable constrained quantizer to quantize layer activations.
-    """
-
-    def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
-        """
-        Initialize a LSQActivationQATQuantizer object with parameters to use
-        for the quantization.
-
-        Args:
-            quantization_config: trainable quantizer config class
-        """
-        super().__init__(quantization_config)
-        self.power_of_two = quantization_config.activation_quantization_method == QuantizationMethod.POWER_OF_TWO
-        self.threshold_values = float(quantization_config.activation_quantization_params[C.THRESHOLD])
-        self.threshold_shape = np.asarray(self.threshold_values).shape
-        self.sign = quantization_config.activation_quantization_params[SIGNED]
-        self.num_bits = quantization_config.activation_n_bits
-        n_pos_bits = self.num_bits - int(self.sign)
-        self.min_int = -int(self.sign) * (2 ** n_pos_bits)
-        self.max_int = (2 ** n_pos_bits) - 1
-        if self.power_of_two:
-            self.threshold_values = np.power(2.0, np.ceil(np.log2(np.maximum(self.threshold_values, C.MIN_THRESHOLD))))
-
-
-    def initialize_quantization(self,
-                                tensor_shape: TensorShape,
-                                name: str,
-                                layer: KerasTrainableQuantizationWrapper):
-        """
-        Add quantizer parameters to the quantizer parameters dictionary
-
-        Args:
-            tensor_shape: tensor shape of the quantized tensor.
-            name: Tensor name.
-            layer: Layer to quantize.
-        """
-        ptq_threshold_tensor = layer.add_weight(
-            name + THRESHOLD_TENSOR,
-            shape=(),
-            initializer=tf.keras.initializers.Constant(1.0),
-            trainable=True)
-        ptq_threshold_tensor.assign(self.threshold_values)
-
-        # save the quantizer added parameters for later calculations
-        self.add_quantizer_variable(THRESHOLD_TENSOR, ptq_threshold_tensor, VariableGroup.QPARAMS)
-
-    def __call__(self,
-                 inputs: tf.Tensor,
-                 training: bool):
-        """
-        Quantize a tensor.
-        Args:
-            inputs: Input tensor to quantize.
-            training: Whether the graph is in training mode.
-
-        Returns:
-            The quantized tensor.
-        """
-
-        thresholds = self.get_quantizer_variable(THRESHOLD_TENSOR)
-        n_channels = inputs.shape[-1]
-        scale_factor = 1.0 / np.sqrt(self.max_int * n_channels)
-        q_tensor = symmetric_lsq_quantizer(inputs, thresholds, self.num_bits, self.sign, self.min_int, self.max_int, scale_factor)
-        return q_tensor
-
-    def convert2inferable(self) -> Union[ActivationPOTInferableQuantizer, ActivationSymmetricInferableQuantizer]:
-        """
-        Convert quantizer to inferable quantizer.
-
-        Returns:
-            BaseKerasInferableQuantizer object.
-        """
-
-        if self.power_of_two:
-            thresholds = 2 ** np.ceil(np.log2(self.get_quantizer_variable(THRESHOLD_TENSOR).numpy()))
-            return ActivationPOTInferableQuantizer(num_bits=self.num_bits,
-                                                   # In activation quantization is per-tensor only - thus we pass
-                                                   # the threshold as a list with a len of 1
-                                                   threshold=[thresholds],
-                                                   signed=self.sign)
-        else:
-            thresholds = self.get_quantizer_variable(THRESHOLD_TENSOR).numpy()
-            return ActivationSymmetricInferableQuantizer(num_bits=self.num_bits,
-                                                         # In activation quantization is per-tensor only - thus we
-                                                         # pass the threshold as a list with a len of 1
-                                                         threshold=[thresholds],
-                                                         signed=self.sign)
