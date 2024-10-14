@@ -661,11 +661,11 @@ class FeatureModelsTestRunner(unittest.TestCase):
                       hessian_weights=True, hessian_num_samples=None,
                       estimator_distribution=HessianEstimationDistribution.RADEMACHER,
                       norm_scores=False, log_norm_weights=False, scaled_log_norm=False)
-       # GPTQAccuracyTest(self, **kwargs).run_test()
+        GPTQAccuracyTest(self, **kwargs).run_test()
         GPTQAccuracyTest(self, hessian_batch_size=16, rounding_type=RoundingType.SoftQuantizer, **kwargs).run_test()
-       # GPTQAccuracyTest(self, hessian_batch_size=5, rounding_type=RoundingType.SoftQuantizer,
-      #                   gradual_activation_quantization=True, **kwargs).run_test()
-      #  GPTQAccuracyTest(self, rounding_type=RoundingType.STE, **kwargs)
+        GPTQAccuracyTest(self, hessian_batch_size=5, rounding_type=RoundingType.SoftQuantizer,
+                         gradual_activation_quantization=True, **kwargs).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.STE, **kwargs)
 
     def test_qat(self):
         """

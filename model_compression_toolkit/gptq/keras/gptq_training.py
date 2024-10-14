@@ -127,6 +127,7 @@ class KerasGPTQTrainer(GPTQTrainer):
             hess_dataloader = data_gen_to_dataloader(self.representative_data_gen_fn,
                                                      batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size)
             return self.compute_hessian_based_weights(hess_dataloader)
+
         num_nodes = len(self.compare_points)
         return np.ones((num_nodes,)) / num_nodes
 

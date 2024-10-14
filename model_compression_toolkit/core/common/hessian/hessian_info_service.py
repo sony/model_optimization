@@ -23,7 +23,6 @@ from model_compression_toolkit.core.common.hessian.hessian_scores_request import
 
 
 # type hints aliases
-SampleHash = str
 LayerName = str
 Tensor = Any
 
@@ -37,6 +36,7 @@ class Query:
 
 
 class HessianCache:
+    """ Hessian cache """
     def __init__(self):
         self._data: Dict[Query, Tensor] = {}
 

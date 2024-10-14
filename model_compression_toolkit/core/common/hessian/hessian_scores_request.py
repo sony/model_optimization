@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable, Iterable, Sequence, Optional
+from typing import Iterable, Sequence, Optional, TYPE_CHECKING
 import dataclasses
 
 from enum import Enum
+
+if TYPE_CHECKING:    # pragma: no cover
+    from model_compression_toolkit.core.common import BaseNode
 
 
 class HessianMode(Enum):
@@ -60,7 +63,7 @@ class HessianScoresRequest:
     Attributes:
         mode: Mode of Hessian-approximation score (w.r.t weights or activations).
         granularity: Granularity level for the approximation.
-        target_nodes: The node names in the float graph for which the Hessian's approximation scores is targeted.
+        target_nodes: The node objects in the float graph for which the Hessian's approximation scores is targeted.
         data_loader: Data loader to compute hessian approximations on. Should reflect the desired batch size for
             the computation. Can be None if all hessians for the request are expected to be pre-computed previously.
         n_samples: The number of samples to fetch hessian estimations for. If None, fetch hessians for a full pass

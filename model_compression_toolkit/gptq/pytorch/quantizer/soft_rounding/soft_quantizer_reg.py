@@ -47,14 +47,14 @@ class SoftQuantizerRegularization:
         Args:
             model: A model to be quantized with SoftRounding.
             entropy_reg: Entropy value to scale the quantizer regularization.
-            layer_weights: a vector of layers weights or a matrix of shape samples X layers.
+            layer_weights: a vector of layers weights.
 
         Returns: Regularization value.
         """
         layers = [m for m in model.modules() if isinstance(m, PytorchQuantizationWrapper)]
 
-        if layer_weights.shape[-1] != len(layers):
-            raise ValueError(f'Expected weights.shape[-1] to be {len(layers)}, '
+        if layer_weights.shape[0] != len(layers):
+            raise ValueError(f'Expected weights.shape[0] to be {len(layers)}, '
                              f'received shape {layer_weights.shape}.')    # pragma: no cover
         max_w = layer_weights.max()
 

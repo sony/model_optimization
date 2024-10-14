@@ -13,23 +13,21 @@
 # limitations under the License.
 # ==============================================================================
 import copy
-import hashlib
 from abc import ABC, abstractmethod
-import numpy as np
-from typing import Callable, List, Any, Dict, Iterable, Optional, Generator
+from typing import Callable, List, Any, Iterable, Optional, Generator
 
-from model_compression_toolkit.constants import ACT_HESSIAN_DEFAULT_BATCH_SIZE
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
-from model_compression_toolkit.core.common import Graph, BaseNode
+import numpy as np
+
+from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
+from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
+    HessianScoresGranularity, hessian_info_utils as hessian_utils
+from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR
 from model_compression_toolkit.gptq.common.gptq_framework_implementation import GPTQFrameworkImplemantation
 from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
-from model_compression_toolkit.core.common.model_builder_mode import ModelBuilderMode
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
-    HessianScoresGranularity
-from model_compression_toolkit.core.common.hessian import hessian_info_utils as hessian_utils
 
 
 class GPTQTrainer(ABC):
@@ -177,7 +175,18 @@ class GPTQTrainer(ABC):
         return log_weights - np.min(log_weights)
 
     def _build_hessian_request(self, granularity: HessianScoresGranularity, data_loader: Iterable,
-                               n_samples: Optional[int]):
+                               n_samples: Optional[int]) -> HessianScoresRequest:
+        """
+        Build hessian request for hessian service.
+
+        Args:
+            granularity: requested granularity.
+            data_loader: data loader yielding samples to compute hessians on.
+            n_samples: request number of samples.
+
+        Returns:
+            Hessian request.
+        """
         return HessianScoresRequest(
             mode=HessianMode.ACTIVATION,
             granularity=granularity,

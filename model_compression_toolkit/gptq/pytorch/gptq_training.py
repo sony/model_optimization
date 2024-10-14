@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import copy
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Tuple, Union, Generator
 
 import numpy as np
 import torch
@@ -123,9 +123,20 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
         self.reg_func = get_regularization(self.gptq_config, _get_total_grad_steps)
 
-    def _prepare_train_dataloader_sla(self, data_gen_fn):
+    def _prepare_train_dataloader_sla(self, data_gen_fn: Callable[[], Generator]) -> DataLoader:
+        """
+        Computes Sample-Layer Attention score and builds a train dataloader.
+
+        Args:
+            data_gen_fn: factory for representative dataset generator.
+
+        Returns:
+            PyTorch dataloader yielding three outputs - samples, weights for the distillation loss and
+              weights for regularization.
+        """
         fixed_dataset = FixedDatasetFromGenerator(data_gen_fn)
         orig_batch_size = fixed_dataset.orig_batch_size
+        # compute hessians for the whole dataset
         hess_data_loader = DataLoader(fixed_dataset,
                                       batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size,
                                       shuffle=False)
@@ -133,20 +144,33 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                               data_loader=hess_data_loader,
                                               n_samples=None)
         layers_hessians = self.hessian_service.fetch_hessian(request, force_compute=True)
-        # score is defined as max over channels
+
+        # compute sla score defined as max over channels
         layers_hessians = {layer: to_torch_tensor(hess.max(1)) for layer, hess in layers_hessians.items()}
 
-        # samples X layers
-        hessians_tensor = torch.stack([layers_hessians[layer.name] for layer in self.compare_points], dim=1)
+        # build train dataset and dataloader
+        hessians_tensor = torch.stack([layers_hessians[layer.name] for layer in self.compare_points], dim=1)    # samples X layers
         assert hessians_tensor.shape[1] == len(self.compare_points)
         loss_weights = list(hessians_tensor)
-        # TODO in the research repo mean is across each batch. I suppose mean over all cannot be worse?
-        reg_weights = hessians_tensor.mean(dim=0)
         sla_train_dataset = FixedSampleInfoDataset(fixed_dataset.samples, loss_weights)
-        return DataLoader(sla_train_dataset, batch_size=orig_batch_size, shuffle=True,
-                          collate_fn=get_collate_fn_with_extra_outputs(reg_weights))
 
-    def _prepare_train_dataloader_for_non_sla(self, data_gen_fn):
+        reg_weights = hessians_tensor.mean(dim=0)
+        # use collate to add a single value to each batch
+        collate_fn = get_collate_fn_with_extra_outputs(reg_weights)
+
+        return DataLoader(sla_train_dataset, batch_size=orig_batch_size, shuffle=True, collate_fn=collate_fn)
+
+    def _prepare_train_dataloader_for_non_sla(self, data_gen_fn: Callable[[], Generator]) -> DataLoader:
+        """
+        Computes loss weights and builds a train dataloader.
+
+        Args:
+            data_gen_fn: factory for representative dataset generator.
+
+        Returns:
+            PyTorch dataloader yielding three outputs - samples, weights for the distillation loss and
+              weights for regularization.
+        """
         dataset = IterableDatasetFromGenerator(data_gen_fn)
         num_nodes = len(self.compare_points)
 
@@ -156,10 +180,14 @@ class PytorchGPTQTrainer(GPTQTrainer):
         else:
             loss_weights = torch.ones(num_nodes) / num_nodes
 
-        reg_weights = to_torch_tensor(torch.ones(num_nodes))
         train_dataset = IterableSampleWithConstInfoDataset(dataset, to_torch_tensor(loss_weights))
+
+        reg_weights = to_torch_tensor(torch.ones(num_nodes))
+        # use collate to add a single value to each batch
+        collate_fn = get_collate_fn_with_extra_outputs(reg_weights)
+
         return DataLoader(train_dataset, batch_size=dataset.orig_batch_size,
-                          collate_fn=get_collate_fn_with_extra_outputs(reg_weights))
+                          collate_fn=collate_fn)
 
     def _is_gptq_weights_trainable(self,
                                    node: BaseNode) -> bool:
