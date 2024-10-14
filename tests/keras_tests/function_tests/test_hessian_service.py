@@ -22,6 +22,7 @@ from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Input
 
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
+from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
@@ -71,70 +72,85 @@ class TestHessianService(unittest.TestCase):
                                                 representative_dataset,
                                                 generate_keras_tpc)
 
-        self.hessian_service = HessianInfoService(graph=self.graph, representative_dataset_gen=representative_dataset,
-                                                  fw_impl=self.keras_impl)
+        self.hessian_service = HessianInfoService(graph=self.graph, fw_impl=self.keras_impl)
 
         self.assertEqual(self.hessian_service.graph, self.graph)
         self.assertEqual(self.hessian_service.fw_impl, self.keras_impl)
 
     def test_fetch_activation_hessian(self):
+        node = list(self.graph.get_topo_sorted_nodes())[0]
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
-                                       target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]])
-        hessian = self.hessian_service.fetch_hessian(request, 2)
+                                       n_samples=2,
+                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       target_nodes=[node])
+        hessian = self.hessian_service.fetch_hessian(request)
         self.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
                                           "approximation, for the single target node.")
-        self.assertEqual(len(hessian[0]), 2, "Expecting 2 Hessian scores.")
+        self.assertEqual(hessian[node.name].shape[0], 2, "Expecting 2 Hessian scores.")
 
     def test_fetch_weights_hessian(self):
+        node = list(self.graph.get_topo_sorted_nodes())[1]
         request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
                                        granularity=HessianScoresGranularity.PER_OUTPUT_CHANNEL,
-                                       target_nodes=[list(self.graph.get_topo_sorted_nodes())[1]])
-        hessian = self.hessian_service.fetch_hessian(request, 2)
+                                       n_samples=2,
+                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       target_nodes=[node])
+        hessian = self.hessian_service.fetch_hessian(request)
         self.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
                                           "approximation, for the single target node.")
-        self.assertEqual(len(hessian[0]), 2, "Expecting 2 Hessian scores.")
+        self.assertEqual(hessian[node.name].shape[0], 2, "Expecting 2 Hessian scores.")
 
     def test_fetch_not_enough_samples_throw(self):
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
+                                       n_samples=5,
+                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=2),
                                        target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]])
 
         with self.assertRaises(Exception) as e:
-            hessian = self.hessian_service.fetch_hessian(request, 5, batch_size=2)  # representative dataset produces 4 images total
+            self.hessian_service.fetch_hessian(request)  # representative dataset produces 4 images total
 
         self.assertTrue('Not enough samples in the provided representative dataset' in str(e.exception))
 
     def test_fetch_not_enough_samples_small_batch_throw(self):
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
+                                       n_samples=5,
+                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
                                        target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]])
 
         with self.assertRaises(Exception) as e:
-            hessian = self.hessian_service.fetch_hessian(request, 5, batch_size=1)  # representative dataset produces 4 images total
+            hessian = self.hessian_service.fetch_hessian(request)  # representative dataset produces 4 images total
 
         self.assertTrue('Not enough samples in the provided representative dataset' in str(e.exception))
 
     def test_fetch_compute_batch_larger_than_repr_batch(self):
+        node = list(self.graph.get_topo_sorted_nodes())[0]
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
-                                       target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]])
+                                       n_samples=3,
+                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=3),
+                                       target_nodes=[node])
 
-        hessian = self.hessian_service.fetch_hessian(request, 3, batch_size=3)  # representative batch size is 2
+        hessian = self.hessian_service.fetch_hessian(request)  # representative batch size is 2
         self.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
                                           "approximation, for the single target node.")
-        self.assertEqual(len(hessian[0]), 3, "Expecting 3 Hessian scores.")
+        self.assertEqual(hessian[node.name].shape[0], 3, "Expecting 3 Hessian scores.")
 
     def test_fetch_required_zero(self):
+        node = list(self.graph.get_topo_sorted_nodes())[0]
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
-                                       target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]], )
+                                       n_samples=0,
+                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       target_nodes=[node])
 
-        hessian = self.hessian_service.fetch_hessian(request, 0)
+        hessian = self.hessian_service.fetch_hessian(request)
 
         self.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
                                           "approximation, for the single target node.")
-        self.assertEqual(len(hessian[0]), 0, "Expecting an empty Hessian scores list.")
+        self.assertEqual(hessian[node.name].shape[0], 0, "Expecting an empty Hessian scores list.")
 
     def test_fetch_multiple_nodes(self):
         input_shape = (8, 8, 3)
@@ -146,9 +162,7 @@ class TestHessianService(unittest.TestCase):
                                                 representative_dataset,
                                                 generate_keras_tpc)
 
-        self.hessian_service = HessianInfoService(graph=self.graph,
-                                                  representative_dataset_gen=representative_dataset,
-                                                  fw_impl=self.keras_impl)
+        self.hessian_service = HessianInfoService(graph=self.graph, fw_impl=self.keras_impl)
 
         self.assertEqual(self.hessian_service.graph, self.graph)
         self.assertEqual(self.hessian_service.fw_impl, self.keras_impl)
@@ -156,54 +170,40 @@ class TestHessianService(unittest.TestCase):
         graph_nodes = list(self.graph.get_topo_sorted_nodes())
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
+                                       n_samples=2,
+                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
                                        target_nodes=[graph_nodes[0], graph_nodes[2]])
 
-        hessian = self.hessian_service.fetch_hessian(request, 2)
+        hessian = self.hessian_service.fetch_hessian(request)
 
         self.assertEqual(len(hessian), 2, "Expecting returned Hessian list to include two list of "
                                           "approximation, for the two target nodes.")
-        self.assertEqual(len(hessian[0]), 2, f"Expecting 2 Hessian scores for layer {graph_nodes[0].name}.")
-        self.assertEqual(len(hessian[1]), 2, f"Expecting 2 Hessian scores for layer {graph_nodes[2].name}.")
+        self.assertEqual(hessian[graph_nodes[0].name].shape[0], 2, f"Expecting 2 Hessian scores for layer {graph_nodes[0].name}.")
+        self.assertEqual(hessian[graph_nodes[2].name].shape[0], 2, f"Expecting 2 Hessian scores for layer {graph_nodes[2].name}.")
 
     def test_clear_cache(self):
-        self.hessian_service._clear_saved_hessian_info()
-        target_node = list(self.graph.nodes)[1]
-        request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
-                                       granularity=HessianScoresGranularity.PER_TENSOR,
-                                       target_nodes=[target_node])
-        self.assertEqual(self.hessian_service.count_saved_scores_of_request(request)[target_node], 0)
-
-        self.hessian_service.fetch_hessian(request, 1)
-        self.assertEqual(self.hessian_service.count_saved_scores_of_request(request)[target_node], 1)
-        self.hessian_service._clear_saved_hessian_info()
-        self.assertEqual(self.hessian_service.count_saved_scores_of_request(request)[target_node], 0)
+        self.hessian_service.clear_cache()
+        self.assertTrue(len(self.hessian_service.cache._data) == 0)
 
     def test_double_fetch_hessian(self):
-        self.hessian_service._clear_saved_hessian_info()
+        self.hessian_service.clear_cache()
         target_node = list(self.graph.nodes)[1]
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
+                                       n_samples=2,
+                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
                                        target_nodes=[target_node])
-        hessian = self.hessian_service.fetch_hessian(request, 2)
+        hessian = self.hessian_service.fetch_hessian(request)
         self.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
                                           "approximation, for the single target node.")
-        self.assertEqual(len(hessian[0]), 2, "Expecting 2 Hessian scores.")
-        self.assertEqual(self.hessian_service.count_saved_scores_of_request(request)[target_node], 2)
+        self.assertEqual(hessian[target_node.name].shape[0], 2, "Expecting 2 Hessian scores.")
 
-        hessian = self.hessian_service.fetch_hessian(request, 2)
+        # can fetch second time from cache
+        request = request.clone(data_loader=None)
+        hessian = self.hessian_service.fetch_hessian(request)
         self.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
                                           "approximation, for the single target node.")
-        self.assertEqual(len(hessian[0]), 2, "Expecting 2 Hessian scores.")
-        self.assertEqual(self.hessian_service.count_saved_scores_of_request(request)[target_node], 2)
-
-    def test_populate_cache_to_size(self):
-        self.hessian_service._clear_saved_hessian_info()
-        target_node = list(self.graph.nodes)[1]
-        request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
-                                       granularity=HessianScoresGranularity.PER_TENSOR,
-                                       target_nodes=[target_node])
-        self.hessian_service._populate_saved_info_to_size(request, 2)
-        self.assertEqual(self.hessian_service.count_saved_scores_of_request(request)[target_node], 2)
+        self.assertEqual(hessian[target_node.name].shape[0], 2, "Expecting 2 Hessian scores.")
 
 
 if __name__ == "__main__":
