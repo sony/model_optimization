@@ -33,35 +33,7 @@ from model_compression_toolkit.trainable_infrastructure import TrainableQuantize
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
 from model_compression_toolkit.qat.keras.quantizer.quant_utils import ste_round, grad_scale, adjust_range_to_include_zero
-
-
-def uniform_lsq_quantizer(x: tf.Tensor,
-                          min_range: tf.Tensor,
-                          max_range: tf.Tensor,
-                          num_bits: int,
-                          min_int: int,
-                          max_int:int,
-                          scale_factor: float) -> tf.Tensor:
-    """
-    Uniform quantizer according to LSQ algorithm: https://arxiv.org/pdf/1902.08153.pdf
-    Args:
-        x: input to quantize
-        min_range: min range of quantization values
-        max_range: min range of quantization values
-        num_bits: number of bits for quantization
-        min_int: min clipping integer value
-        max_int: max clipping integer value
-        scale_factor: grad scale of LSQ algorithm
-    Returns:
-        A quantized tensor
-    """
-    min_range, max_range = adjust_range_to_include_zero(min_range, max_range, num_bits)
-    delta = (max_range - min_range) / (2 ** num_bits - 1)
-    delta_scaled = grad_scale(delta, scale_factor)
-    rounded = ste_round((x-min_range) / delta_scaled)
-    clipped = tf.math.minimum(tf.math.maximum(rounded, min_int), max_int)
-    quantized = delta_scaled * clipped + min_range
-    return quantized
+from model_compression_toolkit.trainable_infrastructure.keras.quantizer_utils import uniform_lsq_quantizer
 
 
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,
