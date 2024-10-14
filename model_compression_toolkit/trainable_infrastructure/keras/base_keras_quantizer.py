@@ -28,16 +28,10 @@ if FOUND_TF:
     import tensorflow as tf
 
     class BaseKerasTrainableQuantizer(BaseTrainableQuantizer):
-        def __init__(self,
-                     quantization_config: Union[TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig]):
-            """
-            This class is a base quantizer which validates provided quantization config and defines an abstract function which any quantizer needs to implement.
-            This class adds to the base quantizer a get_config and from_config functions to enable loading and saving the keras model.
-
-            Args:
-                quantization_config: quantizer config class contains all the information about a quantizer configuration.
-            """
-            super().__init__(quantization_config)
+        """
+        This class is a base quantizer which validates provided quantization config and defines an abstract function which any quantizer needs to implement.
+        This class adds to the base quantizer a get_config and from_config functions to enable loading and saving the keras model.
+        """
 
         def get_config(self) -> Dict[str, Any]:
             """
@@ -77,6 +71,14 @@ if FOUND_TF:
                 quantizer_parameter, parameter_group = parameter_dict[VAR], parameter_dict[GROUP]
                 if quantizer_parameter.trainable and parameter_group == group:
                     quantizer_trainable.append(quantizer_parameter)
+
+            # sanity check to catch inconsistent initialization
+            if self.freeze_quant_params and group == VariableGroup.QPARAMS and quantizer_trainable:
+                Logger.critical(
+                    'Found trainable quantization params despite self.freeze_quant_params=True. '
+                    'Quantization parameters were probably not initialized correctly in the Quantizer.'
+                )  # pragma: no cover
+
             return quantizer_trainable
 
 

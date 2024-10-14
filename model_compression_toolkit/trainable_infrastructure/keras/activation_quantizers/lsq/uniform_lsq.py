@@ -1,4 +1,4 @@
-# Copyright 2023 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.framework.tensor_shape import TensorShape
 from model_compression_toolkit.constants import RANGE_MIN, RANGE_MAX
-from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_weight_quantizer import \
-    BaseKerasQATWeightTrainableQuantizer
+from model_compression_toolkit.trainable_infrastructure.keras.quantizer_utils import uniform_lsq_quantizer
 from model_compression_toolkit.trainable_infrastructure.common.constants import FQ_MIN, FQ_MAX
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod
@@ -32,40 +32,33 @@ from model_compression_toolkit.trainable_infrastructure import TrainableQuantize
     TrainableQuantizerActivationConfig
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 from model_compression_toolkit.core.common.quantization.quantizers.quantizers_helpers import fix_range_to_include_zero
-from model_compression_toolkit.qat.keras.quantizer.quant_utils import ste_round, grad_scale, adjust_range_to_include_zero
-from model_compression_toolkit.trainable_infrastructure.keras.quantizer_utils import uniform_lsq_quantizer
+from model_compression_toolkit.trainable_infrastructure.keras.activation_quantizers import \
+    BaseKerasActivationTrainableQuantizer
 
 
-@mark_quantizer(quantization_target=QuantizationTarget.Weights,
+@mark_quantizer(quantization_target=QuantizationTarget.Activation,
                 quantization_method=[QuantizationMethod.UNIFORM],
                 identifier=TrainingMethod.LSQ)
-class LSQUniformWeightQATQuantizer(BaseKerasQATWeightTrainableQuantizer):
+class LSQUniformActivationTrainableQuantizer(BaseKerasActivationTrainableQuantizer):
     """
-    Trainable constrained quantizer to quantize layer's weights.
+    Trainable constrained quantizer to quantize layer activations.
     """
 
-    def __init__(self, quantization_config: TrainableQuantizerWeightsConfig):
+    def __init__(self, quantization_config: TrainableQuantizerActivationConfig):
         """
-        Initialize a LSQUniformWeightQATQuantizer object with parameters to use
+        Initialize a LSQUniformActivationQATQuantizer object with parameters to use
         for the quantization.
 
         Args:
-            quantization_config: a trainable quantizer config class with attributes for the quantization.
-
+            quantization_config: trainable quantizer config class
         """
         super().__init__(quantization_config)
-        self.num_bits = self.quantization_config.weights_n_bits
-        self.per_channel = self.quantization_config.weights_per_channel_threshold
-        self.channel_axis = self.quantization_config.weights_channels_axis
-        max_values = np.array(quantization_config.weights_quantization_params[RANGE_MAX])
-        min_values = np.array(quantization_config.weights_quantization_params[RANGE_MIN])
-        self.min_max_shape = np.asarray(max_values).shape
-        self.max_values = np.reshape(max_values, [-1]) if self.per_channel else float(max_values)
-        self.min_values = np.reshape(min_values, [-1]) if self.per_channel else float(min_values)
+
+        self.num_bits = quantization_config.activation_n_bits
+        self.min_range = np.array(quantization_config.activation_quantization_params[C.RANGE_MIN])
+        self.max_range = np.array(quantization_config.activation_quantization_params[C.RANGE_MAX])
         self.min_int = 0
         self.max_int = 2**self.num_bits - 1
-        self.scale_factor = 1.0 / np.sqrt(self.max_int * self.max_values.size)
-
 
     def initialize_quantization(self,
                                 tensor_shape: TensorShape,
@@ -81,23 +74,24 @@ class LSQUniformWeightQATQuantizer(BaseKerasQATWeightTrainableQuantizer):
         """
         fq_min = layer.add_weight(
             name + FQ_MIN,
-            shape=len(self.min_values) if self.per_channel else (),
+            shape=(),
             initializer=tf.keras.initializers.Constant(-1.0),
             trainable=True)
-        fq_min.assign(self.min_values)
+        fq_min.assign(self.min_range)
 
         fq_max = layer.add_weight(
             name + FQ_MAX,
-            shape=len(self.max_values) if self.per_channel else (),
+            shape=(),
             initializer=tf.keras.initializers.Constant(1.0),
             trainable=True)
-        fq_max.assign(self.max_values)
+        fq_max.assign(self.max_range)
 
         # save the quantizer added parameters for later calculations
         self.add_quantizer_variable(FQ_MIN, fq_min, VariableGroup.QPARAMS)
         self.add_quantizer_variable(FQ_MAX, fq_max, VariableGroup.QPARAMS)
 
-    def __call__(self, inputs: tf.Tensor,
+    def __call__(self,
+                 inputs: tf.Tensor,
                  training: bool):
         """
         Quantize a tensor.
@@ -109,9 +103,11 @@ class LSQUniformWeightQATQuantizer(BaseKerasQATWeightTrainableQuantizer):
             The quantized tensor.
         """
 
-        min_range = tf.reshape(self.get_quantizer_variable(FQ_MIN), self.min_max_shape)
-        max_range = tf.reshape(self.get_quantizer_variable(FQ_MAX), self.min_max_shape)
-        q_tensor = uniform_lsq_quantizer(inputs, min_range, max_range, self.num_bits, self.min_int, self.max_int, self.scale_factor)
+        min_range = self.get_quantizer_variable(FQ_MIN)
+        max_range = self.get_quantizer_variable(FQ_MAX)
+        n_channels = inputs.shape[-1]
+        scale_factor = 1.0 / np.sqrt(self.max_int * n_channels)
+        q_tensor = uniform_lsq_quantizer(inputs, min_range, max_range, self.num_bits, self.min_int, self.max_int, scale_factor)
         return q_tensor
 
     def convert2inferable(self) -> BaseKerasInferableQuantizer:
@@ -124,10 +120,10 @@ class LSQUniformWeightQATQuantizer(BaseKerasQATWeightTrainableQuantizer):
         min_range, max_range = fix_range_to_include_zero(self.get_quantizer_variable(FQ_MIN).numpy(),
                                                          self.get_quantizer_variable(FQ_MAX).numpy(),
                                                          self.num_bits)
-        return WeightsUniformInferableQuantizer(num_bits=self.num_bits,
-                                                min_range=list(min_range.flatten()),
-                                                max_range=list(max_range.flatten()),
-                                                per_channel=self.per_channel,
-                                                channel_axis=self.channel_axis,
-                                                input_rank=len(self.min_max_shape))
+        return ActivationUniformInferableQuantizer(num_bits=self.num_bits,
+                                                   # In activation quantization is per-tensor only - thus we pass
+                                                   # the min/max as lists with a len of 1
+                                                   min_range=[min_range],
+                                                   max_range=[max_range])
+
 
