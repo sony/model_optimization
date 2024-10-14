@@ -52,7 +52,7 @@ class IterableDatasetFromGenerator(IterableDataset):
         # validate one batch
         test_batch = next(data_gen_fn())
         if not isinstance(test_batch, list):
-            raise TypeError(f'Data generator is expected to yield a list of tensors, got {type(inputs)}')
+            raise TypeError(f'Data generator is expected to yield a list of tensors, got {type(test_batch)}')
         self.orig_batch_size = test_batch[0].shape[0]
 
         self._size = None

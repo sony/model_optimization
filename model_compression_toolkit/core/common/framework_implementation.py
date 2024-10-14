@@ -457,4 +457,4 @@ class FrameworkImplementation(ABC):
     
     @staticmethod
     def convert_data_gen_to_dataloader(data_gen_fn: Callable[[], Generator], batch_size: int):
-        raise NotImplementedError()
+        raise NotImplementedError()    # pragma: no cover

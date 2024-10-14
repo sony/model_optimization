@@ -18,7 +18,7 @@ import numpy as np
 from torch.utils.data import IterableDataset, Dataset
 
 from model_compression_toolkit.core.pytorch.data_util import (data_gen_to_dataloader, IterableDatasetFromGenerator,
-                                                              FixedDatasetFromGenerator)
+                                                              FixedDatasetFromGenerator, FixedSampleInfoDataset)
 
 
 @pytest.fixture(scope='session')
@@ -89,6 +89,23 @@ class TestDataUtil:
     def test_fixed_dataset_from_random_gen_subset(self):
         ds = FixedDatasetFromGenerator(get_random_data_gen_fn(), n_samples=123)
         self._validate_fixed_ds(ds, exp_len=123, exp_batch_size=32)
+
+    def test_not_enough_samples_in_datagen(self):
+        def gen():
+            yield [np.ones((10, 3))]
+        with pytest.raises(ValueError, match='Not enough samples in the data generator'):
+            FixedDatasetFromGenerator(gen, n_samples=11)
+
+    def test_extra_info_mismatch(self, fixed_gen):
+        with pytest.raises(ValueError, match='Mismatch in the number of samples between samples and complementary data'):
+            FixedSampleInfoDataset([1]*10, [2]*10, [3]*11)
+
+    @pytest.mark.parametrize('ds_cls', [FixedDatasetFromGenerator, IterableDatasetFromGenerator])
+    def test_invalid_gen(self, ds_cls):
+        def gen():
+            yield np.ones((10, 3))
+        with pytest.raises(TypeError, match='Data generator is expected to yield a list of tensors'):
+            ds_cls(gen)
 
     def _validate_ds_from_fixed_gen(self, ds, exp_len):
         for _ in range(2):

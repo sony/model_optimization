@@ -205,6 +205,43 @@ class TestHessianService(unittest.TestCase):
                                           "approximation, for the single target node.")
         self.assertEqual(hessian[target_node.name].shape[0], 2, "Expecting 2 Hessian scores.")
 
+    def test_invalid_request(self):
+        with self.assertRaises(ValueError, msg='Data loader and the number of samples cannot both be None'):
+            HessianScoresRequest(mode=HessianMode.ACTIVATION,
+                                 granularity=HessianScoresGranularity.PER_TENSOR,
+                                 n_samples=None,
+                                 data_loader=None,
+                                 target_nodes=list(self.graph.nodes))
+
+    def test_fetch_hessian_invalid_args(self):
+        request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
+                                       granularity=HessianScoresGranularity.PER_TENSOR,
+                                       n_samples=None,
+                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       target_nodes=list(self.graph.nodes))
+        with self.assertRaises(ValueError, msg='Number of samples can be None only when force_compute is True.'):
+            self.hessian_service.fetch_hessian(request)
+
+    def test_double_fetch_more_samples(self):
+        # this is mostly for coverage
+        self.hessian_service.clear_cache()
+        node = list(self.graph.get_topo_sorted_nodes())[0]
+        request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
+                                       granularity=HessianScoresGranularity.PER_TENSOR,
+                                       n_samples=2,
+                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       target_nodes=[node])
+        hess = self.hessian_service.fetch_hessian(request)
+        assert hess[node.name].shape[0] == 2
+
+        request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
+                                       granularity=HessianScoresGranularity.PER_TENSOR,
+                                       n_samples=4,
+                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       target_nodes=[node])
+        hess = self.hessian_service.fetch_hessian(request)
+        assert hess[node.name].shape[0] == 4
+
 
 if __name__ == "__main__":
     unittest.main()
