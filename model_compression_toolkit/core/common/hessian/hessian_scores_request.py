@@ -40,6 +40,14 @@ class HessianScoresGranularity(Enum):
     PER_TENSOR = 2
 
 
+class HessianEstimationDistribution(str, Enum):
+    """
+    Distribution for Hutchinson estimator random vector
+    """
+    GAUSSIAN = 'gaussian'
+    RADEMACHER = 'rademacher'
+
+
 class HessianScoresRequest:
     """
     Request configuration for the Hessian-approximation scores.
@@ -53,7 +61,8 @@ class HessianScoresRequest:
     def __init__(self,
                  mode: HessianMode,
                  granularity: HessianScoresGranularity,
-                 target_nodes: List):
+                 target_nodes: List,
+                 distribution: HessianEstimationDistribution = HessianEstimationDistribution.GAUSSIAN):
         """
         Attributes:
             mode (HessianMode): Mode of Hessian-approximation score (w.r.t weights or activations).
@@ -64,6 +73,7 @@ class HessianScoresRequest:
         self.mode = mode  # w.r.t activations or weights
         self.granularity = granularity  # per element, per layer, per channel
         self.target_nodes = target_nodes
+        self.distribution = distribution
 
     def __eq__(self, other):
         # Checks if the other object is an instance of HessianScoresRequest
@@ -71,9 +81,10 @@ class HessianScoresRequest:
         return isinstance(other, HessianScoresRequest) and \
                self.mode == other.mode and \
                self.granularity == other.granularity and \
-               self.target_nodes == other.target_nodes
+               self.target_nodes == other.target_nodes and \
+               self.distribution == other.distribution
 
     def __hash__(self):
         # Computes the hash based on the attributes.
         # The use of a tuple here ensures that the hash is influenced by all the attributes.
-        return hash((self.mode, self.granularity, tuple(self.target_nodes)))
+        return hash((self.mode, self.granularity, tuple(self.target_nodes), self.distribution))

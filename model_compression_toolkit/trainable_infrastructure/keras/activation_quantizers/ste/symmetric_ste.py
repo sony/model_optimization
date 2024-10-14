@@ -42,7 +42,7 @@ class STESymmetricActivationTrainableQuantizer(BaseKerasActivationTrainableQuant
 
     def __init__(self, quantization_config: TrainableQuantizerActivationConfig, freeze_quant_params: bool = False):
         """
-        Initialize a STEActivationQATQuantizer object with parameters to use
+        Initialize a STESymmetricActivationTrainableQuantizer object with parameters to use
         for the quantization.
 
         Args:

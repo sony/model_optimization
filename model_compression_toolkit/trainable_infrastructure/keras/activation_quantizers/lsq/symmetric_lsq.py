@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from model_compression_toolkit.qat.keras.quantizer.lsq.symmetric_lsq import symmetric_lsq_quantizer
+from model_compression_toolkit.trainable_infrastructure.keras.quantizer_utils import symmetric_lsq_quantizer
 from model_compression_toolkit.trainable_infrastructure.keras.activation_quantizers import BaseKerasActivationTrainableQuantizer
 from typing import Union
 

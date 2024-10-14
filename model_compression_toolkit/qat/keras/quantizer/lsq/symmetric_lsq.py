@@ -29,40 +29,12 @@ from model_compression_toolkit.qat.common import THRESHOLD_TENSOR
 from model_compression_toolkit import constants as C
 
 from model_compression_toolkit.qat.keras.quantizer.base_keras_qat_weight_quantizer import BaseKerasQATWeightTrainableQuantizer
-from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig, \
-    TrainableQuantizerActivationConfig
-from mct_quantizers.keras.quantizers import WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, \
-    ActivationPOTInferableQuantizer, ActivationSymmetricInferableQuantizer
+
+from model_compression_toolkit.trainable_infrastructure import TrainableQuantizerWeightsConfig, TrainableQuantizerActivationConfig
+from mct_quantizers.keras.quantizers import WeightsPOTInferableQuantizer, WeightsSymmetricInferableQuantizer, ActivationPOTInferableQuantizer, ActivationSymmetricInferableQuantizer
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
 from model_compression_toolkit.qat.keras.quantizer.quant_utils import ste_round, grad_scale
-
-
-def symmetric_lsq_quantizer(x: tf.Tensor,
-                            thresholds: tf.Tensor,
-                            num_bits: int,
-                            sign: bool,
-                            min_int: int,
-                            max_int:int,
-                            scale_factor: float) -> tf.Tensor:
-    """
-    Symmetric quantizer according to LSQ algorithm: https://arxiv.org/pdf/1902.08153.pdf
-    Args:
-        x: input to quantize
-        thresholds: thresholds of quantization levels
-        num_bits: number of bits for quantization
-        sign: whether x is signed or not
-        min_int: min clipping integer value
-        max_int: max clipping integer value
-        scale_factor: grad scale of LSQ algorithm
-    Returns:
-        A quantized tensor
-    """
-    delta = thresholds / (2 ** (num_bits - int(sign)))
-    delta_scaled = grad_scale(delta, scale_factor)
-    rounded = ste_round(x / delta_scaled)
-    clipped = tf.math.minimum(tf.math.maximum(rounded, min_int), max_int)
-    quantized = delta_scaled * clipped
-    return quantized
+from model_compression_toolkit.trainable_infrastructure.keras.quantizer_utils import symmetric_lsq_quantizer
 
 
 @mark_quantizer(quantization_target=QuantizationTarget.Weights,

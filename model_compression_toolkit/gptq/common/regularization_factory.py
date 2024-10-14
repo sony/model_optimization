@@ -55,4 +55,4 @@ def get_regularization(gptq_config: GradientPTQConfig,
         # Return the framework-specific soft quantizer regularization
         return SoftQuantizerRegularizationFWClass(scheduler)
     else:
-        return lambda m, e_reg: 0
+        return lambda *args, **kwargs: 0
