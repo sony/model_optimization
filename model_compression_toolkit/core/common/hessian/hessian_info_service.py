@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import hashlib
 
 import numpy as np
 from functools import partial
 from tqdm import tqdm
-from typing import Callable, List, Dict, Any, Tuple
+from typing import Callable, List, Dict, Any, Tuple, TYPE_CHECKING
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.hessian.hessian_scores_request import HessianScoresRequest, \
     HessianScoresGranularity, HessianMode
 from model_compression_toolkit.logger import Logger
+if TYPE_CHECKING:    # pragma: no cover
+    from model_compression_toolkit.core.common import BaseNode
 
 
 class HessianInfoService:
@@ -228,6 +231,61 @@ class HessianInfoService:
         return next_iter_remain_samples if next_iter_remain_samples is not None and len(next_iter_remain_samples) > 0 \
         and len(next_iter_remain_samples[0]) > 0 else None
 
+    def compute_trackable_per_sample_hessian(self,
+                                             hessian_scores_request: HessianScoresRequest,
+                                             inputs_batch: List[np.ndarray]) -> Dict[str, Dict['BaseNode', np.ndarray]]:
+        """
+        Compute hessian score per image hash. We compute the score directly for images rather than via data generator,
+        as data generator might yield different images each time, depending on how it was defined,
+
+        Args:
+            hessian_scores_request: hessian scores request
+            inputs_batch: a list containing a batch of inputs.
+
+        Returns:
+            A dict of Hessian scores per image hash per layer {image hash: {layer: score}}
+        """
+        topo_sorted_nodes_names = [x.name for x in self.graph.get_topo_sorted_nodes()]
+        hessian_scores_request.target_nodes.sort(key=lambda x: topo_sorted_nodes_names.index(x.name))
+
+        hessian_score_by_image_hash = {}
+
+        if not inputs_batch or not isinstance(inputs_batch, list):
+            raise TypeError('Expected a non-empty list of inputs')    # pragma: no cover
+        if len(inputs_batch) > 1:
+            raise NotImplementedError('Per-sample hessian computation is not supported for networks with multiple inputs')    # pragma: no cover
+
+        # Get the framework-specific calculator Hessian-approximation scores
+        fw_hessian_calculator = self.fw_impl.get_hessian_scores_calculator(graph=self.graph,
+                                                                           input_images=inputs_batch,
+                                                                           hessian_scores_request=hessian_scores_request,
+                                                                           num_iterations_for_approximation=self.num_iterations_for_approximation)
+        hessian_scores = fw_hessian_calculator.compute()
+        for i in range(inputs_batch[0].shape[0]):
+            img_hash = self.calc_image_hash(inputs_batch[0][i])
+            hessian_score_by_image_hash[img_hash] = {
+                node: score[i] for node, score in zip(hessian_scores_request.target_nodes, hessian_scores)
+            }
+
+        return hessian_score_by_image_hash
+
+    @staticmethod
+    def calc_image_hash(image):
+        """
+        Calculates hash for an input image.
+
+        Args:
+            image: input 3d image (without batch).
+
+        Returns:
+            Image hash.
+
+        """
+        if not len(image.shape) == 3:    # pragma: no cover
+            raise ValueError(f'Expected 3d image (without batch) for image hash calculation, got {len(image.shape)}')
+        image_bytes = image.astype(np.float32).tobytes()
+        return hashlib.md5(image_bytes).hexdigest()
+
     def fetch_hessian(self,
                       hessian_scores_request: HessianScoresRequest,
                       required_size: int,
@@ -248,7 +306,7 @@ class HessianInfoService:
             OC for per-output-channel when the requested node has OC output-channels, etc.)
         """
 
-        if len(hessian_scores_request.target_nodes) == 0:
+        if len(hessian_scores_request.target_nodes) == 0:    # pragma: no cover
             return []
 
         if required_size == 0:
