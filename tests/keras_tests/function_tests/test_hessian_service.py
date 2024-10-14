@@ -32,7 +32,7 @@ from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_wi
 def basic_model(input_shape):
     random_uniform = initializers.random_uniform(0, 1)
     inputs = Input(shape=input_shape)
-    x = Conv2D(2, 3, padding='same', name="conv2d")(inputs)
+    x = Conv2D(3, 3, padding='same', name="conv2d")(inputs)
     x_bn = BatchNormalization(gamma_initializer='random_normal', beta_initializer='random_normal',
                               moving_mean_initializer='random_normal', moving_variance_initializer=random_uniform,
                               name="bn1")(x)
@@ -43,7 +43,7 @@ def basic_model(input_shape):
 def multiple_act_nodes_model(input_shape):
     random_uniform = initializers.random_uniform(0, 1)
     inputs = Input(shape=input_shape)
-    x = Conv2D(2, 3, padding='same', name="conv2d")(inputs)
+    x = Conv2D(3, 3, padding='same', name="conv2d")(inputs)
     x_bn = BatchNormalization(gamma_initializer='random_normal', beta_initializer='random_normal',
                               moving_mean_initializer='random_normal', moving_variance_initializer=random_uniform,
                               name="bn1")(x)
@@ -52,9 +52,11 @@ def multiple_act_nodes_model(input_shape):
     return keras.Model(inputs=inputs, outputs=outputs)
 
 
-def representative_dataset():
-    for _ in range(2):
-        yield [np.random.randn(2, 8, 8, 3).astype(np.float32)]
+def get_representative_dataset_fn(n_iters=10):
+    def f():
+        for _ in range(n_iters):
+            yield [np.random.randn(2, 8, 8, 3).astype(np.float32)]
+    return f
 
 
 class TestHessianService(unittest.TestCase):
@@ -69,7 +71,7 @@ class TestHessianService(unittest.TestCase):
         self.graph = prepare_graph_with_configs(self.float_model,
                                                 self.keras_impl,
                                                 DEFAULT_KERAS_INFO,
-                                                representative_dataset,
+                                                get_representative_dataset_fn(),
                                                 generate_keras_tpc)
 
         self.hessian_service = HessianInfoService(graph=self.graph, fw_impl=self.keras_impl)
@@ -82,7 +84,7 @@ class TestHessianService(unittest.TestCase):
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
                                        n_samples=2,
-                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       data_loader=data_gen_to_dataloader(get_representative_dataset_fn(), batch_size=1),
                                        target_nodes=[node])
         hessian = self.hessian_service.fetch_hessian(request)
         self.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
@@ -94,7 +96,7 @@ class TestHessianService(unittest.TestCase):
         request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
                                        granularity=HessianScoresGranularity.PER_OUTPUT_CHANNEL,
                                        n_samples=2,
-                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       data_loader=data_gen_to_dataloader(get_representative_dataset_fn(), batch_size=1),
                                        target_nodes=[node])
         hessian = self.hessian_service.fetch_hessian(request)
         self.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
@@ -105,7 +107,7 @@ class TestHessianService(unittest.TestCase):
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
                                        n_samples=5,
-                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=2),
+                                       data_loader=data_gen_to_dataloader(get_representative_dataset_fn(2), batch_size=2),
                                        target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]])
 
         with self.assertRaises(Exception) as e:
@@ -117,7 +119,7 @@ class TestHessianService(unittest.TestCase):
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
                                        n_samples=5,
-                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       data_loader=data_gen_to_dataloader(get_representative_dataset_fn(2), batch_size=1),
                                        target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]])
 
         with self.assertRaises(Exception) as e:
@@ -130,7 +132,7 @@ class TestHessianService(unittest.TestCase):
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
                                        n_samples=3,
-                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=3),
+                                       data_loader=data_gen_to_dataloader(get_representative_dataset_fn(), batch_size=3),
                                        target_nodes=[node])
 
         hessian = self.hessian_service.fetch_hessian(request)  # representative batch size is 2
@@ -143,7 +145,7 @@ class TestHessianService(unittest.TestCase):
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
                                        n_samples=0,
-                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       data_loader=data_gen_to_dataloader(get_representative_dataset_fn(), batch_size=1),
                                        target_nodes=[node])
 
         hessian = self.hessian_service.fetch_hessian(request)
@@ -159,7 +161,7 @@ class TestHessianService(unittest.TestCase):
         self.graph = prepare_graph_with_configs(self.float_model,
                                                 self.keras_impl,
                                                 DEFAULT_KERAS_INFO,
-                                                representative_dataset,
+                                                get_representative_dataset_fn(),
                                                 generate_keras_tpc)
 
         self.hessian_service = HessianInfoService(graph=self.graph, fw_impl=self.keras_impl)
@@ -171,7 +173,7 @@ class TestHessianService(unittest.TestCase):
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
                                        n_samples=2,
-                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       data_loader=data_gen_to_dataloader(get_representative_dataset_fn(), batch_size=1),
                                        target_nodes=[graph_nodes[0], graph_nodes[2]])
 
         hessian = self.hessian_service.fetch_hessian(request)
@@ -191,7 +193,7 @@ class TestHessianService(unittest.TestCase):
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
                                        n_samples=2,
-                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       data_loader=data_gen_to_dataloader(get_representative_dataset_fn(), batch_size=1),
                                        target_nodes=[target_node])
         hessian = self.hessian_service.fetch_hessian(request)
         self.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
@@ -217,7 +219,7 @@ class TestHessianService(unittest.TestCase):
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
                                        n_samples=None,
-                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       data_loader=data_gen_to_dataloader(get_representative_dataset_fn(), batch_size=1),
                                        target_nodes=list(self.graph.nodes))
         with self.assertRaises(ValueError, msg='Number of samples can be None only when force_compute is True.'):
             self.hessian_service.fetch_hessian(request)
@@ -229,7 +231,7 @@ class TestHessianService(unittest.TestCase):
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
                                        n_samples=2,
-                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       data_loader=data_gen_to_dataloader(get_representative_dataset_fn(), batch_size=1),
                                        target_nodes=[node])
         hess = self.hessian_service.fetch_hessian(request)
         assert hess[node.name].shape[0] == 2
@@ -237,7 +239,7 @@ class TestHessianService(unittest.TestCase):
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                        granularity=HessianScoresGranularity.PER_TENSOR,
                                        n_samples=4,
-                                       data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                       data_loader=data_gen_to_dataloader(get_representative_dataset_fn(), batch_size=1),
                                        target_nodes=[node])
         hess = self.hessian_service.fetch_hessian(request)
         assert hess[node.name].shape[0] == 4
