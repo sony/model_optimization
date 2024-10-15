@@ -30,5 +30,3 @@ jobs:
           python -m unittest discover tests/pytorch_tests -v
           pytest tests_pytest/pytorch
 
-
-
