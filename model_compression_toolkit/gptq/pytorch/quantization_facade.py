@@ -77,10 +77,6 @@ if FOUND_TORCH:
             regularization_factor (float): A floating point number that defines the regularization factor.
             hessian_batch_size (int): Batch size for Hessian computation in Hessian-based weights GPTQ.
             use_hessian_sample_attention (bool): whether to use Sample-Layer Attention score for weighted loss.
-            gradual_activation_quantization (bool, GradualActivationQuantizationConfig):
-              If False, GradualActivationQuantization is disabled.
-              If True, GradualActivationQuantization is enabled with the default settings.
-              GradualActivationQuantizationConfig object can be passed to use non-default settings.
 
         returns:
             a GradientPTQConfig object to use when fine-tuning the quantized model using gptq.
@@ -98,8 +94,10 @@ if FOUND_TORCH:
             >>> gptq_conf = mct.gptq.get_pytorch_gptq_config(n_epochs=3, optimizer=torch.optim.Adam([torch.Tensor(1)]))
 
             To enable Gradual Activation Quantization with non-default settings build GradualActivationQuantizationConfig:
+
             >>> gradual_act_conf = mct.gptq.GradualActivationQuantizationConfig(mct.gptq.QFractionLinearAnnealingConfig(initial_q_fraction=0.2))
             >>> gptq_conf = mct.gptq.get_pytorch_gptq_config(n_epochs=3, gradual_activation_quantization=gradual_act_conf)
+
             The configuration can be passed to :func:`~model_compression_toolkit.pytorch_gradient_post_training_quantization` in order to quantize a pytorch model using gptq.
 
         """
