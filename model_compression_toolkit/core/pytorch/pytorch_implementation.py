@@ -15,7 +15,7 @@
 import operator
 from copy import deepcopy
 from functools import partial
-from typing import List, Any, Tuple, Callable, Type, Dict
+from typing import List, Any, Tuple, Callable, Type, Dict, Generator
 
 import numpy as np
 import torch
@@ -38,6 +38,7 @@ from model_compression_toolkit.core.common.model_builder_mode import ModelBuilde
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo
 from model_compression_toolkit.core.common.similarity_analyzer import compute_mse, compute_kl_divergence, compute_cs
 from model_compression_toolkit.core.pytorch.back2framework import get_pytorch_model_builder
+from model_compression_toolkit.core.pytorch.data_util import data_gen_to_dataloader
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.graph_substitutions.substitutions.batchnorm_folding import \
     pytorch_batchnorm_folding, pytorch_batchnorm_forward_folding
@@ -564,3 +565,8 @@ class PytorchImplementation(FrameworkImplementation):
                                         get_weights_quantizer_for_node,
                                         get_activations_quantizer_for_node,
                                         node.get_node_weights_attributes())
+
+    @staticmethod
+    def convert_data_gen_to_dataloader(data_gen_fn: Callable[[], Generator], batch_size: int):
+        """ Converts data generator into framework dataloader with arbitrary batch size. """
+        return data_gen_to_dataloader(data_gen_fn, batch_size=batch_size)

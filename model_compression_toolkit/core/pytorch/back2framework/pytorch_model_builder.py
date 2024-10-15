@@ -134,7 +134,7 @@ def _run_operation(n: BaseNode,
         input_tensors = n.insert_positional_weights_to_input_list(input_tensors)
         # convert inputs from positional weights (numpy arrays) to tensors. Must handle each element in the
         # list separately, because in FX the tensors are FX objects and fail to_torch_tensor
-        input_tensors = [to_torch_tensor(t, numpy_type=t.dtype) if isinstance(t, np.ndarray) else t
+        input_tensors = [to_torch_tensor(t, None) if isinstance(t, np.ndarray) else t
                          for t in input_tensors]
         _tensor_input_allocs = None
 
