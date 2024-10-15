@@ -17,7 +17,6 @@ from enum import Enum
 from typing import Callable, Any, Dict, Optional
 
 from model_compression_toolkit.constants import GPTQ_HESSIAN_NUM_SAMPLES, ACT_HESSIAN_DEFAULT_BATCH_SIZE
-from model_compression_toolkit.core.common.hessian import HessianScoresGranularity, HessianEstimationDistribution
 from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
 
 
@@ -54,7 +53,6 @@ class GPTQHessianScoresConfig:
     scale_log_norm: bool = False
     hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE
     per_sample: bool = False
-    estimator_distribution: HessianEstimationDistribution = HessianEstimationDistribution.GAUSSIAN
 
 
 @dataclass

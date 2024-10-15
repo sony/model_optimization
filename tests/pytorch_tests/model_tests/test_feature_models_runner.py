@@ -13,105 +13,105 @@
 # limitations under the License.
 # ==============================================================================
 import operator
-
 import unittest
-from functools import partial
 
 import numpy as np
 import torch
 from torch import nn
+
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.hessian import HessianEstimationDistribution
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
+from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from model_compression_toolkit.gptq.pytorch.gptq_loss import sample_layer_attention_loss
 from model_compression_toolkit.target_platform_capabilities import constants as C
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod
+from tests.pytorch_tests.model_tests.feature_models.activation_16bit_test import Activation16BitTest, \
+    Activation16BitMixedPrecisionTest
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
-from tests.pytorch_tests.model_tests.feature_models.bn_attributes_quantization_test import BNAttributesQuantization
-from tests.pytorch_tests.model_tests.feature_models.compute_max_cut_test import ComputeMaxCutTest
-from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import LayerNormNetTest
-from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
-from tests.pytorch_tests.model_tests.feature_models.manual_bit_selection import ManualBitWidthByLayerTypeTest, \
-    ManualBitWidthByLayerNameTest, Manual16BitTest, Manual16BitTestMixedPrecisionTest
-from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
-    MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
-    MixedPrecisionBopsAndWeightsMemoryUtilizationTest, MixedPrecisionBopsAndActivationMemoryUtilizationTest, MixedPrecisionBopsAndTotalMemoryUtilizationTest, \
-    MixedPrecisionBopsWeightsActivationUtilizationTest, MixedPrecisionBopsMultipleOutEdgesTest
-from tests.pytorch_tests.model_tests.feature_models.qat_test import QuantizationAwareTrainingTest, \
-    QuantizationAwareTrainingMixedPrecisionCfgTest, QuantizationAwareTrainingMixedPrecisionRUCfgTest, \
-    QuantizationAwareTrainingQuantizerHolderTest
-from tests.pytorch_tests.model_tests.feature_models.relu_replacement_test import SingleLayerReplacementTest, \
-    ReluReplacementTest, ReluReplacementWithAddBiasTest
-from tests.pytorch_tests.model_tests.feature_models.remove_assert_test import AssertNetTest
-from tests.pytorch_tests.model_tests.feature_models.remove_broken_node_test import BrokenNetTest
-from tests.pytorch_tests.model_tests.feature_models.concat_threshold_test import ConcatUpdateTest
 from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSameNetTest
+from tests.pytorch_tests.model_tests.feature_models.bn_attributes_quantization_test import BNAttributesQuantization
 from tests.pytorch_tests.model_tests.feature_models.bn_folding_test import BNFoldingNetTest, BNForwardFoldingNetTest
+from tests.pytorch_tests.model_tests.feature_models.bn_function_test import BNFNetTest
+from tests.pytorch_tests.model_tests.feature_models.compute_max_cut_test import ComputeMaxCutTest
+from tests.pytorch_tests.model_tests.feature_models.concat_threshold_test import ConcatUpdateTest
+from tests.pytorch_tests.model_tests.feature_models.const_quantization_test import ConstQuantizationTest, \
+    AdvancedConstQuantizationTest, ConstQuantizationMultiInputTest, ConstQuantizationExpandTest
+from tests.pytorch_tests.model_tests.feature_models.const_representation_test import ConstRepresentationTest, \
+    ConstRepresentationMultiInputTest, ConstRepresentationLinearLayerTest, ConstRepresentationGetIndexTest, \
+    ConstRepresentationCodeTest
+from tests.pytorch_tests.model_tests.feature_models.constant_conv_substitution_test import ConstantConvSubstitutionTest, \
+    ConstantConvReuseSubstitutionTest, ConstantConvTransposeSubstitutionTest
+from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
+from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
+from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccuracyTest, GPTQWeightsUpdateTest, \
+    GPTQLearnRateZeroTest
+from tests.pytorch_tests.model_tests.feature_models.layer_name_test import ReuseNameNetTest
+from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import LayerNormNetTest
 from tests.pytorch_tests.model_tests.feature_models.linear_collapsing_test import TwoConv2DCollapsingTest, \
     ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest
-from tests.pytorch_tests.model_tests.feature_models.residual_collapsing_test import ResidualCollapsingTest1, \
-    ResidualCollapsingTest2
-from tests.pytorch_tests.model_tests.feature_models.dynamic_size_inputs_test import ReshapeNetTest
+from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTWeightsQuantizerTest, \
+    LUTActivationQuantizerTest
+from tests.pytorch_tests.model_tests.feature_models.manual_bit_selection import ManualBitWidthByLayerTypeTest, \
+    ManualBitWidthByLayerNameTest, Manual16BitTest, Manual16BitTestMixedPrecisionTest
+from tests.pytorch_tests.model_tests.feature_models.metadata_test import MetadataTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPrecisionActivationSearch8Bit, MixedPrecisionActivationSearch2Bit, MixedPrecisionActivationSearch4Bit, \
     MixedPrecisionActivationSearch4BitFunctional, MixedPrecisionActivationMultipleInputs, \
     MixedPrecisionDistanceFunctions, MixedPrecisionActivationConfigurableWeights
-from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
-    HardtanhBoundToPOTNetTest
-from tests.pytorch_tests.model_tests.feature_models.scalar_tensor_test import ScalarTensorTest
-from tests.pytorch_tests.model_tests.feature_models.second_moment_correction_test import ConvSecondMomentNetTest, \
-    ConvTSecondMomentNetTest, MultipleInputsConvSecondMomentNetTest, ValueSecondMomentTest
-from tests.pytorch_tests.model_tests.feature_models.symmetric_activation_test import SymmetricActivationTest
-from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
-    SoftmaxFunctionNetTest
-from tests.pytorch_tests.model_tests.feature_models.permute_substitution_test import PermuteSubstitutionTest
-from tests.pytorch_tests.model_tests.feature_models.reshape_substitution_test import ReshapeSubstitutionTest
-from tests.pytorch_tests.model_tests.feature_models.constant_conv_substitution_test import ConstantConvSubstitutionTest, \
-    ConstantConvReuseSubstitutionTest, ConstantConvTransposeSubstitutionTest
-from tests.pytorch_tests.model_tests.feature_models.multi_head_attention_test import MHALayerNetTest, \
-    MHALayerNetFeatureTest
-from tests.pytorch_tests.model_tests.feature_models.scaled_dot_product_attention_test import ScaledDotProductAttentionTest
-from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test import \
-    ScaleEqualizationWithZeroPadNetTest, ScaleEqualizationNetTest, \
-    ScaleEqualizationReluFuncNetTest, ScaleEqualizationReluFuncWithZeroPadNetTest, \
-    ScaleEqualizationConvTransposeWithZeroPadNetTest, ScaleEqualizationReluFuncConvTransposeWithZeroPadNetTest, \
-    ScaleEqualizationConvTransposeReluFuncNetTest
-from tests.pytorch_tests.model_tests.feature_models.layer_name_test import ReuseNameNetTest
-from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTWeightsQuantizerTest, \
-    LUTActivationQuantizerTest
+from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
+    MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
+    MixedPrecisionBopsAndWeightsMemoryUtilizationTest, MixedPrecisionBopsAndActivationMemoryUtilizationTest, \
+    MixedPrecisionBopsAndTotalMemoryUtilizationTest, \
+    MixedPrecisionBopsWeightsActivationUtilizationTest, MixedPrecisionBopsMultipleOutEdgesTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_weights_test import MixedPrecisionSearch4Bit, \
     MixedPrecisionActivationDisabledTest, MixedPrecisionSearchLastLayerDistance, MixedPrecisionWithHessianScores, \
     MixedPrecisionSearch8Bit, MixedPrecisionSearchPartWeightsLayers, MixedPrecisionSearch2Bit, \
     MixedPrecisionWeightsConfigurableActivations
+from tests.pytorch_tests.model_tests.feature_models.multi_head_attention_test import MHALayerNetTest, \
+    MHALayerNetFeatureTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_output_nodes_multiple_tensors_test import \
     MultipleOutputsMultipleTensorsNetTest
 from tests.pytorch_tests.model_tests.feature_models.multiple_outputs_node_test import MultipleOutputsNetTest
 from tests.pytorch_tests.model_tests.feature_models.output_in_the_middle_test import OutputInTheMiddleNetTest
 from tests.pytorch_tests.model_tests.feature_models.parameter_net_test import ParameterNetTest
+from tests.pytorch_tests.model_tests.feature_models.permute_substitution_test import PermuteSubstitutionTest
+from tests.pytorch_tests.model_tests.feature_models.qat_test import QuantizationAwareTrainingTest, \
+    QuantizationAwareTrainingMixedPrecisionCfgTest, QuantizationAwareTrainingMixedPrecisionRUCfgTest, \
+    QuantizationAwareTrainingQuantizerHolderTest
+from tests.pytorch_tests.model_tests.feature_models.relu_bound_test import ReLUBoundToPOTNetTest, \
+    HardtanhBoundToPOTNetTest
+from tests.pytorch_tests.model_tests.feature_models.relu_replacement_test import SingleLayerReplacementTest, \
+    ReluReplacementTest, ReluReplacementWithAddBiasTest
+from tests.pytorch_tests.model_tests.feature_models.remove_assert_test import AssertNetTest
+from tests.pytorch_tests.model_tests.feature_models.remove_broken_node_test import BrokenNetTest
+from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import RemoveIdentityTest
+from tests.pytorch_tests.model_tests.feature_models.reshape_substitution_test import ReshapeSubstitutionTest
+from tests.pytorch_tests.model_tests.feature_models.residual_collapsing_test import ResidualCollapsingTest1, \
+    ResidualCollapsingTest2
 from tests.pytorch_tests.model_tests.feature_models.reuse_layer_net_test import ReuseLayerNetTest, \
     ReuseFunctionalLayerNetTest, ReuseModuleAndFunctionalLayersTest
+from tests.pytorch_tests.model_tests.feature_models.scalar_tensor_test import ScalarTensorTest
+from tests.pytorch_tests.model_tests.feature_models.scale_equalization_test import \
+    ScaleEqualizationWithZeroPadNetTest, ScaleEqualizationNetTest, \
+    ScaleEqualizationReluFuncNetTest, ScaleEqualizationReluFuncWithZeroPadNetTest, \
+    ScaleEqualizationConvTransposeWithZeroPadNetTest, ScaleEqualizationReluFuncConvTransposeWithZeroPadNetTest, \
+    ScaleEqualizationConvTransposeReluFuncNetTest
+from tests.pytorch_tests.model_tests.feature_models.scaled_dot_product_attention_test import \
+    ScaledDotProductAttentionTest
+from tests.pytorch_tests.model_tests.feature_models.second_moment_correction_test import ConvSecondMomentNetTest, \
+    ConvTSecondMomentNetTest, MultipleInputsConvSecondMomentNetTest, ValueSecondMomentTest
 from tests.pytorch_tests.model_tests.feature_models.shift_negative_activation_test import ShiftNegaviteActivationNetTest
 from tests.pytorch_tests.model_tests.feature_models.split_concat_net_test import SplitConcatNetTest
+from tests.pytorch_tests.model_tests.feature_models.symmetric_activation_test import SymmetricActivationTest
+from tests.pytorch_tests.model_tests.feature_models.test_softmax_shift import SoftmaxLayerNetTest, \
+    SoftmaxFunctionNetTest
 from tests.pytorch_tests.model_tests.feature_models.torch_tensor_attr_net_test import TorchTensorAttrNetTest
-from tests.pytorch_tests.model_tests.feature_models.bn_function_test import BNFNetTest
-from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccuracyTest, GPTQWeightsUpdateTest, \
-    GPTQLearnRateZeroTest
+from tests.pytorch_tests.model_tests.feature_models.tpc_test import TpcTest
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
-from tests.pytorch_tests.model_tests.feature_models.metadata_test import MetadataTest
-from tests.pytorch_tests.model_tests.feature_models.tpc_test import TpcTest
-from tests.pytorch_tests.model_tests.feature_models.const_representation_test import ConstRepresentationTest, \
-    ConstRepresentationMultiInputTest, ConstRepresentationLinearLayerTest, ConstRepresentationGetIndexTest, \
-    ConstRepresentationCodeTest
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from tests.pytorch_tests.model_tests.feature_models.const_quantization_test import ConstQuantizationTest, \
-    AdvancedConstQuantizationTest, ConstQuantizationMultiInputTest, ConstQuantizationExpandTest
-from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import RemoveIdentityTest
-from tests.pytorch_tests.model_tests.feature_models.activation_16bit_test import Activation16BitTest, \
-    Activation16BitMixedPrecisionTest
-from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
@@ -659,7 +659,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
     def test_gptq_with_sample_layer_attention(self):
         kwargs = dict(sample_layer_attention=True, loss=sample_layer_attention_loss,
                       hessian_weights=True, hessian_num_samples=None,
-                      estimator_distribution=HessianEstimationDistribution.RADEMACHER,
                       norm_scores=False, log_norm_weights=False, scaled_log_norm=False)
         GPTQAccuracyTest(self, **kwargs).run_test()
         GPTQAccuracyTest(self, hessian_batch_size=16, rounding_type=RoundingType.SoftQuantizer, **kwargs).run_test()

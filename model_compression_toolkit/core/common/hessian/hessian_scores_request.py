@@ -44,14 +44,6 @@ class HessianScoresGranularity(Enum):
     PER_TENSOR = 2
 
 
-class HessianEstimationDistribution(str, Enum):
-    """
-    Distribution for Hutchinson estimator random vector
-    """
-    GAUSSIAN = 'gaussian'
-    RADEMACHER = 'rademacher'
-
-
 @dataclasses.dataclass
 class HessianScoresRequest:
     """
@@ -68,15 +60,12 @@ class HessianScoresRequest:
             the computation. Can be None if all hessians for the request are expected to be pre-computed previously.
         n_samples: The number of samples to fetch hessian estimations for. If None, fetch hessians for a full pass
             of the data loader.
-        distribution: Distribution to use in Hutchinson estimation.
     """
     mode: HessianMode
     granularity: HessianScoresGranularity
     target_nodes: Sequence['BaseNode']
     data_loader: Optional[Iterable]
     n_samples: Optional[int]
-    # TODO remove
-    distribution: HessianEstimationDistribution = HessianEstimationDistribution.GAUSSIAN
 
     def __post_init__(self):
         if self.data_loader is None and self.n_samples is None:
@@ -85,4 +74,3 @@ class HessianScoresRequest:
     def clone(self, **kwargs):
         """ Create a clone with optional overrides """
         return dataclasses.replace(self, **kwargs)
-

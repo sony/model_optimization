@@ -192,8 +192,7 @@ class GPTQTrainer(ABC):
             granularity=granularity,
             target_nodes=self.compare_points,
             data_loader=data_loader,
-            n_samples=n_samples,
-            distribution=self.gptq_config.hessian_weights_config.estimator_distribution
+            n_samples=n_samples
         )
 
     @abstractmethod
