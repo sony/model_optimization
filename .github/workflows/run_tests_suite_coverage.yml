@@ -7,6 +7,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,34 +23,60 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: '3.10'
-      - name: Install dependencies
+
+      - name: Set up Coverage
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
           pip install coverage
-          pip install pytest
-      - name: Prepare TF env
-        run: pip install tensorflow==2.13.*
-      - name: Run tensorflow testsuite
-        run: coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" unittest tests/test_suite.py -v
-      - name: Run keras pytest
-        run: coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/keras
 
-      - name: Prepare Torch env
-        run: pip uninstall tensorflow -y && pip install torch==2.0.* torchvision onnx onnxruntime onnxruntime-extensions
+      - name: Set up TensorFlow environment
+        run: |
+          python -m venv tf_env
+          source tf_env/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install tensorflow==2.13.* coverage pytest
+
+      - name: Run TensorFlow testsuite
+        run: |
+          source tf_env/bin/activate 
+          coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" unittest tests/test_suite.py -v
+
+      - name: Run keras pytest
+        run: |
+          source tf_env/bin/activate
+          coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/keras
+
+      - name: Set up Pytorch environment
+        run: |
+          python -m venv torch_env
+          source torch_env/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install torch==2.0.* torchvision onnx onnxruntime onnxruntime-extensions coverage pytest
+
       - name: Run torch testsuite
-        run: coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" unittest tests/test_suite.py -v
+        run: |
+          source torch_env/bin/activate
+          coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" unittest tests/test_suite.py -v
+
       - name: Run torch pytest
-        run: coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/pytorch
+        run: |
+          source torch_env/bin/activate
+          coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/pytorch
+
       - name: Combine Multiple Coverage Files
         run: coverage combine
+
       - name: Run Coverage HTML
         run: coverage html -i --directory ./coverage_report_html
+
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
         with:
           name: code-coverage-report
           path: |
             coverage_report_html
+
       - name: Coverage Report
         run: coverage report -i --skip-covered --sort cover --fail-under $COVERAGE_THRESHOLD

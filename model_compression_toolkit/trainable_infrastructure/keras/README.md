@@ -2,7 +2,7 @@
 
 [`BaseKerasTrainableQuantizer`](base_keras_quantizer.py) is an interface that enables easy quantizers development and training. 
 Using this base class makes it simple to implement new quantizers for training and inference for weights or activations.
-[`BaseKerasTrainableQuantizer`](base_keras_quantizer.py) constitutes a base class for trainable quantizers of specific of specific tasks - currently, [`BaseKerasQATTrainableQuantizer`](../../qat/keras/quantizer/base_keras_qat_quantizer.py) for Quantization-Aware Training.
+[`BaseKerasTrainableQuantizer`](base_keras_quantizer.py) constitutes a base class for trainable quantizers of specific of specific tasks, such as QAT.
 
 ### The mark_quantizer Decorator
 
@@ -14,5 +14,5 @@ The [`@mark_quantizer`](https://github.com/sony/mct_quantizers/blob/main/mct_qua
 Note that the `@mark_quantizer` decorator, and the `QuantizationTarget` and `QuantizationMethod` enums are provided by the external [MCT Quantizers](https://github.com/sony/mct_quantizers/) package.
 
 ## Examples and Fully implementation quantizers
-For fully reference, check our QAT quantizers here:
-[QAT Quantizers](../../qat/keras/README.md)
+Examples of Trainable Activation quantizers can be found here [Activation Quantizers](./activation_quantizers) and Trainable Weight quantizers here
+[QAT Weight Quantizers](../../qat/keras/quantizer)
