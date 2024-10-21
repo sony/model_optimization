@@ -85,10 +85,10 @@ class KerasGPTQTrainer(GPTQTrainer):
         def _get_total_grad_steps():
             return get_total_grad_steps(representative_data_gen) * gptq_config.n_epochs
 
-        # must be set prior to model building in the base class constructor. TODO: why?
+        # This must be set before the model building (as it is required for activation holder construction),
+        # which occurs in the base constructor.
         self.gradual_act_quantizer_wrapper_factory = get_gradual_activation_quantizer_wrapper_factory(
             gptq_config, _get_total_grad_steps, KerasLinearAnnealingScheduler)
-
 
         super().__init__(graph_float,
                          graph_quant,
