@@ -126,12 +126,15 @@ class LFHImportanceMetric(BaseImportanceMetric):
 
         # Fetch and process Hessian scores for output channels of entry nodes.
         data_loader = self.fw_impl.convert_data_gen_to_dataloader(self.representative_data_gen, batch_size=1)
-        request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
-                                       granularity=HessianScoresGranularity.PER_OUTPUT_CHANNEL,
-                                       target_nodes=entry_nodes,
-                                       data_loader=data_loader,
-                                       n_samples=self.pruning_config.num_score_approximations)
-        nodes_scores = hessian_info_service.fetch_hessian(request)
+        nodes_scores = {}
+        for node in entry_nodes:
+            request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
+                                           granularity=HessianScoresGranularity.PER_OUTPUT_CHANNEL,
+                                           target_nodes=[node],
+                                           data_loader=data_loader,
+                                           n_samples=self.pruning_config.num_score_approximations)
+            node_scores = hessian_info_service.fetch_hessian(request)
+            nodes_scores.update(node_scores)
 
         # Average and map scores to nodes.
         self._entry_node_to_hessian_score = {node: np.mean(nodes_scores[node.name], axis=0).flatten() for node in entry_nodes}
