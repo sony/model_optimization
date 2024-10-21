@@ -44,7 +44,7 @@ jobs:
       
       - name: Run TensorFlow pytest
         run: |
-          source torch_env/bin/activate
+          source tf_env/bin/activate
           coverage run --parallel-mode -m --omit "*__init__.py" --include "model_compression_toolkit/**/*.py" pytest tests_pytest/keras
 
       - name: Set up Pytorch environment
