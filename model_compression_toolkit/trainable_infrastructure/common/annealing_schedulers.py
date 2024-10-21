@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from abc import abstractmethod
+
+
 class BaseLinearAnnealingScheduler:
     def __init__(self, t_start: int, t_end: int, initial_val: float, target_val: float):
         """
@@ -34,6 +37,7 @@ class BaseLinearAnnealingScheduler:
         self.initial_val = initial_val
         self.target_val = target_val
 
+    @abstractmethod
     def _compute_factor(self, t: int) -> float:
         """
         Abstract method to compute the annealing factor based on time step `t`.
