@@ -60,7 +60,7 @@ class MultipleActNodesModel(nn.Module):
 
 def representative_dataset():
     for _ in range(2):
-        yield [np.random.randn(2, 3, 8, 8).astype(np.float32)]
+        yield [np.random.randn(2, 3, 16, 16).astype(np.float32)]
 
 
 class BaseHessianServiceTest(BasePytorchTest):

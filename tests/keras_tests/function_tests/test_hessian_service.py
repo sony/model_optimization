@@ -55,7 +55,7 @@ def multiple_act_nodes_model(input_shape):
 def get_representative_dataset_fn(n_iters=10):
     def f():
         for _ in range(n_iters):
-            yield [np.random.randn(2, 8, 8, 3).astype(np.float32)]
+            yield [np.random.randn(2, 16, 16, 3).astype(np.float32)]
     return f
 
 
@@ -65,7 +65,7 @@ class TestHessianService(unittest.TestCase):
 
     def setUp(self):
 
-        input_shape = (8, 8, 3)
+        input_shape = (16, 16, 3)
         self.float_model = basic_model(input_shape)
         self.keras_impl = KerasImplementation()
         self.graph = prepare_graph_with_configs(self.float_model,
@@ -155,7 +155,7 @@ class TestHessianService(unittest.TestCase):
         self.assertEqual(hessian[node.name].shape[0], 0, "Expecting an empty Hessian scores list.")
 
     def test_fetch_multiple_nodes(self):
-        input_shape = (8, 8, 3)
+        input_shape = (16, 16, 3)
         self.float_model = multiple_act_nodes_model(input_shape)
         self.keras_impl = KerasImplementation()
         self.graph = prepare_graph_with_configs(self.float_model,

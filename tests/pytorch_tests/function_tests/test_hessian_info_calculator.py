@@ -56,7 +56,7 @@ class advanced_model(torch.nn.Module):
         self.conv2 = Conv2d(3, 3, kernel_size=3, stride=1, padding=1)
         self.bn2 = BatchNorm2d(3)
         self.relu2 = ReLU()
-        self.dense = Linear(8, 7)
+        self.dense = Linear(16, 7)
 
     def forward(self, inp):
         x = self.conv1(inp)
@@ -79,7 +79,7 @@ class multiple_outputs_model(torch.nn.Module):
         self.bn2 = BatchNorm2d(3)
         self.relu2 = ReLU()
         self.hswish = Hardswish()
-        self.dense = Linear(8, 7)
+        self.dense = Linear(16, 7)
 
     def forward(self, inp):
         x = self.conv1(inp)
@@ -145,7 +145,7 @@ class BaseHessianTraceBasicModelTest(BasePytorchTest):
         self.n_iters = n_iters
 
     def create_inputs_shape(self):
-        return [[self.val_batch_size, 3, 8, 8]]
+        return [[self.val_batch_size, 3, 16, 16]]
 
     @staticmethod
     def generate_inputs(input_shapes):

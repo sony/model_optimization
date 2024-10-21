@@ -102,7 +102,7 @@ def get_expected_shape(t_shape, granularity, node_type, num_scores):
 
 class TestHessianInfoCalculatorBase(unittest.TestCase):
 
-    def _setup(self, layer, input_shape=(1, 8, 8, 3)):
+    def _setup(self, layer, input_shape=(1, 16, 16, 3)):
         in_model = basic_model(input_shape, layer=layer)
         keras_impl = KerasImplementation()
         _repr_dataset = functools.partial(representative_dataset,
