@@ -16,11 +16,8 @@ from typing import Dict, List, Tuple
 
 from model_compression_toolkit.gptq import GradientPTQConfig
 from model_compression_toolkit.core import common
-from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
-    get_inferable_quantizer_kwargs
 from model_compression_toolkit.gptq.keras.quantizer.base_keras_gptq_quantizer import BaseKerasGPTQTrainableQuantizer
 from mct_quantizers import QuantizationTarget
-from mct_quantizers.common.get_quantizers import get_inferable_quantizer_class
 from mct_quantizers.keras.quantizers import BaseKerasInferableQuantizer
 
 from model_compression_toolkit.logger import Logger
@@ -79,7 +76,7 @@ def quantization_builder(n: common.BaseNode,
                                                         quantizer_base_class=BaseKerasActivationTrainableQuantizer)
         cfg = get_trainable_quantizer_activation_config(n, None)
 
-        # freeze_quant_params is True since in GPTQ the quantization parameters should not be trained (previously, we used inferable quantizers).
+        # freeze_quant_params is True since in GPTQ the activation quantization parameters should not be trained.
         activation_quantizers.append(quantizer_class(cfg, freeze_quant_params=True))
 
     return weights_quantizers, activation_quantizers
