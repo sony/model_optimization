@@ -42,9 +42,9 @@ class TestGradualActivationQuantization:
         qw = GradualActivationQuantizerWrapper(quantizer, q_fraction_scheduler=lambda t: t / (t + 1))
 
         y0, y1, y2 = [qw(x, training=True) for _ in range(3)]
-        np.testing.assert_array_almost_equal(y0.numpy(), x.numpy())  # t=0
-        np.testing.assert_allclose(y1.numpy(), 0.5 * x.numpy() + (1.5 * x.numpy() + 0.5), rtol=1e-5, atol=1e-8)  # t=1
-        np.testing.assert_allclose(y2.numpy(), x.numpy() / 3 + (2 * x.numpy() + 2 / 3), rtol=1e-5, atol=1e-8) # t=2
+        assert np.allclose(y0.numpy(), x.numpy())  # t=0
+        assert np.allclose(y1.numpy(), 0.5 * x.numpy() + (1.5 * x.numpy() + 0.5))  # t=1
+        assert np.allclose(y2.numpy(), x.numpy() / 3 + (2 * x.numpy() + 2 / 3)) # t=2
         assert quantizer.training is True
 
         _ = qw(x, training=False)
@@ -78,9 +78,9 @@ class TestGradualActivationQuantization:
 
         y = [quantizer_wrapper(x, training=True) for _ in range(exp_end_step + 1)]
 
-        np.testing.assert_allclose(y[9].numpy(), 0.7 * x.numpy() + 0.3 * quantizer(x, training=True).numpy(), rtol=1e-5, atol=1e-8)
-        np.testing.assert_allclose(y[10].numpy(), 0.7 * x.numpy() + 0.3 * quantizer(x, training=True).numpy(), rtol=1e-5, atol=1e-8)
-        np.testing.assert_allclose(y[-1].numpy(), 0.2 * x.numpy() + 0.8 * quantizer(x, training=True).numpy(), rtol=1e-5, atol=1e-8)
+        assert np.allclose(y[9].numpy(), 0.7 * x.numpy() + 0.3 * quantizer(x, training=True).numpy())
+        assert np.allclose(y[10].numpy(), 0.7 * x.numpy() + 0.3 * quantizer(x, training=True).numpy())
+        assert np.allclose(y[-1].numpy(), 0.2 * x.numpy() + 0.8 * quantizer(x, training=True).numpy())
 
     def test_factory_linear_common_case(self, x):
         # validate that we actually implemented the right thing - on first call float input, on last call fully quantized
@@ -89,8 +89,8 @@ class TestGradualActivationQuantization:
         )
         quantizer_wrapper, quantizer = self._run_factory_test(qdrop_cfg, lambda: 15)
         y0, *_, y_last = [quantizer_wrapper(x, training=True) for _ in range(16)]
-        np.testing.assert_array_almost_equal(y0.numpy(), x.numpy())
-        np.testing.assert_allclose(y_last.numpy(), quantizer(x, training=True).numpy())
+        assert np.array_equal(y0.numpy(), x.numpy())
+        assert np.allclose(y_last.numpy(), quantizer(x, training=True).numpy())
 
     def _run_factory_test(self, qdrop_cfg, get_grad_steps_fn):
         # Mocks are used to just pass anything
