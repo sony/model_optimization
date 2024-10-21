@@ -173,7 +173,7 @@ class FetchHessianNotEnoughSamplesThrowTest(BaseHessianServiceTest):
 
         with self.unit_test.assertRaises(Exception) as e:
             self.hessian_service.fetch_hessian(self.request)  # representative dataset produces 4 images total
-        self.unit_test.assertTrue('Not enough samples in the provided representative dataset' in str(e.exception))
+        self.unit_test.assertTrue('not enough samples in the provided representative dataset' in str(e.exception))
 
 
 class FetchHessianNotEnoughSamplesSmallBatchThrowTest(BaseHessianServiceTest):
@@ -202,7 +202,7 @@ class FetchHessianNotEnoughSamplesSmallBatchThrowTest(BaseHessianServiceTest):
         with self.unit_test.assertRaises(Exception) as e:
             self.hessian_service.fetch_hessian(self.request)  # representative dataset produces 4 images total
 
-        self.unit_test.assertTrue('Not enough samples in the provided representative dataset' in str(e.exception))
+        self.unit_test.assertTrue('not enough samples in the provided representative dataset' in str(e.exception))
 
 
 class FetchComputeBatchLargerThanReprBatchTest(BaseHessianServiceTest):

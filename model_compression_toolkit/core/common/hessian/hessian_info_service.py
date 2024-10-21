@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from dataclasses import dataclass
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Tuple, TYPE_CHECKING
 
 import numpy as np
 
@@ -21,10 +21,13 @@ from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.hessian.hessian_scores_request import HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
 
+if TYPE_CHECKING:    # pragma: no cover
+    from model_compression_toolkit.core.common import BaseNode
+
 
 # type hints aliases
 LayerName = str
-Tensor = Any
+Tensor = np.ndarray
 
 
 @dataclass(eq=True, frozen=True)
@@ -63,7 +66,7 @@ class HessianCache:
 
         return min(n_nodes_samples)
 
-    def fetch_hessians(self, request: HessianScoresRequest) -> Tuple[Dict[LayerName, Tensor], Dict[LayerName, int]]:
+    def fetch_hessian(self, request: HessianScoresRequest) -> Tuple[Dict[LayerName, Tensor], Dict[LayerName, int]]:
         """
         Fetch available hessians per request and identify missing samples.
 
@@ -133,6 +136,9 @@ class HessianInfoService:
                       force_compute: bool = False) -> Dict[LayerName, Tensor]:
         """
         Fetch hessians per request.
+        If 'force_compute' is False, will first try to retrieve previously cached hessians. If no or not enough
+        hessians are found in the cache, will compute the remaining number of hessians to fulfill the request.
+        If 'force_compute' is True, will compute the hessians (use when you need hessians for specific inputs).
 
         Args:
             request: request per which to fetch the hessians.
@@ -140,7 +146,7 @@ class HessianInfoService:
                            If False, will look for cached hessians first.
 
         Returns:
-            A dictionary or a list of layers' hessian tensors of shape (samples, ...). The exact shape depends on the
+            A dictionary of layers' hessian tensors of shape (samples, ...). The exact shape depends on the
             requested granularity.
         """
         if request.n_samples is None and not force_compute:
@@ -166,7 +172,7 @@ class HessianInfoService:
         """ Purge the cached hessians. """
         self.cache.clear()
 
-    def _fetch_hessians_with_compute(self, request: HessianScoresRequest, n_iterations: int):
+    def _fetch_hessians_with_compute(self, request: HessianScoresRequest, n_iterations: int) -> Dict[LayerName, Tensor]:
         """
         Fetch pre-computed hessians for the request if available. Otherwise, compute the missing hessians.
 
@@ -177,13 +183,14 @@ class HessianInfoService:
         Returns:
             A dictionary from layers (by name) to their hessians.
         """
-        res, missing = self.cache.fetch_hessians(request)
+        res, missing = self.cache.fetch_hessian(request)
         if not missing:
             return res
 
         if request.data_loader is None:
-            raise ValueError('Not enough hessians are cached to fulfill the request, but data loader was not passed '
-                             'for additional computation.')
+            raise ValueError(f'Not enough hessians are cached to fulfill the request, but data loader was not passed '
+                             f'for additional computation. Requested {request.n_samples}, '
+                             f'available {min(missing.values())}.')
 
         orig_request = request
         # if some hessians were found generate a new request only for missing nodes.
@@ -191,11 +198,12 @@ class HessianInfoService:
             target_nodes = [n for n in orig_request.target_nodes if n.name in missing]
             request = request.clone(target_nodes=target_nodes)
         self._compute_hessians(request, n_iterations, count_by_cache=True)
-        res, missing = self.cache.fetch_hessians(request)
+        res, missing = self.cache.fetch_hessian(request)
         assert not missing
         return res
 
-    def _compute_hessians(self, request: HessianScoresRequest, n_iterations: int, count_by_cache: bool):
+    def _compute_hessians(self, request: HessianScoresRequest,
+                          n_iterations: int, count_by_cache: bool) -> Dict[LayerName, Tensor]:
         """
         Computes hessian estimation per request.
 
@@ -235,7 +243,8 @@ class HessianInfoService:
 
         if request.n_samples:
             if n_samples < request.n_samples:
-                raise ValueError('Not enough samples in the provided representative dataset')
+                raise ValueError(f'Could not compute the requested number of Hessians ({request.n_samples}), '
+                                 f'not enough samples in the provided representative dataset.')
 
             if n_samples > request.n_samples:
                 hess_per_layer = {
@@ -246,7 +255,18 @@ class HessianInfoService:
     def _compute_hessian_for_batch(self,
                                    request: HessianScoresRequest,
                                    inputs_batch: List[Tensor],
-                                   n_iterations: int):
+                                   n_iterations: int) -> Dict[LayerName, Tensor]:
+        """
+        Use hessian score calculator to compute hessian approximations for a batch of inputs.
+
+        Args:
+            request: hessian estimation request.
+            inputs_batch: a batch of inputs to estimate hessians on.
+            n_iterations: the number of iterations for hessian estimation.
+
+        Returns:
+            A dictionary from layers (by name) to their hessians.
+        """
         fw_hessian_calculator = self.fw_impl.get_hessian_scores_calculator(
             graph=self.graph,
             input_images=inputs_batch,

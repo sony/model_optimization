@@ -113,7 +113,7 @@ class TestHessianService(unittest.TestCase):
         with self.assertRaises(Exception) as e:
             self.hessian_service.fetch_hessian(request)  # representative dataset produces 4 images total
 
-        self.assertTrue('Not enough samples in the provided representative dataset' in str(e.exception))
+        self.assertTrue('not enough samples in the provided representative dataset' in str(e.exception))
 
     def test_fetch_not_enough_samples_small_batch_throw(self):
         request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
@@ -125,7 +125,7 @@ class TestHessianService(unittest.TestCase):
         with self.assertRaises(Exception) as e:
             hessian = self.hessian_service.fetch_hessian(request)  # representative dataset produces 4 images total
 
-        self.assertTrue('Not enough samples in the provided representative dataset' in str(e.exception))
+        self.assertTrue('not enough samples in the provided representative dataset' in str(e.exception))
 
     def test_fetch_compute_batch_larger_than_repr_batch(self):
         node = list(self.graph.get_topo_sorted_nodes())[0]

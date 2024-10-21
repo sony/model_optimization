@@ -386,7 +386,8 @@ def _compute_hessian_for_hmse(node,
         node: The node to compute Hessian-based scores for.
         hessian_info_service: HessianInfoService object for retrieving Hessian-based scores.
         num_hessian_samples: Number of samples to approximate Hessian-based scores on.
-        dataloader: Data loader for computing Hessian-based scores. Can be None if hessians are expected to be available.
+        dataloader: Data loader for computing Hessian-based scores. Can be None if hessians are expected to be
+          available, i.e. have been already computed previously.
 
     Returns: A list with computed Hessian-based scores tensors for the given node.
 

@@ -75,6 +75,7 @@ class HessianScoresRequest:
     target_nodes: Sequence['BaseNode']
     data_loader: Optional[Iterable]
     n_samples: Optional[int]
+    # TODO remove
     distribution: HessianEstimationDistribution = HessianEstimationDistribution.GAUSSIAN
 
     def __post_init__(self):

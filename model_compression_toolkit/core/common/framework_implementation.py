@@ -457,4 +457,14 @@ class FrameworkImplementation(ABC):
     
     @staticmethod
     def convert_data_gen_to_dataloader(data_gen_fn: Callable[[], Generator], batch_size: int):
+        """
+        Create DataLoader based on samples yielded by data_gen.
+
+        Args:
+            data_gen_fn: data generator factory.
+            batch_size: target batch size.
+
+        Returns:
+            Framework dataloader.
+        """
         raise NotImplementedError()    # pragma: no cover

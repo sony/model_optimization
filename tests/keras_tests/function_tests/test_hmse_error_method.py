@@ -116,7 +116,8 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                                             target_nodes=[node])
             # check hessians have been precomputed (dataloader=None fetches from cache)
             hess = self.his.fetch_hessian(expected_hessian_request)
-            self.assertTrue(hess[node.name].shape[0] == 1)
+            self.assertTrue(hess[node.name].shape[0] == 1), ('Expected 1 hessian to be fetched from cache '
+                                                             '(with None dataloader)')
 
         _run_node_verification(layers.Conv2D)
         _run_node_verification(layers.Dense)
