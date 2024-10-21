@@ -176,18 +176,21 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
         if self.gptq_config.use_hessian_based_weights:
             hess_dataloader = DataLoader(dataset, batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size)
-            loss_weights = self.compute_hessian_based_weights(hess_dataloader)
+            loss_weights = torch.from_numpy(self.compute_hessian_based_weights(hess_dataloader))
         else:
             loss_weights = torch.ones(num_nodes) / num_nodes
 
-        train_dataset = IterableSampleWithConstInfoDataset(dataset, to_torch_tensor(loss_weights))
+        train_dataset = IterableSampleWithConstInfoDataset(dataset, loss_weights)
 
-        reg_weights = to_torch_tensor(torch.ones(num_nodes))
+        reg_weights = torch.ones(num_nodes)
         # use collate to add a single value to each batch
         collate_fn = get_collate_fn_with_extra_outputs(reg_weights)
 
+        # NOTE: Don't just increase num_workers! With iterable dataset each worker fetches a full pass, so having
+        # more workers will result in multiple passes within the same epoch. Special handling is needed either
+        # in dataset or in worker_init_fn passed to dataloader, and it might not speed anything up anyway.
         return DataLoader(train_dataset, batch_size=dataset.orig_batch_size,
-                          collate_fn=collate_fn)
+                          collate_fn=collate_fn, num_workers=1)
 
     def _is_gptq_weights_trainable(self,
                                    node: BaseNode) -> bool:
@@ -339,7 +342,8 @@ class PytorchGPTQTrainer(GPTQTrainer):
         with tqdm(range(n_epochs), "Running GPTQ optimization") as epochs_pbar:
             for _ in epochs_pbar:
                 with tqdm(self.train_dataloader, position=1, leave=False) as data_pbar:
-                    for data, loss_weight, reg_weight in data_pbar:
+                    for sample in data_pbar:
+                        data, loss_weight, reg_weight = to_torch_tensor(sample)
                         input_data = [d * self.input_scale for d in data]
                         input_tensor = to_torch_tensor(input_data)
                         y_float = self.float_model(input_tensor)  # running float model

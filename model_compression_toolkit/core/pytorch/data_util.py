@@ -14,9 +14,8 @@
 # ==============================================================================
 from typing import Generator, Callable, Sequence, Any
 
+import torch
 from torch.utils.data import IterableDataset, Dataset, DataLoader, default_collate
-
-from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 
 
 def flat_gen_fn(data_gen_fn: Callable[[], Generator]):
@@ -32,7 +31,8 @@ def flat_gen_fn(data_gen_fn: Callable[[], Generator]):
     def gen():
         for inputs_batch in data_gen_fn():
             for sample in zip(*inputs_batch):
-                yield to_torch_tensor(list(sample))
+                # convert to torch tensor but do not move to device yet (it will cause issues with num_workers > 0)
+                yield [torch.as_tensor(s) for s in sample]
     return gen
 
 
@@ -91,7 +91,9 @@ class FixedDatasetFromGenerator(Dataset):
 
         samples = []
         for batch in data_gen_fn():
-            samples.extend(zip(*to_torch_tensor(batch)))
+            # convert to torch tensor but do not move to device yet (it will cause issues with num_workers > 0)
+            batch = [torch.as_tensor(t) for t in batch]
+            samples.extend(zip(*batch))
             if n_samples is not None and len(samples) >= n_samples:
                 samples = samples[:n_samples]
                 break
