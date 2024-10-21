@@ -16,7 +16,7 @@ from functools import partial
 from typing import Callable, Any
 
 from model_compression_toolkit.gptq import GradientPTQConfig, QFractionLinearAnnealingConfig
-
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 
 
 def get_gradual_activation_quantizer_wrapper_factory(gptq_config: GradientPTQConfig,
@@ -64,7 +64,7 @@ class GradualActivationQuantizerWrapper:
         quantizer: quantizer to wrap.
         q_fraction_scheduler: a callable that accepts a gradient step and returns the corresponding quantized fraction.
     """
-    def __init__(self, quantizer, q_fraction_scheduler: Callable[[int], float]):
+    def __init__(self, quantizer: BaseTrainableQuantizer, q_fraction_scheduler: Callable[[int], float]):
         self.quantizer = quantizer
         self.q_fraction_scheduler = q_fraction_scheduler
         self.step_cnt = 0
