@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from copy import deepcopy
-from typing import Tuple, Callable, List
+from typing import Tuple, Callable, List, Iterable, Optional
 import numpy as np
 import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianScoresGranularity, \
@@ -377,7 +377,8 @@ def _get_sliced_histogram(bins: np.ndarray,
 
 def _compute_hessian_for_hmse(node,
                               hessian_info_service: HessianInfoService,
-                              num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES) -> List[List[np.ndarray]]:
+                              num_hessian_samples: int,
+                              dataloader: Optional[Iterable]) -> List[List[np.ndarray]]:
     """
     Compute and retrieve Hessian-based scores for using during HMSE error computation.
 
@@ -385,15 +386,18 @@ def _compute_hessian_for_hmse(node,
         node: The node to compute Hessian-based scores for.
         hessian_info_service: HessianInfoService object for retrieving Hessian-based scores.
         num_hessian_samples: Number of samples to approximate Hessian-based scores on.
+        dataloader: Data loader for computing Hessian-based scores. Can be None if hessians are expected to be
+          available, i.e. have been already computed previously.
 
     Returns: A list with computed Hessian-based scores tensors for the given node.
 
     """
     _request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
                                     granularity=HessianScoresGranularity.PER_ELEMENT,
+                                    data_loader=dataloader,
+                                    n_samples=num_hessian_samples,
                                     target_nodes=[node])
-    _scores_for_node = hessian_info_service.fetch_hessian(_request,
-                                                          required_size=num_hessian_samples)
+    _scores_for_node = hessian_info_service.fetch_hessian(_request)
 
     return _scores_for_node
 
@@ -476,11 +480,11 @@ def get_threshold_selection_tensor_error_function(quantization_method: Quantizat
                                                                           per_channel=True)
 
     if quant_error_method == qc.QuantizationErrorMethod.HMSE:
-        node_hessian_scores = _compute_hessian_for_hmse(node, hessian_info_service, num_hessian_samples)
+        node_hessian_scores = _compute_hessian_for_hmse(node, hessian_info_service, num_hessian_samples, None)
         if len(node_hessian_scores) != 1:
             Logger.critical(f"Expecting single node Hessian score request to return a list of length 1, but got a list "
                             f"of length {len(node_hessian_scores)}.")
-        node_hessian_scores = np.sqrt(np.mean(node_hessian_scores[0], axis=0))
+        node_hessian_scores = np.sqrt(np.mean(node_hessian_scores[node.name], axis=0))
 
         return lambda x, y, threshold: _hmse_error_function_wrapper(x, y, norm=norm, axis=axis,
                                                                     hessian_scores=node_hessian_scores)

@@ -238,22 +238,20 @@ class SensitivityEvaluation:
         """
         # Create a request for Hessian approximation scores with specific configurations
         # (here we use per-tensor approximation of the Hessian's trace w.r.t the node's activations)
+        fw_dataloader = self.fw_impl.convert_data_gen_to_dataloader(self.representative_data_gen,
+                                                                    batch_size=self.quant_config.hessian_batch_size)
         hessian_info_request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                                     granularity=HessianScoresGranularity.PER_TENSOR,
-                                                    target_nodes=self.interest_points)
+                                                    target_nodes=self.interest_points,
+                                                    data_loader=fw_dataloader,
+                                                    n_samples=self.quant_config.num_of_images)
 
         # Fetch the Hessian approximation scores for the current interest point
-        nodes_approximations = self.hessian_info_service.fetch_hessian(hessian_scores_request=hessian_info_request,
-                                                                       required_size=self.quant_config.num_of_images,
-                                                                       batch_size=self.quant_config.hessian_batch_size)
-
-        # Store the approximations for each node for each image
-        approx_by_image = [[nodes_approximations[j][image_idx]
-                            for j, _ in enumerate(self.interest_points)]
-                           for image_idx in range(self.quant_config.num_of_images)]
+        nodes_approximations = self.hessian_info_service.fetch_hessian(request=hessian_info_request)
+        approx_by_image = np.stack([nodes_approximations[n.name] for n in self.interest_points], axis=1)    # samples X nodes
 
         # Return the mean approximation value across all images for each interest point
-        return np.mean(np.stack(approx_by_image), axis=0)
+        return np.mean(approx_by_image, axis=0)
 
     def _configure_bitwidths_model(self,
                                    mp_model_configuration: List[int],

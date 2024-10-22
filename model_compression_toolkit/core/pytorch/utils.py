@@ -15,7 +15,7 @@
 import torch
 from torch import Tensor
 import numpy as np
-from typing import Union
+from typing import Union, Sequence, Optional, List, Tuple
 
 from model_compression_toolkit.core.pytorch.constants import MAX_FLOAT16, MIN_FLOAT16
 from model_compression_toolkit.core.pytorch.pytorch_device_config import get_working_device
@@ -41,30 +41,33 @@ def set_model(model: torch.nn.Module, train_mode: bool = False):
     model.to(device)
 
 
-def to_torch_tensor(tensor,
-                    numpy_type=np.float32):
+def to_torch_tensor(data,
+                    dtype: Optional = torch.float32) -> Union[Tensor, List[Tensor], Tuple[Tensor]]:
+    # TODO it would make more sense to keep the original type by default but it will break lots of existing calls
+    # that count on implicit convertion
     """
-    Convert a Numpy array to a Torch tensor.
+    Convert data to Torch tensors and move to the working device.
+    Data can be numpy or torch tensor, a scalar, or a list or a tuple of such data. In the latter case only the inner
+    data is converted.
+
     Args:
-        tensor: Numpy array.
-        numpy_type: The desired data type for the tensor. Default is np.float32.
+        data: Input data
+        dtype: The desired data type for the tensor. Pass None to keep the type of the input data.
 
     Returns:
-        Torch tensor converted from the input Numpy array.
+        Torch tensor
     """
+
     working_device = get_working_device()
-    if isinstance(tensor, torch.Tensor):
-        return tensor.to(working_device)
-    elif isinstance(tensor, list):
-        return [to_torch_tensor(t) for t in tensor]
-    elif isinstance(tensor, tuple):
-        return (to_torch_tensor(t) for t in tensor)
-    elif isinstance(tensor, np.ndarray):
-        return torch.from_numpy(tensor.astype(numpy_type)).to(working_device)
-    elif isinstance(tensor, (int, float)):
-        return torch.from_numpy(np.array(tensor).astype(numpy_type)).to(working_device)
-    else:
-        Logger.critical(f'Unsupported type for conversion to Torch.tensor: {type(tensor)}.')
+
+    if isinstance(data, list):
+        return [to_torch_tensor(t, dtype) for t in data]
+
+    if isinstance(data, tuple):
+        return tuple(to_torch_tensor(t, dtype) for t in data)
+
+    kwargs = {} if dtype is None else {'dtype': dtype}
+    return torch.as_tensor(data, device=working_device, **kwargs)
 
 
 def torch_tensor_to_numpy(tensor: Union[torch.Tensor, list, tuple]) -> Union[np.ndarray, list, tuple]:

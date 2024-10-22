@@ -24,6 +24,7 @@ from model_compression_toolkit.core.common.hessian import HessianInfoService
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
+from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.common.gradual_activation_quantization import \
     get_gradual_activation_quantizer_wrapper_factory
@@ -95,6 +96,7 @@ class KerasGPTQTrainer(GPTQTrainer):
                          gptq_config,
                          fw_impl,
                          fw_info,
+                         representative_data_gen_fn=representative_data_gen,
                          hessian_info_service=hessian_info_service)
 
         self.loss_list = []
@@ -128,12 +130,22 @@ class KerasGPTQTrainer(GPTQTrainer):
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
-        self.weights_for_average_loss = self.compute_hessian_based_weights()
+        self.weights_for_average_loss = self._get_compare_points_loss_weights()
 
         self.reg_func = get_regularization(self.gptq_config,
                                            _get_total_grad_steps,
                                            SoftQuantizerRegularization,
                                            KerasLinearAnnealingScheduler)
+
+    def _get_compare_points_loss_weights(self):
+        """ Get compare points weights for the distillation loss. """
+        if self.gptq_config.use_hessian_based_weights:
+            hess_dataloader = data_gen_to_dataloader(self.representative_data_gen_fn,
+                                                     batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size)
+            return self.compute_hessian_based_weights(hess_dataloader)
+
+        num_nodes = len(self.compare_points)
+        return np.ones((num_nodes,)) / num_nodes
 
     def _is_gptq_weights_trainable(self,
                                    node: common.BaseNode) -> bool:
@@ -257,11 +269,9 @@ class KerasGPTQTrainer(GPTQTrainer):
             i += len(p)
         return loss_value, res
 
-    def train(self, representative_data_gen: Callable):
+    def train(self):
         """
         Train the quantized model using GPTQ training process in Keras framework
-        Args:
-            representative_data_gen: Dataset to use for inputs of the models.
         """
         compute_gradients = self.compute_gradients
 
@@ -269,7 +279,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         # Training loop
         # ----------------------------------------------
         if self.has_params_to_train:
-            self.micro_training_loop(representative_data_gen,
+            self.micro_training_loop(self.representative_data_gen_fn,
                                      compute_gradients,
                                      self.optimizer_with_param,
                                      self.gptq_config.n_epochs,

@@ -21,7 +21,7 @@ from tensorflow.keras import layers
 import model_compression_toolkit as mct
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core import QuantizationConfig
-from model_compression_toolkit.constants import THRESHOLD, RANGE_MAX
+from model_compression_toolkit.constants import THRESHOLD, RANGE_MAX, NUM_QPARAM_HESSIAN_SAMPLES
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
 from model_compression_toolkit.core.common.model_collector import ModelCollector
@@ -89,8 +89,7 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                                 running_gptq=running_gptq  # to enable HMSE in params calculation if needed
                                                 )
 
-        self.his = HessianInfoService(graph=self.graph, representative_dataset_gen=representative_dataset,
-                                      fw_impl=self.keras_impl)
+        self.his = HessianInfoService(graph=self.graph, fw_impl=self.keras_impl)
 
         mi = ModelCollector(self.graph,
                             fw_impl=self.keras_impl,
@@ -110,14 +109,15 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                 node.candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(KERNEL))
             self.assertTrue(kernel_attr_qparams.weights_quantization_params.get(param_name) is not None,
                             f"Expecting {node_type} node parameters {param_name} to be initialized.")
-
             expected_hessian_request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
                                                             granularity=HessianScoresGranularity.PER_ELEMENT,
+                                                            data_loader=None,
+                                                            n_samples=1,
                                                             target_nodes=[node])
-
-            self.assertTrue(self.his.count_saved_scores_of_request(expected_hessian_request)[node] > 0,
-                            f"No Hessian-based scores were computed for node {node}, "
-                            "but expected parameters selection to run with HMSE.")
+            # check hessians have been precomputed (dataloader=None fetches from cache)
+            hess = self.his.fetch_hessian(expected_hessian_request)
+            self.assertTrue(hess[node.name].shape[0] == 1), ('Expected 1 hessian to be fetched from cache '
+                                                             '(with None dataloader)')
 
         _run_node_verification(layers.Conv2D)
         _run_node_verification(layers.Dense)
@@ -125,37 +125,43 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
     def test_pot_threshold_selection_hmse_per_channel(self):
 
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO, per_channel=True)
-        calculate_quantization_params(self.graph, hessian_info_service=self.his, num_hessian_samples=1)
+        calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
+                                      hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(THRESHOLD)
 
     def test_pot_threshold_selection_hmse_per_tensor(self):
 
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO, per_channel=False)
-        calculate_quantization_params(self.graph, hessian_info_service=self.his, num_hessian_samples=1)
+        calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
+                                      hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(THRESHOLD)
 
     def test_symmetric_threshold_selection_hmse_per_channel(self):
 
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.SYMMETRIC, per_channel=True)
-        calculate_quantization_params(self.graph, hessian_info_service=self.his, num_hessian_samples=1)
+        calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
+                                      hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(THRESHOLD)
 
     def test_symmetric_threshold_selection_hmse_per_tensor(self):
 
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.SYMMETRIC, per_channel=False)
-        calculate_quantization_params(self.graph, hessian_info_service=self.his, num_hessian_samples=1)
+        calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
+                                      hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(THRESHOLD)
 
     def test_usniform_threshold_selection_hmse_per_channel(self):
 
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.UNIFORM, per_channel=True)
-        calculate_quantization_params(self.graph, hessian_info_service=self.his, num_hessian_samples=1)
+        calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
+                                      hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(RANGE_MAX)
 
     def test_uniform_threshold_selection_hmse_per_tensor(self):
 
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.UNIFORM, per_channel=False)
-        calculate_quantization_params(self.graph, hessian_info_service=self.his, num_hessian_samples=1)
+        calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
+                                      hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(RANGE_MAX)
 
     def test_threshold_selection_hmse_no_gptq(self):
@@ -177,7 +183,8 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
         _verify_node_default_mse_error(layers.Conv2D)
         _verify_node_default_mse_error(layers.Dense)
 
-        calculate_quantization_params(self.graph, hessian_info_service=self.his, num_hessian_samples=1)
+        calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
+                                      hessian_info_service=self.his, num_hessian_samples=1)
 
         def _verify_node_no_hessian_computed(node_type):
             node = [n for n in self.graph.nodes if n.type == node_type]
@@ -186,15 +193,16 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
 
             expected_hessian_request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
                                                             granularity=HessianScoresGranularity.PER_ELEMENT,
-                                                            target_node=node)
+                                                            data_loader=None,
+                                                            n_samples=1,
+                                                            target_nodes=[node])
 
-            self.assertTrue(self.his.count_saved_scores_of_request(expected_hessian_request) == 0,
-                            f"Hessian-based scores were computed for node {node}, "
-                            "but expected parameters selection to run with MSE without computing Hessians.")
+            with self.assertRaises(ValueError, msg='Not enough hessians are cached to fulfill the request') as e:
+                self.his.fetch_hessian(expected_hessian_request)
 
-            # verifying that no Hessian scores were computed
-            _verify_node_no_hessian_computed(layers.Conv2D)
-            _verify_node_no_hessian_computed(layers.Dense)
+        # verifying that no Hessian scores were computed
+        _verify_node_no_hessian_computed(layers.Conv2D)
+        _verify_node_no_hessian_computed(layers.Dense)
 
     def test_threshold_selection_hmse_no_kernel_attr(self):
         def _generate_bn_quantization_tpc(quant_method, per_channel):
@@ -232,7 +240,8 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
 
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.SYMMETRIC, per_channel=True,
                               tpc_fn=_generate_bn_quantization_tpc, model_gen_fn=no_bn_fusion_model_gen)
-        calculate_quantization_params(self.graph, hessian_info_service=self.his, num_hessian_samples=1)
+        calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
+                                      hessian_info_service=self.his, num_hessian_samples=1)
 
         # Verify Conv and Dense layers used HMSE
         self._verify_params_calculation_execution(THRESHOLD)
@@ -245,11 +254,12 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
 
         expected_hessian_request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
                                                         granularity=HessianScoresGranularity.PER_ELEMENT,
+                                                        data_loader=None,
+                                                        n_samples=1,
                                                         target_nodes=[node])
 
-        self.assertTrue(self.his.count_saved_scores_of_request(expected_hessian_request)[node] == 0,
-                        f"Hessian-based scores were computed for node {node}, "
-                        "but expected parameters selection to run with MSE without computing Hessians.")
+        with self.assertRaises(ValueError, msg='Not enough hessians are cached to fulfill the request') as e:
+            self.his.fetch_hessian(expected_hessian_request)
 
 
 if __name__ == '__main__':

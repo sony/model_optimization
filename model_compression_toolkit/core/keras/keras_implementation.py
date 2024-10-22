@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 from functools import partial
-from typing import List, Any, Tuple, Callable, Dict, Union
+from typing import List, Any, Tuple, Callable, Dict, Union, Generator
 
 import numpy as np
 import tensorflow as tf
@@ -23,6 +23,7 @@ from tensorflow.keras.models import Model
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianMode, HessianInfoService
+from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remove_identity import RemoveIdentity
 from model_compression_toolkit.core.keras.hessian.activation_hessian_scores_calculator_keras import \
     ActivationHessianScoresCalculatorKeras
@@ -628,3 +629,8 @@ class KerasImplementation(FrameworkImplementation):
                                         get_weights_quantizer_for_node,
                                         get_activations_quantizer_for_node,
                                         attribute_names)
+
+    @staticmethod
+    def convert_data_gen_to_dataloader(data_gen_fn: Callable[[], Generator], batch_size: int):
+        """ Create DataLoader based on samples yielded by data_gen. """
+        return data_gen_to_dataloader(data_gen_fn, batch_size=batch_size)

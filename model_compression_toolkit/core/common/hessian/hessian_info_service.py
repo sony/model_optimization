@@ -12,19 +12,94 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import hashlib
+from dataclasses import dataclass
+from typing import List, Dict, Tuple, TYPE_CHECKING
 
 import numpy as np
-from functools import partial
-from tqdm import tqdm
-from typing import Callable, List, Dict, Any, Tuple, TYPE_CHECKING
 
 from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core.common.hessian.hessian_scores_request import HessianScoresRequest, \
-    HessianScoresGranularity, HessianMode
-from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.core.common.hessian.hessian_scores_request import HessianScoresRequest, HessianMode, \
+    HessianScoresGranularity
+
 if TYPE_CHECKING:    # pragma: no cover
     from model_compression_toolkit.core.common import BaseNode
+
+
+# type hints aliases
+LayerName = str
+Tensor = np.ndarray
+
+
+@dataclass(eq=True, frozen=True)
+class Query:
+    """ Query key for hessians cache. """
+    mode: HessianMode
+    granularity: HessianScoresGranularity
+    node: LayerName
+
+
+class HessianCache:
+    """ Hessian cache """
+    def __init__(self):
+        self._data: Dict[Query, Tensor] = {}
+
+    def update(self, layers_hessians: Dict[str, np.ndarray], request: HessianScoresRequest) -> int:
+        """
+        Updates the cache with new hessians estimations.
+
+        Args:
+            layers_hessians: a dictionary from layer names to their hessian score tensors.
+            request: request per which hessians were computed.
+
+        Returns:
+            Minimal samples count after update (among updated layers).
+
+        """
+        assert set(layers_hessians.keys()) == set(n.name for n in request.target_nodes)
+        n_nodes_samples = []   # samples count per node after update
+        for node_name, hess in layers_hessians.items():
+            query = Query(request.mode, request.granularity, node_name)
+            saved_hess = self._data.get(query)
+            new_hess = hess if saved_hess is None else np.unique(np.concatenate([saved_hess, hess], axis=0), axis=0)
+            self._data[query] = new_hess
+            n_nodes_samples.append(new_hess.shape[0])
+
+        return min(n_nodes_samples)
+
+    def fetch_hessian(self, request: HessianScoresRequest) -> Tuple[Dict[LayerName, Tensor], Dict[LayerName, int]]:
+        """
+        Fetch available hessians per request and identify missing samples.
+
+        Note: if fewer samples are available than requested, hessians tensor will contain the available samples.
+
+        Args:
+            request: hessians fetch request.
+
+        Returns:
+            A tuple of two dictionaries:
+            - A dictionary from layer name to a tensor of its hessian.
+            - A dictionary from layer name to a number of missing samples.
+        """
+        assert request.n_samples is not None
+
+        result = {}
+        missing = {}
+        for node in request.target_nodes:
+            query = Query(request.mode, request.granularity, node.name)
+            hess = self._data.get(query)
+            if hess is None:
+                missing[node.name] = request.n_samples
+                continue
+            n_missing = request.n_samples - hess.shape[0]
+            if n_missing > 0:
+                missing[node.name] = n_missing
+            result[node.name] = hess[:request.n_samples, ...]
+
+        return result, missing
+
+    def clear(self):
+        """ Clear the cache. """
+        self._data.clear()
 
 
 class HessianInfoService:
@@ -44,411 +119,181 @@ class HessianInfoService:
 
     def __init__(self,
                  graph,
-                 representative_dataset_gen: Callable,
                  fw_impl,
                  num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
         """
-
         Args:
             graph: Float graph.
-            representative_dataset_gen: A callable that provides a dataset for sampling.
             fw_impl: Framework-specific implementation for Hessian approximation scores computation.
+            num_iterations_for_approximation: the number of iterations for hessian estimation.
         """
         self.graph = graph
-
-        self.representative_dataset_gen = representative_dataset_gen
-
         self.fw_impl = fw_impl
         self.num_iterations_for_approximation = num_iterations_for_approximation
+        self.cache = HessianCache()
 
-        self.hessian_scores_request_to_scores_list = {}
-
-    def _sample_batch_representative_dataset(self,
-                                             representative_dataset: Any,
-                                             num_hessian_samples: int,
-                                             num_inputs: int,
-                                             last_iter_remain_samples: List[List[np.ndarray]] = None
-                                             ) -> Tuple[List[np.ndarray], List[List[np.ndarray]]]:
+    def fetch_hessian(self, request: HessianScoresRequest,
+                      force_compute: bool = False) -> Dict[LayerName, Tensor]:
         """
-        Get a batch of samples from a representative dataset with the requested num_hessian_samples.
+        Fetch hessians per request.
+        If 'force_compute' is False, will first try to retrieve previously cached hessians. If no or not enough
+        hessians are found in the cache, will compute the remaining number of hessians to fulfill the request.
+        If 'force_compute' is True, will compute the hessians (use when you need hessians for specific inputs).
 
         Args:
-            representative_dataset: A generator which yields batches of input samples.
-            num_hessian_samples: Number of requested samples to compute batch Hessian approximation scores.
-            num_inputs: Number of input layers of the model on which the scores are computed.
-            last_iter_remain_samples: A list of input samples (for each input layer) with remaining samples from
-            previous iterations.
-
-        Returns: A tuple with two lists:
-            (1) A list of inputs - a tensor of the requested batch size for each input layer.
-            (2) A list of remaining samples - for each input layer.
-        """
-
-        if num_inputs < 0:  # pragma: no cover
-            Logger.critical(f"Number of images to compute Hessian approximation must be positive, "
-                            f"but given {num_inputs}.")
-
-        all_inp_hessian_samples = [[] for _ in range(num_inputs)]
-        all_inp_remaining_samples = [[] for _ in range(num_inputs)]
-
-        # Collect the requested number of samples from the representative dataset
-        # In case there are samples left from previous iterations, we use them first
-        # otherwise, we take a batch from the representative dataset generator
-        while len(all_inp_hessian_samples[0]) < num_hessian_samples:
-            batch = None
-            sampling_from_repr = True
-            if last_iter_remain_samples is not None and len(last_iter_remain_samples[0]) >= num_hessian_samples:
-                batch = last_iter_remain_samples
-                sampling_from_repr = False
-            else:
-                try:
-                    batch = next(representative_dataset)
-                except StopIteration:
-                    Logger.critical(
-                        f"Not enough samples in the provided representative dataset to compute Hessian approximation on "
-                        f"{num_hessian_samples} samples.")
-
-            if batch is not None and not isinstance(batch, list):
-                Logger.critical(f'Expected batch to be a list; found type: {type(batch)}.')  # pragma: no cover
-
-            for inp_idx in range(len(batch)):
-                inp_batch = batch[inp_idx] if sampling_from_repr else np.stack(batch[inp_idx], axis=0)
-                if not sampling_from_repr:
-                    last_iter_remain_samples[inp_idx] = []
-
-                # Compute number of missing samples to get to the requested amount from the current batch
-                num_missing = min(num_hessian_samples - len(all_inp_hessian_samples[inp_idx]), inp_batch.shape[0])
-
-                # Append each sample separately
-                samples = [s for s in inp_batch[0:num_missing, ...]]
-                remaining_samples = [s for s in inp_batch[num_missing:, ...]]
-
-                all_inp_hessian_samples[inp_idx] += [sample.reshape(1, *sample.shape) for sample in samples]
-
-                # This list can only get filled on the last batch iteration
-                all_inp_remaining_samples[inp_idx] += remaining_samples
-
-            if len(all_inp_hessian_samples[0]) > num_hessian_samples:
-                Logger.critical(f"Requested {num_hessian_samples} samples for computing Hessian approximation but "
-                                f"{len(all_inp_hessian_samples[0])} were collected.")  # pragma: no cover
-
-        # Collected enough samples, constructing a dataset with the requested batch size
-        hessian_samples_for_input = []
-        for inp_samples in all_inp_hessian_samples:
-            inp_samples = np.concatenate(inp_samples, axis=0)
-            num_collected_samples = inp_samples.shape[0]
-            inp_samples = np.split(inp_samples,
-                                   num_collected_samples // min(num_collected_samples, num_hessian_samples))
-            hessian_samples_for_input.append(inp_samples[0])
-
-        return hessian_samples_for_input, all_inp_remaining_samples
-
-    def _clear_saved_hessian_info(self):
-        """Clears the saved info approximations."""
-        self.hessian_scores_request_to_scores_list={}
-
-    def count_saved_scores_of_request(self, hessian_request: HessianScoresRequest) -> Dict:
-        """
-        Counts the saved approximations of Hessian scores for a specific request.
-        If some approximations were computed for this request before, the amount of approximations (per image)
-        will be returned. If not, zero is returned.
-
-        Args:
-            hessian_request: The request configuration for which to count the saved data.
+            request: request per which to fetch the hessians.
+            force_compute: if True, will compute the hessians.
+                           If False, will look for cached hessians first.
 
         Returns:
-            Number of saved approximations for the given request.
+            A dictionary of layers' hessian tensors of shape (samples, ...). The exact shape depends on the
+            requested granularity.
         """
+        if request.n_samples is None and not force_compute:
+            raise ValueError('Number of samples can be None only when force_compute is True.')
 
-        per_node_counter = {}
+        orig_request = request
+        # replace reused nodes with primary nodes
+        # TODO need to check if there is a bug in reuse. While this is the same layer, the compare tensors and their
+        #  gradients are not. It seems that currently the same compare tensor of the primary node is used multiple times
+        target_nodes = [self._get_primary_node(n) for n in request.target_nodes]
+        request = request.clone(target_nodes=target_nodes)
 
-        for n in hessian_request.target_nodes:
-            if n.reuse:
-                # Reused nodes supposed to have been replaced with a reuse_group
-                # representing node before calling this method.
-                Logger.critical(f"Expecting the Hessian request to include only non-reused nodes at this point, "
-                                f"but found node {n.name} with 'reuse' status.")
-            # Check if the request for this node is in the saved info and store its count, otherwise store 0
-            per_node_counter[n] = len(self.hessian_scores_request_to_scores_list.get(hessian_request, []))
+        if force_compute:
+            res = self._compute_hessians(request, self.num_iterations_for_approximation, count_by_cache=False)
+        else:
+            res = self._fetch_hessians_with_compute(request, self.num_iterations_for_approximation)
 
-        return per_node_counter
+        # restore nodes from the original request
+        res = {n_orig.name: res[n.name] for n_orig, n in zip(orig_request.target_nodes, request.target_nodes)}
+        return res
 
-    def compute(self,
-                hessian_scores_request: HessianScoresRequest,
-                representative_dataset_gen,
-                num_hessian_samples: int,
-                last_iter_remain_samples: List[List[np.ndarray]] = None):
+    def clear_cache(self):
+        """ Purge the cached hessians. """
+        self.cache.clear()
+
+    def _fetch_hessians_with_compute(self, request: HessianScoresRequest, n_iterations: int) -> Dict[LayerName, Tensor]:
         """
-        Computes scores based on the Hessian matrix approximation according to the
-        provided request configuration and stores it in the cache.
+        Fetch pre-computed hessians for the request if available. Otherwise, compute the missing hessians.
 
         Args:
-            hessian_scores_request: Configuration for which to compute the approximation.
-            representative_dataset_gen: A callable that provides a dataset for sampling.
-            num_hessian_samples: Number of requested samples to compute batch Hessian approximation scores.
-            last_iter_remain_samples: A list of input samples (for each input layer) with remaining samples from
-            previous iterations.
-        """
-        Logger.debug(f"Computing Hessian-scores approximations for nodes {hessian_scores_request.target_nodes}.")
-
-        images, next_iter_remain_samples = representative_dataset_gen(num_hessian_samples=num_hessian_samples,
-                                                                      last_iter_remain_samples=last_iter_remain_samples)
-
-        # Compute and store the computed approximation in the saved info
-        topo_sorted_nodes_names = [x.name for x in self.graph.get_topo_sorted_nodes()]
-        hessian_scores_request.target_nodes.sort(key=lambda x: topo_sorted_nodes_names.index(x.name))
-
-        # Get the framework-specific calculator Hessian-approximation scores
-        fw_hessian_calculator = self.fw_impl.get_hessian_scores_calculator(graph=self.graph,
-                                                                           input_images=images,
-                                                                           hessian_scores_request=hessian_scores_request,
-                                                                           num_iterations_for_approximation=self.num_iterations_for_approximation)
-
-        hessian_scores = fw_hessian_calculator.compute()
-
-        for node, hessian in zip(hessian_scores_request.target_nodes, hessian_scores):
-            single_node_request = self._construct_single_node_request(hessian_scores_request.mode,
-                                                                      hessian_scores_request.granularity,
-                                                                      node)
-
-            # The hessian for each node is expected to be a tensor where the first axis represents the number of
-            # images in the batch on which the approximation was computed.
-            # We collect the results as a list of a result for images, which is combined across batches.
-            # After conversion, hessian_scores_request_to_scores_list for a request of a single node should be a list of
-            # results of all images, where each result is a tensor of the shape depending on the granularity.
-            if single_node_request in self.hessian_scores_request_to_scores_list:
-                self.hessian_scores_request_to_scores_list[single_node_request] += (
-                    self._convert_tensor_to_list_of_appx_results(hessian))
-            else:
-                self.hessian_scores_request_to_scores_list[single_node_request] = (
-                    self._convert_tensor_to_list_of_appx_results(hessian))
-
-        # In case that we are required to return a number of scores that is larger that the computation batch size
-        # and if in this case the computation batch size is smaller than the representative dataset batch size
-        # we need to carry over remaining samples from the last fetched batch to the next computation, otherwise,
-        # we might skip samples or remain without enough samples to complete the computations for the
-        # requested number of scores.
-        return next_iter_remain_samples if next_iter_remain_samples is not None and len(next_iter_remain_samples) > 0 \
-        and len(next_iter_remain_samples[0]) > 0 else None
-
-    def compute_trackable_per_sample_hessian(self,
-                                             hessian_scores_request: HessianScoresRequest,
-                                             inputs_batch: List[np.ndarray]) -> Dict[str, Dict['BaseNode', np.ndarray]]:
-        """
-        Compute hessian score per image hash. We compute the score directly for images rather than via data generator,
-        as data generator might yield different images each time, depending on how it was defined,
-
-        Args:
-            hessian_scores_request: hessian scores request
-            inputs_batch: a list containing a batch of inputs.
+            request: hessian estimation request.
+            n_iterations: the number of iterations for hessian estimation.
 
         Returns:
-            A dict of Hessian scores per image hash per layer {image hash: {layer: score}}
+            A dictionary from layers (by name) to their hessians.
         """
-        topo_sorted_nodes_names = [x.name for x in self.graph.get_topo_sorted_nodes()]
-        hessian_scores_request.target_nodes.sort(key=lambda x: topo_sorted_nodes_names.index(x.name))
+        res, missing = self.cache.fetch_hessian(request)
+        if not missing:
+            return res
 
-        hessian_score_by_image_hash = {}
+        if request.data_loader is None:
+            raise ValueError(f'Not enough hessians are cached to fulfill the request, but data loader was not passed '
+                             f'for additional computation. Requested {request.n_samples}, '
+                             f'available {min(missing.values())}.')
 
-        if not inputs_batch or not isinstance(inputs_batch, list):
-            raise TypeError('Expected a non-empty list of inputs')    # pragma: no cover
-        if len(inputs_batch) > 1:
-            raise NotImplementedError('Per-sample hessian computation is not supported for networks with multiple inputs')    # pragma: no cover
+        orig_request = request
+        # if some hessians were found generate a new request only for missing nodes.
+        if res:
+            target_nodes = [n for n in orig_request.target_nodes if n.name in missing]
+            request = request.clone(target_nodes=target_nodes)
+        self._compute_hessians(request, n_iterations, count_by_cache=True)
+        res, missing = self.cache.fetch_hessian(request)
+        assert not missing
+        return res
 
-        # Get the framework-specific calculator Hessian-approximation scores
-        fw_hessian_calculator = self.fw_impl.get_hessian_scores_calculator(graph=self.graph,
-                                                                           input_images=inputs_batch,
-                                                                           hessian_scores_request=hessian_scores_request,
-                                                                           num_iterations_for_approximation=self.num_iterations_for_approximation)
-        hessian_scores = fw_hessian_calculator.compute()
-        for i in range(inputs_batch[0].shape[0]):
-            img_hash = self.calc_image_hash(inputs_batch[0][i])
-            hessian_score_by_image_hash[img_hash] = {
-                node: score[i] for node, score in zip(hessian_scores_request.target_nodes, hessian_scores)
-            }
-
-        return hessian_score_by_image_hash
-
-    @staticmethod
-    def calc_image_hash(image):
+    def _compute_hessians(self, request: HessianScoresRequest,
+                          n_iterations: int, count_by_cache: bool) -> Dict[LayerName, Tensor]:
         """
-        Calculates hash for an input image.
+        Computes hessian estimation per request.
+
+        Data loader from request is used as is, i.e. it should reflect the required batch size (e.g. if
+        hessians should be estimated sample by sample, the data loader should yield a single sample at a time).
+
+        NOTE: the returned value only contains hessians that were computed here, which may differ from the requested
+          number of samples. It's only intended for use when you specifically need sample-wise hessians for the
+          samples in the request.
 
         Args:
-            image: input 3d image (without batch).
+            request: hessian estimation request.
+            n_iterations: the number of iterations for hessian estimation.
+            count_by_cache: if True, computes hessians until the cache contains the requested number of samples.
+                            if False, computes hessian for the first requested number of sample in the dataloader.
+        Returns:
+            A dictionary from layers (by name) to their hessian tensors that *were computed in this invocation*.
+            First axis corresponds to samples in the order determined by the data loader.
+        """
+        if count_by_cache:
+            assert request.n_samples is not None
+
+        n_samples = 0
+        hess_per_layer = []
+        for batch in request.data_loader:
+            batch_hess_per_layer = self._compute_hessian_for_batch(request, batch, n_iterations)
+            hess_per_layer.append(batch_hess_per_layer)
+            min_count = self.cache.update(batch_hess_per_layer, request)
+            n_samples = min_count if count_by_cache else (n_samples + batch[0].shape[0])
+            if request.n_samples and n_samples >= request.n_samples:
+                break
+
+        hess_per_layer = {
+            layer.name: np.concatenate([hess[layer.name] for hess in hess_per_layer], axis=0)
+            for layer in request.target_nodes
+        }
+
+        if request.n_samples:
+            if n_samples < request.n_samples:
+                raise ValueError(f'Could not compute the requested number of Hessians ({request.n_samples}), '
+                                 f'not enough samples in the provided representative dataset.')
+
+            if n_samples > request.n_samples:
+                hess_per_layer = {
+                    layer: hess[:request.n_samples, ...] for layer, hess in hess_per_layer.items()
+                }
+        return hess_per_layer
+
+    def _compute_hessian_for_batch(self,
+                                   request: HessianScoresRequest,
+                                   inputs_batch: List[Tensor],
+                                   n_iterations: int) -> Dict[LayerName, Tensor]:
+        """
+        Use hessian score calculator to compute hessian approximations for a batch of inputs.
+
+        Args:
+            request: hessian estimation request.
+            inputs_batch: a batch of inputs to estimate hessians on.
+            n_iterations: the number of iterations for hessian estimation.
 
         Returns:
-            Image hash.
-
+            A dictionary from layers (by name) to their hessians.
         """
-        if not len(image.shape) == 3:    # pragma: no cover
-            raise ValueError(f'Expected 3d image (without batch) for image hash calculation, got {len(image.shape)}')
-        image_bytes = image.astype(np.float32).tobytes()
-        return hashlib.md5(image_bytes).hexdigest()
+        fw_hessian_calculator = self.fw_impl.get_hessian_scores_calculator(
+            graph=self.graph,
+            input_images=inputs_batch,
+            hessian_scores_request=request,
+            num_iterations_for_approximation=n_iterations
+        )
 
-    def fetch_hessian(self,
-                      hessian_scores_request: HessianScoresRequest,
-                      required_size: int,
-                      batch_size: int = 1) -> List[List[np.ndarray]]:
+        hessian_scores: list = fw_hessian_calculator.compute()
+
+        layers_hessian_scores = {
+            layer.name: score for layer, score in zip(request.target_nodes, hessian_scores)
+        }
+        return layers_hessian_scores
+
+    def _get_primary_node(self, node: 'BaseNode') -> 'BaseNode':
         """
-        Fetches the computed approximations of the Hessian-based scores for the given
-        request and required size.
+        Get node's primary node that it reuses, or itself if not reused.
 
         Args:
-            hessian_scores_request: Configuration for which to fetch the approximation.
-            required_size: Number of approximations required.
-            batch_size: The Hessian computation batch size.
+            node: node's object to get its primary node.
 
         Returns:
-            List[List[np.ndarray]]: For each target node, returns a list of computed approximations.
-            The outer list is per image (thus, has the length as required_size).
-            The inner list length dependent on the granularity (1 for per-tensor, 
-            OC for per-output-channel when the requested node has OC output-channels, etc.)
+            Node's primary node.
         """
+        if node.reuse is False:
+            return node
 
-        if len(hessian_scores_request.target_nodes) == 0:    # pragma: no cover
-            return []
-
-        if required_size == 0:
-            return [[] for _ in hessian_scores_request.target_nodes]
-
-        Logger.info(f"\nEnsuring {required_size} Hessian-approximation scores for nodes "
-                    f"{hessian_scores_request.target_nodes}.")
-
-        # Replace node in reused target nodes with a representing node from the 'reuse group'.
-        hessian_scores_request.target_nodes = [
-            self._get_representing_of_reuse_group(node) if node.reuse else node
-            for node in hessian_scores_request.target_nodes
-        ]
-
-        # Ensure the saved info has the required number of approximations
-        self._populate_saved_info_to_size(hessian_scores_request, required_size, batch_size)
-
-        # Return the saved approximations for the given request
-        return self._collect_saved_hessians_for_request(hessian_scores_request, required_size)
-
-    def _get_representing_of_reuse_group(self, node) -> Any:
-        """
-        For each reused group we compute and fetch its members using a single request.
-        This method creates and returns a request for the reused group the node is in.
-
-        Args:
-            node: The node to get its reuse group representative node.
-
-        Returns: A reuse group representative node (BaseNode).
-        """
         father_nodes = [n for n in self.graph.nodes if not n.reuse and n.reuse_group == node.reuse_group]
-        if len(father_nodes) != 1:  # pragma: no cover
-            Logger.critical(f"Expected a single non-reused node in the reused group, "
-                            f"but found {len(father_nodes)}.")
-
+        assert len(father_nodes) == 1
         return father_nodes[0]
-
-    def _populate_saved_info_to_size(self,
-                                     hessian_scores_request: HessianScoresRequest,
-                                     required_size: int,
-                                     batch_size: int = 1):
-        """
-        Ensures that the saved info has the required size of Hessian approximation scores for the given request.
-
-        Args:
-            hessian_scores_request: Configuration of the request to ensure the saved info size.
-            required_size: Required number of Hessian-approximation scores.
-            batch_size: The Hessian computation batch size.
-        """
-
-        # Get the current number of saved approximations for each node in the request
-        current_existing_hessians = self.count_saved_scores_of_request(hessian_scores_request)
-
-        # Compute the required number of approximations to meet the required size.
-        # Since we allow batch and multi-nodes computation, we take the node with the maximal number of missing
-        # approximations to compute, and run batch computations until meeting the requirement.
-        min_exist_hessians = min(current_existing_hessians.values())
-        max_remaining_hessians = required_size - min_exist_hessians
-
-        Logger.info(
-            f"Running Hessian approximation computation for {len(hessian_scores_request.target_nodes)} nodes.\n "
-            f"The node with minimal existing Hessian-approximation scores has {min_exist_hessians} "
-            f"approximated scores computed.\n"
-            f"{max_remaining_hessians} approximations left to compute...")
-
-        hessian_representative_dataset = partial(self._sample_batch_representative_dataset,
-                                                 num_inputs=len(self.graph.input_nodes),
-                                                 representative_dataset=self.representative_dataset_gen())
-
-        next_iter_remaining_samples = None
-        pbar = tqdm(desc="Computing Hessian approximations...", total=None)
-        while max_remaining_hessians > 0:
-            # If batch_size < max_remaining_hessians then we run each computation on a batch_size of images.
-            # This way, we always run a computation for a single batch.
-            pbar.update(1)
-            size_to_compute = min(max_remaining_hessians, batch_size)
-            next_iter_remaining_samples = (
-                self.compute(hessian_scores_request, hessian_representative_dataset, size_to_compute,
-                             last_iter_remain_samples=next_iter_remaining_samples))
-            max_remaining_hessians -= size_to_compute
-
-    def _collect_saved_hessians_for_request(self,
-                                            hessian_scores_request: HessianScoresRequest,
-                                            required_size: int) -> List[List[np.ndarray]]:
-        """
-        Collects Hessian approximation for the nodes in the given request.
-
-        Args:
-            hessian_scores_request: Configuration for which to fetch the approximation.
-            required_size: Required number of Hessian-approximation scores.
-
-        Returns: A list with List of computed Hessian approximation (a tensor for each score) for each node
-        in the request.
-
-        """
-        collected_results = []
-        for node in hessian_scores_request.target_nodes:
-            single_node_request = self._construct_single_node_request(hessian_scores_request.mode,
-                                                                      hessian_scores_request.granularity,
-                                                                      node)
-
-            res_for_node = self.hessian_scores_request_to_scores_list.get(single_node_request)
-            if res_for_node is None:  # pragma: no cover
-                Logger.critical(f"Couldn't find saved Hessian approximations for node {node.name}.")
-            if len(res_for_node) < required_size:  # pragma: no cover
-                Logger.critical(f"Missing Hessian approximations for node {node.name}, requested {required_size} "
-                                f"but found only {len(res_for_node)}.")
-
-            res_for_node = res_for_node[:required_size]
-
-            collected_results.append(res_for_node)
-
-        return collected_results
-
-    @staticmethod
-    def _construct_single_node_request(mode: HessianMode,
-                                       granularity: HessianScoresGranularity,
-                                       target_nodes: List) -> HessianScoresRequest:
-        """
-        Constructs a Hessian request with for a single node. Used for retrieving and maintaining cached results.
-
-        Args:
-            mode (HessianMode): Mode of Hessian's approximation (w.r.t weights or activations).
-            granularity (HessianScoresGranularity): Granularity level for the approximation.
-            target_nodes (List[BaseNode]): The node in the float graph for which the Hessian's approximation scores is targeted.
-
-        Returns: A HessianScoresRequest with the given details for the requested node.
-
-        """
-        return HessianScoresRequest(mode,
-                                    granularity,
-                                    target_nodes=[target_nodes])
-
-    @staticmethod
-    def _convert_tensor_to_list_of_appx_results(t: Any) -> List:
-        """
-        Converts a tensor with batch computation results to a list of individual result for each sample in batch.
-
-        Args:
-            t: A tensor with Hessian approximation results.
-
-        Returns: A list with split batch into individual results.
-
-        """
-        return [t[i:i+1, :] for i in range(t.shape[0])]
