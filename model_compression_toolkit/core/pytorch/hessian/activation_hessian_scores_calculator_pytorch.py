@@ -117,7 +117,7 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
                                       for _ in range(len(target_activation_tensors))]
         prev_mean_results = None
         for j in tqdm(range(self.num_iterations_for_approximation), "Hessian random iterations"):  # Approximation iterations
-            # Getting a random vector with normal distribution
+            # Getting a random vector
             v = self._generate_random_vectors_batch(output.shape, output.device)
             f_v = torch.sum(v * output)
             for i, ipt_tensor in enumerate(target_activation_tensors):  # Per Interest point activation tensor

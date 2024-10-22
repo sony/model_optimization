@@ -86,7 +86,7 @@ class WeightsHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
 
         prev_mean_results = None
         for j in tqdm(range(self.num_iterations_for_approximation)):
-            # Getting a random vector with normal distribution and the same shape as the model output
+            # Getting a random vector with the same shape as the model output
             v = self._generate_random_vectors_batch(output_tensor.shape, device=device)
             f_v = torch.mean(torch.sum(v * output_tensor, dim=-1))
             for i, ipt_node in enumerate(self.hessian_request.target_nodes):  # Per Interest point weights tensor
