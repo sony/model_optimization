@@ -50,9 +50,9 @@ if FOUND_TF:
 
     # As from TF2.9 optimizers package is changed
     if version.parse(tf.__version__) < version.parse("2.9"):
-        from keras.optimizer_v2.optimizer_v2 import OptimizerV2
+        from keras.optimizer_v2.optimizer_v2 import OptimizerV2  # pragma: no cover
     elif version.parse(tf.__version__) < version.parse("2.12"):
-        from keras.optimizers.optimizer_v2.optimizer_v2 import OptimizerV2
+        from keras.optimizers.optimizer_v2.optimizer_v2 import OptimizerV2  # pragma: no cover
     else:
         from tensorflow.python.keras.optimizer_v2.optimizer_v2 import OptimizerV2
 
@@ -262,13 +262,13 @@ if FOUND_TF:
 else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
-    def get_keras_gptq_config(*args, **kwargs):
+    def get_keras_gptq_config(*args, **kwargs):  # pragma: no cover
         Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
                         "get_keras_gptq_config. The 'tensorflow' package is missing or is "
                         "installed with a version higher than 2.15.")  # pragma: no cover
 
 
-    def keras_gradient_post_training_quantization(*args, **kwargs):
+    def keras_gradient_post_training_quantization(*args, **kwargs):  # pragma: no cover
         Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
                         "keras_gradient_post_training_quantization. The 'tensorflow' package is missing or is "
-                        "installed with a version higher than 2.15.")  # pragma: no cover
+                        "installed with a version higher than 2.15.")

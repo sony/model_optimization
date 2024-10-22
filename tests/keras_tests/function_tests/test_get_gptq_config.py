@@ -17,6 +17,8 @@ from typing import List
 
 import numpy as np
 
+import model_compression_toolkit as mct
+
 from model_compression_toolkit.gptq import get_keras_gptq_config, keras_gradient_post_training_quantization, GradientPTQConfig, RoundingType
 from model_compression_toolkit.core import QuantizationConfig, QuantizationErrorMethod, CoreConfig
 from model_compression_toolkit import DefaultDict
@@ -149,6 +151,18 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                       target_platform_capabilities=self.symmetric_weights_tpc)
 
         tf.config.run_functions_eagerly(False)
+
+    def test_gradual_activation_quantization_custom_config(self):
+        custom_config = mct.gptq.GradualActivationQuantizationConfig(q_fraction_scheduler_policy=mct.gptq.QFractionLinearAnnealingConfig(initial_q_fraction=0.2,
+                                                                                                                                         target_q_fraction=0.8,
+                                                                                                                                         start_step=1,
+                                                                                                                                         end_step=2))
+        config = get_keras_gptq_config(n_epochs=5, gradual_activation_quantization=custom_config)
+        self.assertEqual(config.gradual_activation_quantization_config, custom_config)
+
+    def test_gradual_activation_quantization_invalid_type(self):
+        with self.assertRaises(TypeError):
+            get_keras_gptq_config(n_epochs=5, gradual_activation_quantization='invalid_type')
 
 
 if __name__ == '__main__':
