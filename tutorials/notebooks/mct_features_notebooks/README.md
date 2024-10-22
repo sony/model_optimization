@@ -13,7 +13,6 @@ These techniques are essential for further optimizing models and achieving super
   | Tutorial                                                                                   | Included Features                                                                                   |
   |--------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|
   | [Basic Post-Training Quantization (PTQ)](keras/example_keras_post-training_quantization.ipynb)          | &#x2705; PTQ                                                                                        |
-  | [MobileNetV2](../imx500_notebooks/keras/example_keras_mobilenetv2_for_imx500.ipynb)        | &#x2705; PTQ                                                                                        |
   | [Mixed-Precision MobileNetV2](keras/example_keras_mobilenet_mixed_precision.ipynb)         | &#x2705; PTQ <br/> &#x2705; Mixed-Precision                                                         |
 
 </details>
