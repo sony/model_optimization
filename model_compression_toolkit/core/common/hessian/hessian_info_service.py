@@ -47,6 +47,12 @@ class HessianCache:
         """
         Updates the cache with new hessians estimations.
 
+        Note: we assume that the new hessians were computed on different samples than previously stored hessians.
+        If same samples were used more than once, duplicates will be stored. This can only be a problem if hessians
+        for the same query were computed via multiple requests and dataloader in each request yields same samples.
+        We cannot just filter out duplicates since in some cases we can get valid identical hessians on different
+        samples.
+
         Args:
             layers_hessians: a dictionary from layer names to their hessian score tensors.
             request: request per which hessians were computed.
@@ -61,7 +67,6 @@ class HessianCache:
             query = Query(request.mode, request.granularity, node_name)
             saved_hess = self._data.get(query)
             new_hess = hess if saved_hess is None else np.concatenate([saved_hess, hess], axis=0)
-            new_hess = np.unique(new_hess, axis=0)
             self._data[query] = new_hess
             n_nodes_samples.append(new_hess.shape[0])
 
