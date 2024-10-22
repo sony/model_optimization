@@ -12,19 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from tqdm import tqdm
 from typing import List
+
+import numpy as np
 import torch
 from torch import autograd
-import numpy as np
+from tqdm import tqdm
+
+from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_HESSIAN_ITER, HESSIAN_COMP_TOLERANCE
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianScoresGranularity
+from model_compression_toolkit.core.pytorch.back2framework.float_model_builder import FloatPyTorchModelBuilder
+from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.hessian.hessian_scores_calculator_pytorch import \
     HessianScoresCalculatorPytorch
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.core.pytorch.back2framework.float_model_builder import FloatPyTorchModelBuilder
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
-from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS, MIN_HESSIAN_ITER, HESSIAN_COMP_TOLERANCE, HESSIAN_EPS
 
 
 class WeightsHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
@@ -84,8 +86,8 @@ class WeightsHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
 
         prev_mean_results = None
         for j in tqdm(range(self.num_iterations_for_approximation)):
-            # Getting a random vector with normal distribution and the same shape as the model output
-            v = torch.randn_like(output_tensor, device=device)
+            # Getting a random vector with the same shape as the model output
+            v = self._generate_random_vectors_batch(output_tensor.shape, device=device)
             f_v = torch.mean(torch.sum(v * output_tensor, dim=-1))
             for i, ipt_node in enumerate(self.hessian_request.target_nodes):  # Per Interest point weights tensor
 

@@ -18,7 +18,6 @@ from typing import Callable, Union
 from model_compression_toolkit.constants import ACT_HESSIAN_DEFAULT_BATCH_SIZE, PYTORCH
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
-from model_compression_toolkit.core.common.hessian import HessianScoresGranularity, HessianEstimationDistribution
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
@@ -119,7 +118,6 @@ if FOUND_TORCH:
                 scale_log_norm=False,
                 hessian_batch_size=hessian_batch_size,
                 per_sample=True,
-                estimator_distribution=HessianEstimationDistribution.RADEMACHER
             )
             loss = loss or sample_layer_attention_loss
         else:

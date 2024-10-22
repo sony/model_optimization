@@ -15,20 +15,19 @@
 
 from typing import List
 
+import numpy as np
+import torch
 from torch import autograd
 from tqdm import tqdm
-import numpy as np
 
 from model_compression_toolkit.constants import MIN_HESSIAN_ITER, HESSIAN_COMP_TOLERANCE, HESSIAN_NUM_ITERATIONS
 from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian import (HessianScoresRequest, HessianScoresGranularity,
-                                                           HessianEstimationDistribution)
+from model_compression_toolkit.core.common.hessian import HessianScoresRequest, HessianScoresGranularity
 from model_compression_toolkit.core.pytorch.back2framework.float_model_builder import FloatPyTorchModelBuilder
 from model_compression_toolkit.core.pytorch.hessian.hessian_scores_calculator_pytorch import \
     HessianScoresCalculatorPytorch
 from model_compression_toolkit.core.pytorch.utils import torch_tensor_to_numpy
 from model_compression_toolkit.logger import Logger
-import torch
 
 
 class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
@@ -92,29 +91,6 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
         output = self.concat_tensors(output_tensors)
         return output, target_activation_tensors
 
-    def _generate_random_vectors_batch(self, shape: tuple, distribution: HessianEstimationDistribution,
-                                       device: torch.device) -> torch.Tensor:
-        """
-        Generate a batch of random vectors for Hutchinson estimation
-
-        Args:
-            shape: target shape
-            distribution: distribution to sample from
-            device: target device
-
-        Returns:
-            Random tensor
-        """
-        if distribution == HessianEstimationDistribution.GAUSSIAN:
-            return torch.randn(shape, device=device)
-
-        if distribution == HessianEstimationDistribution.RADEMACHER:
-            v = torch.randint(high=2, size=shape, device=device)
-            v[v == 0] = -1
-            return v
-
-        raise ValueError(f'Unknown distribution {distribution}')    # pragma: no cover
-
     def compute(self) -> List[np.ndarray]:
         """
         Compute the scores that are based on the approximation of the Hessian w.r.t the requested target nodes' activations.
@@ -141,8 +117,8 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
                                       for _ in range(len(target_activation_tensors))]
         prev_mean_results = None
         for j in tqdm(range(self.num_iterations_for_approximation), "Hessian random iterations"):  # Approximation iterations
-            # Getting a random vector with normal distribution
-            v = self._generate_random_vectors_batch(output.shape, self.hessian_request.distribution, output.device)
+            # Getting a random vector
+            v = self._generate_random_vectors_batch(output.shape, output.device)
             f_v = torch.sum(v * output)
             for i, ipt_tensor in enumerate(target_activation_tensors):  # Per Interest point activation tensor
                 # Computing the hessian-approximation scores by getting the gradient of (output * v)
@@ -183,7 +159,7 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
                                       for _ in range(len(target_activation_tensors))]
 
         for j in tqdm(range(self.num_iterations_for_approximation), "Hessian random iterations"):  # Approximation iterations
-            v = self._generate_random_vectors_batch(output.shape, self.hessian_request.distribution, output.device)
+            v = self._generate_random_vectors_batch(output.shape, output.device)
             f_v = torch.sum(v * output)
             for i, ipt_tensor in enumerate(target_activation_tensors):  # Per Interest point activation tensor
                 hess_v = autograd.grad(outputs=f_v,
