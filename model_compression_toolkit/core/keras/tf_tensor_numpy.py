@@ -33,7 +33,7 @@ def to_tf_tensor(tensor):
     elif isinstance(tensor, list):
         return [to_tf_tensor(t) for t in tensor]
     elif isinstance(tensor, tuple):
-        return (to_tf_tensor(t) for t in tensor)
+        return tuple(to_tf_tensor(t) for t in tensor)
     elif isinstance(tensor, np.ndarray):
         return tf.convert_to_tensor(tensor.astype(np.float32))
     else:  # pragma: no cover

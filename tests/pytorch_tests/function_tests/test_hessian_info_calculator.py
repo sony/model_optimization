@@ -17,6 +17,7 @@ import torch
 from torch.nn import Conv2d, BatchNorm2d, ReLU, Linear, Hardswish
 
 from model_compression_toolkit.core.pytorch.constants import KERNEL
+from model_compression_toolkit.core.pytorch.data_util import data_gen_to_dataloader
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor
 import numpy as np
 
@@ -35,7 +36,7 @@ This test checks the model gradients computation
 class basic_model(torch.nn.Module):
     def __init__(self):
         super(basic_model, self).__init__()
-        self.conv1 = Conv2d(3, 3, kernel_size=1, stride=1)
+        self.conv1 = Conv2d(3, 3, kernel_size=3, stride=1, padding=1)
         self.bn = BatchNorm2d(3)
         self.relu = ReLU()
 
@@ -49,13 +50,13 @@ class basic_model(torch.nn.Module):
 class advanced_model(torch.nn.Module):
     def __init__(self):
         super(advanced_model, self).__init__()
-        self.conv1 = Conv2d(3, 3, kernel_size=1, stride=1)
+        self.conv1 = Conv2d(3, 3, kernel_size=3, stride=1, padding=1)
         self.bn1 = BatchNorm2d(3)
         self.relu1 = ReLU()
-        self.conv2 = Conv2d(3, 3, kernel_size=1, stride=1)
+        self.conv2 = Conv2d(3, 3, kernel_size=3, stride=1, padding=1)
         self.bn2 = BatchNorm2d(3)
         self.relu2 = ReLU()
-        self.dense = Linear(8, 7)
+        self.dense = Linear(16, 7)
 
     def forward(self, inp):
         x = self.conv1(inp)
@@ -71,14 +72,14 @@ class advanced_model(torch.nn.Module):
 class multiple_outputs_model(torch.nn.Module):
     def __init__(self):
         super(multiple_outputs_model, self).__init__()
-        self.conv1 = Conv2d(3, 3, kernel_size=1, stride=1)
+        self.conv1 = Conv2d(3, 3, kernel_size=3, stride=1, padding=1)
         self.bn1 = BatchNorm2d(3)
         self.relu1 = ReLU()
-        self.conv2 = Conv2d(3, 3, kernel_size=1, stride=1)
+        self.conv2 = Conv2d(3, 3, kernel_size=3, stride=1, padding=1)
         self.bn2 = BatchNorm2d(3)
         self.relu2 = ReLU()
         self.hswish = Hardswish()
-        self.dense = Linear(8, 7)
+        self.dense = Linear(16, 7)
 
     def forward(self, inp):
         x = self.conv1(inp)
@@ -95,8 +96,8 @@ class multiple_outputs_model(torch.nn.Module):
 class multiple_inputs_model(torch.nn.Module):
     def __init__(self):
         super(multiple_inputs_model, self).__init__()
-        self.conv1 = Conv2d(3, 3, kernel_size=1, stride=1)
-        self.conv2 = Conv2d(3, 3, kernel_size=1, stride=1)
+        self.conv1 = Conv2d(3, 3, kernel_size=3, stride=1, padding=1)
+        self.conv2 = Conv2d(3, 3, kernel_size=3, stride=1, padding=1)
 
     def forward(self, inp1, inp2):
         x1 = self.conv1(inp1)
@@ -107,7 +108,7 @@ class multiple_inputs_model(torch.nn.Module):
 class reused_model(torch.nn.Module):
     def __init__(self):
         super(reused_model, self).__init__()
-        self.conv1 = Conv2d(3, 3, kernel_size=1, stride=1)
+        self.conv1 = Conv2d(3, 3, kernel_size=3, stride=1, padding=1)
         self.bn1 = BatchNorm2d(3)
         self.relu = ReLU()
 
@@ -126,25 +127,25 @@ def generate_inputs(inputs_shape):
     return [1 + np.random.random(in_shape) for in_shape in inputs_shape]
 
 
-def get_expected_shape(t_shape, granularity):
+def get_expected_shape(t_shape, granularity, n_samples):
     if granularity == hessian_common.HessianScoresGranularity.PER_ELEMENT:
-        return (1, *t_shape)
+        return (n_samples, *t_shape)
     elif granularity == hessian_common.HessianScoresGranularity.PER_TENSOR:
-        return (1, 1)
+        return (n_samples, 1)
     else:
-        return (1, t_shape[0])
+        return (n_samples, t_shape[0])
 
 
 class BaseHessianTraceBasicModelTest(BasePytorchTest):
 
-    def __init__(self, unit_test, model, n_iters=2):
+    def __init__(self, unit_test, model, n_iters=10):
         super().__init__(unit_test)
         self.val_batch_size = 1
         self.model = model
         self.n_iters = n_iters
 
     def create_inputs_shape(self):
-        return [[self.val_batch_size, 3, 8, 8]]
+        return [[self.val_batch_size, 3, 16, 16]]
 
     @staticmethod
     def generate_inputs(input_shapes):
@@ -161,22 +162,22 @@ class BaseHessianTraceBasicModelTest(BasePytorchTest):
                                   granularity=hessian_common.HessianScoresGranularity.PER_OUTPUT_CHANNEL,
                                   num_scores=1,
                                   batch_size=1):
+        dataloader = data_gen_to_dataloader(self.representative_data_gen, batch_size=batch_size)
         request = hessian_common.HessianScoresRequest(mode=hessian_common.HessianMode.WEIGHTS,
                                                       granularity=granularity,
-                                                      target_nodes=interest_points)
+                                                      target_nodes=interest_points,
+                                                      data_loader=dataloader,
+                                                      n_samples=num_scores)
 
-        for i, interest_point in enumerate(interest_points):
-            expected_shape = get_expected_shape(interest_point.weights[KERNEL].shape, granularity)
-            info = hessian_service.fetch_hessian(request, num_scores, batch_size=batch_size)
+        info = hessian_service.fetch_hessian(request)
+        # The call for fetch_hessian returns the requested number of scores for each target node.
+        self.unit_test.assertTrue(isinstance(info, dict))
+        assert {n.name for n in interest_points} == set(info.keys())
 
-            # The call for fetch_hessian returns the requested number of scores for each target node.
-            self.unit_test.assertTrue(isinstance(info, list))
+        for interest_point in interest_points:
+            expected_shape = get_expected_shape(interest_point.weights[KERNEL].shape, granularity, num_scores)
+            score = info[interest_point.name]
 
-            info = info[i]
-            self.unit_test.assertTrue(len(info) == num_scores,
-                                      f"Requested {num_scores} score but {len(info)} scores were fetched")
-
-            score = np.mean(np.stack(info), axis=0)
             self.unit_test.assertTrue(score.shape == expected_shape,
                                       f"Tensor shape is expected to be {expected_shape} but has shape {score.shape}")
 
@@ -186,27 +187,27 @@ class BaseHessianTraceBasicModelTest(BasePytorchTest):
                                       mode,
                                       num_scores=1,
                                       batch_size=1):
-
+        data_loader = data_gen_to_dataloader(self.representative_data_gen, batch_size=batch_size)
         request = hessian_common.HessianScoresRequest(mode=mode,
                                                       granularity=hessian_common.HessianScoresGranularity.PER_TENSOR,
-                                                      target_nodes=interest_points)
-        info = hessian_service.fetch_hessian(request, num_scores, batch_size=batch_size)
+                                                      target_nodes=interest_points,
+                                                      data_loader=data_loader,
+                                                      n_samples=num_scores)
+        info = hessian_service.fetch_hessian(request)
+
+        # The call for fetch_hessian returns the requested number of scores for each target node.
+        self.unit_test.assertTrue(isinstance(info, dict))
+
+        assert {n.name for n in interest_points} == set(info.keys())
 
         # currently, activation support only per-tensor Hessian
-        expected_shape = (1, 1)
+        expected_shape = (num_scores, 1)
+        for node_scores in info.values():
+            self.unit_test.assertTrue(node_scores.shape[0] == num_scores,
+                                      f"Requested {num_scores} score but {node_scores.shape[0]} scores were fetched")
 
-        for i, interest_point in enumerate(interest_points):
-
-            # The call for fetch_hessian returns the requested number of scores for each target node.
-            self.unit_test.assertTrue(isinstance(info, list))
-
-            node_info = info[i]
-            self.unit_test.assertTrue(len(node_info) == num_scores,
-                                      f"Requested {num_scores} score but {len(node_info)} scores were fetched")
-
-            score = np.mean(np.stack(node_info), axis=0)
-            self.unit_test.assertTrue(score.shape == expected_shape,
-                                      f"Tensor shape is expected to be {expected_shape} but has shape {score.shape}")
+            self.unit_test.assertTrue(node_scores.shape == expected_shape,
+                                      f"Tensor shape is expected to be {expected_shape} but has shape {node_scores.shape}")
 
     def _setup(self):
         model_float = self.model()
@@ -225,7 +226,6 @@ class WeightsHessianTraceBasicModelTest(BaseHessianTraceBasicModelTest):
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         self.test_hessian_trace_approx(hessian_service,
@@ -241,13 +241,12 @@ class WeightsHessianTraceBasicModelTest(BaseHessianTraceBasicModelTest):
 
 class WeightsHessianTraceAdvanceModelTest(BaseHessianTraceBasicModelTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, model=advanced_model, n_iters=3)
+        super().__init__(unit_test, model=advanced_model)
         self.val_batch_size = 2
 
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         self.test_hessian_trace_approx(hessian_service,
@@ -266,13 +265,12 @@ class WeightsHessianTraceAdvanceModelTest(BaseHessianTraceBasicModelTest):
 
 class WeightsHessianTraceMultipleOutputsModelTest(BaseHessianTraceBasicModelTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, model=multiple_outputs_model, n_iters=3)
+        super().__init__(unit_test, model=multiple_outputs_model)
         self.val_batch_size = 1
 
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         self.test_hessian_trace_approx(hessian_service,
@@ -291,13 +289,12 @@ class WeightsHessianTraceMultipleOutputsModelTest(BaseHessianTraceBasicModelTest
 
 class WeightsHessianTraceReuseModelTest(BaseHessianTraceBasicModelTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, model=reused_model, n_iters=3)
+        super().__init__(unit_test, model=reused_model)
         self.val_batch_size = 1
 
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         self.test_hessian_trace_approx(hessian_service,
@@ -322,7 +319,6 @@ class ActivationHessianTraceBasicModelTest(BaseHessianTraceBasicModelTest):
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         self.test_act_hessian_trace_approx(hessian_service,
@@ -338,7 +334,6 @@ class ActivationHessianTraceAdvanceModelTest(BaseHessianTraceBasicModelTest):
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
 
         # removing last layer cause we do not allow activation Hessian computation for the output layer
@@ -358,7 +353,6 @@ class ActivationHessianTraceMultipleOutputsModelTest(BaseHessianTraceBasicModelT
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
 
         # removing last layer cause we do not allow activation Hessian computation for the output layer
@@ -377,7 +371,6 @@ class ActivationHessianTraceReuseModelTest(BaseHessianTraceBasicModelTest):
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
 
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
@@ -395,14 +388,15 @@ class ActivationHessianOutputExceptionTest(BaseHessianTraceBasicModelTest):
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
 
         with self.unit_test.assertRaises(Exception) as e:
             request = hessian_common.HessianScoresRequest(mode=hessian_common.HessianMode.ACTIVATION,
                                                           granularity=hessian_common.HessianScoresGranularity.PER_TENSOR,
-                                                          target_nodes=[graph.get_outputs()[0].node])
-            _ = hessian_service.fetch_hessian(request, required_size=1)
+                                                          target_nodes=[graph.get_outputs()[0].node],
+                                                          data_loader=self.representative_data_gen(),
+                                                          n_samples=1)
+            _ = hessian_service.fetch_hessian(request)
 
         self.unit_test.assertTrue("Activation Hessian approximation cannot be computed for model outputs"
                                   in str(e.exception))
@@ -419,7 +413,6 @@ class ActivationHessianTraceMultipleInputsModelTest(BaseHessianTraceBasicModelTe
     def run_test(self, seed=0):
         graph, pytorch_impl = self._setup()
         hessian_service = hessian_common.HessianInfoService(graph=graph,
-                                                            representative_dataset_gen=self.representative_data_gen,
                                                             fw_impl=pytorch_impl)
         ipts = [n for n in graph.get_topo_sorted_nodes() if len(n.weights) > 0]
         self.test_act_hessian_trace_approx(hessian_service,

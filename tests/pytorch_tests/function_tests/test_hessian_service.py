@@ -20,6 +20,7 @@ import numpy as np
 
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
+from model_compression_toolkit.core.pytorch.data_util import data_gen_to_dataloader
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
@@ -59,7 +60,7 @@ class MultipleActNodesModel(nn.Module):
 
 def representative_dataset():
     for _ in range(2):
-        yield [np.random.randn(2, 3, 8, 8).astype(np.float32)]
+        yield [np.random.randn(2, 3, 16, 16).astype(np.float32)]
 
 
 class BaseHessianServiceTest(BasePytorchTest):
@@ -80,8 +81,8 @@ class BaseHessianServiceTest(BasePytorchTest):
         self.unit_test.assertEqual(len(self.hessian), self.num_nodes, f"Expecting returned Hessian list to include "
                                                                       f"{self.num_nodes} list of approximation.")
 
-        for i in range(len(self.request.target_nodes)):
-            self.unit_test.assertEqual(len(self.hessian[i]), self.num_scores,
+        for hess in self.hessian.values():
+            self.unit_test.assertEqual(hess.shape[0], self.num_scores,
                                        f"Expecting {self.num_scores} Hessian scores.")
 
     def run_test(self, seed=0):
@@ -89,14 +90,14 @@ class BaseHessianServiceTest(BasePytorchTest):
         assert (self.request is not None and self.num_scores is not None and self.num_nodes is not None
                 and self.graph is not None), "Test parameters are not initialized."
 
-        self.hessian_service = HessianInfoService(graph=self.graph, representative_dataset_gen=representative_dataset,
+        self.hessian_service = HessianInfoService(graph=self.graph,
                                                   fw_impl=self.pytorch_impl)
 
         self.unit_test.assertEqual(self.hessian_service.graph, self.graph)
         self.unit_test.assertEqual(self.hessian_service.fw_impl, self.pytorch_impl)
 
         if self.compute_hessian:
-            self.hessian = self.hessian_service.fetch_hessian(self.request, self.num_scores)
+            self.hessian = self.hessian_service.fetch_hessian(self.request)
 
         if self.run_verification:
             self.verify_hessian()
@@ -115,10 +116,12 @@ class FetchActivationHessianTest(BaseHessianServiceTest):
                                                 DEFAULT_PYTORCH_INFO,
                                                 representative_dataset,
                                                 generate_pytorch_tpc)
-
+        dataloader = data_gen_to_dataloader(representative_dataset, batch_size=1)
         self.request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                             granularity=HessianScoresGranularity.PER_TENSOR,
-                                            target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]])
+                                            target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]],
+                                            data_loader=dataloader,
+                                            n_samples=self.num_scores)
 
         super().run_test()
 
@@ -139,7 +142,9 @@ class FetchWeightsHessianTest(BaseHessianServiceTest):
 
         self.request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
                                             granularity=HessianScoresGranularity.PER_OUTPUT_CHANNEL,
-                                            target_nodes=[list(self.graph.get_topo_sorted_nodes())[1]])
+                                            target_nodes=[list(self.graph.get_topo_sorted_nodes())[1]],
+                                            data_loader=data_gen_to_dataloader(representative_dataset, batch_size=1),
+                                            n_samples=self.num_scores)
 
         super().run_test()
 
@@ -157,17 +162,18 @@ class FetchHessianNotEnoughSamplesThrowTest(BaseHessianServiceTest):
                                                 DEFAULT_PYTORCH_INFO,
                                                 representative_dataset,
                                                 generate_pytorch_tpc)
-
+        data_loader = data_gen_to_dataloader(representative_dataset, batch_size=2)
         self.request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                             granularity=HessianScoresGranularity.PER_TENSOR,
-                                            target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]])
+                                            target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]],
+                                            data_loader=data_loader,
+                                            n_samples=self.num_scores)
 
         super().run_test()
 
         with self.unit_test.assertRaises(Exception) as e:
-            hessian = self.hessian_service.fetch_hessian(self.request, self.num_scores, batch_size=2)  # representative dataset produces 4 images total
-
-        self.unit_test.assertTrue('Not enough samples in the provided representative dataset' in str(e.exception))
+            self.hessian_service.fetch_hessian(self.request)  # representative dataset produces 4 images total
+        self.unit_test.assertTrue('not enough samples in the provided representative dataset' in str(e.exception))
 
 
 class FetchHessianNotEnoughSamplesSmallBatchThrowTest(BaseHessianServiceTest):
@@ -184,17 +190,19 @@ class FetchHessianNotEnoughSamplesSmallBatchThrowTest(BaseHessianServiceTest):
                                                 representative_dataset,
                                                 generate_pytorch_tpc)
 
+        data_loader = data_gen_to_dataloader(representative_dataset, batch_size=1)
         self.request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                             granularity=HessianScoresGranularity.PER_TENSOR,
-                                            target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]])
+                                            target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]],
+                                            data_loader=data_loader,
+                                            n_samples=self.num_scores)
 
         super().run_test()
 
         with self.unit_test.assertRaises(Exception) as e:
-            hessian = self.hessian_service.fetch_hessian(self.request, self.num_scores,
-                                                         batch_size=1)  # representative dataset produces 4 images total
+            self.hessian_service.fetch_hessian(self.request)  # representative dataset produces 4 images total
 
-        self.unit_test.assertTrue('Not enough samples in the provided representative dataset' in str(e.exception))
+        self.unit_test.assertTrue('not enough samples in the provided representative dataset' in str(e.exception))
 
 
 class FetchComputeBatchLargerThanReprBatchTest(BaseHessianServiceTest):
@@ -211,12 +219,15 @@ class FetchComputeBatchLargerThanReprBatchTest(BaseHessianServiceTest):
                                                 representative_dataset,
                                                 generate_pytorch_tpc)
 
+        data_loader = data_gen_to_dataloader(representative_dataset, batch_size=3)
         self.request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                             granularity=HessianScoresGranularity.PER_TENSOR,
-                                            target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]])
+                                            target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]],
+                                            data_loader=data_loader,
+                                            n_samples=self.num_scores)
 
         super().run_test()
-        self.hessian = self.hessian_service.fetch_hessian(self.request, 3, batch_size=3)  # representative batch size is 2
+        self.hessian = self.hessian_service.fetch_hessian(self.request)  # representative batch size is 2
         super().verify_hessian()
 
 
@@ -233,10 +244,12 @@ class FetchHessianRequiredZeroTest(BaseHessianServiceTest):
                                                 DEFAULT_PYTORCH_INFO,
                                                 representative_dataset,
                                                 generate_pytorch_tpc)
-
+        data_loader = data_gen_to_dataloader(representative_dataset, batch_size=1)
         self.request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                             granularity=HessianScoresGranularity.PER_TENSOR,
-                                            target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]])
+                                            target_nodes=[list(self.graph.get_topo_sorted_nodes())[0]],
+                                            data_loader=data_loader,
+                                            n_samples=self.num_scores)
 
         super().run_test()
 
@@ -256,9 +269,12 @@ class FetchHessianMultipleNodesTest(BaseHessianServiceTest):
                                                 generate_pytorch_tpc)
 
         nodes = list(self.graph.get_topo_sorted_nodes())
+        data_loader = data_gen_to_dataloader(representative_dataset, batch_size=1)
         self.request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                             granularity=HessianScoresGranularity.PER_TENSOR,
-                                            target_nodes=[nodes[0], nodes[2]])
+                                            target_nodes=[nodes[0], nodes[2]],
+                                            data_loader=data_loader,
+                                            n_samples=self.num_scores)
 
         super().run_test()
 
@@ -266,8 +282,7 @@ class FetchHessianMultipleNodesTest(BaseHessianServiceTest):
 class DoubleFetchHessianTest(BaseHessianServiceTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, model=MultipleActNodesModel, compute_hessian=False, run_verification=False)
-
-        self.num_nodes = 2
+        self.num_nodes = 1
         self.num_scores = 2
 
     def run_test(self, seed=0):
@@ -278,20 +293,21 @@ class DoubleFetchHessianTest(BaseHessianServiceTest):
                                                 generate_pytorch_tpc)
 
         target_node = list(self.graph.get_topo_sorted_nodes())[0]
+        data_loader = data_gen_to_dataloader(representative_dataset, batch_size=1)
         self.request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                             granularity=HessianScoresGranularity.PER_TENSOR,
-                                            target_nodes=[target_node])
+                                            target_nodes=[target_node],
+                                            data_loader=data_loader,
+                                            n_samples=self.num_scores)
 
         super().run_test()
 
-        hessian = self.hessian_service.fetch_hessian(self.request, 2)
+        hessian = self.hessian_service.fetch_hessian(self.request)
         self.unit_test.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
                                           "approximation, for the single target node.")
-        self.unit_test.assertEqual(len(hessian[0]), 2, "Expecting 2 Hessian scores.")
-        self.unit_test.assertEqual(self.hessian_service.count_saved_scores_of_request(self.request)[target_node], 2)
+        self.unit_test.assertEqual(hessian[target_node.name].shape[0], 2, "Expecting 2 Hessian scores.")
 
-        hessian = self.hessian_service.fetch_hessian(self.request, 2)
+        hessian = self.hessian_service.fetch_hessian(self.request)
         self.unit_test.assertEqual(len(hessian), 1, "Expecting returned Hessian list to include one list of "
                                           "approximation, for the single target node.")
-        self.unit_test.assertEqual(len(hessian[0]), 2, "Expecting 2 Hessian scores.")
-        self.unit_test.assertEqual(self.hessian_service.count_saved_scores_of_request(self.request)[target_node], 2)
+        self.unit_test.assertEqual(hessian[target_node.name].shape[0], 2, "Expecting 2 Hessian scores.")

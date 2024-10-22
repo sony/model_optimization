@@ -102,7 +102,7 @@ def prepare_graph_for_second_network_editor(in_model, representative_data_gen, c
     ######################################
     # Calculate quantization params
     ######################################
-    calculate_quantization_params(transformed_graph)
+    calculate_quantization_params(transformed_graph, fw_impl=fw_impl, repr_data_gen_fn=representative_data_gen)
 
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'thresholds_selection')

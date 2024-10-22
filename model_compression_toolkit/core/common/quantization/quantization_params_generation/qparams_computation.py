@@ -15,11 +15,12 @@
 import copy
 
 from tqdm import tqdm
-from typing import List
+from typing import List, Callable, Generator
 
 from model_compression_toolkit.constants import NUM_QPARAM_HESSIAN_SAMPLES
 from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common import Graph, BaseNode
+from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresRequest, HessianMode, \
     HessianScoresGranularity
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_activations_computation \
@@ -55,26 +56,25 @@ def _collect_nodes_for_hmse(nodes_list: List[BaseNode], graph: Graph) -> List[Ba
 
 
 def calculate_quantization_params(graph: Graph,
-                                  nodes: List[BaseNode] = [],
-                                  specific_nodes: bool = False,
+                                  fw_impl: FrameworkImplementation,
+                                  repr_data_gen_fn: Callable[[], Generator],
+                                  nodes: List[BaseNode] = None,
                                   hessian_info_service: HessianInfoService = None,
                                   num_hessian_samples: int = NUM_QPARAM_HESSIAN_SAMPLES):
     """
     For a graph, go over its nodes, compute quantization params (for both weights and activations according
     to the given framework info), and create and attach a NodeQuantizationConfig to each node (containing the
     computed params).
-    By default, the function goes over all nodes in the graph. However, the specific_nodes flag enables
-    to compute quantization params for specific nodes if the default behavior is unnecessary. For that,
-    a list of nodes should be passed as well.
+    By default, the function goes over all nodes in the graph. However, specific nodes can be passed
+    to compute quantization params only for them.
 
     Args:
-        groups of layers by how they should be quantized, etc.)
         graph: Graph to compute its nodes' thresholds.
+        fw_impl: FrameworkImplementation object.
+        repr_data_gen_fn: callable returning representative dataset generator.
         nodes: List of nodes to compute their thresholds instead of computing it for all nodes in the graph.
-        specific_nodes: Flag to compute thresholds for only specific nodes.
         hessian_info_service: HessianInfoService object for retrieving Hessian-based scores (used only with HMSE error method).
         num_hessian_samples: Number of samples to approximate Hessian-based scores on (used only with HMSE error method).
-
     """
 
     Logger.info(f"\nRunning quantization parameters search. "
@@ -82,18 +82,20 @@ def calculate_quantization_params(graph: Graph,
                 f"depending on the model size and the selected quantization methods.\n")
 
     # Create a list of nodes to compute their thresholds
-    nodes_list: List[BaseNode] = nodes if specific_nodes else graph.nodes()
+    nodes_list: List[BaseNode] = nodes or graph.nodes()
 
     # Collecting nodes that are configured to search weights quantization parameters using HMSE optimization
     # and computing required Hessian information to be used for HMSE parameters selection.
     # The Hessian scores are computed and stored in the hessian_info_service object.
     nodes_for_hmse = _collect_nodes_for_hmse(nodes_list, graph)
     if len(nodes_for_hmse) > 0:
-        hessian_info_service.fetch_hessian(HessianScoresRequest(mode=HessianMode.WEIGHTS,
-                                                                granularity=HessianScoresGranularity.PER_ELEMENT,
-                                                                target_nodes=nodes_for_hmse),
-                                           required_size=num_hessian_samples,
-                                           batch_size=1)
+        dataloader = fw_impl.convert_data_gen_to_dataloader(repr_data_gen_fn, batch_size=1)
+        request = HessianScoresRequest(mode=HessianMode.WEIGHTS,
+                                       granularity=HessianScoresGranularity.PER_ELEMENT,
+                                       data_loader=dataloader,
+                                       n_samples=num_hessian_samples,
+                                       target_nodes=nodes_for_hmse)
+        hessian_info_service.fetch_hessian(request)
 
     for n in tqdm(nodes_list, "Calculating quantization parameters"):  # iterate only nodes that we should compute their thresholds
         for candidate_qc in n.candidates_quantization_cfg:

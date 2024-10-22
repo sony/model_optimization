@@ -86,7 +86,6 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
         target_activation_tensors = outputs[:num_target_nodes]
         # Extract the model outputs
         output_tensors = outputs[num_target_nodes:]
-        device = output_tensors[0].device
 
         # Concat outputs
         # First, we need to unfold all outputs that are given as list, to extract the actual output tensors

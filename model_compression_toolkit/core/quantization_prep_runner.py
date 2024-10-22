@@ -90,7 +90,8 @@ def quantization_preparation_runner(graph: Graph,
     # Calculate quantization params
     ######################################
 
-    calculate_quantization_params(graph, hessian_info_service=hessian_info_service)
+    calculate_quantization_params(graph, fw_impl=fw_impl, repr_data_gen_fn=representative_data_gen,
+                                  hessian_info_service=hessian_info_service)
 
     if tb_w is not None:
         tb_w.add_graph(graph, 'thresholds_selection')

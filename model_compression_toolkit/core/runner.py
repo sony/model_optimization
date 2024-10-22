@@ -122,8 +122,7 @@ def core_runner(in_model: Any,
                                      mixed_precision_enable=core_config.is_mixed_precision_enabled,
                                      running_gptq=running_gptq)
 
-    hessian_info_service = HessianInfoService(graph=graph, representative_dataset_gen=representative_data_gen,
-                                              fw_impl=fw_impl)
+    hessian_info_service = HessianInfoService(graph=graph, fw_impl=fw_impl)
 
     tg = quantization_preparation_runner(graph=graph,
                                          representative_data_gen=representative_data_gen,
