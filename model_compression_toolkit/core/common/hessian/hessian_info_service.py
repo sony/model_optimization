@@ -43,7 +43,7 @@ class HessianCache:
     def __init__(self):
         self._data: Dict[Query, Tensor] = {}
 
-    def update(self, layers_hessians, request) -> int:
+    def update(self, layers_hessians: Dict[str, np.ndarray], request: HessianScoresRequest) -> int:
         """
         Updates the cache with new hessians estimations.
 
