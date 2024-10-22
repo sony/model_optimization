@@ -97,11 +97,19 @@ class multiple_inputs_model(torch.nn.Module):
     def __init__(self):
         super(multiple_inputs_model, self).__init__()
         self.conv1 = Conv2d(3, 3, kernel_size=3, stride=1, padding=1)
+        self.bn1 = BatchNorm2d(3)
+        self.relu1 = ReLU()
         self.conv2 = Conv2d(3, 3, kernel_size=3, stride=1, padding=1)
+        self.bn2 = BatchNorm2d(3)
+        self.relu2 = ReLU()
 
     def forward(self, inp1, inp2):
         x1 = self.conv1(inp1)
+        x1 = self.bn1(x1)
+        x1 = self.relu1(x1)
         x2 = self.conv2(inp2)
+        x2 = self.bn2(x2)
+        x2 = self.relu2(x2)
         return x1 + x2
 
 

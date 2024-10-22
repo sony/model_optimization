@@ -15,12 +15,10 @@
 
 from typing import Union, List
 
-from model_compression_toolkit.constants import HESSIAN_NUM_ITERATIONS
-from model_compression_toolkit.core.common import Graph
-from model_compression_toolkit.core.common.hessian import HessianScoresRequest
+import torch
+
 from model_compression_toolkit.core.common.hessian.hessian_scores_calculator import HessianScoresCalculator
 from model_compression_toolkit.logger import Logger
-import torch
 
 
 class HessianScoresCalculatorPytorch(HessianScoresCalculator):
@@ -28,28 +26,20 @@ class HessianScoresCalculatorPytorch(HessianScoresCalculator):
     Pytorch-specific implementation of the Hessian approximation scores Calculator.
     This class serves as a base for other Pytorch-specific Hessian approximation scores calculators.
     """
-    def __init__(self,
-                 graph: Graph,
-                 input_images: List[torch.Tensor],
-                 fw_impl,
-                 hessian_scores_request: HessianScoresRequest,
-                 num_iterations_for_approximation: int = HESSIAN_NUM_ITERATIONS):
+    def _generate_random_vectors_batch(self, shape: tuple, device: torch.device) -> torch.Tensor:
         """
+        Generate a batch of random vectors for Hutchinson estimation using Rademacher distribution.
 
         Args:
-            graph: Computational graph for the float model.
-            input_images: List of input images for the computation.
-            fw_impl: Framework-specific implementation for Hessian scores computation.
-            hessian_scores_request: Configuration request for which to compute the Hessian approximation scores.
-            num_iterations_for_approximation: Number of iterations to use when approximating the Hessian based scores.
+            shape: target shape.
+            device: target device.
 
+        Returns:
+            Random tensor.
         """
-        super(HessianScoresCalculatorPytorch, self).__init__(graph=graph,
-                                                             input_images=input_images,
-                                                             fw_impl=fw_impl,
-                                                             hessian_scores_request=hessian_scores_request,
-                                                             num_iterations_for_approximation=num_iterations_for_approximation)
-
+        v = torch.randint(high=2, size=shape, device=device)
+        v[v == 0] = -1
+        return v
 
     def concat_tensors(self, tensors_to_concate: Union[torch.Tensor, List[torch.Tensor]]) -> torch.Tensor:
         """
