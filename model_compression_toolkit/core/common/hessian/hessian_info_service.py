@@ -60,7 +60,8 @@ class HessianCache:
         for node_name, hess in layers_hessians.items():
             query = Query(request.mode, request.granularity, node_name)
             saved_hess = self._data.get(query)
-            new_hess = hess if saved_hess is None else np.unique(np.concatenate([saved_hess, hess], axis=0), axis=0)
+            new_hess = hess if saved_hess is None else np.concatenate([saved_hess, hess], axis=0)
+            new_hess = np.unique(new_hess, axis=0)
             self._data[query] = new_hess
             n_nodes_samples.append(new_hess.shape[0])
 
