@@ -18,7 +18,7 @@ from typing import Callable, Union
 from model_compression_toolkit.constants import ACT_HESSIAN_DEFAULT_BATCH_SIZE, PYTORCH
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
-from model_compression_toolkit.core.common.hessian import HessianScoresGranularity, HessianEstimationDistribution
+from model_compression_toolkit.core.common.hessian import HessianEstimationDistribution
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
@@ -27,18 +27,15 @@ from model_compression_toolkit.core.common.visualization.tensorboard_writer impo
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.common.gptq_config import (
     GradientPTQConfig, GPTQHessianScoresConfig, GradualActivationQuantizationConfig)
-from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
-from model_compression_toolkit.gptq.keras.quantization_facade import GPTQ_MOMENTUM
+from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT, LR_DEFAULT, LR_REST_DEFAULT, \
+    LR_BIAS_DEFAULT, GPTQ_MOMENTUM
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.metadata import create_model_metadata
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 
-LR_DEFAULT = 1e-4
-LR_REST_DEFAULT = 1e-4
-LR_BIAS_DEFAULT = 1e-4
-LR_QUANTIZATION_PARAM_DEFAULT = 1e-4
+
 
 if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO

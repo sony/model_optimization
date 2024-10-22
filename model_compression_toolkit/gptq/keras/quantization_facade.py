@@ -17,9 +17,9 @@ import copy
 from typing import Callable, Tuple, Union
 from packaging import version
 
-from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
-from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
+from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT, LR_DEFAULT, LR_REST_DEFAULT, \
+    LR_BIAS_DEFAULT, GPTQ_MOMENTUM
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, ACT_HESSIAN_DEFAULT_BATCH_SIZE
 from model_compression_toolkit.verify_packages import FOUND_TF
@@ -33,13 +33,8 @@ from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
-from model_compression_toolkit.metadata import get_versions_dict, create_model_metadata
+from model_compression_toolkit.metadata import create_model_metadata
 
-LR_DEFAULT = 0.15
-LR_REST_DEFAULT = 1e-4
-LR_BIAS_DEFAULT = 1e-4
-LR_QUANTIZATION_PARAM_DEFAULT = 1e-3
-GPTQ_MOMENTUM = 0.9
 
 if FOUND_TF:
     import tensorflow as tf
