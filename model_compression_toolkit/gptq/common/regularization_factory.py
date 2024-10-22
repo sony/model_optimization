@@ -12,17 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable
+
+from tqdm import tqdm
+from typing import Callable, Type
 
 from model_compression_toolkit.gptq import RoundingType, GradientPTQConfig
-from model_compression_toolkit.gptq.pytorch.quantizer.soft_rounding.soft_quantizer_reg import \
-    SoftQuantizerRegularization
-from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import LinearAnnealingScheduler
 
-
+# Common warmup fraction
 WARMUP_STEP_FRACTION = 0.2
 
-def get_regularization(gptq_config: GradientPTQConfig, get_total_grad_steps_fn: Callable[[], int]) -> Callable:
+
+def get_regularization(gptq_config: GradientPTQConfig,
+                       get_total_grad_steps_fn: Callable[[], int],
+                       SoftQuantizerRegularizationFWClass: Type,
+                       LinearAnnealingSchedulerFWClass: Type) -> Callable:
     """
     Returns a function that computes the regularization term for GPTQ training based on the given
     rounding type in the GPTQ configuration.
@@ -30,15 +33,26 @@ def get_regularization(gptq_config: GradientPTQConfig, get_total_grad_steps_fn: 
     Args:
         gptq_config: A GPTQ configuration.
         get_total_grad_steps_fn: a callable to obtain the total expected number of gradient steps.
+        SoftQuantizerRegularizationFWClass: The class to use for soft quantizer regularization (framework-specific).
+        LinearAnnealingSchedulerFWClass: The class to use for the annealing scheduler (framework-specific).
 
-    Returns: A function for computing the regularization. If there is no regularization function defined for the given
-        rounding type, then it returns a function that just returns 0.
-
+    Returns:
+        Callable: A function for computing the regularization. If there is no regularization function
+        defined for the given rounding type, then it returns a function that just returns 0.
     """
     if gptq_config.rounding_type == RoundingType.SoftQuantizer:
         total_gradient_steps = get_total_grad_steps_fn()
         t_start = int(WARMUP_STEP_FRACTION * total_gradient_steps)
-        scheduler = LinearAnnealingScheduler(t_start=t_start, t_end=total_gradient_steps, initial_val=20, target_val=2)
-        return SoftQuantizerRegularization(scheduler)
+
+        # Directly initializing the scheduler within the method
+        scheduler = LinearAnnealingSchedulerFWClass(
+            t_start=t_start,
+            t_end=total_gradient_steps,
+            initial_val=20,
+            target_val=2
+        )
+
+        # Return the framework-specific soft quantizer regularization
+        return SoftQuantizerRegularizationFWClass(scheduler)
     else:
         return lambda *args, **kwargs: 0

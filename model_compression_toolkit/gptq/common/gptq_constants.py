@@ -23,3 +23,10 @@ SOFT_ROUNDING_ZETA = 1.1
 # GPTQ config constant
 QUANT_PARAM_LEARNING_STR = 'quantization_parameter_learning'
 MAX_LSB_STR = 'max_lsbs_change_map'
+
+# GPTQ learning hyperparameters
+LR_DEFAULT = 3e-2
+LR_REST_DEFAULT = 1e-4
+LR_BIAS_DEFAULT = 1e-3
+LR_QUANTIZATION_PARAM_DEFAULT = 1e-3
+GPTQ_MOMENTUM = 0.9
