@@ -14,17 +14,18 @@
 # ==============================================================================
 import copy
 
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Union
 from packaging import version
 
-from model_compression_toolkit.core.common.quantization.quantize_graph_weights import quantize_graph_weights
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
-from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
+from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT, LR_DEFAULT, LR_REST_DEFAULT, \
+    LR_BIAS_DEFAULT, GPTQ_MOMENTUM
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, ACT_HESSIAN_DEFAULT_BATCH_SIZE
 from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
-from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GPTQHessianScoresConfig
+from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GPTQHessianScoresConfig, \
+    GradualActivationQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core import CoreConfig
@@ -32,13 +33,8 @@ from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
-from model_compression_toolkit.metadata import get_versions_dict, create_model_metadata
+from model_compression_toolkit.metadata import create_model_metadata
 
-LR_DEFAULT = 0.15
-LR_REST_DEFAULT = 1e-4
-LR_BIAS_DEFAULT = 1e-4
-LR_QUANTIZATION_PARAM_DEFAULT = 1e-3
-GPTQ_MOMENTUM = 0.9
 
 if FOUND_TF:
     import tensorflow as tf
@@ -54,25 +50,25 @@ if FOUND_TF:
 
     # As from TF2.9 optimizers package is changed
     if version.parse(tf.__version__) < version.parse("2.9"):
-        from keras.optimizer_v2.optimizer_v2 import OptimizerV2
+        from keras.optimizer_v2.optimizer_v2 import OptimizerV2  # pragma: no cover
     elif version.parse(tf.__version__) < version.parse("2.12"):
-        from keras.optimizers.optimizer_v2.optimizer_v2 import OptimizerV2
+        from keras.optimizers.optimizer_v2.optimizer_v2 import OptimizerV2  # pragma: no cover
     else:
         from tensorflow.python.keras.optimizer_v2.optimizer_v2 import OptimizerV2
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
-
     def get_keras_gptq_config(n_epochs: int,
-                              optimizer: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT),
-                              optimizer_rest: OptimizerV2 = tf.keras.optimizers.Adam(learning_rate=LR_REST_DEFAULT),
+                              optimizer: OptimizerV2 = None,
+                              optimizer_rest: OptimizerV2 = None,
                               loss: Callable = GPTQMultipleTensorsLoss(),
                               log_function: Callable = None,
                               use_hessian_based_weights: bool = True,
                               regularization_factor: float = REG_DEFAULT,
-                              hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE) -> GradientPTQConfig:
+                              hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE,
+                              gradual_activation_quantization: Union[bool, GradualActivationQuantizationConfig] = False) -> GradientPTQConfig:
         """
-        Create a GradientPTQConfigV2 instance for Keras models.
+        Create a GradientPTQConfig instance for Keras models.
 
         args:
             n_epochs (int): Number of epochs for running the representative dataset for fine-tuning.
@@ -83,9 +79,10 @@ if FOUND_TF:
             use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
             regularization_factor (float): A floating point number that defines the regularization factor.
             hessian_batch_size (int): Batch size for Hessian computation in Hessian-based weights GPTQ.
+            gradual_activation_quantization (bool, GradualActivationQuantizationConfig): If False, GradualActivationQuantization is disabled. If True, GradualActivationQuantization is enabled with the default settings. GradualActivationQuantizationConfig object can be passed to use non-default settings.
 
         returns:
-            a GradientPTQConfigV2 object to use when fine-tuning the quantized model using gptq.
+            a GradientPTQConfig object to use when fine-tuning the quantized model using gptq.
 
         Examples:
 
@@ -94,7 +91,7 @@ if FOUND_TF:
             >>> import model_compression_toolkit as mct
             >>> import tensorflow as tf
 
-            Create a GradientPTQConfigV2 to run for 5 epochs:
+            Create a GradientPTQConfig to run for 5 epochs:
 
             >>> gptq_conf = mct.gptq.get_keras_gptq_config(n_epochs=5)
 
@@ -102,11 +99,24 @@ if FOUND_TF:
 
             >>> gptq_conf = mct.gptq.get_keras_gptq_config(n_epochs=3, optimizer=tf.keras.optimizers.Nadam())
 
-            The configuration can be passed to :func:`~model_compression_toolkit.keras_post_training_quantization` in order to quantize a keras model using gptq.
+            The configuration can be passed to :func:`~model_compression_toolkit.keras_gradient_post_training_quantization` in order to quantize a keras model using gptq.
+
 
         """
+        optimizer = optimizer or tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT)
+        optimizer_rest = optimizer_rest or tf.keras.optimizers.Adam(learning_rate=LR_REST_DEFAULT)
+
         bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT,
                                                  momentum=GPTQ_MOMENTUM)
+
+        if isinstance(gradual_activation_quantization, bool):
+            gradual_quant_config = GradualActivationQuantizationConfig() if gradual_activation_quantization else None
+        elif isinstance(gradual_activation_quantization, GradualActivationQuantizationConfig):
+            gradual_quant_config = gradual_activation_quantization
+        else:
+            raise TypeError(f'gradual_activation_quantization argument should be bool or '
+                            f'GradualActivationQuantizationConfig, received {type(gradual_activation_quantization)}')
+
         return GradientPTQConfig(n_epochs,
                                  optimizer,
                                  optimizer_rest=optimizer_rest,
@@ -116,7 +126,8 @@ if FOUND_TF:
                                  optimizer_bias=bias_optimizer,
                                  use_hessian_based_weights=use_hessian_based_weights,
                                  regularization_factor=regularization_factor,
-                                 hessian_weights_config=GPTQHessianScoresConfig(hessian_batch_size=hessian_batch_size))
+                                 hessian_weights_config=GPTQHessianScoresConfig(hessian_batch_size=hessian_batch_size),
+                                 gradual_activation_quantization_config=gradual_quant_config)
 
 
     def keras_gradient_post_training_quantization(in_model: Model, representative_data_gen: Callable,
@@ -251,13 +262,13 @@ if FOUND_TF:
 else:
     # If tensorflow is not installed,
     # we raise an exception when trying to use these functions.
-    def get_keras_gptq_config(*args, **kwargs):
+    def get_keras_gptq_config(*args, **kwargs):  # pragma: no cover
         Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
                         "get_keras_gptq_config. The 'tensorflow' package is missing or is "
                         "installed with a version higher than 2.15.")  # pragma: no cover
 
 
-    def keras_gradient_post_training_quantization(*args, **kwargs):
+    def keras_gradient_post_training_quantization(*args, **kwargs):  # pragma: no cover
         Logger.critical("Tensorflow must be installed with a version of 2.15 or lower to use "
                         "keras_gradient_post_training_quantization. The 'tensorflow' package is missing or is "
-                        "installed with a version higher than 2.15.")  # pragma: no cover
+                        "installed with a version higher than 2.15.")

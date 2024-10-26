@@ -26,18 +26,15 @@ from model_compression_toolkit.core.common.visualization.tensorboard_writer impo
 from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.common.gptq_config import (
     GradientPTQConfig, GPTQHessianScoresConfig, GradualActivationQuantizationConfig)
-from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
-from model_compression_toolkit.gptq.keras.quantization_facade import GPTQ_MOMENTUM
+from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT, LR_DEFAULT, LR_REST_DEFAULT, \
+    LR_BIAS_DEFAULT, GPTQ_MOMENTUM
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.metadata import create_model_metadata
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 
-LR_DEFAULT = 1e-4
-LR_REST_DEFAULT = 1e-4
-LR_BIAS_DEFAULT = 1e-4
-LR_QUANTIZATION_PARAM_DEFAULT = 1e-4
+
 
 if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
@@ -76,10 +73,6 @@ if FOUND_TORCH:
             regularization_factor (float): A floating point number that defines the regularization factor.
             hessian_batch_size (int): Batch size for Hessian computation in Hessian-based weights GPTQ.
             use_hessian_sample_attention (bool): whether to use Sample-Layer Attention score for weighted loss.
-            gradual_activation_quantization (bool, GradualActivationQuantizationConfig):
-              If False, GradualActivationQuantization is disabled.
-              If True, GradualActivationQuantization is enabled with the default settings.
-              GradualActivationQuantizationConfig object can be passed to use non-default settings.
 
         returns:
             a GradientPTQConfig object to use when fine-tuning the quantized model using gptq.
@@ -96,9 +89,6 @@ if FOUND_TORCH:
             >>> import torch
             >>> gptq_conf = mct.gptq.get_pytorch_gptq_config(n_epochs=3, optimizer=torch.optim.Adam([torch.Tensor(1)]))
 
-            To enable Gradual Activation Quantization with non-default settings build GradualActivationQuantizationConfig:
-            >>> gradual_act_conf = mct.gptq.GradualActivationQuantizationConfig(mct.gptq.QFractionLinearAnnealingConfig(initial_q_fraction=0.2))
-            >>> gptq_conf = mct.gptq.get_pytorch_gptq_config(n_epochs=3, gradual_activation_quantization=gradual_act_conf)
             The configuration can be passed to :func:`~model_compression_toolkit.pytorch_gradient_post_training_quantization` in order to quantize a pytorch model using gptq.
 
         """

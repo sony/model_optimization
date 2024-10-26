@@ -17,15 +17,18 @@ from typing import Callable, List, Tuple, Union, Generator
 
 import numpy as np
 import torch
-from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
 from torch.nn import Module
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+from model_compression_toolkit.gptq.common.gradual_activation_quantization import get_gradual_activation_quantizer_wrapper_factory
+from model_compression_toolkit.gptq.common.regularization_factory import get_regularization
 
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresGranularity
+
 from model_compression_toolkit.core.pytorch.back2framework.pytorch_model_builder import PyTorchModelBuilder
 from model_compression_toolkit.core.pytorch.constants import BIAS
 from model_compression_toolkit.core.pytorch.data_util import FixedDatasetFromGenerator, IterableDatasetFromGenerator, \
@@ -34,14 +37,15 @@ from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_mo
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.common.gptq_training import GPTQTrainer
-from model_compression_toolkit.gptq.pytorch.graph_info import get_gptq_trainable_parameters, \
-    get_weights_for_loss
-from model_compression_toolkit.gptq.pytorch.quantizer.gradual_activation_quantization import \
-    get_gradual_activation_quantizer_wrapper_factory
+from model_compression_toolkit.gptq.pytorch.graph_info import get_gptq_trainable_parameters, get_weights_for_loss
 from model_compression_toolkit.gptq.pytorch.quantizer.quantization_builder import quantization_builder
-from model_compression_toolkit.gptq.pytorch.quantizer.regularization_factory import get_regularization
+
+from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
+from model_compression_toolkit.trainable_infrastructure.common.util import get_total_grad_steps
+from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import PytorchLinearAnnealingScheduler
+from model_compression_toolkit.gptq.pytorch.quantizer.soft_rounding.soft_quantizer_reg import SoftQuantizerRegularization as PytorchSoftQuantizerRegularization
+
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.trainable_infrastructure.pytorch.util import get_total_grad_steps
 
 
 class PytorchGPTQTrainer(GPTQTrainer):
@@ -78,7 +82,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
 
         # must be set prior to model building in the base class constructor
         self.gradual_act_quantizer_wrapper_factory = get_gradual_activation_quantizer_wrapper_factory(
-            gptq_config, _get_total_grad_steps)
+            gptq_config, _get_total_grad_steps, PytorchLinearAnnealingScheduler)
 
         super().__init__(graph_float,
                          graph_quant,
@@ -121,7 +125,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         else:
             self.train_dataloader = self._prepare_train_dataloader_for_non_sla(representative_data_gen)
 
-        self.reg_func = get_regularization(self.gptq_config, _get_total_grad_steps)
+        self.reg_func = get_regularization(self.gptq_config, _get_total_grad_steps, PytorchSoftQuantizerRegularization, PytorchLinearAnnealingScheduler)
 
     def _prepare_train_dataloader_sla(self, data_gen_fn: Callable[[], Generator]) -> DataLoader:
         """

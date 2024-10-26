@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import torch
+import numpy as np
 import pytest
 
-from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import PytorchLinearAnnealingScheduler
+from model_compression_toolkit.trainable_infrastructure.keras.annealing_schedulers import KerasLinearAnnealingScheduler
 
 
 def test_linear_annealing():
-    scheduler = PytorchLinearAnnealingScheduler(t_start=10, t_end=35, initial_val=3.4, target_val=-1.6)
+    scheduler = KerasLinearAnnealingScheduler(t_start=10, t_end=35, initial_val=3.4, target_val=-1.6)
     for t in [0, 9, 10]:
         assert _isclose(scheduler(t), 3.4)
 
@@ -32,7 +32,7 @@ def test_linear_annealing():
 
 
 def test_linear_annealing_ascending():
-    scheduler = PytorchLinearAnnealingScheduler(t_start=0, t_end=5, initial_val=-0.5, target_val=1.5)
+    scheduler = KerasLinearAnnealingScheduler(t_start=0, t_end=5, initial_val=-0.5, target_val=1.5)
     assert _isclose(scheduler(0), -0.5)
     assert _isclose(scheduler(1), -0.1)
     assert _isclose(scheduler(4), 1.1)
@@ -42,8 +42,8 @@ def test_linear_annealing_ascending():
 @pytest.mark.parametrize('start', [5, -1])
 def test_invalid(start):
     with pytest.raises(ValueError):
-        PytorchLinearAnnealingScheduler(t_start=start, t_end=4, initial_val=1, target_val=0)
+        KerasLinearAnnealingScheduler(t_start=start, t_end=4, initial_val=1, target_val=0)
 
 
 def _isclose(x, y):
-    return torch.isclose(x, torch.tensor(y))
+    return np.isclose(x, y)

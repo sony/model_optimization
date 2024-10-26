@@ -13,23 +13,23 @@
 # limitations under the License.
 # ==============================================================================
 from functools import partial
-from typing import Callable
+from typing import Callable, Any
 
 from model_compression_toolkit.gptq import GradientPTQConfig, QFractionLinearAnnealingConfig
-from model_compression_toolkit.trainable_infrastructure import BasePytorchTrainableQuantizer
-
-from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import LinearAnnealingScheduler
+from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import BaseTrainableQuantizer
 
 
 def get_gradual_activation_quantizer_wrapper_factory(gptq_config: GradientPTQConfig,
-                                                     get_total_grad_steps_fn: Callable[[], int]) \
-        -> Callable[[BasePytorchTrainableQuantizer], 'GradualActivationQuantizerWrapper']:
+                                                     get_total_grad_steps_fn: Callable[[], int],
+                                                     fw_linear_annealing_scheduler: type) \
+        -> Callable[[Any], 'GradualActivationQuantizerWrapper']:
     """
     Get a factory for 'GradualActivationQuantizerWrapper'.
 
     Args:
         gptq_config: GPTQ configuration.
         get_total_grad_steps_fn: a callable to obtain the total expected number of gradient steps.
+        fw_linear_annealing_scheduler: LinearAnnealingScheduler implementation of the framework (tf/pytorch).
 
     Returns:
         A factory function to build 'GradualActivationQuantizerWrapper' from Quantizer.
@@ -40,9 +40,9 @@ def get_gradual_activation_quantizer_wrapper_factory(gptq_config: GradientPTQCon
     annealing_cfg = gptq_config.gradual_activation_quantization_config.q_fraction_scheduler_policy
     if isinstance(annealing_cfg, QFractionLinearAnnealingConfig):
         t_end = annealing_cfg.end_step or get_total_grad_steps_fn()
-        factor_scheduler = LinearAnnealingScheduler(t_start=annealing_cfg.start_step, t_end=t_end,
-                                                    initial_val=annealing_cfg.initial_q_fraction,
-                                                    target_val=annealing_cfg.target_q_fraction)
+        factor_scheduler = fw_linear_annealing_scheduler(t_start=annealing_cfg.start_step, t_end=t_end,
+                                                         initial_val=annealing_cfg.initial_q_fraction,
+                                                         target_val=annealing_cfg.target_q_fraction)
     else:
         raise ValueError(f'Unknown annealing policy {annealing_cfg}')
 
@@ -64,7 +64,7 @@ class GradualActivationQuantizerWrapper:
         quantizer: quantizer to wrap.
         q_fraction_scheduler: a callable that accepts a gradient step and returns the corresponding quantized fraction.
     """
-    def __init__(self, quantizer: BasePytorchTrainableQuantizer, q_fraction_scheduler: Callable[[int], float]):
+    def __init__(self, quantizer: BaseTrainableQuantizer, q_fraction_scheduler: Callable[[int], float]):
         self.quantizer = quantizer
         self.q_fraction_scheduler = q_fraction_scheduler
         self.step_cnt = 0
