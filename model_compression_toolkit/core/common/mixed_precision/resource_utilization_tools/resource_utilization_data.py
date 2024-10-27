@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+
 import numpy as np
 from typing import Callable, Any, Dict, Tuple
 
@@ -57,6 +59,10 @@ def compute_resource_utilization_data(in_model: Any,
 
 
     """
+    # core_config might be updated in place during graph transformation. Specifically graph_preparation_runner
+    # is run with default running_gptq=False, and in that case weights_error_method HMSE will be overridden with MSE.
+    # We don't want resource utilization computation to modify the config, so we create a copy.
+    core_config = copy.deepcopy(core_config)
 
     # We assume that the resource_utilization_data API is used to compute the model resource utilization for
     # mixed precision scenario, so we run graph preparation under the assumption of enabled mixed precision.
@@ -222,6 +228,12 @@ def requires_mixed_precision(in_model: Any,
     Returns: A boolean indicating if mixed precision is needed.
     """
     is_mixed_precision = False
+
+    # core_config might be updated in place during graph transformation. Specifically graph_preparation_runner
+    # is run with default running_gptq=False, and in that case weights_error_method HMSE will be overridden with MSE.
+    # We don't want resource utilization computation to modify the config, so we create a copy.
+    core_config = copy.deepcopy(core_config)
+
     transformed_graph = graph_preparation_runner(in_model,
                                                  representative_data_gen,
                                                  core_config.quantization_config,
