@@ -151,7 +151,7 @@ def nodes_builder(model: GraphModule,
         if node.meta[TYPE] == torch.Tensor:
             output_shape = [list(node.meta[TENSOR_META].shape)]
         elif node.meta[TYPE] in (list, tuple):
-            output_shape = [list(m.shape) for m in node.meta[TENSOR_META]]
+            output_shape = [list(m.shape) for m in node.meta.get(TENSOR_META, [])]
         elif node.meta[TYPE] == int:
             output_shape = [[1]]
         else:
