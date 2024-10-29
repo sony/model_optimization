@@ -58,13 +58,10 @@ def set_quantization_configuration_to_graph(graph: Graph,
 
     if quant_config.weights_error_method == QuantizationErrorMethod.HMSE:
         if not running_gptq:
-            Logger.warning(f"The HMSE error method for parameters selection is only supported when running GPTQ "
-                           f"optimization due to long execution time that is not suitable for basic PTQ. "
-                           f"Using the default MSE error method instead.")
-            quant_config.weights_error_method = QuantizationErrorMethod.MSE
-        else:
-            Logger.warning("Using the HMSE error method for weights quantization parameters search. "
-                           "Note: This method may significantly increase runtime during the parameter search process.")
+            raise ValueError(f"The HMSE error method for parameters selection is only supported when running GPTQ "
+                             f"optimization due to long execution time that is not suitable for basic PTQ.")
+        Logger.warning("Using the HMSE error method for weights quantization parameters search. "
+                       "Note: This method may significantly increase runtime during the parameter search process.")
 
     nodes_to_manipulate_bit_widths = {} if bit_width_config is None else bit_width_config.get_nodes_to_manipulate_bit_widths(graph)
 
