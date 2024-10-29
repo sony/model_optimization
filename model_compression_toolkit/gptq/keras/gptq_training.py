@@ -130,7 +130,19 @@ class KerasGPTQTrainer(GPTQTrainer):
         else:
             self.input_scale = self.gptq_user_info.input_scale
 
-        self.weights_for_average_loss = self._get_compare_points_loss_weights()
+        hessian_cfg = gptq_config.hessian_weights_config
+
+        self.use_sample_layer_attention = hessian_cfg.per_sample
+        if self.use_sample_layer_attention:
+            # normalization is currently not supported, make sure the config reflects it.
+            if hessian_cfg.norm_scores or hessian_cfg.log_norm or hessian_cfg.scale_log_norm:
+                raise NotImplementedError()
+            self.train_dataloader = self._prepare_train_dataloader_sla(representative_data_gen)
+        else:
+            self.train_dataloader = self._prepare_train_dataloader_for_non_sla(representative_data_gen)
+
+
+        # self.weights_for_average_loss = self._get_compare_points_loss_weights()
 
         self.reg_func = get_regularization(self.gptq_config,
                                            _get_total_grad_steps,
@@ -226,7 +238,9 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         return gptq_model, gptq_user_info
 
-    def compute_gradients(self, in_y_float: List[tf.Tensor], input_data: List[np.ndarray],
+    def compute_gradients(self,
+                          in_y_float: List[tf.Tensor],
+                          input_data: List[np.ndarray],
                           in_optimizer_with_param: List,
                           training=True) -> Tuple[tf.Tensor, List[tf.Tensor]]:
         """

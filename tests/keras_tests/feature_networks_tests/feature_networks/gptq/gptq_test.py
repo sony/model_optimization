@@ -57,10 +57,19 @@ def build_model(in_input_shape: List[int]) -> keras.Model:
 
 
 class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
-    def __init__(self, unit_test, quant_method=QuantizationMethod.SYMMETRIC, rounding_type=RoundingType.STE,
-                 per_channel=True, input_shape=(1, 16, 16, 3),
-                 hessian_weights=True, log_norm_weights=True, scaled_log_norm=False,
-                 quantization_parameter_learning=True, num_calibration_iter=GPTQ_HESSIAN_NUM_SAMPLES):
+    def __init__(self,
+                 unit_test,
+                 quant_method=QuantizationMethod.SYMMETRIC,
+                 rounding_type=RoundingType.STE,
+                 per_channel=True,
+                 input_shape=(1, 16, 16, 3),
+                 hessian_weights=True,
+                 log_norm_weights=True,
+                 scaled_log_norm=False,
+                 quantization_parameter_learning=True,
+                 num_calibration_iter=GPTQ_HESSIAN_NUM_SAMPLES,
+                 use_hessian_sample_attention=False,
+                 loss=None):
         super().__init__(unit_test,
                          input_shape=input_shape,
                          num_calibration_iter=num_calibration_iter)
@@ -71,6 +80,9 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         self.hessian_weights = hessian_weights
         self.log_norm_weights = log_norm_weights
         self.scaled_log_norm = scaled_log_norm
+        self.use_hessian_sample_attention = use_hessian_sample_attention
+        self.loss = loss if loss else multiple_tensors_mse_loss
+
         if rounding_type == RoundingType.SoftQuantizer:
             self.override_params = {QUANT_PARAM_LEARNING_STR: quantization_parameter_learning}
         elif rounding_type == RoundingType.STE:
@@ -87,12 +99,16 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                            relu_bound_to_power_of_2=True, weights_bias_correction=False)
 
     def get_gptq_config(self):
-        return GradientPTQConfig(5, optimizer=tf.keras.optimizers.Adam(
-            learning_rate=0.0001), optimizer_rest=tf.keras.optimizers.Adam(
-            learning_rate=0.0001), loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
+        return GradientPTQConfig(5,
+                                 optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
+                                 optimizer_rest=tf.keras.optimizers.Adam(learning_rate=0.0001),
+                                 loss=self.loss,
+                                 train_bias=True,
+                                 rounding_type=self.rounding_type,
                                  use_hessian_based_weights=self.hessian_weights,
                                  hessian_weights_config=GPTQHessianScoresConfig(log_norm=self.log_norm_weights,
-                                                                                scale_log_norm=self.scaled_log_norm),
+                                                                                scale_log_norm=self.scaled_log_norm,
+                                                                                per_sample=self.use_hessian_sample_attention),
                                  gptq_quantizer_params_override=self.override_params)
 
     def create_networks(self):

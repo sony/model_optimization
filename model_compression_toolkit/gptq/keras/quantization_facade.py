@@ -61,11 +61,12 @@ if FOUND_TF:
     def get_keras_gptq_config(n_epochs: int,
                               optimizer: OptimizerV2 = None,
                               optimizer_rest: OptimizerV2 = None,
-                              loss: Callable = GPTQMultipleTensorsLoss(),
+                              loss: Callable = None,
                               log_function: Callable = None,
                               use_hessian_based_weights: bool = True,
                               regularization_factor: float = REG_DEFAULT,
                               hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE,
+                              use_hessian_sample_attention: bool = False,
                               gradual_activation_quantization: Union[bool, GradualActivationQuantizationConfig] = False) -> GradientPTQConfig:
         """
         Create a GradientPTQConfig instance for Keras models.
@@ -79,6 +80,7 @@ if FOUND_TF:
             use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
             regularization_factor (float): A floating point number that defines the regularization factor.
             hessian_batch_size (int): Batch size for Hessian computation in Hessian-based weights GPTQ.
+            use_hessian_sample_attention (bool): whether to use Sample-Layer Attention score for weighted loss.
             gradual_activation_quantization (bool, GradualActivationQuantizationConfig): If False, GradualActivationQuantization is disabled. If True, GradualActivationQuantization is enabled with the default settings. GradualActivationQuantizationConfig object can be passed to use non-default settings.
 
         returns:
@@ -106,8 +108,24 @@ if FOUND_TF:
         optimizer = optimizer or tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT)
         optimizer_rest = optimizer_rest or tf.keras.optimizers.Adam(learning_rate=LR_REST_DEFAULT)
 
-        bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT,
-                                                 momentum=GPTQ_MOMENTUM)
+        bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT, momentum=GPTQ_MOMENTUM)
+
+        if use_hessian_sample_attention:
+            if not use_hessian_based_weights:  # pragma: no cover
+                raise ValueError(
+                    'use_hessian_based_weights must be set to True in order to use Sample Layer Attention.')
+            hessian_weights_config = GPTQHessianScoresConfig(
+                hessians_num_samples=None,
+                norm_scores=False,
+                log_norm=False,
+                scale_log_norm=False,
+                hessian_batch_size=hessian_batch_size,
+                per_sample=True
+            )
+            loss = loss or sample_layer_attention_loss
+        else:
+            hessian_weights_config = GPTQHessianScoresConfig(hessian_batch_size=hessian_batch_size)
+            loss = loss or GPTQMultipleTensorsLoss()
 
         if isinstance(gradual_activation_quantization, bool):
             gradual_quant_config = GradualActivationQuantizationConfig() if gradual_activation_quantization else None
@@ -126,7 +144,7 @@ if FOUND_TF:
                                  optimizer_bias=bias_optimizer,
                                  use_hessian_based_weights=use_hessian_based_weights,
                                  regularization_factor=regularization_factor,
-                                 hessian_weights_config=GPTQHessianScoresConfig(hessian_batch_size=hessian_batch_size),
+                                 hessian_weights_config=hessian_weights_config,
                                  gradual_activation_quantization_config=gradual_quant_config)
 
 

@@ -13,9 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
-from typing import Any, Tuple, List
-
 import tensorflow as tf
+from typing import List
 
 
 def mse_loss(y: tf.Tensor, x: tf.Tensor, normalized: bool = True) -> tf.Tensor:
@@ -66,6 +65,39 @@ def multiple_tensors_mse_loss(y_list: List[tf.Tensor],
         return tf.reduce_sum(loss_weights * tf.stack(loss_values_list))
     else:
         return tf.reduce_mean(tf.stack(loss_values_list))
+
+def sample_layer_attention_loss(y_list: List[tf.Tensor],
+                                x_list: List[tf.Tensor],
+                                fxp_w_list,
+                                flp_w_list,
+                                act_bn_mean,
+                                act_bn_std,
+                                loss_weights: tf.Tensor) -> tf.Tensor:
+    """
+    Compute Sample Layer Attention loss between two lists of tensors using TensorFlow.
+
+    Args:
+        y_list: First list of tensors.
+        x_list: Second list of tensors.
+        fxp_w_list, flp_w_list, act_bn_mean, act_bn_std: unused (needed to comply with the interface).
+        loss_weights: layer-sample weights tensor of shape (batch X layers)
+
+    Returns:
+        Sample Layer Attention loss (a scalar).
+    """
+    loss = 0
+    layers_mean_w = []
+
+    for i, (y, x) in enumerate(zip(y_list, x_list)):
+        norm = tf.reduce_sum(tf.square(y - x), axis=1)
+        if len(norm.shape) > 1:
+            norm = tf.reduce_mean(tf.reshape(norm, [norm.shape[0], -1]), axis=1)
+        w = loss_weights[:, i]
+        loss += tf.reduce_mean(w * norm)
+        layers_mean_w.append(tf.reduce_mean(w))
+
+    loss = loss / tf.reduce_max(tf.stack(layers_mean_w))
+    return loss
 
 
 def mse_loss_per_tensor(y: tf.Tensor,

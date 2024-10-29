@@ -25,6 +25,7 @@ from tensorflow.keras.layers import PReLU, ELU
 from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
+from model_compression_toolkit.gptq.keras.gptq_loss import sample_layer_attention_loss
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq import RoundingType
 from model_compression_toolkit.target_platform_capabilities import constants as C
@@ -687,6 +688,17 @@ class FeatureNetworkTest(unittest.TestCase):
                                      rounding_type=RoundingType.SoftQuantizer).run_test()
 
         tf.config.run_functions_eagerly(False)
+
+
+    def test_gptq_with_sample_layer_attention(self):
+        # This call removes the effect of @tf.function decoration and executes the decorated function eagerly, which
+        # enabled tracing for code coverage.
+        # tf.config.run_functions_eagerly(True)
+        # GradientPTQTest(self, use_hessian_sample_attention=True).run_test()
+        GradientPTQTest(self, use_hessian_sample_attention=True, loss=sample_layer_attention_loss).run_test()
+
+        # tf.config.run_functions_eagerly(False)
+
 
     # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
     # def test_gptq_new_exporter(self):
