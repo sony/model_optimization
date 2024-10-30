@@ -71,3 +71,6 @@ class MpDistanceWeighting(Enum):
 
     def __call__(self, distance_matrix: np.ndarray) -> np.ndarray:
         return self.value(distance_matrix)
+
+    def __deepcopy__(self, memo):
+        return self

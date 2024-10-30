@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
+
 import numpy as np
 from typing import Callable, Any, Dict, Tuple
 
 from model_compression_toolkit.constants import FLOAT_BITWIDTH, BITS_TO_BYTES
-from model_compression_toolkit.core import FrameworkInfo, ResourceUtilization, CoreConfig
+from model_compression_toolkit.core import FrameworkInfo, ResourceUtilization, CoreConfig, QuantizationErrorMethod
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
@@ -57,7 +59,7 @@ def compute_resource_utilization_data(in_model: Any,
 
 
     """
-
+    core_config = _create_core_config_for_ru(core_config)
     # We assume that the resource_utilization_data API is used to compute the model resource utilization for
     # mixed precision scenario, so we run graph preparation under the assumption of enabled mixed precision.
     if transformed_graph is None:
@@ -222,6 +224,8 @@ def requires_mixed_precision(in_model: Any,
     Returns: A boolean indicating if mixed precision is needed.
     """
     is_mixed_precision = False
+    core_config = _create_core_config_for_ru(core_config)
+
     transformed_graph = graph_preparation_runner(in_model,
                                                  representative_data_gen,
                                                  core_config.quantization_config,
@@ -247,3 +251,21 @@ def requires_mixed_precision(in_model: Any,
     is_mixed_precision |= target_resource_utilization.total_memory < total_weights_memory_bytes + max_activation_tensor_size_bytes
     is_mixed_precision |= target_resource_utilization.bops < bops_count
     return is_mixed_precision
+
+
+def _create_core_config_for_ru(core_config: CoreConfig) -> CoreConfig:
+    """
+    Create a core config to use for resource utilization computation.
+
+    Args:
+        core_config: input core config
+
+    Returns:
+        Core config for resource utilization.
+    """
+    core_config = copy.deepcopy(core_config)
+    # For resource utilization graph_preparation_runner runs with gptq=False (the default value). HMSE is not supported
+    # without GPTQ and will raise an error later so we replace it with MSE.
+    if core_config.quantization_config.weights_error_method == QuantizationErrorMethod.HMSE:
+        core_config.quantization_config.weights_error_method = QuantizationErrorMethod.MSE
+    return core_config
