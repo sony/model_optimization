@@ -264,7 +264,8 @@ def _create_core_config_for_ru(core_config: CoreConfig) -> CoreConfig:
         Core config for resource utilization.
     """
     core_config = copy.deepcopy(core_config)
-    # HMSE is not supported without GPTQ, and resource utilization doesn't care about it, so we replace it with MSE.
+    # For resource utilization graph_preparation_runner runs with gptq=False (the default value). HMSE is not supported
+    # without GPTQ and will raise an error later so we replace it with MSE.
     if core_config.quantization_config.weights_error_method == QuantizationErrorMethod.HMSE:
         core_config.quantization_config.weights_error_method = QuantizationErrorMethod.MSE
     return core_config
