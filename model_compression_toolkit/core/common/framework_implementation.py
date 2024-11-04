@@ -171,6 +171,25 @@ class FrameworkImplementation(ABC):
                              f'framework\'s apply_shift_negative_correction method.')  # pragma: no cover
 
     @abstractmethod
+    def compute_activation_bias_correction(self,
+                                           graph: Graph,
+                                           core_config: CoreConfig,
+                                           fw_info: FrameworkInfo) -> Graph:
+        """
+        Compute activation bias correction on a graph.
+
+        Args:
+            graph: Graph to apply activation bias correction on.
+            core_config: QuantizationConfig of how the model should be quantized.
+            fw_info: FrameworkInfo object with information about the specific framework's model.
+
+        Returns:
+            Graph after activation bias correction computing.
+        """
+        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+                                  f'framework\'s compute_activation_bias_correction method.')  # pragma: no cover
+
+    @abstractmethod
     def get_substitutions_channel_equalization(self,
                                                quant_config: QuantizationConfig,
                                                fw_info: FrameworkInfo) -> List[common.BaseSubstitution]:
@@ -454,7 +473,7 @@ class FrameworkImplementation(ABC):
 
         raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
                              f'framework\'s get_inferable_quantizers method.')  # pragma: no cover
-    
+
     @staticmethod
     def convert_data_gen_to_dataloader(data_gen_fn: Callable[[], Generator], batch_size: int):
         """

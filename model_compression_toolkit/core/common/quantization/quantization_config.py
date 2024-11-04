@@ -70,6 +70,8 @@ class QuantizationConfig:
     weights_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE
     relu_bound_to_power_of_2: bool = False
     weights_bias_correction: bool = True
+    activation_bias_correction: bool = False
+    activation_bias_correction_threshold: float = 0.0
     weights_second_moment_correction: bool = False
     input_scaling: bool = False
     softmax_shift: bool = False

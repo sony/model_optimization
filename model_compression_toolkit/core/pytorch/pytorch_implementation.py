@@ -92,6 +92,8 @@ from model_compression_toolkit.core.pytorch.pytorch_node_prior_info import creat
 from model_compression_toolkit.core.pytorch.reader.reader import model_reader
 from model_compression_toolkit.core.pytorch.statistics_correction.apply_second_moment_correction import \
     pytorch_apply_second_moment_correction
+from model_compression_toolkit.core.pytorch.statistics_correction.pytorch_compute_activation_bias_correction_of_graph import \
+    pytorch_compute_activation_bias_correction_of_graph
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from model_compression_toolkit.exporter.model_wrapper.fw_agnostic.get_inferable_quantizers import \
     get_inferable_quantizers
@@ -212,6 +214,25 @@ class PytorchImplementation(FrameworkImplementation):
                                                        core_config,
                                                        fw_info)
 
+    def compute_activation_bias_correction(self,
+                                           graph: Graph,
+                                           core_config: CoreConfig,
+                                           fw_info: FrameworkInfo):
+        """
+        Compute activation bias correction on a graph.
+
+        Args:
+            graph: Graph to apply activation bias correction on.
+            core_config: QuantizationConfig of how the model should be quantized.
+            fw_info: FrameworkInfo object with information about the specific framework's model.
+
+        Returns:
+            Graph after activation bias correction computing.
+        """
+        return pytorch_compute_activation_bias_correction_of_graph(graph=graph,
+                                                                   core_config=core_config,
+                                                                   fw_info=fw_info,
+                                                                   fw_impl=self)
 
     def get_substitutions_channel_equalization(self,
                                                quant_config: QuantizationConfig,
