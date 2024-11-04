@@ -70,8 +70,6 @@ class QuantizationConfig:
     weights_error_method: QuantizationErrorMethod = QuantizationErrorMethod.MSE
     relu_bound_to_power_of_2: bool = False
     weights_bias_correction: bool = True
-    activation_bias_correction: bool = False
-    activation_bias_correction_threshold: float = 0.0
     weights_second_moment_correction: bool = False
     input_scaling: bool = False
     softmax_shift: bool = False
@@ -86,6 +84,8 @@ class QuantizationConfig:
     shift_negative_threshold_recalculation: bool = False
     shift_negative_params_search: bool = False
     concat_threshold_update: bool = False
+    activation_bias_correction: bool = False
+    activation_bias_correction_threshold: float = 0.0
 
 
 # Default quantization configuration the library use.

@@ -199,11 +199,12 @@ def compute_activation_bias_correction_of_graph(graph: Graph,
                                                      graph=graph,
                                                      linear_node_types=linear_node_types,
                                                      bypass_node_types=bypass_node_types)
-            graph = compute_activation_bias_correction(graph=graph,
-                                                       core_config=core_config,
-                                                       fw_info=fw_info,
-                                                       fw_impl=fw_impl,
-                                                       linear_node=n,
-                                                       prev_node=prev_node,
-                                                       kernel_size=kernel_size)
+            if prev_node is not None:
+                graph = compute_activation_bias_correction(graph=graph,
+                                                           core_config=core_config,
+                                                           fw_info=fw_info,
+                                                           fw_impl=fw_impl,
+                                                           linear_node=n,
+                                                           prev_node=prev_node,
+                                                           kernel_size=kernel_size)
     return graph
