@@ -42,10 +42,7 @@ setup(name='model_compression_toolkit',
       long_description=get_log_description(),
       long_description_content_type="text/markdown",
       description='A Model Compression Toolkit for neural networks',
-      packages=find_packages(
-          exclude=["tests", "tests.*",
-                   "requirements", "requirements.*",
-                   "tutorials", "tutorials.*"]),
+      packages=find_packages(include=["model_compression_toolkit", "model_compression_toolkit.*"]),
       classifiers=[
           "Programming Language :: Python :: 3",
           "License :: OSI Approved :: Apache Software License",
