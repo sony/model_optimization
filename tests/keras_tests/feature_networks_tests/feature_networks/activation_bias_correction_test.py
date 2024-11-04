@@ -38,6 +38,7 @@ class BaseActivationBiasCorrectionTest(BaseKerasFeatureNetworkTest):
     def get_quantization_config(self):
         return QuantizationConfig(weights_bias_correction=False,
                                   weights_second_moment_correction=False,
+                                  shift_negative_activation_correction=False,
                                   activation_bias_correction=True)
 
     def create_networks(self):
@@ -45,7 +46,7 @@ class BaseActivationBiasCorrectionTest(BaseKerasFeatureNetworkTest):
         x = layers.Activation('gelu')(inputs)
         x = layers.Dropout(0.5)(x)
         x = layers.Dropout(0.5)(x)
-        outputs = layers.Dense(30)(x)
+        outputs = layers.Dense(30, use_bias=False)(x)
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -159,3 +160,38 @@ class BaseActivationBiasCorrectionReshapeConvTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(np.array_equal(bias, bias_after_activation_bias_correction),
                                   msg=f"Error in activation bias correction: expected no change in the bias value in "
                                       f"case of activation_bias_correction_threshold 1e9.")
+
+
+class BaseActivationBiasCorrectionConv8Test(BaseKerasFeatureNetworkTest):
+    """
+    This test checks the Activation Bias Correction feature.
+    """
+
+    def __init__(self, unit_test):
+        super().__init__(unit_test)
+
+    def get_quantization_config(self):
+        # A large value is assigned to the activation bias correction threshold to enable threshold filtering,
+        # which adjusts the bias correction values to zero.
+        return QuantizationConfig(weights_bias_correction=False,
+                                  weights_second_moment_correction=False,
+                                  activation_bias_correction=True)
+
+    def create_networks(self):
+        inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
+        x = layers.Activation('swish')(inputs)
+        x = layers.Flatten()(x)
+        x = layers.Reshape(target_shape=(8, 8, 3))(x)
+        outputs = layers.Conv2D(filters=3, kernel_size=2, use_bias=True, bias_initializer='ones')(x)
+        return keras.Model(inputs=inputs, outputs=outputs)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        float_conv_layers = get_layers_from_model_by_type(float_model, layers.Conv2D)
+        quantized_conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
+
+        bias = float_conv_layers[-1].bias
+        bias_after_activation_bias_correction = quantized_conv_layers[-1].layer.bias
+
+        self.unit_test.assertTrue(np.array_equal(bias, bias_after_activation_bias_correction),
+                                  msg=f"Error in activation bias correction: expected no change in the bias value in "
+                                      f"case of conv2d with kernel 2.")

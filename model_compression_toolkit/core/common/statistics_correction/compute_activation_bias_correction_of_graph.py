@@ -46,7 +46,7 @@ def get_next_nodes_to_correct(node: BaseNode,
     prev_nodes = graph.get_prev_nodes(node)
 
     if len(prev_nodes) != 1:
-        return None, None
+        return None, None  # pragma: no cover
 
     prev_node = prev_nodes[0]
 
@@ -65,7 +65,7 @@ def get_next_nodes_to_correct(node: BaseNode,
                                          linear_node_types=linear_node_types,
                                          bypass_node_types=bypass_node_types,
                                          bypass_nodes=bypass_nodes)
-    return None, None
+    return None, None  # pragma: no cover
 
 
 def calculate_bin_centers(bin_edges: np.ndarray) -> np.ndarray:
@@ -124,7 +124,7 @@ def compute_activation_bias_correction(graph: Graph,
     # Check if the previous node's has activation quantization configuration and if the previous node have the
     # histogram collector
     if prev_node_act_quant_cfg is None or not hasattr(graph.get_out_stats_collector(prev_node), 'hc'):
-        return graph
+        return graph  # pragma: no cover
 
     float_bins, float_count = graph.get_out_stats_collector(prev_node).hc.get_histogram()
 

@@ -30,7 +30,7 @@ from model_compression_toolkit.gptq import RoundingType
 from model_compression_toolkit.target_platform_capabilities import constants as C
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_bias_correction_test import \
     BaseActivationBiasCorrectionTest, BaseActivationBiasCorrectionConvTest, BaseActivationBiasCorrectionDWConvTest, \
-    BaseActivationBiasCorrectionReshapeConvTest
+    BaseActivationBiasCorrectionReshapeConvTest, BaseActivationBiasCorrectionConv8Test
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
     ActivationDecompositionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_bound_to_power_of_2_test import \
@@ -524,6 +524,7 @@ class FeatureNetworkTest(unittest.TestCase):
         BaseActivationBiasCorrectionConvTest(self).run_test()
         BaseActivationBiasCorrectionDWConvTest(self).run_test()
         BaseActivationBiasCorrectionReshapeConvTest(self).run_test()
+        BaseActivationBiasCorrectionConv8Test(self).run_test()
 
     def test_layer_activation_softmax_shift(self):
         SoftmaxShiftTest(self, layers.Dense(20, activation='softmax'), None).run_test()
