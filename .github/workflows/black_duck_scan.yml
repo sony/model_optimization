@@ -1,8 +1,8 @@
 name: Black Duck Scan
+
 on:
   push:
-    branches:
-      [ patch-1 ]
+    branches: [ main ]
 
 
 env:
