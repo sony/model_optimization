@@ -2,7 +2,7 @@ name: Black Duck Scan
 on:
   push:
     branches:
-      [ add_blackduck_scan ]
+      [ patch-1 ]
 
 
 env:
