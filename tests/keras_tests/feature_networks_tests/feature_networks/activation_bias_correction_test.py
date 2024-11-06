@@ -69,12 +69,18 @@ class BaseActivationBiasCorrectionTest(BaseKerasFeatureNetworkTest):
         bias = float_linear_layers[-1].bias
         bias_after_activation_bias_correction = quantized_linear_layers[-1].layer.bias
 
+        y = float_model.predict(input_x)
+        y_hat = quantized_model.predict(input_x)
+
+        self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
+
         if getattr(float_linear_layers[-1], KERNEL_SIZE, None) in [None, 1, (1, 1)]:
             if self.activation_bias_correction_threshold > 1e8:
                 self.unit_test.assertTrue(np.array_equal(bias, bias_after_activation_bias_correction),
                                           msg=f"Error in activation bias correction: expected no change in the bias "
                                               f"value in case of activation_bias_correction_threshold "
                                               f"{self.activation_bias_correction_threshold}.")
+
             else:
                 self.unit_test.assertFalse(np.array_equal(bias, bias_after_activation_bias_correction),
                                            msg=f"Error in activation bias correction: expected a change in the bias "
@@ -82,4 +88,4 @@ class BaseActivationBiasCorrectionTest(BaseKerasFeatureNetworkTest):
         else:
             self.unit_test.assertTrue(np.array_equal(bias, bias_after_activation_bias_correction),
                                       msg=f"Error in activation bias correction: expected no change in the bias value "
-                                          f"in case of conv with kernel 2.")
+                                          f"in case of conv with kernel different than 1 or (1, 1).")

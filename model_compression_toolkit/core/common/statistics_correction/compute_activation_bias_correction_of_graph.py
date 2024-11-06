@@ -91,8 +91,10 @@ def compute_activation_bias_correction(graph: Graph,
         Graph with activation bias correction term for each node.
     """
 
-    # Retrieve the 'kernel_size' value if it exists and ensure it is None, 1, or (1, 1).
-    # This feature supports only Dense/Linear layers and convolution layers with kernel size  of 1 or (1, 1).
+    # Retrieve the 'kernel_size' value if it exists and ensure it is None, 1, or (1, 1). This feature supports only
+    # Dense/Linear layers and convolution layers with kernel size  of 1 or (1, 1).
+    # For Dense/Linear layers, which lack a 'kernel_size' attribute, the result will be None, and no restriction
+    # applies in that case.
     if linear_node.framework_attr.get(kernel_size) not in [None, 1, (1, 1)]:
         # If the kernel size is not 1 or (1, 1), return the current graph unmodified
         return graph
@@ -136,17 +138,18 @@ def compute_activation_bias_correction(graph: Graph,
     # size matching the number of output channels.
     if kernel is not None:
 
-        # Get the axes that are not the output channel
+        # Get the axes that are not the output channel.
         output_channel_index, input_channel_index = fw_info.kernel_channels_mapping.get(linear_node.type)
         axis_not_output_channel = list(range(len(kernel.shape)))
         axis_not_output_channel.remove(output_channel_index)
 
-        # special case of depthwise_conv2d in tensorflow, where we have a depth multiplier for the filters
+        # Special case of depthwise_conv2d in tensorflow, where we have a depth multiplier for the filters.
         if output_channel_index == input_channel_index:
-            axis_not_output_channel.remove(3)  # 3 is the depth multiplier index
+            axis_not_output_channel.remove(3)  # 3 is the depth multiplier index.
 
         activation_bias_correction_term = mean_diff * np.sum(kernel, axis=tuple(axis_not_output_channel))
-        linear_node.final_activation_quantization_cfg.activation_bias_correction_term = activation_bias_correction_term.flatten()
+        linear_node.final_activation_quantization_cfg.activation_bias_correction_term = (
+            activation_bias_correction_term.flatten())
     return graph
 
 

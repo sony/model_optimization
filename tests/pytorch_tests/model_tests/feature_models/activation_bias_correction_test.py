@@ -19,6 +19,7 @@ from torch.nn import GELU, Hardswish, AdaptiveAvgPool2d, ZeroPad2d, Linear, Conv
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.core.pytorch.constants import KERNEL_SIZE
+from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_model
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 
 """
@@ -108,6 +109,12 @@ class BaseActivationBiasCorrectionTest(BasePytorchFeatureNetworkTest):
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         bias = float_model.linear_layer.bias.cpu().detach().numpy()
         bias_after_activation_bias_correction = quantized_model.linear_layer.layer.bias.cpu().detach().numpy()
+
+        set_model(float_model)
+        y = float_model(to_torch_tensor(input_x[0]))
+        y_hat = quantized_model(to_torch_tensor(input_x[0]))
+
+        self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
 
         if getattr(float_model.linear_layer, KERNEL_SIZE, None) in [None, 1, (1, 1)]:
             if self.activation_bias_correction_threshold > 1e8:
