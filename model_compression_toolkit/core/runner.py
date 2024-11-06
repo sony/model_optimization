@@ -164,6 +164,14 @@ def core_runner(in_model: Any,
                         tg,
                         bit_widths_config)
 
+    ######################################
+    # Compute Activation Bias Correction
+    ######################################
+    if core_config.quantization_config.activation_bias_correction:
+        tg = fw_impl.compute_activation_bias_correction(graph=tg,
+                                                        quant_config=core_config.quantization_config,
+                                                        fw_info=fw_info)
+
     # Edit the graph again after finalizing the configurations.
     # This is since some actions regard the final configuration and should be edited.
     edit_network_graph(tg, fw_info, core_config.debug_config.network_editor)

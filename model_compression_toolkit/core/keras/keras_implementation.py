@@ -28,6 +28,8 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.remo
 from model_compression_toolkit.core.keras.hessian.activation_hessian_scores_calculator_keras import \
     ActivationHessianScoresCalculatorKeras
 from model_compression_toolkit.core.keras.hessian.weights_hessian_scores_calculator_keras import WeightsHessianScoresCalculatorKeras
+from model_compression_toolkit.core.keras.statistics_correction.keras_compute_activation_bias_correction_of_graph import \
+    keras_compute_activation_bias_correction_of_graph
 from model_compression_toolkit.exporter.model_wrapper.fw_agnostic.get_inferable_quantizers import \
     get_inferable_quantizers
 from model_compression_toolkit.exporter.model_wrapper.keras.builder.node_to_quantizer import \
@@ -84,7 +86,7 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.line
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.residual_collapsing import \
     keras_residual_collapsing
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.input_scaling import InputScaling, \
-    InputScalingWithPad 
+    InputScalingWithPad
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.concat_threshold_update import ConcatThresholdUpdate
 from model_compression_toolkit.core.keras.graph_substitutions.substitutions.relu_bound_to_power_of_2 import \
     ReLUBoundToPowerOfTwo
@@ -218,6 +220,25 @@ class KerasImplementation(FrameworkImplementation):
                                                      core_config,
                                                      fw_info)
 
+    def compute_activation_bias_correction(self,
+                                           graph: Graph,
+                                           quant_config: QuantizationConfig,
+                                           fw_info: FrameworkInfo):
+        """
+        Compute activation bias correction on a graph.
+
+        Args:
+            graph: Graph to apply activation bias correction on.
+            quant_config: QuantizationConfig of how the model should be quantized.
+            fw_info: FrameworkInfo object with information about the specific framework's model.
+
+        Returns:
+            Graph after activation bias correction computing.
+        """
+        return keras_compute_activation_bias_correction_of_graph(graph=graph,
+                                                                 quant_config=quant_config,
+                                                                 fw_info=fw_info,
+                                                                 fw_impl=self)
 
     def get_substitutions_channel_equalization(self,
                                                quant_config: QuantizationConfig,
@@ -309,7 +330,7 @@ class KerasImplementation(FrameworkImplementation):
         """
         return keras_op2d_add_const_collapsing()
 
-    def get_substitutions_post_statistics_collection(self, 
+    def get_substitutions_post_statistics_collection(self,
                                                      quant_config: QuantizationConfig) -> List[common.BaseSubstitution]:
         """
         Return a list of the framework substitutions used after we collect statistics.

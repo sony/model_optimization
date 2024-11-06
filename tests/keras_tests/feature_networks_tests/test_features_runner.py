@@ -28,6 +28,8 @@ from model_compression_toolkit.core.common.network_editors import NodeTypeFilter
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq import RoundingType
 from model_compression_toolkit.target_platform_capabilities import constants as C
+from tests.keras_tests.feature_networks_tests.feature_networks.activation_bias_correction_test import \
+    BaseActivationBiasCorrectionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_decomposition_test import \
     ActivationDecompositionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_relu_bound_to_power_of_2_test import \
@@ -63,7 +65,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision.r
     RequiresMixedPrecision, RequiresMixedPrecisionWeights
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_bops_test import \
     MixedPrecisionBopsBasicTest, MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, \
-    MixedPrecisionActivationOnlyBopsTest, MixedPrecisionBopsAndWeightsUtilizationTest, MixedPrecisionBopsAndActivationUtilizationTest, \
+    MixedPrecisionActivationOnlyBopsTest, MixedPrecisionBopsAndWeightsUtilizationTest, \
+    MixedPrecisionBopsAndActivationUtilizationTest, \
     MixedPrecisionBopsAndTotalUtilizationTest, MixedPrecisionBopsWeightsActivationUtilizationTest, \
     MixedPrecisionBopsMultipleOutEdgesTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_tests import \
@@ -140,7 +143,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_pre
     MixedPrecisionSearchPartWeightsLayersTest, MixedPrecisionDepthwiseTest, MixedPrecisionSearchLastLayerDistanceTest, \
     MixedPrecisionSearchActivationNonConfNodesTest, MixedPrecisionSearchTotalMemoryNonConfNodesTest, \
     MixedPrecisionCombinedNMSTest
-from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substitution_test import MatmulToDenseSubstitutionTest
+from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substitution_test import \
+    MatmulToDenseSubstitutionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.metadata_test import MetadataTest
 from tests.keras_tests.feature_networks_tests.feature_networks.tpc_test import TpcTest
 from tests.keras_tests.feature_networks_tests.feature_networks.const_representation_test import ConstRepresentationTest, \
@@ -150,8 +154,10 @@ from tests.keras_tests.feature_networks_tests.feature_networks.const_quantizatio
     AdvancedConstQuantizationTest, ConstQuantizationMultiInputTest
 from tests.keras_tests.feature_networks_tests.feature_networks.activation_16bit_test import Activation16BitTest, \
     Activation16BitMixedPrecisionTest
-from tests.keras_tests.feature_networks_tests.feature_networks.sigmoid_mul_substitution_test import SigMulSubstitutionTest
-from tests.keras_tests.feature_networks_tests.feature_networks.conv_func_substitutions_test import ConvFuncSubstitutionsTest
+from tests.keras_tests.feature_networks_tests.feature_networks.sigmoid_mul_substitution_test import \
+    SigMulSubstitutionTest
+from tests.keras_tests.feature_networks_tests.feature_networks.conv_func_substitutions_test import \
+    ConvFuncSubstitutionsTest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
 
 layers = tf.keras.layers
@@ -167,7 +173,7 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_per_tensor_weight_quantization(self):
         PerTensorWeightQuantizationTest(self).run_test()
-    
+
     def test_single_relu_replacement(self):
         SingleReluReplacementTest(self).run_test()
 
@@ -240,7 +246,7 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_requires_mixed_recision(self):
         RequiresMixedPrecisionWeights(self, weights_memory=True).run_test()
-        RequiresMixedPrecision(self,activation_memory=True).run_test()
+        RequiresMixedPrecision(self, activation_memory=True).run_test()
         RequiresMixedPrecision(self, total_memory=True).run_test()
         RequiresMixedPrecision(self, bops=True).run_test()
         RequiresMixedPrecision(self).run_test()
@@ -516,6 +522,27 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_activation_scaling_relu6(self):
         ReLUBoundToPOTNetTest(self).run_test()
 
+    def test_activation_bias_correction(self):
+        for use_bias in [False, True]:
+            for linear_layer in [layers.Dense(30, use_bias=use_bias),
+                                 layers.Conv2D(filters=3, kernel_size=1, use_bias=use_bias),
+                                 layers.DepthwiseConv2D(kernel_size=1, use_bias=use_bias,
+                                                        bias_initializer='glorot_uniform', depth_multiplier=1),
+                                 layers.Conv2DTranspose(filters=3, kernel_size=1, use_bias=use_bias),
+                                 layers.Conv2D(filters=3, kernel_size=2, use_bias=use_bias)]:
+                for activation_bias_correction_threshold in [0.0, 1e-6, 1e9]:
+                    for activation in ['gelu', 'swish']:
+                        for bypass_layer in [[layers.ZeroPadding2D(2)],
+                                             [layers.Dropout(0.5), layers.Dropout(0.5)],
+                                             [layers.MaxPooling2D(pool_size=(2, 2), strides=2)],
+                                             [layers.Flatten(), layers.Reshape(target_shape=(8, 8, 3))]]:
+                            BaseActivationBiasCorrectionTest(self,
+                                                             prev_layer=layers.Activation(activation),
+                                                             bypass_layer_list=bypass_layer,
+                                                             linear_layer=linear_layer,
+                                                             activation_bias_correction_threshold=
+                                                             activation_bias_correction_threshold).run_test()
+
     def test_layer_activation_softmax_shift(self):
         SoftmaxShiftTest(self, layers.Dense(20, activation='softmax'), None).run_test()
 
@@ -535,9 +562,12 @@ class FeatureNetworkTest(unittest.TestCase):
         Conv2DBNFoldingTest(self).run_test()
 
     def test_bn_forward_folding(self):
-        BNForwardFoldingTest(self, layers.Conv2D(2, 1, bias_initializer='glorot_uniform'), True, is_dwconv=True).run_test()
-        BNForwardFoldingTest(self, layers.DepthwiseConv2D(1, bias_initializer='glorot_uniform'), True, is_dwconv=True).run_test()
-        BNForwardFoldingTest(self, layers.Conv2DTranspose(2, 1, bias_initializer='glorot_uniform'), True, is_dwconv=True).run_test()
+        BNForwardFoldingTest(self, layers.Conv2D(2, 1, bias_initializer='glorot_uniform'), True,
+                             is_dwconv=True).run_test()
+        BNForwardFoldingTest(self, layers.DepthwiseConv2D(1, bias_initializer='glorot_uniform'), True,
+                             is_dwconv=True).run_test()
+        BNForwardFoldingTest(self, layers.Conv2DTranspose(2, 1, bias_initializer='glorot_uniform'), True,
+                             is_dwconv=True).run_test()
         BNForwardFoldingTest(self, layers.Conv2D(2, 2), False, is_dwconv=True).run_test()
         BNForwardFoldingTest(self, layers.DepthwiseConv2D((3, 1)), False, is_dwconv=True).run_test()
         BNForwardFoldingTest(self, layers.Conv2DTranspose(2, (1, 3)), False, is_dwconv=True).run_test()
@@ -582,10 +612,14 @@ class FeatureNetworkTest(unittest.TestCase):
             for qmethod in [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC, QuantizationMethod.UNIFORM]:
                 for error_method in [QuantizationErrorMethod.MSE, QuantizationErrorMethod.NOCLIPPING]:
                     ConstQuantizationTest(self, func, c, qmethod=qmethod, error_method=error_method).run_test()
-                    ConstQuantizationTest(self, func, c, input_reverse_order=True, qmethod=qmethod, error_method=error_method).run_test()
-                    ConstQuantizationTest(self, func, c, input_reverse_order=True, use_kwargs=True, qmethod=qmethod, error_method=error_method).run_test()
-                    ConstQuantizationTest(self, func, c, use_kwargs=True, qmethod=qmethod, error_method=error_method).run_test()
-                    ConstQuantizationTest(self, func, 5.1, input_reverse_order=True, qmethod=qmethod, error_method=error_method).run_test()
+                    ConstQuantizationTest(self, func, c, input_reverse_order=True, qmethod=qmethod,
+                                          error_method=error_method).run_test()
+                    ConstQuantizationTest(self, func, c, input_reverse_order=True, use_kwargs=True, qmethod=qmethod,
+                                          error_method=error_method).run_test()
+                    ConstQuantizationTest(self, func, c, use_kwargs=True, qmethod=qmethod,
+                                          error_method=error_method).run_test()
+                    ConstQuantizationTest(self, func, 5.1, input_reverse_order=True, qmethod=qmethod,
+                                          error_method=error_method).run_test()
 
         AdvancedConstQuantizationTest(self).run_test()
         ConstQuantizationMultiInputTest(self).run_test()
@@ -607,7 +641,8 @@ class FeatureNetworkTest(unittest.TestCase):
         for func in [layers.Add(), layers.Multiply(), layers.Subtract()]:
             ConstRepresentationTest(self, func, c, is_list_input=True).run_test()
             ConstRepresentationTest(self, func, c, input_reverse_order=True, is_list_input=True).run_test()
-            ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwargs=True, is_list_input=True).run_test()
+            ConstRepresentationTest(self, func, c, input_reverse_order=True, use_kwargs=True,
+                                    is_list_input=True).run_test()
             ConstRepresentationTest(self, func, c, use_kwargs=True, is_list_input=True).run_test()
 
         ConstRepresentationMultiInputTest(self).run_test()
@@ -696,7 +731,6 @@ class FeatureNetworkTest(unittest.TestCase):
     # def test_gptq_conv_group(self):
     #     GradientPTQLearnRateZeroConvGroupTest(self).run_test()
     #     GradientPTQWeightsUpdateConvGroupTest(self).run_test()
-
 
     def test_gptq_conv_group_dilation(self):
         GradientPTQLearnRateZeroConvGroupDilationTest(self).run_test()
@@ -794,7 +828,8 @@ class FeatureNetworkTest(unittest.TestCase):
         QuantizationAwareTrainingQuantizersTest(self).run_test()
         QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
         QATWrappersMixedPrecisionCfgTest(self).run_test()
-        QATWrappersMixedPrecisionCfgTest(self, ru_weights=17920 * 4 / 8, ru_activation=5408 * 4 / 8, expected_mp_cfg=[0, 4, 1, 1]).run_test()
+        QATWrappersMixedPrecisionCfgTest(self, ru_weights=17920 * 4 / 8, ru_activation=5408 * 4 / 8,
+                                         expected_mp_cfg=[0, 4, 1, 1]).run_test()
 
     def test_bn_attributes_quantization(self):
         BNAttributesQuantization(self, quantize_linear=False).run_test()
@@ -883,8 +918,8 @@ class FeatureNetworkTest(unittest.TestCase):
         # Invalid inputs to API
         with self.assertRaises(Exception) as context:
             ManualBitWidthSelectionTest(self,
-                                          [NodeNameFilter('relu1'), NodeNameFilter('add1'), NodeNameFilter('add2')],
-                                          [2, 4]).run_test()
+                                        [NodeNameFilter('relu1'), NodeNameFilter('add1'), NodeNameFilter('add2')],
+                                        [2, 4]).run_test()
         # Check that the correct exception message was raised
         self.assertEqual(str(context.exception),
                          "Configuration Error: The number of provided bit_width values 2 must match the number of filters 3, or a single bit_width value should be provided for all filters.")
@@ -899,15 +934,15 @@ class FeatureNetworkTest(unittest.TestCase):
         ManualBitWidthSelectionTest(self, NodeTypeFilter(layers.Add), 4).run_test()
         ManualBitWidthSelectionTest(self, NodeTypeFilter(layers.Add), 2).run_test()
         ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Conv2D), NodeTypeFilter(layers.Dense)],
-                                      [2, 4]).run_test()
+                                    [2, 4]).run_test()
         ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Conv2D), NodeTypeFilter(layers.Dense)],
-                                      [4, 4]).run_test()
+                                    [4, 4]).run_test()
         ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Conv2D), NodeTypeFilter(layers.Add)],
-                                      [2, 4]).run_test()
+                                    [2, 4]).run_test()
         ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Add), NodeTypeFilter(layers.Conv2D)],
-                                      [4, 4]).run_test()
+                                    [4, 4]).run_test()
         ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Add), NodeTypeFilter(layers.Dense)],
-                                      4).run_test()
+                                    4).run_test()
         ManualBitWidthSelectionTest(self, NodeNameFilter('input'), 4).run_test()
         ManualBitWidthSelectionTest(self, NodeNameFilter('conv1'), 4).run_test()
         ManualBitWidthSelectionTest(self, NodeNameFilter('fc'), 4).run_test()
@@ -916,7 +951,7 @@ class FeatureNetworkTest(unittest.TestCase):
         ManualBitWidthSelectionTest(self, NodeNameFilter('relu1'), 4).run_test()
         ManualBitWidthSelectionTest(self, [NodeNameFilter('add1'), NodeNameFilter('conv1')], [2, 4]).run_test()
         ManualBitWidthSelectionTest(self, [NodeNameFilter('add2'), NodeNameFilter('relu1')], 4).run_test()
-        ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Add), NodeNameFilter('add2')],[4, 2]).run_test()
+        ManualBitWidthSelectionTest(self, [NodeTypeFilter(layers.Add), NodeNameFilter('add2')], [4, 2]).run_test()
 
 
 if __name__ == '__main__':

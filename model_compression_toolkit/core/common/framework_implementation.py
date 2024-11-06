@@ -64,7 +64,7 @@ class FrameworkImplementation(ABC):
 
         Returns: HessianScoresCalculator to use for the hessian approximation scores computation for this request.
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_hessian_scores_calculator method.')  # pragma: no cover
 
     @abstractmethod
@@ -77,7 +77,7 @@ class FrameworkImplementation(ABC):
         Returns:
             Numpy array converted from the input tensor.
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s to_numpy method.')  # pragma: no cover
 
     @abstractmethod
@@ -90,7 +90,7 @@ class FrameworkImplementation(ABC):
         Returns:
             Framework's tensor converted from the input Numpy array.
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s to_tensor method.')  # pragma: no cover
 
     @abstractmethod
@@ -106,7 +106,7 @@ class FrameworkImplementation(ABC):
         Returns:
             Graph representing the input model.
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s model_reader method.')  # pragma: no cover
 
     @abstractmethod
@@ -131,7 +131,7 @@ class FrameworkImplementation(ABC):
         Returns:
             A tuple with the model and additional relevant supporting objects.
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s model_builder method.')  # pragma: no cover
 
     @abstractmethod
@@ -148,7 +148,7 @@ class FrameworkImplementation(ABC):
         Returns:
             The frameworks model's output.
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s run_model_inference method.')  # pragma: no cover
 
     @abstractmethod
@@ -167,8 +167,27 @@ class FrameworkImplementation(ABC):
         Returns:
             Graph after SNC.
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s apply_shift_negative_correction method.')  # pragma: no cover
+
+    @abstractmethod
+    def compute_activation_bias_correction(self,
+                                           graph: Graph,
+                                           quant_config: QuantizationConfig,
+                                           fw_info: FrameworkInfo) -> Graph:
+        """
+        Compute activation bias correction on a graph.
+
+        Args:
+            graph: Graph to apply activation bias correction on.
+            quant_config: QuantizationConfig of how the model should be quantized.
+            fw_info: FrameworkInfo object with information about the specific framework's model.
+
+        Returns:
+            Graph after activation bias correction computing.
+        """
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
+                                  f'framework\'s compute_activation_bias_correction method.')  # pragma: no cover
 
     @abstractmethod
     def get_substitutions_channel_equalization(self,
@@ -184,7 +203,7 @@ class FrameworkImplementation(ABC):
         Returns:
             A list of the framework substitutions used after we collect statistics.
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_substitutions_channel_equalization method.')  # pragma: no cover
 
     @abstractmethod
@@ -194,7 +213,7 @@ class FrameworkImplementation(ABC):
         Returns: A list of the framework substitutions used to prepare the graph.
 
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_substitutions_prepare_graph method.')  # pragma: no cover
 
     @abstractmethod
@@ -208,7 +227,7 @@ class FrameworkImplementation(ABC):
         Returns: A list of the framework substitutions used before we collect statistics.
 
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_substitutions_pre_statistics_collection method.')  # pragma: no cover
 
     @abstractmethod
@@ -216,7 +235,7 @@ class FrameworkImplementation(ABC):
         """
         Returns: linear collapsing substitution
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_linear_collapsing_substitution method.')  # pragma: no cover
 
     @abstractmethod
@@ -224,7 +243,7 @@ class FrameworkImplementation(ABC):
         """
         Returns: conv2d add const collapsing substitution
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_op2d_add_const_collapsing_substitution method.')  # pragma: no cover
 
     @abstractmethod
@@ -239,7 +258,7 @@ class FrameworkImplementation(ABC):
         Returns:
             A list of the framework substitutions used for statistics correction.
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_substitutions_statistics_correction method.')  # pragma: no cover
 
     @abstractmethod
@@ -247,7 +266,7 @@ class FrameworkImplementation(ABC):
         """
         Returns: A list of the framework substitutions used for residual collapsing
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_residual_collapsing_substitution method.')  # pragma: no cover
 
 
@@ -263,7 +282,7 @@ class FrameworkImplementation(ABC):
         Returns:
             A list of the framework substitutions used after we collect statistics.
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_substitutions_post_statistics_collection method.')  # pragma: no cover
 
     @abstractmethod
@@ -272,7 +291,7 @@ class FrameworkImplementation(ABC):
         Returns: A list of Keras substitutions used to build a virtual graph with composed activation-weights pairs.
         """
 
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_substitutions_virtual_weights_activation_coupling '
                              f'method.')  # pragma: no cover
 
@@ -288,7 +307,7 @@ class FrameworkImplementation(ABC):
         Returns:
             A list of the framework substitutions used after we apply second moment statistics.
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_substitutions_after_second_moment_correction '
                              f'method.')  # pragma: no cover
 
@@ -316,7 +335,7 @@ class FrameworkImplementation(ABC):
             A function that computes the metric.
         """
 
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_sensitivity_evaluator method.')  # pragma: no cover
 
     def get_node_prior_info(self, node: BaseNode,
@@ -334,7 +353,7 @@ class FrameworkImplementation(ABC):
             NodePriorInfo with information about the node.
         """
 
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_node_prior_info method.')  # pragma: no cover
 
     def count_node_for_mixed_precision_interest_points(self, node: BaseNode) -> bool:
@@ -345,7 +364,7 @@ class FrameworkImplementation(ABC):
         Returns: True if the node should be considered an interest point, False otherwise.
         """
 
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s count_node_for_mixed_precision_interest_points method.')  # pragma: no cover
 
     def get_mp_node_distance_fn(self, n: BaseNode,
@@ -364,7 +383,7 @@ class FrameworkImplementation(ABC):
         Returns: A distance function between two tensors and a axis on which the distance is computed (if exists).
         """
 
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_mp_node_distance_fn method.')  # pragma: no cover
 
 
@@ -381,7 +400,7 @@ class FrameworkImplementation(ABC):
 
         """
 
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s is_output_node_compatible_for_hessian_score_computation method.')  # pragma: no cover
 
     @abstractmethod
@@ -398,7 +417,7 @@ class FrameworkImplementation(ABC):
         Returns: The MAC count of the operation
         """
 
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_node_mac_operations method.')  # pragma: no cover
 
     @abstractmethod
@@ -419,7 +438,7 @@ class FrameworkImplementation(ABC):
         Returns:
             A Graph after second moment correction.
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s apply_second_moment_correction method.')  # pragma: no cover
 
     @abstractmethod
@@ -436,7 +455,7 @@ class FrameworkImplementation(ABC):
         Returns:
             The output of the model inference on the given input.
         """
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s sensitivity_eval_inference method.')  # pragma: no cover
 
     def get_inferable_quantizers(self, node: BaseNode):
@@ -452,9 +471,9 @@ class FrameworkImplementation(ABC):
 
         """
 
-        raise NotImplementedError(f'{self.__class__.__name__} have to implement the '
+        raise NotImplementedError(f'{self.__class__.__name__} has to implement the '
                              f'framework\'s get_inferable_quantizers method.')  # pragma: no cover
-    
+
     @staticmethod
     def convert_data_gen_to_dataloader(data_gen_fn: Callable[[], Generator], batch_size: int):
         """
