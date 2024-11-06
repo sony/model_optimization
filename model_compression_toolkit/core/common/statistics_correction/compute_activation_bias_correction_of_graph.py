@@ -12,82 +12,63 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import List, Tuple, Any, Callable
-
 import numpy as np
+from typing import Any, Callable
 
-from model_compression_toolkit.core import CoreConfig
+from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
-from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 
 
-def get_next_nodes_to_correct(node: BaseNode,
-                              graph: Graph,
-                              linear_node_types: NodeOperationMatcher,
-                              bypass_node_types: NodeOperationMatcher,
-                              bypass_nodes: List = None) -> Tuple[Any, Any]:
+def get_previous_node_with_activation_quantization(linear_node: BaseNode,
+                                                   graph: Graph) -> Any:
     """
-    Search for the previous node which is not a bypass node of a given node. Go over the previous nodes of the node
-    and recursively search for a node.
+    Search recursively for the previous node with activation quantization.
 
     Args:
-        node: Node to search for its previous node.
+        linear_node: Node to search for its previous node.
         graph: Graph the node is in.
-        linear_node_types: Types of linear nodes to consider.
-        bypass_node_types: Types of nodes for bypassing to consider.
-        bypass_nodes: a list of bypass nodes found while running this function
 
-    Returns: The previous node (if found) and a list of bypass nodes (if any), or Nones if it were not found or there
-    are multiple incoming edges to one of nodes during the search (which means, the substitution can not be applied).
+    Returns:
+        The previous node (if found) or None if it was not found or there are multiple incoming edges to one of
+        nodes during the search (which means, the substitution can not be applied).
     """
 
-    prev_nodes = graph.get_prev_nodes(node)
+    prev_nodes = graph.get_prev_nodes(linear_node)
 
     if len(prev_nodes) != 1:
-        return None, None  # pragma: no cover
+        return None  # pragma: no cover
 
     prev_node = prev_nodes[0]
 
-    # If the previous node is not a bypass type, return it as the valid node along with any bypass nodes
-    if not bypass_node_types.apply(prev_node):
-        return prev_node, bypass_nodes
+    activation_quantization_config = prev_node.final_activation_quantization_cfg
 
-    # If the previous node is a bypass node type, add it to the bypass_nodes list and continue searching
-    if bypass_node_types.apply(prev_node):
-        if bypass_nodes:
-            bypass_nodes.append(prev_node)
-        else:
-            bypass_nodes = [prev_node]
-        return get_next_nodes_to_correct(node=prev_node,
-                                         graph=graph,
-                                         linear_node_types=linear_node_types,
-                                         bypass_node_types=bypass_node_types,
-                                         bypass_nodes=bypass_nodes)
-    return None, None  # pragma: no cover
+    # Search for node with activation quantization
+    if (activation_quantization_config.enable_activation_quantization and
+            not activation_quantization_config.quantization_preserving):
+        return prev_node
+    else:
+        return get_previous_node_with_activation_quantization(prev_node, graph)
 
 
 def calculate_bin_centers(bin_edges: np.ndarray) -> np.ndarray:
     """
     Calculate the centers of bins given their edges.
 
-    Parameters:
-    bin_edges: Array of bin edges.
+    Args:
+        bin_edges: Array of bin edges.
 
     Returns:
-    np.ndarray: Array of bin centers.
+        np.ndarray: Array of bin centers.
     """
-    # Ensure bin_edges is a numpy array
-    bin_edges = np.array(bin_edges, dtype=np.float32)
-
     # Calculate the centers by averaging continuous bin edges
     bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2.0
     return bin_centers
 
 
 def compute_activation_bias_correction(graph: Graph,
-                                       core_config: CoreConfig,
+                                       quant_config: QuantizationConfig,
                                        fw_info: FrameworkInfo,
                                        fw_impl: FrameworkImplementation,
                                        linear_node: BaseNode,
@@ -99,7 +80,7 @@ def compute_activation_bias_correction(graph: Graph,
 
     Args:
         graph: Graph with nodes to compute the activation bias correction for each node's final activation quantization configuration.
-        core_config: Configuration object containing parameters of how the model should be quantized.
+        quant_config: QuantizationConfig of how the model should be quantized.
         fw_info: Framework info like lists of nodes their kernel should quantized.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         linear_node: Node to compute the activation bias correction for.
@@ -110,19 +91,16 @@ def compute_activation_bias_correction(graph: Graph,
         Graph with activation bias correction term for each node.
     """
 
-    # Check if 'kernel_size' is a key in the framework-specific attributes of the linear_node, if it is then the
-    # linear_node is a convolution
-    if kernel_size in linear_node.framework_attr.keys():
-        # Retrieve the value of 'kernel_size' and check if it is not 1 or (1, 1). This feature supports only kernel
-        # size of 1 or (1, 1).
-        if linear_node.framework_attr.get(kernel_size) not in [1, (1, 1)]:
-            # If the kernel size is not 1 or (1, 1), return the current graph unmodified
-            return graph
+    # Retrieve the 'kernel_size' value if it exists and ensure it is None, 1, or (1, 1).
+    # This feature supports only Dense/Linear layers and convolution layers with kernel size  of 1 or (1, 1).
+    if linear_node.framework_attr.get(kernel_size) not in [None, 1, (1, 1)]:
+        # If the kernel size is not 1 or (1, 1), return the current graph unmodified
+        return graph
 
     prev_node_act_quant_cfg = prev_node.final_activation_quantization_cfg
 
     # Check if the previous node's has activation quantization configuration and if the previous node have the
-    # histogram collector
+    # histogram collector.
     if prev_node_act_quant_cfg is None or not hasattr(graph.get_out_stats_collector(prev_node), 'hc'):
         return graph  # pragma: no cover
 
@@ -143,25 +121,27 @@ def compute_activation_bias_correction(graph: Graph,
     # Compute the difference between the mean quantized center and the mean float center
     mean_diff = mean_quant_centers - mean_float_centers
 
-    # Check if activation bias correction is enabled based on the configured threshold
-    if core_config.quantization_config.activation_bias_correction_threshold > 0:
+    # Calculate the normalized bias as a percentage of the float center norm
+    float_centers_norm1 = np.abs(mean_float_centers)
+    normalized_bias = 100 * np.abs(mean_diff) / float_centers_norm1
 
-        # Calculate the normalized bias as a percentage of the float center norm
-        float_centers_norm1 = np.abs(mean_float_centers)
-        normalized_bias = 100 * np.abs(mean_diff) / float_centers_norm1
+    # If the normalized bias is below the activation bias correction threshold, return the graph unmodified.
+    # By default, the threshold is set to 0, allowing all nodes to proceed in this case.
+    if normalized_bias < quant_config.activation_bias_correction_threshold:
+        return graph
 
-        # If the normalized bias is below the activation bias correction threshold, return the unmodified graph
-        if normalized_bias < core_config.quantization_config.activation_bias_correction_threshold:
-            return graph
-
-    # The correction term is a function of the layer type.
     kernel = linear_node.get_weights_by_keys(fw_info.kernel_ops_attributes_mapping.get(linear_node.type)[0])
 
+    # Compute the activation bias correction by applying the quantization error to the kernel, resulting in an output
+    # size matching the number of output channels.
     if kernel is not None:
+
+        # Get the axes that are not the output channel
         output_channel_index, input_channel_index = fw_info.kernel_channels_mapping.get(linear_node.type)
         axis_not_output_channel = list(range(len(kernel.shape)))
         axis_not_output_channel.remove(output_channel_index)
 
+        # special case of depthwise_conv2d in tensorflow, where we have a depth multiplier for the filters
         if output_channel_index == input_channel_index:
             axis_not_output_channel.remove(3)  # 3 is the depth multiplier index
 
@@ -171,7 +151,7 @@ def compute_activation_bias_correction(graph: Graph,
 
 
 def compute_activation_bias_correction_of_graph(graph: Graph,
-                                                core_config: CoreConfig,
+                                                quant_config: QuantizationConfig,
                                                 fw_info: FrameworkInfo,
                                                 fw_impl: FrameworkImplementation,
                                                 activation_bias_correction_node_matchers: Callable,
@@ -181,7 +161,7 @@ def compute_activation_bias_correction_of_graph(graph: Graph,
 
     Args:
         graph: Graph with nodes to compute the activation bias correction.
-        core_config: Configuration object containing parameters of how the model should be quantized.
+        quant_config: QuantizationConfig of how the model should be quantized.
         fw_info: Framework info like lists of nodes their kernel should quantized.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
         activation_bias_correction_node_matchers: Function to match the layers for activation bias correction.
@@ -191,17 +171,14 @@ def compute_activation_bias_correction_of_graph(graph: Graph,
     Returns:
         Graph with activation bias correction term for each relevant node.
     """
-    linear_node_types, bypass_node_types = activation_bias_correction_node_matchers()
+    linear_node_types = activation_bias_correction_node_matchers()
 
     for n in graph.nodes:
         if linear_node_types.apply(n):
-            prev_node, _ = get_next_nodes_to_correct(node=n,
-                                                     graph=graph,
-                                                     linear_node_types=linear_node_types,
-                                                     bypass_node_types=bypass_node_types)
+            prev_node = get_previous_node_with_activation_quantization(n, graph)
             if prev_node is not None:
                 graph = compute_activation_bias_correction(graph=graph,
-                                                           core_config=core_config,
+                                                           quant_config=quant_config,
                                                            fw_info=fw_info,
                                                            fw_impl=fw_impl,
                                                            linear_node=n,

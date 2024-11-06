@@ -18,6 +18,7 @@ import torch
 from torch.nn import GELU, Hardswish, AdaptiveAvgPool2d, ZeroPad2d, Linear, Conv2d
 
 import model_compression_toolkit as mct
+from model_compression_toolkit.core.pytorch.constants import KERNEL_SIZE
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 
 """
@@ -31,10 +32,11 @@ class ActivationBiasCorrectionNet(torch.nn.Module):
     """
 
     def __init__(self,
+                 prev_layer,
                  linear_layer,
                  bypass_layers):
         super(ActivationBiasCorrectionNet, self).__init__()
-        self.activation_layer = GELU()
+        self.activation_layer = prev_layer
         self.linear_layer = linear_layer
         self.bypass_layers = torch.nn.ModuleList(bypass_layers)
 
@@ -45,7 +47,6 @@ class ActivationBiasCorrectionNet(torch.nn.Module):
             x = bypass_layer(x)
         x = self.linear_layer(x)
         return x
-
 
 class ActivationBiasCorrectionPadNet(torch.nn.Module):
     """
@@ -86,74 +87,39 @@ class ActivationBiasCorrectionReshapeNet(torch.nn.Module):
 
 
 class BaseActivationBiasCorrectionTest(BasePytorchFeatureNetworkTest):
-    def __init__(self, unit_test):
+    def __init__(self, unit_test,
+                 model,
+                 activation_bias_correction_threshold=0.0):
         super().__init__(unit_test)
+        self.model = model
+        self.activation_bias_correction_threshold = activation_bias_correction_threshold
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(weights_bias_correction=False,
                                            weights_second_moment_correction=False,
-                                           activation_bias_correction=True)
+                                           shift_negative_activation_correction=False,
+                                           activation_bias_correction=True,
+                                           activation_bias_correction_threshold=
+                                           self.activation_bias_correction_threshold)
+
+    def create_networks(self):
+        return self.model
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         bias = float_model.linear_layer.bias.cpu().detach().numpy()
         bias_after_activation_bias_correction = quantized_model.linear_layer.layer.bias.cpu().detach().numpy()
-        self.unit_test.assertFalse(np.array_equal(bias, bias_after_activation_bias_correction),
-                                   msg=f"Error in activation bias correction: expected a change in the bias value.")
 
-
-class BaseActivationBiasCorrectionNetTest(BaseActivationBiasCorrectionTest):
-    def __init__(self, unit_test, linear_layer, bypass_layers):
-        super().__init__(unit_test)
-        self.linear_layer = linear_layer
-        self.bypass_layers = bypass_layers
-
-    def create_networks(self):
-        return ActivationBiasCorrectionNet(linear_layer=self.linear_layer,
-                                           bypass_layers=self.bypass_layers)
-
-
-class BaseActivationBiasCorrectionPadNetTest(BaseActivationBiasCorrectionTest):
-    def __init__(self, unit_test):
-        super().__init__(unit_test)
-
-    def get_quantization_config(self):
-        # A small value set to the activation bias correction threshold only to activate the threshold
-        # filtering without changing the bias correction values.
-        return mct.core.QuantizationConfig(weights_bias_correction=False,
-                                           weights_second_moment_correction=False,
-                                           activation_bias_correction=True,
-                                           activation_bias_correction_threshold=1e-6)
-
-    def create_networks(self):
-        return ActivationBiasCorrectionPadNet()
-
-
-class BaseActivationBiasCorrectionBigThrTest(BaseActivationBiasCorrectionTest):
-    def __init__(self, unit_test):
-        super().__init__(unit_test)
-
-    def get_quantization_config(self):
-        # A large value is assigned to the activation bias correction threshold to enable threshold filtering,
-        # which adjusts the bias correction values to zero.
-        return mct.core.QuantizationConfig(weights_bias_correction=False,
-                                           weights_second_moment_correction=False,
-                                           activation_bias_correction=True,
-                                           activation_bias_correction_threshold=1e9)
-
-    def create_networks(self):
-        return ActivationBiasCorrectionPadNet()
-
-    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        bias = float_model.linear_layer.bias.cpu().detach().numpy()
-        bias_after_activation_bias_correction = quantized_model.linear_layer.layer.bias.cpu().detach().numpy()
-        self.unit_test.assertTrue(np.array_equal(bias, bias_after_activation_bias_correction),
-                                  msg=f"Error in activation bias correction: expected no change in the bias value in "
-                                      f"case of activation_bias_correction_threshold 1e9.")
-
-
-class BaseActivationBiasCorrectionReshapeNetTest(BaseActivationBiasCorrectionTest):
-    def __init__(self, unit_test):
-        super().__init__(unit_test)
-
-    def create_networks(self):
-        return ActivationBiasCorrectionReshapeNet()
+        if getattr(float_model.linear_layer, KERNEL_SIZE, None) in [None, 1, (1, 1)]:
+            if self.activation_bias_correction_threshold > 1e8:
+                self.unit_test.assertTrue(np.array_equal(bias, bias_after_activation_bias_correction),
+                                          msg=f"Error in activation bias correction: expected no change in the bias "
+                                              f"value in case of activation_bias_correction_threshold "
+                                              f"{self.activation_bias_correction_threshold}.")
+            else:
+                self.unit_test.assertFalse(np.array_equal(bias, bias_after_activation_bias_correction),
+                                           msg=f"Error in activation bias correction: expected a change in the bias "
+                                               f"value.")
+        else:
+            self.unit_test.assertTrue(np.array_equal(bias, bias_after_activation_bias_correction),
+                                      msg=f"Error in activation bias correction: expected no change in the bias value "
+                                          f"in case of conv with kernel different than 1 or (1, 1).")

@@ -169,7 +169,7 @@ def core_runner(in_model: Any,
     ######################################
     if core_config.quantization_config.activation_bias_correction:
         tg = fw_impl.compute_activation_bias_correction(graph=tg,
-                                                        core_config=core_config,
+                                                        quant_config=core_config.quantization_config,
                                                         fw_info=fw_info)
 
     # Edit the graph again after finalizing the configurations.

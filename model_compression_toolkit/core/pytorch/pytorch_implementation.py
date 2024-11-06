@@ -216,21 +216,21 @@ class PytorchImplementation(FrameworkImplementation):
 
     def compute_activation_bias_correction(self,
                                            graph: Graph,
-                                           core_config: CoreConfig,
+                                           quant_config: QuantizationConfig,
                                            fw_info: FrameworkInfo):
         """
         Compute activation bias correction on a graph.
 
         Args:
             graph: Graph to apply activation bias correction on.
-            core_config: QuantizationConfig of how the model should be quantized.
+            quant_config: QuantizationConfig of how the model should be quantized.
             fw_info: FrameworkInfo object with information about the specific framework's model.
 
         Returns:
             Graph after activation bias correction computing.
         """
         return pytorch_compute_activation_bias_correction_of_graph(graph=graph,
-                                                                   core_config=core_config,
+                                                                   quant_config=quant_config,
                                                                    fw_info=fw_info,
                                                                    fw_impl=self)
 

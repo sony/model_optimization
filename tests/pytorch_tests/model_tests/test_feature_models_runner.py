@@ -30,9 +30,9 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 from tests.pytorch_tests.model_tests.feature_models.activation_16bit_test import Activation16BitTest, \
     Activation16BitMixedPrecisionTest
-from tests.pytorch_tests.model_tests.feature_models.activation_bias_correction_test import \
-    BaseActivationBiasCorrectionPadNetTest, BaseActivationBiasCorrectionNetTest, \
-    BaseActivationBiasCorrectionReshapeNetTest, BaseActivationBiasCorrectionBigThrTest
+from tests.pytorch_tests.model_tests.feature_models.activation_bias_correction_test import (
+    BaseActivationBiasCorrectionTest, ActivationBiasCorrectionNet, ActivationBiasCorrectionPadNet,
+    ActivationBiasCorrectionReshapeNet)
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSameNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_attributes_quantization_test import BNAttributesQuantization
@@ -445,16 +445,30 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         This test checks the activation bias correction feature.
         """
-        BaseActivationBiasCorrectionPadNetTest(self).run_test()
-        BaseActivationBiasCorrectionReshapeNetTest(self).run_test()
-        BaseActivationBiasCorrectionBigThrTest(self).run_test()
-        for linear_layer in [nn.Linear(8, 20),
-                             nn.Conv2d(3, 20, 1),
-                             nn.Conv2d(3, 8, (1, 1))]:
-            for bypass_layers in [[nn.Dropout(0.5)], [nn.Dropout(0.5), nn.Dropout(0.5)]]:
-                BaseActivationBiasCorrectionNetTest(self,
-                                                    linear_layer=linear_layer,
-                                                    bypass_layers=bypass_layers).run_test()
+        model_list = [ActivationBiasCorrectionNet(prev_layer=nn.GELU(),
+                                                  linear_layer=nn.Linear(8, 20),
+                                                  bypass_layers=[nn.Dropout(0.5), nn.Dropout(0.5)]),
+                      ActivationBiasCorrectionNet(prev_layer=nn.GELU(),
+                                                  linear_layer=nn.Conv2d(3, 20, 1),
+                                                  bypass_layers=[nn.Dropout(0.5), nn.Dropout(0.5)]),
+                      ActivationBiasCorrectionNet(prev_layer=nn.GELU(),
+                                                  linear_layer=nn.Conv2d(3, 8, (1, 1)),
+                                                  bypass_layers=[nn.Dropout(0.5)]),
+                      ActivationBiasCorrectionNet(prev_layer=nn.Hardswish(),
+                                                  linear_layer=nn.ConvTranspose2d(3, 8, 1),
+                                                  bypass_layers=[nn.Dropout(0.5)]),
+                      ActivationBiasCorrectionNet(prev_layer=nn.GELU(),
+                                                  linear_layer=nn.Conv2d(3, 8, 3),
+                                                  bypass_layers=[nn.Dropout(0.5)]),
+                      ActivationBiasCorrectionPadNet(),
+                      ActivationBiasCorrectionReshapeNet()]
+
+        for activation_bias_correction_threshold in [0.0, 1e-6, 1e9]:
+            for model in model_list:
+                BaseActivationBiasCorrectionTest(self,
+                                                 model=model,
+                                                 activation_bias_correction_threshold=
+                                                 activation_bias_correction_threshold).run_test()
 
     def test_split_concat_net(self):
         """

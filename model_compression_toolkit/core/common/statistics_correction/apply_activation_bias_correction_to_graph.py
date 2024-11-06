@@ -13,8 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 
-import copy
-
 from model_compression_toolkit.core import CoreConfig, QuantizationConfig
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
@@ -26,7 +24,7 @@ def apply_activation_bias_correction_to_graph(graph: Graph,
                                               core_config: CoreConfig,
                                               fw_impl: FrameworkImplementation) -> Graph:
     """
-    Get a graph, where each node has a final activation quantization configuration (with a activation bias
+    Get a graph, where each node has a final activation quantization configuration (with an activation bias
     correction term in it), and apply the activation bias correction for each node in the graph.
 
     Args:
@@ -38,12 +36,11 @@ def apply_activation_bias_correction_to_graph(graph: Graph,
         Graph with activation bias correction apply to it's nodes.
     """
 
-    graph = copy.deepcopy(graph)
     for n in graph.nodes:
         # Activation bias correction is only relevant for nodes with kernel op
         kernel_attr = graph.fw_info.get_kernel_op_attributes(n.type)[0]
         if core_config.quantization_config.activation_bias_correction and kernel_attr is not None and \
-                hasattr(n.final_activation_quantization_cfg, 'activation_bias_correction_term'):
+                n.final_activation_quantization_cfg.activation_bias_correction_term is not None:
             # If activation bias correction is enabled in n.quantization_cfg, an activation bias correction term was
             # calculated during model preparation, and is used now in the node's bias term.
             _apply_activation_bias_correction_to_node(n, fw_impl, core_config.quantization_config)
@@ -66,15 +63,19 @@ def _apply_activation_bias_correction_to_node(node: BaseNode,
     correction = node.final_activation_quantization_cfg.activation_bias_correction_term
     bias = node.get_weights_by_keys(fw_impl.constants.BIAS)  # get original bias from node's weights
 
-    if bias is not None:  # If the layer has bias, we subtract the correction from original bias
-        node.set_weights_by_keys(fw_impl.constants.BIAS, bias - correction)
-    else:
-        # If the layer has no bias, we consider it as if it has and its value is 0 and add a "dummy" attribute
-        # configuration with disabled quantization.
+    if bias is None:
+        # If the layer has no bias, we set the bias as -correction.
         node.set_weights_by_keys(fw_impl.constants.BIAS, - correction)
-        node.framework_attr[fw_impl.constants.USE_BIAS] = True  # Mark the use_bias attribute of the node.
+
+        # Mark the use_bias attribute of the node.
+        node.framework_attr[fw_impl.constants.USE_BIAS] = True
+
+        # Configure the quantization of the bias as disabled.
         node.final_weights_quantization_cfg.set_attr_config(fw_impl.constants.BIAS,
                                                             WeightsAttrQuantizationConfig(
                                                                 qc,
                                                                 AttributeQuantizationConfig(
                                                                     enable_weights_quantization=False)))
+    else:
+        # If the layer has bias, we subtract the correction from original bias
+        node.set_weights_by_keys(fw_impl.constants.BIAS, bias - correction)

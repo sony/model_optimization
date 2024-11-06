@@ -13,11 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 
-from torch import reshape, transpose, flatten, permute
-from torch.nn import Conv2d, Linear, Dropout, ZeroPad2d, AdaptiveAvgPool2d
-from torch.nn.functional import avg_pool2d, pad
+from torch.nn import Conv2d, Linear, ConvTranspose2d
 
-from model_compression_toolkit.core import CoreConfig
+from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -29,24 +27,12 @@ from model_compression_toolkit.core.pytorch.constants import KERNEL_SIZE
 
 def activation_bias_correction_node_matchers():
     # Match linear layers where we can add a correction.
-    linear_node = NodeOperationMatcher(Linear) | NodeOperationMatcher(Conv2d)
-
-    # Match bypass layers what don't affect the quantization process.
-    bypass_node = NodeOperationMatcher(reshape) | \
-                  NodeOperationMatcher(avg_pool2d) | \
-                  NodeOperationMatcher(transpose) | \
-                  NodeOperationMatcher(Dropout) | \
-                  NodeOperationMatcher(flatten) | \
-                  NodeOperationMatcher(ZeroPad2d) | \
-                  NodeOperationMatcher(pad) | \
-                  NodeOperationMatcher(AdaptiveAvgPool2d) | \
-                  NodeOperationMatcher(permute)
-
-    return linear_node, bypass_node
+    linear_node = NodeOperationMatcher(Linear) | NodeOperationMatcher(Conv2d) | NodeOperationMatcher(ConvTranspose2d)
+    return linear_node
 
 
 def pytorch_compute_activation_bias_correction_of_graph(graph: Graph,
-                                                        core_config: CoreConfig,
+                                                        quant_config: QuantizationConfig,
                                                         fw_info: FrameworkInfo,
                                                         fw_impl: FrameworkImplementation) -> Graph:
     """
@@ -54,7 +40,7 @@ def pytorch_compute_activation_bias_correction_of_graph(graph: Graph,
 
     Args:
         graph: Graph with nodes to compute the activation bias correction.
-        core_config: Configuration object containing parameters of how the model should be quantized.
+        quant_config: QuantizationConfig of how the model should be quantized.
         fw_info: Framework info like lists of nodes their kernel should quantized.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
@@ -62,7 +48,7 @@ def pytorch_compute_activation_bias_correction_of_graph(graph: Graph,
         Graph with activation bias correction term for each relevant node.
     """
     graph = compute_activation_bias_correction_of_graph(graph=graph,
-                                                        core_config=core_config,
+                                                        quant_config=quant_config,
                                                         fw_info=fw_info,
                                                         fw_impl=fw_impl,
                                                         activation_bias_correction_node_matchers=

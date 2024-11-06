@@ -19,13 +19,11 @@ from packaging import version
 from model_compression_toolkit.core.keras.constants import KERNEL_SIZE
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
-    from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
-        MaxPooling2D, Flatten, Cropping2D, Permute, GlobalAveragePooling2D
+    from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose
 else:
-    from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
-        MaxPooling2D, Flatten, Cropping2D, Permute, GlobalAveragePooling2D
+    from keras.layers import Conv2D, DepthwiseConv2D, Dense, Conv2DTranspose
 
-from model_compression_toolkit.core import CoreConfig
+from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common import Graph
@@ -38,32 +36,13 @@ def activation_bias_correction_node_matchers():
     # Match linear layers where we can add a correction.
     linear_node = NodeOperationMatcher(Conv2D) | \
                   NodeOperationMatcher(Dense) | \
-                  NodeOperationMatcher(DepthwiseConv2D)
-
-    # Match bypass layers what don't affect the quantization process.
-    bypass_node = (NodeOperationMatcher(Cropping2D) |
-                   NodeOperationMatcher(GlobalAveragePooling2D) |
-                   NodeOperationMatcher(Dropout) |
-                   NodeOperationMatcher(ZeroPadding2D) |
-                   NodeOperationMatcher(MaxPooling2D) |
-                   NodeOperationMatcher(tf.split) |
-                   NodeOperationMatcher(tf.cast) |
-                   NodeOperationMatcher(tf.unstack) |
-                   NodeOperationMatcher(tf.__operators__.getitem) |
-                   NodeOperationMatcher(tf.strided_slice) |
-                   NodeOperationMatcher(Reshape) |
-                   NodeOperationMatcher(tf.reshape) |
-                   NodeOperationMatcher(Permute) |
-                   NodeOperationMatcher(tf.transpose) |
-                   NodeOperationMatcher(Flatten) |
-                   NodeOperationMatcher(tf.gather) |
-                   NodeOperationMatcher(tf.compat.v1.gather))
-
-    return linear_node, bypass_node
+                  NodeOperationMatcher(DepthwiseConv2D) | \
+                  NodeOperationMatcher(Conv2DTranspose)
+    return linear_node
 
 
 def keras_compute_activation_bias_correction_of_graph(graph: Graph,
-                                                      core_config: CoreConfig,
+                                                      quant_config: QuantizationConfig,
                                                       fw_info: FrameworkInfo,
                                                       fw_impl: FrameworkImplementation) -> Graph:
     """
@@ -71,7 +50,7 @@ def keras_compute_activation_bias_correction_of_graph(graph: Graph,
 
     Args:
         graph: Graph with nodes to compute the activation bias correction.
-        core_config: Configuration object containing parameters of how the model should be quantized.
+        quant_config: QuantizationConfig of how the model should be quantized.
         fw_info: Framework info like lists of nodes their kernel should quantized.
         fw_impl: FrameworkImplementation object with a specific framework methods implementation.
 
@@ -79,7 +58,7 @@ def keras_compute_activation_bias_correction_of_graph(graph: Graph,
         Graph with activation bias correction term for each relevant node.
     """
     graph = compute_activation_bias_correction_of_graph(graph=graph,
-                                                        core_config=core_config,
+                                                        quant_config=quant_config,
                                                         fw_info=fw_info,
                                                         fw_impl=fw_impl,
                                                         activation_bias_correction_node_matchers=
