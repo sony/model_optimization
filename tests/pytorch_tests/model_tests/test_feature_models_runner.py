@@ -52,6 +52,7 @@ from tests.pytorch_tests.model_tests.feature_models.layer_name_test import Reuse
 from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import LayerNormNetTest
 from tests.pytorch_tests.model_tests.feature_models.linear_collapsing_test import TwoConv2DCollapsingTest, \
     ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest
+from tests.pytorch_tests.model_tests.feature_models.linear_function_test import LinearFNetTest
 from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTWeightsQuantizerTest, \
     LUTActivationQuantizerTest
 from tests.pytorch_tests.model_tests.feature_models.manual_bit_selection import ManualBitWidthByLayerTypeTest, \
@@ -235,6 +236,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the batch_norm function.
         """
         BNFNetTest(self).run_test()
+
+    def test_linear_function(self):
+        """
+        This test check the linear functional substitution function.
+        """
+        LinearFNetTest(self).run_test()
 
     def test_broken_net(self):
         """
