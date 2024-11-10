@@ -15,7 +15,7 @@
 import copy
 from typing import Callable, Union
 
-from model_compression_toolkit.constants import ACT_HESSIAN_DEFAULT_BATCH_SIZE, PYTORCH
+from model_compression_toolkit.constants import ACT_HESSIAN_DEFAULT_BATCH_SIZE, PYTORCH, GPTQ_HESSIAN_NUM_SAMPLES
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.analyzer import analyzer_model_quantization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
@@ -27,7 +27,7 @@ from model_compression_toolkit.core.runner import core_runner
 from model_compression_toolkit.gptq.common.gptq_config import (
     GradientPTQConfig, GPTQHessianScoresConfig, GradualActivationQuantizationConfig)
 from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT, LR_DEFAULT, LR_REST_DEFAULT, \
-    LR_BIAS_DEFAULT, GPTQ_MOMENTUM
+    LR_BIAS_DEFAULT, GPTQ_MOMENTUM, REG_DEFAULT_SLA
 from model_compression_toolkit.gptq.runner import gptq_runner
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.metadata import create_model_metadata
@@ -55,10 +55,10 @@ if FOUND_TORCH:
                                 loss: Callable = None,
                                 log_function: Callable = None,
                                 use_hessian_based_weights: bool = True,
-                                regularization_factor: float = REG_DEFAULT,
+                                regularization_factor: float = None,
                                 hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE,
-                                use_hessian_sample_attention: bool = False,
-                                gradual_activation_quantization: Union[bool, GradualActivationQuantizationConfig] = False,
+                                use_hessian_sample_attention: bool = True,
+                                gradual_activation_quantization: Union[bool, GradualActivationQuantizationConfig] = True,
                                 ) -> GradientPTQConfig:
         """
         Create a GradientPTQConfig instance for Pytorch models.
@@ -94,25 +94,26 @@ if FOUND_TORCH:
         """
         optimizer = optimizer or Adam([torch.Tensor([])], lr=LR_DEFAULT)
         optimizer_rest = optimizer_rest or Adam([torch.Tensor([])], lr=LR_REST_DEFAULT)
-
+        # TODO this contradicts the docstring for optimizer_rest
         bias_optimizer = torch.optim.SGD([torch.Tensor([])], lr=LR_BIAS_DEFAULT, momentum=GPTQ_MOMENTUM)
 
+        if regularization_factor is None:
+            regularization_factor = REG_DEFAULT_SLA if use_hessian_sample_attention else REG_DEFAULT
+
+        loss = loss or multiple_tensors_mse_loss
+        hessian_weights_config = None
         if use_hessian_sample_attention:
             if not use_hessian_based_weights:    # pragma: no cover
                 raise ValueError('use_hessian_based_weights must be set to True in order to use Sample Layer Attention.')
 
-            hessian_weights_config = GPTQHessianScoresConfig(
-                hessians_num_samples=None,
-                norm_scores=False,
-                log_norm=False,
-                scale_log_norm=False,
-                hessian_batch_size=hessian_batch_size,
-                per_sample=True,
-            )
+            hessian_weights_config = GPTQHessianScoresConfig(per_sample=True,
+                                                             hessians_num_samples=None,
+                                                             hessian_batch_size=hessian_batch_size)
             loss = loss or sample_layer_attention_loss
-        else:
-            hessian_weights_config = GPTQHessianScoresConfig(hessian_batch_size=hessian_batch_size)
-            loss = loss or multiple_tensors_mse_loss
+        elif use_hessian_based_weights:
+            hessian_weights_config = GPTQHessianScoresConfig(per_sample=False,
+                                                             hessians_num_samples=GPTQ_HESSIAN_NUM_SAMPLES,
+                                                             hessian_batch_size=hessian_batch_size)
 
         if isinstance(gradual_activation_quantization, bool):
             gradual_quant_config = GradualActivationQuantizationConfig() if gradual_activation_quantization else None
@@ -122,12 +123,16 @@ if FOUND_TORCH:
             raise TypeError(f'gradual_activation_quantization argument should be bool or '
                             f'GradualActivationQuantizationConfig, received {type(gradual_activation_quantization)}')
 
-        return GradientPTQConfig(n_epochs, optimizer, optimizer_rest=optimizer_rest, loss=loss,
-                                 log_function=log_function, train_bias=True, optimizer_bias=bias_optimizer,
-                                 use_hessian_based_weights=use_hessian_based_weights,
+        return GradientPTQConfig(n_epochs=n_epochs,
+                                 loss=loss,
+                                 optimizer=optimizer,
+                                 optimizer_rest=optimizer_rest,
+                                 optimizer_bias=bias_optimizer,
+                                 train_bias=True,
                                  regularization_factor=regularization_factor,
                                  hessian_weights_config=hessian_weights_config,
-                                 gradual_activation_quantization_config=gradual_quant_config)
+                                 gradual_activation_quantization_config=gradual_quant_config,
+                                 log_function=log_function)
 
     def pytorch_gradient_post_training_quantization(model: Module,
                                                     representative_data_gen: Callable,

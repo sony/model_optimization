@@ -16,8 +16,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Callable, Any, Dict, Optional
 
-from model_compression_toolkit.constants import GPTQ_HESSIAN_NUM_SAMPLES, ACT_HESSIAN_DEFAULT_BATCH_SIZE
-from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT
+from model_compression_toolkit.constants import ACT_HESSIAN_DEFAULT_BATCH_SIZE
 
 
 class RoundingType(Enum):
@@ -39,20 +38,28 @@ class GPTQHessianScoresConfig:
     Configuration to use for computing the Hessian-based scores for GPTQ loss metric.
 
     Args:
+        per_sample (bool): Whether to use per sample attention score.
         hessians_num_samples (int|None): Number of samples to use for computing the Hessian-based scores.
           If None, compute Hessian for all images.
         norm_scores (bool): Whether to normalize the returned scores of the weighted loss function (to get values between 0 and 1).
         log_norm (bool): Whether to use log normalization for the GPTQ Hessian-based scores.
         scale_log_norm (bool): Whether to scale the final vector of the Hessian-based scores.
         hessian_batch_size (int): The Hessian computation batch size. used only if using GPTQ with Hessian-based objective.
-        per_sample (bool): Whether to use per sample attention score.
     """
-    hessians_num_samples: Optional[int] = GPTQ_HESSIAN_NUM_SAMPLES
-    norm_scores: bool = True
-    log_norm: bool = True
-    scale_log_norm: bool = False
+    per_sample: bool
+    hessians_num_samples: Optional[int]
+    norm_scores: bool = None
+    log_norm: bool = None
+    scale_log_norm: bool = None
     hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE
-    per_sample: bool = False
+
+    def __post_init__(self):
+        if self.norm_scores is None:
+            self.norm_scores = not self.per_sample
+        if self.log_norm is None:
+            self.log_norm = not self.per_sample
+        if self.scale_log_norm is None:
+            self.scale_log_norm = False
 
 
 @dataclass
@@ -107,32 +114,30 @@ class GradientPTQConfig:
 
     Args:
         n_epochs: Number of representative dataset epochs to train.
-        optimizer: Optimizer to use.
-        optimizer_rest: Optimizer to use for bias and quantizer parameters.
         loss: The loss to use. See 'multiple_tensors_mse_loss' for the expected interface.
-        log_function: Function to log information about the GPTQ process.
+        optimizer: Optimizer to use.
+        optimizer_rest: Default optimizer to use for bias and quantizer parameters.
         train_bias: Whether to update the bias during the training or not.
-        rounding_type: An enum that defines the rounding type.
-        use_hessian_based_weights: Whether to use Hessian-based weights for weighted average loss.
-        optimizer_quantization_parameter: Optimizer to override the rest optimizer  for quantizer parameters.
-        optimizer_bias: Optimizer to override the rest optimizer for bias.
-        regularization_factor: A floating point number that defines the regularization factor.
         hessian_weights_config: A configuration that include all necessary arguments to run a computation of
             Hessian scores for the GPTQ loss.
         gradual_activation_quantization_config: A configuration for Gradual Activation Quantization.
+        regularization_factor: A floating point number that defines the regularization factor.
+        rounding_type: An enum that defines the rounding type.
+        optimizer_quantization_parameter: Optimizer to override the rest optimizer for quantizer parameters.
+        optimizer_bias: Optimizer to override the rest optimizer for bias.
+        log_function: Function to log information about the GPTQ process.
         gptq_quantizer_params_override: A dictionary of parameters to override in GPTQ quantizer instantiation.
     """
     n_epochs: int
+    loss: Callable
     optimizer: Any
-    optimizer_rest: Any = None
-    loss: Callable = None
-    log_function: Callable = None
-    train_bias: bool = True
+    optimizer_rest: Any
+    train_bias: bool
+    hessian_weights_config: Optional[GPTQHessianScoresConfig]
+    gradual_activation_quantization_config: Optional[GradualActivationQuantizationConfig]
+    regularization_factor: float
     rounding_type: RoundingType = RoundingType.SoftQuantizer
-    use_hessian_based_weights: bool = True
     optimizer_quantization_parameter: Any = None
     optimizer_bias: Any = None
-    regularization_factor: float = REG_DEFAULT
-    hessian_weights_config: GPTQHessianScoresConfig = field(default_factory=GPTQHessianScoresConfig)
-    gradual_activation_quantization_config: Optional[GradualActivationQuantizationConfig] = None
+    log_function: Callable = None
     gptq_quantizer_params_override: Dict[str, Any] = field(default_factory=dict)

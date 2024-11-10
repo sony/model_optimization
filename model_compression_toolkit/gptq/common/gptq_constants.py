@@ -14,7 +14,7 @@ N_CYCLES = 4
 MIM_TEMP = 0.5
 MAX_TEMP = 1.0
 REG_DEFAULT = 0.01
-REG_DEFAULT_SLA = 1
+REG_DEFAULT_SLA = 10
 MAX_LSB_CHANGE = 1
 
 # Soft rounding arguments values

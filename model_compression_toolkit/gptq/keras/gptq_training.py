@@ -139,7 +139,7 @@ class KerasGPTQTrainer(GPTQTrainer):
 
     def _get_compare_points_loss_weights(self):
         """ Get compare points weights for the distillation loss. """
-        if self.gptq_config.use_hessian_based_weights:
+        if self.gptq_config.hessian_weights_config:
             hess_dataloader = data_gen_to_dataloader(self.representative_data_gen_fn,
                                                      batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size)
             return self.compute_hessian_based_weights(hess_dataloader)
