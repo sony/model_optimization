@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Keras Structured Pruning &#8212; MCT Documentation: ver 2.2.1</title>
+    <title>Keras Structured Pruning &#8212; MCT Documentation: ver 2.2.2</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.1</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.2</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Keras Structured Pruning</a></li> 
       </ul>
     </div>  
@@ -56,7 +56,7 @@ architecture. The process involves analyzing the model with a representative dat
 identify groups of channels that can be removed with minimal impact on performance.</p>
 <p>Notice that the pruned model must be retrained to recover the compressed model’s performance.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>Model</em>) – The original Keras model to be pruned.</p></li>
 <li><p><strong>target_resource_utilization</strong> (<a class="reference internal" href="../classes/ResourceUtilization.html#model_compression_toolkit.core.ResourceUtilization" title="model_compression_toolkit.core.ResourceUtilization"><em>ResourceUtilization</em></a>) – The target Key Performance Indicators to be achieved through pruning.</p></li>
@@ -65,10 +65,10 @@ identify groups of channels that can be removed with minimal impact on performan
 <li><p><strong>target_platform_capabilities</strong> (<a class="reference internal" href="../modules/target_platform.html#model_compression_toolkit.target_platform.TargetPlatformCapabilities" title="model_compression_toolkit.target_platform.TargetPlatformCapabilities"><em>TargetPlatformCapabilities</em></a>) – Platform-specific constraints and capabilities. Defaults to DEFAULT_KERAS_TPC.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A tuple containing the pruned Keras model and associated pruning information.</p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>Tuple[Model, <a class="reference internal" href="../classes/PruningInfo.html#model_compression_toolkit.pruning.PruningInfo" title="model_compression_toolkit.pruning.PruningInfo">PruningInfo</a>]</p>
 </dd>
 </dl>
@@ -110,7 +110,7 @@ extends the duration of the pruning process:</p>
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code>, <a class="reference internal" href="../classes/PruningInfo.html#model_compression_toolkit.pruning.PruningInfo" title="model_compression_toolkit.core.common.pruning.pruning_info.PruningInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">PruningInfo</span></code></a>]</p>
 </dd>
 </dl>
@@ -145,7 +145,7 @@ extends the duration of the pruning process:</p>
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.1</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.2</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Keras Structured Pruning</a></li> 
       </ul>
     </div>

@@ -5,9 +5,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Get DataGenerationConfig for Keras Models &#8212; MCT Documentation: ver 2.2.1</title>
+    <title>Get DataGenerationConfig for Keras Models &#8212; MCT Documentation: ver 2.2.2</title>
     <link rel="stylesheet" type="text/css" href="../../../static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/bizstyle.css" />
     <link rel="stylesheet" type="text/css" href="../../../static/css/custom.css" />
@@ -31,7 +31,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.1</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.2</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Get DataGenerationConfig for Keras Models</a></li> 
       </ul>
     </div>  
@@ -48,7 +48,7 @@
 <span class="sig-prename descclassname"><span class="pre">model_compression_toolkit.data_generation.</span></span><span class="sig-name descname"><span class="pre">get_keras_data_generation_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_N_ITER</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">Adam</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_gen_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_DATA_GEN_BS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_KERAS_INITIAL_LR</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_loss_multiplier</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_KERAS_OUTPUT_LOSS_MULTIPLIER</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SchedulerType.REDUCE_ON_PLATEAU</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bn_alignment_loss_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">BatchNormAlignemntLossType.L2_SQUARE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_loss_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">OutputLossType.REGULARIZED_MIN_MAX_DIFF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_init_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DataInitType.Gaussian</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_weighting_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">BNLayerWeightingType.AVERAGE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_granularity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ImageGranularity.BatchWise</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_pipeline_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ImagePipelineType.SMOOTHING_AND_AUGMENTATION</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_normalization_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ImageNormalizationType.KERAS_APPLICATIONS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_pixels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">DEFAULT_KERAS_EXTRA_PIXELS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bn_layer_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[BatchNormalization]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_clipping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#model_compression_toolkit.data_generation.get_keras_data_generation_config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function to create a DataGenerationConfig object with the specified configuration parameters.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>n_iter</strong> (<em>int</em>) – Number of iterations for the data generation process.</p></li>
 <li><p><strong>optimizer</strong> (<em>Optimizer</em>) – The optimizer to use for the data generation process.</p></li>
@@ -68,13 +68,13 @@
 <li><p><strong>image_clipping</strong> (<em>bool</em>) – Whether to clip images during optimization.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><p>Data generation configuration object.</p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><a class="reference internal" href="../classes/DataGenerationConfig.html#model_compression_toolkit.data_generation.DataGenerationConfig" title="model_compression_toolkit.data_generation.DataGenerationConfig">DataGenerationConfig</a></p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dt class="field-even">Return type</dt>
 <dd class="field-even"><p><a class="reference internal" href="../classes/DataGenerationConfig.html#model_compression_toolkit.data_generation.DataGenerationConfig" title="model_compression_toolkit.data_generation.common.data_generation_config.DataGenerationConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataGenerationConfig</span></code></a></p>
 </dd>
 </dl>
@@ -109,7 +109,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="../../../genindex.html" title="General Index"
              >index</a></li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.1</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">MCT Documentation: ver 2.2.2</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">Get DataGenerationConfig for Keras Models</a></li> 
       </ul>
     </div>
