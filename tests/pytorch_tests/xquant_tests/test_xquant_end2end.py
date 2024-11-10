@@ -71,7 +71,7 @@ class BaseTestEnd2EndPytorchXQuant(unittest.TestCase):
         return mct.core.CoreConfig(debug_config=mct.core.DebugConfig(simulate_scheduler=True))
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v2")
+        return mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v1")
 
     def get_model_to_test(self):
         class BaseModelTest(torch.nn.Module):

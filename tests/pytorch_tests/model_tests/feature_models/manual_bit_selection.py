@@ -28,7 +28,7 @@ from tests.pytorch_tests.utils import get_layer_type_from_activation_quantizer
 get_op_set = lambda x, x_list: [op_set for op_set in x_list if op_set.name == x][0]
 
 
-class Activation16BitNet(torch.nn.Module):
+class Activation4BitNet(torch.nn.Module):
 
     def __init__(self):
         super().__init__()
@@ -179,45 +179,3 @@ class ManualBitWidthByLayerNameTest(BaseManualBitWidthSelectionTest):
                     else:
                         # make sure that the bit width of other layers was not changed.
                         self.unit_test.assertFalse(layer.activation_holder_quantizer.num_bits in bit_widths, msg=f"name {name}, layer.activation_holder_quantizer.num_bits {layer.activation_holder_quantizer.num_bits }, {self.bit_widths}")
-
-
-class Manual16BitTest(ManualBitWidthByLayerNameTest):
-
-    def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
-        mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        mul_op_set.qc_options.base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.mul].base_config = mul_op_set.qc_options.base_config
-        tpc.layer2qco[mul].base_config = mul_op_set.qc_options.base_config
-        return {'mixed_precision_activation_model': tpc}
-
-    def create_feature_network(self, input_shape):
-        return Activation16BitNet()
-
-
-class Manual16BitTestMixedPrecisionTest(ManualBitWidthByLayerNameTest):
-
-    def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
-        mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        mul_op_set.qc_options.base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.mul].base_config = mul_op_set.qc_options.base_config
-        tpc.layer2qco[mul].base_config = mul_op_set.qc_options.base_config
-        mul_op_set.qc_options.quantization_config_list.extend(
-            [mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=4),
-             mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[torch.mul].quantization_config_list.extend([
-            tpc.layer2qco[torch.mul].base_config.clone_and_edit(activation_n_bits=4),
-            tpc.layer2qco[torch.mul].base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[mul].quantization_config_list.extend([
-            tpc.layer2qco[mul].base_config.clone_and_edit(activation_n_bits=4),
-            tpc.layer2qco[mul].base_config.clone_and_edit(activation_n_bits=2)])
-
-        return {'mixed_precision_activation_model': tpc}
-
-    def get_resource_utilization(self):
-        return mct.core.ResourceUtilization(activation_memory=6200)
-
-
-    def create_feature_network(self, input_shape):
-        return Activation16BitNet()

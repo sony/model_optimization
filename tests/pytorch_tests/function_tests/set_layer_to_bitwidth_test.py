@@ -44,7 +44,7 @@ class base_model(torch.nn.Module):
         return x
 
 
-def test_setup(representative_data_gen, get_tpc_fn):
+def setup_test(representative_data_gen, get_tpc_fn):
     model = base_model()
     graph = prepare_graph_with_quantization_parameters(model, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                                        representative_data_gen, get_tpc_fn,
@@ -82,7 +82,7 @@ class TestSetLayerToBitwidthWeights(BasePytorchTest):
 
         # In this test we need a dedicated TPC so we just override the TPC generator function that needed to be passed
         # to the tests preparation helper method
-        node, layer = test_setup(self.representative_data_gen, get_tpc_fn=lambda x, y: tpc)
+        node, layer = setup_test(self.representative_data_gen, get_tpc_fn=lambda x, y: tpc)
 
         wrapper_layer = PytorchQuantizationWrapper(layer,
                                                    weights_quantizers={KERNEL:
@@ -132,7 +132,7 @@ class TestSetLayerToBitwidthActivation(BasePytorchTest):
 
         # In this test we need a dedicated TPC so we just override the TPC generator function that needed to be passed
         # to the tests preparation helper method
-        node, layer = test_setup(self.representative_data_gen, get_tpc_fn=lambda x, y: tpc)
+        node, layer = setup_test(self.representative_data_gen, get_tpc_fn=lambda x, y: tpc)
 
         holder_layer = \
             PytorchActivationQuantizationHolder(ConfigurableActivationQuantizer(

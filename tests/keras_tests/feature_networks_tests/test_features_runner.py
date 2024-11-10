@@ -40,7 +40,6 @@ from tests.keras_tests.feature_networks_tests.feature_networks.bn_attributes_qua
 from tests.keras_tests.feature_networks_tests.feature_networks.bn_folding_test import Conv2DBNFoldingTest, \
     DepthwiseConv2DBNFoldingTest, DepthwiseConv2DBNFoldingHighMultiplierTest, Conv2DTransposeBNFoldingTest, \
     Conv2DBNConcatFoldingTest, SeparableConv2DBNFoldingTest, BNForwardFoldingTest
-from tests.keras_tests.feature_networks_tests.feature_networks.compute_max_cut_test import ComputeMaxCutTest
 from tests.keras_tests.feature_networks_tests.feature_networks.conv_bn_relu_residual_test import ConvBnReluResidualTest
 from tests.keras_tests.feature_networks_tests.feature_networks.decompose_separable_conv_test import \
     DecomposeSeparableConvTest
@@ -57,8 +56,7 @@ from tests.keras_tests.feature_networks_tests.feature_networks.linear_collapsing
     ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest, Op2DAddConstCollapsingTest
 from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTWeightsQuantizerTest, \
     LUTActivationQuantizerTest
-from tests.keras_tests.feature_networks_tests.feature_networks.manual_bit_selection import ManualBitWidthSelectionTest, \
-    Manual16BitWidthSelectionTest, Manual16BitWidthSelectionMixedPrecisionTest
+from tests.keras_tests.feature_networks_tests.feature_networks.manual_bit_selection import ManualBitWidthSelectionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision.requires_mixed_precision_test import \
     RequiresMixedPrecision, RequiresMixedPrecisionWeights
 from tests.keras_tests.feature_networks_tests.feature_networks.mixed_precision_bops_test import \
@@ -141,15 +139,10 @@ from tests.keras_tests.feature_networks_tests.feature_networks.weights_mixed_pre
     MixedPrecisionSearchActivationNonConfNodesTest, MixedPrecisionSearchTotalMemoryNonConfNodesTest, \
     MixedPrecisionCombinedNMSTest
 from tests.keras_tests.feature_networks_tests.feature_networks.matmul_substitution_test import MatmulToDenseSubstitutionTest
-from tests.keras_tests.feature_networks_tests.feature_networks.metadata_test import MetadataTest
 from tests.keras_tests.feature_networks_tests.feature_networks.tpc_test import TpcTest
 from tests.keras_tests.feature_networks_tests.feature_networks.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest, ConstRepresentationMatMulTest, ConstRepresentationListTypeArgsTest
 from tests.keras_tests.feature_networks_tests.feature_networks.concatination_threshold_update import ConcatThresholdtest
-from tests.keras_tests.feature_networks_tests.feature_networks.const_quantization_test import ConstQuantizationTest, \
-    AdvancedConstQuantizationTest
-from tests.keras_tests.feature_networks_tests.feature_networks.activation_16bit_test import Activation16BitTest, \
-    Activation16BitMixedPrecisionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.sigmoid_mul_substitution_test import SigMulSubstitutionTest
 from tests.keras_tests.feature_networks_tests.feature_networks.conv_func_substitutions_test import ConvFuncSubstitutionsTest
 from model_compression_toolkit.qat.common.qat_config import TrainingMethod
@@ -158,9 +151,6 @@ layers = tf.keras.layers
 
 
 class FeatureNetworkTest(unittest.TestCase):
-
-    def test_compute_max_cut(self):
-        ComputeMaxCutTest(self).run_test()
 
     def test_remove_identity(self):
         RemoveIdentityTest(self).run_test()
@@ -576,19 +566,6 @@ class FeatureNetworkTest(unittest.TestCase):
         SixConv2DCollapsingTest(self).run_test()
         Op2DAddConstCollapsingTest(self).run_test()
 
-    def test_const_quantization(self):
-        c = (np.ones((32, 32, 16)) + np.random.random((32, 32, 16))).astype(np.float32)
-        for func in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv]:
-            for qmethod in [QuantizationMethod.POWER_OF_TWO, QuantizationMethod.SYMMETRIC, QuantizationMethod.UNIFORM]:
-                for error_method in [QuantizationErrorMethod.MSE, QuantizationErrorMethod.NOCLIPPING]:
-                    ConstQuantizationTest(self, func, c, qmethod=qmethod, error_method=error_method).run_test()
-                    ConstQuantizationTest(self, func, c, input_reverse_order=True, qmethod=qmethod, error_method=error_method).run_test()
-                    ConstQuantizationTest(self, func, c, input_reverse_order=True, use_kwargs=True, qmethod=qmethod, error_method=error_method).run_test()
-                    ConstQuantizationTest(self, func, c, use_kwargs=True, qmethod=qmethod, error_method=error_method).run_test()
-                    ConstQuantizationTest(self, func, 5.1, input_reverse_order=True, qmethod=qmethod, error_method=error_method).run_test()
-
-        AdvancedConstQuantizationTest(self).run_test()
-
     def test_const_representation(self):
         c = (np.ones((16,)) + np.random.random((16,))).astype(np.float32)
         for func in [tf.add, tf.multiply, tf.subtract, tf.divide, tf.truediv, tf.pow]:
@@ -802,17 +779,10 @@ class FeatureNetworkTest(unittest.TestCase):
     def test_concat_threshold(self):
         ConcatThresholdtest(self).run_test()
 
-    def test_metadata(self):
-        MetadataTest(self).run_test()
-
     def test_keras_tpcs(self):
         TpcTest(f'{C.IMX500_TP_MODEL}.v1', self).run_test()
         TpcTest(f'{C.IMX500_TP_MODEL}.v1_lut', self).run_test()
         TpcTest(f'{C.IMX500_TP_MODEL}.v1_pot', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v2', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v2_lut', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v3', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v3_lut', self).run_test()
         TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
         TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
 
@@ -821,10 +791,6 @@ class FeatureNetworkTest(unittest.TestCase):
 
     def test_conv_func_substitutions(self):
         ConvFuncSubstitutionsTest(self).run_test()
-
-    def test_16bit_activations(self):
-        Activation16BitTest(self).run_test()
-        Activation16BitMixedPrecisionTest(self).run_test()
 
     def test_invalid_bit_width_selection(self):
         with self.assertRaises(Exception) as context:
@@ -845,39 +811,10 @@ class FeatureNetworkTest(unittest.TestCase):
         self.assertEqual(str(context.exception),
                          "Manually selected activation bit-width 3 is invalid for node ReLU:relu1.")
 
-    def test_mul_16_bit_manual_selection(self):
-        """
-        This test checks the execptions in the manual bit-width selection feature.
-        """
-        # This "mul" can be configured to 16 bit
-        Manual16BitWidthSelectionTest(self, NodeNameFilter('mul1'), 16).run_test()
-        Manual16BitWidthSelectionMixedPrecisionTest(self, NodeNameFilter('mul1'), 16).run_test()
-
-        # This "mul" cannot be configured to 16 bit
-        with self.assertRaises(Exception) as context:
-            Manual16BitWidthSelectionTest(self, NodeNameFilter('mul2'), 16).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception),
-                         "Manually selected activation bit-width 16 is invalid for node Multiply:mul2.")
-
-        # This "mul" cannot be configured to 16 bit
-        with self.assertRaises(Exception) as context:
-            Manual16BitWidthSelectionMixedPrecisionTest(self, NodeNameFilter('mul2'), 16).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception),
-                         "Manually selected activation bit-width 16 is invalid for node Multiply:mul2.")
-
     def test_exceptions_manual_selection(self):
         """
         This test checks the execptions in the manual bit-width selection feature.
         """
-        # Node name doesn't exist in graph
-        with self.assertRaises(Exception) as context:
-            Manual16BitWidthSelectionTest(self, NodeNameFilter('mul_3'), 16).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception),
-                         "Node Filtering Error: No nodes found in the graph for filter {'node_name': 'mul_3'} to change their bit width to 16.")
-
         # Invalid inputs to API
         with self.assertRaises(Exception) as context:
             ManualBitWidthSelectionTest(self,

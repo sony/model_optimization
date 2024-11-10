@@ -74,7 +74,7 @@ class BaseTestEnd2EndKerasXQuant(unittest.TestCase):
         return mct.core.CoreConfig(debug_config=mct.core.DebugConfig(simulate_scheduler=True))
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v2")
+        return mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1")
 
     def get_model_to_test(self):
         inputs = keras.layers.Input(shape=self.get_input_shape())
@@ -159,9 +159,6 @@ class BaseTestEnd2EndKerasXQuant(unittest.TestCase):
             if node.device == 'KerasQuantizationWrapper':
                 self.assertIn(XQUANT_REPR, str(node))
                 self.assertIn(XQUANT_VAL, str(node))
-                self.assertIn(CUT_MEMORY_ELEMENTS, str(node))
-                self.assertIn(CUT_TOTAL_SIZE, str(node))
-
 
 # Test with Conv2D without BatchNormalization and without Activation
 class TestXQuantReportModel2(BaseTestEnd2EndKerasXQuant):

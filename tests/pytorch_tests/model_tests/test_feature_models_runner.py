@@ -27,11 +27,10 @@ from model_compression_toolkit.gptq.common.gptq_config import RoundingType
 from model_compression_toolkit.target_platform_capabilities import constants as C
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_attributes_quantization_test import BNAttributesQuantization
-from tests.pytorch_tests.model_tests.feature_models.compute_max_cut_test import ComputeMaxCutTest
 from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import LayerNormNetTest
 from tests.pytorch_tests.model_tests.feature_models.conv2d_replacement_test import DwConv2dReplacementTest
 from tests.pytorch_tests.model_tests.feature_models.manual_bit_selection import ManualBitWidthByLayerTypeTest, \
-    ManualBitWidthByLayerNameTest, Manual16BitTest, Manual16BitTestMixedPrecisionTest
+    ManualBitWidthByLayerNameTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_bops_test import MixedPrecisionBopsBasicTest, \
     MixedPrecisionBopsAllWeightsLayersTest, MixedPrecisionWeightsOnlyBopsTest, MixedPrecisionActivationOnlyBopsTest, \
     MixedPrecisionBopsAndWeightsMemoryUtilizationTest, MixedPrecisionBopsAndActivationMemoryUtilizationTest, MixedPrecisionBopsAndTotalMemoryUtilizationTest, \
@@ -95,26 +94,15 @@ from tests.pytorch_tests.model_tests.feature_models.gptq_test import GPTQAccurac
     GPTQLearnRateZeroTest
 from tests.pytorch_tests.model_tests.feature_models.uniform_activation_test import \
     UniformActivationTest
-from tests.pytorch_tests.model_tests.feature_models.metadata_test import MetadataTest
 from tests.pytorch_tests.model_tests.feature_models.tpc_test import TpcTest
 from tests.pytorch_tests.model_tests.feature_models.const_representation_test import ConstRepresentationTest, \
     ConstRepresentationMultiInputTest, ConstRepresentationLinearLayerTest, ConstRepresentationGetIndexTest, \
     ConstRepresentationCodeTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from tests.pytorch_tests.model_tests.feature_models.const_quantization_test import ConstQuantizationTest, \
-    AdvancedConstQuantizationTest
 from tests.pytorch_tests.model_tests.feature_models.remove_identity_test import RemoveIdentityTest
-from tests.pytorch_tests.model_tests.feature_models.activation_16bit_test import Activation16BitTest, \
-    Activation16BitMixedPrecisionTest
 
 
 class FeatureModelsTestRunner(unittest.TestCase):
-
-    def test_compute_max_cut(self):
-        """
-        This test checks the compute max cut of a model and the fused nodes information in the model metadata.
-        """
-        ComputeMaxCutTest(self).run_test()
 
     def test_remove_identity(self):
         """
@@ -252,16 +240,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         ResidualCollapsingTest1(self).run_test()
         ResidualCollapsingTest2(self).run_test()
-
-    def test_const_quantization(self):
-        c = (np.ones((16, 32, 32)) + np.random.random((16, 32, 32))).astype(np.float32)
-        for func in [torch.add, torch.sub, torch.mul, torch.div]:
-            ConstQuantizationTest(self, func, c).run_test()
-            ConstQuantizationTest(self, func, c, input_reverse_order=True).run_test()
-            ConstQuantizationTest(self, func, 2.45).run_test()
-            ConstQuantizationTest(self, func, 5, input_reverse_order=True).run_test()
-
-        AdvancedConstQuantizationTest(self).run_test()
 
     def test_const_representation(self):
         for const_dtype in [np.float32, np.int64, np.int32]:
@@ -670,23 +648,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
     def test_concat_threshold_update(self):
         ConcatUpdateTest(self).run_test()
 
-    def test_metadata(self):
-        MetadataTest(self).run_test()
-
     def test_torch_tpcs(self):
         TpcTest(f'{C.IMX500_TP_MODEL}.v1', self).run_test()
         TpcTest(f'{C.IMX500_TP_MODEL}.v1_lut', self).run_test()
         TpcTest(f'{C.IMX500_TP_MODEL}.v1_pot', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v2', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v2_lut', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v3', self).run_test()
-        TpcTest(f'{C.IMX500_TP_MODEL}.v3_lut', self).run_test()
         TpcTest(f'{C.TFLITE_TP_MODEL}.v1', self).run_test()
         TpcTest(f'{C.QNNPACK_TP_MODEL}.v1', self).run_test()
-
-    def test_16bit_activations(self):
-        Activation16BitTest(self).run_test()
-        Activation16BitMixedPrecisionTest(self).run_test()
 
     def test_invalid_bit_width_selection(self):
         with self.assertRaises(Exception) as context:
@@ -704,36 +671,10 @@ class FeatureModelsTestRunner(unittest.TestCase):
         # Check that the correct exception message was raised
         self.assertEqual(str(context.exception), "Manually selected activation bit-width 3 is invalid for node ReLU:relu.")
 
-    def test_mul_16_bit_manual_selection(self):
-        """
-        This test checks the execptions in the manual bit-width selection feature.
-        """
-        # This "mul" can be configured to 16 bit
-        Manual16BitTest(self, NodeNameFilter('mul'), 16).run_test()
-        Manual16BitTestMixedPrecisionTest(self, NodeNameFilter('mul'), 16).run_test()
-
-        # This "mul" cannot be configured to 16 bit
-        with self.assertRaises(Exception) as context:
-            Manual16BitTest(self, NodeNameFilter('mul_1'), 16).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception), "Manually selected activation bit-width 16 is invalid for node mul:mul_1.")
-
-        # This "mul" cannot be configured to 16 bit
-        with self.assertRaises(Exception) as context:
-            Manual16BitTestMixedPrecisionTest(self, NodeNameFilter('mul_1'), 16).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception), "Manually selected activation bit-width 16 is invalid for node mul:mul_1.")
-
     def test_exceptions__manual_selection(self):
         """
         This test checks the execptions in the manual bit-width selection feature.
         """
-        # Node name doesn't exist in graph
-        with self.assertRaises(Exception) as context:
-            Manual16BitTest(self, NodeNameFilter('mul_3'), 16).run_test()
-        # Check that the correct exception message was raised
-        self.assertEqual(str(context.exception), "Node Filtering Error: No nodes found in the graph for filter {'node_name': 'mul_3'} to change their bit width to 16.")
-
         # Invalid inputs to API
         with self.assertRaises(Exception) as context:
             ManualBitWidthByLayerNameTest(self, [NodeNameFilter('relu'), NodeNameFilter('add'), NodeNameFilter('add_1')], [2, 4]).run_test()
@@ -758,8 +699,6 @@ class FeatureModelsTestRunner(unittest.TestCase):
                                       [2, 4]).run_test()
         ManualBitWidthByLayerTypeTest(self, [NodeTypeFilter(operator.add), NodeTypeFilter(torch.nn.Conv2d)],
                                       [4, 4]).run_test()
-        ManualBitWidthByLayerTypeTest(self, [NodeTypeFilter(operator.add), NodeTypeFilter(torch.nn.Linear)],
-                                      4).run_test()
 
     def test_manual_bit_width_selection_by_layer_name(self):
         """

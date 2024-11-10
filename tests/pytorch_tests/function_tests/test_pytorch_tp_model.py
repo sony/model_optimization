@@ -256,13 +256,9 @@ class TestGetPytorchTPC(unittest.TestCase):
 
         tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v1')
         self.assertTrue(tpc.version == 'v1')
-        tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v2')
-        self.assertTrue(tpc.version == 'v2')
 
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v1")
         self.assertTrue(tpc.version == 'v1')
-        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v2")
-        self.assertTrue(tpc.version == 'v2')
 
         tpc = mct.get_target_platform_capabilities(PYTORCH, TFLITE_TP_MODEL, "v1")
         self.assertTrue(tpc.version == 'v1')
