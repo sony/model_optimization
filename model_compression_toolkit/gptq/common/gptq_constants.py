@@ -14,6 +14,7 @@ N_CYCLES = 4
 MIM_TEMP = 0.5
 MAX_TEMP = 1.0
 REG_DEFAULT = 0.01
+REG_DEFAULT_SLA = 1
 MAX_LSB_CHANGE = 1
 
 # Soft rounding arguments values
@@ -27,6 +28,5 @@ MAX_LSB_STR = 'max_lsbs_change_map'
 # GPTQ learning hyperparameters
 LR_DEFAULT = 3e-2
 LR_REST_DEFAULT = 1e-4
-LR_BIAS_DEFAULT = 1e-3
-LR_QUANTIZATION_PARAM_DEFAULT = 1e-3
+LR_BIAS_DEFAULT = 1e-4
 GPTQ_MOMENTUM = 0.9
