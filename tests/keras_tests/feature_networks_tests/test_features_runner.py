@@ -695,7 +695,7 @@ class FeatureNetworkTest(unittest.TestCase):
         # enabled tracing for code coverage.
         # tf.config.run_functions_eagerly(True)
         # GradientPTQTest(self, use_hessian_sample_attention=True).run_test()
-        GradientPTQTest(self, use_hessian_sample_attention=True, loss=sample_layer_attention_loss).run_test()
+        GradientPTQTest(self, log_norm_weights=False, scaled_log_norm=False, use_hessian_sample_attention=True, loss=sample_layer_attention_loss).run_test()
 
         # tf.config.run_functions_eagerly(False)
 

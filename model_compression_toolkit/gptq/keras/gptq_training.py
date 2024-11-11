@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Tuple, Union, Generator
 
 import tensorflow as tf
 from keras import Model
@@ -20,11 +20,12 @@ from packaging import version
 from tensorflow.keras.layers import Layer
 from tqdm import tqdm
 
-from model_compression_toolkit.core.common.hessian import HessianInfoService
+from model_compression_toolkit.core.common.hessian import HessianInfoService, HessianScoresGranularity
 # As from Tensorflow 2.6, keras is a separate package and some classes should be imported differently.
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
-from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader
+from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader, \
+    FixedSampleInfoDataset, FixedTFDataset, create_tf_dataloader
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.common.gradual_activation_quantization import \
     get_gradual_activation_quantizer_wrapper_factory
@@ -149,15 +150,143 @@ class KerasGPTQTrainer(GPTQTrainer):
                                            SoftQuantizerRegularization,
                                            KerasLinearAnnealingScheduler)
 
-    def _get_compare_points_loss_weights(self):
-        """ Get compare points weights for the distillation loss. """
-        if self.gptq_config.use_hessian_based_weights:
-            hess_dataloader = data_gen_to_dataloader(self.representative_data_gen_fn,
-                                                     batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size)
-            return self.compute_hessian_based_weights(hess_dataloader)
+    def _prepare_train_dataloader_sla(self, data_gen_fn: Callable[[], Generator]) -> tf.data.Dataset:
+        """
+        Computes Sample-Layer Attention score and builds a train dataloader in TensorFlow.
 
-        num_nodes = len(self.compare_points)
-        return np.ones((num_nodes,)) / num_nodes
+        Args:
+            data_gen_fn: factory for representative dataset generator.
+
+        Returns:
+            TensorFlow dataset yielding three outputs - samples, weights for the distillation loss,
+            and weights for regularization.
+        """
+        # Create a fixed dataset
+        fixed_dataset = FixedTFDataset(data_gen_fn)
+        orig_batch_size = fixed_dataset.orig_batch_size
+
+        # Prepare a separate loader for computing hessians over the whole dataset
+        hess_data_loader = create_tf_dataloader(
+            fixed_dataset,
+            batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size,
+            shuffle=False
+        )
+
+        # Prepare request for Hessian computation
+        request = self._build_hessian_request(
+            granularity=HessianScoresGranularity.PER_ELEMENT,
+            data_loader=hess_data_loader,
+            n_samples=None
+        )
+        layers_hessians = self.hessian_service.fetch_hessian(request, force_compute=True)
+
+        # Compute SLA score defined as max over channels
+        layers_hessians = {
+            layer: tf.convert_to_tensor(tf.reduce_max(hess, axis=1)) for layer, hess in layers_hessians.items()
+        }
+
+        # Stack hessians for comparison points
+        hessians_tensor = tf.stack([layers_hessians[layer.name] for layer in self.compare_points], axis=1)
+        assert hessians_tensor.shape[1] == len(self.compare_points)
+        loss_weights = list(hessians_tensor.numpy())  # Convert to a list for compatibility
+
+        # Prepare final dataset with samples and loss weights
+        sla_train_dataset = FixedSampleInfoDataset(fixed_dataset.samples, loss_weights)
+
+        # Calculate regularization weights as mean across samples
+        reg_weights = tf.reduce_mean(hessians_tensor, axis=0)
+
+        # Define a collate function to add regularization weights to each batch
+        def collate_fn(batch):
+            samples, loss_weights_batch = zip(*batch)
+            return tf.stack(samples), tf.stack(loss_weights_batch), reg_weights
+
+        # Prepare and return a batched and shuffled dataset
+        sla_train_tf_dataset = tf.data.Dataset.from_generator(
+            lambda: iter(sla_train_dataset),
+            output_signature=(tf.TensorSpec(shape=(None,), dtype=tf.float32),) * 2 + (
+            tf.TensorSpec(shape=(), dtype=tf.float32),)
+        )
+
+        sla_train_tf_dataset = sla_train_tf_dataset.batch(orig_batch_size).map(collate_fn).shuffle(buffer_size=100)
+
+        return sla_train_tf_dataset
+
+    # def _prepare_train_dataloader_sla(self, data_gen_fn):
+    #     """
+    #     Computes Sample-Layer Attention score and builds a train dataloader.
+    #
+    #     Args:
+    #         data_gen_fn: Factory for representative dataset generator.
+    #
+    #     Returns:
+    #         A tf.data.Dataset yielding three outputs - samples, weights for the distillation loss,
+    #         and weights for regularization.
+    #     """
+    #     # Initialize FixedDatasetFromGenerator
+    #     fixed_dataset = FixedDatasetFromGenerator(data_gen_fn)
+    #     orig_batch_size = fixed_dataset.orig_batch_size
+    #
+    #     # Prepare a separate loader for computing hessians over the whole dataset
+    #     hess_data_loader = create_tf_dataloader(
+    #         fixed_dataset,
+    #         batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size,
+    #         shuffle=False
+    #     )
+    #
+    #     # Build hessian request using the data loader for the hessians
+    #     request = self._build_hessian_request(
+    #         granularity=HessianScoresGranularity.PER_OUTPUT_CHANNEL,
+    #         data_loader=hess_data_loader,
+    #         n_samples=None
+    #     )
+    #
+    #     # Fetch hessians for each layer
+    #     layers_hessians = self.hessian_service.fetch_hessian(request, force_compute=True)
+    #
+    #     # Compute SLA score as the max over channels
+    #     layers_hessians = {layer: tf.convert_to_tensor(tf.reduce_max(hess, axis=1)) for layer, hess in
+    #                        layers_hessians.items()}
+    #
+    #     # Stack hessians across layers to create the loss weights
+    #     hessians_tensor = tf.stack([layers_hessians[layer.name] for layer in self.compare_points],
+    #                                axis=1)  # samples X layers
+    #     assert hessians_tensor.shape[1] == len(self.compare_points)
+    #     loss_weights = list(hessians_tensor)
+    #
+    #     # Create the SLA training dataset with additional info (loss weights)
+    #     sla_train_dataset = FixedSampleInfoDataset(fixed_dataset.samples, loss_weights)
+    #
+    #     # Calculate regularization weights as the mean over hessians across samples
+    #     reg_weights = tf.reduce_mean(hessians_tensor, axis=0)
+    #
+    #     # Define a collate function for appending regularization weights to each batch
+    #     def collate_fn(batch, extra_output=None):
+    #         """Collates batch with additional regularization weight for each sample."""
+    #         batch = tuple(map(tf.convert_to_tensor, batch))
+    #         if extra_output is not None:
+    #             extra_output = tf.convert_to_tensor(extra_output)
+    #             return (*batch, extra_output)
+    #         return batch
+    #
+    #     # Create the main training data loader
+    #     return create_tf_dataloader(
+    #         sla_train_dataset,
+    #         batch_size=orig_batch_size,
+    #         shuffle=True,
+    #         collate_fn=collate_fn,
+    #         extra_output=reg_weights
+    #     )
+
+    # def _get_compare_points_loss_weights(self):
+    #     """ Get compare points weights for the distillation loss. """
+    #     if self.gptq_config.use_hessian_based_weights:
+    #         hess_dataloader = data_gen_to_dataloader(self.representative_data_gen_fn,
+    #                                                  batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size)
+    #         return self.compute_hessian_based_weights(hess_dataloader)
+    #
+    #     num_nodes = len(self.compare_points)
+    #     return np.ones((num_nodes,)) / num_nodes
 
     def _is_gptq_weights_trainable(self,
                                    node: common.BaseNode) -> bool:

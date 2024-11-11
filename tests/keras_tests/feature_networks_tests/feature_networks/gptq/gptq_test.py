@@ -62,14 +62,15 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                  quant_method=QuantizationMethod.SYMMETRIC,
                  rounding_type=RoundingType.STE,
                  per_channel=True,
-                 input_shape=(1, 16, 16, 3),
+                 input_shape=(16, 16, 3),
                  hessian_weights=True,
                  log_norm_weights=True,
                  scaled_log_norm=False,
                  quantization_parameter_learning=True,
                  num_calibration_iter=GPTQ_HESSIAN_NUM_SAMPLES,
                  use_hessian_sample_attention=False,
-                 loss=None):
+                 loss=None,
+                 norm_scores=False):
         super().__init__(unit_test,
                          input_shape=input_shape,
                          num_calibration_iter=num_calibration_iter)
@@ -82,7 +83,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         self.scaled_log_norm = scaled_log_norm
         self.use_hessian_sample_attention = use_hessian_sample_attention
         self.loss = loss if loss else multiple_tensors_mse_loss
-
+        self.norm_scores = norm_scores
         if rounding_type == RoundingType.SoftQuantizer:
             self.override_params = {QUANT_PARAM_LEARNING_STR: quantization_parameter_learning}
         elif rounding_type == RoundingType.STE:
@@ -108,7 +109,8 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                  use_hessian_based_weights=self.hessian_weights,
                                  hessian_weights_config=GPTQHessianScoresConfig(log_norm=self.log_norm_weights,
                                                                                 scale_log_norm=self.scaled_log_norm,
-                                                                                per_sample=self.use_hessian_sample_attention),
+                                                                                per_sample=self.use_hessian_sample_attention,
+                                                                                norm_scores=self.norm_scores),
                                  gptq_quantizer_params_override=self.override_params)
 
     def create_networks(self):
