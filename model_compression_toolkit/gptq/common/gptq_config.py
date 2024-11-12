@@ -50,7 +50,7 @@ class GPTQHessianScoresConfig:
     hessians_num_samples: Optional[int]
     norm_scores: bool = None
     log_norm: bool = None
-    scale_log_norm: bool = None
+    scale_log_norm: bool = False
     hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE
 
     def __post_init__(self):
@@ -58,8 +58,6 @@ class GPTQHessianScoresConfig:
             self.norm_scores = not self.per_sample
         if self.log_norm is None:
             self.log_norm = not self.per_sample
-        if self.scale_log_norm is None:
-            self.scale_log_norm = False
 
 
 @dataclass
