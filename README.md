@@ -1,55 +1,104 @@
+<div align="center" markdown="1">
+
 # Model Compression Toolkit (MCT)
 
-Model Compression Toolkit (MCT) is an open-source project for neural network model optimization under efficient, constrained hardware.
+**Quantize and compress production-ready deep learning vision models for efficient edge deployment.**
+#### Version 2.2.2 is out! Notebooks have been updated!
+______________________________________________________________________
 
-This project provides researchers, developers, and engineers tools for optimizing and deploying state-of-the-art neural networks on efficient hardware.
+</div>  
+<div align="center">
+<p align="center">
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#tutorials-and-examples">Tutorials</a> •
+  <a href="#supported-features">High level features and techniques</a> •
+  <a href="#resources">Resources</a> • 
+  <a href="#contributions">Community</a> •
+  <a href="#license">License</a>
+</p>
+<p align="center">
+  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/python-2.1%20%7C%202.2%20%7C%202.3-blue" /></a>
+  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/pytorch-3.9%20%7C3.10%20%7C3.11-blue" /></a>
+  <a href="https://github.com/sony/model_optimization/releases"><img src="https://img.shields.io/github/v/release/sony/model_optimization" /></a>
+  <a href="https://github.com/sony/model_optimization/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" /></a>
+  
+ </p>    
+</div>
 
-Specifically, this project aims to apply quantization to compress neural networks.
-
-<img src="https://github.com/sony/model_optimization/raw/main/docsrc/images/mct_block_diagram.svg" width="10000">
-
-MCT is developed by researchers and engineers working at Sony Semiconductor Israel.
+__________________________________________________________________________________________________________
 
 
+## Quantize with MCT
+__________________________________________________________________________________________________________
 
-## Table of Contents
+Open-source project for neural network model optimization, providing researchers, developers, and engineers with advanced quantization and compression tools for deploying state-of-the-art neural networks on efficient, constrained hardware.
 
-- [Getting Started](https://github.com/sony/model_optimization?tab=readme-ov-file#getting-started)
-- [Supported features](https://github.com/sony/model_optimization?tab=readme-ov-file#supported-features)
-- [Results](https://github.com/sony/model_optimization?tab=readme-ov-file#results)
-- [Troubleshooting](https://github.com/sony/model_optimization?tab=readme-ov-file#trouble-shooting)
-- [Contributions](https://github.com/sony/model_optimization?tab=readme-ov-file#contributions)
-- [License](https://github.com/sony/model_optimization?tab=readme-ov-file#license)
+### Support various computer vision tasks
+<p align="center">
+<img src="/docsrc/images/Classification.png" width="200">
+<img src="/docsrc/images/SemSeg.png" width="200">
+<img src="/docsrc/images/PoseEst.png" width="200">
+<img src="/docsrc/images/ObjDet.png" width="200">
 
 
 ## Getting Started
-
-This section provides an installation and a quick starting guide.
-
-### Installation
-
-To install the latest stable release of MCT, run the following command:
+### Quick Installation
+Pip install the model compression toolkit package in a Python>=3.9 environment with PyTorch>=2.1 or Tensorflow>=2.12.
 ```
 pip install model-compression-toolkit
 ```
-
 For installing the nightly version or installing from source, refer to the [installation guide](https://github.com/sony/model_optimization/blob/main/INSTALLATION.md).
 
+**Important note**: In order to use MCT, you’ll need to provide a floating point .pt or .keras model as an input.
 
-### Quick start & tutorials 
+### Tutorials and Examples 
 
-Explore the Model Compression Toolkit (MCT) through our tutorials, 
-covering compression techniques for Keras and PyTorch models. Access interactive [notebooks](https://github.com/sony/model_optimization/blob/main/tutorials/README.md) 
-for hands-on learning. For example:
-* [Keras MobileNetV2 post training quantization](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/imx500_notebooks/keras/example_keras_mobilenetv2_for_imx500.ipynb)
-* [Post training quantization with PyTorch](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_post_training_quantization.ipynb)
-* [Data Generation for ResNet18 with PyTorch](https://github.com/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_data_generation.ipynb).
+Our [tutorials](https://github.com/sony/model_optimization/blob/main/tutorials/README.md) section will walk you through the basics of deploying your first model; Covering various compression techniques for both Keras and PyTorch models. 
+Access interactive notebooks for hands-on learning with popular models/tasks or move on to [Resources](#resources) section.
+
+### Supported Quantization flows</div>  
+MCT supports various quantization flows as appears below. 
+<div align="center">
+<p align="center">
+
+  Quantization Method  | Complexity | Computational Cost | Tutorial 
+-------------------- | -----------|--------------------|---------
+PTQ (Post Training Quantization)  | Low | Low (~1-10 CPU minutes) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_post_training_quantization.ipynb"><img src="https://img.shields.io/badge/Pytorch-green"/></a> <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_post-training_quantization.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a>
+GPTQ (parameters fine-tuning using gradients)  | Moderate | Moderate (~2-3 GPU hours) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_mobilenet_gptq.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a> <img src="https://img.shields.io/badge/Pytorch-grey"/>
+QAT (Quantization Aware Training)  | High | High (~12-36 GPU hours) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_qat.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a> <img src="https://img.shields.io/badge/Pytorch-grey"/>
+
+</p>    
+</div>
+
+For each flow, **Quantization core** utilizes various algorithms and hyper-parameters for optimal [hardware-aware](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/README.md) quantization results. 
+For further details, please see [Supported features and algorithms](#supported-features). User can either provide their own representative dataset, or utilize the [Data Generation](#data-generation-) capability.
+
+<div align="center">
+<p align="center">
+
+<img src="/docsrc/images/mctFlow.png" width="800">
+</p>    
+</div>
+
+### Resources
+* [User Guide](https://sony.github.io/model_optimization/docs/index.html)  contains detailed information about MCT and guides you from installation through optimizing models for your edge AI applications.
+
+* MCT's [API Docs](https://sony.github.io/model_optimization/docs/api/api_docs/) is seperated per quantization methods:  
+
+  * [Post-training quantization](https://sony.github.io/model_optimization/docs/api/api_docs/index.html#ptq) | PTQ API docs
+  * [Gradient-based post-training quantization](https://sony.github.io/model_optimization/docs/api/api_docs/index.html#gptq) | GPTQ API docs
+  * [Quantization-aware training](https://sony.github.io/model_optimization/docs/api/api_docs/index.html#qat) | QAT API docs
+    
+* [Debug](https://sony.github.io/model_optimization/docs/guidelines/visualization.html) – modify optimization process or generate explainable report
+  
+* [Release notes](https://github.com/sony/model_optimization/releases)
 
 
 ### Supported Versions
 
 Currently, MCT is being tested on various Python, Pytorch and TensorFlow versions:
-
+<details id="supported-versions">
+  <summary>Supported Versions Table</summary>
 
 |             |  PyTorch 2.1                                                                                                                                                                                                               | PyTorch 2.2                                                                                                                                                                                                              | PyTorch 2.3                                                                                                                                                                                                              | PyTorch 2.4                                                                                                                                                                                                              |
 |-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -65,6 +114,7 @@ Currently, MCT is being tested on various Python, Pytorch and TensorFlow version
 | Python 3.10 | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras212.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras212.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras213.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras213.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras214.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras215.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python310_keras215.yml) |
 | Python 3.11 | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras212.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras212.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras213.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras213.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras214.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras214.yml) | [![Run Tests](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras215.yml/badge.svg)](https://github.com/sony/model_optimization/actions/workflows/run_tests_python311_keras215.yml) |
 
+</details>
 
 ## Supported Features
 MCT offers a range of powerful features to optimize neural network models for efficient deployment. These supported features include:
@@ -83,7 +133,7 @@ MCT supports different quantization methods:
 | Quantization Method                           | Complexity | Computational Cost          |
 |-----------------------------------------------|------------|-----------------------------|
 | PTQ                                           | Low        | Low (order of minutes)      |
-| GPTQ (parameters fine-tuning using gradients) | Mild       | Mild (order of 2-3 hours)   |
+| GPTQ (parameters fine-tuning using gradients) | Moderate   | Moderate (order of 2-3 hours)   |
 | QAT                                           | High       | High (order of 12-36 hours) |
 
 
@@ -130,13 +180,6 @@ For more details, we highly recommend visiting our project website where experim
 
 
 ## Results
-### Keras
-Graph of [MobileNetV2](https://keras.io/api/applications/mobilenet/) accuracy on ImageNet vs average bit-width of weights, using 
-single-precision quantization, mixed-precision quantization, and mixed-precision quantization with GPTQ.
-
-<img src="https://github.com/sony/model_optimization/raw/main/docsrc/images/mbv2_accuracy_graph.png">
-
-For more results, please see [1]
 
 ### Pytorch
 We quantized classification networks from the torchvision library. 
@@ -148,6 +191,14 @@ In the following table we present the ImageNet validation results for these mode
 | ResNet-18 [3]             | 69.86           | 69.63           |69.53|
 | SqueezeNet 1.1 [3]        | 58.128          | 57.678          ||
 
+### Keras
+MCT can quantize an existing 32-bit floating-point model to an 8-bit fixed-point (or less) model without compromising accuracy. 
+Below is a graph of [MobileNetV2](https://keras.io/api/applications/mobilenet/) accuracy on ImageNet vs average bit-width of weights (X-axis), using 
+single-precision quantization, mixed-precision quantization, and mixed-precision quantization with GPTQ. 
+
+<img src="https://github.com/sony/model_optimization/raw/main/docsrc/images/mbv2_accuracy_graph.png">
+
+For more results, please see [1]
 
 #### Pruning Results
 
@@ -158,23 +209,25 @@ Results for applying pruning to reduce the parameters of the following models by
 | ResNet50 [2]    | 75.1                 | 72.4                  |
 | DenseNet121 [3] | 74.44                | 71.71                 |
 
-
-## Trouble Shooting
+## Troubleshooting and Community
 
 If the accuracy degradation of the quantized model is too large for your application, check out the [Quantization Troubleshooting](https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md)
 for common pitfalls and some tools to improve quantization accuracy.
 
-Check out the [FAQ](https://github.com/sony/model_optimization/tree/main/FAQ.md) for common issues.
+Check out the [FAQ](https://github.com/sony/model_optimization/tree/main/FAQ.md) for common issues. 
+
+You are welcome to ask questions and get support on our [issues section](https://github.com/sony/model_optimization/issues) and manage community discussions under [discussions section](https://github.com/sony/model_optimization/discussions).
 
 
 ## Contributions
 MCT aims at keeping a more up-to-date fork and welcomes contributions from anyone.
 
-*You will find more information about contributions in the [Contribution guide](https://github.com/sony/model_optimization/blob/main/CONTRIBUTING.md).
+*Checkout more our [Contribution guide](https://github.com/sony/model_optimization/blob/main/CONTRIBUTING.md) for more details.
 
 
 ## License
-[Apache License 2.0](https://github.com/sony/model_optimization/blob/main/LICENSE.md).
+MCT is licensed under Apache License Version 2.0. By contributing to the project, you agree to the license and copyright terms therein and release your contribution under these terms.
+<a href="https://github.com/sony/model_optimization/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" /></a>
 
 ## References 
 
