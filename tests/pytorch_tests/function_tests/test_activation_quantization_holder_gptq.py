@@ -75,10 +75,10 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         activation_quantization_holders_in_model = self._get_holders_with_validation(gptq_model, exp_n_holders=3)
         for a in activation_quantization_holders_in_model:
             self.assertTrue(isinstance(a.activation_holder_quantizer, STESymmetricActivationTrainableQuantizer))
-            self.assertEquals(a.activation_holder_quantizer.identifier, TrainingMethod.STE)
+            self.assertEqual(a.activation_holder_quantizer.identifier, TrainingMethod.STE)
             # activation quantization params for gptq should be frozen (non-learnable)
             self.assertTrue(a.activation_holder_quantizer.freeze_quant_params is True)
-            self.assertEquals(a.activation_holder_quantizer.get_trainable_variables(VariableGroup.QPARAMS), [])
+            self.assertEqual(a.activation_holder_quantizer.get_trainable_variables(VariableGroup.QPARAMS), [])
 
         for name, module in gptq_model.named_modules():
             if isinstance(module, PytorchQuantizationWrapper):
@@ -130,7 +130,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
             quantizer = a.activation_holder_quantizer.quantizer
             self.assertTrue(isinstance(quantizer, STESymmetricActivationTrainableQuantizer))
             self.assertTrue(quantizer.freeze_quant_params is True)
-            self.assertEquals(quantizer.get_trainable_variables(VariableGroup.QPARAMS), [])
+            self.assertEqual(quantizer.get_trainable_variables(VariableGroup.QPARAMS), [])
 
     def _get_holders_with_validation(self, gptq_model, exp_n_holders):
         last_module = list(gptq_model.named_modules())[-1][1]
