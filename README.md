@@ -16,8 +16,9 @@ ______________________________________________________________________
   <a href="#license">License</a>
 </p>
 <p align="center">
-  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/python-2.1%20%7C%202.2%20%7C%202.3-blue" /></a>
-  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/pytorch-3.9%20%7C3.10%20%7C3.11-blue" /></a>
+  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/pytorch-2.1%20%7C%202.2%20%7C%202.3-blue" /></a>
+  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/TensorFlow-2.12%20%7C%202.13%20%7C%202.14%20%7C%202.15-blue" /></a>
+  <a href="https://sony.github.io/model_optimization#prerequisites"><img src="https://img.shields.io/badge/python-3.9%20%7C3.10%20%7C3.11-blue" /></a>
   <a href="https://github.com/sony/model_optimization/releases"><img src="https://img.shields.io/github/v/release/sony/model_optimization" /></a>
   <a href="https://github.com/sony/model_optimization/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" /></a>
   
@@ -218,6 +219,7 @@ MCT aims at keeping a more up-to-date fork and welcomes contributions from anyon
 
 ## License
 MCT is licensed under Apache License Version 2.0. By contributing to the project, you agree to the license and copyright terms therein and release your contribution under these terms.
+
 <a href="https://github.com/sony/model_optimization/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" /></a>
 
 ## References 
