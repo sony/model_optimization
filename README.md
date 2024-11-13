@@ -2,8 +2,7 @@
 
 # Model Compression Toolkit (MCT)
 
-**Quantize and compress production-ready deep learning vision models for efficient edge deployment.**
-#### Version 2.2.2 is out! Notebooks have been updated!
+**Open-source project for neural network model optimization, providing researchers, developers, and engineers with advanced quantization and compression tools for deploying state-of-the-art neural networks on efficient, constrained hardware.**
 ______________________________________________________________________
 
 </div>  
@@ -26,20 +25,6 @@ ______________________________________________________________________
 </div>
 
 __________________________________________________________________________________________________________
-
-
-## Quantize with MCT
-__________________________________________________________________________________________________________
-
-Open-source project for neural network model optimization, providing researchers, developers, and engineers with advanced quantization and compression tools for deploying state-of-the-art neural networks on efficient, constrained hardware.
-
-### Support various computer vision tasks
-<p align="center">
-<img src="/docsrc/images/Classification.png" width="200">
-<img src="/docsrc/images/SemSeg.png" width="200">
-<img src="/docsrc/images/PoseEst.png" width="200">
-<img src="/docsrc/images/ObjDet.png" width="200">
-
 
 ## Getting Started
 ### Quick Installation
@@ -64,8 +49,8 @@ MCT supports various quantization flows as appears below.
   Quantization Method  | Complexity | Computational Cost | Tutorial 
 -------------------- | -----------|--------------------|---------
 PTQ (Post Training Quantization)  | Low | Low (~1-10 CPU minutes) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_post_training_quantization.ipynb"><img src="https://img.shields.io/badge/Pytorch-green"/></a> <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_post-training_quantization.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a>
-GPTQ (parameters fine-tuning using gradients)  | Moderate | Moderate (~2-3 GPU hours) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_mobilenet_gptq.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a> <img src="https://img.shields.io/badge/Pytorch-grey"/>
-QAT (Quantization Aware Training)  | High | High (~12-36 GPU hours) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_qat.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a> <img src="https://img.shields.io/badge/Pytorch-grey"/>
+GPTQ (parameters fine-tuning using gradients)  | Moderate | Moderate (~2-3 GPU hours) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_mobilenet_gptq.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a>
+QAT (Quantization Aware Training)  | High | High (~12-36 GPU hours) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_qat.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a>
 
 </p>    
 </div>
@@ -181,7 +166,13 @@ For more details, we highly recommend visiting our project website where experim
 
 ## Results
 
-### Pytorch
+<p align="center">
+<img src="/docsrc/images/Classification.png" width="225">
+<img src="/docsrc/images/SemSeg.png" width="225">
+<img src="/docsrc/images/PoseEst.png" width="225">
+<img src="/docsrc/images/ObjDet.png" width="225">
+
+  ### Pytorch
 We quantized classification networks from the torchvision library. 
 In the following table we present the ImageNet validation results for these models:
 
