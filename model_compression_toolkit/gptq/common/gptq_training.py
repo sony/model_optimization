@@ -75,7 +75,7 @@ class GPTQTrainer(ABC):
                                                                        fw_info=self.fw_info)
 
         self.fxp_model, self.gptq_user_info = self.build_gptq_model()
-        if self.gptq_config.use_hessian_based_weights:
+        if self.gptq_config.hessian_weights_config:
             if not isinstance(hessian_info_service, HessianInfoService):
                 Logger.critical(f"When using Hessian-based approximations for sensitivity evaluation, "
                                 f"an 'HessianInfoService' object must be provided, but received: {hessian_info_service}.")   # pragma: no cover
