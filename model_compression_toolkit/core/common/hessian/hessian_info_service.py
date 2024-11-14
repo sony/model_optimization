@@ -204,7 +204,7 @@ class HessianInfoService:
             target_nodes = [n for n in orig_request.target_nodes if n.name in missing]
             request = request.clone(target_nodes=target_nodes)
         self._compute_hessians(request, n_iterations, count_by_cache=True)
-        res, missing = self.cache.fetch_hessian(request)
+        res, missing = self.cache.fetch_hessian(orig_request)
         assert not missing
         return res
 

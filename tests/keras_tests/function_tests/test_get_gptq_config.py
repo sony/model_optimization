@@ -66,7 +66,10 @@ class TestGetGPTQConfig(unittest.TestCase):
                                      weights_bias_correction=False)  # disable bias correction when working with GPTQ
         self.cc = CoreConfig(quantization_config=self.qc)
 
-        test_hessian_weights_config = GPTQHessianScoresConfig(hessians_num_samples=2,
+        default_reg_factor = 1
+        default_hessian_cfg = GPTQHessianScoresConfig(per_sample=False, hessians_num_samples=2)
+        test_hessian_weights_config = GPTQHessianScoresConfig(per_sample=False,
+                                                              hessians_num_samples=2,
                                                               norm_scores=False,
                                                               log_norm=True,
                                                               scale_log_norm=True)
@@ -75,35 +78,51 @@ class TestGetGPTQConfig(unittest.TestCase):
                                                       optimizer_rest=tf.keras.optimizers.RMSprop(),
                                                       train_bias=True,
                                                       loss=multiple_tensors_mse_loss,
-                                                      rounding_type=RoundingType.SoftQuantizer),
-                                    GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
-                                                      optimizer_rest=tf.keras.optimizers.Adam(),
-                                                      train_bias=True,
-                                                      loss=multiple_tensors_mse_loss,
-                                                      rounding_type=RoundingType.SoftQuantizer),
+                                                      rounding_type=RoundingType.SoftQuantizer,
+                                                      hessian_weights_config=default_hessian_cfg,
+                                                      regularization_factor=default_reg_factor,
+                                                      gradual_activation_quantization_config=None),
                                     GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
                                                       optimizer_rest=tf.keras.optimizers.Adam(),
                                                       train_bias=True,
                                                       loss=multiple_tensors_mse_loss,
                                                       rounding_type=RoundingType.SoftQuantizer,
-                                                      regularization_factor=15),
+                                                      hessian_weights_config=default_hessian_cfg,
+                                                      regularization_factor=default_reg_factor,
+                                                      gradual_activation_quantization_config=None),
                                     GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
                                                       optimizer_rest=tf.keras.optimizers.Adam(),
                                                       train_bias=True,
                                                       loss=multiple_tensors_mse_loss,
                                                       rounding_type=RoundingType.SoftQuantizer,
+                                                      hessian_weights_config=default_hessian_cfg,
+                                                      regularization_factor=15,
+                                                      gradual_activation_quantization_config=None),
+                                    GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
+                                                      optimizer_rest=tf.keras.optimizers.Adam(),
+                                                      train_bias=True,
+                                                      loss=multiple_tensors_mse_loss,
+                                                      rounding_type=RoundingType.SoftQuantizer,
+                                                      hessian_weights_config=default_hessian_cfg,
+                                                      regularization_factor=default_reg_factor,
+                                                      gradual_activation_quantization_config=None,
                                                       gptq_quantizer_params_override={QUANT_PARAM_LEARNING_STR: True}),
                                     GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
                                                       optimizer_rest=tf.keras.optimizers.Adam(),
                                                       train_bias=True,
                                                       loss=multiple_tensors_mse_loss,
                                                       rounding_type=RoundingType.SoftQuantizer,
-                                                      hessian_weights_config=test_hessian_weights_config),
+                                                      hessian_weights_config=test_hessian_weights_config,
+                                                      regularization_factor=default_reg_factor,
+                                                      gradual_activation_quantization_config=None),
                                     GradientPTQConfig(1, optimizer=tf.keras.optimizers.Adam(),
                                                       optimizer_rest=tf.keras.optimizers.Adam(),
                                                       train_bias=True,
                                                       loss=multiple_tensors_mse_loss,
                                                       rounding_type=RoundingType.STE,
+                                                      hessian_weights_config=default_hessian_cfg,
+                                                      regularization_factor=default_reg_factor,
+                                                      gradual_activation_quantization_config=None,
                                                       gptq_quantizer_params_override={
                                                           MAX_LSB_STR: DefaultDict(default_value=1)}),
                                     get_keras_gptq_config(n_epochs=1,
@@ -111,7 +130,6 @@ class TestGetGPTQConfig(unittest.TestCase):
                                     get_keras_gptq_config(n_epochs=1,
                                                           optimizer=tf.keras.optimizers.Adam(),
                                                           regularization_factor=0.001)]
-
 
         pot_tp = generate_test_tp_model({'weights_quantization_method': QuantizationMethod.POWER_OF_TWO})
         self.pot_weights_tpc = generate_keras_tpc(name="gptq_pot_config_test", tp_model=pot_tp)
@@ -153,10 +171,12 @@ class TestGetGPTQConfig(unittest.TestCase):
         tf.config.run_functions_eagerly(False)
 
     def test_gradual_activation_quantization_custom_config(self):
-        custom_config = mct.gptq.GradualActivationQuantizationConfig(q_fraction_scheduler_policy=mct.gptq.QFractionLinearAnnealingConfig(initial_q_fraction=0.2,
-                                                                                                                                         target_q_fraction=0.8,
-                                                                                                                                         start_step=1,
-                                                                                                                                         end_step=2))
+        custom_config = mct.gptq.GradualActivationQuantizationConfig(
+            q_fraction_scheduler_policy=mct.gptq.QFractionLinearAnnealingConfig(initial_q_fraction=0.2,
+                                                                                target_q_fraction=0.8,
+                                                                                start_step=1,
+                                                                                end_step=2)
+        )
         config = get_keras_gptq_config(n_epochs=5, gradual_activation_quantization=custom_config)
         self.assertEqual(config.gradual_activation_quantization_config, custom_config)
 

@@ -127,7 +127,7 @@ class TestHessianInfoCalculatorWeights(TestHessianInfoCalculatorBase):
 
         info = hessian_info.fetch_hessian(request)
         self.assertTrue(isinstance(info, dict))
-        self.assertEquals(set(info.keys()), {n.name for n in target_nodes})
+        self.assertEqual(set(info.keys()), {n.name for n in target_nodes})
         for target_node in target_nodes:
             node_score = info[target_node.name]
             kernel_attr_name = [w for w in target_node.weights if KERNEL in w]
