@@ -1,8 +1,7 @@
 <div align="center" markdown="1">
 
-# Model Compression Toolkit (MCT)
+<img src="/docsrc/images/mctHeader-cropped.svg" width="1000">
 
-**Open-source project for neural network model optimization, providing researchers, developers, and engineers with advanced quantization and compression tools for deploying state-of-the-art neural networks on efficient, constrained hardware.**
 ______________________________________________________________________
 
 </div>  
