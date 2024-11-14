@@ -42,22 +42,26 @@ For installing the nightly version or installing from source, refer to the [inst
 Our [tutorials](https://github.com/sony/model_optimization/blob/main/tutorials/README.md) section will walk you through the basics of the MCT tool, covering various compression techniques for both Keras and PyTorch models. 
 Access interactive notebooks for hands-on learning with popular models/tasks or move on to [Resources](#resources) section.
 
-### Supported Quantization flows</div>  
-MCT supports various quantization flows as appears below. 
+### Supported Quantization Methods</div>  
+MCT supports various quantization methods as appears below. 
 <div align="center">
 <p align="center">
 
   Quantization Method  | Complexity | Computational Cost | Tutorial 
 -------------------- | -----------|--------------------|---------
 PTQ (Post Training Quantization)  | Low | Low (~1-10 CPU minutes) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_post_training_quantization.ipynb"><img src="https://img.shields.io/badge/Pytorch-green"/></a> <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_post-training_quantization.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a>
-GPTQ (parameters fine-tuning using gradients)  | Moderate | Moderate (~2-3 GPU hours) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_mobilenet_gptq.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a>
+GPTQ (parameters fine-tuning using gradients)  | Moderate | Moderate (~1-3 GPU hours) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_mobilenet_gptq.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a>
 QAT (Quantization Aware Training)  | High | High (~12-36 GPU hours) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_qat.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a>
 
 </p>    
 </div>
 
 For each flow, **Quantization core** utilizes various algorithms and hyper-parameters for optimal [hardware-aware](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/README.md) quantization results. 
-For further details, please see [Supported features and algorithms](#supported-features). User can either provide their own representative dataset, or utilize the [Data Generation](#data-generation-) capability.
+For further details, please see [Supported features and algorithms](#supported-features). 
+
+Required input: 
+- Floating point model - 32bit model in either .pt or .keras format
+- Representative dataset - can be either provided by the user, or generated utilizing the [Data Generation](#data-generation-) capability
 
 <div align="center">
 <p align="center">
@@ -118,9 +122,9 @@ MCT supports different quantization methods:
 
 | Quantization Method                           | Complexity | Computational Cost          |
 |-----------------------------------------------|------------|-----------------------------|
-| PTQ                                           | Low        | Low (order of minutes)      |
-| GPTQ (parameters fine-tuning using gradients) | Moderate   | Moderate (order of 2-3 hours)   |
-| QAT                                           | High       | High (order of 12-36 hours) |
+| PTQ                                           | Low        | Low (~CPU minutes)      |
+| GPTQ (parameters fine-tuning using gradients) | Moderate   | Moderate (~1-3 GPU hours)   |
+| QAT                                           | High       | High (~12-36 GPU hours) |
 
 
 In addition, MCT supports different quantization schemes for quantizing weights and activations:
@@ -203,8 +207,8 @@ Results for applying pruning to reduce the parameters of the following models by
 
 ## Troubleshooting and Community
 
-If the accuracy degradation of the quantized model is too large for your application, check out the [Quantization Troubleshooting](https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md)
-for common pitfalls and some tools to improve quantization accuracy.
+If you encountered large accuracy degradation with MCT, check out the [Quantization Troubleshooting](https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md)
+for common pitfalls and some tools to improve quantized model's accuracy.
 
 Check out the [FAQ](https://github.com/sony/model_optimization/tree/main/FAQ.md) for common issues. 
 
@@ -214,7 +218,7 @@ You are welcome to ask questions and get support on our [issues section](https:/
 ## Contributions
 MCT aims at keeping a more up-to-date fork and welcomes contributions from anyone.
 
-*Checkout more our [Contribution guide](https://github.com/sony/model_optimization/blob/main/CONTRIBUTING.md) for more details.
+*Checkout our [Contribution guide](https://github.com/sony/model_optimization/blob/main/CONTRIBUTING.md) for more details.
 
 
 ## License
