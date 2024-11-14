@@ -66,7 +66,7 @@ Required input:
 <div align="center">
 <p align="center">
 
-<img src="/docsrc/images/mctFlow.png" width="800">
+<img src="/docsrc/images/mctDiagram_clean.svg" width="800">
 </p>    
 </div>
 
