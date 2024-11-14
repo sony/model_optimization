@@ -39,7 +39,7 @@ For installing the nightly version or installing from source, refer to the [inst
 
 ### Tutorials and Examples 
 
-Our [tutorials](https://github.com/sony/model_optimization/blob/main/tutorials/README.md) section will walk you through the basics of deploying your first model; Covering various compression techniques for both Keras and PyTorch models. 
+Our [tutorials](https://github.com/sony/model_optimization/blob/main/tutorials/README.md) section will walk you through the basics of the MCT tool, covering various compression techniques for both Keras and PyTorch models. 
 Access interactive notebooks for hands-on learning with popular models/tasks or move on to [Resources](#resources) section.
 
 ### Supported Quantization flows</div>  
