@@ -85,7 +85,7 @@ MCT offers a range of powerful features to optimize models for efficient edge de
 
 🧮 **Advanced quantization algorithms**. To prevent a performance degradation some algorithms are applied, such as Shift negative correction, Outliers filtering and clustering.
 
-### Hardware-specific optimization 
+### Hardware-aware optimization 
 
 🎯 **TPC (Target Platform Capabilities)**. Describes the target hardware’s constrains, for which the model optimization is targeted. See [TPC Readme](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/README.md) for more information.
 
