@@ -28,7 +28,7 @@ ______________________________________________________________________
 
 __________________________________________________________________________________________________________
 
-## Getting Started
+## <div align="center">Getting Started</div>
 ### Quick Installation
 Pip install the model compression toolkit package in a Python>=3.9 environment with PyTorch>=2.1 or Tensorflow>=2.12.
 ```
@@ -71,7 +71,7 @@ Required input:
 </p>    
 </div>
 
-## High level features and techniques
+## <div align="center">High level features and techniques</div>
 
 MCT offers a range of powerful features to optimize models for efficient edge deployment. These supported features include:
 
@@ -108,7 +108,7 @@ As part of the GPTQ capability, we provide an advanced optimization algorithm ca
 The specifications of the algorithm are detailed in the paper: _"**EPTQ: Enhanced Post-Training Quantization via Label-Free Hessian**"_ [4].
 More details on the how to use EPTQ via MCT can be found in the [EPTQ guidelines](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/gptq/README.md).
 
-## Resources
+## <div align="center">Resources</div>
 * [User Guide](https://sony.github.io/model_optimization/docs/index.html)  contains detailed information about MCT and guides you from installation through optimizing models for your edge AI applications.
 
 * MCT's [API Docs](https://sony.github.io/model_optimization/docs/api/api_docs/) is seperated per quantization methods:  
@@ -122,7 +122,7 @@ More details on the how to use EPTQ via MCT can be found in the [EPTQ guidelines
 * [Release notes](https://github.com/sony/model_optimization/releases)
 
 
-## Supported Versions
+## <div align="center">Supported Versions</div>
 
 Currently, MCT is being tested on various Python, Pytorch and TensorFlow versions:
 <details id="supported-versions">
@@ -143,7 +143,7 @@ Currently, MCT is being tested on various Python, Pytorch and TensorFlow version
 
 </details>
 
-## Results
+## <div align="center">Results</div>
 
 <p align="center">
 <img src="/docsrc/images/Classification.png" width="200">
@@ -170,7 +170,7 @@ single-precision quantization, mixed-precision quantization, and mixed-precision
 
 For more results, please see [1]
 
-#### Pruning Results
+### Pruning Results
 
 Results for applying pruning to reduce the parameters of the following models by 50%:
 
@@ -179,7 +179,7 @@ Results for applying pruning to reduce the parameters of the following models by
 | ResNet50 [2]    | 75.1                 | 72.4                  |
 | DenseNet121 [3] | 74.44                | 71.71                 |
 
-## Troubleshooting and Community
+## <div align="center">Troubleshooting and Community</div>
 
 If you encountered large accuracy degradation with MCT, check out the [Quantization Troubleshooting](https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md)
 for common pitfalls and some tools to improve quantized model's accuracy.
@@ -189,18 +189,18 @@ Check out the [FAQ](https://github.com/sony/model_optimization/tree/main/FAQ.md)
 You are welcome to ask questions and get support on our [issues section](https://github.com/sony/model_optimization/issues) and manage community discussions under [discussions section](https://github.com/sony/model_optimization/discussions).
 
 
-## Contributions
+## <div align="center">Contributions</div>
 MCT aims at keeping a more up-to-date fork and welcomes contributions from anyone.
 
 *Checkout our [Contribution guide](https://github.com/sony/model_optimization/blob/main/CONTRIBUTING.md) for more details.
 
 
-## License
+## <div align="center">License</div>
 MCT is licensed under Apache License Version 2.0. By contributing to the project, you agree to the license and copyright terms therein and release your contribution under these terms.
 
 <a href="https://github.com/sony/model_optimization/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" /></a>
 
-## References 
+## <div align="center">References</div>
 
 [1] Habi, H.V., Peretz, R., Cohen, E., Dikstein, L., Dror, O., Diamant, I., Jennings, R.H. and Netzer, A., 2021. [HPTQ: Hardware-Friendly Post Training Quantization. arXiv preprint](https://arxiv.org/abs/2109.09113).
 
