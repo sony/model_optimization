@@ -58,7 +58,7 @@ QAT (Quantization Aware Training)  | High | High (~12-36 GPU hours) | [Experimen
 </div>
 
 For each flow, **Quantization core** utilizes various algorithms and hyper-parameters for optimal [hardware-aware](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/README.md) quantization results. 
-For further details, please see [Supported features and algorithms](#supported-features). 
+For further details, please see [Supported features and algorithms](#high-level-features-and-techniques). 
 
 Required input: 
 - Floating point model - 32bit model in either .pt or .keras format
