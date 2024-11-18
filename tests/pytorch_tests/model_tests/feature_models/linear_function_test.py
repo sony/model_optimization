@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ class LinearFNet(torch.nn.Module):
 
     def forward(self, x):
         x = F.linear(x, self.fc1.weight, self.fc1.bias)
-        y = F.linear(x, self.fc2.weight, self.fc2.bias)
+        y = F.linear(x, bias=self.fc2.bias, weight=self.fc2.weight)
         return y
 
 
