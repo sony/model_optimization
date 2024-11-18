@@ -47,7 +47,7 @@ class FunctionalLinear(BaseSubstitution):
             Graph after applying the substitution.
         """
 
-        # Create new node of layer convolution
+        # Create new node of layer Linear
         if 1 not in func_node.weights:
             Logger.critical(f'Weight input missing for node {func_node.name}.')  # pragma: no cover
         # Extract index of kernel and bias according to tensor_input_allocs if they were input as kwargs. If
