@@ -710,7 +710,7 @@ class FeatureNetworkTest(unittest.TestCase):
                         per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
         GradientPTQWeightedLossTest(self,
                                     rounding_type=RoundingType.SoftQuantizer,
-                                    per_channel=True, hessian_weights=True, log_norm_weights=True,
+                                    per_channel=True, log_norm_weights=True,
                                     scaled_log_norm=True).run_test()
         GradientPTQNoTempLearningTest(self,
                                       rounding_type=RoundingType.SoftQuantizer).run_test()

@@ -116,7 +116,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
                                                                   trainable_threshold)
         hessian_cfg = self.gptq_config.hessian_weights_config
 
-        self.use_sample_layer_attention = hessian_cfg.per_sample
+        self.use_sample_layer_attention = hessian_cfg and hessian_cfg.per_sample
         if self.use_sample_layer_attention:
             # normalization is currently not supported, make sure the config reflects it.
             if hessian_cfg.norm_scores or hessian_cfg.log_norm or hessian_cfg.scale_log_norm:
@@ -178,7 +178,7 @@ class PytorchGPTQTrainer(GPTQTrainer):
         dataset = IterableDatasetFromGenerator(data_gen_fn)
         num_nodes = len(self.compare_points)
 
-        if self.gptq_config.use_hessian_based_weights:
+        if self.gptq_config.hessian_weights_config:
             hess_dataloader = DataLoader(dataset, batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size)
             loss_weights = torch.from_numpy(self.compute_hessian_based_weights(hess_dataloader))
         else:

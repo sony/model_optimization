@@ -75,10 +75,10 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
         activation_quantization_holders_in_model = self._get_holders_with_validation(gptq_model, exp_n_holders=3)
         for a in activation_quantization_holders_in_model:
             self.assertTrue(isinstance(a.activation_holder_quantizer, STESymmetricActivationTrainableQuantizer))
-            self.assertEquals(a.activation_holder_quantizer.identifier, TrainingMethod.STE)
+            self.assertEqual(a.activation_holder_quantizer.identifier, TrainingMethod.STE)
             # activation quantization params for gptq should be frozen (non-learnable)
             self.assertTrue(a.activation_holder_quantizer.freeze_quant_params is True)
-            self.assertEquals(a.activation_holder_quantizer.get_trainable_variables(VariableGroup.QPARAMS), [])
+            self.assertEqual(a.activation_holder_quantizer.get_trainable_variables(VariableGroup.QPARAMS), [])
 
         for name, module in gptq_model.named_modules():
             if isinstance(module, PytorchQuantizationWrapper):
@@ -112,6 +112,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
             QFractionLinearAnnealingConfig(initial_q_fraction=0.1, target_q_fraction=0.9, start_step=100, end_step=500)
         )
         gptq_cfg = mct.gptq.get_pytorch_gptq_config(1, use_hessian_based_weights=False,
+                                                    use_hessian_sample_attention=False,
                                                     gradual_activation_quantization=gradual_act_quant_cfg)
         gptq_model = self._get_gptq_model(INPUT_SHAPE, BasicModel(), gptq_cfg)
         activation_holders = self._get_holders_with_validation(gptq_model, exp_n_holders=3)
@@ -129,7 +130,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
             quantizer = a.activation_holder_quantizer.quantizer
             self.assertTrue(isinstance(quantizer, STESymmetricActivationTrainableQuantizer))
             self.assertTrue(quantizer.freeze_quant_params is True)
-            self.assertEquals(quantizer.get_trainable_variables(VariableGroup.QPARAMS), [])
+            self.assertEqual(quantizer.get_trainable_variables(VariableGroup.QPARAMS), [])
 
     def _get_holders_with_validation(self, gptq_model, exp_n_holders):
         last_module = list(gptq_model.named_modules())[-1][1]
@@ -153,7 +154,9 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
                                                            qc=qc)
         graph = set_bit_widths(mixed_precision_enable=False,
                                graph=graph)
-        gptq_cfg = gptq_cfg or mct.gptq.get_pytorch_gptq_config(1, use_hessian_based_weights=False)
+        gptq_cfg = gptq_cfg or mct.gptq.get_pytorch_gptq_config(1, use_hessian_based_weights=False,
+                                                                use_hessian_sample_attention=False,
+                                                                gradual_activation_quantization=False)
         trainer = PytorchGPTQTrainer(graph,
                                      graph,
                                      gptq_cfg,
