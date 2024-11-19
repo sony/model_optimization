@@ -21,9 +21,9 @@ from torch import add, sub, mul, div, divide, flatten, reshape, split, unsqueeze
     maximum
 from torch.nn import Conv2d, Linear, ConvTranspose2d, MaxPool2d, BatchNorm2d
 from torch.nn import Dropout, Flatten, Hardtanh
-from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, LeakyReLU, GELU
+from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, Hardsigmoid, LeakyReLU, GELU
 import torch.nn.functional as F
-from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, leaky_relu, gelu
+from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, hardsigmoid, leaky_relu, gelu
 
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL, \
@@ -115,11 +115,11 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
         tp.OperationsSetToLayers(OPSET_DIV, [operator.truediv, div, divide])
         tp.OperationsSetToLayers(OPSET_MIN_MAX, [minimum, maximum])
         tp.OperationsSetToLayers(OPSET_PRELU, [PReLU, prelu])
-        tp.OperationsSetToLayers(OPSET_SWISH, [SiLU, silu, Hardswish, hardswish])
+        tp.OperationsSetToLayers(OPSET_SWISH, [SiLU, silu])
         tp.OperationsSetToLayers(OPSET_SIGMOID, [Sigmoid, sigmoid, F.sigmoid])
         tp.OperationsSetToLayers(OPSET_TANH, [Tanh, tanh, F.tanh])
         tp.OperationsSetToLayers(OPSET_GELU, [GELU, gelu])
-        tp.OperationsSetToLayers(OPSET_HARDSIGMOID, [torch.nn.Hardsigmoid, torch.nn.functional.hardsigmoid])
-        tp.OperationsSetToLayers(OPSET_HARDSWISH, [torch.nn.Hardswish, torch.nn.functional.hardswish])
+        tp.OperationsSetToLayers(OPSET_HARDSIGMOID, [Hardsigmoid, hardsigmoid])
+        tp.OperationsSetToLayers(OPSET_HARDSWISH, [Hardswish, hardswish])
 
     return pytorch_tpc
