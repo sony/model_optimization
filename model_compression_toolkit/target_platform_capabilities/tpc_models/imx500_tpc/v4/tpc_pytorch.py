@@ -17,11 +17,13 @@ import operator
 
 import torch
 from torch import add, sub, mul, div, divide, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, \
-    chunk, unbind, topk, gather, equal, transpose, permute, argmax, squeeze, multiply, subtract
-from torch.nn import Conv2d, Linear, ConvTranspose2d, MaxPool2d
+    chunk, unbind, topk, gather, equal, transpose, permute, argmax, squeeze, multiply, subtract, minimum, \
+    maximum
+from torch.nn import Conv2d, Linear, ConvTranspose2d, MaxPool2d, BatchNorm2d
 from torch.nn import Dropout, Flatten, Hardtanh
-from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, LeakyReLU
-from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, leaky_relu
+from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, LeakyReLU, GELU
+import torch.nn.functional as F
+from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, leaky_relu, gelu
 
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL, \
@@ -32,7 +34,7 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import OPSET_NO_QUANTIZATION, \
     OPSET_QUANTIZATION_PRESERVING, OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS, OPSET_DIMENSION_MANIPULATION_OPS, \
     OPSET_MERGE_OPS, OPSET_CONV, OPSET_FULLY_CONNECTED, OPSET_ANY_RELU, OPSET_ADD, OPSET_SUB, OPSET_MUL, OPSET_DIV, \
-    OPSET_PRELU, OPSET_SWISH, OPSET_SIGMOID, OPSET_TANH
+    OPSET_PRELU, OPSET_SWISH, OPSET_SIGMOID, OPSET_TANH, OPSET_GELU, OPSET_BATCH_NORM, OPSET_MIN_MAX
 
 tp = mct.target_platform
 
@@ -95,6 +97,7 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
                                  attr_mapping=pytorch_linear_attr_mapping)
         tp.OperationsSetToLayers(OPSET_FULLY_CONNECTED, [Linear],
                                  attr_mapping=pytorch_linear_attr_mapping)
+        tp.OperationsSetToLayers(OPSET_BATCH_NORM, [BatchNorm2d])
         tp.OperationsSetToLayers(OPSET_ANY_RELU, [torch.relu,
                                                   ReLU,
                                                   ReLU6,
@@ -109,9 +112,11 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
         tp.OperationsSetToLayers(OPSET_SUB, [operator.sub, sub, subtract])
         tp.OperationsSetToLayers(OPSET_MUL, [operator.mul, mul, multiply])
         tp.OperationsSetToLayers(OPSET_DIV, [operator.truediv, div, divide])
+        tp.OperationsSetToLayers(OPSET_MIN_MAX, [minimum, maximum])
         tp.OperationsSetToLayers(OPSET_PRELU, [PReLU, prelu])
         tp.OperationsSetToLayers(OPSET_SWISH, [SiLU, silu, Hardswish, hardswish])
-        tp.OperationsSetToLayers(OPSET_SIGMOID, [Sigmoid, sigmoid])
-        tp.OperationsSetToLayers(OPSET_TANH, [Tanh, tanh])
+        tp.OperationsSetToLayers(OPSET_SIGMOID, [Sigmoid, sigmoid, F.sigmoid])
+        tp.OperationsSetToLayers(OPSET_TANH, [Tanh, tanh, F.tanh])
+        tp.OperationsSetToLayers(OPSET_GELU, [GELU, gelu])
 
     return pytorch_tpc
