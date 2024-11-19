@@ -34,7 +34,8 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import OPSET_NO_QUANTIZATION, \
     OPSET_QUANTIZATION_PRESERVING, OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS, OPSET_DIMENSION_MANIPULATION_OPS, \
     OPSET_MERGE_OPS, OPSET_CONV, OPSET_FULLY_CONNECTED, OPSET_ANY_RELU, OPSET_ADD, OPSET_SUB, OPSET_MUL, OPSET_DIV, \
-    OPSET_PRELU, OPSET_SWISH, OPSET_SIGMOID, OPSET_TANH, OPSET_GELU, OPSET_BATCH_NORM, OPSET_MIN_MAX
+    OPSET_PRELU, OPSET_SWISH, OPSET_SIGMOID, OPSET_TANH, OPSET_GELU, OPSET_BATCH_NORM, OPSET_MIN_MAX, OPSET_HARDSIGMOID, \
+    OPSET_HARDSWISH
 
 tp = mct.target_platform
 
@@ -118,5 +119,7 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
         tp.OperationsSetToLayers(OPSET_SIGMOID, [Sigmoid, sigmoid, F.sigmoid])
         tp.OperationsSetToLayers(OPSET_TANH, [Tanh, tanh, F.tanh])
         tp.OperationsSetToLayers(OPSET_GELU, [GELU, gelu])
+        tp.OperationsSetToLayers(OPSET_HARDSIGMOID, [torch.nn.Hardsigmoid, torch.nn.functional.hardsigmoid])
+        tp.OperationsSetToLayers(OPSET_HARDSWISH, [torch.nn.Hardswish, torch.nn.functional.hardswish])
 
     return pytorch_tpc

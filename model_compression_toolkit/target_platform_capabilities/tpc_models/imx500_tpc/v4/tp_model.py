@@ -43,6 +43,8 @@ OPSET_SWISH = "Swish"
 OPSET_SIGMOID = "Sigmoid"
 OPSET_TANH = "Tanh"
 OPSET_GELU = "Gelu"
+OPSET_HARDSIGMOID = "HardSigmoid"
+OPSET_HARDSWISH = "HardSwish"
 
 
 def get_tp_model() -> TargetPlatformModel:
@@ -278,12 +280,16 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         sigmoid = tp.OperatorsSet(OPSET_SIGMOID, default_config_options_16bit)
         tanh = tp.OperatorsSet(OPSET_TANH, default_config_options_16bit)
         gelu = tp.OperatorsSet(OPSET_GELU, default_config_options_16bit)
+        hardsigmoid = tp.OperatorsSet(OPSET_HARDSIGMOID, default_config_options_16bit)
+        hardswish = tp.OperatorsSet(OPSET_HARDSWISH, default_config_options_16bit)
 
         # Combine multiple operators into a single operator to avoid quantization between
         # them. To do this we define fusing patterns using the OperatorsSets that were created.
         # To group multiple sets with regard to fusing, an OperatorSetConcat can be created
-        activations_after_conv_to_fuse = tp.OperatorSetConcat(any_relu, swish, prelu, sigmoid, tanh, gelu)
-        activations_after_fc_to_fuse = tp.OperatorSetConcat(any_relu, swish, sigmoid, tanh, gelu)
+        activations_after_conv_to_fuse = tp.OperatorSetConcat(any_relu, swish, prelu, sigmoid,
+                                                              tanh, gelu, hardswish, hardsigmoid)
+        activations_after_fc_to_fuse = tp.OperatorSetConcat(any_relu, swish, sigmoid, tanh, gelu,
+                                                            hardswish, hardsigmoid)
         any_binary = tp.OperatorSetConcat(add, sub, mul, div)
 
         # ------------------- #
