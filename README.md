@@ -1,7 +1,7 @@
 <div align="center" markdown="1">
 <p>
       <a href="https://sony.github.io/model_optimization/" target="_blank">
-        <img src="/docsrc/images/mctHeader-cropped.svg" width="1000"></a>
+        <img src="/docsrc/images/mctHeader1-cropped.svg" width="1000"></a>
 </p>
   
 ______________________________________________________________________
