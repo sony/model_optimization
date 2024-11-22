@@ -210,6 +210,6 @@ MCT is licensed under Apache License Version 2.0. By contributing to the project
 
 [3] [TORCHVISION.MODELS](https://pytorch.org/vision/stable/models.html) 
 
-[4] Gordon, O., Cohen, E., Habi, H. V., & Netzer, A., 2024. [EPTQ: Enhanced Post-Training Quantization via Hessian-guided Network-wise Optimization. arXiv preprint](https://arxiv.org/abs/2309.11531)
+[4] Gordon, O., Cohen, E., Habi, H. V., & Netzer, A., 2024. [EPTQ: Enhanced Post-Training Quantization via Hessian-guided Network-wise Optimization, European Conference on Computer Vision Workshop 2024, Computational Aspects of Deep Learning (CADL)](https://arxiv.org/abs/2309.11531)
 
-[5] Dikstein, L., Lapid, A., Habi, H. V., & Netzer, A., 2024. [Data Generation for Hardware-Friendly Post-Training Quantization](https://arxiv.org/abs/2410.22110)
+[5] Dikstein, L., Lapid, A., Netzer, A., & Habi, H. V., 2024. [Data Generation for Hardware-Friendly Post-Training Quantization, Accepted to IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) 2025](https://arxiv.org/abs/2410.22110)
