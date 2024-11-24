@@ -17,6 +17,7 @@ import tensorflow as tf
 import numpy as np
 
 import model_compression_toolkit as mct
+import model_compression_toolkit.target_platform_capabilities.schema.v1
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import generate_tp_model, \
     get_op_quantization_configs
@@ -48,11 +49,11 @@ def create_const_quant_tpc(qmethod):
         default_weight_attr_config=default_cfg.default_weight_attr_config.clone_and_edit(
             enable_weights_quantization=True, weights_per_channel_threshold=True,
             weights_n_bits=16, weights_quantization_method=qmethod))
-    const_configuration_options = tp.QuantizationConfigOptions([const_config])
+    const_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([const_config])
     const_merge_config = default_cfg.clone_and_edit(
         default_weight_attr_config=default_cfg.default_weight_attr_config.clone_and_edit(
             weights_per_channel_threshold=False))
-    const_merge_configuration_options = tp.QuantizationConfigOptions([const_merge_config])
+    const_merge_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([const_merge_config])
 
     operator_sets_dict = {}
     operator_sets_dict["Add"] = const_configuration_options

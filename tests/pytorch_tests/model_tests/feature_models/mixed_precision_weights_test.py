@@ -16,14 +16,16 @@ import torch
 import numpy as np
 from torch.nn import Conv2d
 
+import model_compression_toolkit.target_platform_capabilities.schema.v1
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.constants import BIAS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationConfigOptions, \
-    TargetPlatformModel, OperatorsSet, TargetPlatformCapabilities, OperationsSetToLayers
+from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, OperationsSetToLayers
+from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel, OperatorsSet, \
+    QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model, get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
@@ -137,22 +139,25 @@ class MixedPrecisionSearchPartWeightsLayers(MixedPrecisionBaseTest):
 
         two_bit_cfg = mixed_precision_cfg_list[2]
 
-        weight_mixed_cfg = tp.QuantizationConfigOptions(
+        weight_mixed_cfg = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(
             mixed_precision_cfg_list,
             base_config=cfg,
         )
 
-        weight_fixed_cfg = tp.QuantizationConfigOptions(
+        weight_fixed_cfg = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(
             [two_bit_cfg],
             base_config=two_bit_cfg,
         )
 
-        tp_model = tp.TargetPlatformModel(weight_fixed_cfg, name="mp_part_weights_layers_test")
+        tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(weight_fixed_cfg,
+                                                                                                        tpc_minor_version=None,
+                                                                                                        tpc_patch_version=None,
+                                                                                                        name="mp_part_weights_layers_test")
         with tp_model:
-            tp.OperatorsSet("Weights_mp", weight_mixed_cfg)
-            tp.OperatorsSet("Weights_fixed", weight_fixed_cfg)
+            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Weights_mp", weight_mixed_cfg)
+            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Weights_fixed", weight_fixed_cfg)
 
-        pytorch_tpc = tp.TargetPlatformCapabilities(tp_model, name="mp_part_weights_layers_test")
+        pytorch_tpc = tp.TargetPlatformCapabilities(tp_model)
 
         with pytorch_tpc:
             tp.OperationsSetToLayers(
@@ -309,13 +314,15 @@ class MixedPrecisionWeightsConfigurableActivations(MixedPrecisionBaseTest):
         )
 
         tp_model = TargetPlatformModel(QuantizationConfigOptions([cfg], cfg),
+                                       tpc_minor_version=None,
+                                       tpc_patch_version=None,
                                        name="mp_weights_conf_act_test")
 
         with tp_model:
             OperatorsSet("Activations", act_mixed_cfg)
             OperatorsSet("Weights", weight_mixed_cfg)
 
-        torch_tpc = TargetPlatformCapabilities(tp_model, name="mp_weights_conf_act_test")
+        torch_tpc = TargetPlatformCapabilities(tp_model)
 
         with torch_tpc:
             OperationsSetToLayers(

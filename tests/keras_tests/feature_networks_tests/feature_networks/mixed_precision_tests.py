@@ -18,6 +18,7 @@ import numpy as np
 import tensorflow as tf
 from keras.activations import sigmoid, softmax
 
+import model_compression_toolkit.target_platform_capabilities.schema.v1
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core.keras.constants import SIGMOID, SOFTMAX, BIAS
@@ -640,24 +641,28 @@ class MixedPrecisionActivationOnlyConfigurableWeightsTest(MixedPrecisionActivati
             [c.clone_and_edit(enable_activation_quantization=False) for c in mixed_precision_cfg_list]
         cfg = mixed_precision_cfg_list[0]
 
-        act_mixed_cfg = tp.QuantizationConfigOptions(
+        act_mixed_cfg = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(
             [act_eight_bit_cfg, act_four_bit_cfg, act_two_bit_cfg],
             base_config=act_eight_bit_cfg,
         )
 
-        weight_mixed_cfg = tp.QuantizationConfigOptions(
+        weight_mixed_cfg = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(
             mixed_precision_cfg_list,
             base_config=cfg,
         )
 
-        tp_model = tp.TargetPlatformModel(tp.QuantizationConfigOptions([cfg], cfg),
-                                          name="mp_activation_conf_weights_test")
+        tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+            model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([cfg], cfg),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            add_metadata=False,
+            name="mp_activation_conf_weights_test")
 
         with tp_model:
-            tp.OperatorsSet("Activations", act_mixed_cfg)
-            tp.OperatorsSet("Weights", weight_mixed_cfg)
+            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Activations", act_mixed_cfg)
+            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Weights", weight_mixed_cfg)
 
-        keras_tpc = tp.TargetPlatformCapabilities(tp_model, name="mp_activation_conf_weights_test")
+        keras_tpc = tp.TargetPlatformCapabilities(tp_model)
 
         with keras_tpc:
             tp.OperationsSetToLayers(

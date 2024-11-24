@@ -16,6 +16,7 @@
 import unittest
 
 import model_compression_toolkit as mct
+import model_compression_toolkit.target_platform_capabilities.schema.v1
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
@@ -25,7 +26,7 @@ from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr
 tp = mct.target_platform
 
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
-TEST_QCO = tp.QuantizationConfigOptions([TEST_QC])
+TEST_QCO = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC])
 
 
 class TargetPlatformModelingTest(unittest.TestCase):
@@ -36,27 +37,39 @@ class TargetPlatformModelingTest(unittest.TestCase):
         self.assertEqual('Target platform model is not initialized.', str(e.exception))
 
     def test_get_default_options(self):
-        with tp.TargetPlatformModel(TEST_QCO):
+        with model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(TEST_QCO,
+                                                                                                  tpc_minor_version=None,
+                                                                                                  tpc_patch_version=None,
+                                                                                                  add_metadata=False):
             self.assertEqual(tp.get_default_quantization_config_options(), TEST_QCO)
 
     def test_immutable_tp(self):
-        model = tp.TargetPlatformModel(TEST_QCO)
+        model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(TEST_QCO,
+                                                                                                     tpc_minor_version=None,
+                                                                                                     tpc_patch_version=None,
+                                                                                                     add_metadata=False)
         with self.assertRaises(Exception) as e:
             with model:
-                tp.OperatorsSet("opset")
+                model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("opset")
             model.operator_set = []
         self.assertEqual('Immutable class. Can\'t edit attributes.', str(e.exception))
 
     def test_default_options_more_than_single_qc(self):
-        test_qco = tp.QuantizationConfigOptions([TEST_QC, TEST_QC], base_config=TEST_QC)
+        test_qco = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC, TEST_QC], base_config=TEST_QC)
         with self.assertRaises(Exception) as e:
-            tp.TargetPlatformModel(test_qco)
+            model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(test_qco,
+                                                                                                 tpc_minor_version=None,
+                                                                                                 tpc_patch_version=None,
+                                                                                                 add_metadata=False)
         self.assertEqual('Default QuantizationConfigOptions must contain only one option', str(e.exception))
 
     def test_tp_model_show(self):
-        tpm = tp.TargetPlatformModel(TEST_QCO)
+        tpm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(TEST_QCO,
+                                                                                                   tpc_minor_version=None,
+                                                                                                   tpc_patch_version=None,
+                                                                                                   add_metadata=False)
         with tpm:
-            a = tp.OperatorsSet("opA")
+            a = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("opA")
 
         tpm.show()
 
@@ -64,11 +77,15 @@ class TargetPlatformModelingTest(unittest.TestCase):
 class OpsetTest(unittest.TestCase):
 
     def test_opset_qco(self):
-        hm = tp.TargetPlatformModel(TEST_QCO, name='test')
+        hm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(TEST_QCO,
+                                                                                                  tpc_minor_version=None,
+                                                                                                  tpc_patch_version=None,
+                                                                                                  add_metadata=False,
+                                                                                                  name='test')
         opset_name = "ops_3bit"
         with hm:
             qco_3bit = get_default_quantization_config_options().clone_and_edit(activation_n_bits=3)
-            tp.OperatorsSet(opset_name, qco_3bit)
+            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet(opset_name, qco_3bit)
 
         for op_qc in hm.get_config_options_by_operators_set(opset_name).quantization_config_list:
             self.assertEqual(op_qc.activation_n_bits, 3)
@@ -80,23 +97,31 @@ class OpsetTest(unittest.TestCase):
                          hm.default_qco)
 
     def test_opset_concat(self):
-        hm = tp.TargetPlatformModel(TEST_QCO, name='test')
+        hm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(TEST_QCO,
+                                                                                                  tpc_minor_version=None,
+                                                                                                  tpc_patch_version=None,
+                                                                                                  add_metadata=False,
+                                                                                                  name='test')
         with hm:
-            a = tp.OperatorsSet('opset_A')
-            b = tp.OperatorsSet('opset_B',
-                                 get_default_quantization_config_options().clone_and_edit(activation_n_bits=2))
-            tp.OperatorsSet('opset_C')  # Just add it without using it in concat
-            tp.OperatorSetConcat(a, b)
+            a = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet('opset_A')
+            b = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet('opset_B',
+                                                                                              get_default_quantization_config_options().clone_and_edit(activation_n_bits=2))
+            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet('opset_C')  # Just add it without using it in concat
+            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorSetConcat(a, b)
         self.assertEqual(len(hm.operator_set), 4)
         self.assertTrue(hm.is_opset_in_model("opset_A_opset_B"))
         self.assertTrue(hm.get_config_options_by_operators_set('opset_A_opset_B') is None)
 
     def test_non_unique_opset(self):
-        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
+        hm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+            model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            add_metadata=False)
         with self.assertRaises(Exception) as e:
             with hm:
-                tp.OperatorsSet("conv")
-                tp.OperatorsSet("conv")
+                model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("conv")
+                model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("conv")
         self.assertEqual('Operator Sets must have unique names.', str(e.exception))
 
 
@@ -104,13 +129,13 @@ class QCOptionsTest(unittest.TestCase):
 
     def test_empty_qc_options(self):
         with self.assertRaises(AssertionError) as e:
-            tp.QuantizationConfigOptions([])
+            model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([])
         self.assertEqual("'QuantizationConfigOptions' requires at least one 'OpQuantizationConfig'. The provided list is empty.",
                          str(e.exception))
 
     def test_list_of_no_qc(self):
         with self.assertRaises(AssertionError) as e:
-            tp.QuantizationConfigOptions([TEST_QC, 3])
+            model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC, 3])
         self.assertEqual(
             'Each option must be an instance of \'OpQuantizationConfig\', but found an object of type: <class \'int\'>.',
             str(e.exception))
@@ -123,9 +148,9 @@ class QCOptionsTest(unittest.TestCase):
         self.assertEqual(modified_options.quantization_config_list[0].attr_weights_configs_mapping[KERNEL_ATTR].weights_n_bits, 5)
 
     def test_qco_without_base_config(self):
-        tp.QuantizationConfigOptions([TEST_QC])  # Should work fine as it has only one qc.
+        model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC])  # Should work fine as it has only one qc.
         with self.assertRaises(Exception) as e:
-            tp.QuantizationConfigOptions([TEST_QC, TEST_QC])  # Should raise exception as base_config was not passed
+            model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC, TEST_QC])  # Should raise exception as base_config was not passed
         self.assertEqual(
             'For multiple configurations, a \'base_config\' is required for non-mixed-precision optimization.',
             str(e.exception))
@@ -140,21 +165,29 @@ class QCOptionsTest(unittest.TestCase):
 class FusingTest(unittest.TestCase):
 
     def test_fusing_single_opset(self):
-        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
+        hm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+            model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
+        tpc_minor_version = None,
+        tpc_patch_version = None,
+        add_metadata = False)
         with hm:
-            add = tp.OperatorsSet("add")
+            add = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("add")
             with self.assertRaises(Exception) as e:
-                tp.Fusing([add])
+                model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([add])
             self.assertEqual('Fusing can not be created for a single operators group', str(e.exception))
 
     def test_fusing_contains(self):
-        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
+        hm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+            model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            add_metadata=False)
         with hm:
-            conv = tp.OperatorsSet("conv")
-            add = tp.OperatorsSet("add")
-            tanh = tp.OperatorsSet("tanh")
-            tp.Fusing([conv, add])
-            tp.Fusing([conv, add, tanh])
+            conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("conv")
+            add = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("add")
+            tanh = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("tanh")
+            model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, add])
+            model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, add, tanh])
 
         self.assertEqual(len(hm.fusing_patterns), 2)
         f0, f1 = hm.fusing_patterns[0], hm.fusing_patterns[1]
@@ -164,15 +197,19 @@ class FusingTest(unittest.TestCase):
         self.assertTrue(f1.contains(f1))
 
     def test_fusing_contains_with_opset_concat(self):
-        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
+        hm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+            model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            add_metadata=False)
         with hm:
-            conv = tp.OperatorsSet("conv")
-            add = tp.OperatorsSet("add")
-            tanh = tp.OperatorsSet("tanh")
-            add_tanh = tp.OperatorSetConcat(add, tanh)
-            tp.Fusing([conv, add])
-            tp.Fusing([conv, add_tanh])
-            tp.Fusing([conv, add, tanh])
+            conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("conv")
+            add = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("add")
+            tanh = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("tanh")
+            add_tanh = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorSetConcat(add, tanh)
+            model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, add])
+            model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, add_tanh])
+            model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, add, tanh])
 
         self.assertEqual(len(hm.fusing_patterns), 3)
         f0, f1, f2 = hm.fusing_patterns[0], hm.fusing_patterns[1], hm.fusing_patterns[2]

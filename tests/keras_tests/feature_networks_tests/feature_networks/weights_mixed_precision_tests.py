@@ -17,6 +17,7 @@
 import numpy as np
 import tensorflow as tf
 
+import model_compression_toolkit.target_platform_capabilities.schema.v1
 from mct_quantizers import KerasQuantizationWrapper
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.defaultdict import DefaultDict
@@ -177,22 +178,27 @@ class MixedPrecisionSearchPartWeightsLayersTest(MixedPrecisionBaseTest):
 
         two_bit_cfg = mixed_precision_cfg_list[2]
 
-        weight_mixed_cfg = tp.QuantizationConfigOptions(
+        weight_mixed_cfg = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(
             mixed_precision_cfg_list,
             base_config=cfg,
         )
 
-        weight_fixed_cfg = tp.QuantizationConfigOptions(
+        weight_fixed_cfg = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(
             [two_bit_cfg],
             base_config=two_bit_cfg,
         )
 
-        tp_model = tp.TargetPlatformModel(weight_fixed_cfg, name="mp_part_weights_layers_test")
+        tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+            weight_fixed_cfg,
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            add_metadata=False,
+            name="mp_part_weights_layers_test")
         with tp_model:
-            tp.OperatorsSet("Weights_mp", weight_mixed_cfg)
-            tp.OperatorsSet("Weights_fixed", weight_fixed_cfg)
+            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Weights_mp", weight_mixed_cfg)
+            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Weights_fixed", weight_fixed_cfg)
 
-        keras_tpc = tp.TargetPlatformCapabilities(tp_model, name="mp_part_weights_layers_test")
+        keras_tpc = tp.TargetPlatformCapabilities(tp_model)
 
         with keras_tpc:
             tp.OperationsSetToLayers(
@@ -505,24 +511,28 @@ class MixedPrecisionWeightsOnlyConfigurableActivationsTest(MixedPrecisionBaseTes
             [c.clone_and_edit(enable_activation_quantization=False) for c in mixed_precision_cfg_list]
         cfg = mixed_precision_cfg_list[0]
 
-        act_mixed_cfg = tp.QuantizationConfigOptions(
+        act_mixed_cfg = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(
             [act_eight_bit_cfg, act_four_bit_cfg, act_two_bit_cfg],
             base_config=act_eight_bit_cfg,
         )
 
-        weight_mixed_cfg = tp.QuantizationConfigOptions(
+        weight_mixed_cfg = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(
             mixed_precision_cfg_list,
             base_config=cfg,
         )
 
-        tp_model = tp.TargetPlatformModel(tp.QuantizationConfigOptions([cfg], cfg),
-                                          name="mp_weights_conf_act_test")
+        tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+            model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([cfg], cfg),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            add_metadata=False,
+            name="mp_weights_conf_act_test")
 
         with tp_model:
-            tp.OperatorsSet("Activations", act_mixed_cfg)
-            tp.OperatorsSet("Weights", weight_mixed_cfg)
+            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Activations", act_mixed_cfg)
+            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Weights", weight_mixed_cfg)
 
-        keras_tpc = tp.TargetPlatformCapabilities(tp_model, name="mp_weights_conf_act_test")
+        keras_tpc = tp.TargetPlatformCapabilities(tp_model)
 
         with keras_tpc:
             tp.OperationsSetToLayers(

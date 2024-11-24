@@ -21,6 +21,7 @@ PYTORCH = 'pytorch'
 # Metadata fields
 MCT_VERSION = 'mct_version'
 TPC_VERSION = 'tpc_version'
+TPC_SCHEMA = 'tpc_schema'
 
 WEIGHTS_SIGNED = True
 # Minimal threshold to use for quantization ranges:

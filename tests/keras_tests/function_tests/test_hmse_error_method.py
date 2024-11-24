@@ -19,6 +19,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 import model_compression_toolkit as mct
+import model_compression_toolkit.target_platform_capabilities.schema.v1
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.constants import THRESHOLD, RANGE_MAX, NUM_QPARAM_HESSIAN_SAMPLES
@@ -29,7 +30,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     calculate_quantization_params
 from model_compression_toolkit.core.keras.constants import KERNEL, GAMMA
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL, BIAS
-from model_compression_toolkit.target_platform_capabilities.target_platform import AttributeQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.schema.v1 import AttributeQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -174,18 +175,21 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
     def test_threshold_selection_hmse_no_kernel_attr(self):
         def _generate_bn_quantization_tpc(quant_method, per_channel):
             cfg, _, _ = get_op_quantization_configs()
-            conv_qco = tp.QuantizationConfigOptions([cfg], base_config=cfg)
+            conv_qco = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([cfg], base_config=cfg)
 
             # enable BN attributes quantization using the
             bn_qco = conv_qco.clone_and_edit(attr_weights_configs_mapping=
                                              {GAMMA: AttributeQuantizationConfig(weights_n_bits=8,
                                                                                  enable_weights_quantization=True)})
 
-            tp_model = tp.TargetPlatformModel(conv_qco)
+            tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(conv_qco,
+                                                                                                            tpc_minor_version=None,
+                                                                                                            tpc_patch_version=None,
+                                                                                                            add_metadata=False)
 
             with tp_model:
-                tp.OperatorsSet("Linear", conv_qco)
-                tp.OperatorsSet("BN", bn_qco)
+                model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Linear", conv_qco)
+                model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("BN", bn_qco)
 
             tpc = tp.TargetPlatformCapabilities(tp_model)
 

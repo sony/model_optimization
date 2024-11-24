@@ -15,12 +15,11 @@
 from typing import List, Tuple
 
 import model_compression_toolkit as mct
+import model_compression_toolkit.target_platform_capabilities.schema.v1
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS
-from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
-    TargetPlatformModel, Signedness
-from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import \
-    AttributeQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel, Signedness, \
+    AttributeQuantizationConfig, OpQuantizationConfig
 
 tp = mct.target_platform
 
@@ -90,7 +89,7 @@ def get_op_quantization_configs() -> \
 
     # We define a default config for operation without kernel attribute.
     # This is the default config that should be used for non-linear operations.
-    eight_bits_default = tp.OpQuantizationConfig(
+    eight_bits_default = model_compression_toolkit.target_platform_capabilities.schema.v1.OpQuantizationConfig(
         default_weight_attr_config=default_weight_attr_config,
         attr_weights_configs_mapping={},
         activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
@@ -104,7 +103,7 @@ def get_op_quantization_configs() -> \
         signedness=Signedness.AUTO)
 
     # We define an 8-bit config for linear operations quantization, that include a kernel and bias attributes.
-    linear_eight_bits = tp.OpQuantizationConfig(
+    linear_eight_bits = model_compression_toolkit.target_platform_capabilities.schema.v1.OpQuantizationConfig(
         default_weight_attr_config=default_weight_attr_config,
         attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config, BIAS_ATTR: bias_config},
         activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
@@ -154,12 +153,17 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
-    default_configuration_options = tp.QuantizationConfigOptions([default_config])
+    default_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([default_config])
 
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
-    generated_tpm = tp.TargetPlatformModel(default_configuration_options, add_metadata=True, name=name)
+    generated_tpm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+        default_configuration_options,
+        tpc_minor_version=2,
+        tpc_patch_version=0,
+        add_metadata=True,
+        name=name)
 
     # To start defining the model's components (such as operator sets, and fusing patterns),
     # use 'with' the TargetPlatformModel instance, and create them as below:
@@ -174,42 +178,42 @@ def generate_tp_model(default_config: OpQuantizationConfig,
 
         # May suit for operations like: Dropout, Reshape, etc.
         default_qco = tp.get_default_quantization_config_options()
-        tp.OperatorsSet("NoQuantization",
-                        default_qco.clone_and_edit(enable_activation_quantization=False)
-                        .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+        model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("NoQuantization",
+                                                                                      default_qco.clone_and_edit(enable_activation_quantization=False)
+                                                                                      .clone_and_edit_weight_attribute(enable_weights_quantization=False))
 
         # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
-        mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
-                                                                             base_config=base_config)
+        mixed_precision_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(mixed_precision_cfg_list,
+                                                                                                                                           base_config=base_config)
 
         # Define operator sets that use mixed_precision_configuration_options:
-        conv = tp.OperatorsSet("Conv", mixed_precision_configuration_options)
-        fc = tp.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
+        conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Conv", mixed_precision_configuration_options)
+        fc = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
 
         # Define operations sets without quantization configuration
         # options (useful for creating fusing patterns, for example):
-        any_relu = tp.OperatorsSet("AnyReLU")
-        add = tp.OperatorsSet("Add")
-        sub = tp.OperatorsSet("Sub")
-        mul = tp.OperatorsSet("Mul")
-        div = tp.OperatorsSet("Div")
-        prelu = tp.OperatorsSet("PReLU")
-        swish = tp.OperatorsSet("Swish")
-        sigmoid = tp.OperatorsSet("Sigmoid")
-        tanh = tp.OperatorsSet("Tanh")
+        any_relu = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("AnyReLU")
+        add = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Add")
+        sub = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Sub")
+        mul = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Mul")
+        div = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Div")
+        prelu = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("PReLU")
+        swish = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Swish")
+        sigmoid = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Sigmoid")
+        tanh = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Tanh")
 
         # Combine multiple operators into a single operator to avoid quantization between
         # them. To do this we define fusing patterns using the OperatorsSets that were created.
         # To group multiple sets with regard to fusing, an OperatorSetConcat can be created
-        activations_after_conv_to_fuse = tp.OperatorSetConcat(any_relu, swish, prelu, sigmoid, tanh)
-        activations_after_fc_to_fuse = tp.OperatorSetConcat(any_relu, swish, sigmoid)
-        any_binary = tp.OperatorSetConcat(add, sub, mul, div)
+        activations_after_conv_to_fuse = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorSetConcat(any_relu, swish, prelu, sigmoid, tanh)
+        activations_after_fc_to_fuse = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorSetConcat(any_relu, swish, sigmoid)
+        any_binary = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorSetConcat(add, sub, mul, div)
 
         # ------------------- #
         # Fusions
         # ------------------- #
-        tp.Fusing([conv, activations_after_conv_to_fuse])
-        tp.Fusing([fc, activations_after_fc_to_fuse])
-        tp.Fusing([any_binary, any_relu])
+        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, activations_after_conv_to_fuse])
+        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([fc, activations_after_fc_to_fuse])
+        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([any_binary, any_relu])
 
     return generated_tpm

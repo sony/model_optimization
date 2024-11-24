@@ -25,6 +25,7 @@ from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, Hardsig
 import torch.nn.functional as F
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, hardsigmoid, leaky_relu, gelu
 
+import model_compression_toolkit.target_platform_capabilities.schema.v1
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL, \
     BIAS
@@ -50,7 +51,7 @@ def get_pytorch_tpc() -> tp.TargetPlatformCapabilities:
     return generate_pytorch_tpc(name='imx500_tpc_pytorch_tpc', tp_model=imx500_tpc_tp_model)
 
 
-def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
+def generate_pytorch_tpc(name: str, tp_model: model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
     Args:
@@ -59,9 +60,7 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
-    pytorch_tpc = tp.TargetPlatformCapabilities(tp_model,
-                                                name=name,
-                                                version=TPC_VERSION)
+    pytorch_tpc = tp.TargetPlatformCapabilities(tp_model)
 
     # we provide attributes mapping that maps each layer type in the operations set
     # that has weights attributes with provided quantization config (in the tp model) to

@@ -24,10 +24,8 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.immutable import ImmutableClass
-from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import QuantizationConfigOptions, \
-    OpQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorsSetBase
-from model_compression_toolkit.target_platform_capabilities.target_platform.target_platform_model import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel, OperatorsSetBase, \
+    OpQuantizationConfig, QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import _current_tpc
 from model_compression_toolkit.constants import MCT_VERSION, TPC_VERSION
 
@@ -36,20 +34,14 @@ class TargetPlatformCapabilities(ImmutableClass):
     """
     Attach framework information to a modeled hardware.
     """
-    def __init__(self,
-                 tp_model: TargetPlatformModel,
-                 name: str = "base",
-                 version: str = None):
+    def __init__(self, tp_model: TargetPlatformModel):
         """
 
         Args:
             tp_model (TargetPlatformModel): Modeled hardware to attach framework information to.
-            name (str): Name of the TargetPlatformCapabilities.
-            version (str): TPC version.
         """
 
         super().__init__()
-        self.name = name
         assert isinstance(tp_model, TargetPlatformModel), f'Target platform model that was passed to TargetPlatformCapabilities must be of type TargetPlatformModel, but has type of {type(tp_model)}'
         self.tp_model = tp_model
         self.op_sets_to_layers = OperationsToLayers() # Init an empty OperationsToLayers
@@ -57,7 +49,6 @@ class TargetPlatformCapabilities(ImmutableClass):
         # Track the unused opsets for warning purposes.
         self.__tp_model_opsets_not_used = [s.name for s in tp_model.operator_set]
         self.remove_fusing_names_from_not_used_list()
-        self.version = version
 
     def get_layers_by_opset_name(self, opset_name: str) -> List[Any]:
         """

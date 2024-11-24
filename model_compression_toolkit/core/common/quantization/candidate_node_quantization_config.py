@@ -17,8 +17,8 @@ from typing import Callable, List, Tuple
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.quantization.node_quantization_config import BaseNodeQuantizationConfig, \
     NodeWeightsQuantizationConfig, NodeActivationQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
-    AttributeQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.schema.v1 import AttributeQuantizationConfig, \
+    OpQuantizationConfig
 from model_compression_toolkit.logger import Logger
 
 

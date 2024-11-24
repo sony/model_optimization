@@ -25,8 +25,8 @@ from model_compression_toolkit.core.common.quantization.quantization_params_fn_s
 
 from model_compression_toolkit.core.common.quantization.quantization_config import QuantizationConfig, \
     QuantizationErrorMethod
-from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, \
-    AttributeQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.schema.v1 import AttributeQuantizationConfig, \
+    OpQuantizationConfig
 
 
 ##########################################

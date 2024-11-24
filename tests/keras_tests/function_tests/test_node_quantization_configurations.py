@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     power_of_two_selection_histogram
 from model_compression_toolkit.core.common.quantization.quantizers.uniform_quantizers import power_of_two_quantizer
 from model_compression_toolkit.core.keras.constants import KERNEL, BIAS
-from model_compression_toolkit.target_platform_capabilities.target_platform import AttributeQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.schema.v1 import AttributeQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 
 

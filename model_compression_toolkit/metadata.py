@@ -15,7 +15,7 @@
 
 from typing import Dict, Any
 from model_compression_toolkit.constants import MCT_VERSION, TPC_VERSION, OPERATORS_SCHEDULING, FUSED_NODES_MAPPING, \
-    CUTS, MAX_CUT, OP_ORDER, OP_RECORD, SHAPE, NODE_OUTPUT_INDEX, NODE_NAME, TOTAL_SIZE, MEM_ELEMENTS
+    CUTS, MAX_CUT, OP_ORDER, OP_RECORD, SHAPE, NODE_OUTPUT_INDEX, NODE_NAME, TOTAL_SIZE, MEM_ELEMENTS, TPC_SCHEMA
 from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import SchedulerInfo
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 
@@ -43,13 +43,16 @@ def create_model_metadata(tpc: TargetPlatformCapabilities,
 def get_versions_dict(tpc) -> Dict:
     """
 
-    Returns: A dictionary with TPC and MCT versions.
+    Returns: A dictionary with TPC, MCT and TPC-Schema versions.
 
     """
     # imported inside to avoid circular import error
     from model_compression_toolkit import __version__ as mct_version
-    tpc_version = f'{tpc.name}.{tpc.version}'
-    return {MCT_VERSION: mct_version, TPC_VERSION: tpc_version}
+    tpc_version = f'{tpc.tp_model.tpc_minor_version}.{tpc.tp_model.tpc_patch_version}'
+    tpc_schema = f'{tpc.tp_model.SCHEMA_VERSION}'
+    return {MCT_VERSION: mct_version,
+            TPC_VERSION: tpc_version,
+            TPC_SCHEMA: tpc_schema}
 
 
 def get_scheduler_metadata(scheduler_info: SchedulerInfo) -> Dict[str, Any]:

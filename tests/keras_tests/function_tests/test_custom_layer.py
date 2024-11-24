@@ -18,7 +18,8 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.target_platform_capabilities.target_platform import Signedness
+import model_compression_toolkit.target_platform_capabilities.schema.v1
+from model_compression_toolkit.target_platform_capabilities.schema.v1 import Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
     KERNEL_BASE_CONFIG, BIAS_CONFIG
@@ -63,25 +64,28 @@ def get_tpc():
     """
     tp = mct.target_platform
     attr_cfg = generate_test_attr_configs(kernel_lut_values_bitwidth=0)
-    base_cfg = tp.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-                                       enable_activation_quantization=True,
-                                       activation_n_bits=32,
-                                       supported_input_activation_n_bits=32,
-                                       default_weight_attr_config=attr_cfg[DEFAULT_WEIGHT_ATTR_CONFIG],
-                                       attr_weights_configs_mapping={},
-                                       quantization_preserving=False,
-                                       fixed_scale=1.0,
-                                       fixed_zero_point=0,
-                                       simd_size=32,
-                                       signedness=Signedness.AUTO)
+    base_cfg = model_compression_toolkit.target_platform_capabilities.schema.v1.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+                                                                                                     enable_activation_quantization=True,
+                                                                                                     activation_n_bits=32,
+                                                                                                     supported_input_activation_n_bits=32,
+                                                                                                     default_weight_attr_config=attr_cfg[DEFAULT_WEIGHT_ATTR_CONFIG],
+                                                                                                     attr_weights_configs_mapping={},
+                                                                                                     quantization_preserving=False,
+                                                                                                     fixed_scale=1.0,
+                                                                                                     fixed_zero_point=0,
+                                                                                                     simd_size=32,
+                                                                                                     signedness=Signedness.AUTO)
 
-    default_configuration_options = tp.QuantizationConfigOptions([base_cfg])
-    tp_model = tp.TargetPlatformModel(default_configuration_options)
+    default_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([base_cfg])
+    tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(default_configuration_options,
+                                                                                                    tpc_minor_version=None,
+                                                                                                    tpc_patch_version=None,
+                                                                                                    add_metadata=False)
     with tp_model:
         default_qco = tp.get_default_quantization_config_options()
-        tp.OperatorsSet("NoQuantization",
-                        default_qco.clone_and_edit(enable_activation_quantization=False)
-                        .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+        model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("NoQuantization",
+                                                                                      default_qco.clone_and_edit(enable_activation_quantization=False)
+                                                                                      .clone_and_edit_weight_attribute(enable_weights_quantization=False))
 
     tpc = tp.TargetPlatformCapabilities(tp_model)
     with tpc:

@@ -15,7 +15,8 @@
 import numpy as np
 from typing import Dict, Union
 
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod, Signedness
+from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
+from model_compression_toolkit.target_platform_capabilities.schema.v1 import Signedness
 from model_compression_toolkit.core.common.collectors.statistics_collector import BaseStatsCollector
 from model_compression_toolkit.core.common.quantization import quantization_params_generation
 from model_compression_toolkit.core.common.node_prior_info import NodePriorInfo

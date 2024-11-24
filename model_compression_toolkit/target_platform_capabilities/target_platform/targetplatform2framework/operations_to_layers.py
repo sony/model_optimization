@@ -18,8 +18,7 @@ from typing import List, Any, Dict
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import  _current_tpc
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
-from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorSetConcat, \
-    OperatorsSetBase
+from model_compression_toolkit.target_platform_capabilities.schema.v1 import OperatorsSetBase, OperatorSetConcat
 from model_compression_toolkit import DefaultDict
 
 

@@ -17,6 +17,7 @@ import torch.nn as nn
 from torch.nn import Conv2d, ReLU, SiLU, Sigmoid, Linear, Hardtanh
 from torch.nn.functional import relu, relu6
 
+import model_compression_toolkit.target_platform_capabilities.schema.v1
 from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
@@ -47,10 +48,13 @@ class BaseLayerFusingTest(BasePytorchTest):
 
     def get_tpc(self):
         base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-        default_configuration_options = tp.QuantizationConfigOptions([default_config])
-        generated_tp = tp.TargetPlatformModel(default_configuration_options, name='layer_fusing_test')
-        mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
-                                                                             base_config=base_config)
+        default_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([default_config])
+        generated_tp = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(default_configuration_options,
+                                                                                                            tpc_minor_version=None,
+                                                                                                            tpc_patch_version=None,
+                                                                                                            name='layer_fusing_test')
+        mixed_precision_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(mixed_precision_cfg_list,
+                                                                                                                                           base_config=base_config)
         return generated_tp, mixed_precision_configuration_options
 
     def _compare(self, fused_nodes):
@@ -67,12 +71,12 @@ class LayerFusingTest1(BaseLayerFusingTest):
     def get_tpc(self):
         generated_tp, mixed_precision_configuration_options = super().get_tpc()
         with generated_tp:
-            conv = tp.OperatorsSet("Conv", mixed_precision_configuration_options)
-            any_relu = tp.OperatorsSet("AnyReLU")
+            conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Conv", mixed_precision_configuration_options)
+            any_relu = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("AnyReLU")
             # Define fusions
-            tp.Fusing([conv, any_relu])
+            model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, any_relu])
 
-        pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp, name='layer_fusing_test')
+        pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp)
         with pytorch_tpc:
             tp.OperationsSetToLayers("Conv", [nn.Conv2d])
             tp.OperationsSetToLayers("AnyReLU", [torch.relu,
@@ -109,12 +113,12 @@ class LayerFusingTest2(BaseLayerFusingTest):
     def get_tpc(self):
         generated_tp, mixed_precision_configuration_options = super().get_tpc()
         with generated_tp:
-            conv = tp.OperatorsSet("Conv", mixed_precision_configuration_options)
-            any_act = tp.OperatorsSet("AnyAct")
+            conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Conv", mixed_precision_configuration_options)
+            any_act = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("AnyAct")
             # Define fusions
-            tp.Fusing([conv, any_act])
+            model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, any_act])
 
-        pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp, name='layer_fusing_test')
+        pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp)
         with pytorch_tpc:
             tp.OperationsSetToLayers("Conv", [Conv2d])
             tp.OperationsSetToLayers("AnyAct", [ReLU,relu6,relu,SiLU,Sigmoid, LayerFilterParams(Hardtanh, min_val=0)])
@@ -161,12 +165,12 @@ class LayerFusingTest3(BaseLayerFusingTest):
     def get_tpc(self):
         generated_tp, mixed_precision_configuration_options = super().get_tpc()
         with generated_tp:
-            conv = tp.OperatorsSet("Conv", mixed_precision_configuration_options)
-            any_act = tp.OperatorsSet("AnyAct")
+            conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Conv", mixed_precision_configuration_options)
+            any_act = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("AnyAct")
             # Define fusions
-            tp.Fusing([conv, any_act])
+            model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, any_act])
 
-        pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp, name='layer_fusing_test')
+        pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp)
         with pytorch_tpc:
             tp.OperationsSetToLayers("Conv", [Conv2d])
             tp.OperationsSetToLayers("AnyAct", [ReLU,relu6,relu])
@@ -213,19 +217,19 @@ class LayerFusingTest4(BaseLayerFusingTest):
     def get_tpc(self):
         generated_tp, mixed_precision_configuration_options = super().get_tpc()
         with generated_tp:
-            conv = tp.OperatorsSet("Conv", mixed_precision_configuration_options)
-            fc = tp.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
-            any_relu = tp.OperatorsSet("AnyReLU")
-            add = tp.OperatorsSet("Add")
-            swish = tp.OperatorsSet("Swish")
-            activations_to_fuse = tp.OperatorSetConcat(any_relu, swish)
+            conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Conv", mixed_precision_configuration_options)
+            fc = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
+            any_relu = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("AnyReLU")
+            add = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Add")
+            swish = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Swish")
+            activations_to_fuse = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorSetConcat(any_relu, swish)
             # Define fusions
-            tp.Fusing([conv, activations_to_fuse])
-            tp.Fusing([conv, add, activations_to_fuse])
-            tp.Fusing([conv, activations_to_fuse, add])
-            tp.Fusing([fc, activations_to_fuse])
+            model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, activations_to_fuse])
+            model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, add, activations_to_fuse])
+            model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, activations_to_fuse, add])
+            model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([fc, activations_to_fuse])
 
-        pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp, name='layer_fusing_test')
+        pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp)
         with pytorch_tpc:
             tp.OperationsSetToLayers("Conv", [Conv2d])
             tp.OperationsSetToLayers("FullyConnected", [Linear])
