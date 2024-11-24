@@ -56,7 +56,8 @@ from tests.keras_tests.feature_networks_tests.feature_networks.gptq.gptq_test im
 from tests.keras_tests.feature_networks_tests.feature_networks.input_scaling_test import InputScalingDenseTest, \
     InputScalingConvTest, InputScalingDWTest, InputScalingZeroPadTest
 from tests.keras_tests.feature_networks_tests.feature_networks.linear_collapsing_test import TwoConv2DCollapsingTest, \
-    ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest, Op2DAddConstCollapsingTest
+    ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest, Op2DAddConstCollapsingTest, \
+    FuncConvCollapsingTest
 from tests.keras_tests.feature_networks_tests.feature_networks.lut_quantizer import LUTWeightsQuantizerTest, \
     LUTActivationQuantizerTest
 from tests.keras_tests.feature_networks_tests.feature_networks.manual_bit_selection import ManualBitWidthSelectionTest, \
@@ -605,6 +606,7 @@ class FeatureNetworkTest(unittest.TestCase):
         FourConv2DCollapsingTest(self).run_test()
         SixConv2DCollapsingTest(self).run_test()
         Op2DAddConstCollapsingTest(self).run_test()
+        FuncConvCollapsingTest(self).run_test()
 
     def test_const_quantization(self):
         c = (np.ones((32, 32, 16)) + np.random.random((32, 32, 16))).astype(np.float32)
