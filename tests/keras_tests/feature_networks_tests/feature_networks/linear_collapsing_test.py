@@ -116,38 +116,29 @@ class FourConv2DCollapsingTest(BaseConv2DCollapsingTest):
             self.unit_test.assertTrue(len(layer.weights) == 2,msg=f'fail Bias should appear in weights!!')
 
 
-class FuncConv2DCollapsingTest(FourConv2DCollapsingTest):
+class FuncConvCollapsingTest(FourConv2DCollapsingTest):
     def create_networks(self):
-        # tests the combination of functional conv to Conv2D substitution with linear collapsing
+        # Tests the combination of functional conv to Conv2D substitution with linear collapsing
+        # (in case of default values, tf layer doesn't contain these attributes, and they must be added explicitly
+        # to node's attributes dict, which is not covered by substitution test)
         h, w, c = self.get_input_shapes()[0][1:]
         inputs = layers.Input(shape=(h, w, c))
-        x = tf.nn.conv2d(inputs, tf.random.uniform((3, 3, c, 128)), 1, 'VALID')
-        x = tf.nn.conv2d(x, filters=tf.random.uniform((1, 1, 128, 64)), strides=[1], padding='SAME', dilations=1)
-        x = tf.nn.conv2d(x, tf.random.uniform((1, 1, 64, 64)), strides=[1, 1], padding='VALID', dilations=[1])
-        y = tf.nn.conv2d(x, tf.random.uniform((1, 1, 64, 4)), strides=[1, 1], padding='SAME', dilations=[1, 1])
+        x = tf.nn.conv2d(inputs, tf.random.uniform((3, 3, c, 16)), 1, 'SAME')
+        x = tf.nn.convolution(x, tf.random.uniform((1, 1, 16, 8)))
+        x = tf.nn.relu(x)
+        x = tf.nn.convolution(x, tf.random.uniform((3, 3, 8, 32)))
+        y = tf.nn.conv2d(x, tf.random.uniform((1, 1, 32, 4)), 1, 'VALID')
         return tf.keras.models.Model(inputs=inputs, outputs=y)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         convs = [l for l in quantized_model.layers if isinstance(l, layers.Conv2D)]
-        self.unit_test.assertTrue(len(convs) == 1)
+        self.unit_test.assertTrue(len(convs) == 2)
 
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
         cs = cosine_similarity(y, y_hat)
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
-
-
-class FuncConvolutionCollapsingTest(FuncConv2DCollapsingTest):
-    def create_networks(self):
-        # tests the combination of functional conv to Conv2D substitution with linear collapsing
-        h, w, c = self.get_input_shapes()[0][1:]
-        inputs = layers.Input(shape=(h, w, c))
-        x = tf.nn.convolution(inputs, tf.random.uniform((3, 3, c, 128)))
-        x = tf.nn.convolution(x, filters=tf.random.uniform((1, 1, 128, 64)), strides=[1], padding='SAME', dilations=1)
-        x = tf.nn.convolution(x, tf.random.uniform((1, 1, 64, 64)), strides=[1, 1], padding='VALID', dilations=[1])
-        y = tf.nn.convolution(x, tf.random.uniform((1, 1, 64, 4)), strides=[1, 1], padding='VALID', dilations=[1, 1])
-        return tf.keras.models.Model(inputs=inputs, outputs=y)
 
 
 class SixConv2DCollapsingTest(BaseConv2DCollapsingTest):

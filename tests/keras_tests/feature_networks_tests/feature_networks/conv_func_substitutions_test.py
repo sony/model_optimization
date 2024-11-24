@@ -39,6 +39,9 @@ layers = keras.layers
 
 class ConvFuncSubstitutionsTest(BaseKerasFeatureNetworkTest):
 
+    def __init__(self, unit_test):
+        super().__init__(unit_test, input_shape=(32, 32, 3))
+
     def get_tpc(self):
         tp = generate_test_tp_model({'enable_weights_quantization': False,
                                      'enable_activation_quantization': False})
@@ -67,6 +70,18 @@ class ConvFuncSubstitutionsTest(BaseKerasFeatureNetworkTest):
         x = tf.nn.convolution(x, np.random.random((3, 3, 2, 4)).astype(np.float32),
                               [2, 1], padding='SAME')
         x = tf.nn.bias_add(x, np.random.random((4,)).astype(np.float32))
+
+        # default values and various formats
+        x = tf.nn.conv2d(x, np.random.random((3, 3, 4, 8)), 1, 'VALID')
+        x = tf.nn.conv2d(x, np.random.random((3, 3, 8, 16)), strides=[1], padding='SAME', dilations=1)
+        x = tf.nn.conv2d(x, np.random.random((3, 3, 16, 8)), strides=[1, 1], padding='VALID', dilations=[1])
+        x = tf.nn.conv2d(x, filters=np.random.random((3, 3, 8, 4)), strides=[1, 1], padding='SAME', dilations=[1, 1])
+
+        x = tf.nn.convolution(x, np.random.random((3, 3, 4, 16)).astype(np.float32))
+        x = tf.nn.convolution(x, np.random.random((3, 3, 16, 32)).astype(np.float32), strides=[1], padding='SAME', dilations=1)
+        x = tf.nn.convolution(x, np.random.random((3, 3, 32, 8)).astype(np.float32), strides=[1, 1], padding='VALID', dilations=[1])
+        x = tf.nn.convolution(x, filters=np.random.random((3, 3, 8, 4)).astype(np.float32), strides=[1, 1], padding='VALID', dilations=[1, 1])
+
         return tf.keras.Model(inputs=_in, outputs=x)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -75,7 +90,7 @@ class ConvFuncSubstitutionsTest(BaseKerasFeatureNetworkTest):
         cs = cosine_similarity(out_float.numpy(), out_quant.numpy())
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check: {cs}')
 
-        self.unit_test.assertTrue(len(get_layers_from_model_by_type(quantized_model, Conv2D)) == 4,
+        self.unit_test.assertTrue(len(get_layers_from_model_by_type(quantized_model, Conv2D)) == 12,
                                   "Not all conv functions were substituted.")
         self.unit_test.assertTrue(len(get_layers_from_model_by_type(quantized_model, DepthwiseConv2D)) == 2,
                                   "Not all dw-conv functions were substituted.")

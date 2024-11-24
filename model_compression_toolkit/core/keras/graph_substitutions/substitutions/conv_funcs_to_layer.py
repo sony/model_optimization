@@ -31,7 +31,7 @@ from model_compression_toolkit.core.common.graph.graph_matchers import NodeOpera
 from model_compression_toolkit.constants import REUSE, REUSE_GROUP
 from model_compression_toolkit.core.keras.constants import KERNEL, BIAS, USE_BIAS, FILTERS, PADDING, \
     KERNEL_SIZE, DEPTH_MULTIPLIER, STRIDES, DILATIONS, DILATION_RATE, DEPTHWISE_KERNEL, RATE, \
-    ACTIVATION, LINEAR, DATA_FORMAT, GROUPS
+    ACTIVATION, LINEAR, DATA_FORMAT, GROUPS, CHANNELS_FORMAT_FIRST, CHANNELS_FORMAT_LAST
 
 
 def extract_bias_node_data(_node: FunctionalNode, _graph: Graph) -> np.ndarray:
@@ -138,20 +138,19 @@ class Conv2dFuncToConv2dLayer(common.BaseSubstitution):
         if len(conv_func_node.op_call_args) > 0:
             Logger.critical(f"node {conv_func_node.name} expected to have only kwargs but got args={conv_func_node.op_call_args}.")  # pragma: no cover
 
-        strides = self._parse_tf_2d_kwarg(conv_func_node, STRIDES)
+        strides = self._parse_tf_stride_dilation(conv_func_node, STRIDES)
         if strides is None:
             # Non-standard strides -> skip substitution.
             return graph
         conv_fw_attr[STRIDES] = strides
 
-        if PADDING in conv_func_node.op_call_kwargs:
-            padding = conv_func_node.op_call_kwargs[PADDING]
-            if not isinstance(padding, str):
-                # Non-standard padding, Layer only support either 'valid' or 'same' -> skip substitution.
-                return graph  # pragma: no cover
-            conv_fw_attr[PADDING] = padding
+        padding = conv_func_node.op_call_kwargs.get(PADDING) or 'VALID'
+        if not isinstance(padding, str):
+            # Non-standard padding, Layer only support either 'valid' or 'same' -> skip substitution.
+            return graph  # pragma: no cover
+        conv_fw_attr[PADDING] = padding
 
-        dilations = self._parse_tf_2d_kwarg(conv_func_node, DILATIONS)
+        dilations = self._parse_tf_stride_dilation(conv_func_node, DILATIONS)
         if dilations is None:
             # Non-standard dilations -> skip substitution.
             return graph
@@ -163,7 +162,7 @@ class Conv2dFuncToConv2dLayer(common.BaseSubstitution):
             weights[BIAS] = b
 
         data_format = conv_func_node.op_call_kwargs.get(DATA_FORMAT, 'NHWC')
-        conv_fw_attr['data_format'] = {'NHWC': 'channels_last', 'NCHW': 'channels_first'}[data_format]
+        conv_fw_attr[DATA_FORMAT] = {'NHWC': CHANNELS_FORMAT_LAST, 'NCHW': CHANNELS_FORMAT_FIRST}[data_format]
 
         conv_fw_attr[GROUPS] = 1
 
@@ -174,7 +173,7 @@ class Conv2dFuncToConv2dLayer(common.BaseSubstitution):
         replace_conv_node(graph, conv_node, conv_func_node, remove_add_node=b is not None)
         return graph
 
-    def _parse_tf_2d_kwarg(self, node, key) -> Optional[Tuple[int, int]]:
+    def _parse_tf_stride_dilation(self, node, key) -> Optional[Tuple[int, int]]:
         """
         Extract stride/dilation param from tf node and convert it to keras format (suitable for Conv2D).
 
