@@ -54,6 +54,8 @@ class BaseConv2DCollapsingTest(BaseKerasFeatureNetworkTest, ABC):
         y = float_model.predict(input_x)
         y_hat = quantized_model.predict(input_x)
         self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
+        # FIXME this doesn't test anything, the number of quantized convs in the network is exactly 0. Even if it
+        #  looked at correct layers it hardly checks anything.
         self.unit_test.assertTrue(len([l for l in quantized_model.layers if isinstance(l, KerasTrainableQuantizationWrapper) and isinstance(l.layer, layers.Conv2D)]) < len([l for l in float_model.layers if isinstance(l, layers.Conv2D)]), msg=f'fail number of layers should decrease!')
         cs = cosine_similarity(y, y_hat)
         self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
@@ -74,6 +76,7 @@ class TwoConv2DCollapsingTest(BaseConv2DCollapsingTest):
         for layer in quantized_model.layers:
             if type(layer) == layers.Conv2D:
                 self.unit_test.assertTrue(len(layer.weights) == 2, msg=f'fail Bias should appear in weights!!')
+
 
 class ThreeConv2DCollapsingTest(BaseConv2DCollapsingTest):
     def __init__(self, unit_test):
@@ -107,9 +110,44 @@ class FourConv2DCollapsingTest(BaseConv2DCollapsingTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         super().compare(quantized_model, float_model, input_x, quantization_info)
-        for layer in quantized_model.layers:
-            if type(layer) == layers.Conv2D:
-                self.unit_test.assertTrue(len(layer.weights) == 2,msg=f'fail Bias should appear in weights!!')
+        convs = [l for l in quantized_model.layers if isinstance(l, layers.Conv2D)]
+        self.unit_test.assertTrue(len(convs) == 1)
+        for layer in convs:
+            self.unit_test.assertTrue(len(layer.weights) == 2,msg=f'fail Bias should appear in weights!!')
+
+
+class FuncConv2DCollapsingTest(FourConv2DCollapsingTest):
+    def create_networks(self):
+        # tests the combination of functional conv to Conv2D substitution with linear collapsing
+        h, w, c = self.get_input_shapes()[0][1:]
+        inputs = layers.Input(shape=(h, w, c))
+        x = tf.nn.conv2d(inputs, tf.random.uniform((3, 3, c, 128)), 1, 'VALID')
+        x = tf.nn.conv2d(x, filters=tf.random.uniform((1, 1, 128, 64)), strides=[1], padding='SAME', dilations=1)
+        x = tf.nn.conv2d(x, tf.random.uniform((1, 1, 64, 64)), strides=[1, 1], padding='VALID', dilations=[1])
+        y = tf.nn.conv2d(x, tf.random.uniform((1, 1, 64, 4)), strides=[1, 1], padding='SAME', dilations=[1, 1])
+        return tf.keras.models.Model(inputs=inputs, outputs=y)
+
+    def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
+        convs = [l for l in quantized_model.layers if isinstance(l, layers.Conv2D)]
+        self.unit_test.assertTrue(len(convs) == 1)
+
+        y = float_model.predict(input_x)
+        y_hat = quantized_model.predict(input_x)
+        self.unit_test.assertTrue(y.shape == y_hat.shape, msg=f'out shape is not as expected!')
+        cs = cosine_similarity(y, y_hat)
+        self.unit_test.assertTrue(np.isclose(cs, 1), msg=f'fail cosine similarity check:{cs}')
+
+
+class FuncConvolutionCollapsingTest(FuncConv2DCollapsingTest):
+    def create_networks(self):
+        # tests the combination of functional conv to Conv2D substitution with linear collapsing
+        h, w, c = self.get_input_shapes()[0][1:]
+        inputs = layers.Input(shape=(h, w, c))
+        x = tf.nn.convolution(inputs, tf.random.uniform((3, 3, c, 128)))
+        x = tf.nn.convolution(x, filters=tf.random.uniform((1, 1, 128, 64)), strides=[1], padding='SAME', dilations=1)
+        x = tf.nn.convolution(x, tf.random.uniform((1, 1, 64, 64)), strides=[1, 1], padding='VALID', dilations=[1])
+        y = tf.nn.convolution(x, tf.random.uniform((1, 1, 64, 4)), strides=[1, 1], padding='VALID', dilations=[1, 1])
+        return tf.keras.models.Model(inputs=inputs, outputs=y)
 
 
 class SixConv2DCollapsingTest(BaseConv2DCollapsingTest):
