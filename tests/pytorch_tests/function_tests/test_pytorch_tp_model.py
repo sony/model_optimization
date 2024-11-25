@@ -85,6 +85,7 @@ class TestPytorchTPModel(unittest.TestCase):
         tpm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(default_qco,
                                                                                                    tpc_minor_version=None,
                                                                                                    tpc_patch_version=None,
+                                                                                                   tpc_platform_type=None,
                                                                                                    add_metadata=False,
                                                                                                    name='test')
         with tpm:
@@ -142,6 +143,7 @@ class TestPytorchTPModel(unittest.TestCase):
             model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False)
         with hm:
             op_obj = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet('opsetA')
@@ -157,6 +159,7 @@ class TestPytorchTPModel(unittest.TestCase):
             model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False)
         with hm:
             op_obj_a = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet('opsetA')
@@ -178,6 +181,7 @@ class TestPytorchTPModel(unittest.TestCase):
             model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False)
         with hm:
             model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet('opsetA')
@@ -195,6 +199,7 @@ class TestPytorchTPModel(unittest.TestCase):
             model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False)
         with hm:
             model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet('opsetA')
@@ -212,6 +217,7 @@ class TestPytorchTPModel(unittest.TestCase):
         hm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(default_qco,
                                                                                                   tpc_minor_version=None,
                                                                                                   tpc_patch_version=None,
+                                                                                                  tpc_platform_type=None,
                                                                                                   add_metadata=False)
         hm_pytorch = tp.TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
@@ -222,10 +228,12 @@ class TestPytorchTPModel(unittest.TestCase):
             str(e.exception))
 
     def test_pytorch_fusing_patterns(self):
-        default_qco = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC])
+        default_qco = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(
+            [TEST_QC])
         hm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(default_qco,
                                                                                                   tpc_minor_version=None,
                                                                                                   tpc_patch_version=None,
+                                                                                                  tpc_platform_type=None,
                                                                                                   add_metadata=False)
         with hm:
             a = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("opA")

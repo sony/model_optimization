@@ -536,6 +536,7 @@ class TargetPlatformModel(ImmutableClass):
                  default_qco: QuantizationConfigOptions,
                  tpc_minor_version: Optional[int],
                  tpc_patch_version: Optional[int],
+                 tpc_platform_type: Optional[str],
                  add_metadata: bool = True,
                  name="default_tp_model"):
         """
@@ -544,6 +545,7 @@ class TargetPlatformModel(ImmutableClass):
             default_qco (QuantizationConfigOptions): Default QuantizationConfigOptions to use for operators that their QuantizationConfigOptions are not defined in the model.
             tpc_minor_version (Optional[int]): The minor version of the target platform capabilities.
             tpc_patch_version (Optional[int]): The patch version of the target platform capabilities.
+            tpc_platform_type (Optional[str]): The platform type of the target platform capabilities.
             add_metadata (bool): Whether to add metadata to the model or not.
             name (str): Name of the model.
 
@@ -554,6 +556,7 @@ class TargetPlatformModel(ImmutableClass):
         super().__init__()
         self.tpc_minor_version = tpc_minor_version
         self.tpc_patch_version = tpc_patch_version
+        self.tpc_platform_type = tpc_platform_type
         self.add_metadata = add_metadata
         self.name = name
         self.operator_set = []

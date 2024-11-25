@@ -72,6 +72,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,
+        tpc_platform_type=None,
         add_metadata=False, name=name)
     with generated_tpc:
         model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("NoQuantization",

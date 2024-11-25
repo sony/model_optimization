@@ -40,6 +40,7 @@ class TargetPlatformModelingTest(unittest.TestCase):
         with model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(TEST_QCO,
                                                                                                   tpc_minor_version=None,
                                                                                                   tpc_patch_version=None,
+                                                                                                  tpc_platform_type=None,
                                                                                                   add_metadata=False):
             self.assertEqual(tp.get_default_quantization_config_options(), TEST_QCO)
 
@@ -47,6 +48,7 @@ class TargetPlatformModelingTest(unittest.TestCase):
         model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(TEST_QCO,
                                                                                                      tpc_minor_version=None,
                                                                                                      tpc_patch_version=None,
+                                                                                                     tpc_platform_type=None,
                                                                                                      add_metadata=False)
         with self.assertRaises(Exception) as e:
             with model:
@@ -60,6 +62,7 @@ class TargetPlatformModelingTest(unittest.TestCase):
             model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(test_qco,
                                                                                                  tpc_minor_version=None,
                                                                                                  tpc_patch_version=None,
+                                                                                                 tpc_platform_type=None,
                                                                                                  add_metadata=False)
         self.assertEqual('Default QuantizationConfigOptions must contain only one option', str(e.exception))
 
@@ -67,6 +70,7 @@ class TargetPlatformModelingTest(unittest.TestCase):
         tpm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(TEST_QCO,
                                                                                                    tpc_minor_version=None,
                                                                                                    tpc_patch_version=None,
+                                                                                                   tpc_platform_type=None,
                                                                                                    add_metadata=False)
         with tpm:
             a = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("opA")
@@ -80,6 +84,7 @@ class OpsetTest(unittest.TestCase):
         hm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(TEST_QCO,
                                                                                                   tpc_minor_version=None,
                                                                                                   tpc_patch_version=None,
+                                                                                                  tpc_platform_type=None,
                                                                                                   add_metadata=False,
                                                                                                   name='test')
         opset_name = "ops_3bit"
@@ -100,6 +105,7 @@ class OpsetTest(unittest.TestCase):
         hm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(TEST_QCO,
                                                                                                   tpc_minor_version=None,
                                                                                                   tpc_patch_version=None,
+                                                                                                  tpc_platform_type=None,
                                                                                                   add_metadata=False,
                                                                                                   name='test')
         with hm:
@@ -117,6 +123,7 @@ class OpsetTest(unittest.TestCase):
             model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False)
         with self.assertRaises(Exception) as e:
             with hm:
@@ -181,6 +188,7 @@ class FusingTest(unittest.TestCase):
             model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False)
         with hm:
             conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("conv")
@@ -201,6 +209,7 @@ class FusingTest(unittest.TestCase):
             model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False)
         with hm:
             conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("conv")

@@ -109,6 +109,7 @@ class TestKerasTPModel(unittest.TestCase):
             model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False)
         with hm:
             op_obj = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet('opsetA')
@@ -125,6 +126,7 @@ class TestKerasTPModel(unittest.TestCase):
             model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False)
         with hm:
             op_obj_a = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet('opsetA')
@@ -146,6 +148,7 @@ class TestKerasTPModel(unittest.TestCase):
             model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False)
         with hm:
             model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet('opsetA')
@@ -163,6 +166,7 @@ class TestKerasTPModel(unittest.TestCase):
             model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([TEST_QC]),
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False)
         with hm:
             model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet('opsetA')
@@ -181,6 +185,7 @@ class TestKerasTPModel(unittest.TestCase):
         tpm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(default_qco,
                                                                                                    tpc_minor_version=None,
                                                                                                    tpc_patch_version=None,
+                                                                                                   tpc_platform_type=None,
                                                                                                    add_metadata=False,
                                                                                                    name='test')
         with tpm:
@@ -225,6 +230,7 @@ class TestKerasTPModel(unittest.TestCase):
         hm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(default_qco,
                                                                                                   tpc_minor_version=None,
                                                                                                   tpc_patch_version=None,
+                                                                                                  tpc_platform_type=None,
                                                                                                   add_metadata=False)
         hm_keras = tp.TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
@@ -239,6 +245,7 @@ class TestKerasTPModel(unittest.TestCase):
         hm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(default_qco,
                                                                                                   tpc_minor_version=None,
                                                                                                   tpc_patch_version=None,
+                                                                                                  tpc_platform_type=None,
                                                                                                   add_metadata=False)
         with hm:
             a = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("opA")
@@ -271,6 +278,7 @@ class TestKerasTPModel(unittest.TestCase):
         tpm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(default_qco,
                                                                                                    tpc_minor_version=None,
                                                                                                    tpc_patch_version=None,
+                                                                                                   tpc_platform_type=None,
                                                                                                    add_metadata=False)
         with tpm:
             a = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("opA")
@@ -328,7 +336,7 @@ class TestGetKerasTPC(unittest.TestCase):
         self.assertTrue(tpc.tp_model.tpc_minor_version == 2)
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1_lut")
-        self.assertTrue(tpc.tp_model.tpc_minor_version == 11)
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v2_lut")
         self.assertTrue(tpc.tp_model.tpc_minor_version == 2)
 

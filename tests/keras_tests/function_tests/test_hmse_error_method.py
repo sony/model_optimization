@@ -185,6 +185,7 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
             tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(conv_qco,
                                                                                                             tpc_minor_version=None,
                                                                                                             tpc_patch_version=None,
+                                                                                                            tpc_platform_type=None,
                                                                                                             add_metadata=False)
 
             with tp_model:

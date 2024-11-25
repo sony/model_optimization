@@ -132,6 +132,7 @@ def generate_custom_test_tp_model(name: str,
         default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,
+        tpc_platform_type=None,
         add_metadata=False,
         name=name)
 

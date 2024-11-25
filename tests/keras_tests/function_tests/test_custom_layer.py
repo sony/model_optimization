@@ -80,6 +80,7 @@ def get_tpc():
     tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(default_configuration_options,
                                                                                                     tpc_minor_version=None,
                                                                                                     tpc_patch_version=None,
+                                                                                                    tpc_platform_type=None,
                                                                                                     add_metadata=False)
     with tp_model:
         default_qco = tp.get_default_quantization_config_options()

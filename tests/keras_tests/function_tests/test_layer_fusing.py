@@ -86,6 +86,7 @@ def generate_base_tpc():
         default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,
+        tpc_platform_type=None,
         add_metadata=False, name='layer_fusing_test')
     mixed_precision_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(mixed_precision_cfg_list,
                                                                                                                                        base_config=base_config)

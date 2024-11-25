@@ -52,6 +52,7 @@ class BaseLayerFusingTest(BasePytorchTest):
         generated_tp = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(default_configuration_options,
                                                                                                             tpc_minor_version=None,
                                                                                                             tpc_patch_version=None,
+                                                                                                            tpc_platform_type=None,
                                                                                                             name='layer_fusing_test')
         mixed_precision_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(mixed_precision_cfg_list,
                                                                                                                                            base_config=base_config)

@@ -192,6 +192,7 @@ class MixedPrecisionSearchPartWeightsLayersTest(MixedPrecisionBaseTest):
             weight_fixed_cfg,
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False,
             name="mp_part_weights_layers_test")
         with tp_model:
@@ -525,6 +526,7 @@ class MixedPrecisionWeightsOnlyConfigurableActivationsTest(MixedPrecisionBaseTes
             model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([cfg], cfg),
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False,
             name="mp_weights_conf_act_test")
 

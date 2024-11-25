@@ -149,10 +149,12 @@ class MixedPrecisionSearchPartWeightsLayers(MixedPrecisionBaseTest):
             base_config=two_bit_cfg,
         )
 
-        tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(weight_fixed_cfg,
-                                                                                                        tpc_minor_version=None,
-                                                                                                        tpc_patch_version=None,
-                                                                                                        name="mp_part_weights_layers_test")
+        tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+            weight_fixed_cfg,
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            tpc_platform_type=None,
+            name="mp_part_weights_layers_test")
         with tp_model:
             model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Weights_mp", weight_mixed_cfg)
             model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Weights_fixed", weight_fixed_cfg)
@@ -316,6 +318,7 @@ class MixedPrecisionWeightsConfigurableActivations(MixedPrecisionBaseTest):
         tp_model = TargetPlatformModel(QuantizationConfigOptions([cfg], cfg),
                                        tpc_minor_version=None,
                                        tpc_patch_version=None,
+                                       tpc_platform_type=None,
                                        name="mp_weights_conf_act_test")
 
         with tp_model:

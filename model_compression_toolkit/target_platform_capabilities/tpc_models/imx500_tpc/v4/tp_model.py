@@ -17,7 +17,8 @@ from typing import List, Tuple
 import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.v1
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS, \
+    IMX500_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel, Signedness, \
     AttributeQuantizationConfig, OpQuantizationConfig
 
@@ -231,6 +232,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         default_configuration_options,
         tpc_minor_version=4,
         tpc_patch_version=0,
+        tpc_platform_type=IMX500_TP_MODEL,
         add_metadata=True, name=name)
 
     # To start defining the model's components (such as operator sets, and fusing patterns),

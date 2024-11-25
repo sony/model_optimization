@@ -85,6 +85,7 @@ def _generate_bn_quantized_tpm(quantize_linear):
         default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,
+        tpc_platform_type=None,
         add_metadata=False, name='bn_quantized_tpm')
 
     with generated_tpm:

@@ -655,6 +655,7 @@ class MixedPrecisionActivationOnlyConfigurableWeightsTest(MixedPrecisionActivati
             model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([cfg], cfg),
             tpc_minor_version=None,
             tpc_patch_version=None,
+            tpc_platform_type=None,
             add_metadata=False,
             name="mp_activation_conf_weights_test")
 

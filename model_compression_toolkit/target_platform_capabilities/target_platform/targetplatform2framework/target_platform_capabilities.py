@@ -27,7 +27,6 @@ from model_compression_toolkit.target_platform_capabilities.immutable import Imm
 from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel, OperatorsSetBase, \
     OpQuantizationConfig, QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import _current_tpc
-from model_compression_toolkit.constants import MCT_VERSION, TPC_VERSION
 
 
 class TargetPlatformCapabilities(ImmutableClass):
