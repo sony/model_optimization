@@ -727,7 +727,7 @@ class FeatureNetworkTest(unittest.TestCase):
         tf.config.run_functions_eagerly(False)
 
     def test_gptq_with_sample_layer_attention(self):
-        kwargs = dict(use_hessian_sample_attention=True, loss=sample_layer_attention_loss,
+        kwargs = dict(per_sample=True, loss=sample_layer_attention_loss,
                       hessian_weights=True, hessian_num_samples=None,
                       norm_scores=False, log_norm_weights=False, scaled_log_norm=False)
         GradientPTQTest(self, **kwargs).run_test()
