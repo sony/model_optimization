@@ -153,7 +153,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         Computes Sample-Layer Attention score and builds a train dataloader in TensorFlow.
 
         Args:
-            data_gen_fn: factory for representative dataset generator.
+            data_gen_fn: function for representative dataset generation.
 
         Returns:
             TensorFlow dataset yielding three outputs - samples, weights for the distillation loss,
@@ -191,7 +191,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         # Prepare final dataset with samples and loss weights
         sla_train_dataset = FixedSampleInfoDataset(fixed_dataset.samples, loss_weights)
 
-        # Calculate regularization weights as mean across samples # TODO: check why
+        # Calculate regularization weights as mean across samples
         reg_weights = tf.reduce_mean(hessians_tensor, axis=1)
 
         # Define a collate function to add regularization weights to each batch
@@ -224,7 +224,7 @@ class KerasGPTQTrainer(GPTQTrainer):
         num_nodes = len(self.compare_points)
 
         # Step 2: Compute loss weights
-        if self.gptq_config.use_hessian_based_weights:
+        if self.gptq_config.hessian_weights_config:
             hessian_dataset = create_tf_dataloader(dataset=dataset, batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size)
             hessian_weights = self.compute_hessian_based_weights(hessian_dataset)
             loss_weights = tf.convert_to_tensor(hessian_weights, dtype=tf.float32)

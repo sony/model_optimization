@@ -30,6 +30,7 @@ class LayerTest(unittest.TestCase):
         BaseKerasLayerTest(self,
                            [Activation('linear'),
                             Activation('hard_sigmoid'),
+                            tf.keras.activations.hard_sigmoid,
                             Activation('exponential')]).run_test()
 
     def test_softplus(self):

@@ -94,7 +94,8 @@ class TestGradualActivationQuantization:
 
     def _run_factory_test(self, qdrop_cfg, get_grad_steps_fn):
         # Mocks are used to just pass anything
-        gptq_cfg = GradientPTQConfig(n_epochs=5, optimizer=Mock(), loss=Mock(),
+        gptq_cfg = GradientPTQConfig(n_epochs=5, optimizer=Mock(), optimizer_rest=Mock(), loss=Mock(),
+                                     hessian_weights_config=None, train_bias=False, regularization_factor=1,
                                      gradual_activation_quantization_config=qdrop_cfg)
         factory = get_gradual_activation_quantizer_wrapper_factory(gptq_cfg, get_grad_steps_fn, KerasLinearAnnealingScheduler)
         quantizer = Quantizer()

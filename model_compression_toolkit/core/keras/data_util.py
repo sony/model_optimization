@@ -21,7 +21,7 @@ from model_compression_toolkit.core.keras.tf_tensor_numpy import to_tf_tensor
 import tensorflow as tf
 from typing import Callable, Generator, Sequence, Any
 
-#
+
 def flat_gen_fn(data_gen_fn: Callable[[], Generator]):
     """
     Convert data generator with arbitrary batch size to a flat (sample by sample) data generator.
@@ -40,15 +40,15 @@ def flat_gen_fn(data_gen_fn: Callable[[], Generator]):
 
     return gen
 
-def flat_gen_fn2(data_gen_fn):
-    def generator():
-        for data in data_gen_fn():
-            # Convert list to tuple or preserve dictionary
-            if isinstance(data, list):
-                yield tuple(data)
-            else:
-                yield data
-    return generator
+# def flat_gen_fn2(data_gen_fn):
+#     def generator():
+#         for data in data_gen_fn():
+#             # Convert list to tuple or preserve dictionary
+#             if isinstance(data, list):
+#                 yield tuple(data)
+#             else:
+#                 yield data
+#     return generator
 
 
 
@@ -88,8 +88,6 @@ class TFDatasetFromGenerator:
             self._size = sum(1 for _ in self.dataset)
         return self._size
 
-    # def __getitem__(self, index):
-    #     return self.dataset[index]
 
 
 class FixedTFDataset:
@@ -177,9 +175,6 @@ def create_tf_dataloader(dataset, batch_size, shuffle=False, collate_fn=None):
     Returns:
         tf.data.Dataset: Configured for batching, shuffling, and custom transformations.
     """
-    # def generator():
-    #     for i in range(len(dataset)):
-    #         yield dataset[i]
     def generator():
         for item in dataset:
             yield item

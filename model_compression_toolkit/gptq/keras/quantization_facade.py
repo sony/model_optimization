@@ -21,7 +21,7 @@ from model_compression_toolkit.core.common.visualization.tensorboard_writer impo
 from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT, LR_DEFAULT, LR_REST_DEFAULT, \
     LR_BIAS_DEFAULT, GPTQ_MOMENTUM
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.constants import TENSORFLOW, ACT_HESSIAN_DEFAULT_BATCH_SIZE
+from model_compression_toolkit.constants import TENSORFLOW, ACT_HESSIAN_DEFAULT_BATCH_SIZE, GPTQ_HESSIAN_NUM_SAMPLES
 from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, GPTQHessianScoresConfig, \
@@ -135,14 +135,18 @@ if FOUND_TF:
             raise TypeError(f'gradual_activation_quantization argument should be bool or '
                             f'GradualActivationQuantizationConfig, received {type(gradual_activation_quantization)}')
 
-        return GradientPTQConfig(n_epochs,
-                                 optimizer,
+        hessian_weights_config = None
+        if use_hessian_based_weights:
+            hessian_weights_config = GPTQHessianScoresConfig(per_sample=False,
+                                                             hessians_num_samples=GPTQ_HESSIAN_NUM_SAMPLES,
+                                                             hessian_batch_size=hessian_batch_size)
+        return GradientPTQConfig(n_epochs=n_epochs,
+                                 optimizer=optimizer,
                                  optimizer_rest=optimizer_rest,
                                  loss=loss,
                                  log_function=log_function,
                                  train_bias=True,
                                  optimizer_bias=bias_optimizer,
-                                 use_hessian_based_weights=use_hessian_based_weights,
                                  regularization_factor=regularization_factor,
                                  hessian_weights_config=hessian_weights_config,
                                  gradual_activation_quantization_config=gradual_quant_config)

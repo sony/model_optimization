@@ -19,6 +19,8 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import \
+    OPSET_MUL, OPSET_GELU, OPSET_TANH
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 
@@ -28,10 +30,14 @@ get_op_set = lambda x, x_list: [op_set for op_set in x_list if op_set.name == x]
 
 class Activation16BitNet(torch.nn.Module):
 
-    def __init__(self, use_concat=True):
+    def __init__(self, use_concat=True, enable_head=True):
         super().__init__()
         self.use_concat = use_concat
+        self.enable_head = enable_head
         self.conv = torch.nn.Conv2d(3, 3, 1)
+        if enable_head:
+            self.conv_a = torch.nn.Conv2d(3, 3, 1)
+            self.conv_b = torch.nn.Conv2d(3, 3, 1)
         self.register_buffer('add_const', torch.rand((3, 1, 1)))
         self.register_buffer('sub_const', torch.rand((3, 1, 1)))
         self.register_buffer('div_const', 2*torch.ones((3, 1, 1)))
@@ -47,20 +53,32 @@ class Activation16BitNet(torch.nn.Module):
         x = torch.reshape(x, (-1, 3, 8*(1+int(self.use_concat)), 8))
         x = self.conv(x)
         x = torch.divide(x, self.div_const)
+
+        if self.enable_head:
+            x = torch.cat([torch.nn.functional.gelu(self.conv_a(x)),
+                           torch.nn.functional.tanh(self.conv_b(x))], dim=1)
+
         return x
+
+
+def set_16bit_as_default(tpc, required_op_set, required_ops_list):
+    op_set = get_op_set(required_op_set, tpc.tp_model.operator_set)
+    op_set.qc_options.base_config = [l for l in op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
+    for op in required_ops_list:
+        tpc.layer2qco[op].base_config = [l for l in tpc.layer2qco[op].quantization_config_list if l.activation_n_bits == 16][0]
 
 
 class Activation16BitTest(BasePytorchFeatureNetworkTest):
 
     def get_tpc(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v4')
-        mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        mul_op_set.qc_options.base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.mul].base_config = mul_op_set.qc_options.base_config
-        tpc.layer2qco[mul].base_config = mul_op_set.qc_options.base_config
+        set_16bit_as_default(tpc, OPSET_MUL, [torch.mul, mul])
+        set_16bit_as_default(tpc, OPSET_GELU, [torch.nn.GELU, torch.nn.functional.gelu])
+        set_16bit_as_default(tpc, OPSET_TANH, [torch.nn.Tanh, torch.nn.functional.tanh, torch.tanh])
         return tpc
 
     def create_networks(self):
+        # Activation16BitNet()(torch.from_numpy(self.generate_inputs()[0]).type(torch.float32))
         return Activation16BitNet()
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -77,6 +95,10 @@ class Activation16BitTest(BasePytorchFeatureNetworkTest):
                                   "1st mul activation should be forced by TPC to be signed, even though activations as all positive.")
         self.unit_test.assertTrue(mul2_act_quant.activation_holder_quantizer.num_bits == 8,
                                   "2nd mul activation bits should be 8 bits because of following div node.")
+        self.unit_test.assertTrue(quantized_model.gelu_activation_holder_quantizer.activation_holder_quantizer.num_bits == 16,
+                                  "gelu activation bits should be 16 bits because of following concat node.")
+        self.unit_test.assertTrue(quantized_model.tanh_activation_holder_quantizer.activation_holder_quantizer.num_bits == 16,
+                                  "tanh activation bits should be 16 bits because of following concat node.")
 
 
 class Activation16BitMixedPrecisionTest(Activation16BitTest):
@@ -103,7 +125,7 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
         return mct.core.ResourceUtilization(activation_memory=200)
 
     def create_networks(self):
-        return Activation16BitNet(use_concat=False)
+        return Activation16BitNet(use_concat=False, enable_head=False)
 
     def get_mixed_precision_config(self):
         return MixedPrecisionQuantizationConfig()

@@ -30,6 +30,9 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 from tests.pytorch_tests.model_tests.feature_models.activation_16bit_test import Activation16BitTest, \
     Activation16BitMixedPrecisionTest
+from tests.pytorch_tests.model_tests.feature_models.activation_bias_correction_test import (
+    BaseActivationBiasCorrectionTest, ActivationBiasCorrectionNet, ActivationBiasCorrectionPadNet,
+    ActivationBiasCorrectionReshapeNet)
 from tests.pytorch_tests.model_tests.feature_models.add_net_test import AddNetTest
 from tests.pytorch_tests.model_tests.feature_models.add_same_test import AddSameNetTest
 from tests.pytorch_tests.model_tests.feature_models.bn_attributes_quantization_test import BNAttributesQuantization
@@ -52,6 +55,7 @@ from tests.pytorch_tests.model_tests.feature_models.layer_name_test import Reuse
 from tests.pytorch_tests.model_tests.feature_models.layer_norm_net_test import LayerNormNetTest
 from tests.pytorch_tests.model_tests.feature_models.linear_collapsing_test import TwoConv2DCollapsingTest, \
     ThreeConv2DCollapsingTest, FourConv2DCollapsingTest, SixConv2DCollapsingTest
+from tests.pytorch_tests.model_tests.feature_models.linear_function_test import LinearFNetTest
 from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LUTWeightsQuantizerTest, \
     LUTActivationQuantizerTest
 from tests.pytorch_tests.model_tests.feature_models.manual_bit_selection import ManualBitWidthByLayerTypeTest, \
@@ -236,6 +240,12 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         BNFNetTest(self).run_test()
 
+    def test_linear_function(self):
+        """
+        This test check the linear functional substitution function.
+        """
+        LinearFNetTest(self).run_test()
+
     def test_broken_net(self):
         """
         This test checks that the "broken" node (node without output) is being
@@ -302,13 +312,13 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test checks the permute substitution feature
         """
         PermuteSubstitutionTest(self).run_test()
-    
+
     def test_reshape_substitution(self):
         """
         This test checks the reshape substitution feature
         """
         ReshapeSubstitutionTest(self).run_test()
-    
+
     def test_constant_conv_substitution(self):
         """
         This test checks the constant conv substitution feature
@@ -437,6 +447,35 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         for activation_layer in [torch.nn.Hardswish, torch.nn.GELU]:
             ShiftNegaviteActivationNetTest(self, activation_layer=activation_layer).run_test(seed=3)
+
+    def test_activation_bias_correction_net(self):
+        """
+        This test checks the activation bias correction feature.
+        """
+        model_list = [ActivationBiasCorrectionNet(prev_layer=nn.GELU(),
+                                                  linear_layer=nn.Linear(8, 20),
+                                                  bypass_layers=[nn.Dropout(0.5), nn.Dropout(0.5)]),
+                      ActivationBiasCorrectionNet(prev_layer=nn.GELU(),
+                                                  linear_layer=nn.Conv2d(3, 20, 1),
+                                                  bypass_layers=[nn.Dropout(0.5), nn.Dropout(0.5)]),
+                      ActivationBiasCorrectionNet(prev_layer=nn.GELU(),
+                                                  linear_layer=nn.Conv2d(3, 8, (1, 1)),
+                                                  bypass_layers=[nn.Dropout(0.5)]),
+                      ActivationBiasCorrectionNet(prev_layer=nn.Hardswish(),
+                                                  linear_layer=nn.ConvTranspose2d(3, 8, 1),
+                                                  bypass_layers=[nn.Dropout(0.5)]),
+                      ActivationBiasCorrectionNet(prev_layer=nn.GELU(),
+                                                  linear_layer=nn.Conv2d(3, 8, 3),
+                                                  bypass_layers=[nn.Dropout(0.5)]),
+                      ActivationBiasCorrectionPadNet(),
+                      ActivationBiasCorrectionReshapeNet()]
+
+        for activation_bias_correction_threshold in [0.0, 1e-6, 1e9]:
+            for model in model_list:
+                BaseActivationBiasCorrectionTest(self,
+                                                 model=model,
+                                                 activation_bias_correction_threshold=
+                                                 activation_bias_correction_threshold).run_test()
 
     def test_split_concat_net(self):
         """
@@ -715,7 +754,7 @@ class FeatureModelsTestRunner(unittest.TestCase):
         """
         BNAttributesQuantization(self, quantize_linear=False).run_test()
         BNAttributesQuantization(self, quantize_linear=True).run_test()
-    
+
     def test_concat_threshold_update(self):
         ConcatUpdateTest(self).run_test()
 

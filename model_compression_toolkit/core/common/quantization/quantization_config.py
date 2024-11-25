@@ -84,6 +84,8 @@ class QuantizationConfig:
     shift_negative_threshold_recalculation: bool = False
     shift_negative_params_search: bool = False
     concat_threshold_update: bool = False
+    activation_bias_correction: bool = False
+    activation_bias_correction_threshold: float = 0.0
 
 
 # Default quantization configuration the library use.

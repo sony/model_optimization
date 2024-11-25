@@ -26,11 +26,11 @@ if FOUND_SONY_CUSTOM_LAYERS:
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
-        Conv2DTranspose, Identity, Concatenate
+        Conv2DTranspose, Identity, Concatenate, BatchNormalization, Minimum, Maximum
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
-        Conv2DTranspose, Identity, Concatenate
+        Conv2DTranspose, Identity, Concatenate, BatchNormalization, Minimum, Maximum
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import get_tp_model
 import model_compression_toolkit as mct
@@ -38,7 +38,7 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import OPSET_NO_QUANTIZATION, \
     OPSET_QUANTIZATION_PRESERVING, OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS, OPSET_DIMENSION_MANIPULATION_OPS, \
     OPSET_MERGE_OPS, OPSET_CONV, OPSET_FULLY_CONNECTED, OPSET_ANY_RELU, OPSET_ADD, OPSET_SUB, OPSET_MUL, OPSET_DIV, \
-    OPSET_PRELU, OPSET_SWISH, OPSET_SIGMOID, OPSET_TANH
+    OPSET_PRELU, OPSET_SWISH, OPSET_SIGMOID, OPSET_TANH, OPSET_GELU, OPSET_BATCH_NORM, OPSET_MIN_MAX, OPSET_HARDSIGMOID
 
 tp = mct.target_platform
 
@@ -117,6 +117,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
         tp.OperationsSetToLayers(OPSET_FULLY_CONNECTED, [Dense],
                                  attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
                                                BIAS_ATTR: DefaultDict(default_value=BIAS)})
+        tp.OperationsSetToLayers(OPSET_BATCH_NORM, [BatchNormalization])
         tp.OperationsSetToLayers(OPSET_ANY_RELU, [tf.nn.relu,
                                                   tf.nn.relu6,
                                                   tf.nn.leaky_relu,
@@ -128,9 +129,13 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
         tp.OperationsSetToLayers(OPSET_SUB, [tf.subtract, Subtract])
         tp.OperationsSetToLayers(OPSET_MUL, [tf.math.multiply, Multiply])
         tp.OperationsSetToLayers(OPSET_DIV, [tf.math.divide, tf.math.truediv])
+        tp.OperationsSetToLayers(OPSET_MIN_MAX, [tf.math.minimum, tf.math.maximum, Minimum, Maximum])
         tp.OperationsSetToLayers(OPSET_PRELU, [PReLU])
         tp.OperationsSetToLayers(OPSET_SWISH, [tf.nn.swish, tp.LayerFilterParams(Activation, activation="swish")])
         tp.OperationsSetToLayers(OPSET_SIGMOID, [tf.nn.sigmoid, tp.LayerFilterParams(Activation, activation="sigmoid")])
         tp.OperationsSetToLayers(OPSET_TANH, [tf.nn.tanh, tp.LayerFilterParams(Activation, activation="tanh")])
+        tp.OperationsSetToLayers(OPSET_GELU, [tf.nn.gelu, tp.LayerFilterParams(Activation, activation="gelu")])
+        tp.OperationsSetToLayers(OPSET_HARDSIGMOID, [tf.keras.activations.hard_sigmoid,
+                                                     tp.LayerFilterParams(Activation, activation="hard_sigmoid")])
 
     return keras_tpc

@@ -18,6 +18,8 @@ from model_compression_toolkit.core.common import FrameworkInfo
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
+from model_compression_toolkit.core.common.statistics_correction.apply_activation_bias_correction_to_graph import \
+    apply_activation_bias_correction_to_graph
 from model_compression_toolkit.core.common.statistics_correction.apply_bias_correction_to_graph import \
     apply_bias_correction_to_graph
 from model_compression_toolkit.core.common.statistics_correction.apply_second_moment_correction_to_graph import \
@@ -73,7 +75,7 @@ def apply_statistics_correction(transformed_graph: Graph,
                                 fw_impl: FrameworkImplementation,
                                 tb_w: TensorboardWriter = None, ) -> Graph:
     """
-     Apply statistics moment correction on graph.
+     Apply statistics correction on graph.
      Args:
         transformed_graph: Graph to apply statistics correction.
         representative_data_gen (Callable): Dataset used for calibration.
@@ -84,7 +86,7 @@ def apply_statistics_correction(transformed_graph: Graph,
         tb_w (TensorboardWriter): TensorboardWriter object to use for logging events such as graphs, histograms, etc.
 
      Returns:
-         Graph after statistics correction correction.
+         Graph after statistics correction.
      """
 
     #############################################
@@ -103,5 +105,15 @@ def apply_statistics_correction(transformed_graph: Graph,
                                                            fw_impl=fw_impl)
     if tb_w is not None:
         tb_w.add_graph(transformed_graph, 'after_statistics_correction')
+
+    #############################################
+    # Apply Activation Bias Correction
+    #############################################
+    if core_config.quantization_config.activation_bias_correction:
+        transformed_graph = apply_activation_bias_correction_to_graph(graph=transformed_graph,
+                                                                      core_config=core_config,
+                                                                      fw_impl=fw_impl)
+    if tb_w is not None:
+        tb_w.add_graph(transformed_graph, 'after_activation_bias_correction')
 
     return transformed_graph
