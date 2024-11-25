@@ -40,30 +40,42 @@ class SoftQuantizerRegularization:
         self.count_iter = tf.Variable(0.)
 
 
-    def __call__(self, model: Model, entropy_reg: float):
+    def __call__(self, model: Model, entropy_reg: float, layer_weights: tf.Tensor):
         """
         Returns the soft quantizer regularization value for SoftRounding.
 
         Args:
             model: A model to be quantized with SoftRounding.
             entropy_reg: Entropy value to scale the quantizer regularization.
+            layer_weights: a vector of layers weights.
 
         Returns: Regularization value.
         """
-        soft_reg_aux: List[tf.Tensor] = []
+        layers = [l for l in model.layers if isinstance(l, KerasTrainableQuantizationWrapper)]
+
+        if layer_weights.shape[0] != len(layers):
+            raise ValueError(f'Expected weights.shape[0] to be {len(layers)}, '
+                             f'received shape {layer_weights.shape}.')  # pragma: no cover
+
         b = self.beta_scheduler(self.count_iter.value())
-        for layer in model.layers:
-            if isinstance(layer, KerasTrainableQuantizationWrapper):
-                kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
-                                                                      fw_info=DEFAULT_KERAS_INFO)
 
-                st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
-                soft_reg_aux.append(tf.reduce_sum(1 - tf.pow(tf.math.abs(st - .5) * 2, b)))
+        max_w = tf.reduce_max(layer_weights)
 
-        reg = 0
+        # Initialize reg to zero
+        reg = tf.constant(0.0, dtype=tf.float32)
 
-        for sq in soft_reg_aux:
-            reg += sq
+        # Compute the regularization term without concatenating
+        for i, layer in enumerate(layers):
+            kernel_attribute = get_kernel_attribute_name_for_gptq(layer_type=type(layer.layer),
+                                                                  fw_info=DEFAULT_KERAS_INFO)
+
+            st = layer.weights_quantizers[kernel_attribute].get_soft_targets()
+
+            soft_loss = tf.reduce_sum(1 - tf.pow(tf.math.abs(st - 0.5) * 2, b))
+            reg += layer_weights[i] * soft_loss
+
+        # Normalize reg by max_w
+        reg = reg / max_w
 
         self.count_iter.assign_add(1.0)
 

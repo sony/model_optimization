@@ -25,7 +25,8 @@ from model_compression_toolkit.core.common.hessian import HessianInfoService, He
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.keras.back2framework.keras_model_builder import KerasModelBuilder
 from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader, \
-    FixedSampleInfoDataset, FixedTFDataset, create_tf_dataloader
+    FixedSampleInfoDataset, FixedTFDataset, create_tf_dataloader, TFDatasetFromGenerator, \
+    IterableSampleWithConstInfoDataset
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
 from model_compression_toolkit.gptq.common.gradual_activation_quantization import \
     get_gradual_activation_quantizer_wrapper_factory
@@ -180,37 +181,77 @@ class KerasGPTQTrainer(GPTQTrainer):
         )
         layers_hessians = self.hessian_service.fetch_hessian(request, force_compute=True)
 
-        # Compute SLA score defined as max over channels
+        # Compute SLA score defined as max over elements
         layers_hessians = {
-            layer: tf.convert_to_tensor(tf.reduce_max(hess, axis=1)) for layer, hess in layers_hessians.items()
+            layer: tf.convert_to_tensor(tf.reduce_max(hess, axis=tuple(range(1, len(hess.shape))))) for layer, hess in layers_hessians.items()
         }
 
         # Stack hessians for comparison points
-        hessians_tensor = tf.stack([layers_hessians[layer.name] for layer in self.compare_points], axis=1)
-        assert hessians_tensor.shape[1] == len(self.compare_points)
+        hessians_tensor = tf.stack([layers_hessians[layer.name] for layer in self.compare_points])
+        assert hessians_tensor.shape[0] == len(self.compare_points)
         loss_weights = list(hessians_tensor.numpy())  # Convert to a list for compatibility
 
         # Prepare final dataset with samples and loss weights
         sla_train_dataset = FixedSampleInfoDataset(fixed_dataset.samples, loss_weights)
 
-        # Calculate regularization weights as mean across samples
-        reg_weights = tf.reduce_mean(hessians_tensor, axis=0)
+        # Calculate regularization weights as mean across samples # TODO: check why
+        reg_weights = tf.reduce_mean(hessians_tensor, axis=1)
 
         # Define a collate function to add regularization weights to each batch
-        def collate_fn(batch):
-            samples, loss_weights_batch = zip(*batch)
-            return tf.stack(samples), tf.stack(loss_weights_batch), reg_weights
+        def collate_fn(samples_with_loss_weights):
+            return *samples_with_loss_weights, reg_weights
 
-        # Prepare and return a batched and shuffled dataset
-        sla_train_tf_dataset = tf.data.Dataset.from_generator(
-            lambda: iter(sla_train_dataset),
-            output_signature=(tf.TensorSpec(shape=(None,), dtype=tf.float32),) * 2 + (
-            tf.TensorSpec(shape=(), dtype=tf.float32),)
+        # Create final dataset using the new dataloader with collate_fn
+        final_dataset = create_tf_dataloader(
+            dataset=sla_train_dataset,
+            batch_size=orig_batch_size,
+            shuffle=True,
+            collate_fn=collate_fn
         )
 
-        sla_train_tf_dataset = sla_train_tf_dataset.batch(orig_batch_size).map(collate_fn).shuffle(buffer_size=100)
+        return final_dataset
 
-        return sla_train_tf_dataset
+    def _prepare_train_dataloader_for_non_sla(self,
+                                              data_gen_fn: Callable[[], Generator]) -> tf.data.Dataset:
+        """
+        Prepares a train dataloader for non-SLA tasks.
+
+        Args:
+            data_gen_fn: Factory for representative dataset generator.
+
+        Returns:
+            A `tf.data.Dataset` yielding samples with loss weights and regularization weights.
+        """
+        # Step 1: Create a dataset from the generator
+        dataset = TFDatasetFromGenerator(data_gen_fn)
+        num_nodes = len(self.compare_points)
+
+        # Step 2: Compute loss weights
+        if self.gptq_config.use_hessian_based_weights:
+            hessian_dataset = create_tf_dataloader(dataset=dataset, batch_size=self.gptq_config.hessian_weights_config.hessian_batch_size)
+            # hessian_dataset = data_gen_to_dataloader(data_gen_fn, self.gptq_config.hessian_weights_config.hessian_batch_size)
+            hessian_weights = self.compute_hessian_based_weights(hessian_dataset)
+            loss_weights = tf.convert_to_tensor(hessian_weights, dtype=tf.float32)
+        else:
+            loss_weights = tf.ones(num_nodes, dtype=tf.float32) / num_nodes
+
+        # Step 3: Create a dataset with samples and loss weights
+        augmented_dataset = IterableSampleWithConstInfoDataset(dataset.dataset, loss_weights)
+
+        # Step 4: Add constant regularization weights
+        reg_weights = tf.ones(num_nodes, dtype=tf.float32)
+
+        def collate_fn(batch):
+            samples, loss_weights = batch
+            return samples, loss_weights, reg_weights
+
+        # Step 5: Create a tf.data.Dataset with collate_fn
+        train_dataloader = create_tf_dataloader(augmented_dataset,
+                                                batch_size=dataset.orig_batch_size,
+                                                shuffle=False,
+                                                collate_fn=collate_fn)
+
+        return train_dataloader
 
     # def _prepare_train_dataloader_sla(self, data_gen_fn):
     #     """
@@ -371,7 +412,9 @@ class KerasGPTQTrainer(GPTQTrainer):
                           in_y_float: List[tf.Tensor],
                           input_data: List[np.ndarray],
                           in_optimizer_with_param: List,
-                          training=True) -> Tuple[tf.Tensor, List[tf.Tensor]]:
+                          training=True,
+                          distill_loss_weights=None,
+                          reg_weights=None) -> Tuple[tf.Tensor, List[tf.Tensor]]:
         """
         Get outputs from both teacher and student networks. Compute the observed error,
         and use it to compute the gradients and applying them to the student weights.
@@ -396,9 +439,9 @@ class KerasGPTQTrainer(GPTQTrainer):
                                                self.flp_weights_list,
                                                self.compare_points_mean,
                                                self.compare_points_std,
-                                               self.weights_for_average_loss)
+                                               distill_loss_weights)
 
-            reg_value = self.reg_func(self.fxp_model, self.gptq_config.regularization_factor)
+            reg_value = self.reg_func(self.fxp_model, self.gptq_config.regularization_factor, reg_weights)
 
             loss_value += reg_value
 
@@ -422,14 +465,19 @@ class KerasGPTQTrainer(GPTQTrainer):
         # Training loop
         # ----------------------------------------------
         if self.has_params_to_train:
-            self.micro_training_loop(self.representative_data_gen_fn,
-                                     compute_gradients,
+            self.micro_training_loop(compute_gradients,
                                      self.optimizer_with_param,
                                      self.gptq_config.n_epochs,
                                      True)
 
     @tf.function
-    def nano_training_step(self, input_data, in_compute_gradients, in_optimizer_with_param, is_training):
+    def nano_training_step(self,
+                           input_data,
+                           in_compute_gradients,
+                           in_optimizer_with_param,
+                           is_training,
+                           distill_loss_weights,
+                           reg_weights):
         """
         This function run part of the training step, wrapped by a tf.function for acceleration.
         Args:
@@ -446,12 +494,15 @@ class KerasGPTQTrainer(GPTQTrainer):
         # run float model
         y_float = self.float_model(input_data)
         # rung quantized model and calculate loss & gradients
-        loss_value_step, grads = in_compute_gradients(y_float, input_data, in_optimizer_with_param,
-                                                      training=is_training)
+        loss_value_step, grads = in_compute_gradients(y_float,
+                                                      input_data,
+                                                      in_optimizer_with_param,
+                                                      training=is_training,
+                                                      distill_loss_weights=distill_loss_weights,
+                                                      reg_weights=reg_weights)
         return loss_value_step, grads
 
     def micro_training_loop(self,
-                            data_function: Callable,
                             in_compute_gradients: Callable,
                             in_optimizer_with_param: List[Tuple[tf.keras.optimizers.Optimizer, List[tf.Tensor]]],
                             n_epochs: int,
@@ -459,7 +510,6 @@ class KerasGPTQTrainer(GPTQTrainer):
         """
         This function run a micro training loop on given set of parameters.
         Args:
-            data_function: A callable function that give a batch of samples.
             in_compute_gradients: A callable function that compute the gradients.
             in_optimizer_with_param: A list of optimizer classes to update with the corresponding parameters.
             n_epochs: Number of update iterations of representative dataset.
@@ -470,12 +520,19 @@ class KerasGPTQTrainer(GPTQTrainer):
         """
         with tqdm(range(n_epochs), "Running GPTQ optimization") as epochs_pbar:
             for _ in epochs_pbar:
-                with tqdm(data_function(), position=1, leave=False) as data_pbar:
+                with tqdm(self.train_dataloader, position=1, leave=False) as data_pbar:
                     for data in data_pbar:
-                        input_data = [d * self.input_scale for d in data]
 
-                        loss_value_step, grads = self.nano_training_step(input_data, in_compute_gradients,
-                                                                         in_optimizer_with_param, is_training)
+                        input_data, distill_loss_weights, reg_weight = data
+
+                        input_data = [d * self.input_scale for d in input_data]
+
+                        loss_value_step, grads = self.nano_training_step(input_data,
+                                                                         in_compute_gradients,
+                                                                         in_optimizer_with_param,
+                                                                         is_training,
+                                                                         distill_loss_weights,
+                                                                         reg_weight)
                         # Run one step of gradient descent by updating
                         # the value of the variables to minimize the loss.
                         for i, (o, p) in enumerate(in_optimizer_with_param):

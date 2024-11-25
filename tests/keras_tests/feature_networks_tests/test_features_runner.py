@@ -689,16 +689,14 @@ class FeatureNetworkTest(unittest.TestCase):
 
         tf.config.run_functions_eagerly(False)
 
-
     def test_gptq_with_sample_layer_attention(self):
-        # This call removes the effect of @tf.function decoration and executes the decorated function eagerly, which
-        # enabled tracing for code coverage.
-        # tf.config.run_functions_eagerly(True)
-        # GradientPTQTest(self, use_hessian_sample_attention=True).run_test()
-        GradientPTQTest(self, log_norm_weights=False, scaled_log_norm=False, use_hessian_sample_attention=True, loss=sample_layer_attention_loss).run_test()
-
-        # tf.config.run_functions_eagerly(False)
-
+        kwargs = dict(use_hessian_sample_attention=True, loss=sample_layer_attention_loss,
+                      hessian_weights=True, hessian_num_samples=None,
+                      norm_scores=False, log_norm_weights=False, scaled_log_norm=False)
+        GradientPTQTest(self, **kwargs).run_test()
+        GradientPTQTest(self, hessian_batch_size=16, rounding_type=RoundingType.SoftQuantizer, **kwargs).run_test()
+        GradientPTQTest(self, hessian_batch_size=5, rounding_type=RoundingType.SoftQuantizer, gradual_activation_quantization=True, **kwargs).run_test()
+        GradientPTQTest(self, rounding_type=RoundingType.STE, **kwargs)
 
     # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
     # def test_gptq_new_exporter(self):

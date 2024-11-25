@@ -21,7 +21,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.constants import GPTQ_HESSIAN_NUM_SAMPLES
 from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig, RoundingType, GradientPTQConfig, \
-    GPTQHessianScoresConfig
+    GPTQHessianScoresConfig, GradualActivationQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR, MAX_LSB_STR
@@ -70,7 +70,10 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                  num_calibration_iter=GPTQ_HESSIAN_NUM_SAMPLES,
                  use_hessian_sample_attention=False,
                  loss=None,
-                 norm_scores=False):
+                 norm_scores=False,
+                 gradual_activation_quantization=False,
+                 hessian_batch_size=1,
+                 hessian_num_samples=GPTQ_HESSIAN_NUM_SAMPLES):
         super().__init__(unit_test,
                          input_shape=input_shape,
                          num_calibration_iter=num_calibration_iter)
@@ -84,12 +87,16 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
         self.use_hessian_sample_attention = use_hessian_sample_attention
         self.loss = loss if loss else multiple_tensors_mse_loss
         self.norm_scores = norm_scores
+        self.gradual_activation_quantization = gradual_activation_quantization
+        self.hessian_batch_size = hessian_batch_size
+        self.hessian_num_samples = hessian_num_samples
         if rounding_type == RoundingType.SoftQuantizer:
             self.override_params = {QUANT_PARAM_LEARNING_STR: quantization_parameter_learning}
         elif rounding_type == RoundingType.STE:
             self.override_params = {MAX_LSB_STR: DefaultDict(default_value=1)}
         else:
             self.override_params = None
+
 
     def get_tpc(self):
         return get_tpc("gptq_test", 16, 16, self.quant_method)
@@ -100,6 +107,7 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                            relu_bound_to_power_of_2=True, weights_bias_correction=False)
 
     def get_gptq_config(self):
+        gradual_act_cfg = GradualActivationQuantizationConfig() if self.gradual_activation_quantization else None
         return GradientPTQConfig(5,
                                  optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
                                  optimizer_rest=tf.keras.optimizers.Adam(learning_rate=0.0001),
@@ -110,8 +118,10 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                  hessian_weights_config=GPTQHessianScoresConfig(log_norm=self.log_norm_weights,
                                                                                 scale_log_norm=self.scaled_log_norm,
                                                                                 per_sample=self.use_hessian_sample_attention,
-                                                                                norm_scores=self.norm_scores),
-                                 gptq_quantizer_params_override=self.override_params)
+                                                                                norm_scores=self.norm_scores,
+                                                                                hessian_batch_size=self.hessian_batch_size),
+                                 gptq_quantizer_params_override=self.override_params,
+                                 gradual_activation_quantization_config=gradual_act_cfg)
 
     def create_networks(self):
         in_shape = self.get_input_shapes()[0][1:]

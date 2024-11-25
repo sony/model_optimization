@@ -60,96 +60,122 @@ class ActivationHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
         Returns:
             List[np.ndarray]: Scores based on the Hessian-approximation for the requested nodes.
         """
-        if self.hessian_request.granularity == HessianScoresGranularity.PER_TENSOR:
-            model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
+        # self.hessian_request.granularity = HessianScoresGranularity.PER_TENSOR
 
-            if len([n for n in self.hessian_request.target_nodes if n in model_output_nodes]) > 0:
-                Logger.critical("Trying to compute activation Hessian approximation with respect to the model output. "
-                                "This operation is not supported. "
-                                "Remove the output node from the set of node targets in the Hessian request.")
+        model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
 
-            grad_model_outputs = self.hessian_request.target_nodes + model_output_nodes
+        if len([n for n in self.hessian_request.target_nodes if n in model_output_nodes]) > 0:
+            Logger.critical("Trying to compute activation Hessian approximation with respect to the model output. "
+                            "This operation is not supported. "
+                            "Remove the output node from the set of node targets in the Hessian request.")
 
-            # Building a model to run Hessian approximation on
-            model, _ = FloatKerasModelBuilder(graph=self.graph, append2output=grad_model_outputs).build_model()
+        grad_model_outputs = self.hessian_request.target_nodes + model_output_nodes
 
-            # Record operations for automatic differentiation
-            with tf.GradientTape(persistent=True, watch_accessed_variables=False) as g:
-                g.watch(self.input_images)
+        # Building a model to run Hessian approximation on
+        model, _ = FloatKerasModelBuilder(graph=self.graph, append2output=grad_model_outputs).build_model()
 
-                if len(self.input_images) > 1:
-                    outputs = model(self.input_images)
-                else:
-                    outputs = model(*self.input_images)
+        # Record operations for automatic differentiation
+        with tf.GradientTape(persistent=True, watch_accessed_variables=False) as g:
+            g.watch(self.input_images)
 
-                if len(outputs) != len(grad_model_outputs):  # pragma: no cover
-                    Logger.critical(
-                        f"Model for computing activation Hessian approximation expects {len(grad_model_outputs)} "
-                        f"outputs, but got {len(outputs)} output tensors.")
+            if len(self.input_images) > 1:
+                outputs = model(self.input_images)
+            else:
+                outputs = model(*self.input_images)
 
-                # Extracting the intermediate activation tensors and the model real output.
-                # Note that we do not allow computing Hessian for output nodes, so there shouldn't be an overlap.
-                num_target_nodes = len(self.hessian_request.target_nodes)
-                # Extract activation tensors of nodes for which we want to compute Hessian
-                target_activation_tensors = outputs[:num_target_nodes]
-                # Extract the model outputs
-                output_tensors = outputs[num_target_nodes:]
+            if len(outputs) != len(grad_model_outputs):  # pragma: no cover
+                Logger.critical(
+                    f"Model for computing activation Hessian approximation expects {len(grad_model_outputs)} "
+                    f"outputs, but got {len(outputs)} output tensors.")
 
-                # Unfold and concatenate all outputs to form a single tensor
-                output = self._concat_tensors(output_tensors)
+            # Extracting the intermediate activation tensors and the model real output.
+            # Note that we do not allow computing Hessian for output nodes, so there shouldn't be an overlap.
+            num_target_nodes = len(self.hessian_request.target_nodes)
+            # Extract activation tensors of nodes for which we want to compute Hessian
+            target_activation_tensors = outputs[:num_target_nodes]
+            # Extract the model outputs
+            output_tensors = outputs[num_target_nodes:]
 
-                # List to store the Hessian-approximation scores for each interest point
-                ipts_hessian_approximations = [tf.Variable([0.0], dtype=tf.float32, trainable=True)
-                                               for _ in range(len(target_activation_tensors))]
+            # Unfold and concatenate all outputs to form a single tensor
+            output = self._concat_tensors(output_tensors)
 
-                # Loop through each interest point activation tensor
-                prev_mean_results = None
-                for j in tqdm(range(self.num_iterations_for_approximation)):  # Approximation iterations
-                    # Getting a random vector with normal distribution
-                    v = tf.random.normal(shape=output.shape, dtype=output.dtype)
-                    f_v = tf.reduce_sum(v * output)
-                    for i, ipt in enumerate(target_activation_tensors):  # Per Interest point activation tensor
-                        interest_point_scores = []  # List to store scores for each interest point
-                        with g.stop_recording():
-                            # Computing the approximation by getting the gradient of (output * v)
-                            hess_v = g.gradient(f_v, ipt)
+            # List to store the Hessian-approximation scores for each interest point
+            ipts_hessian_approximations = [tf.Variable([0.0], dtype=tf.float32, trainable=True)
+                                           for _ in range(len(target_activation_tensors))]
 
-                            if hess_v is None:
-                                # In case we have an output node, which is an interest point, but it is not
-                                # differentiable, we consider its Hessian to be the initial value 0.
-                                continue  # pragma: no cover
+            # Loop through each interest point activation tensor
+            prev_mean_results = None
+            for j in tqdm(range(self.num_iterations_for_approximation)):  # Approximation iterations
+                # Getting a random vector with normal distribution
+                v = tf.random.normal(shape=output.shape, dtype=output.dtype)
+                f_v = tf.reduce_sum(v * output)
+                for i, ipt in enumerate(target_activation_tensors):  # Per Interest point activation tensor
+                    interest_point_scores = []  # List to store scores for each interest point
+                    with g.stop_recording():
+                        # Computing the approximation by getting the gradient of (output * v)
+                        hess_v = g.gradient(f_v, ipt)
 
+                        if hess_v is None:
+                            # In case we have an output node, which is an interest point, but it is not
+                            # differentiable, we consider its Hessian to be the initial value 0.
+                            continue  # pragma: no cover
+
+                        if self.hessian_request.granularity == HessianScoresGranularity.PER_TENSOR:
                             # Mean over all dims but the batch (CXHXW for conv)
                             hessian_approx = tf.reduce_sum(hess_v ** 2.0,
                                                            axis=tuple(d for d in range(1, len(hess_v.shape))))
+                        elif self.hessian_request.granularity == HessianScoresGranularity.PER_ELEMENT:
+                            hessian_approx = hess_v ** 2
 
-                            # Free gradients
-                            del hess_v
+                        else:  # pragma: no cover
+                            Logger.critical(f"{self.hessian_request.granularity} "
+                                            f"is not supported for Keras activation hessian\'s approximation scores calculator.")
 
-                            # Update node Hessian approximation mean over random iterations
-                            ipts_hessian_approximations[i] = (j * ipts_hessian_approximations[i] + hessian_approx) / (j + 1)
+                        # Free gradients
+                        del hess_v
 
-                    # If the change to the mean approximation is insignificant (to all outputs)
-                    # we stop the calculation.
-                    if j > MIN_HESSIAN_ITER:
-                        if prev_mean_results is not None:
+                        # Update node Hessian approximation mean over random iterations
+                        ipts_hessian_approximations[i] = (j * ipts_hessian_approximations[i] + hessian_approx) / (j + 1)
+
+                # If the change to the mean approximation is insignificant (to all outputs)
+                # we stop the calculation.
+                if j > MIN_HESSIAN_ITER:
+                    if prev_mean_results is not None:
+                        # new_mean_res = tf.reduce_mean(tf.stack(ipts_hessian_approximations), axis=1)
+                        if self.hessian_request.granularity == HessianScoresGranularity.PER_TENSOR:
                             new_mean_res = tf.reduce_mean(tf.stack(ipts_hessian_approximations), axis=1)
                             relative_delta_per_node = (tf.abs(new_mean_res - prev_mean_results) /
                                                        (tf.abs(new_mean_res) + 1e-6))
                             max_delta = tf.reduce_max(relative_delta_per_node)
-                            if max_delta < HESSIAN_COMP_TOLERANCE:
-                                break
+
+                        elif self.hessian_request.granularity == HessianScoresGranularity.PER_ELEMENT:
+                            # Reshape to maintain spatial dimensions and average only across batch
+                            new_mean_res = [tf.reduce_mean(h, axis=0) for h in ipts_hessian_approximations]  # List of tensors with shapes [H1,W1,C], [H2,W2,C], etc.
+                            relative_deltas = [
+                                tf.abs(new - prev) / (tf.abs(new) + 1e-6)
+                                for new, prev in zip(new_mean_res, prev_mean_results)
+                            ]
+                            max_delta = tf.reduce_max([tf.reduce_max(delta) for delta in relative_deltas])
+
+                        if max_delta < HESSIAN_COMP_TOLERANCE:
+                            print(f"breaking - got to converge in iteration {j}")
+                            break
+                if self.hessian_request.granularity == HessianScoresGranularity.PER_TENSOR:
                     prev_mean_results = tf.reduce_mean(tf.stack(ipts_hessian_approximations), axis=1)
+                elif self.hessian_request.granularity == HessianScoresGranularity.PER_ELEMENT:
+                    # Reshape to maintain spatial dimensions and average only across batch
+                    prev_mean_results = [tf.reduce_mean(h, axis=0) for h in ipts_hessian_approximations]  # List of tensors with shapes [H1,W1,C], [H2,W2,C], etc.
 
-                # Convert results to list of numpy arrays
-                hessian_results = [h.numpy() for h in ipts_hessian_approximations]
-                # Extend the Hessian tensors shape to align with expected return type
-                # TODO: currently, only per-tensor Hessian is available for activation.
-                #  Once implementing per-channel or per-element, this alignment needs to be verified and handled separately.
-                hessian_results = [h[..., np.newaxis] for h in hessian_results]
+                    # stacked = tf.stack(ipts_hessian_approximations)  # Shape: [3, 32, H, W, C]
+                    # prev_mean_results = tf.reduce_mean(stacked, axis=1)  # Shape: [3, H, W, C]
+                # prev_mean_results = tf.reduce_mean(tf.stack(ipts_hessian_approximations), axis=1)
 
-                return hessian_results
+            # Convert results to list of numpy arrays
+            hessian_results = [h.numpy() for h in ipts_hessian_approximations]
+            # Extend the Hessian tensors shape to align with expected return type
+            # TODO: currently, only per-tensor Hessian is available for activation.
+            #  Once implementing per-channel or per-element, this alignment needs to be verified and handled separately.
+            hessian_results = [h[..., np.newaxis] for h in hessian_results]
 
-        else:  # pragma: no cover
-            Logger.critical(f"{self.hessian_request.granularity} "
-                            f"is not supported for Keras activation hessian\'s approximation scores calculator.")
+            return hessian_results
+

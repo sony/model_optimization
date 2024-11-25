@@ -87,6 +87,7 @@ def sample_layer_attention_loss(y_list: List[tf.Tensor],
     """
     loss = 0
     layers_mean_w = []
+    loss_weights = tf.stack(loss_weights, axis=1)
 
     for i, (y, x) in enumerate(zip(y_list, x_list)):
         norm = tf.reduce_sum(tf.square(y - x), axis=1)
