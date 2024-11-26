@@ -98,7 +98,7 @@ Reduces model size/complexity and ensures better channels utilization by removin
 __________________________________________________________________________________________________________
 ### **Debugging and Visualization**
 **🎛️ Network Editor (Modify Quantization Configurations)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_network_editor.ipynb). 
-Modify your model's quantization configuration for specific layers or apply a custom edit rule (e.g adjust layer's bit-width) using MCT’s network editor
+Modify your model's quantization configuration for specific layers or apply a custom edit rule (e.g adjust layer's bit-width) using MCT’s network editor.
 
 **🖥️ Visualization**. Observe useful information for troubleshooting the quantized model's performance using TensorBoard. [Read more](https://sony.github.io/model_optimization/docs/guidelines/visualization.html).
 
@@ -118,7 +118,7 @@ More details on how to use EPTQ via MCT can be found in the [GPTQ guidelines](ht
   * [Gradient-based post-training quantization](https://sony.github.io/model_optimization/docs/api/api_docs/index.html#gptq) | GPTQ API docs
   * [Quantization-aware training](https://sony.github.io/model_optimization/docs/api/api_docs/index.html#qat) | QAT API docs
     
-* [Debug](https://sony.github.io/model_optimization/docs/guidelines/visualization.html) – modify optimization process or generate explainable report
+* [Debug](https://sony.github.io/model_optimization/docs/guidelines/visualization.html) – modify optimization process or generate an explainable report
   
 * [Release notes](https://github.com/sony/model_optimization/releases)
 
@@ -172,19 +172,20 @@ Results for applying pruning to reduce the parameters of the following models by
 
 ## <div align="center">Troubleshooting and Community</div>
 
-If you encountered large accuracy degradation with MCT, check out the [Quantization Troubleshooting](https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md)
-for common pitfalls and some tools to improve quantized model's accuracy.
+If you encountered a large accuracy degradation with MCT, check out the [Quantization Troubleshooting](https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md)
+for common pitfalls and some tools to improve the quantized model's accuracy.
 
 Check out the [FAQ](https://github.com/sony/model_optimization/tree/main/FAQ.md) for common issues. 
 
-You are welcome to ask questions and get support on our [issues section](https://github.com/sony/model_optimization/issues) and manage community discussions under [discussions section](https://github.com/sony/model_optimization/discussions).
+You are welcome to ask questions and get support on our [issues section](https://github.com/sony/model_optimization/issues) and manage community discussions under the [discussions section](https://github.com/sony/model_optimization/discussions).
 
 
 ## <div align="center">Contributions</div>
-MCT aims at keeping a more up-to-date fork and welcomes contributions from anyone.
+We'd love your input! MCT would not be possible without help from our community, and welcomes contributions from anyone! 
 
 *Checkout our [Contribution guide](https://github.com/sony/model_optimization/blob/main/CONTRIBUTING.md) for more details.
 
+Thank you 🙏 to all our contributors!
 
 ## <div align="center">License</div>
 MCT is licensed under Apache License Version 2.0. By contributing to the project, you agree to the license and copyright terms therein and release your contribution under these terms.
