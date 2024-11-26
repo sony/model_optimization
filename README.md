@@ -60,9 +60,9 @@ QAT (Quantization Aware Training)  | High | High (~12-36 GPU hours) | [QAT API](
 For each flow, **Quantization core** utilizes various algorithms and hyper-parameters for optimal [hardware-aware](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/README.md) quantization results. 
 For further details, please see [Supported features and algorithms](#high-level-features-and-techniques). 
 
-Required input: 
-- Floating point model - 32bit model in either .pt or .keras format
-- Representative dataset - can be either provided by the user, or generated utilizing the [Data Generation](#data-generation-) capability
+ **Required input**: Floating point model - 32bit model in either .pt or .keras format
+ 
+ **Optional input**: Representative dataset - can be either provided by the user, or generated utilizing the [Data Generation](#data-generation-) capability
 
 <div align="center">
 <p align="center">
@@ -152,24 +152,13 @@ Currently, MCT is being tested on various Python, Pytorch and TensorFlow version
 <img src="/docsrc/images/PoseEst.png" width="200">
 <img src="/docsrc/images/ObjDet.png" width="200">
 
-  ### Pytorch
-We quantized classification networks from the torchvision library. 
-In the following table we present the ImageNet validation results for these models:
-
-| Network Name              | Float Accuracy  | 8Bit Accuracy   | Data-Free 8Bit Accuracy |
-|---------------------------|-----------------|-----------------|-------------------------|
-| MobileNet V2 [3]          | 71.886          | 71.444          |71.29|
-| ResNet-18 [3]             | 69.86           | 69.63           |69.53|
-| SqueezeNet 1.1 [3]        | 58.128          | 57.678          ||
-
-### Keras
 MCT can quantize an existing 32-bit floating-point model to an 8-bit fixed-point (or less) model without compromising accuracy. 
-Below is a graph of [MobileNetV2](https://keras.io/api/applications/mobilenet/) accuracy on ImageNet vs average bit-width of weights (X-axis), using 
-single-precision quantization, mixed-precision quantization, and mixed-precision quantization with GPTQ. 
+Below is a graph of [MobileNetV2](https://pytorch.org/vision/main/models/generated/torchvision.models.mobilenet_v2.html) accuracy on ImageNet vs average bit-width of weights (X-axis), using **single-precision** quantization, **mixed-precision** quantization, and mixed-precision quantization with GPTQ. 
 
-<img src="https://github.com/sony/model_optimization/raw/main/docsrc/images/mbv2_accuracy_graph.png">
+<img src="https://github.com/sony/model_optimization/raw/main/docsrc/images/torch_mobilenetv2.png">
 
 For more results, please see [1]
+
 
 ### Pruning Results
 
