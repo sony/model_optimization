@@ -92,6 +92,7 @@ ________________________________________________________________________________
 __________________________________________________________________________________________________________
 ### Data-free quantization (Data Generation) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_data_generation.ipynb)
 Generates synthetic images based on the statistics stored in the model's batch normalization layers, according to your specific needs, for when image data isn’t available. See [Data Generation Library](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/data_generation/README.md) for more.
+The specifications of the method are detailed in the paper: _"**Data Generation for Hardware-Friendly Post-Training Quantization**"_ [5].
 __________________________________________________________________________________________________________
 ### Structured Pruning [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_pruning_mnist.ipynb)
 Reduces model size/complexity and ensures better channels utilization by removing redundant input channels from layers and reconstruction of layer weights. Read more ([Pytorch API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/pytorch_pruning_experimental.html) / [Keras API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/keras_pruning_experimental.html)).
@@ -209,4 +210,6 @@ MCT is licensed under Apache License Version 2.0. By contributing to the project
 
 [3] [TORCHVISION.MODELS](https://pytorch.org/vision/stable/models.html) 
 
-[4] Gordon, O., Cohen, E., Habi, H. V., & Netzer, A., 2024. [EPTQ: Enhanced Post-Training Quantization via Hessian-guided Network-wise Optimization. arXiv preprint](https://arxiv.org/abs/2309.11531)
+[4] Gordon, O., Cohen, E., Habi, H. V., & Netzer, A., 2024. [EPTQ: Enhanced Post-Training Quantization via Hessian-guided Network-wise Optimization, European Conference on Computer Vision Workshop 2024, Computational Aspects of Deep Learning (CADL)](https://arxiv.org/abs/2309.11531)
+
+[5] Dikstein, L., Lapid, A., Netzer, A., & Habi, H. V., 2024. [Data Generation for Hardware-Friendly Post-Training Quantization, Accepted to IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) 2025](https://arxiv.org/abs/2410.22110)
