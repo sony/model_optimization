@@ -77,12 +77,6 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                  reg_factor=1,
                  grad_act_quant_cfg=None,
                  per_sample=False):
-    # def __init__(self, unit_test, quant_method=QuantizationMethod.SYMMETRIC, rounding_type=RoundingType.STE,
-    #              per_channel=True, input_shape=(1, 16, 16, 3),
-    #              hessian_weights=True, log_norm_weights=True, scaled_log_norm=False, norm_scores=False,
-    #              quantization_parameter_learning=True, num_calibration_iter=GPTQ_HESSIAN_NUM_SAMPLES,
-    #              hessian_num_samples=GPTQ_HESSIAN_NUM_SAMPLES, per_sample=False,
-    #              reg_factor=1, grad_act_quant_cfg=None):
 
         super().__init__(unit_test,
                          input_shape=input_shape,
@@ -140,14 +134,6 @@ class GradientPTQBaseTest(BaseKerasFeatureNetworkTest):
                                  gradual_activation_quantization_config=self.grad_act_quant_cfg,
                                  regularization_factor=self.reg_factor
                                  )
-        # return GradientPTQConfig(5,
-        #                          optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),
-        #                          optimizer_rest=tf.keras.optimizers.Adam(learning_rate=0.0001),
-        #                          loss=multiple_tensors_mse_loss, train_bias=True, rounding_type=self.rounding_type,
-        #                          hessian_weights_config=self.hessian_weights_config,
-        #                          gradual_activation_quantization_config=self.grad_act_quant_cfg,
-        #                          regularization_factor=self.reg_factor,
-        #                          gptq_quantizer_params_override=self.override_params)
 
     def create_networks(self):
         in_shape = self.get_input_shapes()[0][1:]

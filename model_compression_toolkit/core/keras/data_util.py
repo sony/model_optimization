@@ -74,6 +74,7 @@ class TFDatasetFromGenerator:
         self.orig_batch_size = inputs[0].shape[0]
         self._size = None
 
+        # TFDatasetFromGenerator flattens the dataset, thus we ignore the batch dimension
         output_signature = get_tensor_spec(inputs, ignore_batch_dim=True)
         self.dataset = tf.data.Dataset.from_generator(flat_gen_fn(data_gen_fn), output_signature=output_signature)
 

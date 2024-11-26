@@ -60,8 +60,6 @@ class ActivationHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
         Returns:
             List[np.ndarray]: Scores based on the Hessian-approximation for the requested nodes.
         """
-        # self.hessian_request.granularity = HessianScoresGranularity.PER_TENSOR
-
         model_output_nodes = [ot.node for ot in self.graph.get_outputs()]
 
         if len([n for n in self.hessian_request.target_nodes if n in model_output_nodes]) > 0:
@@ -141,7 +139,6 @@ class ActivationHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
                 # we stop the calculation.
                 if j > MIN_HESSIAN_ITER:
                     if prev_mean_results is not None:
-                        # new_mean_res = tf.reduce_mean(tf.stack(ipts_hessian_approximations), axis=1)
                         if self.hessian_request.granularity == HessianScoresGranularity.PER_TENSOR:
                             new_mean_res = tf.reduce_mean(tf.stack(ipts_hessian_approximations), axis=1)
                             relative_delta_per_node = (tf.abs(new_mean_res - prev_mean_results) /
@@ -150,7 +147,7 @@ class ActivationHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
 
                         elif self.hessian_request.granularity == HessianScoresGranularity.PER_ELEMENT:
                             # Reshape to maintain spatial dimensions and average only across batch
-                            new_mean_res = [tf.reduce_mean(h, axis=0) for h in ipts_hessian_approximations]  # List of tensors with shapes [H1,W1,C], [H2,W2,C], etc.
+                            new_mean_res = [tf.reduce_mean(h, axis=0) for h in ipts_hessian_approximations]
                             relative_deltas = [
                                 tf.abs(new - prev) / (tf.abs(new) + 1e-6)
                                 for new, prev in zip(new_mean_res, prev_mean_results)
@@ -158,17 +155,13 @@ class ActivationHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
                             max_delta = tf.reduce_max([tf.reduce_max(delta) for delta in relative_deltas])
 
                         if max_delta < HESSIAN_COMP_TOLERANCE:
-                            print(f"breaking - got to converge in iteration {j}")
                             break
+
                 if self.hessian_request.granularity == HessianScoresGranularity.PER_TENSOR:
                     prev_mean_results = tf.reduce_mean(tf.stack(ipts_hessian_approximations), axis=1)
                 elif self.hessian_request.granularity == HessianScoresGranularity.PER_ELEMENT:
                     # Reshape to maintain spatial dimensions and average only across batch
-                    prev_mean_results = [tf.reduce_mean(h, axis=0) for h in ipts_hessian_approximations]  # List of tensors with shapes [H1,W1,C], [H2,W2,C], etc.
-
-                    # stacked = tf.stack(ipts_hessian_approximations)  # Shape: [3, 32, H, W, C]
-                    # prev_mean_results = tf.reduce_mean(stacked, axis=1)  # Shape: [3, H, W, C]
-                # prev_mean_results = tf.reduce_mean(tf.stack(ipts_hessian_approximations), axis=1)
+                    prev_mean_results = [tf.reduce_mean(h, axis=0) for h in ipts_hessian_approximations]
 
             # Convert results to list of numpy arrays
             hessian_results = [h.numpy() for h in ipts_hessian_approximations]

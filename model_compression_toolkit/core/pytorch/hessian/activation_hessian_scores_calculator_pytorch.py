@@ -157,7 +157,7 @@ class ActivationHessianScoresCalculatorPytorch(HessianScoresCalculatorPytorch):
         assert self.hessian_request.granularity == HessianScoresGranularity.PER_OUTPUT_CHANNEL
         ipts_hessian_approx_scores = [torch.tensor(0.0, requires_grad=True, device=output.device)
                                       for _ in range(len(target_activation_tensors))]
-        # TODO: why no convergence test?
+
         for j in tqdm(range(self.num_iterations_for_approximation), "Hessian random iterations"):  # Approximation iterations
             v = self._generate_random_vectors_batch(output.shape, output.device)
             f_v = torch.sum(v * output)

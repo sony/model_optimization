@@ -127,23 +127,6 @@ if FOUND_TF:
                                                              hessians_num_samples=GPTQ_HESSIAN_NUM_SAMPLES,
                                                              hessian_batch_size=hessian_batch_size)
 
-        # if use_hessian_sample_attention:
-        #     if not use_hessian_based_weights:  # pragma: no cover
-        #         raise ValueError(
-        #             'use_hessian_based_weights must be set to True in order to use Sample Layer Attention.')
-        #     hessian_weights_config = GPTQHessianScoresConfig(
-        #         hessians_num_samples=None,
-        #         norm_scores=False,
-        #         log_norm=False,
-        #         scale_log_norm=False,
-        #         hessian_batch_size=hessian_batch_size,
-        #         per_sample=True
-        #     )
-        #     loss = loss or sample_layer_attention_loss
-        # else:
-        #     hessian_weights_config = GPTQHessianScoresConfig(hessian_batch_size=hessian_batch_size)
-        #     loss = loss or GPTQMultipleTensorsLoss()
-
         if isinstance(gradual_activation_quantization, bool):
             gradual_quant_config = GradualActivationQuantizationConfig() if gradual_activation_quantization else None
         elif isinstance(gradual_activation_quantization, GradualActivationQuantizationConfig):
