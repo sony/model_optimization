@@ -155,7 +155,8 @@ Currently, MCT is being tested on various Python, Pytorch and TensorFlow version
 MCT can quantize an existing 32-bit floating-point model to an 8-bit fixed-point (or less) model without compromising accuracy. 
 Below is a graph of [MobileNetV2](https://pytorch.org/vision/main/models/generated/torchvision.models.mobilenet_v2.html) accuracy on ImageNet vs average bit-width of weights (X-axis), using **single-precision** quantization, **mixed-precision** quantization, and mixed-precision quantization with GPTQ. 
 
-<img src="https://github.com/sony/model_optimization/raw/main/docsrc/images/torch_mobilenetv2.png">
+<p align="center">
+<img src="/docsrc/images/torch_mobilenetv2.png" width="800">
 
 For more results, please see [1]
 
