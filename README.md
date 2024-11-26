@@ -72,15 +72,15 @@ Required input:
 </div>
 
 ### Resources
-* [User Guide](https://sony.github.io/model_optimization/docs/index.html)  contains detailed information about MCT and guides you from installation through optimizing models for your edge AI applications.
+* [User Guide](https://sony.github.io/model_optimization/index.html)  contains detailed information about MCT and guides you from installation through optimizing models for your edge AI applications.
 
-* MCT's [API Docs](https://sony.github.io/model_optimization/docs/api/api_docs/) is seperated per quantization methods:  
+* MCT's [API Docs](https://sony.github.io/model_optimization/api/api_docs/) is seperated per quantization methods:  
 
-  * [Post-training quantization](https://sony.github.io/model_optimization/docs/api/api_docs/index.html#ptq) | PTQ API docs
-  * [Gradient-based post-training quantization](https://sony.github.io/model_optimization/docs/api/api_docs/index.html#gptq) | GPTQ API docs
-  * [Quantization-aware training](https://sony.github.io/model_optimization/docs/api/api_docs/index.html#qat) | QAT API docs
+  * [Post-training quantization](https://sony.github.io/model_optimization/api/api_docs/index.html#ptq) | PTQ API docs
+  * [Gradient-based post-training quantization](https://sony.github.io/model_optimization/api/api_docs/index.html#gptq) | GPTQ API docs
+  * [Quantization-aware training](https://sony.github.io/model_optimization/api/api_docs/index.html#qat) | QAT API docs
     
-* [Debug](https://sony.github.io/model_optimization/docs/guidelines/visualization.html) – modify optimization process or generate explainable report
+* [Debug](https://sony.github.io/model_optimization/guidelines/visualization.html) – modify optimization process or generate explainable report
   
 * [Release notes](https://github.com/sony/model_optimization/releases)
 
@@ -115,8 +115,8 @@ You can customize data generation configurations to suit your specific needs. [G
 
 ### Quantization
 MCT supports different quantization methods:
-* Post-training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/keras_post_training_quantization.html), [PyTorch API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/pytorch_post_training_quantization.html)
-* Gradient-based post-training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/keras_gradient_post_training_quantization.html), [PyTorch API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/pytorch_gradient_post_training_quantization.html)
+* Post-training quantization (PTQ): [Keras API](https://sony.github.io/model_optimization/api/api_docs/methods/keras_post_training_quantization.html), [PyTorch API](https://sony.github.io/model_optimization/api/api_docs/methods/pytorch_post_training_quantization.html)
+* Gradient-based post-training quantization (GPTQ): [Keras API](https://sony.github.io/model_optimization/api/api_docs/methods/keras_gradient_post_training_quantization.html), [PyTorch API](https://sony.github.io/model_optimization/api/api_docs/methods/pytorch_gradient_post_training_quantization.html)
 * Quantization-aware training (QAT) [*](https://github.com/sony/model_optimization?tab=readme-ov-file#experimental-features)
 
 
@@ -141,7 +141,7 @@ Main features:
   * <ins>Outliers filtering:</ins> Computing z-score for activation statistics to detect and remove outliers.
 * <ins>Clustering:</ins> Using non-uniform quantization grid to quantize the weights and activations to match their distributions.[*](https://github.com/sony/model_optimization?tab=readme-ov-file#experimental-features)
 * <ins>Mixed-precision search:</ins> Assigning quantization bit-width per layer (for weights/activations), based on the layer's sensitivity to different bit-widths.
-* <ins>Visualization:</ins> You can use TensorBoard to observe useful information for troubleshooting the quantized model's performance (for example, the model in different phases of the quantization, collected statistics, similarity between layers of the float and quantized model and bit-width configuration for mixed-precision quantization). For more details, please read the [visualization documentation](https://sony.github.io/model_optimization/docs/guidelines/visualization.html).   
+* <ins>Visualization:</ins> You can use TensorBoard to observe useful information for troubleshooting the quantized model's performance (for example, the model in different phases of the quantization, collected statistics, similarity between layers of the float and quantized model and bit-width configuration for mixed-precision quantization). For more details, please read the [visualization documentation](https://sony.github.io/model_optimization/guidelines/visualization.html).   
 * <ins>Target Platform Capabilities:</ins> The Target Platform Capabilities (TPC) describes the target platform (an edge device with dedicated hardware). For more details, please read the [TPC README](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/README.md).   
 
 ### Enhanced Post-Training Quantization (EPTQ)
@@ -159,8 +159,8 @@ taking into account the target platform's Single Instruction, Multiple Data (SIM
 By pruning groups of channels (SIMD groups), our approach not only reduces model size 
 and complexity, but ensures that better utilization of channels is in line with the SIMD architecture 
 for a target Resource Utilization of weights memory footprint.
-[Keras API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/keras_pruning_experimental.html)
-[Pytorch API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/pytorch_pruning_experimental.html) 
+[Keras API](https://sony.github.io/model_optimization/api/api_docs/methods/keras_pruning_experimental.html)
+[Pytorch API](https://sony.github.io/model_optimization/api/api_docs/methods/pytorch_pruning_experimental.html) 
 
 #### Experimental features 
 
