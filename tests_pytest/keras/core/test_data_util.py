@@ -15,8 +15,9 @@
 import numpy as np
 import pytest
 
-from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader, TFDatasetFromGenerator
+from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader, TFDatasetFromGenerator, create_tf_dataloader, FixedTFDataset, IterableSampleWithConstInfoDataset, FixedSampleInfoDataset
 
+import tensorflow as tf
 
 @pytest.fixture(scope='session')
 def fixed_dataset():
@@ -46,46 +47,82 @@ def get_random_data_gen_fn(seed=42):
 
 
 class TestTFDataUtil:
-    create_dataloader_fn = data_gen_to_dataloader
 
-    def test_iterable_dataset_from_fixed_gen(self, fixed_gen):
-        """ tests iterable dataset from fixed gen - same samples are generated in each epoch in the same order """
-        ds = TFDatasetFromGenerator(fixed_gen, batch_size=1)
-        self._validate_ds_from_fixed_gen(ds, 320)
+    def test_create_tf_dataloader_tfdataset_from_generator(self, fixed_gen):
+        batch_size = 2
+        dataloader = data_gen_to_dataloader(fixed_gen, batch_size)
+        assert isinstance(dataloader, tf.data.Dataset)
+        assert len(list(dataloader)) == 320 // batch_size
 
-    def test_iterable_dataset_from_random_gen(self):
-        """ test that dataset samples over epochs are identical to the original data generator """
-        ds = TFDatasetFromGenerator(get_random_data_gen_fn(), batch_size=1)
-        pass1 = np.concatenate([t[0] for t in ds], axis=0)
-        pass2 = np.concatenate([t[0] for t in ds], axis=0)
+        for batch in dataloader:
+            inputs, labels = batch
+            assert inputs.shape == (batch_size, 3, 30, 20)
+            assert labels.shape == (batch_size, 10)
 
-        gen_fn = get_random_data_gen_fn()
-        # one invocation is used for validation and batch size in dataset, so promote the reference gen for comparison
-        next(gen_fn())
-        gen_pass1 = np.concatenate([t[0] for t in gen_fn()], axis=0)
-        gen_pass2 = np.concatenate([t[0] for t in gen_fn()], axis=0)
-        # check that each pass is identical to corresponding pass in the original gen
-        assert np.array_equal(pass1, gen_pass1)
-        assert np.array_equal(pass2, gen_pass2)
-        assert not np.allclose(pass1, pass2)
+    def test_create_tf_dataloader_fixed_tfdataset(self, fixed_gen):
+        n_samples = 64
+        dataset = FixedTFDataset(fixed_gen, n_samples=n_samples)
 
-    def test_dataloader(self, fixed_gen):
-        ds = TFDatasetFromGenerator(fixed_gen, batch_size=25)
-        ds_iter = iter(ds)
-        batch1 = next(ds_iter)
-        assert batch1[0].shape[0] == batch1[1].shape[0] == 25
-        assert np.array_equal(batch1[0][0], np.full((3, 30, 20), 0))
-        assert np.array_equal(batch1[1][0], np.full((10,), 10))
-        assert np.array_equal(batch1[0][-1], np.full((3, 30, 20), 24))
-        assert np.array_equal(batch1[1][-1], np.full((10,), 34))
-        assert len(ds) == 13
-        assert ds.orig_batch_size == 32
+        for i, sample in enumerate(dataset):
+            assert np.array_equal(sample[0].cpu().numpy(), np.full((3, 30, 20), i))
 
-    def _validate_ds_from_fixed_gen(self, ds, exp_len):
-        for _ in range(2):
-            for i, sample in enumerate(ds):
-                assert np.array_equal(sample[0].cpu().numpy(), np.full((1, 3, 30, 20), i))
-                assert np.array_equal(sample[1].cpu().numpy(), np.full((1, 10,), i + 10))
-            assert i == exp_len - 1
-            assert ds.orig_batch_size == 32
-            assert len(ds) == exp_len
+        batch_size = 16
+        dataloader = create_tf_dataloader(dataset, batch_size=batch_size)
+
+        assert isinstance(dataloader, tf.data.Dataset)
+        assert len(list(dataloader)) == n_samples // batch_size
+
+        for batch in dataloader:
+            inputs, labels = batch
+            assert inputs.shape == (batch_size, 3, 30, 20)
+            assert labels.shape == (batch_size, 10)
+
+    def test_fixed_tfdataset_too_many_requested_samples(self, fixed_gen):
+        n_samples = 321
+        with pytest.raises(Exception) as e_info:
+            FixedTFDataset(fixed_gen, n_samples=n_samples)
+        assert 'Not enough samples to create a dataset with 321 samples' in str(e_info)
+
+    def test_create_tf_dataloader_fixed_tfdataset_with_info(self, fixed_gen):
+        samples = []
+        for b in list(fixed_gen()):
+            samples.extend(tf.unstack(b[0], axis=0))
+            break # Take one batch only (since this tests fixed,small dataset)
+        dataset = FixedSampleInfoDataset(samples, [tf.range(32)])
+
+        for i, sample_with_info in enumerate(dataset):
+            sample, info = sample_with_info
+            assert np.array_equal(sample.cpu().numpy(), np.full((3, 30, 20), i))
+            assert info == (i,)
+
+        batch_size = 16
+        dataloader = create_tf_dataloader(dataset, batch_size=batch_size)
+
+        assert isinstance(dataloader, tf.data.Dataset)
+        assert len(list(dataloader)) == 32 // batch_size
+
+        for batch in dataloader:
+            samples, additional_info = batch
+            assert samples.shape == (batch_size, 3, 30, 20)
+            assert additional_info[0].shape == (batch_size,)
+
+    def test_create_tf_dataloader_iterable_tfdataset_with_const_info(self, fixed_gen):
+        iterable_ds = TFDatasetFromGenerator(fixed_gen)
+        dataset = IterableSampleWithConstInfoDataset(iterable_ds, tf.constant("some_string"))
+
+        for i, sample_with_info in enumerate(dataset):
+            sample, info = sample_with_info
+            assert np.array_equal(sample[0].cpu().numpy(), np.full((3, 30, 20), i))
+            assert info == tf.constant("some_string")
+
+        batch_size = 16
+        dataloader = create_tf_dataloader(dataset, batch_size=batch_size)
+
+        assert isinstance(dataloader, tf.data.Dataset)
+        assert len(list(dataloader)) == 320 // batch_size
+
+        for batch in dataloader:
+            samples, additional_info = batch
+            assert samples[0].shape == (batch_size, 3, 30, 20)
+            assert additional_info.shape == (batch_size,)
+            assert all(additional_info == tf.constant("some_string"))

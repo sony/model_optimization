@@ -22,6 +22,24 @@ import tensorflow as tf
 from typing import Callable, Generator, Sequence, Any
 
 
+def get_tensor_spec(item, ignore_batch_dim=False):
+    """
+    Get the TensorFlow TensorSpec for an item, optionally ignoring the first dimension.
+
+    Args:
+        item: The input item, which could be a tensor, tuple, or list.
+        ignore_batch_dim (bool): Whether to ignore the first dimension of the tensor shape.
+
+    Returns:
+        TensorSpec or a tuple of TensorSpecs.
+    """
+    if isinstance(item, (tuple, list)):
+        return tuple(get_tensor_spec(sub_item, ignore_batch_dim) for sub_item in item)
+
+    shape = item.shape[1:] if ignore_batch_dim else item.shape
+    return tf.TensorSpec(shape=shape, dtype=item.dtype)
+
+
 def flat_gen_fn(data_gen_fn: Callable[[], Generator]):
     """
     Convert data generator with arbitrary batch size to a flat (sample by sample) data generator.
@@ -40,19 +58,6 @@ def flat_gen_fn(data_gen_fn: Callable[[], Generator]):
 
     return gen
 
-# def flat_gen_fn2(data_gen_fn):
-#     def generator():
-#         for data in data_gen_fn():
-#             # Convert list to tuple or preserve dictionary
-#             if isinstance(data, list):
-#                 yield tuple(data)
-#             else:
-#                 yield data
-#     return generator
-
-
-
-
 class TFDatasetFromGenerator:
     """
     TensorFlow dataset from a data generator function, batched to a specified size.
@@ -69,13 +74,7 @@ class TFDatasetFromGenerator:
         self.orig_batch_size = inputs[0].shape[0]
         self._size = None
 
-        def get_tensor_spec(item):
-            if isinstance(item, (tuple, list)):
-                return tuple(get_tensor_spec(sub_item) for sub_item in item)
-            return tf.TensorSpec(shape=item.shape[1:], dtype=item.dtype)
-
-        output_signature = get_tensor_spec(inputs)
-
+        output_signature = get_tensor_spec(inputs, ignore_batch_dim=True)
         self.dataset = tf.data.Dataset.from_generator(flat_gen_fn(data_gen_fn), output_signature=output_signature)
 
 
@@ -180,11 +179,6 @@ def create_tf_dataloader(dataset, batch_size, shuffle=False, collate_fn=None):
             yield item
 
     dummy_input_tensors = next(generator())
-
-    def get_tensor_spec(item):
-        if isinstance(item, (tuple, list)):
-            return tuple(get_tensor_spec(sub_item) for sub_item in item)
-        return tf.TensorSpec(shape=item.shape, dtype=item.dtype)
 
     output_signature = get_tensor_spec(dummy_input_tensors)
 
