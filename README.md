@@ -50,9 +50,9 @@ MCT supports various quantization methods as appears below.
 
   Quantization Method  | Complexity | Computational Cost | API | Tutorial 
 -------------------- | -----------|--------------------|---------|--------
-PTQ (Post Training Quantization)  | Low | Low (~1-10 CPU minutes) | [PyTorch API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/pytorch_post_training_quantization.html) / [Keras API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/keras_post_training_quantization.html) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_post_training_quantization.ipynb"><img src="https://img.shields.io/badge/Pytorch-green"/></a> <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_post-training_quantization.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a>
-GPTQ (parameters fine-tuning using gradients)  | Moderate | Moderate (~1-3 GPU hours) | [PyTorch API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/pytorch_gradient_post_training_quantization.html) / [Keras API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/keras_gradient_post_training_quantization.html) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_mobilenet_gptq.ipynb"><img src="https://img.shields.io/badge/PyTorch-green"/></a> <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_mobilenet_gptq.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a> 
-QAT (Quantization Aware Training)  | High | High (~12-36 GPU hours) | [QAT API](https://sony.github.io/model_optimization/docs/api/api_docs/index.html#qat) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_qat.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a>
+PTQ (Post Training Quantization)  | Low | Low (~1-10 CPU minutes) | [PyTorch API](https://sony.github.io/model_optimization/api/api_docs/methods/pytorch_post_training_quantization.html) / [Keras API](https://sony.github.io/model_optimization/api/api_docs/methods/keras_post_training_quantization.html) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_post_training_quantization.ipynb"><img src="https://img.shields.io/badge/Pytorch-green"/></a> <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_post-training_quantization.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a>
+GPTQ (parameters fine-tuning using gradients)  | Moderate | Moderate (~1-3 GPU hours) | [PyTorch API](https://sony.github.io/model_optimization/api/api_docs/methods/pytorch_gradient_post_training_quantization.html) / [Keras API](https://sony.github.io/model_optimization/api/api_docs/methods/keras_gradient_post_training_quantization.html) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_mobilenet_gptq.ipynb"><img src="https://img.shields.io/badge/PyTorch-green"/></a> <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_mobilenet_gptq.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a> 
+QAT (Quantization Aware Training)  | High | High (~12-36 GPU hours) | [QAT API](https://sony.github.io/model_optimization/api/api_docs/index.html#qat) | <a href="https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_qat.ipynb"><img src="https://img.shields.io/badge/Keras-green"/></a>
 
 </p>    
 </div>
@@ -60,9 +60,9 @@ QAT (Quantization Aware Training)  | High | High (~12-36 GPU hours) | [QAT API](
 For each flow, **Quantization core** utilizes various algorithms and hyper-parameters for optimal [hardware-aware](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/target_platform_capabilities/README.md) quantization results. 
 For further details, please see [Supported features and algorithms](#high-level-features-and-techniques). 
 
-Required input: 
-- Floating point model - 32bit model in either .pt or .keras format
-- Representative dataset - can be either provided by the user, or generated utilizing the [Data Generation](#data-generation-) capability
+ **Required input**: Floating point model - 32bit model in either .pt or .keras format
+ 
+ **Optional input**: Representative dataset - can be either provided by the user, or generated utilizing the [Data Generation](#data-generation-) capability
 
 <div align="center">
 <p align="center">
@@ -95,13 +95,13 @@ Generates synthetic images based on the statistics stored in the model's batch n
 The specifications of the method are detailed in the paper: _"**Data Generation for Hardware-Friendly Post-Training Quantization**"_ [5].
 __________________________________________________________________________________________________________
 ### Structured Pruning [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_pruning_mnist.ipynb)
-Reduces model size/complexity and ensures better channels utilization by removing redundant input channels from layers and reconstruction of layer weights. Read more ([Pytorch API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/pytorch_pruning_experimental.html) / [Keras API](https://sony.github.io/model_optimization/docs/api/api_docs/methods/keras_pruning_experimental.html)).
+Reduces model size/complexity and ensures better channels utilization by removing redundant input channels from layers and reconstruction of layer weights. Read more ([Pytorch API](https://sony.github.io/model_optimization/api/api_docs/methods/pytorch_pruning_experimental.html) / [Keras API](https://sony.github.io/model_optimization/api/api_docs/methods/keras_pruning_experimental.html)).
 __________________________________________________________________________________________________________
 ### **Debugging and Visualization**
 **🎛️ Network Editor (Modify Quantization Configurations)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/keras/example_keras_network_editor.ipynb). 
-Modify your model's quantization configuration for specific layers or apply a custom edit rule (e.g adjust layer's bit-width) using MCT’s network editor
+Modify your model's quantization configuration for specific layers or apply a custom edit rule (e.g adjust layer's bit-width) using MCT’s network editor.
 
-**🖥️ Visualization**. Observe useful information for troubleshooting the quantized model's performance using TensorBoard. [Read more](https://sony.github.io/model_optimization/docs/guidelines/visualization.html).
+**🖥️ Visualization**. Observe useful information for troubleshooting the quantized model's performance using TensorBoard. [Read more](https://sony.github.io/model_optimization/guidelines/visualization.html).
 
 **🔑 XQuant (Explainable Quantization)** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sony/model_optimization/blob/main/tutorials/notebooks/mct_features_notebooks/pytorch/example_pytorch_xquant.ipynb). Get valuable insights regarding the quality and success of the quantization process of your model. The report includes histograms and similarity metrics between the original float model and the quantized model in key points of the model. The report can be visualized using TensorBoard.
 __________________________________________________________________________________________________________
@@ -111,15 +111,15 @@ The specifications of the algorithm are detailed in the paper: _"**EPTQ: Enhance
 More details on how to use EPTQ via MCT can be found in the [GPTQ guidelines](https://github.com/sony/model_optimization/blob/main/model_compression_toolkit/gptq/README.md).
 
 ## <div align="center">Resources</div>
-* [User Guide](https://sony.github.io/model_optimization/docs/index.html)  contains detailed information about MCT and guides you from installation through optimizing models for your edge AI applications.
+* [User Guide](https://sony.github.io/model_optimization/index.html)  contains detailed information about MCT and guides you from installation through optimizing models for your edge AI applications.
 
-* MCT's [API Docs](https://sony.github.io/model_optimization/docs/api/api_docs/) is seperated per quantization methods:  
+* MCT's [API Docs](https://sony.github.io/model_optimization/api/api_docs/) is separated per quantization methods:  
 
-  * [Post-training quantization](https://sony.github.io/model_optimization/docs/api/api_docs/index.html#ptq) | PTQ API docs
-  * [Gradient-based post-training quantization](https://sony.github.io/model_optimization/docs/api/api_docs/index.html#gptq) | GPTQ API docs
-  * [Quantization-aware training](https://sony.github.io/model_optimization/docs/api/api_docs/index.html#qat) | QAT API docs
+  * [Post-training quantization](https://sony.github.io/model_optimization/api/api_docs/index.html#ptq) | PTQ API docs
+  * [Gradient-based post-training quantization](https://sony.github.io/model_optimization/api/api_docs/index.html#gptq) | GPTQ API docs
+  * [Quantization-aware training](https://sony.github.io/model_optimization/api/api_docs/index.html#qat) | QAT API docs
     
-* [Debug](https://sony.github.io/model_optimization/docs/guidelines/visualization.html) – modify optimization process or generate explainable report
+* [Debug](https://sony.github.io/model_optimization/guidelines/visualization.html) – modify optimization process or generate an explainable report
   
 * [Release notes](https://github.com/sony/model_optimization/releases)
 
@@ -153,24 +153,14 @@ Currently, MCT is being tested on various Python, Pytorch and TensorFlow version
 <img src="/docsrc/images/PoseEst.png" width="200">
 <img src="/docsrc/images/ObjDet.png" width="200">
 
-  ### Pytorch
-We quantized classification networks from the torchvision library. 
-In the following table we present the ImageNet validation results for these models:
-
-| Network Name              | Float Accuracy  | 8Bit Accuracy   | Data-Free 8Bit Accuracy |
-|---------------------------|-----------------|-----------------|-------------------------|
-| MobileNet V2 [3]          | 71.886          | 71.444          |71.29|
-| ResNet-18 [3]             | 69.86           | 69.63           |69.53|
-| SqueezeNet 1.1 [3]        | 58.128          | 57.678          ||
-
-### Keras
 MCT can quantize an existing 32-bit floating-point model to an 8-bit fixed-point (or less) model without compromising accuracy. 
-Below is a graph of [MobileNetV2](https://keras.io/api/applications/mobilenet/) accuracy on ImageNet vs average bit-width of weights (X-axis), using 
-single-precision quantization, mixed-precision quantization, and mixed-precision quantization with GPTQ. 
+Below is a graph of [MobileNetV2](https://pytorch.org/vision/main/models/generated/torchvision.models.mobilenet_v2.html) accuracy on ImageNet vs average bit-width of weights (X-axis), using **single-precision** quantization, **mixed-precision** quantization, and mixed-precision quantization with GPTQ. 
 
-<img src="https://github.com/sony/model_optimization/raw/main/docsrc/images/mbv2_accuracy_graph.png">
+<p align="center">
+<img src="/docsrc/images/torch_mobilenetv2.png" width="800">
 
 For more results, please see [1]
+
 
 ### Pruning Results
 
@@ -183,19 +173,20 @@ Results for applying pruning to reduce the parameters of the following models by
 
 ## <div align="center">Troubleshooting and Community</div>
 
-If you encountered large accuracy degradation with MCT, check out the [Quantization Troubleshooting](https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md)
-for common pitfalls and some tools to improve quantized model's accuracy.
+If you encountered a large accuracy degradation with MCT, check out the [Quantization Troubleshooting](https://github.com/sony/model_optimization/tree/main/quantization_troubleshooting.md)
+for common pitfalls and some tools to improve the quantized model's accuracy.
 
 Check out the [FAQ](https://github.com/sony/model_optimization/tree/main/FAQ.md) for common issues. 
 
-You are welcome to ask questions and get support on our [issues section](https://github.com/sony/model_optimization/issues) and manage community discussions under [discussions section](https://github.com/sony/model_optimization/discussions).
+You are welcome to ask questions and get support on our [issues section](https://github.com/sony/model_optimization/issues) and manage community discussions under the [discussions section](https://github.com/sony/model_optimization/discussions).
 
 
 ## <div align="center">Contributions</div>
-MCT aims at keeping a more up-to-date fork and welcomes contributions from anyone.
+We'd love your input! MCT would not be possible without help from our community, and welcomes contributions from anyone! 
 
 *Checkout our [Contribution guide](https://github.com/sony/model_optimization/blob/main/CONTRIBUTING.md) for more details.
 
+Thank you 🙏 to all our contributors!
 
 ## <div align="center">License</div>
 MCT is licensed under Apache License Version 2.0. By contributing to the project, you agree to the license and copyright terms therein and release your contribution under these terms.
