@@ -15,7 +15,7 @@
 from typing import List, Tuple
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR, TFLITE_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel, Signedness, \
@@ -82,7 +82,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
 
     # We define a default config for operation without kernel attribute.
     # This is the default config that should be used for non-linear operations.
-    eight_bits_default = model_compression_toolkit.target_platform_capabilities.schema.v1.OpQuantizationConfig(
+    eight_bits_default = schema.OpQuantizationConfig(
         default_weight_attr_config=default_weight_attr_config,
         attr_weights_configs_mapping={},
         activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
@@ -96,7 +96,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         signedness=Signedness.AUTO)
 
     # We define an 8-bit config for linear operations quantization, that include a kernel and bias attributes.
-    linear_eight_bits = model_compression_toolkit.target_platform_capabilities.schema.v1.OpQuantizationConfig(
+    linear_eight_bits = schema.OpQuantizationConfig(
         activation_quantization_method=tp.QuantizationMethod.UNIFORM,
         default_weight_attr_config=default_weight_attr_config,
         attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config, BIAS_ATTR: bias_config},
@@ -136,12 +136,12 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
-    default_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([default_config])
+    default_configuration_options = schema.QuantizationConfigOptions([default_config])
 
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
-    generated_tpc = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+    generated_tpc = schema.TargetPlatformModel(
         default_configuration_options,
         tpc_minor_version=1,
         tpc_patch_version=0,
@@ -155,52 +155,52 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # In TFLite, the quantized operator specifications constraint operators quantization
         # differently. For more details:
         # https://www.tensorflow.org/lite/performance/quantization_spec#int8_quantized_operator_specifications
-        model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("NoQuantization",
-                                                                                      tp.get_default_quantization_config_options().clone_and_edit(
-                            quantization_preserving=True))
+        schema.OperatorsSet("NoQuantization",
+                               tp.get_default_quantization_config_options().clone_and_edit(
+                                   quantization_preserving=True))
 
         fc_qco = tp.get_default_quantization_config_options()
-        fc = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("FullyConnected",
-                                                                                           fc_qco.clone_and_edit_weight_attribute(weights_per_channel_threshold=False))
+        fc = schema.OperatorsSet("FullyConnected",
+                                    fc_qco.clone_and_edit_weight_attribute(weights_per_channel_threshold=False))
 
-        model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("L2Normalization",
-                                                                                      tp.get_default_quantization_config_options().clone_and_edit(
-                            fixed_zero_point=0, fixed_scale=1 / 128))
-        model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("LogSoftmax",
-                                                                                      tp.get_default_quantization_config_options().clone_and_edit(
-                            fixed_zero_point=127, fixed_scale=16 / 256))
-        model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Tanh",
-                                                                                      tp.get_default_quantization_config_options().clone_and_edit(
-                            fixed_zero_point=0, fixed_scale=1 / 128))
-        model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Softmax",
-                                                                                      tp.get_default_quantization_config_options().clone_and_edit(
-                            fixed_zero_point=-128, fixed_scale=1 / 256))
-        model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Logistic",
-                                                                                      tp.get_default_quantization_config_options().clone_and_edit(
-                            fixed_zero_point=-128, fixed_scale=1 / 256))
+        schema.OperatorsSet("L2Normalization",
+                               tp.get_default_quantization_config_options().clone_and_edit(
+                                   fixed_zero_point=0, fixed_scale=1 / 128))
+        schema.OperatorsSet("LogSoftmax",
+                               tp.get_default_quantization_config_options().clone_and_edit(
+                                   fixed_zero_point=127, fixed_scale=16 / 256))
+        schema.OperatorsSet("Tanh",
+                               tp.get_default_quantization_config_options().clone_and_edit(
+                                   fixed_zero_point=0, fixed_scale=1 / 128))
+        schema.OperatorsSet("Softmax",
+                               tp.get_default_quantization_config_options().clone_and_edit(
+                                   fixed_zero_point=-128, fixed_scale=1 / 256))
+        schema.OperatorsSet("Logistic",
+                               tp.get_default_quantization_config_options().clone_and_edit(
+                                   fixed_zero_point=-128, fixed_scale=1 / 256))
 
-        conv2d = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Conv2d")
-        kernel = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorSetConcat(conv2d, fc)
+        conv2d = schema.OperatorsSet("Conv2d")
+        kernel = schema.OperatorSetConcat(conv2d, fc)
 
-        relu = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Relu")
-        elu = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Elu")
-        activations_to_fuse = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorSetConcat(relu, elu)
+        relu = schema.OperatorsSet("Relu")
+        elu = schema.OperatorsSet("Elu")
+        activations_to_fuse = schema.OperatorSetConcat(relu, elu)
 
-        batch_norm = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("BatchNorm")
-        bias_add = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("BiasAdd")
-        add = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Add")
-        squeeze = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Squeeze",
-                                                                                                qc_options=tp.get_default_quantization_config_options().clone_and_edit(
-                                      quantization_preserving=True))
+        batch_norm = schema.OperatorsSet("BatchNorm")
+        bias_add = schema.OperatorsSet("BiasAdd")
+        add = schema.OperatorsSet("Add")
+        squeeze = schema.OperatorsSet("Squeeze",
+                                         qc_options=tp.get_default_quantization_config_options().clone_and_edit(
+                                             quantization_preserving=True))
         # ------------------- #
         # Fusions
         # ------------------- #
         # Source: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/grappler/optimizers/remapper
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([kernel, bias_add])
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([kernel, bias_add, activations_to_fuse])
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv2d, batch_norm, activations_to_fuse])
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv2d, squeeze, activations_to_fuse])
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([batch_norm, activations_to_fuse])
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([batch_norm, add, activations_to_fuse])
+        schema.Fusing([kernel, bias_add])
+        schema.Fusing([kernel, bias_add, activations_to_fuse])
+        schema.Fusing([conv2d, batch_norm, activations_to_fuse])
+        schema.Fusing([conv2d, squeeze, activations_to_fuse])
+        schema.Fusing([batch_norm, activations_to_fuse])
+        schema.Fusing([batch_norm, add, activations_to_fuse])
 
     return generated_tpc

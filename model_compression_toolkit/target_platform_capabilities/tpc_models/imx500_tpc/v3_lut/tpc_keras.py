@@ -15,7 +15,7 @@
 import tensorflow as tf
 from packaging import version
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.verify_packages import FOUND_SONY_CUSTOM_LAYERS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, \
@@ -49,7 +49,7 @@ def get_keras_tpc() -> tp.TargetPlatformCapabilities:
     return generate_keras_tpc(name='imx500_tpc_keras_tpc', tp_model=imx500_tpc_tp_model)
 
 
-def generate_keras_tpc(name: str, tp_model: model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel):
+def generate_keras_tpc(name: str, tp_model: TargetPlatformModel):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
 

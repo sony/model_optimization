@@ -19,7 +19,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.constants import THRESHOLD, RANGE_MAX, NUM_QPARAM_HESSIAN_SAMPLES
@@ -87,7 +87,8 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                                 representative_dataset,
                                                 lambda name, _tp: tpc_fn(quant_method, per_channel),
                                                 qc=self.qc,
-                                                running_gptq=running_gptq  # to enable HMSE in params calculation if needed
+                                                running_gptq=running_gptq
+                                                # to enable HMSE in params calculation if needed
                                                 )
 
         self.his = HessianInfoService(graph=self.graph, fw_impl=self.keras_impl)
@@ -124,42 +125,36 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
         _run_node_verification(layers.Dense)
 
     def test_pot_threshold_selection_hmse_per_channel(self):
-
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO, per_channel=True)
         calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
                                       hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(THRESHOLD)
 
     def test_pot_threshold_selection_hmse_per_tensor(self):
-
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO, per_channel=False)
         calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
                                       hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(THRESHOLD)
 
     def test_symmetric_threshold_selection_hmse_per_channel(self):
-
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.SYMMETRIC, per_channel=True)
         calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
                                       hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(THRESHOLD)
 
     def test_symmetric_threshold_selection_hmse_per_tensor(self):
-
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.SYMMETRIC, per_channel=False)
         calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
                                       hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(THRESHOLD)
 
     def test_usniform_threshold_selection_hmse_per_channel(self):
-
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.UNIFORM, per_channel=True)
         calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
                                       hessian_info_service=self.his, num_hessian_samples=1)
         self._verify_params_calculation_execution(RANGE_MAX)
 
     def test_uniform_threshold_selection_hmse_per_tensor(self):
-
         self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.UNIFORM, per_channel=False)
         calculate_quantization_params(self.graph, fw_impl=self.keras_impl, repr_data_gen_fn=representative_dataset,
                                       hessian_info_service=self.his, num_hessian_samples=1)
@@ -170,27 +165,28 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
             self._setup_with_args(quant_method=mct.target_platform.QuantizationMethod.SYMMETRIC, per_channel=True,
                                   running_gptq=False)
         self.assertTrue('The HMSE error method for parameters selection is only supported when running GPTQ '
-                        'optimization due to long execution time that is not suitable for basic PTQ.' in e.exception.args[0])
+                        'optimization due to long execution time that is not suitable for basic PTQ.' in
+                        e.exception.args[0])
 
     def test_threshold_selection_hmse_no_kernel_attr(self):
         def _generate_bn_quantization_tpc(quant_method, per_channel):
             cfg, _, _ = get_op_quantization_configs()
-            conv_qco = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([cfg], base_config=cfg)
+            conv_qco = schema.QuantizationConfigOptions([cfg], base_config=cfg)
 
             # enable BN attributes quantization using the
             bn_qco = conv_qco.clone_and_edit(attr_weights_configs_mapping=
                                              {GAMMA: AttributeQuantizationConfig(weights_n_bits=8,
                                                                                  enable_weights_quantization=True)})
 
-            tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(conv_qco,
-                                                                                                            tpc_minor_version=None,
-                                                                                                            tpc_patch_version=None,
-                                                                                                            tpc_platform_type=None,
-                                                                                                            add_metadata=False)
+            tp_model = schema.TargetPlatformModel(conv_qco,
+                                                  tpc_minor_version=None,
+                                                  tpc_patch_version=None,
+                                                  tpc_platform_type=None,
+                                                  add_metadata=False)
 
             with tp_model:
-                model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Linear", conv_qco)
-                model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("BN", bn_qco)
+                schema.OperatorsSet("Linear", conv_qco)
+                schema.OperatorsSet("BN", bn_qco)
 
             tpc = tp.TargetPlatformCapabilities(tp_model)
 

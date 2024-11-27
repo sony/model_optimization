@@ -16,17 +16,19 @@ import torch
 import numpy as np
 from torch.nn import Conv2d
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.core.pytorch.constants import BIAS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, OperationsSetToLayers
+from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, \
+    OperationsSetToLayers
 from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel, OperatorsSet, \
     QuantizationConfigOptions
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model, get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model, \
+    get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -139,25 +141,25 @@ class MixedPrecisionSearchPartWeightsLayers(MixedPrecisionBaseTest):
 
         two_bit_cfg = mixed_precision_cfg_list[2]
 
-        weight_mixed_cfg = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(
+        weight_mixed_cfg = schema.QuantizationConfigOptions(
             mixed_precision_cfg_list,
             base_config=cfg,
         )
 
-        weight_fixed_cfg = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(
+        weight_fixed_cfg = schema.QuantizationConfigOptions(
             [two_bit_cfg],
             base_config=two_bit_cfg,
         )
 
-        tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+        tp_model = schema.TargetPlatformModel(
             weight_fixed_cfg,
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
             name="mp_part_weights_layers_test")
         with tp_model:
-            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Weights_mp", weight_mixed_cfg)
-            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Weights_fixed", weight_fixed_cfg)
+            schema.OperatorsSet("Weights_mp", weight_mixed_cfg)
+            schema.OperatorsSet("Weights_fixed", weight_fixed_cfg)
 
         pytorch_tpc = tp.TargetPlatformCapabilities(tp_model)
 
@@ -209,6 +211,7 @@ class MixedPrecisionSearchPartWeightsLayers(MixedPrecisionBaseTest):
         for i in range(q_weights.shape[0]):
             self.unit_test.assertTrue(
                 np.unique(q_weights[i, :]).flatten().shape[0] <= 4)
+
 
 class MixedPrecisionSearch2Bit(MixedPrecisionBaseTest):
     def __init__(self, unit_test):

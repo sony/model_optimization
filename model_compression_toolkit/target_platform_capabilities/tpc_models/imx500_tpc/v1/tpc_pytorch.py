@@ -23,13 +23,12 @@ from torch.nn import Dropout, Flatten, Hardtanh
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, LeakyReLU
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, leaky_relu
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL, \
     BIAS
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import get_tp_model
 import model_compression_toolkit as mct
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1 import __version__ as TPC_VERSION
 
 tp = mct.target_platform
 
@@ -43,7 +42,7 @@ def get_pytorch_tpc() -> tp.TargetPlatformCapabilities:
     return generate_pytorch_tpc(name='imx500_tpc_pytorch_tpc', tp_model=imx500_tpc_tp_model)
 
 
-def generate_pytorch_tpc(name: str, tp_model: model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel):
+def generate_pytorch_tpc(name: str, tp_model: TargetPlatformModel):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
     Args:

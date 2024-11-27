@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config
+from mct_quantizers.common.quant_info import QuantizationMethod
+
 from tests.common_tests.base_feature_test import BaseFeatureNetworkTest
 import model_compression_toolkit as mct
 import tensorflow as tf
@@ -30,8 +31,8 @@ class TanhActivationTest(BaseKerasFeatureNetworkTest):
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
-                                      model_compression_toolkit.target_platform_capabilities.target_platform.QuantizationMethod.POWER_OF_TWO,
-                                      model_compression_toolkit.target_platform_capabilities.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                      QuantizationMethod.POWER_OF_TWO,
+                                      QuantizationMethod.POWER_OF_TWO,
                                       16, 16, True, True, True)
 
     def create_networks(self):

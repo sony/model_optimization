@@ -17,7 +17,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
 from model_compression_toolkit.target_platform_capabilities.schema.v1 import Signedness
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
@@ -61,7 +61,7 @@ class ConstQuantizationTest(BasePytorchFeatureNetworkTest):
         self.input_reverse_order = input_reverse_order
 
     def generate_inputs(self):
-        return [np.random.random(in_shape)+1 for in_shape in self.get_input_shapes()]
+        return [np.random.random(in_shape) + 1 for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
         return mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v3")
@@ -118,7 +118,7 @@ class AdvancedConstQuantizationTest(BasePytorchFeatureNetworkTest):
         return mct.core.ResourceUtilization(9e3)
 
     def generate_inputs(self):
-        return [np.random.random(in_shape)+1 for in_shape in self.get_input_shapes()]
+        return [np.random.random(in_shape) + 1 for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
         return mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v3")
@@ -155,7 +155,7 @@ class MultiInputConstQuantizationNet(nn.Module):
         self.register_buffer('concatenate_const_3', to_torch_tensor(np.random.randint(-128, 127, size=(1, 3, 36, 36))))
         self.register_buffer('stack_const_1', to_torch_tensor(np.random.randint(-128, 127, size=(1, 39, 36, 36))))
         self.register_buffer('stack_const_2', to_torch_tensor(np.random.randint(-128, 127, size=(1, 39, 36, 36))))
-        self.register_buffer('gather_const', to_torch_tensor(np.random.randint(-128, 127, size=(1, 2*36*36))))
+        self.register_buffer('gather_const', to_torch_tensor(np.random.randint(-128, 127, size=(1, 2 * 36 * 36))))
 
     def forward(self, x):
         x = torch.cat([self.cat_const_1, x, self.cat_const_2], dim=2)
@@ -164,9 +164,9 @@ class MultiInputConstQuantizationNet(nn.Module):
                                self.concatenate_const_2, x,
                                self.concatenate_const_3, self.concatenate_const_1], dim=1)
         x = torch.stack([self.stack_const_1, x, self.stack_const_2], dim=1)
-        x = torch.reshape(x, (1, 3*39, 36, 36))
+        x = torch.reshape(x, (1, 3 * 39, 36, 36))
 
-        inds = torch.argmax(torch.reshape(x, (-1, 117, 36*36)), dim=2)
+        inds = torch.argmax(torch.reshape(x, (-1, 117, 36 * 36)), dim=2)
         b = torch.reshape(torch.gather(self.gather_const, 1, inds), (-1, 117, 1, 1))
         return x + b
 
@@ -204,9 +204,11 @@ class ConstQuantizationMultiInputTest(BasePytorchFeatureNetworkTest):
 class ExpandConstQuantizationNet(nn.Module):
     def __init__(self, batch_size):
         super().__init__()
-        self.register_buffer('cat_const', to_torch_tensor(np.random.randint(-128, 127, size=(batch_size, 3, 32, 32)).astype(np.float32)))
+        self.register_buffer('cat_const', to_torch_tensor(
+            np.random.randint(-128, 127, size=(batch_size, 3, 32, 32)).astype(np.float32)))
         self.register_parameter('expand_const',
-                                nn.Parameter(to_torch_tensor(np.random.randint(-128, 127, size=(1, 2, 32, 1)).astype(np.float32)),
+                                nn.Parameter(to_torch_tensor(
+                                    np.random.randint(-128, 127, size=(1, 2, 32, 1)).astype(np.float32)),
                                              requires_grad=False))
 
     def forward(self, x):
@@ -226,34 +228,35 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
     def get_tpc(self):
         tp = mct.target_platform
         attr_cfg = generate_test_attr_configs()
-        base_cfg = model_compression_toolkit.target_platform_capabilities.schema.v1.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-                                                                                                         enable_activation_quantization=True,
-                                                                                                         activation_n_bits=32,
-                                                                                                         supported_input_activation_n_bits=32,
-                                                                                                         default_weight_attr_config=attr_cfg[DEFAULT_WEIGHT_ATTR_CONFIG],
-                                                                                                         attr_weights_configs_mapping={},
-                                                                                                         quantization_preserving=False,
-                                                                                                         fixed_scale=1.0,
-                                                                                                         fixed_zero_point=0,
-                                                                                                         simd_size=32,
-                                                                                                         signedness=Signedness.AUTO)
+        base_cfg = schema.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+                                               enable_activation_quantization=True,
+                                               activation_n_bits=32,
+                                               supported_input_activation_n_bits=32,
+                                               default_weight_attr_config=attr_cfg[DEFAULT_WEIGHT_ATTR_CONFIG],
+                                               attr_weights_configs_mapping={},
+                                               quantization_preserving=False,
+                                               fixed_scale=1.0,
+                                               fixed_zero_point=0,
+                                               simd_size=32,
+                                               signedness=Signedness.AUTO)
 
-        default_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([base_cfg])
+        default_configuration_options = schema.QuantizationConfigOptions([base_cfg])
 
         const_config = base_cfg.clone_and_edit(enable_activation_quantization=False,
                                                default_weight_attr_config=base_cfg.default_weight_attr_config.clone_and_edit(
-                                                   enable_weights_quantization=True, weights_per_channel_threshold=False,
+                                                   enable_weights_quantization=True,
+                                                   weights_per_channel_threshold=False,
                                                    weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO))
-        const_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([const_config])
+        const_configuration_options = schema.QuantizationConfigOptions([const_config])
 
-        tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+        tp_model = schema.TargetPlatformModel(
             default_configuration_options,
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
             add_metadata=False)
         with tp_model:
-            model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("WeightQuant", const_configuration_options)
+            schema.OperatorsSet("WeightQuant", const_configuration_options)
 
         tpc = tp.TargetPlatformCapabilities(tp_model)
         with tpc:

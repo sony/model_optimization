@@ -17,7 +17,7 @@ from typing import List, Tuple
 import tensorflow as tf
 from packaging import version
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS, \
     KERAS_DEPTHWISE_KERNEL, WEIGHTS_N_BITS
@@ -66,41 +66,41 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                       base_config: OpQuantizationConfig,
                       mixed_precision_cfg_list: List[OpQuantizationConfig],
                       name: str) -> TargetPlatformModel:
-    default_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(
+    default_configuration_options = schema.QuantizationConfigOptions(
         [default_config])
-    generated_tpc = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+    generated_tpc = schema.TargetPlatformModel(
         default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,
         tpc_platform_type=None,
         add_metadata=False, name=name)
     with generated_tpc:
-        model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("NoQuantization",
-                                                                                      tp.get_default_quantization_config_options()
-                                                                                      .clone_and_edit(enable_activation_quantization=False)
-                                                                                      .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+        schema.OperatorsSet("NoQuantization",
+                            tp.get_default_quantization_config_options()
+                            .clone_and_edit(enable_activation_quantization=False)
+                            .clone_and_edit_weight_attribute(enable_weights_quantization=False))
 
-        mixed_precision_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(mixed_precision_cfg_list,
-                                                                                                                                           base_config=base_config)
+        mixed_precision_configuration_options = schema.QuantizationConfigOptions(mixed_precision_cfg_list,
+                                                                                 base_config=base_config)
 
-        conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Conv", mixed_precision_configuration_options)
-        fc = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
+        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+        fc = schema.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
 
-        any_relu = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("AnyReLU")
-        add = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Add")
-        sub = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Sub")
-        mul = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Mul")
-        div = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Div")
-        prelu = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("PReLU")
-        swish = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Swish")
-        sigmoid = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Sigmoid")
-        tanh = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Tanh")
-        activations_after_conv_to_fuse = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorSetConcat(any_relu, swish, prelu, sigmoid, tanh)
-        activations_after_fc_to_fuse = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorSetConcat(any_relu, swish, sigmoid)
-        any_binary = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorSetConcat(add, sub, mul, div)
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, activations_after_conv_to_fuse])
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([fc, activations_after_fc_to_fuse])
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([any_binary, any_relu])
+        any_relu = schema.OperatorsSet("AnyReLU")
+        add = schema.OperatorsSet("Add")
+        sub = schema.OperatorsSet("Sub")
+        mul = schema.OperatorsSet("Mul")
+        div = schema.OperatorsSet("Div")
+        prelu = schema.OperatorsSet("PReLU")
+        swish = schema.OperatorsSet("Swish")
+        sigmoid = schema.OperatorsSet("Sigmoid")
+        tanh = schema.OperatorsSet("Tanh")
+        activations_after_conv_to_fuse = schema.OperatorSetConcat(any_relu, swish, prelu, sigmoid, tanh)
+        activations_after_fc_to_fuse = schema.OperatorSetConcat(any_relu, swish, sigmoid)
+        any_binary = schema.OperatorSetConcat(add, sub, mul, div)
+        schema.Fusing([conv, activations_after_conv_to_fuse])
+        schema.Fusing([fc, activations_after_fc_to_fuse])
+        schema.Fusing([any_binary, any_relu])
 
     return generated_tpc
 
@@ -110,7 +110,7 @@ def get_int8_tpc(edit_weights_params_dict={}, edit_act_params_dict={}) -> tp.Tar
     return generate_keras_tpc(name='int8_tpc', tp_model=default_tp_model)
 
 
-def generate_keras_tpc(name: str, tp_model: model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel):
+def generate_keras_tpc(name: str, tp_model: schema.TargetPlatformModel):
     keras_tpc = tp.TargetPlatformCapabilities(tp_model)
 
     with keras_tpc:

@@ -16,7 +16,7 @@ import tensorflow as tf
 
 from packaging import version
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, \
     KERAS_DEPTHWISE_KERNEL, BIAS
@@ -42,7 +42,7 @@ def get_keras_tpc() -> tp.TargetPlatformCapabilities:
     return generate_keras_tpc(name='qnnpack_keras', tp_model=qnnpack_tp_model)
 
 
-def generate_keras_tpc(name: str, tp_model: model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel):
+def generate_keras_tpc(name: str, tp_model: schema.TargetPlatformModel):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
 

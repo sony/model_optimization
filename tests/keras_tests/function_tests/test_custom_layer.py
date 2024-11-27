@@ -18,7 +18,7 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
 from model_compression_toolkit.target_platform_capabilities.schema.v1 import Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
@@ -64,35 +64,35 @@ def get_tpc():
     """
     tp = mct.target_platform
     attr_cfg = generate_test_attr_configs(kernel_lut_values_bitwidth=0)
-    base_cfg = model_compression_toolkit.target_platform_capabilities.schema.v1.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
-                                                                                                     enable_activation_quantization=True,
-                                                                                                     activation_n_bits=32,
-                                                                                                     supported_input_activation_n_bits=32,
-                                                                                                     default_weight_attr_config=attr_cfg[DEFAULT_WEIGHT_ATTR_CONFIG],
-                                                                                                     attr_weights_configs_mapping={},
-                                                                                                     quantization_preserving=False,
-                                                                                                     fixed_scale=1.0,
-                                                                                                     fixed_zero_point=0,
-                                                                                                     simd_size=32,
-                                                                                                     signedness=Signedness.AUTO)
+    base_cfg = schema.OpQuantizationConfig(activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
+                                           enable_activation_quantization=True,
+                                           activation_n_bits=32,
+                                           supported_input_activation_n_bits=32,
+                                           default_weight_attr_config=attr_cfg[DEFAULT_WEIGHT_ATTR_CONFIG],
+                                           attr_weights_configs_mapping={},
+                                           quantization_preserving=False,
+                                           fixed_scale=1.0,
+                                           fixed_zero_point=0,
+                                           simd_size=32,
+                                           signedness=Signedness.AUTO)
 
-    default_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([base_cfg])
-    tp_model = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(default_configuration_options,
-                                                                                                    tpc_minor_version=None,
-                                                                                                    tpc_patch_version=None,
-                                                                                                    tpc_platform_type=None,
-                                                                                                    add_metadata=False)
+    default_configuration_options = schema.QuantizationConfigOptions([base_cfg])
+    tp_model = schema.TargetPlatformModel(default_configuration_options,
+                                          tpc_minor_version=None,
+                                          tpc_patch_version=None,
+                                          tpc_platform_type=None,
+                                          add_metadata=False)
     with tp_model:
         default_qco = tp.get_default_quantization_config_options()
-        model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("NoQuantization",
-                                                                                      default_qco.clone_and_edit(enable_activation_quantization=False)
-                                                                                      .clone_and_edit_weight_attribute(enable_weights_quantization=False))
+        schema.OperatorsSet("NoQuantization",
+                            default_qco.clone_and_edit(enable_activation_quantization=False)
+                            .clone_and_edit_weight_attribute(enable_weights_quantization=False))
 
     tpc = tp.TargetPlatformCapabilities(tp_model)
     with tpc:
         # No need to quantize Flatten and Dropout layers
         tp.OperationsSetToLayers("NoQuantization", [CustomIdentity,
-                                                    tp.LayerFilterParams(CustomIdentityWithArg, dummy_arg=0),])
+                                                    tp.LayerFilterParams(CustomIdentityWithArg, dummy_arg=0), ])
 
     return tpc
 
@@ -111,7 +111,8 @@ class TestCustomLayer(unittest.TestCase):
 
         # verify the custom layer is in the quantized model
         self.assertTrue(isinstance(q_model.layers[2], CustomIdentity), 'Custom layer should be in the quantized model')
-        self.assertTrue(isinstance(q_model.layers[3], CustomIdentityWithArg), 'Custom layer should be in the quantized model')
+        self.assertTrue(isinstance(q_model.layers[3], CustomIdentityWithArg),
+                        'Custom layer should be in the quantized model')
         # verify the custom layer isn't quantized
         self.assertTrue(len(q_model.layers) == 4,
                         'Quantized model should have only 3 layers: Input, KerasActivationQuantizationHolder, CustomIdentity & CustomIdentityWithArg')

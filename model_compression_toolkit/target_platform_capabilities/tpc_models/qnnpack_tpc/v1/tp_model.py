@@ -15,7 +15,7 @@
 from typing import List, Tuple
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, QNNPACK_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel, Signedness, \
@@ -84,7 +84,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
 
     # We define a default config for operation without kernel attribute.
     # This is the default config that should be used for non-linear operations.
-    eight_bits_default = model_compression_toolkit.target_platform_capabilities.schema.v1.OpQuantizationConfig(
+    eight_bits_default = schema.OpQuantizationConfig(
         default_weight_attr_config=default_weight_attr_config,
         attr_weights_configs_mapping={},
         activation_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
@@ -98,7 +98,7 @@ def get_op_quantization_configs() -> Tuple[OpQuantizationConfig, List[OpQuantiza
         signedness=Signedness.AUTO)
 
     # We define an 8-bit config for linear operations quantization, that include a kernel and bias attributes.
-    linear_eight_bits = model_compression_toolkit.target_platform_capabilities.schema.v1.OpQuantizationConfig(
+    linear_eight_bits = schema.OpQuantizationConfig(
         activation_quantization_method=tp.QuantizationMethod.UNIFORM,
         default_weight_attr_config=default_weight_attr_config,
         attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config, BIAS_ATTR: bias_config},
@@ -138,12 +138,12 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
-    default_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([default_config])
+    default_configuration_options = schema.QuantizationConfigOptions([default_config])
 
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
-    generated_tpc = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+    generated_tpc = schema.TargetPlatformModel(
         default_configuration_options,
         tpc_minor_version=1,
         tpc_patch_version=0,
@@ -158,17 +158,17 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # Pytorch supports the next fusing patterns:
         # [Conv, Relu], [Conv, BatchNorm], [Conv, BatchNorm, Relu], [Linear, Relu]
         # Source: # https://pytorch.org/docs/stable/quantization.html#model-preparation-for-quantization-eager-mode
-        conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Conv")
-        batchnorm = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("BatchNorm")
-        relu = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Relu")
-        linear = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Linear")
+        conv = schema.OperatorsSet("Conv")
+        batchnorm = schema.OperatorsSet("BatchNorm")
+        relu = schema.OperatorsSet("Relu")
+        linear = schema.OperatorsSet("Linear")
 
         # ------------------- #
         # Fusions
         # ------------------- #
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, batchnorm, relu])
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, batchnorm])
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, relu])
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([linear, relu])
+        schema.Fusing([conv, batchnorm, relu])
+        schema.Fusing([conv, batchnorm])
+        schema.Fusing([conv, relu])
+        schema.Fusing([linear, relu])
 
     return generated_tpc

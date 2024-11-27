@@ -33,14 +33,18 @@ class TargetPlatformCapabilities(ImmutableClass):
     """
     Attach framework information to a modeled hardware.
     """
-    def __init__(self, tp_model: TargetPlatformModel):
+    def __init__(self,
+                 tp_model: TargetPlatformModel,
+                 name: str = "base"):
         """
 
         Args:
             tp_model (TargetPlatformModel): Modeled hardware to attach framework information to.
+            name (str): Name of the TargetPlatformCapabilities.
         """
 
         super().__init__()
+        self.name = name
         assert isinstance(tp_model, TargetPlatformModel), f'Target platform model that was passed to TargetPlatformCapabilities must be of type TargetPlatformModel, but has type of {type(tp_model)}'
         self.tp_model = tp_model
         self.op_sets_to_layers = OperationsToLayers() # Init an empty OperationsToLayers
@@ -107,7 +111,9 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         """
         return {"Target Platform Capabilities": self.name,
-                "Version": self.version,
+                "Minor version": self.tp_model.tpc_minor_version,
+                "Patch version": self.tp_model.tpc_patch_version,
+                "Platform type": self.tp_model.tpc_platform_type,
                 "Target Platform Model": self.tp_model.get_info(),
                 "Operations to layers": {op2layer.name:[l.__name__ for l in op2layer.layers] for op2layer in self.op_sets_to_layers.op_sets_to_layers}}
 

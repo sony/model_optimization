@@ -16,11 +16,12 @@ import torch
 from torch import nn
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
 from mct_quantizers import QuantizationMethod, PytorchQuantizationWrapper
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core.pytorch.constants import GAMMA, BETA
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS, BIAS_ATTR
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS, \
+    BIAS_ATTR
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, \
     DEFAULT_WEIGHT_ATTR_CONFIG, KERNEL_BASE_CONFIG, generate_test_op_qc, BIAS_CONFIG
 from model_compression_toolkit.target_platform_capabilities.schema.v1 import Signedness
@@ -51,35 +52,35 @@ def _generate_bn_quantized_tpm(quantize_linear):
                                        bias_config=attr_cfgs_dict[BIAS_CONFIG],
                                        enable_activation_quantization=False)
 
-    bn_op_qc = model_compression_toolkit.target_platform_capabilities.schema.v1.OpQuantizationConfig(enable_activation_quantization=False,
-                                                                                                     default_weight_attr_config=default_attr_cfg,
-                                                                                                     attr_weights_configs_mapping={BETA: bn_attr_cfg, GAMMA: bn_attr_cfg},
-                                                                                                     activation_n_bits=8,
-                                                                                                     supported_input_activation_n_bits=8,
-                                                                                                     activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-                                                                                                     quantization_preserving=False,
-                                                                                                     fixed_scale=None,
-                                                                                                     fixed_zero_point=None,
-                                                                                                     simd_size=32,
-                                                                                                     signedness=Signedness.AUTO)
+    bn_op_qc = schema.OpQuantizationConfig(enable_activation_quantization=False,
+                                           default_weight_attr_config=default_attr_cfg,
+                                           attr_weights_configs_mapping={BETA: bn_attr_cfg, GAMMA: bn_attr_cfg},
+                                           activation_n_bits=8,
+                                           supported_input_activation_n_bits=8,
+                                           activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                                           quantization_preserving=False,
+                                           fixed_scale=None,
+                                           fixed_zero_point=None,
+                                           simd_size=32,
+                                           signedness=Signedness.AUTO)
 
-    default_op_qc = model_compression_toolkit.target_platform_capabilities.schema.v1.OpQuantizationConfig(enable_activation_quantization=False,
-                                                                                                          default_weight_attr_config=default_attr_cfg,
-                                                                                                          attr_weights_configs_mapping={},
-                                                                                                          activation_n_bits=8,
-                                                                                                          supported_input_activation_n_bits=8,
-                                                                                                          activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-                                                                                                          quantization_preserving=False,
-                                                                                                          fixed_scale=None,
-                                                                                                          fixed_zero_point=None,
-                                                                                                          simd_size=32,
-                                                                                                          signedness=Signedness.AUTO)
+    default_op_qc = schema.OpQuantizationConfig(enable_activation_quantization=False,
+                                                default_weight_attr_config=default_attr_cfg,
+                                                attr_weights_configs_mapping={},
+                                                activation_n_bits=8,
+                                                supported_input_activation_n_bits=8,
+                                                activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                                                quantization_preserving=False,
+                                                fixed_scale=None,
+                                                fixed_zero_point=None,
+                                                simd_size=32,
+                                                signedness=Signedness.AUTO)
 
-    default_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([default_op_qc])
-    linear_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([linear_op_qc])
-    bn_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([bn_op_qc])
+    default_configuration_options = schema.QuantizationConfigOptions([default_op_qc])
+    linear_configuration_options = schema.QuantizationConfigOptions([linear_op_qc])
+    bn_configuration_options = schema.QuantizationConfigOptions([bn_op_qc])
 
-    generated_tpm = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+    generated_tpm = schema.TargetPlatformModel(
         default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,
@@ -87,9 +88,8 @@ def _generate_bn_quantized_tpm(quantize_linear):
         add_metadata=False, name='bn_quantized_tpm')
 
     with generated_tpm:
-
-        model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Conv", linear_configuration_options)
-        model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("BN", bn_configuration_options)
+        schema.OperatorsSet("Conv", linear_configuration_options)
+        schema.OperatorsSet("BN", bn_configuration_options)
 
     return generated_tpm
 

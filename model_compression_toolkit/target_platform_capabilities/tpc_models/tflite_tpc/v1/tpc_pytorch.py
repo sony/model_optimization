@@ -16,7 +16,7 @@ import torch
 from torch.nn import AvgPool2d, MaxPool2d
 from torch.nn.functional import avg_pool2d, max_pool2d, interpolate
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR, \
     BIAS
@@ -38,7 +38,7 @@ def get_pytorch_tpc() -> tp.TargetPlatformCapabilities:
     return generate_pytorch_tpc(name='tflite_torch', tp_model=tflite_tp_model)
 
 
-def generate_pytorch_tpc(name: str, tp_model: model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel):
+def generate_pytorch_tpc(name: str, tp_model: schema.TargetPlatformModel):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
     Args:

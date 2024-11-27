@@ -17,7 +17,7 @@ import tensorflow as tf
 import numpy as np
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import generate_tp_model, \
     get_op_quantization_configs
@@ -49,11 +49,11 @@ def create_const_quant_tpc(qmethod):
         default_weight_attr_config=default_cfg.default_weight_attr_config.clone_and_edit(
             enable_weights_quantization=True, weights_per_channel_threshold=True,
             weights_n_bits=16, weights_quantization_method=qmethod))
-    const_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([const_config])
+    const_configuration_options = schema.QuantizationConfigOptions([const_config])
     const_merge_config = default_cfg.clone_and_edit(
         default_weight_attr_config=default_cfg.default_weight_attr_config.clone_and_edit(
             weights_per_channel_threshold=False))
-    const_merge_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions([const_merge_config])
+    const_merge_configuration_options = schema.QuantizationConfigOptions([const_merge_config])
 
     operator_sets_dict = {}
     operator_sets_dict["Add"] = const_configuration_options
@@ -188,9 +188,10 @@ class ConstQuantizationMultiInputTest(BaseKerasFeatureNetworkTest):
         x1 = layers.Add()([np.random.random((1, x.shape[-1])), x, np.random.random((1, x.shape[-1]))])
         x2 = layers.Multiply()([x, np.random.random((1, x.shape[-1])), x, np.random.random((1, x.shape[-1]))])
         x3 = tf.add_n([x1, as_const(x), x2])
-        x1 = tf.reshape(tf.stack([as_const(x1), x1, as_const(x1)], axis=1), (-1, 3*x1.shape[1], x1.shape[2], x1.shape[3]))
+        x1 = tf.reshape(tf.stack([as_const(x1), x1, as_const(x1)], axis=1),
+                        (-1, 3 * x1.shape[1], x1.shape[2], x1.shape[3]))
         x = tf.concat([x1, x2, as_const(x3), x3], 1)
-        ind_select_const = np.zeros((192*32, 38))
+        ind_select_const = np.zeros((192 * 32, 38))
         ind_select_const[4, :] = 100
         x1 = tf.add(x, ind_select_const.reshape((192, 32, 38)))
         inds = tf.argmax(tf.reshape(x1, (-1, 192 * 32, 38)), axis=1)
@@ -209,7 +210,8 @@ class ConstQuantizationMultiInputTest(BaseKerasFeatureNetworkTest):
         self.unit_test.assertTrue(np.isclose(cs, 1, atol=0.01), msg=f'fail cosine similarity check:{cs}')
 
         # check quantization layers:
-        for op in [tf.concat, tf.stack, layers.Add, layers.Multiply, layers.Concatenate, tf.gather, tf.compat.v1.gather]:
+        for op in [tf.concat, tf.stack, layers.Add, layers.Multiply, layers.Concatenate, tf.gather,
+                   tf.compat.v1.gather]:
             for qlayer in get_layers_from_model_by_type(quantized_model, op):
                 self.unit_test.assertTrue(isinstance(qlayer, KerasQuantizationWrapper),
                                           msg=f"{op} should be quantized.")

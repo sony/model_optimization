@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import tensorflow as tf
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
 from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
@@ -10,7 +10,8 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
+    get_op_quantization_configs
 import model_compression_toolkit as mct
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 
@@ -80,16 +81,16 @@ def create_network_4(input_shape):
 
 def generate_base_tpc():
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-    default_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(
+    default_configuration_options = schema.QuantizationConfigOptions(
         [default_config])
-    generated_tp = model_compression_toolkit.target_platform_capabilities.schema.v1.TargetPlatformModel(
+    generated_tp = schema.TargetPlatformModel(
         default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,
         tpc_platform_type=None,
         add_metadata=False, name='layer_fusing_test')
-    mixed_precision_configuration_options = model_compression_toolkit.target_platform_capabilities.schema.v1.QuantizationConfigOptions(mixed_precision_cfg_list,
-                                                                                                                                       base_config=base_config)
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(mixed_precision_cfg_list,
+                                                                             base_config=base_config)
 
     return generated_tp, mixed_precision_configuration_options
 
@@ -97,10 +98,10 @@ def generate_base_tpc():
 def get_tpc_1():
     generated_tp, mixed_precision_configuration_options = generate_base_tpc()
     with generated_tp:
-        conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Conv", mixed_precision_configuration_options)
-        any_relu = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("AnyReLU")
+        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+        any_relu = schema.OperatorsSet("AnyReLU")
         # Define fusions
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, any_relu])
+        schema.Fusing([conv, any_relu])
 
     keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
     with keras_tpc:
@@ -114,14 +115,14 @@ def get_tpc_1():
 def get_tpc_2():
     generated_tp, mixed_precision_configuration_options = generate_base_tpc()
     with generated_tp:
-        conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Conv", mixed_precision_configuration_options)
-        any_relu = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("AnyReLU")
-        swish = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Swish")
-        sigmoid = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Sigmoid")
-        tanh = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Tanh")
-        activations_after_conv_to_fuse = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorSetConcat(any_relu, swish, sigmoid, tanh)
+        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+        any_relu = schema.OperatorsSet("AnyReLU")
+        swish = schema.OperatorsSet("Swish")
+        sigmoid = schema.OperatorsSet("Sigmoid")
+        tanh = schema.OperatorsSet("Tanh")
+        activations_after_conv_to_fuse = schema.OperatorSetConcat(any_relu, swish, sigmoid, tanh)
         # Define fusions
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, activations_after_conv_to_fuse])
+        schema.Fusing([conv, activations_after_conv_to_fuse])
 
     keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
     with keras_tpc:
@@ -138,10 +139,10 @@ def get_tpc_2():
 def get_tpc_3():
     generated_tp, mixed_precision_configuration_options = generate_base_tpc()
     with generated_tp:
-        conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Conv", mixed_precision_configuration_options)
-        any_relu = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("AnyReLU")
+        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+        any_relu = schema.OperatorsSet("AnyReLU")
         # Define fusions
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, any_relu])
+        schema.Fusing([conv, any_relu])
 
     keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
     with keras_tpc:
@@ -155,17 +156,17 @@ def get_tpc_3():
 def get_tpc_4():
     generated_tp, mixed_precision_configuration_options = generate_base_tpc()
     with generated_tp:
-        conv = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Conv", mixed_precision_configuration_options)
-        fc = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
-        any_relu = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("AnyReLU")
-        add = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Add")
-        swish = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorsSet("Swish")
-        activations_to_fuse = model_compression_toolkit.target_platform_capabilities.schema.v1.OperatorSetConcat(any_relu, swish)
+        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+        fc = schema.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
+        any_relu = schema.OperatorsSet("AnyReLU")
+        add = schema.OperatorsSet("Add")
+        swish = schema.OperatorsSet("Swish")
+        activations_to_fuse = schema.OperatorSetConcat(any_relu, swish)
         # Define fusions
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, activations_to_fuse])
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, add, activations_to_fuse])
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([conv, activations_to_fuse, add])
-        model_compression_toolkit.target_platform_capabilities.schema.v1.Fusing([fc, activations_to_fuse])
+        schema.Fusing([conv, activations_to_fuse])
+        schema.Fusing([conv, add, activations_to_fuse])
+        schema.Fusing([conv, activations_to_fuse, add])
+        schema.Fusing([fc, activations_to_fuse])
 
     keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
     with keras_tpc:
@@ -223,7 +224,8 @@ class TestLayerFusing(unittest.TestCase):
         self._compare(fusion_graph.fused_nodes, expected_fusions)
 
     def test_layer_fusing_4(self):
-        expected_fusions = [[Conv2D, Activation, Add], [Conv2D, Activation, Add], [Conv2D, Activation], [Conv2D, ReLU, Add], [Dense, tf.nn.silu], [Dense, Activation]]
+        expected_fusions = [[Conv2D, Activation, Add], [Conv2D, Activation, Add], [Conv2D, Activation],
+                            [Conv2D, ReLU, Add], [Dense, tf.nn.silu], [Dense, Activation]]
         model = create_network_4(INPUT_SHAPE)
 
         fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
