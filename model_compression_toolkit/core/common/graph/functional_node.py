@@ -85,5 +85,5 @@ class FunctionalNode(BaseNode):
             Whether _type matches the self node type
 
         """
-        names_match = _type.__name__ == self.type.__name__ if FOUND_TF else False
+        names_match = _type.__name__ == self.type.__name__
         return super().is_match_type(_type) or names_match
