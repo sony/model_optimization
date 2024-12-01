@@ -40,41 +40,38 @@ def filter_candidates_for_mixed_precision(graph: Graph,
 
     """
 
-    no_total_restrictions = (target_resource_utilization.total_memory == np.inf and
-                             target_resource_utilization.bops == np.inf)
+    tru = target_resource_utilization
+    if tru.total_mem_restricted() or tru.bops_restricted():
+        return
 
-    if target_resource_utilization.weights_memory < np.inf:
-        if target_resource_utilization.activation_memory == np.inf and no_total_restrictions:
-            # Running mixed precision for weights compression only -
-            # filter out candidates activation only configurable node
-            weights_conf = graph.get_weights_configurable_nodes(fw_info)
-            for n in graph.get_activation_configurable_nodes():
-                if n not in weights_conf:
-                    base_cfg_nbits = n.get_qco(tpc).base_config.activation_n_bits
-                    filtered_conf = [c for c in n.candidates_quantization_cfg if
-                                     c.activation_quantization_cfg.enable_activation_quantization and
-                                     c.activation_quantization_cfg.activation_n_bits == base_cfg_nbits]
+    if tru.weight_restricted() and not tru.activation_restricted():
+        # Running mixed precision for weights compression only -
+        # filter out candidates activation only configurable node
+        weights_conf = graph.get_weights_configurable_nodes(fw_info)
+        nodes = [n for n in graph.get_activation_configurable_nodes() if n not in weights_conf]
+        for n in nodes:
+            base_cfg_nbits = n.get_qco(tpc).base_config.activation_n_bits
+            filtered_conf = [c for c in n.candidates_quantization_cfg if
+                             c.activation_quantization_cfg.enable_activation_quantization and
+                             c.activation_quantization_cfg.activation_n_bits == base_cfg_nbits]
 
-                    if len(filtered_conf) != 1:
-                        Logger.critical(f"Running weights only mixed precision failed on layer {n.name} with multiple "
-                                        f"activation quantization configurations.")  # pragma: no cover
-                    n.candidates_quantization_cfg = filtered_conf
+            if len(filtered_conf) != 1:
+                Logger.critical(f"Running weights only mixed precision failed on layer {n.name} with multiple "
+                                f"activation quantization configurations.")  # pragma: no cover
+            n.candidates_quantization_cfg = filtered_conf
 
-    elif target_resource_utilization.activation_memory < np.inf:
-        if target_resource_utilization.weights_memory == np.inf and no_total_restrictions:
-            # Running mixed precision for activation compression only -
-            # filter out candidates weights only configurable node
-            activation_conf = graph.get_activation_configurable_nodes()
-            for n in graph.get_weights_configurable_nodes(fw_info):
-                if n not in activation_conf:
-                    kernel_attr = graph.fw_info.get_kernel_op_attributes(n.type)[0]
-                    base_cfg_nbits = n.get_qco(tpc).base_config.attr_weights_configs_mapping[kernel_attr].weights_n_bits
-                    filtered_conf = [c for c in n.candidates_quantization_cfg if
-                                     c.weights_quantization_cfg.get_attr_config(
-                                         kernel_attr).enable_weights_quantization and
-                                     c.weights_quantization_cfg.get_attr_config(
-                                         kernel_attr).weights_n_bits == base_cfg_nbits]
-                    if len(filtered_conf) != 1:
-                        Logger.critical(f"Running activation only mixed precision failed on layer {n.name} with multiple "
-                                        f"weights quantization configurations.")  # pragma: no cover
-                    n.candidates_quantization_cfg = filtered_conf
+    elif tru.activation_restricted() and not tru.weight_restricted():
+        # Running mixed precision for activation compression only -
+        # filter out candidates weights only configurable node
+        activation_conf = graph.get_activation_configurable_nodes()
+        nodes = [n for n in graph.get_weights_configurable_nodes(fw_info) if n not in activation_conf]
+        for n in nodes:
+            kernel_attr = graph.fw_info.get_kernel_op_attributes(n.type)[0]
+            base_cfg_nbits = n.get_qco(tpc).base_config.attr_weights_configs_mapping[kernel_attr].weights_n_bits
+            filtered_conf = [c for c in n.candidates_quantization_cfg if
+                             c.weights_quantization_cfg.get_attr_config(kernel_attr).enable_weights_quantization and
+                             c.weights_quantization_cfg.get_attr_config(kernel_attr).weights_n_bits == base_cfg_nbits]
+            if len(filtered_conf) != 1:
+                Logger.critical(f"Running activation only mixed precision failed on layer {n.name} with multiple "
+                                f"weights quantization configurations.")  # pragma: no cover
+            n.candidates_quantization_cfg = filtered_conf

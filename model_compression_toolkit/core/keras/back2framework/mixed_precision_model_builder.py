@@ -92,11 +92,8 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
         if kernel_attr is not None and n.is_weights_quantization_enabled(kernel_attr):
             weights_conf_nodes_names = [node.name for node in self.graph.get_weights_configurable_nodes(self.fw_info)]
             if n.name in weights_conf_nodes_names:
-                return KerasQuantizationWrapper(layer,
-                                                weights_quantizers={
-                                                    kernel_attr: ConfigurableWeightsQuantizer(
-                                                        **self._get_weights_configurable_quantizer_kwargs(n,
-                                                                                                          kernel_attr))})
+                wq = ConfigurableWeightsQuantizer(**self._get_weights_configurable_quantizer_kwargs(n, kernel_attr))
+                return KerasQuantizationWrapper(layer, weights_quantizers={kernel_attr: wq})
             else:
                 # TODO: Do we want to include other quantized attributes that are not
                 #  the kernel attribute in the mixed precision model?
@@ -106,12 +103,12 @@ class MixedPrecisionKerasModelBuilder(KerasModelBuilder):
                 if not len(node_weights_qc) == 1:
                     Logger.critical(f"Expected a unique weights configuration for node {n.name}, but found {len(node_weights_qc)} configurations.")# pragma: no cover
 
+                weights_quant_cfg = node_weights_qc[0].weights_quantization_cfg
+                weights_quant_method = weights_quant_cfg.get_attr_config(kernel_attr).weights_quantization_method
                 quantier_for_node = get_inferable_quantizer_class(QuantizationTarget.Weights,
-                                                                  node_weights_qc[0].weights_quantization_cfg
-                                                                  .get_attr_config(kernel_attr)
-                                                                  .weights_quantization_method,
+                                                                  weights_quant_method,
                                                                   BaseKerasInferableQuantizer)
-                kwargs = get_inferable_quantizer_kwargs(node_weights_qc[0].weights_quantization_cfg,
+                kwargs = get_inferable_quantizer_kwargs(weights_quant_cfg,
                                                         QuantizationTarget.Weights,
                                                         kernel_attr)
 

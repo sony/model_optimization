@@ -211,14 +211,8 @@ class MixedPrecisionSearchManager:
         Returns: Node's resource utilization vector.
 
         """
-        return self.compute_ru_functions[target][0](
-            self.replace_config_in_index(
-                self.min_ru_config,
-                conf_node_idx,
-                candidate_idx),
-            self.graph,
-            self.fw_info,
-            self.fw_impl)
+        cfg = self.replace_config_in_index(self.min_ru_config, conf_node_idx, candidate_idx)
+        return self.compute_ru_functions[target].metric_fn(cfg, self.graph, self.fw_info, self.fw_impl)
 
     @staticmethod
     def replace_config_in_index(mp_cfg: List[int], idx: int, value: int) -> List[int]:
@@ -253,7 +247,7 @@ class MixedPrecisionSearchManager:
             if target == RUTarget.BOPS:
                 ru_vector = None
             else:
-                ru_vector = self.compute_ru_functions[target][0]([], self.graph, self.fw_info, self.fw_impl)
+                ru_vector = self.compute_ru_functions[target].metric_fn([], self.graph, self.fw_info, self.fw_impl)
 
             non_conf_ru_dict[target] = ru_vector
 
@@ -282,9 +276,9 @@ class MixedPrecisionSearchManager:
                 configurable_nodes_ru_vector = ru_fns[0](config, self.original_graph, self.fw_info, self.fw_impl)
             non_configurable_nodes_ru_vector = self.non_conf_ru_dict.get(ru_target)
             if non_configurable_nodes_ru_vector is None or len(non_configurable_nodes_ru_vector) == 0:
-                ru_ru = self.compute_ru_functions[ru_target][1](configurable_nodes_ru_vector, False)
+                ru_ru = self.compute_ru_functions[ru_target].aggregate_fn(configurable_nodes_ru_vector, False)
             else:
-                ru_ru = self.compute_ru_functions[ru_target][1](
+                ru_ru = self.compute_ru_functions[ru_target].aggregate_fn(
                     np.concatenate([configurable_nodes_ru_vector, non_configurable_nodes_ru_vector]), False)
 
             ru_dict[ru_target] = ru_ru[0]

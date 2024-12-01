@@ -383,9 +383,8 @@ class BaseNode:
         """
         # note that if the given attribute name does not exist in the node's attributes mapping,
         # the inner method would log an exception.
-        return all(attr_candidate ==
-                   self.candidates_quantization_cfg[0].weights_quantization_cfg.get_attr_config(attr)
-                   for attr_candidate in self.get_all_weights_attr_candidates(attr))
+        candidates = self.get_all_weights_attr_candidates(attr)
+        return all(candidate == candidates[0] for candidate in candidates[1:])
 
     def has_kernel_weight_to_quantize(self, fw_info):
         """

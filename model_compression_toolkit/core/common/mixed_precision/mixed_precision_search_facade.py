@@ -83,16 +83,17 @@ def search_bit_width(graph_to_search_cfg: Graph,
 
     # Set graph for MP search
     graph = copy.deepcopy(graph_to_search_cfg)  # Copy graph before searching
-    if target_resource_utilization.bops < np.inf:
+    if target_resource_utilization.bops_restricted():
         # Since Bit-operations count target resource utilization is set, we need to reconstruct the graph for the MP search
         graph = substitute(graph, fw_impl.get_substitutions_virtual_weights_activation_coupling())
 
     # If we only run weights compression with MP than no need to consider activation quantization when computing the
     # MP metric (it adds noise to the computation)
-    disable_activation_for_metric = (target_resource_utilization.weights_memory < np.inf and
-                                    (target_resource_utilization.activation_memory == np.inf and
-                                     target_resource_utilization.total_memory == np.inf and
-                                     target_resource_utilization.bops == np.inf)) or graph_to_search_cfg.is_single_activation_cfg()
+    tru = target_resource_utilization
+    weight_only_restricted = tru.weight_restricted() and not (tru.activation_restricted() or
+                                                              tru.total_mem_restricted() or
+                                                              tru.bops_restricted())
+    disable_activation_for_metric = weight_only_restricted or graph_to_search_cfg.is_single_activation_cfg()
 
     # Set Sensitivity Evaluator for MP search. It should always work with the original MP graph,
     # even if a virtual graph was created (and is used only for BOPS utilization computation purposes)
@@ -117,11 +118,10 @@ def search_bit_width(graph_to_search_cfg: Graph,
                                                  target_resource_utilization,
                                                  original_graph=graph_to_search_cfg)
 
-    if search_method in search_methods:  # Get a specific search function
-        search_method_fn = search_methods.get(search_method)
-    else:
-        raise NotImplemented  # pragma: no cover
+    if search_method not in search_methods:
+        raise NotImplementedError()  # pragma: no cover
 
+    search_method_fn = search_methods[search_method]
     # Search for the desired mixed-precision configuration
     result_bit_cfg = search_method_fn(search_manager,
                                       target_resource_utilization)

@@ -90,7 +90,7 @@ class SensitivityEvaluation:
                                                       quant_config.num_interest_points_factor)
 
         # We use normalized MSE when not running hessian-based. For Hessian-based normalized MSE is not needed
-        # beacause hessian weights already do normalization.
+        # because hessian weights already do normalization.
         use_normalized_mse = self.quant_config.use_hessian_based_scores is False
         self.ips_distance_fns, self.ips_axis = self._init_metric_points_lists(self.interest_points, use_normalized_mse)
 
@@ -116,14 +116,11 @@ class SensitivityEvaluation:
         # Build images batches for inference comparison
         self.images_batches = self._get_images_batches(quant_config.num_of_images)
 
-        # Get baseline model inference on all samples
-        self.baseline_tensors_list = []  # setting from outside scope
-
         # Casting images tensors to the framework tensor type.
-        self.images_batches = list(map(lambda in_arr: self.fw_impl.to_tensor(in_arr), self.images_batches))
+        self.images_batches = [self.fw_impl.to_tensor(img) for img in self.images_batches]
 
         # Initiating baseline_tensors_list since it is not initiated in SensitivityEvaluationManager init.
-        self._init_baseline_tensors_list()
+        self.baseline_tensors_list = self._init_baseline_tensors_list()
 
         # Computing Hessian-based scores for weighted average distance metric computation (only if requested),
         # and assigning distance_weighting method accordingly.
@@ -193,11 +190,9 @@ class SensitivityEvaluation:
 
     def _init_baseline_tensors_list(self):
         """
-        Evaluates the baseline model on all images and saves the obtained lists of tensors in a list for later use.
-        Initiates a class variable self.baseline_tensors_list
+        Evaluates the baseline model on all images and returns the obtained lists of tensors in a list for later use.
         """
-        self.baseline_tensors_list = [self.fw_impl.to_numpy(self.fw_impl.sensitivity_eval_inference(self.baseline_model,
-                                                                                                    images))
+        return [self.fw_impl.to_numpy(self.fw_impl.sensitivity_eval_inference(self.baseline_model, images))
                                       for images in self.images_batches]
 
     def _build_models(self) -> Any:
@@ -454,7 +449,7 @@ def get_mp_interest_points(graph: Graph,
 
     """
     sorted_nodes = graph.get_topo_sorted_nodes()
-    ip_nodes = list(filter(lambda n: interest_points_classifier(n), sorted_nodes))
+    ip_nodes = [n for n in sorted_nodes if interest_points_classifier(n)]
 
     interest_points_nodes = bound_num_interest_points(ip_nodes, num_ip_factor)
 
