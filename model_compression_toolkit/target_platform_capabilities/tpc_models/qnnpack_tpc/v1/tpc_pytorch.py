@@ -16,6 +16,7 @@ import torch
 from torch.nn import Conv2d, Linear, BatchNorm2d, ConvTranspose2d, Hardtanh, ReLU, ReLU6
 from torch.nn.functional import relu, relu6, hardtanh
 
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR, \
     BIAS
@@ -35,7 +36,7 @@ def get_pytorch_tpc() -> tp.TargetPlatformCapabilities:
     return generate_pytorch_tpc(name='qnnpack_pytorch', tp_model=qnnpack_pytorch)
 
 
-def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
+def generate_pytorch_tpc(name: str, tp_model: schema.TargetPlatformModel):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
     Args:
@@ -44,9 +45,7 @@ def generate_pytorch_tpc(name: str, tp_model: tp.TargetPlatformModel):
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
-    pytorch_tpc = tp.TargetPlatformCapabilities(tp_model,
-                                                name=name,
-                                                version=TPC_VERSION)
+    pytorch_tpc = tp.TargetPlatformCapabilities(tp_model)
 
     # we provide attributes mapping that maps each layer type in the operations set
     # that has weights attributes with provided quantization config (in the tp model) to

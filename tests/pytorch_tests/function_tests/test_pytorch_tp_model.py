@@ -23,13 +23,16 @@ from torch.nn.functional import hardtanh
 from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import LayerFilterParams
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import Greater, Smaller, Eq
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import \
+    LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attribute_filter import \
+    Greater, Smaller, Eq
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
     TFLITE_TP_MODEL, QNNPACK_TP_MODEL, KERNEL_ATTR, WEIGHTS_N_BITS, PYTORCH_KERNEL, BIAS_ATTR, BIAS
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
@@ -38,9 +41,8 @@ from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import LayerTestMod
 
 tp = mct.target_platform
 
-
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
-TEST_QCO = tp.QuantizationConfigOptions([TEST_QC])
+TEST_QCO = schema.QuantizationConfigOptions([TEST_QC])
 
 
 class TestPytorchTPModel(unittest.TestCase):
@@ -66,42 +68,50 @@ class TestPytorchTPModel(unittest.TestCase):
         hardtanh_with_params = LayerFilterParams(hardtanh, Greater("max_val", 2) & Smaller("min_val", 1))
         self.assertTrue(get_node(partial(hardtanh, max_val=3, min_val=0)).is_match_filter_params(hardtanh_with_params))
         self.assertFalse(get_node(partial(hardtanh, max_val=3, min_val=1)).is_match_filter_params(hardtanh_with_params))
-        self.assertFalse(get_node(partial(hardtanh, max_val=2, min_val=0.5)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(
+            get_node(partial(hardtanh, max_val=2, min_val=0.5)).is_match_filter_params(hardtanh_with_params))
         self.assertFalse(get_node(partial(hardtanh, max_val=2)).is_match_filter_params(hardtanh_with_params))
-        self.assertFalse(get_node(partial(hardtanh, max_val=1, min_val=0.5)).is_match_filter_params(hardtanh_with_params))
+        self.assertFalse(
+            get_node(partial(hardtanh, max_val=1, min_val=0.5)).is_match_filter_params(hardtanh_with_params))
 
-        l2norm_tflite_opset = LayerFilterParams(torch.nn.functional.normalize, Eq('p',2) | Eq('p',None))
-        self.assertTrue(get_node(partial(torch.nn.functional.normalize, p=2)).is_match_filter_params(l2norm_tflite_opset))
-        self.assertTrue(get_node(partial(torch.nn.functional.normalize, p=2.0)).is_match_filter_params(l2norm_tflite_opset))
+        l2norm_tflite_opset = LayerFilterParams(torch.nn.functional.normalize, Eq('p', 2) | Eq('p', None))
+        self.assertTrue(
+            get_node(partial(torch.nn.functional.normalize, p=2)).is_match_filter_params(l2norm_tflite_opset))
+        self.assertTrue(
+            get_node(partial(torch.nn.functional.normalize, p=2.0)).is_match_filter_params(l2norm_tflite_opset))
         self.assertTrue(get_node(torch.nn.functional.normalize).is_match_filter_params(l2norm_tflite_opset))
-        self.assertFalse(get_node(partial(torch.nn.functional.normalize, p=3.0)).is_match_filter_params(l2norm_tflite_opset))
-
-
+        self.assertFalse(
+            get_node(partial(torch.nn.functional.normalize, p=3.0)).is_match_filter_params(l2norm_tflite_opset))
 
     def test_qco_by_pytorch_layer(self):
-        default_qco = tp.QuantizationConfigOptions([TEST_QC])
+        default_qco = schema.QuantizationConfigOptions([TEST_QC])
         default_qco = default_qco.clone_and_edit(attr_weights_configs_mapping={})
-        tpm = tp.TargetPlatformModel(default_qco, name='test')
+        tpm = schema.TargetPlatformModel(default_qco,
+                                         tpc_minor_version=None,
+                                         tpc_patch_version=None,
+                                         tpc_platform_type=None,
+                                         add_metadata=False,
+                                         name='test')
         with tpm:
-            mixed_precision_configuration_options = tp.QuantizationConfigOptions(
+            mixed_precision_configuration_options = schema.QuantizationConfigOptions(
                 [TEST_QC,
                  TEST_QC.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}}),
                  TEST_QC.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 2}})],
                 base_config=TEST_QC)
 
-            tp.OperatorsSet("conv", mixed_precision_configuration_options)
+            schema.OperatorsSet("conv", mixed_precision_configuration_options)
 
             sevenbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=7,
                                                    attr_weights_configs_mapping={})
-            tp.OperatorsSet("tanh", sevenbit_qco)
+            schema.OperatorsSet("tanh", sevenbit_qco)
 
             sixbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=6,
                                                  attr_weights_configs_mapping={})
-            tp.OperatorsSet("avg_pool2d_kernel_2", sixbit_qco)
+            schema.OperatorsSet("avg_pool2d_kernel_2", sixbit_qco)
 
-            tp.OperatorsSet("avg_pool2d")
+            schema.OperatorsSet("avg_pool2d")
 
-        tpc_pytorch = tp.TargetPlatformCapabilities(tpm, name='fw_test')
+        tpc_pytorch = tp.TargetPlatformCapabilities(tpm)
         with tpc_pytorch:
             tp.OperationsSetToLayers("conv", [torch.nn.Conv2d],
                                      attr_mapping={KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
@@ -133,9 +143,14 @@ class TestPytorchTPModel(unittest.TestCase):
         self.assertEqual(avg_pool2d_qco, default_qco)
 
     def test_get_layers_by_op(self):
-        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
+        hm = schema.TargetPlatformModel(
+            schema.QuantizationConfigOptions([TEST_QC]),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            tpc_platform_type=None,
+            add_metadata=False)
         with hm:
-            op_obj = tp.OperatorsSet('opsetA')
+            op_obj = schema.OperatorsSet('opsetA')
         fw_tp = TargetPlatformCapabilities(hm)
         with fw_tp:
             opset_layers = [torch.nn.Conv2d, LayerFilterParams(torch.nn.Softmax, dim=1)]
@@ -144,11 +159,16 @@ class TestPytorchTPModel(unittest.TestCase):
         self.assertEqual(fw_tp.get_layers_by_opset(op_obj), opset_layers)
 
     def test_get_layers_by_opconcat(self):
-        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
+        hm = schema.TargetPlatformModel(
+            schema.QuantizationConfigOptions([TEST_QC]),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            tpc_platform_type=None,
+            add_metadata=False)
         with hm:
-            op_obj_a = tp.OperatorsSet('opsetA')
-            op_obj_b = tp.OperatorsSet('opsetB')
-            op_concat = tp.OperatorSetConcat(op_obj_a, op_obj_b)
+            op_obj_a = schema.OperatorsSet('opsetA')
+            op_obj_b = schema.OperatorsSet('opsetB')
+            op_concat = schema.OperatorSetConcat(op_obj_a, op_obj_b)
 
         fw_tp = TargetPlatformCapabilities(hm)
         with fw_tp:
@@ -161,10 +181,15 @@ class TestPytorchTPModel(unittest.TestCase):
         self.assertEqual(fw_tp.get_layers_by_opset(op_concat), opset_layers_a + opset_layers_b)
 
     def test_layer_attached_to_multiple_opsets(self):
-        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
+        hm = schema.TargetPlatformModel(
+            schema.QuantizationConfigOptions([TEST_QC]),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            tpc_platform_type=None,
+            add_metadata=False)
         with hm:
-            tp.OperatorsSet('opsetA')
-            tp.OperatorsSet('opsetB')
+            schema.OperatorsSet('opsetA')
+            schema.OperatorsSet('opsetB')
 
         fw_tp = TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
@@ -174,10 +199,15 @@ class TestPytorchTPModel(unittest.TestCase):
         self.assertEqual('Found layer Conv2d in more than one OperatorsSet', str(e.exception))
 
     def test_filter_layer_attached_to_multiple_opsets(self):
-        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
+        hm = schema.TargetPlatformModel(
+            schema.QuantizationConfigOptions([TEST_QC]),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            tpc_platform_type=None,
+            add_metadata=False)
         with hm:
-            tp.OperatorsSet('opsetA')
-            tp.OperatorsSet('opsetB')
+            schema.OperatorsSet('opsetA')
+            schema.OperatorsSet('opsetB')
 
         fw_tp = TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
@@ -187,8 +217,12 @@ class TestPytorchTPModel(unittest.TestCase):
         self.assertEqual('Found layer Softmax(dim=2) in more than one OperatorsSet', str(e.exception))
 
     def test_opset_not_in_tp(self):
-        default_qco = tp.QuantizationConfigOptions([TEST_QC])
-        hm = tp.TargetPlatformModel(default_qco)
+        default_qco = schema.QuantizationConfigOptions([TEST_QC])
+        hm = schema.TargetPlatformModel(default_qco,
+                                        tpc_minor_version=None,
+                                        tpc_patch_version=None,
+                                        tpc_platform_type=None,
+                                        add_metadata=False)
         hm_pytorch = tp.TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with hm_pytorch:
@@ -198,14 +232,19 @@ class TestPytorchTPModel(unittest.TestCase):
             str(e.exception))
 
     def test_pytorch_fusing_patterns(self):
-        default_qco = tp.QuantizationConfigOptions([TEST_QC])
-        hm = tp.TargetPlatformModel(default_qco)
+        default_qco = schema.QuantizationConfigOptions(
+            [TEST_QC])
+        hm = schema.TargetPlatformModel(default_qco,
+                                        tpc_minor_version=None,
+                                        tpc_patch_version=None,
+                                        tpc_platform_type=None,
+                                        add_metadata=False)
         with hm:
-            a = tp.OperatorsSet("opA")
-            b = tp.OperatorsSet("opB")
-            c = tp.OperatorsSet("opC")
-            tp.Fusing([a, b, c])
-            tp.Fusing([a, c])
+            a = schema.OperatorsSet("opA")
+            b = schema.OperatorsSet("opB")
+            c = schema.OperatorsSet("opC")
+            schema.Fusing([a, b, c])
+            schema.Fusing([a, c])
 
         hm_keras = tp.TargetPlatformCapabilities(hm)
         with hm_keras:
@@ -246,29 +285,30 @@ class TestGetPytorchTPC(unittest.TestCase):
                                           mixed_precision_config=mp_qc)
         quantized_model, _ = mct.ptq.pytorch_post_training_quantization(model,
                                                                         rep_data,
-                                                                        target_resource_utilization=mct.core.ResourceUtilization(np.inf),
+                                                                        target_resource_utilization=mct.core.ResourceUtilization(
+                                                                            np.inf),
                                                                         target_platform_capabilities=tpc,
                                                                         core_config=core_config)
 
     def test_get_pytorch_supported_version(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)  # Latest
-        self.assertTrue(tpc.version == 'v1')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
 
         tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v1')
-        self.assertTrue(tpc.version == 'v1')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
         tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL, 'v2')
-        self.assertTrue(tpc.version == 'v2')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 2)
 
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v1")
-        self.assertTrue(tpc.version == 'v1')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v2")
-        self.assertTrue(tpc.version == 'v2')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 2)
 
         tpc = mct.get_target_platform_capabilities(PYTORCH, TFLITE_TP_MODEL, "v1")
-        self.assertTrue(tpc.version == 'v1')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
 
         tpc = mct.get_target_platform_capabilities(PYTORCH, QNNPACK_TP_MODEL, "v1")
-        self.assertTrue(tpc.version == 'v1')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
 
     def test_get_pytorch_not_supported_platform(self):
         with self.assertRaises(Exception) as e:

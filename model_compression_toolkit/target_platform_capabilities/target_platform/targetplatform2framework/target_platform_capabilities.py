@@ -24,12 +24,9 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.targ
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.layer_filter_params import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.immutable import ImmutableClass
-from model_compression_toolkit.target_platform_capabilities.target_platform.op_quantization_config import QuantizationConfigOptions, \
-    OpQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform.operators import OperatorsSetBase
-from model_compression_toolkit.target_platform_capabilities.target_platform.target_platform_model import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OperatorsSetBase, \
+    OpQuantizationConfig, QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.current_tpc import _current_tpc
-from model_compression_toolkit.constants import MCT_VERSION, TPC_VERSION
 
 
 class TargetPlatformCapabilities(ImmutableClass):
@@ -38,14 +35,12 @@ class TargetPlatformCapabilities(ImmutableClass):
     """
     def __init__(self,
                  tp_model: TargetPlatformModel,
-                 name: str = "base",
-                 version: str = None):
+                 name: str = "base"):
         """
 
         Args:
             tp_model (TargetPlatformModel): Modeled hardware to attach framework information to.
             name (str): Name of the TargetPlatformCapabilities.
-            version (str): TPC version.
         """
 
         super().__init__()
@@ -57,7 +52,6 @@ class TargetPlatformCapabilities(ImmutableClass):
         # Track the unused opsets for warning purposes.
         self.__tp_model_opsets_not_used = [s.name for s in tp_model.operator_set]
         self.remove_fusing_names_from_not_used_list()
-        self.version = version
 
     def get_layers_by_opset_name(self, opset_name: str) -> List[Any]:
         """
@@ -117,7 +111,9 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         """
         return {"Target Platform Capabilities": self.name,
-                "Version": self.version,
+                "Minor version": self.tp_model.tpc_minor_version,
+                "Patch version": self.tp_model.tpc_patch_version,
+                "Platform type": self.tp_model.tpc_platform_type,
                 "Target Platform Model": self.tp_model.get_info(),
                 "Operations to layers": {op2layer.name:[l.__name__ for l in op2layer.layers] for op2layer in self.op_sets_to_layers.op_sets_to_layers}}
 

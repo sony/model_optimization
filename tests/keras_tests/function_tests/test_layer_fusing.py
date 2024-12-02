@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 import tensorflow as tf
 
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
@@ -9,7 +10,8 @@ from model_compression_toolkit.core.common.quantization.set_node_quantization_co
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
+    get_op_quantization_configs
 import model_compression_toolkit as mct
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 
@@ -79,10 +81,16 @@ def create_network_4(input_shape):
 
 def generate_base_tpc():
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-    default_configuration_options = tp.QuantizationConfigOptions([default_config])
-    generated_tp = tp.TargetPlatformModel(default_configuration_options, name='layer_fusing_test')
-    mixed_precision_configuration_options = tp.QuantizationConfigOptions(mixed_precision_cfg_list,
-                                                                         base_config=base_config)
+    default_configuration_options = schema.QuantizationConfigOptions(
+        [default_config])
+    generated_tp = schema.TargetPlatformModel(
+        default_configuration_options,
+        tpc_minor_version=None,
+        tpc_patch_version=None,
+        tpc_platform_type=None,
+        add_metadata=False, name='layer_fusing_test')
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(mixed_precision_cfg_list,
+                                                                             base_config=base_config)
 
     return generated_tp, mixed_precision_configuration_options
 
@@ -90,12 +98,12 @@ def generate_base_tpc():
 def get_tpc_1():
     generated_tp, mixed_precision_configuration_options = generate_base_tpc()
     with generated_tp:
-        conv = tp.OperatorsSet("Conv", mixed_precision_configuration_options)
-        any_relu = tp.OperatorsSet("AnyReLU")
+        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+        any_relu = schema.OperatorsSet("AnyReLU")
         # Define fusions
-        tp.Fusing([conv, any_relu])
+        schema.Fusing([conv, any_relu])
 
-    keras_tpc = tp.TargetPlatformCapabilities(generated_tp, name='layer_fusing_test')
+    keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
     with keras_tpc:
         tp.OperationsSetToLayers("Conv", [Conv2D])
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
@@ -107,16 +115,16 @@ def get_tpc_1():
 def get_tpc_2():
     generated_tp, mixed_precision_configuration_options = generate_base_tpc()
     with generated_tp:
-        conv = tp.OperatorsSet("Conv", mixed_precision_configuration_options)
-        any_relu = tp.OperatorsSet("AnyReLU")
-        swish = tp.OperatorsSet("Swish")
-        sigmoid = tp.OperatorsSet("Sigmoid")
-        tanh = tp.OperatorsSet("Tanh")
-        activations_after_conv_to_fuse = tp.OperatorSetConcat(any_relu, swish, sigmoid, tanh)
+        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+        any_relu = schema.OperatorsSet("AnyReLU")
+        swish = schema.OperatorsSet("Swish")
+        sigmoid = schema.OperatorsSet("Sigmoid")
+        tanh = schema.OperatorsSet("Tanh")
+        activations_after_conv_to_fuse = schema.OperatorSetConcat(any_relu, swish, sigmoid, tanh)
         # Define fusions
-        tp.Fusing([conv, activations_after_conv_to_fuse])
+        schema.Fusing([conv, activations_after_conv_to_fuse])
 
-    keras_tpc = tp.TargetPlatformCapabilities(generated_tp, name='layer_fusing_test')
+    keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
     with keras_tpc:
         tp.OperationsSetToLayers("Conv", [Conv2D, DepthwiseConv2D])
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
@@ -131,12 +139,12 @@ def get_tpc_2():
 def get_tpc_3():
     generated_tp, mixed_precision_configuration_options = generate_base_tpc()
     with generated_tp:
-        conv = tp.OperatorsSet("Conv", mixed_precision_configuration_options)
-        any_relu = tp.OperatorsSet("AnyReLU")
+        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+        any_relu = schema.OperatorsSet("AnyReLU")
         # Define fusions
-        tp.Fusing([conv, any_relu])
+        schema.Fusing([conv, any_relu])
 
-    keras_tpc = tp.TargetPlatformCapabilities(generated_tp, name='layer_fusing_test')
+    keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
     with keras_tpc:
         tp.OperationsSetToLayers("Conv", [Conv2D])
         tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
@@ -148,19 +156,19 @@ def get_tpc_3():
 def get_tpc_4():
     generated_tp, mixed_precision_configuration_options = generate_base_tpc()
     with generated_tp:
-        conv = tp.OperatorsSet("Conv", mixed_precision_configuration_options)
-        fc = tp.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
-        any_relu = tp.OperatorsSet("AnyReLU")
-        add = tp.OperatorsSet("Add")
-        swish = tp.OperatorsSet("Swish")
-        activations_to_fuse = tp.OperatorSetConcat(any_relu, swish)
+        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+        fc = schema.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
+        any_relu = schema.OperatorsSet("AnyReLU")
+        add = schema.OperatorsSet("Add")
+        swish = schema.OperatorsSet("Swish")
+        activations_to_fuse = schema.OperatorSetConcat(any_relu, swish)
         # Define fusions
-        tp.Fusing([conv, activations_to_fuse])
-        tp.Fusing([conv, add, activations_to_fuse])
-        tp.Fusing([conv, activations_to_fuse, add])
-        tp.Fusing([fc, activations_to_fuse])
+        schema.Fusing([conv, activations_to_fuse])
+        schema.Fusing([conv, add, activations_to_fuse])
+        schema.Fusing([conv, activations_to_fuse, add])
+        schema.Fusing([fc, activations_to_fuse])
 
-    keras_tpc = tp.TargetPlatformCapabilities(generated_tp, name='layer_fusing_test')
+    keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
     with keras_tpc:
         tp.OperationsSetToLayers("Conv", [Conv2D])
         tp.OperationsSetToLayers("FullyConnected", [Dense])
@@ -216,7 +224,8 @@ class TestLayerFusing(unittest.TestCase):
         self._compare(fusion_graph.fused_nodes, expected_fusions)
 
     def test_layer_fusing_4(self):
-        expected_fusions = [[Conv2D, Activation, Add], [Conv2D, Activation, Add], [Conv2D, Activation], [Conv2D, ReLU, Add], [Dense, tf.nn.silu], [Dense, Activation]]
+        expected_fusions = [[Conv2D, Activation, Add], [Conv2D, Activation, Add], [Conv2D, Activation],
+                            [Conv2D, ReLU, Add], [Dense, tf.nn.silu], [Dense, Activation]]
         model = create_network_4(INPUT_SHAPE)
 
         fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,

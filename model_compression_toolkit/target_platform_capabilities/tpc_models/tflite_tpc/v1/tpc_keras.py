@@ -15,6 +15,7 @@
 import tensorflow as tf
 from packaging import version
 
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS
 
@@ -46,7 +47,7 @@ def get_keras_tpc() -> tp.TargetPlatformCapabilities:
     return generate_keras_tpc(name='tflite_keras', tp_model=tflite_tp_model)
 
 
-def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
+def generate_keras_tpc(name: str, tp_model: schema.TargetPlatformModel):
     """
     Generates a TargetPlatformCapabilities object with default operation sets to layers mapping.
 
@@ -57,9 +58,7 @@ def generate_keras_tpc(name: str, tp_model: tp.TargetPlatformModel):
     Returns: a TargetPlatformCapabilities object for the given TargetPlatformModel.
     """
 
-    keras_tpc = tp.TargetPlatformCapabilities(tp_model,
-                                              name=name,
-                                              version=TPC_VERSION)
+    keras_tpc = tp.TargetPlatformCapabilities(tp_model)
 
     with keras_tpc:
         tp.OperationsSetToLayers("NoQuantization", [AveragePooling2D,

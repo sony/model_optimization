@@ -15,11 +15,13 @@
 import copy
 from typing import Dict, List, Any
 
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.constants import FLOAT_BITWIDTH, ACTIVATION_N_BITS_ATTRIBUTE, \
     SUPPORTED_INPUT_ACTIVATION_NBITS_ATTRIBUTE
 from model_compression_toolkit.target_platform_capabilities.constants import OPS_SET_LIST, KERNEL_ATTR, BIAS_ATTR, \
     WEIGHTS_N_BITS
-from model_compression_toolkit.target_platform_capabilities.target_platform import OpQuantizationConfig, QuantizationConfigOptions, Signedness
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness, OpQuantizationConfig, \
+    QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_tp_model
 import model_compression_toolkit as mct
 
@@ -37,7 +39,8 @@ def generate_test_tp_model(edit_params_dict, name=""):
     base_config, op_cfg_list, default_config = get_op_quantization_configs()
 
     # separate weights attribute parameters from the requested param to edit
-    weights_params_names = [name for name in tp.AttributeQuantizationConfig.__init__.__code__.co_varnames if name != 'self']
+    weights_params_names = [name for name in schema.AttributeQuantizationConfig.__init__.__code__.co_varnames if
+                            name != 'self']
     weights_params = {k: v for k, v in edit_params_dict.items() if k in weights_params_names}
     rest_params = {k: v for k, v in edit_params_dict.items() if k not in list(weights_params.keys())}
 
@@ -104,8 +107,8 @@ def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_c
                                       mixed_precision_cfg_list=mp_op_cfg_list,
                                       name=name)
 
-    mixed_precision_configuration_options = tp.QuantizationConfigOptions(mp_op_cfg_list,
-                                                                         base_config=base_cfg)
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(mp_op_cfg_list,
+                                                                                base_config=base_cfg)
 
     operator_sets_dict = {op_set.name: mixed_precision_configuration_options for op_set in base_tp_model.operator_set
                           if op_set.name is not "NoQuantization"}
@@ -121,12 +124,17 @@ def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_c
 
 def generate_custom_test_tp_model(name: str,
                                   base_cfg: OpQuantizationConfig,
-                                  base_tp_model: tp.TargetPlatformModel,
+                                  base_tp_model: schema.TargetPlatformModel,
                                   operator_sets_dict: Dict[str, QuantizationConfigOptions] = None):
+    default_configuration_options = schema.QuantizationConfigOptions([base_cfg])
 
-    default_configuration_options = tp.QuantizationConfigOptions([base_cfg])
-
-    custom_tp_model = tp.TargetPlatformModel(default_configuration_options, name=name)
+    custom_tp_model = schema.TargetPlatformModel(
+        default_configuration_options,
+        tpc_minor_version=None,
+        tpc_patch_version=None,
+        tpc_platform_type=None,
+        add_metadata=False,
+        name=name)
 
     with custom_tp_model:
         for op_set in base_tp_model.operator_set:
@@ -136,27 +144,26 @@ def generate_custom_test_tp_model(name: str,
             else:
                 qc_options = op_set.qc_options
 
-            tp.OperatorsSet(op_set.name, qc_options)
+            schema.OperatorsSet(op_set.name, qc_options)
 
         existing_op_sets_names = [op_set.name for op_set in base_tp_model.operator_set]
         for op_set_name, op_set_qc_options in operator_sets_dict.items():
             # Add new OperatorSets from the given operator_sets_dict
             if op_set_name not in existing_op_sets_names:
-                tp.OperatorsSet(op_set_name, op_set_qc_options)
+                schema.OperatorsSet(op_set_name, op_set_qc_options)
 
         for fusion in base_tp_model.fusing_patterns:
-            tp.Fusing(fusion.operator_groups_list)
+            schema.Fusing(fusion.operator_groups_list)
 
     return custom_tp_model
 
 
 def generate_test_tpc(name: str,
-                      tp_model: tp.TargetPlatformModel,
+                      tp_model: schema.TargetPlatformModel,
                       base_tpc: tp.TargetPlatformCapabilities,
                       op_sets_to_layer_add: Dict[str, List[Any]] = None,
                       op_sets_to_layer_drop: Dict[str, List[Any]] = None,
                       attr_mapping: Dict[str, Dict] = {}):
-
     op_set_to_layers_list = base_tpc.op_sets_to_layers.op_sets_to_layers
     op_set_to_layers_dict = {op_set.name: op_set.layers for op_set in op_set_to_layers_list}
 
@@ -174,7 +181,7 @@ def generate_test_tpc(name: str,
         # Remove empty op sets
         merged_dict = {op_set_name: layers for op_set_name, layers in merged_dict.items() if len(layers) == 0}
 
-    tpc = tp.TargetPlatformCapabilities(tp_model, name=name)
+    tpc = tp.TargetPlatformCapabilities(tp_model)
 
     with tpc:
         for op_set_name, layers in merged_dict.items():
@@ -190,22 +197,21 @@ def generate_test_attr_configs(default_cfg_nbits: int = 8,
                                kernel_cfg_quantizatiom_method: tp.QuantizationMethod = tp.QuantizationMethod.POWER_OF_TWO,
                                enable_kernel_weights_quantization: bool = True,
                                kernel_lut_values_bitwidth: int = None):
-
-    default_weight_attr_config = tp.AttributeQuantizationConfig(
+    default_weight_attr_config = schema.AttributeQuantizationConfig(
         weights_quantization_method=default_cfg_quantizatiom_method,
         weights_n_bits=default_cfg_nbits,
         weights_per_channel_threshold=False,
         enable_weights_quantization=False,
         lut_values_bitwidth=None)
 
-    kernel_base_config = tp.AttributeQuantizationConfig(
+    kernel_base_config = schema.AttributeQuantizationConfig(
         weights_quantization_method=kernel_cfg_quantizatiom_method,
         weights_n_bits=kernel_cfg_nbits,
         weights_per_channel_threshold=True,
         enable_weights_quantization=enable_kernel_weights_quantization,
         lut_values_bitwidth=kernel_lut_values_bitwidth)
 
-    bias_config = tp.AttributeQuantizationConfig(
+    bias_config = schema.AttributeQuantizationConfig(
         weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO,
         weights_n_bits=FLOAT_BITWIDTH,
         weights_per_channel_threshold=False,
@@ -217,22 +223,21 @@ def generate_test_attr_configs(default_cfg_nbits: int = 8,
             BIAS_CONFIG: bias_config}
 
 
-def generate_test_op_qc(default_weight_attr_config: tp.AttributeQuantizationConfig,
-                        kernel_base_config: tp.AttributeQuantizationConfig,
-                        bias_config: tp.AttributeQuantizationConfig,
+def generate_test_op_qc(default_weight_attr_config: schema.AttributeQuantizationConfig,
+                        kernel_base_config: schema.AttributeQuantizationConfig,
+                        bias_config: schema.AttributeQuantizationConfig,
                         enable_activation_quantization: bool = True,
                         activation_n_bits: int = 8,
                         activation_quantization_method: tp.QuantizationMethod = tp.QuantizationMethod.POWER_OF_TWO):
-
-    return tp.OpQuantizationConfig(enable_activation_quantization=enable_activation_quantization,
-                                   default_weight_attr_config=default_weight_attr_config,
-                                   attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config,
-                                                                 BIAS_ATTR: bias_config},
-                                   activation_n_bits=activation_n_bits,
-                                   supported_input_activation_n_bits=activation_n_bits,
-                                   activation_quantization_method=activation_quantization_method,
-                                   quantization_preserving=False,
-                                   fixed_scale=None,
-                                   fixed_zero_point=None,
-                                   simd_size=32,
-                                   signedness=Signedness.AUTO)
+    return schema.OpQuantizationConfig(enable_activation_quantization=enable_activation_quantization,
+                                          default_weight_attr_config=default_weight_attr_config,
+                                          attr_weights_configs_mapping={KERNEL_ATTR: kernel_base_config,
+                                                                        BIAS_ATTR: bias_config},
+                                          activation_n_bits=activation_n_bits,
+                                          supported_input_activation_n_bits=activation_n_bits,
+                                          activation_quantization_method=activation_quantization_method,
+                                          quantization_preserving=False,
+                                          fixed_scale=None,
+                                          fixed_zero_point=None,
+                                          simd_size=32,
+                                          signedness=Signedness.AUTO)

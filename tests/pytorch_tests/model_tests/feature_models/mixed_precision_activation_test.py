@@ -22,8 +22,9 @@ from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, Res
 from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL, \
     BIAS
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationConfigOptions, \
-    TargetPlatformModel, OperatorsSet, TargetPlatformCapabilities, OperationsSetToLayers
+from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, OperationsSetToLayers
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OperatorsSet, \
+    QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
@@ -301,13 +302,17 @@ class MixedPrecisionActivationConfigurableWeights(MixedPrecisionActivationBaseTe
         )
 
         tp_model = TargetPlatformModel(QuantizationConfigOptions([cfg], cfg),
+                                       tpc_minor_version=None,
+                                       tpc_patch_version=None,
+                                       tpc_platform_type=None,
+                                       add_metadata=False,
                                        name="mp_activation_conf_weights_test")
 
         with tp_model:
             OperatorsSet("Activations", act_mixed_cfg)
             OperatorsSet("Weights", weight_mixed_cfg)
 
-        torch_tpc = TargetPlatformCapabilities(tp_model, name="mp_activation_conf_weights_test")
+        torch_tpc = TargetPlatformCapabilities(tp_model)
 
         with torch_tpc:
             OperationsSetToLayers(

@@ -16,10 +16,11 @@ import tensorflow as tf
 import numpy as np
 
 import model_compression_toolkit as mct
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from mct_quantizers import QuantizationMethod, KerasQuantizationWrapper
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core.keras.constants import GAMMA, BETA
-from model_compression_toolkit.target_platform_capabilities.target_platform import Signedness
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS, BIAS_ATTR
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, \
     DEFAULT_WEIGHT_ATTR_CONFIG, KERNEL_BASE_CONFIG, generate_test_op_qc, BIAS_CONFIG
@@ -52,46 +53,50 @@ def _generate_bn_quantized_tpm(quantize_linear):
                                        bias_config=attr_cfgs_dict[BIAS_CONFIG],
                                        enable_activation_quantization=False)
 
-    bn_op_qc = tp.OpQuantizationConfig(enable_activation_quantization=False,
-                                       default_weight_attr_config=default_attr_cfg,
-                                       attr_weights_configs_mapping={BETA: bn_attr_cfg, GAMMA: bn_attr_cfg},
-                                       activation_n_bits=8,
-                                       supported_input_activation_n_bits=8,
-                                       activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-                                       quantization_preserving=False,
-                                       fixed_scale=None,
-                                       fixed_zero_point=None,
-                                       simd_size=32,
-                                       signedness=Signedness.AUTO)
+    bn_op_qc = schema.OpQuantizationConfig(enable_activation_quantization=False,
+                                           default_weight_attr_config=default_attr_cfg,
+                                           attr_weights_configs_mapping={BETA: bn_attr_cfg, GAMMA: bn_attr_cfg},
+                                           activation_n_bits=8,
+                                           supported_input_activation_n_bits=8,
+                                           activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                                           quantization_preserving=False,
+                                           fixed_scale=None,
+                                           fixed_zero_point=None,
+                                           simd_size=32,
+                                           signedness=Signedness.AUTO)
 
-    default_op_qc = tp.OpQuantizationConfig(enable_activation_quantization=False,
-                                            default_weight_attr_config=default_attr_cfg,
-                                            attr_weights_configs_mapping={},
-                                            activation_n_bits=8,
-                                            supported_input_activation_n_bits=8,
-                                            activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
-                                            quantization_preserving=False,
-                                            fixed_scale=None,
-                                            fixed_zero_point=None,
-                                            simd_size=32,
-                                            signedness=Signedness.AUTO)
+    default_op_qc = schema.OpQuantizationConfig(enable_activation_quantization=False,
+                                                default_weight_attr_config=default_attr_cfg,
+                                                attr_weights_configs_mapping={},
+                                                activation_n_bits=8,
+                                                supported_input_activation_n_bits=8,
+                                                activation_quantization_method=QuantizationMethod.POWER_OF_TWO,
+                                                quantization_preserving=False,
+                                                fixed_scale=None,
+                                                fixed_zero_point=None,
+                                                simd_size=32,
+                                                signedness=Signedness.AUTO)
 
-    default_configuration_options = tp.QuantizationConfigOptions([default_op_qc])
-    linear_configuration_options = tp.QuantizationConfigOptions([linear_op_qc])
-    bn_configuration_options = tp.QuantizationConfigOptions([bn_op_qc])
+    default_configuration_options = schema.QuantizationConfigOptions([default_op_qc])
+    linear_configuration_options = schema.QuantizationConfigOptions([linear_op_qc])
+    bn_configuration_options = schema.QuantizationConfigOptions([bn_op_qc])
 
-    generated_tpm = tp.TargetPlatformModel(default_configuration_options, name='bn_quantized_tpm')
+    generated_tpm = schema.TargetPlatformModel(
+        default_configuration_options,
+        tpc_minor_version=None,
+        tpc_patch_version=None,
+        tpc_platform_type=None,
+        add_metadata=False, name='bn_quantized_tpm')
 
     with generated_tpm:
-
-        tp.OperatorsSet("Conv", linear_configuration_options)
-        tp.OperatorsSet("BN", bn_configuration_options)
+        schema.OperatorsSet("Conv", linear_configuration_options)
+        schema.OperatorsSet("BN", bn_configuration_options)
 
     return generated_tpm
 
 
 def _generate_bn_quantized_tpc(tp_model):
-    tpc = tp.TargetPlatformCapabilities(tp_model, name='bn_quantized_tpc')
+    tpc = tp.TargetPlatformCapabilities(tp_model)
 
     with tpc:
         tp.OperationsSetToLayers("Conv", [layers.Conv2D],
@@ -134,11 +139,13 @@ class BNAttributesQuantization(BaseKerasFeatureNetworkTest):
         return tf.keras.models.Model(inputs=inputs, outputs=x)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        float_bn_layer = get_layers_from_model_by_type(float_model, layers.BatchNormalization, include_wrapped_layers=False)
+        float_bn_layer = get_layers_from_model_by_type(float_model, layers.BatchNormalization,
+                                                       include_wrapped_layers=False)
         self.unit_test.assertTrue(len(float_bn_layer) == 1, "Expecting the float model to have exactly 1 BN layer")
         float_bn_layer = float_bn_layer[0]
 
-        quant_bn_layer = get_layers_from_model_by_type(quantized_model, layers.BatchNormalization, include_wrapped_layers=True)
+        quant_bn_layer = get_layers_from_model_by_type(quantized_model, layers.BatchNormalization,
+                                                       include_wrapped_layers=True)
         self.unit_test.assertTrue(len(quant_bn_layer) == 1, "Expecting the quantized model to have exactly 1 BN layer")
         quant_bn_layer = quant_bn_layer[0]
 
@@ -155,7 +162,8 @@ class BNAttributesQuantization(BaseKerasFeatureNetworkTest):
         f_beta = f_beta[0]
         q_beta = q_bn_weights.get(BETA)
         self.unit_test.assertTrue(q_beta is not None, "Expecting quantized model BN layer to have a BETA attribute")
-        self.unit_test.assertTrue(np.any(f_beta != q_beta), "Float and quantized BETA attributes are expected to have different values")
+        self.unit_test.assertTrue(np.any(f_beta != q_beta),
+                                  "Float and quantized BETA attributes are expected to have different values")
 
         f_gamma = [w for w in f_bn_weights if GAMMA in w.name]
         self.unit_test.assertTrue(len(f_gamma) == 1, "Expecting float model BN layer to have a GAMMA attribute")

@@ -22,8 +22,9 @@ from model_compression_toolkit.constants import WEIGHTS_NBITS_ATTRIBUTE, CORRECT
     ACTIVATION_N_BITS_ATTRIBUTE, FP32_BYTES_PER_PARAMETER
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
 from model_compression_toolkit.logger import Logger
-from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationConfigOptions, \
-    TargetPlatformCapabilities, LayerFilterParams, OpQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions, \
+    OpQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, LayerFilterParams
 
 
 class BaseNode:

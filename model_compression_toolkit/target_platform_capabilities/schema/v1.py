@@ -1,4 +1,4 @@
-# Copyright 2022 Sony Semiconductor Israel, Inc. All rights reserved.
+# Copyright 2024 Sony Semiconductor Israel, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
 import copy
-from typing import List, Dict, Union, Any, Tuple
+
 from enum import Enum
+
+import pprint
+
+from typing import Dict, Any, Union, Tuple, List, Optional
 
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
+
 from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.target_platform_capabilities.constants import OPS_SET_LIST
+from model_compression_toolkit.target_platform_capabilities.immutable import ImmutableClass
+from model_compression_toolkit.target_platform_capabilities.target_platform.current_tp_model import \
+    get_current_tp_model, _current_tp_model
+from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import clone_and_edit_object_params
 
 
 class Signedness(Enum):
@@ -33,27 +42,6 @@ class Signedness(Enum):
     AUTO = 0
     SIGNED = 1
     UNSIGNED = 2
-
-
-def clone_and_edit_object_params(obj: Any, **kwargs: Dict) -> Any:
-    """
-    Clones the given object and edit some of its parameters.
-
-    Args:
-        obj: An object to clone.
-        **kwargs: Keyword arguments to edit in the cloned object.
-
-    Returns:
-        Edited copy of the given object.
-    """
-
-    obj_copy = copy.deepcopy(obj)
-    for k, v in kwargs.items():
-        assert hasattr(obj_copy,
-                       k), f'Edit parameter is possible only for existing parameters in the given object, ' \
-                           f'but {k} is not a parameter of {obj_copy}.'
-        setattr(obj_copy, k, v)
-    return obj_copy
 
 
 class AttributeQuantizationConfig:
@@ -375,4 +363,369 @@ class QuantizationConfigOptions:
 
     def get_info(self):
         return {f'option {i}': cfg.get_info() for i, cfg in enumerate(self.quantization_config_list)}
+
+
+class TargetPlatformModelComponent:
+    """
+    Component of TargetPlatformModel (Fusing, OperatorsSet, etc.)
+    """
+    def __init__(self, name: str):
+        """
+
+        Args:
+            name: Name of component.
+        """
+        self.name = name
+        _current_tp_model.get().append_component(self)
+
+    def get_info(self) -> Dict[str, Any]:
+        """
+
+        Returns: Get information about the component to display (return an empty dictionary.
+        the actual component should fill it with info).
+
+        """
+        return {}
+
+
+class OperatorsSetBase(TargetPlatformModelComponent):
+    """
+    Base class to represent a set of operators.
+    """
+    def __init__(self, name: str):
+        """
+
+        Args:
+            name: Name of OperatorsSet.
+        """
+        super().__init__(name=name)
+
+
+class OperatorsSet(OperatorsSetBase):
+    def __init__(self,
+                 name: str,
+                 qc_options: QuantizationConfigOptions = None):
+        """
+        Set of operators that are represented by a unique label.
+
+        Args:
+            name (str): Set's label (must be unique in a TargetPlatformModel).
+            qc_options (QuantizationConfigOptions): Configuration options to use for this set of operations.
+        """
+
+        super().__init__(name)
+        self.qc_options = qc_options
+        is_fusing_set = qc_options is None
+        self.is_default = _current_tp_model.get().default_qco == self.qc_options or is_fusing_set
+
+
+    def get_info(self) -> Dict[str,Any]:
+        """
+
+        Returns: Info about the set as a dictionary.
+
+        """
+        return {"name": self.name,
+                "is_default_qc": self.is_default}
+
+
+class OperatorSetConcat(OperatorsSetBase):
+    """
+    Concatenate a list of operator sets to treat them similarly in different places (like fusing).
+    """
+    def __init__(self, *opsets: OperatorsSet):
+        """
+        Group a list of operation sets.
+
+        Args:
+            *opsets (OperatorsSet): List of operator sets to group.
+        """
+        name = "_".join([a.name for a in opsets])
+        super().__init__(name=name)
+        self.op_set_list = opsets
+        self.qc_options = None  # Concat have no qc options
+
+    def get_info(self) -> Dict[str,Any]:
+        """
+
+        Returns: Info about the sets group as a dictionary.
+
+        """
+        return {"name": self.name,
+                OPS_SET_LIST: [s.name for s in self.op_set_list]}
+
+
+class Fusing(TargetPlatformModelComponent):
+    """
+     Fusing defines a list of operators that should be combined and treated as a single operator,
+     hence no quantization is applied between them.
+    """
+
+    def __init__(self,
+                 operator_groups_list: List[Union[OperatorsSet, OperatorSetConcat]],
+                 name: str = None):
+        """
+        Args:
+            operator_groups_list (List[Union[OperatorsSet, OperatorSetConcat]]): A list of operator groups, each being either an OperatorSetConcat or an OperatorsSet.
+            name (str): The name for the Fusing instance. If not provided, it's generated from the operator groups' names.
+        """
+        assert isinstance(operator_groups_list,
+                          list), f'List of operator groups should be of type list but is {type(operator_groups_list)}'
+        assert len(operator_groups_list) >= 2, f'Fusing can not be created for a single operators group'
+
+        # Generate a name from the operator groups if no name is provided
+        if name is None:
+            name = '_'.join([x.name for x in operator_groups_list])
+
+        super().__init__(name)
+        self.operator_groups_list = operator_groups_list
+
+    def contains(self, other: Any) -> bool:
+        """
+        Determines if the current Fusing instance contains another Fusing instance.
+
+        Args:
+            other: The other Fusing instance to check against.
+
+        Returns:
+            A boolean indicating whether the other instance is contained within this one.
+        """
+        if not isinstance(other, Fusing):
+            return False
+
+        # Check for containment by comparing operator groups
+        for i in range(len(self.operator_groups_list) - len(other.operator_groups_list) + 1):
+            for j in range(len(other.operator_groups_list)):
+                if self.operator_groups_list[i + j] != other.operator_groups_list[j] and not (
+                        isinstance(self.operator_groups_list[i + j], OperatorSetConcat) and (
+                        other.operator_groups_list[j] in self.operator_groups_list[i + j].op_set_list)):
+                    break
+            else:
+                # If all checks pass, the other Fusing instance is contained
+                return True
+        # Other Fusing instance is not contained
+        return False
+
+    def get_info(self):
+        """
+        Retrieves information about the Fusing instance, including its name and the sequence of operator groups.
+
+        Returns:
+            A dictionary with the Fusing instance's name as the key and the sequence of operator groups as the value,
+            or just the sequence of operator groups if no name is set.
+        """
+        if self.name is not None:
+            return {self.name: ' -> '.join([x.name for x in self.operator_groups_list])}
+        return ' -> '.join([x.name for x in self.operator_groups_list])
+
+
+class TargetPlatformModel(ImmutableClass):
+    """
+    Represents the hardware configuration used for quantized model inference.
+
+    This model defines:
+    - The operators and their associated quantization configurations.
+    - Fusing patterns, enabling multiple operators to be combined into a single operator
+      for optimization during inference.
+    - Versioning support through minor and patch versions for backward compatibility.
+
+    Attributes:
+        SCHEMA_VERSION (int): The schema version of the target platform model.
+    """
+    SCHEMA_VERSION = 1
+    def __init__(self,
+                 default_qco: QuantizationConfigOptions,
+                 tpc_minor_version: Optional[int],
+                 tpc_patch_version: Optional[int],
+                 tpc_platform_type: Optional[str],
+                 add_metadata: bool = True,
+                 name="default_tp_model"):
+        """
+
+        Args:
+            default_qco (QuantizationConfigOptions): Default QuantizationConfigOptions to use for operators that their QuantizationConfigOptions are not defined in the model.
+            tpc_minor_version (Optional[int]): The minor version of the target platform capabilities.
+            tpc_patch_version (Optional[int]): The patch version of the target platform capabilities.
+            tpc_platform_type (Optional[str]): The platform type of the target platform capabilities.
+            add_metadata (bool): Whether to add metadata to the model or not.
+            name (str): Name of the model.
+
+         Raises:
+            AssertionError: If the provided `default_qco` does not contain exactly one quantization configuration.
+        """
+
+        super().__init__()
+        self.tpc_minor_version = tpc_minor_version
+        self.tpc_patch_version = tpc_patch_version
+        self.tpc_platform_type = tpc_platform_type
+        self.add_metadata = add_metadata
+        self.name = name
+        self.operator_set = []
+        assert isinstance(default_qco, QuantizationConfigOptions), \
+            "default_qco must be an instance of QuantizationConfigOptions"
+        assert len(default_qco.quantization_config_list) == 1, \
+            "Default QuantizationConfigOptions must contain exactly one option."
+
+        self.default_qco = default_qco
+        self.fusing_patterns = []
+        self.is_simd_padding = False
+
+    def get_config_options_by_operators_set(self,
+                                            operators_set_name: str) -> QuantizationConfigOptions:
+        """
+        Get the QuantizationConfigOptions of a OperatorsSet by the OperatorsSet name.
+        If the name is not in the model, the default QuantizationConfigOptions is returned.
+
+        Args:
+            operators_set_name: Name of OperatorsSet to get.
+
+        Returns:
+            QuantizationConfigOptions to use for ops in OperatorsSet named operators_set_name.
+        """
+        for op_set in self.operator_set:
+            if operators_set_name == op_set.name:
+                return op_set.qc_options
+        return self.default_qco
+
+    def get_default_op_quantization_config(self) -> OpQuantizationConfig:
+        """
+
+        Returns: The default OpQuantizationConfig of the TargetPlatformModel.
+
+        """
+        assert len(self.default_qco.quantization_config_list) == 1, \
+            f'Default quantization configuration options must contain only one option,' \
+            f' but found {len(get_current_tp_model().default_qco.quantization_config_list)} configurations.'
+        return self.default_qco.quantization_config_list[0]
+
+    def is_opset_in_model(self,
+                          opset_name: str) -> bool:
+        """
+        Check whether an operators set is defined in the model or not.
+
+        Args:
+            opset_name: Operators set name to check.
+
+        Returns:
+            Whether an operators set is defined in the model or not.
+        """
+        return opset_name in [x.name for x in self.operator_set]
+
+    def get_opset_by_name(self,
+                          opset_name: str) -> OperatorsSetBase:
+        """
+        Get an OperatorsSet object from the model by its name.
+        If name is not in the model - None is returned.
+
+        Args:
+            opset_name: OperatorsSet name to retrieve.
+
+        Returns:
+            OperatorsSet object with the name opset_name, or None if opset_name is not in the model.
+        """
+
+        opset_list = [x for x in self.operator_set if x.name == opset_name]
+        assert len(opset_list) <= 1, f'Found more than one OperatorsSet in' \
+                                     f' TargetPlatformModel with the name {opset_name}. ' \
+                                     f'OperatorsSet name must be unique.'
+        if len(opset_list) == 0:  # opset_name is not in the model.
+            return None
+
+        return opset_list[0]  # There's one opset with that name
+
+    def append_component(self,
+                         tp_model_component: TargetPlatformModelComponent):
+        """
+        Attach a TargetPlatformModel component to the model. Components can be for example:
+        Fusing, OperatorsSet, etc.
+
+        Args:
+            tp_model_component: Component to attach to the model.
+
+        """
+        if isinstance(tp_model_component, Fusing):
+            self.fusing_patterns.append(tp_model_component)
+        elif isinstance(tp_model_component, OperatorsSetBase):
+            self.operator_set.append(tp_model_component)
+        else:  # pragma: no cover
+            Logger.critical(f'Attempted to append an unrecognized TargetPlatformModelComponent of type: {type(tp_model_component)}.')
+
+    def __enter__(self):
+        """
+        Start defining the TargetPlatformModel using 'with'.
+
+        Returns: Initialized TargetPlatformModel object.
+
+        """
+        _current_tp_model.set(self)
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        """
+        Finish defining the TargetPlatformModel at the end of the 'with' clause.
+        Returns the final and immutable TargetPlatformModel instance.
+        """
+
+        if exc_value is not None:
+            print(exc_value, exc_value.args)
+            raise exc_value
+        self.__validate_model()  # Assert that model is valid.
+        _current_tp_model.reset()
+        self.initialized_done()  # Make model immutable.
+        return self
+
+    def __validate_model(self):
+        """
+
+        Assert model is valid.
+        Model is invalid if, for example, it contains multiple operator sets with the same name,
+        as their names should be unique.
+
+        """
+        opsets_names = [op.name for op in self.operator_set]
+        if len(set(opsets_names)) != len(opsets_names):
+            Logger.critical(f'Operator Sets must have unique names.')
+
+    def get_default_config(self) -> OpQuantizationConfig:
+        """
+
+        Returns:
+
+        """
+        assert len(self.default_qco.quantization_config_list) == 1, \
+            f'Default quantization configuration options must contain only one option,' \
+            f' but found {len(self.default_qco.quantization_config_list)} configurations.'
+        return self.default_qco.quantization_config_list[0]
+
+    def get_info(self) -> Dict[str, Any]:
+        """
+
+        Returns: Dictionary that summarizes the TargetPlatformModel properties (for display purposes).
+
+        """
+        return {"Model name": self.name,
+                "Default quantization config": self.get_default_config().get_info(),
+                "Operators sets": [o.get_info() for o in self.operator_set],
+                "Fusing patterns": [f.get_info() for f in self.fusing_patterns]
+                }
+
+    def show(self):
+        """
+
+        Display the TargetPlatformModel.
+
+        """
+        pprint.pprint(self.get_info(), sort_dicts=False)
+
+    def set_simd_padding(self,
+                         is_simd_padding: bool):
+        """
+        Set flag is_simd_padding to indicate whether this TP model defines
+        that padding due to SIMD constrains occurs.
+
+        Args:
+            is_simd_padding: Whether this TP model defines that padding due to SIMD constrains occurs.
+
+        """
+        self.is_simd_padding = is_simd_padding
 

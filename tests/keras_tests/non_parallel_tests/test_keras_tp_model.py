@@ -22,6 +22,7 @@ from packaging import version
 
 from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common import BaseNode
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
@@ -47,9 +48,8 @@ from model_compression_toolkit.core.keras.keras_implementation import KerasImple
 
 tp = mct.target_platform
 
-
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
-TEST_QCO = tp.QuantizationConfigOptions([TEST_QC])
+TEST_QCO = schema.QuantizationConfigOptions([TEST_QC])
 
 
 def get_node(layer) -> BaseNode:
@@ -104,9 +104,14 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertFalse(get_node(conv).is_match_filter_params(conv_filter_contains))
 
     def test_get_layers_by_op(self):
-        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
+        hm = schema.TargetPlatformModel(
+            schema.QuantizationConfigOptions([TEST_QC]),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            tpc_platform_type=None,
+            add_metadata=False)
         with hm:
-            op_obj = tp.OperatorsSet('opsetA')
+            op_obj = schema.OperatorsSet('opsetA')
         fw_tp = TargetPlatformCapabilities(hm)
         with fw_tp:
             opset_layers = [Conv2D, LayerFilterParams(ReLU, max_value=2)]
@@ -116,11 +121,16 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual(fw_tp.get_layers_by_opset_name('nonExistingOpsetName'), None)
 
     def test_get_layers_by_opconcat(self):
-        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
+        hm = schema.TargetPlatformModel(
+            schema.QuantizationConfigOptions([TEST_QC]),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            tpc_platform_type=None,
+            add_metadata=False)
         with hm:
-            op_obj_a = tp.OperatorsSet('opsetA')
-            op_obj_b = tp.OperatorsSet('opsetB')
-            op_concat = tp.OperatorSetConcat(op_obj_a, op_obj_b)
+            op_obj_a = schema.OperatorsSet('opsetA')
+            op_obj_b = schema.OperatorsSet('opsetB')
+            op_concat = schema.OperatorSetConcat(op_obj_a, op_obj_b)
 
         fw_tp = TargetPlatformCapabilities(hm)
         with fw_tp:
@@ -133,10 +143,15 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual(fw_tp.get_layers_by_opset(op_concat), opset_layers_a + opset_layers_b)
 
     def test_layer_attached_to_multiple_opsets(self):
-        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
+        hm = schema.TargetPlatformModel(
+            schema.QuantizationConfigOptions([TEST_QC]),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            tpc_platform_type=None,
+            add_metadata=False)
         with hm:
-            tp.OperatorsSet('opsetA')
-            tp.OperatorsSet('opsetB')
+            schema.OperatorsSet('opsetA')
+            schema.OperatorsSet('opsetB')
 
         fw_tp = TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
@@ -146,10 +161,15 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual('Found layer Conv2D in more than one OperatorsSet', str(e.exception))
 
     def test_filter_layer_attached_to_multiple_opsets(self):
-        hm = tp.TargetPlatformModel(tp.QuantizationConfigOptions([TEST_QC]))
+        hm = schema.TargetPlatformModel(
+            schema.QuantizationConfigOptions([TEST_QC]),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            tpc_platform_type=None,
+            add_metadata=False)
         with hm:
-            tp.OperatorsSet('opsetA')
-            tp.OperatorsSet('opsetB')
+            schema.OperatorsSet('opsetA')
+            schema.OperatorsSet('opsetB')
 
         fw_tp = TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
@@ -159,23 +179,28 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual('Found layer Activation(activation=relu) in more than one OperatorsSet', str(e.exception))
 
     def test_qco_by_keras_layer(self):
-        default_qco = tp.QuantizationConfigOptions([TEST_QC])
+        default_qco = schema.QuantizationConfigOptions([TEST_QC])
         default_qco = default_qco.clone_and_edit(attr_weights_configs_mapping={})
-        tpm = tp.TargetPlatformModel(default_qco, name='test')
+        tpm = schema.TargetPlatformModel(default_qco,
+                                         tpc_minor_version=None,
+                                         tpc_patch_version=None,
+                                         tpc_platform_type=None,
+                                         add_metadata=False,
+                                         name='test')
         with tpm:
-            mixed_precision_configuration_options = tp.QuantizationConfigOptions(
+            mixed_precision_configuration_options = schema.QuantizationConfigOptions(
                 quantization_config_list=[TEST_QC,
                                           TEST_QC.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}}),
                                           TEST_QC.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 2}})],
                 base_config=TEST_QC)
 
-            tp.OperatorsSet("conv", mixed_precision_configuration_options)
+            schema.OperatorsSet("conv", mixed_precision_configuration_options)
             sevenbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=7,
                                                    attr_weights_configs_mapping={})
-            tp.OperatorsSet("tanh", sevenbit_qco)
-            tp.OperatorsSet("relu")
+            schema.OperatorsSet("tanh", sevenbit_qco)
+            schema.OperatorsSet("relu")
 
-        tpc_keras = tp.TargetPlatformCapabilities(tpm, name='fw_test')
+        tpc_keras = tp.TargetPlatformCapabilities(tpm)
         with tpc_keras:
             tp.OperationsSetToLayers("conv", [Conv2D],
                                      attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
@@ -195,13 +220,18 @@ class TestKerasTPModel(unittest.TestCase):
                          len(mixed_precision_configuration_options.quantization_config_list))
         for i in range(len(conv_qco.quantization_config_list)):
             self.assertEqual(conv_qco.quantization_config_list[i].attr_weights_configs_mapping[KERAS_KERNEL],
-                             mixed_precision_configuration_options.quantization_config_list[i].attr_weights_configs_mapping[KERNEL_ATTR])
+                             mixed_precision_configuration_options.quantization_config_list[
+                                 i].attr_weights_configs_mapping[KERNEL_ATTR])
         self.assertEqual(tanh_qco, sevenbit_qco)
         self.assertEqual(relu_qco, default_qco)
 
     def test_opset_not_in_tp(self):
-        default_qco = tp.QuantizationConfigOptions([TEST_QC])
-        hm = tp.TargetPlatformModel(default_qco)
+        default_qco = schema.QuantizationConfigOptions([TEST_QC])
+        hm = schema.TargetPlatformModel(default_qco,
+                                        tpc_minor_version=None,
+                                        tpc_patch_version=None,
+                                        tpc_platform_type=None,
+                                        add_metadata=False)
         hm_keras = tp.TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
             with hm_keras:
@@ -211,14 +241,18 @@ class TestKerasTPModel(unittest.TestCase):
             str(e.exception))
 
     def test_keras_fusing_patterns(self):
-        default_qco = tp.QuantizationConfigOptions([TEST_QC])
-        hm = tp.TargetPlatformModel(default_qco)
+        default_qco = schema.QuantizationConfigOptions([TEST_QC])
+        hm = schema.TargetPlatformModel(default_qco,
+                                        tpc_minor_version=None,
+                                        tpc_patch_version=None,
+                                        tpc_platform_type=None,
+                                        add_metadata=False)
         with hm:
-            a = tp.OperatorsSet("opA")
-            b = tp.OperatorsSet("opB")
-            c = tp.OperatorsSet("opC")
-            tp.Fusing([a, b, c])
-            tp.Fusing([a, c])
+            a = schema.OperatorsSet("opA")
+            b = schema.OperatorsSet("opB")
+            c = schema.OperatorsSet("opC")
+            schema.Fusing([a, b, c])
+            schema.Fusing([a, c])
 
         hm_keras = tp.TargetPlatformCapabilities(hm)
         with hm_keras:
@@ -240,10 +274,14 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual(p1[1], LayerFilterParams(ReLU, Greater("max_value", 7), negative_slope=0))
 
     def test_get_default_op_qc(self):
-        default_qco = tp.QuantizationConfigOptions([TEST_QC])
-        tpm = tp.TargetPlatformModel(default_qco)
+        default_qco = schema.QuantizationConfigOptions([TEST_QC])
+        tpm = schema.TargetPlatformModel(default_qco,
+                                         tpc_minor_version=None,
+                                         tpc_patch_version=None,
+                                         tpc_platform_type=None,
+                                         add_metadata=False)
         with tpm:
-            a = tp.OperatorsSet("opA")
+            a = schema.OperatorsSet("opA")
 
         tpc = tp.TargetPlatformCapabilities(tpm)
         with tpc:
@@ -269,47 +307,49 @@ class TestGetKerasTPC(unittest.TestCase):
         quantized_model, _ = mct.ptq.keras_post_training_quantization(model,
                                                                       rep_data,
                                                                       target_platform_capabilities=tpc)
-        core_config = mct.core.CoreConfig(mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(num_of_images=2,
-                                                                                                           use_hessian_based_scores=False))
+        core_config = mct.core.CoreConfig(
+            mixed_precision_config=mct.core.MixedPrecisionQuantizationConfig(num_of_images=2,
+                                                                             use_hessian_based_scores=False))
         quantized_model, _ = mct.ptq.keras_post_training_quantization(model,
                                                                       rep_data,
                                                                       core_config=core_config,
-                                                                      target_resource_utilization=mct.core.ResourceUtilization(np.inf),
+                                                                      target_resource_utilization=mct.core.ResourceUtilization(
+                                                                          np.inf),
                                                                       target_platform_capabilities=tpc)
 
     def test_get_keras_supported_version(self):
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)  # Latest
-        self.assertTrue(tpc.version == 'v1')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1_pot')
-        self.assertTrue(tpc.version == 'v1_pot')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1_lut')
-        self.assertTrue(tpc.version == 'v1_lut')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v1')
-        self.assertTrue(tpc.version == 'v1')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v2_lut')
-        self.assertTrue(tpc.version == 'v2_lut')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 2)
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL, 'v2')
-        self.assertTrue(tpc.version == 'v2')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 2)
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1")
-        self.assertTrue(tpc.version == 'v1')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v2")
-        self.assertTrue(tpc.version == 'v2')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 2)
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1_lut")
-        self.assertTrue(tpc.version == 'v1_lut')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v2_lut")
-        self.assertTrue(tpc.version == 'v2_lut')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 2)
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, "v1_pot")
-        self.assertTrue(tpc.version == 'v1_pot')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, TFLITE_TP_MODEL, "v1")
-        self.assertTrue(tpc.version == 'v1')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
 
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, QNNPACK_TP_MODEL, "v1")
-        self.assertTrue(tpc.version == 'v1')
+        self.assertTrue(tpc.tp_model.tpc_minor_version == 1)
 
     def test_get_keras_not_supported_platform(self):
         with self.assertRaises(Exception) as e:

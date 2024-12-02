@@ -17,7 +17,7 @@ from model_compression_toolkit.core import CoreConfig, QuantizationConfig
 from model_compression_toolkit.core.common import BaseNode, Graph
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.quantization.node_quantization_config import WeightsAttrQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform import AttributeQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig
 
 
 def apply_activation_bias_correction_to_graph(graph: Graph,

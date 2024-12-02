@@ -5,7 +5,7 @@
 Several training methods may be applied by the user to train the QAT ready model
 created by `pytorch_quantization_aware_training_init` method in [`pytorch/quantization_facade`](../quantization_facade.py).
 Each [`TrainingMethod`](../../../trainable_infrastructure/common/training_method.py) 
-and [`QuantizationMethod`](../../../target_platform_capabilities/target_platform/op_quantization_config.py)
+and `QuantizationMethod`
 selects a quantizer for weights and a quantizer for activations.
 
 ## Make your own training method

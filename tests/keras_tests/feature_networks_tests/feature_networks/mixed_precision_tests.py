@@ -18,6 +18,7 @@ import numpy as np
 import tensorflow as tf
 from keras.activations import sigmoid, softmax
 
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core.keras.constants import SIGMOID, SOFTMAX, BIAS
@@ -28,7 +29,8 @@ from tests.keras_tests.feature_networks_tests.base_keras_feature_test import Bas
 from keras import backend as K
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import \
+    ResourceUtilization
 from model_compression_toolkit.core.common.user_info import UserInformation
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 from tests.keras_tests.utils import get_layers_from_model_by_type
@@ -94,14 +96,15 @@ class MixedPrecisionActivationBaseTest(BaseKerasFeatureNetworkTest):
                             activation_layers_idx, unique_tensor_values):
         # verify weights quantization
         conv_layers = get_layers_from_model_by_type(quantized_model, layers.Conv2D)
-        for conv_layer, num_channels in zip(conv_layers,weights_layers_channels_size):
+        for conv_layer, num_channels in zip(conv_layers, weights_layers_channels_size):
             for j in range(num_channels):  # quantized per channel
                 self.unit_test.assertTrue(
                     np.unique(conv_layer.get_quantized_weights()['kernel'][:, :, :, j]).flatten().shape[
                         0] <= unique_tensor_values)
 
         # verify activation quantization
-        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[1:] # skip the input layer
+        holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[
+                        1:]  # skip the input layer
         inp = quantized_model.input  # input placeholder
         out = [layer.output for layer in holder_layers]  # all layer outputs
         get_outputs = K.function([inp], out)
@@ -135,7 +138,7 @@ class MixedPrecisionActivationSearchTest(MixedPrecisionActivationBaseTest):
 
 class MixedPrecisionActivationSearch4BitsAvgTest(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
-        super().__init__(unit_test, activation_layers_idx=[2,4])
+        super().__init__(unit_test, activation_layers_idx=[2, 4])
 
     def get_resource_utilization(self):
         # resource utilization is for 4 bits on average
@@ -260,7 +263,7 @@ class MixedPrecisionActivationDepthwise4BitTest(MixedPrecisionActivationBaseTest
         # activation bitwidth for each layer would be 4-bit, this assertion tests the expected result for this specific
         # test with its current setup (therefore, we don't check the relu layer's bitwidth)
         holder_layer = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)[0]
-        self.unit_test.assertTrue(holder_layer.activation_holder_quantizer.get_config()['num_bits']==4)
+        self.unit_test.assertTrue(holder_layer.activation_holder_quantizer.get_config()['num_bits'] == 4)
 
 
 class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
@@ -640,24 +643,29 @@ class MixedPrecisionActivationOnlyConfigurableWeightsTest(MixedPrecisionActivati
             [c.clone_and_edit(enable_activation_quantization=False) for c in mixed_precision_cfg_list]
         cfg = mixed_precision_cfg_list[0]
 
-        act_mixed_cfg = tp.QuantizationConfigOptions(
+        act_mixed_cfg = schema.QuantizationConfigOptions(
             [act_eight_bit_cfg, act_four_bit_cfg, act_two_bit_cfg],
             base_config=act_eight_bit_cfg,
         )
 
-        weight_mixed_cfg = tp.QuantizationConfigOptions(
+        weight_mixed_cfg = schema.QuantizationConfigOptions(
             mixed_precision_cfg_list,
             base_config=cfg,
         )
 
-        tp_model = tp.TargetPlatformModel(tp.QuantizationConfigOptions([cfg], cfg),
-                                          name="mp_activation_conf_weights_test")
+        tp_model = schema.TargetPlatformModel(
+            schema.QuantizationConfigOptions([cfg], cfg),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            tpc_platform_type=None,
+            add_metadata=False,
+            name="mp_activation_conf_weights_test")
 
         with tp_model:
-            tp.OperatorsSet("Activations", act_mixed_cfg)
-            tp.OperatorsSet("Weights", weight_mixed_cfg)
+            schema.OperatorsSet("Activations", act_mixed_cfg)
+            schema.OperatorsSet("Weights", weight_mixed_cfg)
 
-        keras_tpc = tp.TargetPlatformCapabilities(tp_model, name="mp_activation_conf_weights_test")
+        keras_tpc = tp.TargetPlatformCapabilities(tp_model)
 
         with keras_tpc:
             tp.OperationsSetToLayers(
