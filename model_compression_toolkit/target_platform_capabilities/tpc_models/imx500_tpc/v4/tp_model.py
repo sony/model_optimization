@@ -207,7 +207,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     const_config_input16_per_tensor = const_config.clone_and_edit(
         supported_input_activation_n_bits=(8, 16),
         default_weight_attr_config=default_config.default_weight_attr_config.clone_and_edit(
-            enable_weights_quantization=True, weights_per_channel_threshold=True,
+            enable_weights_quantization=True, weights_per_channel_threshold=False,
             weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO)
     )
     const_config_input16_output16_per_tensor = const_config_input16_per_tensor.clone_and_edit(

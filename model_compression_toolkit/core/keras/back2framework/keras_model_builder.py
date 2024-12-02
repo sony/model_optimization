@@ -302,7 +302,11 @@ class KerasModelBuilder(BaseModelBuilder):
             # Build a functional node using its args
             if isinstance(n, FunctionalNode):
                 if n.inputs_as_list:  # If the first argument should be a list of tensors:
-                    out_tensors_of_n_float = op_func(input_tensors, *n.op_call_args, **op_call_kwargs)
+                    if isinstance(op_func, KerasQuantizationWrapper):
+                        # in wrapped nodes, the op args & kwargs are already in the KerasQuantizationWrapper.
+                        out_tensors_of_n_float = op_func(input_tensors)
+                    else:
+                        out_tensors_of_n_float = op_func(input_tensors, *n.op_call_args, **op_call_kwargs)
                 else:  # If the input tensors should not be a list but iterated:
                     out_tensors_of_n_float = op_func(*input_tensors, *n.op_call_args, **op_call_kwargs)
             else:
