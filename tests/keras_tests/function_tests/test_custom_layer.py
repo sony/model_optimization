@@ -18,8 +18,8 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import Signedness
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
     KERNEL_BASE_CONFIG, BIAS_CONFIG

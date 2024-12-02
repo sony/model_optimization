@@ -19,7 +19,7 @@ import tensorflow as tf
 from tensorflow.keras import layers
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.constants import THRESHOLD, RANGE_MAX, NUM_QPARAM_HESSIAN_SAMPLES
@@ -30,7 +30,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
     calculate_quantization_params
 from model_compression_toolkit.core.keras.constants import KERNEL, GAMMA
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL, BIAS
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import AttributeQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation

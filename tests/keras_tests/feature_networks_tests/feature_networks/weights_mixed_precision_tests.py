@@ -17,7 +17,7 @@
 import numpy as np
 import tensorflow as tf
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from mct_quantizers import KerasQuantizationWrapper
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.defaultdict import DefaultDict

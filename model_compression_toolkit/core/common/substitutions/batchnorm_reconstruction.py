@@ -27,7 +27,7 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.base_node import BaseNode
 from model_compression_toolkit.core.common.graph.graph_matchers import NodeOperationMatcher
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import AttributeQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig
 
 
 class BatchNormalizationReconstruction(common.BaseSubstitution):

@@ -23,7 +23,7 @@ from model_compression_toolkit.core.common.user_info import UserInformation
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL, \
     BIAS
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, OperationsSetToLayers
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel, OperatorsSet, \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OperatorsSet, \
     QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp

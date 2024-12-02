@@ -17,7 +17,7 @@ import tensorflow as tf
 import numpy as np
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import generate_tp_model, \
     get_op_quantization_configs

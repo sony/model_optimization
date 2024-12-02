@@ -25,7 +25,7 @@ from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, Hardsig
 import torch.nn.functional as F
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, hardsigmoid, leaky_relu, gelu
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL, \
     BIAS

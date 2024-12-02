@@ -15,12 +15,12 @@
 import copy
 from typing import Dict, List, Any
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.constants import FLOAT_BITWIDTH, ACTIVATION_N_BITS_ATTRIBUTE, \
     SUPPORTED_INPUT_ACTIVATION_NBITS_ATTRIBUTE
 from model_compression_toolkit.target_platform_capabilities.constants import OPS_SET_LIST, KERNEL_ATTR, BIAS_ATTR, \
     WEIGHTS_N_BITS
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import Signedness, OpQuantizationConfig, \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness, OpQuantizationConfig, \
     QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs, generate_tp_model
 import model_compression_toolkit as mct

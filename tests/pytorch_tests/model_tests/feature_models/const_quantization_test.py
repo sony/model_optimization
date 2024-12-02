@@ -17,8 +17,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import Signedness
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest

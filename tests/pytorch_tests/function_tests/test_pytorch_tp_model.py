@@ -23,7 +23,7 @@ from torch.nn.functional import hardtanh
 from torchvision.models import mobilenet_v2
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.constants import PYTORCH

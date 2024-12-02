@@ -14,7 +14,7 @@
 # ==============================================================================
 
 from model_compression_toolkit.target_platform_capabilities.target_platform.current_tp_model import get_current_tp_model
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import QuantizationConfigOptions
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions
 
 
 def get_default_quantization_config_options() -> QuantizationConfigOptions:
@@ -26,17 +26,5 @@ def get_default_quantization_config_options() -> QuantizationConfigOptions:
 
     """
     return get_current_tp_model().default_qco
-
-
-def get_default_quantization_config():
-    """
-
-    Returns: The default OpQuantizationConfig of the model. This is the OpQuantizationConfig
-    to use when a layer's options is queried and it wasn't specified in the TargetPlatformCapabilities.
-    This OpQuantizationConfig is the single option in the default QuantizationConfigOptions.
-
-    """
-
-    return get_current_tp_model().get_default_op_quantization_config()
 
 

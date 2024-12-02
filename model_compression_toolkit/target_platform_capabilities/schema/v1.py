@@ -28,8 +28,7 @@ from model_compression_toolkit.target_platform_capabilities.constants import OPS
 from model_compression_toolkit.target_platform_capabilities.immutable import ImmutableClass
 from model_compression_toolkit.target_platform_capabilities.target_platform.current_tp_model import \
     get_current_tp_model, _current_tp_model
-from model_compression_toolkit.target_platform_capabilities.target_platform.target_platform_model_component import \
-    TargetPlatformModelComponent
+from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import clone_and_edit_object_params
 
 
 class Signedness(Enum):
@@ -43,27 +42,6 @@ class Signedness(Enum):
     AUTO = 0
     SIGNED = 1
     UNSIGNED = 2
-
-
-def clone_and_edit_object_params(obj: Any, **kwargs: Dict) -> Any:
-    """
-    Clones the given object and edit some of its parameters.
-
-    Args:
-        obj: An object to clone.
-        **kwargs: Keyword arguments to edit in the cloned object.
-
-    Returns:
-        Edited copy of the given object.
-    """
-
-    obj_copy = copy.deepcopy(obj)
-    for k, v in kwargs.items():
-        assert hasattr(obj_copy,
-                       k), f'Edit parameter is possible only for existing parameters in the given object, ' \
-                           f'but {k} is not a parameter of {obj_copy}.'
-        setattr(obj_copy, k, v)
-    return obj_copy
 
 
 class AttributeQuantizationConfig:
@@ -385,6 +363,29 @@ class QuantizationConfigOptions:
 
     def get_info(self):
         return {f'option {i}': cfg.get_info() for i, cfg in enumerate(self.quantization_config_list)}
+
+
+class TargetPlatformModelComponent:
+    """
+    Component of TargetPlatformModel (Fusing, OperatorsSet, etc.)
+    """
+    def __init__(self, name: str):
+        """
+
+        Args:
+            name: Name of component.
+        """
+        self.name = name
+        _current_tp_model.get().append_component(self)
+
+    def get_info(self) -> Dict[str, Any]:
+        """
+
+        Returns: Get information about the component to display (return an empty dictionary.
+        the actual component should fill it with info).
+
+        """
+        return {}
 
 
 class OperatorsSetBase(TargetPlatformModelComponent):

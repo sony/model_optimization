@@ -16,11 +16,11 @@ import tensorflow as tf
 import numpy as np
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from mct_quantizers import QuantizationMethod, KerasQuantizationWrapper
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core.keras.constants import GAMMA, BETA
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import Signedness
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS, BIAS_ATTR
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, \
     DEFAULT_WEIGHT_ATTR_CONFIG, KERNEL_BASE_CONFIG, generate_test_op_qc, BIAS_CONFIG

@@ -33,7 +33,7 @@ from model_compression_toolkit.core.common.quantization.quantization_params_fn_s
 from model_compression_toolkit.core.common.quantization.quantization_fn_selection import \
     get_weights_quantization_fn
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework import TargetPlatformCapabilities
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import OpQuantizationConfig, \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OpQuantizationConfig, \
     QuantizationConfigOptions
 
 

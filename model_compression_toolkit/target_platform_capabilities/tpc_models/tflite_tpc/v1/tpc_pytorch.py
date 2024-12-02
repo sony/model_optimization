@@ -16,7 +16,7 @@ import torch
 from torch.nn import AvgPool2d, MaxPool2d
 from torch.nn.functional import avg_pool2d, max_pool2d, interpolate
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR, \
     BIAS

@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from dataclasses import dataclass, asdict
 
 from typing import Dict, Any
-from model_compression_toolkit.constants import MCT_VERSION, TPC_MINOR_VERSION, OPERATORS_SCHEDULING, \
-    FUSED_NODES_MAPPING, \
-    CUTS, MAX_CUT, OP_ORDER, OP_RECORD, SHAPE, NODE_OUTPUT_INDEX, NODE_NAME, TOTAL_SIZE, MEM_ELEMENTS, TPC_SCHEMA, \
-    TPC_PATCH_VERSION, TPC_PLATFORM_TYPE
+from model_compression_toolkit.constants import OPERATORS_SCHEDULING, FUSED_NODES_MAPPING, CUTS, MAX_CUT, OP_ORDER, \
+    OP_RECORD, SHAPE, NODE_OUTPUT_INDEX, NODE_NAME, TOTAL_SIZE, MEM_ELEMENTS
 from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import SchedulerInfo
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 
@@ -50,15 +49,16 @@ def get_versions_dict(tpc) -> Dict:
     """
     # imported inside to avoid circular import error
     from model_compression_toolkit import __version__ as mct_version
-    tpc_minor_version = f'{tpc.tp_model.tpc_minor_version}'
-    tpc_patch_version = f'{tpc.tp_model.tpc_patch_version}'
-    tpc_platform_type = f'{tpc.tp_model.tpc_platform_type}'
-    tpc_schema = f'{tpc.tp_model.SCHEMA_VERSION}'
-    return {MCT_VERSION: mct_version,
-            TPC_MINOR_VERSION: tpc_minor_version,
-            TPC_PATCH_VERSION: tpc_patch_version,
-            TPC_PLATFORM_TYPE: tpc_platform_type,
-            TPC_SCHEMA: tpc_schema}
+
+    @dataclass
+    class TPCVersions:
+        mct_version: str
+        tpc_minor_version: str = f'{tpc.tp_model.tpc_minor_version}'
+        tpc_patch_version: str = f'{tpc.tp_model.tpc_patch_version}'
+        tpc_platform_type: str = f'{tpc.tp_model.tpc_platform_type}'
+        tpc_schema: str = f'{tpc.tp_model.SCHEMA_VERSION}'
+
+    return asdict(TPCVersions(mct_version))
 
 
 def get_scheduler_metadata(scheduler_info: SchedulerInfo) -> Dict[str, Any]:

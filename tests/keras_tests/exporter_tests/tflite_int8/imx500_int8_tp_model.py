@@ -17,7 +17,7 @@ from typing import List, Tuple
 import tensorflow as tf
 from packaging import version
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_KERNEL, BIAS_ATTR, BIAS, \
     KERAS_DEPTHWISE_KERNEL, WEIGHTS_N_BITS
@@ -33,7 +33,7 @@ else:
         Conv2DTranspose
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel, OpQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OpQuantizationConfig
 
 tp = mct.target_platform
 

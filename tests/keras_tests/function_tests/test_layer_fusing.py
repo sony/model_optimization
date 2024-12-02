@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import tensorflow as tf
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.core import DEFAULTCONFIG
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \

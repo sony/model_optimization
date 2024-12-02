@@ -23,7 +23,7 @@ from torch.nn import Dropout, Flatten, Hardtanh, Identity
 from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, LeakyReLU
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, leaky_relu
 
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL, \
     BIAS

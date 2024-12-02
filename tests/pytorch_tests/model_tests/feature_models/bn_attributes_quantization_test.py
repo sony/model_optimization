@@ -16,7 +16,7 @@ import torch
 from torch import nn
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from mct_quantizers import QuantizationMethod, PytorchQuantizationWrapper
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.core.pytorch.constants import GAMMA, BETA
@@ -24,7 +24,7 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
     BIAS_ATTR
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, \
     DEFAULT_WEIGHT_ATTR_CONFIG, KERNEL_BASE_CONFIG, generate_test_op_qc, BIAS_CONFIG
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import Signedness
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from tests.pytorch_tests.utils import get_layers_from_model_by_type
 

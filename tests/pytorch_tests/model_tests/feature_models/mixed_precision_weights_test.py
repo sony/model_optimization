@@ -16,7 +16,7 @@ import torch
 import numpy as np
 from torch.nn import Conv2d
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
@@ -25,7 +25,7 @@ from model_compression_toolkit.core.pytorch.constants import BIAS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS_ATTR
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, \
     OperationsSetToLayers
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel, OperatorsSet, \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, OperatorsSet, \
     QuantizationConfigOptions
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_tp_model, \
     get_op_quantization_configs

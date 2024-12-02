@@ -15,7 +15,7 @@
 import tensorflow as tf
 from packaging import version
 
-from model_compression_toolkit.target_platform_capabilities.schema.v1 import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.verify_packages import FOUND_SONY_CUSTOM_LAYERS
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, KERAS_DEPTHWISE_KERNEL, \

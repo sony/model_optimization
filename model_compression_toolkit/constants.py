@@ -18,12 +18,6 @@
 TENSORFLOW = 'tensorflow'
 PYTORCH = 'pytorch'
 
-# Metadata fields
-MCT_VERSION = 'mct_version'
-TPC_MINOR_VERSION = 'tpc_minor_version'
-TPC_PATCH_VERSION = 'tpc_patch_version'
-TPC_PLATFORM_TYPE = 'tpc_platform_type'
-TPC_SCHEMA = 'tpc_schema'
 
 WEIGHTS_SIGNED = True
 # Minimal threshold to use for quantization ranges:

@@ -17,7 +17,7 @@ import torch.nn as nn
 from torch.nn import Conv2d, ReLU, SiLU, Sigmoid, Linear, Hardtanh
 from torch.nn.functional import relu, relu6
 
-import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
+import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
