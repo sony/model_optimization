@@ -24,6 +24,8 @@ from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quant
     MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width, \
     BitWidthSearchMethod
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_functions_mapping import \
+    RuFunctions
 from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
     mp_integer_programming_search
 from model_compression_toolkit.core.common.model_collector import ModelCollector
@@ -64,10 +66,10 @@ class MockMixedPrecisionSearchManager:
                        RUTarget.TOTAL: [[2], [2], [2]],
                        RUTarget.BOPS: [[1], [1], [1]]}  # minimal resource utilization in the tests layer_to_ru_mapping
 
-        self.compute_ru_functions = {RUTarget.WEIGHTS: (None, lambda v: [lpSum(v)]),
-                                     RUTarget.ACTIVATION: (None, lambda v: [i for i in v]),
-                                     RUTarget.TOTAL: (None, lambda v: [lpSum(v[0]) + i for i in v[1]]),
-                                     RUTarget.BOPS: (None, lambda v: [lpSum(v)])}
+        self.compute_ru_functions = {RUTarget.WEIGHTS: RuFunctions(None, lambda v: [lpSum(v)]),
+                                     RUTarget.ACTIVATION: RuFunctions(None, lambda v: [i for i in v]),
+                                     RUTarget.TOTAL: RuFunctions(None, lambda v: [lpSum(v[0]) + i for i in v[1]]),
+                                     RUTarget.BOPS: RuFunctions(None, lambda v: [lpSum(v)])}
         self.max_ru_config = [0]
         self.config_reconstruction_helper = MockReconstructionHelper()
         self.non_conf_ru_dict = None

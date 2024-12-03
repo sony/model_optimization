@@ -221,9 +221,9 @@ def _add_set_of_ru_constraints(search_manager: MixedPrecisionSearchManager,
     # search_manager.compute_ru_functions contains a pair of ru_metric and ru_aggregation for each ru target
     # get aggregated ru, considering both configurable and non-configurable nodes
     if non_conf_ru_vector is None or len(non_conf_ru_vector) == 0:
-        aggr_ru = search_manager.compute_ru_functions[target][1](ru_sum_vector)
+        aggr_ru = search_manager.compute_ru_functions[target].aggregate_fn(ru_sum_vector)
     else:
-        aggr_ru = search_manager.compute_ru_functions[target][1](np.concatenate([ru_sum_vector, non_conf_ru_vector]))
+        aggr_ru = search_manager.compute_ru_functions[target].aggregate_fn(np.concatenate([ru_sum_vector, non_conf_ru_vector]))
 
     for v in aggr_ru:
         if isinstance(v, float):
@@ -261,9 +261,7 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
     Logger.info('Starting to evaluate metrics')
     layer_to_metrics_mapping = {}
 
-    is_bops_target_resource_utilization = target_resource_utilization.bops < np.inf
-
-    if is_bops_target_resource_utilization:
+    if target_resource_utilization.bops_restricted():
         origin_max_config = search_manager.config_reconstruction_helper.reconstruct_config_from_virtual_graph(search_manager.max_ru_config)
         max_config_value = search_manager.compute_metric_fn(origin_max_config)
     else:
@@ -284,7 +282,7 @@ def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,
             mp_model_configuration[node_idx] = bitwidth_idx
 
             # Build a distance matrix using the function we got from the framework implementation.
-            if is_bops_target_resource_utilization:
+            if target_resource_utilization.bops_restricted():
                 # Reconstructing original graph's configuration from virtual graph's configuration
                 origin_mp_model_configuration = \
                     search_manager.config_reconstruction_helper.reconstruct_config_from_virtual_graph(

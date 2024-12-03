@@ -72,6 +72,18 @@ class ResourceUtilization:
                f"Total_memory: {self.total_memory}, " \
                f"BOPS: {self.bops}"
 
+    def weight_restricted(self):
+        return self.weights_memory < np.inf
+
+    def activation_restricted(self):
+        return self.activation_memory < np.inf
+
+    def total_mem_restricted(self):
+        return self.total_memory < np.inf
+
+    def bops_restricted(self):
+        return self.bops < np.inf
+
     def get_resource_utilization_dict(self) -> Dict[RUTarget, float]:
         """
         Returns: a dictionary with the ResourceUtilization object's values for each resource utilization target.

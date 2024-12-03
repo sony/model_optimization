@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from typing import NamedTuple
+
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import RUTarget
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_aggregation_methods import MpRuAggregation
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import MpRuMetric
@@ -20,7 +22,12 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 # When adding a RUTarget that we want to consider in our mp search,
 # a matching pair of resource_utilization_tools computation function and a resource_utilization_tools
 # aggregation function should be added to this dictionary
-ru_functions_mapping = {RUTarget.WEIGHTS: (MpRuMetric.WEIGHTS_SIZE, MpRuAggregation.SUM),
-                        RUTarget.ACTIVATION: (MpRuMetric.ACTIVATION_OUTPUT_SIZE, MpRuAggregation.MAX),
-                        RUTarget.TOTAL: (MpRuMetric.TOTAL_WEIGHTS_ACTIVATION_SIZE, MpRuAggregation.TOTAL),
-                        RUTarget.BOPS: (MpRuMetric.BOPS_COUNT, MpRuAggregation.SUM)}
+class RuFunctions(NamedTuple):
+    metric_fn: MpRuMetric
+    aggregate_fn: MpRuAggregation
+
+
+ru_functions_mapping = {RUTarget.WEIGHTS: RuFunctions(MpRuMetric.WEIGHTS_SIZE, MpRuAggregation.SUM),
+                        RUTarget.ACTIVATION: RuFunctions(MpRuMetric.ACTIVATION_OUTPUT_SIZE, MpRuAggregation.MAX),
+                        RUTarget.TOTAL: RuFunctions(MpRuMetric.TOTAL_WEIGHTS_ACTIVATION_SIZE, MpRuAggregation.TOTAL),
+                        RUTarget.BOPS: RuFunctions(MpRuMetric.BOPS_COUNT, MpRuAggregation.SUM)}

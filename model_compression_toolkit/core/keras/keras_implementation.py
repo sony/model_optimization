@@ -438,17 +438,11 @@ class KerasImplementation(FrameworkImplementation):
             node: Node to indicate whether it needs to be part of the interest points set.
         Returns: True if the node should be considered an interest point, False otherwise.
         """
-
-        if node.is_match_type(Activation):
-            node_type_name = node.framework_attr[keras_constants.ACTIVATION]
-            if node_type_name in [keras_constants.SOFTMAX, keras_constants.SIGMOID]:
-                return True
-        elif any([node.is_match_type(_type) for _type in [tf.nn.softmax, tf.keras.layers.Softmax, tf.nn.sigmoid, Conv2D,
-                                                          DepthwiseConv2D, Conv2DTranspose, Dense, Concatenate, tf.concat,
-                                                          Add, tf.add]]):
+        if self.is_softmax(node) or self.is_sigmoid(node):
             return True
 
-        return False
+        return any([node.is_match_type(_type) for _type in [Conv2D, DepthwiseConv2D, Conv2DTranspose, Dense,
+                                                            Concatenate, tf.concat, Add, tf.add]])
 
     def get_mp_node_distance_fn(self, n: BaseNode,
                                 compute_distance_fn: Callable = None,
@@ -466,31 +460,33 @@ class KerasImplementation(FrameworkImplementation):
         Returns: A distance function between two tensors and a axis on which the distance is computed (if exists).
         """
 
-        axis = n.framework_attr.get(keras_constants.AXIS) \
-            if not isinstance(n, FunctionalNode) else n.op_call_kwargs.get(keras_constants.AXIS)
-
-        layer_class = n.layer_class
-        framework_attrs = n.framework_attr
+        axis = n.op_call_kwargs.get(keras_constants.AXIS) if isinstance(n, FunctionalNode) else n.framework_attr.get(keras_constants.AXIS)
 
         if compute_distance_fn is not None:
             return compute_distance_fn, axis
 
-        if layer_class == Activation:
-            node_type_name = framework_attrs[ACTIVATION]
-            if node_type_name == SOFTMAX and axis is not None:
-                return compute_kl_divergence, axis
-            elif node_type_name == SIGMOID:
-                return compute_cs, axis
-        elif axis is not None and (layer_class == tf.nn.softmax or layer_class == tf.keras.layers.Softmax
-                                   or (layer_class == TFOpLambda and
-                                       SOFTMAX in framework_attrs[keras_constants.FUNCTION])):
+        # TODO should we really return mse if axis is None? Error? Fill default?
+        if self.is_softmax(n) and axis is not None:
             return compute_kl_divergence, axis
-        elif layer_class == tf.nn.sigmoid or (layer_class == TFOpLambda and
-                                              SIGMOID in framework_attrs[keras_constants.FUNCTION]):
+
+        if self.is_sigmoid(n) or n.layer_class == Dense:
             return compute_cs, axis
-        elif layer_class == Dense:
-            return compute_cs, axis
+
         return partial(compute_mse, norm=norm_mse), axis
+
+    @staticmethod
+    def is_sigmoid(node: BaseNode):
+        cls = node.layer_class
+        return ((cls == Activation and node.framework_attr[ACTIVATION] == SIGMOID) or
+                cls == tf.nn.sigmoid or
+                cls == TFOpLambda and SIGMOID in node.framework_attr[keras_constants.FUNCTION])
+
+    @staticmethod
+    def is_softmax(node: BaseNode):
+        cls = node.layer_class
+        return ((cls == Activation and node.framework_attr[ACTIVATION] == SOFTMAX) or
+                cls in [tf.nn.softmax, tf.keras.layers.Softmax] or
+                cls == TFOpLambda and SOFTMAX in node.framework_attr[keras_constants.FUNCTION])
 
     def get_hessian_scores_calculator(self,
                                       graph: Graph,
