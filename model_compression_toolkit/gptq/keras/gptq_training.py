@@ -172,7 +172,7 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         # Prepare request for Hessian computation
         request = self._build_hessian_request(
-            granularity=HessianScoresGranularity.PER_ELEMENT,
+            granularity=HessianScoresGranularity.PER_OUTPUT_CHANNEL,
             data_loader=hess_data_loader,
             n_samples=None
         )
