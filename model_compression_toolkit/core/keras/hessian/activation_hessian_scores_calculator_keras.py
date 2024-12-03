@@ -140,15 +140,13 @@ class ActivationHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
 
                 # If the change to the mean approximation is insignificant (to all outputs)
                 # we stop the calculation.
-                if j > MIN_HESSIAN_ITER:
-                    if prev_mean_results is not None:
-                        if self.hessian_request.granularity == HessianScoresGranularity.PER_TENSOR:
-                            new_mean_res = tf.reduce_mean(tf.stack(ipts_hessian_approximations), axis=1)
-                            relative_delta_per_node = (tf.abs(new_mean_res - prev_mean_results) /
-                                                       (tf.abs(new_mean_res) + 1e-6))
-                            max_delta = tf.reduce_max(relative_delta_per_node)
-                            if max_delta < HESSIAN_COMP_TOLERANCE:
-                                break
+                if j > MIN_HESSIAN_ITER and prev_mean_results is not None:
+                    new_mean_res = tf.reduce_mean(tf.stack(ipts_hessian_approximations), axis=1)
+                    relative_delta_per_node = (tf.abs(new_mean_res - prev_mean_results) /
+                                               (tf.abs(new_mean_res) + 1e-6))
+                    max_delta = tf.reduce_max(relative_delta_per_node)
+                    if max_delta < HESSIAN_COMP_TOLERANCE:
+                        break
 
                 if self.hessian_request.granularity == HessianScoresGranularity.PER_TENSOR:
                     prev_mean_results = tf.reduce_mean(tf.stack(ipts_hessian_approximations), axis=1)
