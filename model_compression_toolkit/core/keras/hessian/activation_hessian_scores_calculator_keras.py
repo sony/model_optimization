@@ -104,8 +104,8 @@ class ActivationHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
             # Loop through each interest point activation tensor
             prev_mean_results = None
             for j in tqdm(range(self.num_iterations_for_approximation)):  # Approximation iterations
-                # Getting a random vector with normal distribution
-                v = tf.random.normal(shape=output.shape, dtype=output.dtype)
+                # Generate random tensor of 1s and -1s
+                v = self._generate_random_vectors_batch(output.shape)
                 f_v = tf.reduce_sum(v * output)
                 for i, ipt in enumerate(target_activation_tensors):  # Per Interest point activation tensor
                     interest_point_scores = []  # List to store scores for each interest point
