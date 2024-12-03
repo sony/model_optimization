@@ -172,7 +172,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         n_outputs = 1 if isinstance(n.output_shape, tuple) else len(n.output_shape)
 
-        if n_outputs != 1:  # Node has multiple outputs
+        if n_outputs > 1:  # Node has multiple outputs
             stats_collectors = [deepcopy(stats_collector) for i in
                                 range(n_outputs)]  # Create multiple tensors to attach to each next
             # node

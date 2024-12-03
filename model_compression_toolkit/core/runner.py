@@ -91,7 +91,7 @@ def core_runner(in_model: Any,
     batch_data = iter(representative_data_gen()).__next__()
     if isinstance(batch_data, list):
         batch_data = batch_data[0]
-    if batch_data.shape[0] == 1:
+    if not isinstance(batch_data, dict) and batch_data.shape[0] == 1:
         Logger.warning('representative_data_gen generates a batch size of 1 which can be slow for optimization:'
                        ' consider increasing the batch size')
 

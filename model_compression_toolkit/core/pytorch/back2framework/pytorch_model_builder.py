@@ -150,6 +150,13 @@ def _run_operation(n: BaseNode,
             # Temporary patch: for torch.gather this is not the case, so need to merge inputs.
             out_tensors_of_n_float = op_func(*input_tensors)
         else:
+            if n.name == "getitem_3":
+                op_call_args = [(slice(None, None, None), slice(0, 128, None))]
+            if n.name == 'bert_embeddings_word_embeddings' or n.layer_class.__name__ == 'Embedding':
+                # 'bert_embeddings_token_type_embeddings', 'bert_embeddings_position_embeddings'
+                input_tensors = [t.type(torch.int32) for t in input_tensors]
+            if n.layer_class.__name__ == 'masked_fill':
+                input_tensors = [t.type(torch.bool) if isinstance(t, torch.Tensor) else t for t in input_tensors]
             merged_inputs, functional_kwargs = _merge_inputs(n, input_tensors, op_call_args, functional_kwargs.copy(),
                                                              tensor_input_allocs=_tensor_input_allocs)
             out_tensors_of_n_float = op_func(*merged_inputs, **functional_kwargs)
@@ -197,7 +204,12 @@ def _generate_outputs(
         if len(out_tensors_of_n) > 1:
             output.append(out_tensors_of_n)
         else:
-            output += out_tensors_of_n
+            # todo: Exception: Unsupported type for conversion to Numpy array: <class 'int'>.
+            if isinstance(out_tensors_of_n[0], torch.Tensor):
+                output += out_tensors_of_n
+            else:
+                output += [to_torch_tensor(out_tensors_of_n[0], torch.int32).reshape(1, 1)]
+
     return output
 
 

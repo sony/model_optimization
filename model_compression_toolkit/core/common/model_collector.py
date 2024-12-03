@@ -41,8 +41,10 @@ def create_stats_collector_for_node(node: common.BaseNode,
     Returns:
         Statistics collector for statistics collection for the node.
     """
+    if len(node.output_shape) == 0:
+        stats_collector = common.NoStatsCollector()
 
-    if node.is_activation_quantization_enabled():
+    elif node.is_activation_quantization_enabled():
         min_output = getattr(node.prior_info, 'min_output', None)
         max_output = getattr(node.prior_info, 'max_output', None)
         stats_collector = common.StatsCollector(out_channel_axis=fw_info.out_channel_axis_mapping.get(node.type),

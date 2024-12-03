@@ -20,12 +20,17 @@ from typing import Callable, Dict
 import numpy as np
 import torch
 from torch.fx import symbolic_trace
+from transformers.utils import fx as transformers_fx
 from torch.fx.passes.shape_prop import ShapeProp
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.pytorch.reader.graph_builders import edges_builder, nodes_builder
 from model_compression_toolkit.core.pytorch.utils import set_model
+
+
+def is_language_model(model, batch_data) -> bool:
+    return isinstance(batch_data, dict) and "input_ids" in batch_data
 
 
 def generate_module_dict(model: torch.nn.Module) -> Dict:
@@ -87,12 +92,21 @@ def fx_graph_module_generation(pytorch_model: torch.nn.Module,
     set_model(pytorch_model)
 
     try:
-        symbolic_traced = symbolic_trace(pytorch_model)
+        batch_data = iter(representative_data_gen()).__next__()
+        if is_language_model(pytorch_model, batch_data):
+            input_names = ["input_ids", "attention_mask", "token_type_ids"]
+            symbolic_traced = transformers_fx.symbolic_trace(pytorch_model, input_names)
+        else:
+            symbolic_traced = symbolic_trace(pytorch_model)
     except torch.fx.proxy.TraceError as e:
         Logger.critical(f'Error parsing model with torch.fx\n'
                         f'fx error: {e}')
     inputs = next(representative_data_gen())
-    input_for_shape_infer = [to_tensor(i) for i in inputs]
+    if is_language_model(pytorch_model, inputs):
+        llm_inputs = [inputs["input_ids"], inputs["attention_mask"], inputs["token_type_ids"]]
+        input_for_shape_infer = [to_tensor(i, torch.int32) for i in llm_inputs]
+    else:
+        input_for_shape_infer = [to_tensor(i) for i in inputs]
     ShapeProp(symbolic_traced).propagate(*input_for_shape_infer)
     return symbolic_traced
 

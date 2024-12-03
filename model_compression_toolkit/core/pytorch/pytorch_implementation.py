@@ -15,7 +15,7 @@
 import operator
 from copy import deepcopy
 from functools import partial
-from typing import List, Any, Tuple, Callable, Type, Dict, Generator
+from typing import List, Any, Tuple, Callable, Type, Dict, Generator, Optional
 
 import numpy as np
 import torch
@@ -130,7 +130,7 @@ class PytorchImplementation(FrameworkImplementation):
         """
         return torch_tensor_to_numpy(tensor)
 
-    def to_tensor(self, tensor: Any) -> torch.Tensor:
+    def to_tensor(self, tensor: Any, dtype: Optional = torch.float32) -> torch.Tensor:
         """
         Convert a Numpy array to a framework's tensor.
         Args:
@@ -138,7 +138,7 @@ class PytorchImplementation(FrameworkImplementation):
         Returns:
             Framework's tensor converted from the input Numpy array.
         """
-        return to_torch_tensor(tensor)
+        return to_torch_tensor(tensor, dtype)
 
     def model_reader(self,
                      module: Module,
@@ -195,7 +195,12 @@ class PytorchImplementation(FrameworkImplementation):
         Returns:
             The Pytorch model's output.
         """
-        return model(*to_torch_tensor(input_list))
+        if "input_ids" in input_list:
+            llm_inputs = [input_list["input_ids"], input_list["attention_mask"], input_list["token_type_ids"]]
+            input_for_shape_infer = [self.to_tensor(i, torch.int32) for i in llm_inputs]
+            return model(*input_for_shape_infer)
+        else:
+            return model(*to_torch_tensor(input_list))
 
     def shift_negative_correction(self,
                                   graph: Graph,
@@ -261,15 +266,17 @@ class PytorchImplementation(FrameworkImplementation):
         Returns: A list of the framework substitutions used before we collect the prior information.
 
         """
-        return [ReshapeWithStaticShapes(),
+        return [
+            ReshapeWithStaticShapes(),
                 MultiHeadAttentionDecomposition(),
-                ScaledDotProductDecomposition(),
+                # ScaledDotProductDecomposition(),
                 TransformFunctionCallMethod(),
                 FunctionalConvSubstitution(fw_info),
                 FunctionalBatchNorm(),
                 FunctionalLayerNorm(),
                 FunctionalLinear(),
-                RemoveIdentity()]
+                RemoveIdentity()
+        ]
 
     def get_substitutions_pre_statistics_collection(self,
                                                     quant_config: QuantizationConfig

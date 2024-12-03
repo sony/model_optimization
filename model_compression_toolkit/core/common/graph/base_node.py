@@ -115,6 +115,9 @@ class BaseNode:
         Returns: Whether node activation quantization is enabled or not.
 
         """
+        if len(self.output_shape) == 0:
+            return False
+
         if self.final_activation_quantization_cfg:
             # if we have a final configuration, then we only care to check if it enables activation quantization
             return self.final_activation_quantization_cfg.enable_activation_quantization

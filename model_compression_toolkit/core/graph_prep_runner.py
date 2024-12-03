@@ -160,7 +160,7 @@ def get_finalized_graph(initial_graph: Graph,
     ######################################
     # Layer fusing
     ######################################
-    transformed_graph = fusion(transformed_graph, tpc)
+    # transformed_graph = fusion(transformed_graph, tpc)
 
     ######################################
     # Channel equalization
