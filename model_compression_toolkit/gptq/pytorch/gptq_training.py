@@ -21,9 +21,6 @@ from torch.nn import Module
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from model_compression_toolkit.gptq.common.gradual_activation_quantization import get_gradual_activation_quantizer_wrapper_factory
-from model_compression_toolkit.gptq.common.regularization_factory import get_regularization
-
 from model_compression_toolkit.core.common import Graph, BaseNode
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
@@ -41,7 +38,6 @@ from model_compression_toolkit.gptq.pytorch.graph_info import get_gptq_trainable
 from model_compression_toolkit.gptq.pytorch.quantizer.quantization_builder import quantization_builder
 
 from mct_quantizers import PytorchQuantizationWrapper, PytorchActivationQuantizationHolder
-from model_compression_toolkit.trainable_infrastructure.common.util import get_total_grad_steps
 from model_compression_toolkit.trainable_infrastructure.pytorch.annealing_schedulers import PytorchLinearAnnealingScheduler
 from model_compression_toolkit.gptq.pytorch.quantizer.soft_rounding.soft_quantizer_reg import SoftQuantizerRegularization as PytorchSoftQuantizerRegularization
 
@@ -88,41 +84,6 @@ class PytorchGPTQTrainer(GPTQTrainer):
                          fw_info,
                          representative_data_gen_fn=representative_data_gen,
                          hessian_info_service=hessian_info_service)
-
-        # self.loss_list = []
-        # self.input_scale = 1
-        # if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
-        #     Logger.critical("Input scale mismatch between float and GPTQ networks. "
-        #                     "Ensure both networks have matching input scales.")  # pragma: no cover
-        # else:
-        #     self.input_scale = self.gptq_user_info.input_scale
-
-        # trainable_weights, trainable_bias, trainable_threshold = get_gptq_trainable_parameters(
-        #     self.fxp_model,
-        #     add_bias=self.gptq_config.train_bias)
-
-
-        # self.flp_weights_list, self.fxp_weights_list = get_weights_for_loss(self.fxp_model)
-        # if not (len(self.compare_points) == len(trainable_weights) == len(self.flp_weights_list) == len(
-        #         self.fxp_weights_list)):
-        #     Logger.critical("GPTQ: Number of comparison points, layers with trainable weights, "
-        #                     "and float vs. quantized weights for loss calculation do not match. "
-        #                     "Verify consistency across these parameters for successful GPTQ training.")
-
-        # self.optimizer_with_param = self.get_optimizer_with_param(trainable_weights,
-        #                                                           trainable_bias,
-        #                                                           trainable_threshold)
-        # hessian_cfg = self.gptq_config.hessian_weights_config
-
-        # self.use_sample_layer_attention = hessian_cfg and hessian_cfg.per_sample
-        # if self.use_sample_layer_attention:
-        #     # normalization is currently not supported, make sure the config reflects it.
-        #     if hessian_cfg.norm_scores or hessian_cfg.log_norm or hessian_cfg.scale_log_norm:
-        #         raise NotImplementedError()
-        #     self.train_dataloader = self._prepare_train_dataloader_sla(representative_data_gen)
-        # else:
-        #     self.train_dataloader = self._prepare_train_dataloader_for_non_sla(representative_data_gen)
-
 
 
     def _prepare_train_dataloader_sla(self, data_gen_fn: Callable[[], Generator]) -> DataLoader:

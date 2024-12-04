@@ -93,7 +93,6 @@ class GPTQTrainer(ABC):
                                 f"an 'HessianInfoService' object must be provided, but received: {hessian_info_service}.")   # pragma: no cover
             self.hessian_service = hessian_info_service
 
-
         self.reg_func = get_regularization(self.gptq_config,
                                            _get_total_grad_steps,
                                            self.fw_soft_quantizer_regularization,
@@ -136,9 +135,9 @@ class GPTQTrainer(ABC):
             # normalization is currently not supported, make sure the config reflects it.
             if hessian_cfg.norm_scores or hessian_cfg.log_norm or hessian_cfg.scale_log_norm:
                 raise NotImplementedError()
-            self.train_dataloader = self._prepare_train_dataloader_sla(representative_data_gen)
+            self.train_dataloader = self._prepare_train_dataloader_sla(representative_data_gen_fn)
         else:
-            self.train_dataloader = self._prepare_train_dataloader_for_non_sla(representative_data_gen)
+            self.train_dataloader = self._prepare_train_dataloader_for_non_sla(representative_data_gen_fn)
 
     def get_optimizer_with_param(self,
                                  flattened_trainable_weights: List[Any],
