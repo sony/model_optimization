@@ -27,7 +27,11 @@ from model_compression_toolkit.gptq.common.gptq_config import GradientPTQConfig
 from model_compression_toolkit.gptq.common.gptq_constants import QUANT_PARAM_LEARNING_STR
 from model_compression_toolkit.gptq.common.gptq_framework_implementation import GPTQFrameworkImplemantation
 from model_compression_toolkit.gptq.common.gptq_graph import get_compare_points
+from model_compression_toolkit.gptq.common.gradual_activation_quantization import \
+    get_gradual_activation_quantizer_wrapper_factory
+from model_compression_toolkit.gptq.common.regularization_factory import get_regularization
 from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.trainable_infrastructure.common.util import get_total_grad_steps
 
 
 class GPTQTrainer(ABC):
@@ -64,6 +68,14 @@ class GPTQTrainer(ABC):
         self.fw_impl = fw_impl
         self.fw_info = fw_info
         self.representative_data_gen_fn = representative_data_gen_fn
+
+        def _get_total_grad_steps():
+            return get_total_grad_steps(representative_data_gen_fn) * gptq_config.n_epochs
+
+        self.gradual_act_quantizer_wrapper_factory = get_gradual_activation_quantizer_wrapper_factory(gptq_config,
+                                                                                                      _get_total_grad_steps,
+                                                                                                      self.fw_linear_annealing_scheduler)
+
         # ----------------------------------------------
         # Build two models and create compare nodes
         # ----------------------------------------------
@@ -80,6 +92,53 @@ class GPTQTrainer(ABC):
                 Logger.critical(f"When using Hessian-based approximations for sensitivity evaluation, "
                                 f"an 'HessianInfoService' object must be provided, but received: {hessian_info_service}.")   # pragma: no cover
             self.hessian_service = hessian_info_service
+
+
+        self.reg_func = get_regularization(self.gptq_config,
+                                           _get_total_grad_steps,
+                                           self.fw_soft_quantizer_regularization,
+                                           self.fw_linear_annealing_scheduler)
+        self.loss_list = []
+        self.input_scale = 1
+        if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
+            Logger.critical("Input scale mismatch between float and GPTQ networks. "
+                            "Ensure both networks have matching input scales.")  # pragma: no cover
+        else:
+            self.input_scale = self.gptq_user_info.input_scale
+
+        trainable_weights, trainable_bias, trainable_threshold = self.fw_get_gptq_trainable_parameters_fn(
+            self.fxp_model,
+            add_bias=self.gptq_config.train_bias)
+        self.flp_weights_list, self.fxp_weights_list = self.fw_get_weights_for_loss_fn(self.fxp_model)
+
+        if not (len(self.compare_points) == len(trainable_weights) == len(self.flp_weights_list) == len(
+                self.fxp_weights_list)):
+            Logger.critical("Mismatch in the number of comparison points, layers with trainable weights, "
+                            "and the number of float and quantized weights for loss calculation. "
+                            "Ensure all these elements align to proceed with GPTQ training.")
+
+        # In Keras we need to flatten the weights first before attaching the optimizer
+        if isinstance(trainable_weights[0], (list, tuple)):
+            trainable_weights = [w for layer_weights in trainable_weights for w in layer_weights]
+        if isinstance(trainable_bias[0], (list, tuple)):
+            trainable_bias = [w for layer_weights in trainable_bias for w in layer_weights]
+
+        self.optimizer_with_param = self.get_optimizer_with_param(trainable_weights,
+                                                                  trainable_bias,
+                                                                  trainable_threshold)
+        hessian_cfg = self.gptq_config.hessian_weights_config
+
+        self.has_params_to_train = np.sum(
+            [len(optimizer_params_tuple[1]) for optimizer_params_tuple in self.optimizer_with_param]) > 0
+        self.use_sample_layer_attention = hessian_cfg and hessian_cfg.per_sample
+
+        if self.use_sample_layer_attention:
+            # normalization is currently not supported, make sure the config reflects it.
+            if hessian_cfg.norm_scores or hessian_cfg.log_norm or hessian_cfg.scale_log_norm:
+                raise NotImplementedError()
+            self.train_dataloader = self._prepare_train_dataloader_sla(representative_data_gen)
+        else:
+            self.train_dataloader = self._prepare_train_dataloader_for_non_sla(representative_data_gen)
 
     def get_optimizer_with_param(self,
                                  flattened_trainable_weights: List[Any],

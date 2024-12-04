@@ -85,13 +85,10 @@ class KerasGPTQTrainer(GPTQTrainer):
 
         """
 
-        def _get_total_grad_steps():
-            return get_total_grad_steps(representative_data_gen) * gptq_config.n_epochs
-
-        # This must be set before the model building (as it is required for activation holder construction),
-        # which occurs in the base constructor.
-        self.gradual_act_quantizer_wrapper_factory = get_gradual_activation_quantizer_wrapper_factory(
-            gptq_config, _get_total_grad_steps, KerasLinearAnnealingScheduler)
+        self.fw_soft_quantizer_regularization = SoftQuantizerRegularization
+        self.fw_linear_annealing_scheduler = KerasLinearAnnealingScheduler
+        self.fw_get_gptq_trainable_parameters_fn = get_gptq_trainable_parameters
+        self.fw_get_weights_for_loss_fn = get_weights_for_loss
 
         super().__init__(graph_float,
                          graph_quant,
@@ -101,52 +98,48 @@ class KerasGPTQTrainer(GPTQTrainer):
                          representative_data_gen_fn=representative_data_gen,
                          hessian_info_service=hessian_info_service)
 
-        self.loss_list = []
-        self.input_scale = 1
+        # self.loss_list = []
+        # self.input_scale = 1
 
-        trainable_weights, bias_weights, trainable_threshold = get_gptq_trainable_parameters(
-            self.fxp_model,
-            fw_info,
-            add_bias=gptq_config.train_bias)
+        # trainable_weights, bias_weights, trainable_threshold = get_gptq_trainable_parameters(
+        #     self.fxp_model,
+        #     add_bias=gptq_config.train_bias)
 
-        self.flp_weights_list, self.fxp_weights_list = get_weights_for_loss(self.fxp_model)
+        # self.flp_weights_list, self.fxp_weights_list = get_weights_for_loss(self.fxp_model)
+        #
+        # if not (len(self.compare_points) == len(trainable_weights) == len(self.flp_weights_list) == len(
+        #         self.fxp_weights_list)):
+        #     Logger.critical("Mismatch in the number of comparison points, layers with trainable weights, "
+        #                     "and the number of float and quantized weights for loss calculation. "
+        #                     "Ensure all these elements align to proceed with GPTQ training.")
 
-        if not (len(self.compare_points) == len(trainable_weights) == len(self.flp_weights_list) == len(
-                self.fxp_weights_list)):
-            Logger.critical("Mismatch in the number of comparison points, layers with trainable weights, "
-                            "and the number of float and quantized weights for loss calculation. "
-                            "Ensure all these elements align to proceed with GPTQ training.")
+        # flattened_trainable_weights = [w for layer_weights in trainable_weights for w in layer_weights]
+        # flattened_bias_weights = [w for layer_weights in bias_weights for w in layer_weights]
+        # trainable_quantization_parameters = trainable_threshold
+        #
+        # self.optimizer_with_param = self.get_optimizer_with_param(flattened_trainable_weights,
+        #                                                           flattened_bias_weights,
+        #                                                           trainable_quantization_parameters)
+        # self.has_params_to_train = np.sum(
+        #     [len(optimizer_params_tuple[1]) for optimizer_params_tuple in self.optimizer_with_param]) > 0
 
-        flattened_trainable_weights = [w for layer_weights in trainable_weights for w in layer_weights]
-        flattened_bias_weights = [w for layer_weights in bias_weights for w in layer_weights]
-        trainable_quantization_parameters = trainable_threshold
-        self.optimizer_with_param = self.get_optimizer_with_param(flattened_trainable_weights,
-                                                                  flattened_bias_weights,
-                                                                  trainable_quantization_parameters)
-        self.has_params_to_train = np.sum(
-            [len(optimizer_params_tuple[1]) for optimizer_params_tuple in self.optimizer_with_param]) > 0
+        # if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
+        #     Logger.critical("Input scale mismatch detected between the float model and the GPTQ model. "
+        #                     "Confirm that the input scales for both models are correctly configured and aligned.")  # pragma: no cover
+        # else:
+        #     self.input_scale = self.gptq_user_info.input_scale
 
-        if self.float_user_info.input_scale != self.gptq_user_info.input_scale:
-            Logger.critical("Input scale mismatch detected between the float model and the GPTQ model. "
-                            "Confirm that the input scales for both models are correctly configured and aligned.")  # pragma: no cover
-        else:
-            self.input_scale = self.gptq_user_info.input_scale
+        # hessian_cfg = gptq_config.hessian_weights_config
+        # self.use_sample_layer_attention = hessian_cfg and hessian_cfg.per_sample
+        #
+        # if self.use_sample_layer_attention:
+        #     # normalization is currently not supported, make sure the config reflects it.
+        #     if hessian_cfg.norm_scores or hessian_cfg.log_norm or hessian_cfg.scale_log_norm:
+        #         raise NotImplementedError()
+        #     self.train_dataloader = self._prepare_train_dataloader_sla(representative_data_gen)
+        # else:
+        #     self.train_dataloader = self._prepare_train_dataloader_for_non_sla(representative_data_gen)
 
-        hessian_cfg = gptq_config.hessian_weights_config
-        self.use_sample_layer_attention = hessian_cfg and hessian_cfg.per_sample
-
-        if self.use_sample_layer_attention:
-            # normalization is currently not supported, make sure the config reflects it.
-            if hessian_cfg.norm_scores or hessian_cfg.log_norm or hessian_cfg.scale_log_norm:
-                raise NotImplementedError()
-            self.train_dataloader = self._prepare_train_dataloader_sla(representative_data_gen)
-        else:
-            self.train_dataloader = self._prepare_train_dataloader_for_non_sla(representative_data_gen)
-
-        self.reg_func = get_regularization(self.gptq_config,
-                                           _get_total_grad_steps,
-                                           SoftQuantizerRegularization,
-                                           KerasLinearAnnealingScheduler)
 
     def _prepare_train_dataloader_sla(self, data_gen_fn: Callable[[], Generator]) -> tf.data.Dataset:
         """

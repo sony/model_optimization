@@ -16,7 +16,6 @@
 import tensorflow as tf
 from typing import Tuple, List
 from model_compression_toolkit.core.keras.constants import USE_BIAS
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from tensorflow.keras.models import Model
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.gptq.common.gptq_graph import get_kernel_attribute_name_for_gptq
@@ -26,7 +25,6 @@ from model_compression_toolkit.trainable_infrastructure.common.base_trainable_qu
 
 
 def get_gptq_trainable_parameters(fxp_model: Model,
-                                  fw_info: FrameworkInfo,
                                   add_bias: bool = False) -> (
         List[tf.Variable], List[tf.Variable], List[tf.Variable]):
     """
@@ -34,7 +32,6 @@ def get_gptq_trainable_parameters(fxp_model: Model,
 
     Args:
         fxp_model: Model to get its trainable parameters.
-        fw_info: Framework information needed for keras kernel ops list.
         add_bias: Whether to include biases of the model (if there are) or not.
 
     Returns:
@@ -60,7 +57,7 @@ def get_gptq_trainable_parameters(fxp_model: Model,
             trainable_threshold.extend(quantizer_trainable_threshold)
 
             if add_bias:
-                kernel_ops_attrs = fw_info.kernel_ops_attributes_mapping.get(type(layer.layer))
+                kernel_ops_attrs = DEFAULT_KERAS_INFO.kernel_ops_attributes_mapping.get(type(layer.layer))
                 use_bias = kernel_ops_attrs is not None and kernel_ops_attrs[0] is not None \
                            and layer.layer.get_config().get(USE_BIAS)
                 if use_bias is not None and use_bias and layer.layer.bias is not None:
