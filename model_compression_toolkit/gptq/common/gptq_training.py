@@ -117,9 +117,9 @@ class GPTQTrainer(ABC):
                             "Ensure all these elements align to proceed with GPTQ training.")
 
         # In Keras we need to flatten the weights first before attaching the optimizer
-        if isinstance(trainable_weights[0], (list, tuple)):
+        if len(trainable_weights) > 0 and isinstance(trainable_weights[0], (list, tuple)):
             trainable_weights = [w for layer_weights in trainable_weights for w in layer_weights]
-        if isinstance(trainable_bias[0], (list, tuple)):
+        if len(trainable_bias) > 0 and isinstance(trainable_bias[0], (list, tuple)):
             trainable_bias = [w for layer_weights in trainable_bias for w in layer_weights]
 
         self.optimizer_with_param = self.get_optimizer_with_param(trainable_weights,
