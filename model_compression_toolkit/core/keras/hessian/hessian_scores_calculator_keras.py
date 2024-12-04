@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from tensorflow import TensorShape
 
 from model_compression_toolkit.core.common.hessian.hessian_scores_calculator import HessianScoresCalculator
 
@@ -77,3 +78,19 @@ class HessianScoresCalculatorKeras(HessianScoresCalculator):
                 "Unable to concatenate tensors for gradient calculation due to mismatched shapes along the first axis.") # pragma: no cover
 
         return tf.concat(_r_tensors, axis=1)
+
+    def _generate_random_vectors_batch(self, shape: TensorShape) -> tf.Tensor:
+        """
+        Generate a batch of random vectors for Hutchinson estimation using Rademacher distribution.
+
+        Args:
+            shape: target shape.
+
+        Returns:
+            Random tensor.
+        """
+        v = tf.random.uniform(shape=shape, minval=0, maxval=2, dtype=tf.int32)
+        v = tf.where(v == 0, -1, 1)
+        v = tf.cast(v, tf.float32)
+        return v
+

@@ -18,6 +18,27 @@ import tensorflow as tf
 
 from model_compression_toolkit.core.keras.tf_tensor_numpy import to_tf_tensor
 
+import tensorflow as tf
+from typing import Callable, Generator, Sequence, Any
+
+
+def get_tensor_spec(item, ignore_batch_dim=False):
+    """
+    Get the TensorFlow TensorSpec for an item, optionally ignoring the first dimension.
+
+    Args:
+        item: The input item, which could be a tensor, tuple, or list.
+        ignore_batch_dim (bool): Whether to ignore the first dimension of the tensor shape.
+
+    Returns:
+        TensorSpec or a tuple of TensorSpecs.
+    """
+    if isinstance(item, (tuple, list)):
+        return tuple(get_tensor_spec(sub_item, ignore_batch_dim) for sub_item in item)
+
+    shape = item.shape[1:] if ignore_batch_dim else item.shape
+    return tf.TensorSpec(shape=shape, dtype=item.dtype)
+
 
 def flat_gen_fn(data_gen_fn: Callable[[], Generator]):
     """
@@ -29,28 +50,34 @@ def flat_gen_fn(data_gen_fn: Callable[[], Generator]):
     Returns:
         A factory for a flattened data generator.
     """
+
     def gen():
         for inputs_batch in data_gen_fn():
             for sample in zip(*inputs_batch):
-                yield to_tf_tensor(sample)
+                yield tuple([tf.convert_to_tensor(s) for s in sample])
+
     return gen
 
-
-# TODO in tf dataset and dataloader are combined within tf.data.Dataset. For advanced use cases such as gptq sla we
-#  need to separate dataset from dataloader similarly to torch data_util.
 class TFDatasetFromGenerator:
-    def __init__(self, data_gen, batch_size):
-        inputs = next(data_gen())
+    """
+    TensorFlow dataset from a data generator function, batched to a specified size.
+    """
+
+    def __init__(self, data_gen_fn: Callable[[], Generator]):
+        """
+        Args:
+            data_gen_fn: a factory function for data generator that yields lists of tensors.
+        """
+        inputs = next(data_gen_fn())
         if not isinstance(inputs, list):
-            raise TypeError(f'Representative data generator is expected to generate a list of tensors, '
-                            f'got {type(inputs)}')  # pragma: no cover
-
+            raise TypeError(f'Data generator is expected to yield a list of tensors, got {type(inputs)}')
         self.orig_batch_size = inputs[0].shape[0]
-
-        output_signature = tuple([tf.TensorSpec(shape=t.shape[1:], dtype=t.dtype) for t in inputs])
-        dataset = tf.data.Dataset.from_generator(flat_gen_fn(data_gen), output_signature=output_signature)
-        self.dataset = dataset.batch(batch_size)
         self._size = None
+
+        # TFDatasetFromGenerator flattens the dataset, thus we ignore the batch dimension
+        output_signature = get_tensor_spec(inputs, ignore_batch_dim=True)
+        self.dataset = tf.data.Dataset.from_generator(flat_gen_fn(data_gen_fn), output_signature=output_signature)
+
 
     def __iter__(self):
         return iter(self.dataset)
@@ -58,10 +85,116 @@ class TFDatasetFromGenerator:
     def __len__(self):
         """ Returns the number of batches. """
         if self._size is None:
-            self._num_batches = sum(1 for _ in self)
-        return self._num_batches
+            self._size = sum(1 for _ in self.dataset)
+        return self._size
 
 
-def data_gen_to_dataloader(data_gen_fn: Callable[[], Generator], batch_size) -> TFDatasetFromGenerator:
-    """ Create DataLoader based on samples yielded by data_gen. """
-    return TFDatasetFromGenerator(data_gen_fn, batch_size)
+
+class FixedTFDataset:
+    """
+    Fixed dataset containing samples from a generator, stored in memory.
+    """
+
+    def __init__(self, data_gen_fn: Callable[[], Generator], n_samples: int = None):
+        """
+        Args:
+            data_gen_fn: data generator function.
+            n_samples: number of samples to store in the dataset. If None, uses all samples in one pass.
+        """
+        inputs = next(data_gen_fn())
+        if not isinstance(inputs, list):
+            raise TypeError(f'Data generator is expected to yield a list of tensors, got {type(inputs)}')
+        self.orig_batch_size = inputs[0].shape[0]
+
+        samples = []
+        for batch in data_gen_fn():
+            samples.extend(zip(*[tf.convert_to_tensor(t) for t in batch]))
+            if n_samples is not None and len(samples) >= n_samples:
+                samples = samples[:n_samples]
+                break
+
+        if n_samples and len(samples) < n_samples:
+            raise ValueError(f'Not enough samples to create a dataset with {n_samples} samples')
+        self.samples = samples
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, index):
+        return self.samples[index]
+
+
+class FixedSampleInfoDataset:
+    """
+    Dataset for samples with additional info, each element is a tuple of (sample, sample_info).
+    """
+
+    def __init__(self, samples: Sequence, sample_info: Sequence):
+        if not all(len(info) == len(samples) for info in sample_info):
+            raise ValueError('Sample and additional info lengths must match')
+        self.samples = samples
+        self.sample_info = sample_info
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, index):
+        return self.samples[index], tuple([info[index] for info in self.sample_info])
+
+
+class IterableSampleWithConstInfoDataset:
+    """
+    Augments each sample in an iterable dataset with constant additional information.
+    """
+
+    def __init__(self, samples_dataset: tf.data.Dataset, *info: Any):
+        self.samples_dataset = samples_dataset
+        self.info = info
+
+    def __iter__(self):
+        for sample in self.samples_dataset:
+            yield (sample, *self.info)
+
+
+def data_gen_to_dataloader(data_gen_fn: Callable[[], Generator], batch_size: int):
+    """Create a DataLoader based on samples yielded by data_gen."""
+    ds = TFDatasetFromGenerator(data_gen_fn)
+    return create_tf_dataloader(dataset=ds, batch_size=batch_size)
+
+
+def create_tf_dataloader(dataset, batch_size, shuffle=False, collate_fn=None):
+    """
+    Creates a tf.data.Dataset with specified loading options.
+
+    Args:
+        dataset: The dataset container (e.g., FixedDatasetFromGenerator or FixedSampleInfoDataset).
+        batch_size: Number of samples per batch.
+        shuffle: Whether to shuffle the dataset.
+        collate_fn: A function to apply to each batch (e.g., add extra outputs like regularization weights).
+
+    Returns:
+        tf.data.Dataset: Configured for batching, shuffling, and custom transformations.
+    """
+    def generator():
+        for item in dataset:
+            yield item
+
+    dummy_input_tensors = next(generator())
+
+    output_signature = get_tensor_spec(dummy_input_tensors)
+
+    tf_dataset = tf.data.Dataset.from_generator(
+        generator,
+        output_signature=output_signature
+    )
+
+    if shuffle:
+        tf_dataset = tf_dataset.shuffle(buffer_size=len(dataset))
+
+    tf_dataset = tf_dataset.batch(batch_size)
+
+    # Apply collate function if provided
+    if collate_fn:
+        tf_dataset = tf_dataset.map(lambda *args: collate_fn(args))
+
+    return tf_dataset

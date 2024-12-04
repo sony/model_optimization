@@ -25,6 +25,7 @@ from tensorflow.keras.layers import PReLU, ELU
 from model_compression_toolkit.core import QuantizationErrorMethod
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
 from model_compression_toolkit.core.common.network_editors import NodeTypeFilter, NodeNameFilter
+from model_compression_toolkit.gptq.keras.gptq_loss import sample_layer_attention_loss
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 from model_compression_toolkit.gptq import RoundingType
 from model_compression_toolkit.target_platform_capabilities import constants as C
@@ -725,6 +726,19 @@ class FeatureNetworkTest(unittest.TestCase):
 
         tf.config.run_functions_eagerly(False)
 
+    def test_gptq_with_sample_layer_attention(self):
+        # This call removes the effect of @tf.function decoration and executes the decorated function eagerly, which
+        # enabled tracing for code coverage.
+        tf.config.run_functions_eagerly(True)
+        kwargs = dict(per_sample=True, loss=sample_layer_attention_loss,
+                      hessian_weights=True, hessian_num_samples=None,
+                      norm_scores=False, log_norm_weights=False, scaled_log_norm=False)
+        GradientPTQTest(self, **kwargs).run_test()
+        GradientPTQTest(self, hessian_batch_size=16, rounding_type=RoundingType.SoftQuantizer, **kwargs).run_test()
+        GradientPTQTest(self, hessian_batch_size=5, rounding_type=RoundingType.SoftQuantizer, gradual_activation_quantization=True, **kwargs).run_test()
+        GradientPTQTest(self, rounding_type=RoundingType.STE, **kwargs)
+        tf.config.run_functions_eagerly(False)
+
     # TODO: reuven - new experimental facade needs to be tested regardless the exporter.
     # def test_gptq_new_exporter(self):
     #     self.test_gptq(experimental_exporter=True)
@@ -735,10 +749,14 @@ class FeatureNetworkTest(unittest.TestCase):
     #     GradientPTQWeightsUpdateConvGroupTest(self).run_test()
 
     def test_gptq_conv_group_dilation(self):
+        # This call removes the effect of @tf.function decoration and executes the decorated function eagerly, which
+        # enabled tracing for code coverage.
+        tf.config.run_functions_eagerly(True)
         GradientPTQLearnRateZeroConvGroupDilationTest(self).run_test()
         GradientPTQWeightsUpdateConvGroupDilationTest(self).run_test()
         GradientPTQLearnRateZeroConvGroupDilationTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
         GradientPTQWeightsUpdateConvGroupDilationTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+        tf.config.run_functions_eagerly(False)
 
     def test_split_conv_bug(self):
         SplitConvBugTest(self).run_test()

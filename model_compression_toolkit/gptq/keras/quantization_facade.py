@@ -19,7 +19,7 @@ from packaging import version
 
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.gptq.common.gptq_constants import REG_DEFAULT, LR_DEFAULT, LR_REST_DEFAULT, \
-    LR_BIAS_DEFAULT, GPTQ_MOMENTUM
+    LR_BIAS_DEFAULT, GPTQ_MOMENTUM, REG_DEFAULT_SLA
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import TENSORFLOW, ACT_HESSIAN_DEFAULT_BATCH_SIZE, GPTQ_HESSIAN_NUM_SAMPLES
 from model_compression_toolkit.verify_packages import FOUND_TF
@@ -42,7 +42,7 @@ if FOUND_TF:
     from model_compression_toolkit.gptq.keras.gptq_keras_implementation import GPTQKerasImplemantation
     from model_compression_toolkit.core.keras.keras_model_validation import KerasModelValidation
     from tensorflow.keras.models import Model
-    from model_compression_toolkit.gptq.keras.gptq_loss import GPTQMultipleTensorsLoss
+    from model_compression_toolkit.gptq.keras.gptq_loss import GPTQMultipleTensorsLoss, sample_layer_attention_loss
     from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from model_compression_toolkit.exporter.model_wrapper import get_exportable_keras_model
     from model_compression_toolkit import get_target_platform_capabilities
@@ -61,11 +61,12 @@ if FOUND_TF:
     def get_keras_gptq_config(n_epochs: int,
                               optimizer: OptimizerV2 = None,
                               optimizer_rest: OptimizerV2 = None,
-                              loss: Callable = GPTQMultipleTensorsLoss(),
+                              loss: Callable = None,
                               log_function: Callable = None,
                               use_hessian_based_weights: bool = True,
-                              regularization_factor: float = REG_DEFAULT,
+                              regularization_factor: float = None,
                               hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE,
+                              use_hessian_sample_attention: bool = False,
                               gradual_activation_quantization: Union[bool, GradualActivationQuantizationConfig] = False) -> GradientPTQConfig:
         """
         Create a GradientPTQConfig instance for Keras models.
@@ -79,6 +80,7 @@ if FOUND_TF:
             use_hessian_based_weights (bool): Whether to use Hessian-based weights for weighted average loss.
             regularization_factor (float): A floating point number that defines the regularization factor.
             hessian_batch_size (int): Batch size for Hessian computation in Hessian-based weights GPTQ.
+            use_hessian_sample_attention (bool): whether to use Sample-Layer Attention score for weighted loss.
             gradual_activation_quantization (bool, GradualActivationQuantizationConfig): If False, GradualActivationQuantization is disabled. If True, GradualActivationQuantization is enabled with the default settings. GradualActivationQuantizationConfig object can be passed to use non-default settings.
 
         returns:
@@ -105,9 +107,25 @@ if FOUND_TF:
         """
         optimizer = optimizer or tf.keras.optimizers.Adam(learning_rate=LR_DEFAULT)
         optimizer_rest = optimizer_rest or tf.keras.optimizers.Adam(learning_rate=LR_REST_DEFAULT)
+        bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT, momentum=GPTQ_MOMENTUM)
 
-        bias_optimizer = tf.keras.optimizers.SGD(learning_rate=LR_BIAS_DEFAULT,
-                                                 momentum=GPTQ_MOMENTUM)
+        if regularization_factor is None:
+            regularization_factor = REG_DEFAULT_SLA if use_hessian_sample_attention else REG_DEFAULT
+
+        loss = loss or GPTQMultipleTensorsLoss()
+        hessian_weights_config = None
+        if use_hessian_sample_attention:
+            if not use_hessian_based_weights:    # pragma: no cover
+                raise ValueError('use_hessian_based_weights must be set to True in order to use Sample Layer Attention.')
+
+            hessian_weights_config = GPTQHessianScoresConfig(per_sample=True,
+                                                             hessians_num_samples=None,
+                                                             hessian_batch_size=hessian_batch_size)
+            loss = loss or sample_layer_attention_loss
+        elif use_hessian_based_weights:
+            hessian_weights_config = GPTQHessianScoresConfig(per_sample=False,
+                                                             hessians_num_samples=GPTQ_HESSIAN_NUM_SAMPLES,
+                                                             hessian_batch_size=hessian_batch_size)
 
         if isinstance(gradual_activation_quantization, bool):
             gradual_quant_config = GradualActivationQuantizationConfig() if gradual_activation_quantization else None
@@ -117,11 +135,6 @@ if FOUND_TF:
             raise TypeError(f'gradual_activation_quantization argument should be bool or '
                             f'GradualActivationQuantizationConfig, received {type(gradual_activation_quantization)}')
 
-        hessian_weights_config = None
-        if use_hessian_based_weights:
-            hessian_weights_config = GPTQHessianScoresConfig(per_sample=False,
-                                                             hessians_num_samples=GPTQ_HESSIAN_NUM_SAMPLES,
-                                                             hessian_batch_size=hessian_batch_size)
         return GradientPTQConfig(n_epochs=n_epochs,
                                  optimizer=optimizer,
                                  optimizer_rest=optimizer_rest,

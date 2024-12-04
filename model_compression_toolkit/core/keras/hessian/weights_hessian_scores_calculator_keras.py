@@ -89,8 +89,7 @@ class WeightsHessianScoresCalculatorKeras(HessianScoresCalculatorKeras):
             prev_mean_results = None
             tensors_original_shape = []
             for j in tqdm(range(self.num_iterations_for_approximation)):  # Approximation iterations
-                # Getting a random vector with normal distribution and the same shape as the model output
-                v = tf.random.normal(shape=output.shape)
+                v = self._generate_random_vectors_batch(output.shape)
                 f_v = tf.reduce_sum(v * output)
 
                 for i, ipt_node in enumerate(self.hessian_request.target_nodes):  # Per Interest point weights tensor
