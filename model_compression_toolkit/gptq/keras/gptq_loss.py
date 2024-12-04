@@ -85,7 +85,6 @@ def sample_layer_attention_loss(y_list: List[tf.Tensor],
     Returns:
         Sample Layer Attention loss (a scalar).
     """
-    print(f"Why coverage seems to not get here?????")
     loss = 0
     layers_mean_w = []
     loss_weights = tf.stack(loss_weights, axis=1)
