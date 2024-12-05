@@ -66,8 +66,8 @@ if FOUND_TF:
                               use_hessian_based_weights: bool = True,
                               regularization_factor: float = None,
                               hessian_batch_size: int = ACT_HESSIAN_DEFAULT_BATCH_SIZE,
-                              use_hessian_sample_attention: bool = False,
-                              gradual_activation_quantization: Union[bool, GradualActivationQuantizationConfig] = False) -> GradientPTQConfig:
+                              use_hessian_sample_attention: bool = True,
+                              gradual_activation_quantization: Union[bool, GradualActivationQuantizationConfig] = True) -> GradientPTQConfig:
         """
         Create a GradientPTQConfig instance for Keras models.
 
