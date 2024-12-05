@@ -82,7 +82,7 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
                                graph=graph)
         trainer = KerasGPTQTrainer(graph,
                                    graph,
-                                   mct.gptq.get_keras_gptq_config(1, use_hessian_based_weights=False),
+                                   mct.gptq.get_keras_gptq_config(1, use_hessian_based_weights=False, use_hessian_sample_attention=False),
                                    keras_impl,
                                    DEFAULT_KERAS_INFO,
                                    representative_dataset)
