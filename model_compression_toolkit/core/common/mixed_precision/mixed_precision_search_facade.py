@@ -22,7 +22,6 @@ from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.common import Graph
 from model_compression_toolkit.core.common.hessian import HessianInfoService
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_functions_mapping import ru_functions_mapping
 from model_compression_toolkit.core.common.framework_implementation import FrameworkImplementation
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
 from model_compression_toolkit.core.common.mixed_precision.search_methods.linear_programming import \
@@ -105,16 +104,11 @@ def search_bit_width(graph_to_search_cfg: Graph,
         disable_activation_for_metric=disable_activation_for_metric,
         hessian_info_service=hessian_info_service)
 
-    # Each pair of (resource utilization method, resource utilization aggregation) should match to a specific
-    # provided target resource utilization
-    ru_functions = ru_functions_mapping
-
     # Instantiate a manager object
     search_manager = MixedPrecisionSearchManager(graph,
                                                  fw_info,
                                                  fw_impl,
                                                  se,
-                                                 ru_functions,
                                                  target_resource_utilization,
                                                  original_graph=graph_to_search_cfg)
 

@@ -545,9 +545,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
 
         def is_configurable(n):
             kernel_attr = fw_info.get_kernel_op_attributes(n.type)[0]
-            return (n.is_weights_quantization_enabled(kernel_attr) and
-                    not n.is_all_weights_candidates_equal(kernel_attr) and
-                    (not n.reuse or include_reused_nodes))
+            return n.is_configurable_weight(kernel_attr) and (not n.reuse or include_reused_nodes)
 
         return [n for n in potential_conf_nodes if is_configurable(n)]
 
@@ -576,7 +574,7 @@ class Graph(nx.MultiDiGraph, GraphSearches):
         Returns:
             A list of nodes that their activation can be configured (namely, has one or more activation qc candidate).
         """
-        return [n for n in list(self) if n.is_activation_quantization_enabled() and not n.is_all_activation_candidates_equal()]
+        return [n for n in list(self) if n.has_configurable_activation()]
 
     def get_sorted_activation_configurable_nodes(self) -> List[BaseNode]:
         """

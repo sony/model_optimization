@@ -14,10 +14,13 @@
 # ==============================================================================
 
 import numpy as np
+import pulp
 from pulp import *
 from tqdm import tqdm
 from typing import Dict, List, Tuple, Callable
 
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_calculator import \
+    ru_target_aggregation_fn, AggregationMethod
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization, RUTarget
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_manager import MixedPrecisionSearchManager
@@ -218,13 +221,11 @@ def _add_set_of_ru_constraints(search_manager: MixedPrecisionSearchManager,
         np.sum(indicated_ru_matrix[i], axis=0) +  # sum of metric values over all configurations in a row
         search_manager.min_ru[target][i] for i in range(indicated_ru_matrix.shape[0])])
 
-    # search_manager.compute_ru_functions contains a pair of ru_metric and ru_aggregation for each ru target
-    # get aggregated ru, considering both configurable and non-configurable nodes
-    if non_conf_ru_vector is None or len(non_conf_ru_vector) == 0:
-        aggr_ru = search_manager.compute_ru_functions[target].aggregate_fn(ru_sum_vector)
-    else:
-        aggr_ru = search_manager.compute_ru_functions[target].aggregate_fn(np.concatenate([ru_sum_vector, non_conf_ru_vector]))
+    ru_vec = ru_sum_vector
+    if non_conf_ru_vector is not None and non_conf_ru_vector.size:
+        ru_vec = np.concatenate([ru_vec, non_conf_ru_vector])
 
+    aggr_ru = _aggregate_for_lp(ru_vec, target)
     for v in aggr_ru:
         if isinstance(v, float):
             if v > target_resource_utilization_value:
@@ -233,6 +234,21 @@ def _add_set_of_ru_constraints(search_manager: MixedPrecisionSearchManager,
                     f"with the value {target_resource_utilization_value}.")  # pragma: no cover
         else:
             lp_problem += v <= target_resource_utilization_value
+
+
+def _aggregate_for_lp(ru_vec, target) -> list:
+    if target == RUTarget.TOTAL:
+        w = pulp.lpSum(v[0] for v in ru_vec)
+        return [w + v[1] for v in ru_vec]
+
+    if ru_target_aggregation_fn[target] == AggregationMethod.SUM:
+        return [pulp.lpSum(ru_vec)]
+
+    if ru_target_aggregation_fn[target] == AggregationMethod.MAX:
+        return list(ru_vec)
+
+    raise NotImplementedError(f'Cannot define lp constraints with unsupported aggregation function '
+                              f'{ru_target_aggregation_fn[target]}')  # pragma: no cover
 
 
 def _build_layer_to_metrics_mapping(search_manager: MixedPrecisionSearchManager,

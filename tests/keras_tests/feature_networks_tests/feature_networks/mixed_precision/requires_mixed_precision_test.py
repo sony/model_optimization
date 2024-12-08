@@ -78,7 +78,7 @@ class RequiresMixedPrecision(MixedPrecisionBaseTest):
                                                  fw_info=DEFAULT_KERAS_INFO,
                                                  fw_impl=KerasImplementation(),
                                                  transformed_graph=None,
-                                                 mixed_precision_enable=False)
+                                                 mixed_precision_enabled=False)
 
     def get_quantization_config(self):
         return mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE,
