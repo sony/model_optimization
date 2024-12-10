@@ -47,7 +47,7 @@ def greedy_solution_refinement_procedure(mp_solution: List[int],
 
     """
     # Refinement is not supported for BOPs utilization for now...
-    if target_resource_utilization.bops < np.inf:
+    if target_resource_utilization.bops_restricted():
         Logger.info(f'Target resource utilization constraint BOPs - Skipping MP greedy solution refinement')
         return mp_solution
 

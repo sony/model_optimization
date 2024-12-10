@@ -73,7 +73,7 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
 
     assert lp_problem.status == LpStatusOptimal, Logger.critical(
         "No solution was found during solving the LP problem")
-    Logger.info(LpStatus[lp_problem.status])
+    Logger.info(f"ILP status: {LpStatus[lp_problem.status]}")
 
     # Take the bitwidth index only if its corresponding indicator is one.
     config = np.asarray(
@@ -82,7 +82,7 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
          in layer_to_indicator_vars_mapping.values()]
     ).flatten()
 
-    if target_resource_utilization.bops < np.inf:
+    if target_resource_utilization.bops_restricted():
         return search_manager.config_reconstruction_helper.reconstruct_config_from_virtual_graph(config)
     else:
         return config

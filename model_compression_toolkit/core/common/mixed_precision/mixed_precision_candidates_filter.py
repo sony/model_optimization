@@ -30,7 +30,7 @@ def filter_candidates_for_mixed_precision(graph: Graph,
     such that only a single candidate would remain, with the bitwidth equal to the one defined in the matching layer's
     base config in the TPC.
 
-    Note" This function modifies the graph inplace!
+    Note: This function modifies the graph inplace!
 
     Args:
         graph: A graph representation of the model to be quantized.

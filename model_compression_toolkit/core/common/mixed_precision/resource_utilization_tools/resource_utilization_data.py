@@ -57,7 +57,6 @@ def compute_resource_utilization_data(in_model: Any,
     Returns:
         ResourceUtilization: An object encapsulating the calculated resource utilization computations.
 
-
     """
     core_config = _create_core_config_for_ru(core_config)
     # We assume that the resource_utilization_data API is used to compute the model resource utilization for
