@@ -55,7 +55,7 @@ class TargetPlatformModelingTest(unittest.TestCase):
             with model:
                 schema.OperatorsSet("opset")
             model.operator_set = []
-        self.assertEqual('Immutable class. Can\'t edit attributes.', str(e.exception))
+        self.assertEqual("cannot assign to field 'operator_set'", str(e.exception))
 
     def test_default_options_more_than_single_qc(self):
         test_qco = schema.QuantizationConfigOptions([TEST_QC, TEST_QC], base_config=TEST_QC)
@@ -75,8 +75,6 @@ class TargetPlatformModelingTest(unittest.TestCase):
                                          add_metadata=False)
         with tpm:
             a = schema.OperatorsSet("opA")
-
-        tpm.show()
 
 
 class OpsetTest(unittest.TestCase):
@@ -114,7 +112,7 @@ class OpsetTest(unittest.TestCase):
             b = schema.OperatorsSet('opset_B',
                                     get_default_quantization_config_options().clone_and_edit(activation_n_bits=2))
             schema.OperatorsSet('opset_C')  # Just add it without using it in concat
-            schema.OperatorSetConcat(a, b)
+            schema.OperatorSetConcat([a, b])
         self.assertEqual(len(hm.operator_set), 4)
         self.assertTrue(hm.is_opset_in_model("opset_A_opset_B"))
         self.assertTrue(hm.get_config_options_by_operators_set('opset_A_opset_B') is None)
@@ -136,14 +134,14 @@ class OpsetTest(unittest.TestCase):
 class QCOptionsTest(unittest.TestCase):
 
     def test_empty_qc_options(self):
-        with self.assertRaises(AssertionError) as e:
+        with self.assertRaises(Exception) as e:
             schema.QuantizationConfigOptions([])
         self.assertEqual(
             "'QuantizationConfigOptions' requires at least one 'OpQuantizationConfig'. The provided list is empty.",
             str(e.exception))
 
     def test_list_of_no_qc(self):
-        with self.assertRaises(AssertionError) as e:
+        with self.assertRaises(Exception) as e:
             schema.QuantizationConfigOptions([TEST_QC, 3])
         self.assertEqual(
             'Each option must be an instance of \'OpQuantizationConfig\', but found an object of type: <class \'int\'>.',
@@ -186,7 +184,7 @@ class FusingTest(unittest.TestCase):
             add = schema.OperatorsSet("add")
             with self.assertRaises(Exception) as e:
                 schema.Fusing([add])
-            self.assertEqual('Fusing can not be created for a single operators group', str(e.exception))
+            self.assertEqual('Fusing cannot be created for a single operator.', str(e.exception))
 
     def test_fusing_contains(self):
         hm = schema.TargetPlatformModel(
@@ -220,7 +218,7 @@ class FusingTest(unittest.TestCase):
             conv = schema.OperatorsSet("conv")
             add = schema.OperatorsSet("add")
             tanh = schema.OperatorsSet("tanh")
-            add_tanh = schema.OperatorSetConcat(add, tanh)
+            add_tanh = schema.OperatorSetConcat([add, tanh])
             schema.Fusing([conv, add])
             schema.Fusing([conv, add_tanh])
             schema.Fusing([conv, add, tanh])

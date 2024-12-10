@@ -229,7 +229,7 @@ class LayerFusingTest4(BaseLayerFusingTest):
             any_relu = schema.OperatorsSet("AnyReLU")
             add = schema.OperatorsSet("Add")
             swish = schema.OperatorsSet("Swish")
-            activations_to_fuse = schema.OperatorSetConcat(any_relu, swish)
+            activations_to_fuse = schema.OperatorSetConcat([any_relu, swish])
             # Define fusions
             schema.Fusing([conv, activations_to_fuse])
             schema.Fusing([conv, add, activations_to_fuse])
