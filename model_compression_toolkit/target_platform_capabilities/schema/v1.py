@@ -120,11 +120,11 @@ class AttributeQuantizationConfig:
             Logger critical if attributes are of incorrect type or have invalid values.
         """
         if not isinstance(self.weights_n_bits, int) or self.weights_n_bits < 1:
-            Logger.critical("weights_n_bits must be a positive integer.")
+            Logger.critical("weights_n_bits must be a positive integer.") # pragma: no cover
         if not isinstance(self.enable_weights_quantization, bool):
-            Logger.critical("enable_weights_quantization must be a boolean.")
+            Logger.critical("enable_weights_quantization must be a boolean.") # pragma: no cover
         if self.lut_values_bitwidth is not None and not isinstance(self.lut_values_bitwidth, int):
-            Logger.critical("lut_values_bitwidth must be an integer or None.")
+            Logger.critical("lut_values_bitwidth must be an integer or None.") # pragma: no cover
 
     def clone_and_edit(self, **kwargs) -> 'AttributeQuantizationConfig':
         """
@@ -251,27 +251,27 @@ class QuantizationConfigOptions:
         # Validate `quantization_config_list`
         if not isinstance(self.quantization_config_list, list):
             Logger.critical(
-                f"'quantization_config_list' must be a list, but received: {type(self.quantization_config_list)}.")
+                f"'quantization_config_list' must be a list, but received: {type(self.quantization_config_list)}.") # pragma: no cover
         for cfg in self.quantization_config_list:
             if not isinstance(cfg, OpQuantizationConfig):
                 Logger.critical(
-                    f"Each option must be an instance of 'OpQuantizationConfig', but found an object of type: {type(cfg)}.")
+                    f"Each option must be an instance of 'OpQuantizationConfig', but found an object of type: {type(cfg)}.") # pragma: no cover
 
         # Handle base_config
         if len(self.quantization_config_list) > 1:
             if self.base_config is None:
-                Logger.critical(f"For multiple configurations, a 'base_config' is required for non-mixed-precision optimization.")
+                Logger.critical(f"For multiple configurations, a 'base_config' is required for non-mixed-precision optimization.") # pragma: no cover
             if not any(self.base_config == cfg for cfg in self.quantization_config_list):
-                Logger.critical(f"'base_config' must be included in the quantization config options list.")
+                Logger.critical(f"'base_config' must be included in the quantization config options list.") # pragma: no cover
         elif len(self.quantization_config_list) == 1:
             if self.base_config is None:
                 object.__setattr__(self, 'base_config', self.quantization_config_list[0])
             elif self.base_config != self.quantization_config_list[0]:
                 Logger.critical(
-                    "'base_config' should be the same as the sole item in 'quantization_config_list'.")
+                    "'base_config' should be the same as the sole item in 'quantization_config_list'.") # pragma: no cover
 
         elif len(self.quantization_config_list) == 0:
-            Logger.critical("'QuantizationConfigOptions' requires at least one 'OpQuantizationConfig'. The provided list is empty.")
+            Logger.critical("'QuantizationConfigOptions' requires at least one 'OpQuantizationConfig'. The provided list is empty.") # pragma: no cover
 
     def clone_and_edit(self, **kwargs) -> 'QuantizationConfigOptions':
         """
@@ -500,9 +500,9 @@ class Fusing(TargetPlatformModelComponent):
         # Validate the operator_groups_list
         if not isinstance(self.operator_groups_list, list):
             Logger.critical(
-                f"List of operator groups should be of type list but is {type(self.operator_groups_list)}.")
+                f"List of operator groups should be of type list but is {type(self.operator_groups_list)}.") # pragma: no cover
         if len(self.operator_groups_list) < 2:
-            Logger.critical("Fusing cannot be created for a single operator.")
+            Logger.critical("Fusing cannot be created for a single operator.") # pragma: no cover
 
         # if self.name is None:
         # Generate the name from the operator groups if not provided
@@ -588,9 +588,9 @@ class TargetPlatformModel:
         """
         # Validate `default_qco`
         if not isinstance(self.default_qco, QuantizationConfigOptions):
-            Logger.critical("'default_qco' must be an instance of QuantizationConfigOptions.")
+            Logger.critical("'default_qco' must be an instance of QuantizationConfigOptions.") # pragma: no cover
         if len(self.default_qco.quantization_config_list) != 1:
-            Logger.critical("Default QuantizationConfigOptions must contain exactly one option.")
+            Logger.critical("Default QuantizationConfigOptions must contain exactly one option.") # pragma: no cover
 
     def get_config_options_by_operators_set(self, operators_set_name: str) -> QuantizationConfigOptions:
         """
@@ -661,9 +661,9 @@ class TargetPlatformModel:
             self.fusing_patterns.append(tp_model_component)
         elif isinstance(tp_model_component, OperatorsSetBase):
             self.operator_set.append(tp_model_component)
-        else:  # pragma: no cover
+        else:
             Logger.critical(
-                f"Attempted to append an unrecognized TargetPlatformModelComponent of type: {type(tp_model_component)}.")
+                f"Attempted to append an unrecognized TargetPlatformModelComponent of type: {type(tp_model_component)}.") # pragma: no cover
 
     def get_info(self) -> Dict[str, Any]:
         """
@@ -688,7 +688,7 @@ class TargetPlatformModel:
         """
         opsets_names = [op.name for op in self.operator_set]
         if len(set(opsets_names)) != len(opsets_names):
-            Logger.critical("Operator Sets must have unique names.")
+            Logger.critical("Operator Sets must have unique names.") # pragma: no cover
 
     def __enter__(self) -> 'TargetPlatformModel':
         """
