@@ -120,7 +120,7 @@ def get_tpc_2():
         swish = schema.OperatorsSet("Swish")
         sigmoid = schema.OperatorsSet("Sigmoid")
         tanh = schema.OperatorsSet("Tanh")
-        activations_after_conv_to_fuse = schema.OperatorSetConcat(any_relu, swish, sigmoid, tanh)
+        activations_after_conv_to_fuse = schema.OperatorSetConcat([any_relu, swish, sigmoid, tanh])
         # Define fusions
         schema.Fusing([conv, activations_after_conv_to_fuse])
 
@@ -161,7 +161,7 @@ def get_tpc_4():
         any_relu = schema.OperatorsSet("AnyReLU")
         add = schema.OperatorsSet("Add")
         swish = schema.OperatorsSet("Swish")
-        activations_to_fuse = schema.OperatorSetConcat(any_relu, swish)
+        activations_to_fuse = schema.OperatorSetConcat([any_relu, swish])
         # Define fusions
         schema.Fusing([conv, activations_to_fuse])
         schema.Fusing([conv, add, activations_to_fuse])
