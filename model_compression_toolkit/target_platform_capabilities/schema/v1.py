@@ -23,11 +23,6 @@ from model_compression_toolkit.target_platform_capabilities.target_platform.curr
     _current_tp_model
 
 class OperatorSetNames(Enum):
-    OPSET_NO_QUANTIZATION = "NoQuantization"
-    OPSET_QUANTIZATION_PRESERVING = "QuantizationPreserving"
-    OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS = "DimensionManipulationOpsWithWeights"
-    OPSET_DIMENSION_MANIPULATION_OPS = "DimensionManipulationOps"
-    OPSET_MERGE_OPS = "MergeOps"
     OPSET_CONV = "Conv"
     OPSET_DEPTHWISE_CONV = "DepthwiseConv2D"
     OPSET_CONV_TRANSPOSE = "ConvTraspose"
@@ -38,7 +33,10 @@ class OperatorSetNames(Enum):
     OPSET_GATHER = "Gather"
     OPSET_EXPAND = "Expend"
     OPSET_BATCH_NORM = "BatchNorm"
-    OPSET_ANY_RELU = "AnyReLU"
+    OPSET_RELU = "ReLU"
+    OPSET_RELU6 = "ReLU6"
+    OPSET_LEAKY_RELU = "LEAKYReLU"
+    OPSET_HARD_TANH = "HardTanh"
     OPSET_ADD = "Add"
     OPSET_SUB = "Sub"
     OPSET_MUL = "Mul"
