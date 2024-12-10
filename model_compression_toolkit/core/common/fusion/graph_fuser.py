@@ -26,6 +26,8 @@ class FusedLayerType:
     """
     def __init__(self):
         self.__name__ = 'FusedLayer'
+
+
 class GraphFuser:
 
     def create_fused_graph(self, graph: Graph) -> Dict[str, str]:

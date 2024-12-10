@@ -48,9 +48,8 @@ def set_bit_widths(mixed_precision_enable: bool,
             node_name = node.name if not node.reuse else '_'.join(node.name.split('_')[:-2])
             if node_name in sorted_nodes_names:  # only configurable nodes are in this list
                 node_index_in_graph = sorted_nodes_names.index(node_name)
-                _set_node_final_qc(bit_widths_config,
+                _set_node_final_qc(bit_widths_config[node_index_in_graph],
                                    node,
-                                   node_index_in_graph,
                                    graph.fw_info)
             else:
                 if node.is_activation_quantization_enabled():
@@ -83,8 +82,7 @@ def set_bit_widths(mixed_precision_enable: bool,
 
 
 def _get_node_qc_by_bit_widths(node: BaseNode,
-                               bit_width_cfg: List[int],
-                               node_index_in_graph: int,
+                               node_bit_width_cfg: int,
                                fw_info) -> Any:
     """
     Get the node's quantization configuration that
@@ -93,8 +91,7 @@ def _get_node_qc_by_bit_widths(node: BaseNode,
 
     Args:
         node: Node to get its quantization configuration candidate.
-        bit_width_cfg: Configuration which determines the node's desired bit width.
-        node_index_in_graph: Index of the node in the bit_width_cfg.
+        node_bit_width_cfg: Configuration which determines the node's desired bit width.
         fw_info: Information relevant to a specific framework about how layers should be quantized.
 
     Returns:
@@ -104,24 +101,21 @@ def _get_node_qc_by_bit_widths(node: BaseNode,
     kernel_attr = fw_info.get_kernel_op_attributes(node.type)
 
     if node.is_activation_quantization_enabled():
-        bit_index_in_cfg = bit_width_cfg[node_index_in_graph]
-        qc = node.candidates_quantization_cfg[bit_index_in_cfg]
+        qc = node.candidates_quantization_cfg[node_bit_width_cfg]
 
         return qc
 
     elif kernel_attr is not None:
         if node.is_weights_quantization_enabled(kernel_attr[0]):
-            bit_index_in_cfg = bit_width_cfg[node_index_in_graph]
-            qc = node.candidates_quantization_cfg[bit_index_in_cfg]
+            qc = node.candidates_quantization_cfg[node_bit_width_cfg]
 
             return qc
 
     Logger.critical(f"Quantization configuration for node '{node.name}' not found in candidate configurations.")  # pragma: no cover
 
 
-def _set_node_final_qc(bit_width_cfg: List[int],
+def _set_node_final_qc(node_bit_width_cfg: int,
                        node: BaseNode,
-                       node_index_in_graph: int,
                        fw_info):
     """
     Get the node's quantization configuration that
@@ -130,15 +124,13 @@ def _set_node_final_qc(bit_width_cfg: List[int],
     If the node quantization config was not found, raise an exception.
 
     Args:
-        bit_width_cfg: Configuration which determines the node's desired bit width.
+        node_bit_width_cfg: Configuration which determines the node's desired bit width.
         node: Node to set its node quantization configuration.
-        node_index_in_graph: Index of the node in the bit_width_cfg.
         fw_info: Information relevant to a specific framework about how layers should be quantized.
 
     """
     node_qc = _get_node_qc_by_bit_widths(node,
-                                         bit_width_cfg,
-                                         node_index_in_graph,
+                                         node_bit_width_cfg,
                                          fw_info)
 
     if node_qc is None:

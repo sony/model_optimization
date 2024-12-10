@@ -77,7 +77,8 @@ class BaseManualBitWidthSelectionTest(MixedPrecisionActivationBaseTest):
     def create_feature_network(self, input_shape):
         return NetForBitSelection(input_shape)
 
-    def get_mp_core_config(self):
+    @staticmethod
+    def get_mp_core_config():
         qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
                                          relu_bound_to_power_of_2=False, weights_bias_correction=True,
                                          input_scaling=False, activation_channel_equalization=False)
@@ -91,6 +92,7 @@ class BaseManualBitWidthSelectionTest(MixedPrecisionActivationBaseTest):
         core_config = self.get_mp_core_config()
         core_config.bit_width_config.set_manual_activation_bit_width(self.filters, self.bit_widths)
         return {"mixed_precision_activation_model": core_config}
+
 
 class ManualBitWidthByLayerTypeTest(BaseManualBitWidthSelectionTest):
     """
@@ -159,9 +161,7 @@ class ManualBitWidthByLayerNameTest(BaseManualBitWidthSelectionTest):
         for filter, bit_width in zip(filters, bit_widths):
             self.layer_names.update({filter.node_name: bit_width})
 
-
         super().__init__(unit_test)
-
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         # in the compare we need bit_widths to be a list

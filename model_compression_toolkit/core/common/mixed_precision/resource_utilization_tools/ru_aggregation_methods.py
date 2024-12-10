@@ -33,9 +33,10 @@ def sum_ru_values(ru_vector: np.ndarray, set_constraints: bool = True) -> List[A
     Returns: A list with an lpSum object for lp problem definition with the vector's sum.
 
     """
-    if not set_constraints:
-        return [0] if len(ru_vector) == 0 else [sum(ru_vector)]
-    return [lpSum(ru_vector)]
+    if set_constraints:
+        return [lpSum(ru_vector)]
+    return [0] if len(ru_vector) == 0 else [sum(ru_vector)]
+
 
 
 def max_ru_values(ru_vector: np.ndarray, set_constraints: bool = True) -> List[float]:
@@ -53,9 +54,10 @@ def max_ru_values(ru_vector: np.ndarray, set_constraints: bool = True) -> List[f
     in the linear programming problem formalization.
 
     """
-    if not set_constraints:
-        return [0] if len(ru_vector) == 0 else [max(ru_vector)]
-    return [ru for ru in ru_vector]
+    if set_constraints:
+        return [ru for ru in ru_vector]
+    return [0] if len(ru_vector) == 0 else [max(ru_vector)]
+
 
 
 def total_ru(ru_tensor: np.ndarray, set_constraints: bool = True) -> List[float]:
@@ -74,15 +76,13 @@ def total_ru(ru_tensor: np.ndarray, set_constraints: bool = True) -> List[float]
     in the linear programming problem formalization.
 
     """
-    if not set_constraints:
+    if set_constraints:
+        weights_ru = lpSum([ru[0] for ru in ru_tensor])
+        return [weights_ru + activation_ru for _, activation_ru in ru_tensor]
+    else:
         weights_ru = sum([ru[0] for ru in ru_tensor])
         activation_ru = max([ru[1] for ru in ru_tensor])
         return [weights_ru + activation_ru]
-
-    weights_ru = lpSum([ru[0] for ru in ru_tensor])
-    total_ru = [weights_ru + activation_ru for _, activation_ru in ru_tensor]
-
-    return total_ru
 
 
 class MpRuAggregation(Enum):

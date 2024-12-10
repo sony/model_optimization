@@ -24,6 +24,7 @@ from model_compression_toolkit.core.common.graph.memory_graph.memory_graph impor
 
 SchedulerInfo = namedtuple('SchedulerInfo', [OPERATORS_SCHEDULING, MAX_CUT, CUTS, FUSED_NODES_MAPPING])
 
+
 def compute_graph_max_cut(memory_graph: MemoryGraph,
                           n_iter: int = 50,
                           astar_n_iter: int = 500,
