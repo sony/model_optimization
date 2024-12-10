@@ -76,6 +76,7 @@ class TargetPlatformModelingTest(unittest.TestCase):
         with tpm:
             a = schema.OperatorsSet("opA")
 
+        tpm.show()
 
 class OpsetTest(unittest.TestCase):
 

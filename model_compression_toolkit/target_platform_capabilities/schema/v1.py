@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import pprint
+
 from dataclasses import replace, dataclass, asdict, field
 from enum import Enum
 from typing import Dict, Any, Union, Tuple, List, Optional
@@ -718,3 +720,11 @@ class TargetPlatformModel:
         self.__validate_model()
         _current_tp_model.reset()
         return self
+
+    def show(self) -> None:
+        """
+
+        Display the TargetPlatformModel.
+
+        """
+        pprint.pprint(self.get_info(), sort_dicts=False)
