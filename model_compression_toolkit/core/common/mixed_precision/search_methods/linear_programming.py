@@ -27,7 +27,7 @@ SOLVER_TIME_LIMIT = 60
 
 
 def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
-                                  target_resource_utilization: ResourceUtilization = None) -> List[int]:
+                                  target_resource_utilization: ResourceUtilization = None) -> np.ndarray:
     """
     Searching and returning a mixed-precision configuration using an ILP optimization solution.
     It first builds a mapping from each layer's index (in the model) to a dictionary that maps the
@@ -44,7 +44,7 @@ def mp_integer_programming_search(search_manager: MixedPrecisionSearchManager,
         consumption).
 
     Returns:
-        The mixed-precision configuration (list of indices. Each indicates the bitwidth index of a node).
+        The mixed-precision configuration (1-D array of indices. Each indicates the bitwidth index of a node).
 
     """
 

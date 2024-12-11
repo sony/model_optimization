@@ -34,6 +34,7 @@ def set_layer_to_bitwidth(quantization_layer: Any,
         activation_quant_layer_type: A class of an activation quantization holder.
     """
 
+    bitwidth_set = False
     if isinstance(quantization_layer, weights_quant_layer_type):
         for _, quantizer in quantization_layer.weights_quantizers.items():
             if isinstance(quantizer, weights_quantizer_type):
@@ -41,6 +42,7 @@ def set_layer_to_bitwidth(quantization_layer: Any,
                 # for instance, if only activations are quantized with mixed precision and weights are quantized with
                 # fixed precision
                 quantizer.set_weights_bit_width_index(bitwidth_idx)
+                bitwidth_set = True
 
     if isinstance(quantization_layer, activation_quant_layer_type):
         if isinstance(quantization_layer.activation_holder_quantizer, activation_quantizer_type):
@@ -48,3 +50,6 @@ def set_layer_to_bitwidth(quantization_layer: Any,
             # for instance, if only weights are quantized with mixed precision and activation are quantized with
             # fixed precision
             quantization_layer.activation_holder_quantizer.set_active_activation_quantizer(bitwidth_idx)
+            bitwidth_set = True
+
+    assert bitwidth_set, f"Bit-width not set for {quantization_layer}"

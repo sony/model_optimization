@@ -147,9 +147,11 @@ def _extract_input_and_output_shapes(_node: Node) -> Tuple[List, List]:
 
     if _node.meta[TYPE] == torch.Tensor:
         output_shape = [list(_node.meta[TENSOR_META].shape)]
+    elif _node.meta[TYPE] == torch.Size:
+        output_shape = [[len(input_shape[0])]] if len(input_shape) > 0 else []
     elif _node.meta[TYPE] in (list, tuple):
         output_shape = [list(m.shape) for m in _node.meta.get(TENSOR_META, [])]
-    elif _node.meta[TYPE] == int:
+    elif _node.meta[TYPE] in [int, bool]:
         output_shape = [[1]]
     else:
         output_shape = []

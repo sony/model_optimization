@@ -25,6 +25,7 @@ from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import ActivationMaxCutUtilization
 
 
 def compute_resource_utilization_data(in_model: Any,
@@ -76,7 +77,7 @@ def compute_resource_utilization_data(in_model: Any,
     total_weights_params = 0 if len(weights_params) == 0 else sum(weights_params)
 
     # Compute max activation tensor
-    activation_output_sizes_bytes, activation_output_sizes = compute_activation_output_sizes(graph=transformed_graph)
+    activation_output_sizes_bytes, activation_output_sizes = compute_activation_output_maxcut_sizes(graph=transformed_graph)
     max_activation_tensor_size = 0 if len(activation_output_sizes) == 0 else max(activation_output_sizes)
 
     # Compute total memory utilization - parameters sum + max activation tensor
@@ -132,6 +133,59 @@ def compute_nodes_weights_params(graph: Graph, fw_info: FrameworkInfo) -> Tuple[
 
     return np.array(weights_memory_bytes), np.array(weights_params)
 
+
+def compute_activation_output_maxcut_sizes(graph: Graph) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Computes an array of the respective output tensor maxcut size and an array of the output tensor
+    cut size in bytes for each cut.
+
+    Args:
+        graph: A finalized Graph object, representing the model structure.
+
+    Returns:
+    A tuple containing two arrays:
+        - The first is an array of the size of each activation max-cut size in bytes, calculated
+          using the maximal bit-width for quantization.
+        - The second array an array of the size of each activation max-cut activation size in number of parameters.
+
+    """
+    graph_act_cuts = ActivationMaxCutUtilization(graph)
+
+    # map nodes to cuts.
+    node_to_cat_mapping = {}
+    for i, cut in enumerate(graph_act_cuts.cuts):
+        mem_element_names = []
+        for m in cut.mem_elements.elements:
+            if len(graph.find_node_by_name(m.node_name)) > 0:
+                mem_element_names.append(m.node_name)
+            else:
+                mem_element_names.extend(graph_act_cuts.fused_nodes_to_nodes[m.node_name])
+        for m_name in mem_element_names:
+            if len(graph.find_node_by_name(m_name)) > 0:
+                if m_name in node_to_cat_mapping:
+                    node_to_cat_mapping[m_name].append(i)
+                else:
+                    node_to_cat_mapping[m_name] = [i]
+            else:
+                raise Exception("Missing node")
+
+    activation_outputs = np.zeros(len(graph_act_cuts.cuts))
+    activation_outputs_bytes = np.zeros(len(graph_act_cuts.cuts))
+    for n in graph.nodes:
+        # Go over all nodes that have configurable activation.
+        if n.has_activation_quantization_enabled_candidate():
+            # Fetch maximum bits required for activations quantization.
+            max_activation_bits = max([qc.activation_quantization_cfg.activation_n_bits for qc in n.candidates_quantization_cfg])
+            node_output_size = n.get_total_output_params()  # TODO maxcut: use memory elements
+            for cut_index in node_to_cat_mapping[n.name]:
+                activation_outputs[cut_index] += node_output_size
+                # Calculate activation size in bytes and append to list
+                activation_outputs_bytes[cut_index] += node_output_size * max_activation_bits / BITS_TO_BYTES
+
+    del graph_act_cuts
+    return activation_outputs_bytes, activation_outputs
+
+
 def compute_activation_output_sizes(graph: Graph) -> Tuple[np.ndarray, np.ndarray]:
     """
     Computes an array of the respective output tensor size and an array of the output tensor size in bytes for
@@ -146,9 +200,7 @@ def compute_activation_output_sizes(graph: Graph) -> Tuple[np.ndarray, np.ndarra
           calculated using the maximal bit-width for quantization.
         - The second array represents the size of each node's activation output tensor size.
 
-
     """
-
     activation_outputs = []
     activation_outputs_bytes = []
     for n in graph.nodes:
@@ -238,7 +290,7 @@ def requires_mixed_precision(in_model: Any,
     total_weights_memory_bytes = 0 if len(weights_memory_by_layer_bytes) == 0 else sum(weights_memory_by_layer_bytes)
 
     # Compute max activation tensor in bytes
-    activation_output_sizes_bytes, _ = compute_activation_output_sizes(transformed_graph)
+    activation_output_sizes_bytes, _ = compute_activation_output_maxcut_sizes(transformed_graph)
     max_activation_tensor_size_bytes = 0 if len(activation_output_sizes_bytes) == 0 else max(activation_output_sizes_bytes)
 
     # Compute BOPS utilization - total count of bit-operations for all configurable layers with kernel

@@ -15,6 +15,7 @@
 from enum import Enum
 from functools import partial
 from typing import List
+from copy import deepcopy
 
 import numpy as np
 
@@ -25,6 +26,9 @@ from model_compression_toolkit.core.common.framework_implementation import Frame
 from model_compression_toolkit.core.common.graph.edge import EDGE_SINK_INDEX
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
     VirtualSplitWeightsNode, VirtualSplitActivationNode
+from model_compression_toolkit.core.common.fusion.graph_fuser import GraphFuser
+from model_compression_toolkit.core.common.graph.memory_graph.memory_graph import MemoryGraph
+from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import compute_graph_max_cut
 from model_compression_toolkit.logger import Logger
 
 
@@ -85,6 +89,95 @@ def weights_size_utilization(mp_cfg: List[int],
             weights_memory.append(node_weights_memory_in_bytes)
 
     return np.array(weights_memory)
+
+
+class ActivationMaxCutUtilization:
+    """
+    An object to calculate all cuts in a graph. Each cut size is calculated by the nodes in the cuts and the
+    activation bit-width configuration.
+    Created as an object so the cuts calculation can be done once.
+    """
+    def __init__(self, graph=None):
+        """
+        Init the module. If a graph is provided then calc the cuts.
+        Args:
+            graph: A graph object to calculate its cuts.
+        """
+        self.cuts = None
+        self.max_cut = None
+        self.fused_nodes_to_nodes = {}
+        if graph is not None:
+            self._calc_cuts(graph)
+
+    def _calc_cuts(self, graph):
+        """
+        Calculate graph cuts. Computes the max cut, a list of all cuts and a dictionary of translating fused nodes
+        to graph nodes.
+        Args:
+            graph: A graph object to calculate its cuts.
+        """
+        graph_to_fuse = deepcopy(graph)
+        fused_nodes_mapping = GraphFuser().create_fused_graph(graph_to_fuse)
+        memory_graph = MemoryGraph(graph_to_fuse)
+        _, self.max_cut, self.cuts = compute_graph_max_cut(memory_graph)
+        for k, v in fused_nodes_mapping.items():
+            if v in self.fused_nodes_to_nodes:
+                self.fused_nodes_to_nodes[v].append(k)
+            else:
+                self.fused_nodes_to_nodes[v] = [k]
+
+    def __call__(self, mp_cfg: List[int],
+                 graph: Graph,
+                 fw_info: FrameworkInfo,
+                 fw_impl: FrameworkImplementation) -> np.ndarray:
+        """
+        Computes a resource utilization vector with the respective output memory max-cut size for activation
+        nodes, according to the given mixed-precision configuration.
+
+        Args:
+            mp_cfg: A mixed-precision configuration (list of candidates index for each configurable node)
+            graph: Graph object.
+            fw_info: FrameworkInfo object about the specific framework (e.g., attributes of different layers' weights to quantize)
+                (not used in this method).
+            fw_impl: FrameworkImplementation object with specific framework methods implementation(not used in this method).
+
+        Returns: A vector of node's cut memory sizes.
+        Note that the vector is not necessarily of the same length as the given config.
+
+        """
+        if self.cuts is None:
+            self._calc_cuts(graph)
+
+        activation_cut_memory = []
+        if len(mp_cfg) == 0:
+            # Computing non-configurable nodes resource utilization for max-cut is included in the calculation of the
+            # configurable nodes.
+            activation_cut_memory.append(0.0)
+        else:
+            mp_nodes = graph.get_configurable_sorted_nodes_names(fw_info)
+            # Go over all nodes that should be taken into consideration when computing the weights memory utilization.
+            nodes_act_nbits = {}
+            for n in graph.get_sorted_activation_configurable_nodes():
+                node_idx = mp_nodes.index(n.name)
+                node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
+                node_nbits = node_qc.activation_quantization_cfg.activation_n_bits
+                nodes_act_nbits[n.name] = node_nbits
+
+            for i, cut in enumerate(self.cuts):
+                mem_elements = []
+                for m in cut.mem_elements.elements:
+                    mem_elements.extend(self.fused_nodes_to_nodes.get(m.node_name, [m.node_name]))
+
+                mem = 0
+                for op_name in mem_elements:
+                    if op_name in nodes_act_nbits:
+                        n = graph.find_node_by_name(op_name)[0]
+                        mem += _compute_node_activation_memory(n, nodes_act_nbits[op_name])
+                        print(n, nodes_act_nbits[op_name],
+                              _compute_node_activation_memory(n, nodes_act_nbits[op_name]))
+                activation_cut_memory.append(mem)
+
+        return np.array(activation_cut_memory)
 
 
 def activation_output_size_utilization(mp_cfg: List[int],
@@ -433,7 +526,7 @@ class MpRuMetric(Enum):
     """
 
     WEIGHTS_SIZE = partial(weights_size_utilization)
-    ACTIVATION_OUTPUT_SIZE = partial(activation_output_size_utilization)
+    ACTIVATION_OUTPUT_SIZE = ActivationMaxCutUtilization()
     TOTAL_WEIGHTS_ACTIVATION_SIZE = partial(total_weights_activation_utilization)
     BOPS_COUNT = partial(bops_utilization)
 
