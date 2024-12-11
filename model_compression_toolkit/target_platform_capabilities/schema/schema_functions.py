@@ -13,32 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 from logging import Logger
-import copy
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OpQuantizationConfig, \
     TargetPlatformModel, QuantizationConfigOptions, OperatorsSetBase
-
-
-def clone_and_edit_object_params(obj: Any, **kwargs: Dict) -> Any:
-    """
-    Clones the given object and edit some of its parameters.
-
-    Args:
-        obj: An object to clone.
-        **kwargs: Keyword arguments to edit in the cloned object.
-
-    Returns:
-        Edited copy of the given object.
-    """
-
-    obj_copy = copy.deepcopy(obj)
-    for k, v in kwargs.items():
-        assert hasattr(obj_copy,
-                       k), f'Edit parameter is possible only for existing parameters in the given object, ' \
-                           f'but {k} is not a parameter of {obj_copy}.'
-        setattr(obj_copy, k, v)
-    return obj_copy
 
 
 def get_config_options_by_operators_set(self, operators_set_name: str) -> QuantizationConfigOptions:
@@ -104,7 +82,7 @@ def get_default_op_quantization_config(tp_model: TargetPlatformModel) -> OpQuant
     """
     assert len(tp_model.default_qco.quantization_config_list) == 1, \
         f"Default quantization configuration options must contain only one option, " \
-        f"but found {len(tp_model.default_qco.quantization_config_list)} configurations."
+        f"but found {len(tp_model.default_qco.quantization_config_list)} configurations." # pragma: no cover
     return tp_model.default_qco.quantization_config_list[0]
 
 
@@ -140,5 +118,5 @@ def get_opset_by_name(tp_model: TargetPlatformModel, opset_name: str) -> Optiona
     """
     opset_list = [x for x in tp_model.operator_set if x.name == opset_name]
     if len(opset_list) > 1:
-        Logger.critical(f"Found more than one OperatorsSet in TargetPlatformModel with the name {opset_name}.")
+        Logger.critical(f"Found more than one OperatorsSet in TargetPlatformModel with the name {opset_name}.") # pragma: no cover
     return opset_list[0] if opset_list else None
