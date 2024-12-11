@@ -103,14 +103,14 @@ class AttributeQuantizationConfig:
         weights_n_bits (int): Number of bits to quantize the coefficients.
         weights_per_channel_threshold (bool): Indicates whether to quantize the weights per-channel or per-tensor.
         enable_weights_quantization (bool): Indicates whether to quantize the model weights or not.
-        lut_values_bitwidth (Union[int, None]): Number of bits to use when quantizing in a look-up table.
+        lut_values_bitwidth (Optional[int]): Number of bits to use when quantizing in a look-up table.
                                                If None, defaults to 8 in hptq; otherwise, it uses the provided value.
     """
     weights_quantization_method: QuantizationMethod = QuantizationMethod.POWER_OF_TWO
     weights_n_bits: int = FLOAT_BITWIDTH
     weights_per_channel_threshold: bool = False
     enable_weights_quantization: bool = False
-    lut_values_bitwidth: Union[int, None] = None
+    lut_values_bitwidth: Optional[int] = None
 
     def __post_init__(self):
         """
@@ -170,7 +170,7 @@ class OpQuantizationConfig:
     simd_size: int
     signedness: Signedness
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         """
         Post-initialization processing for input validation.
 
@@ -218,16 +218,6 @@ class OpQuantizationConfig:
         # Return a new instance with the updated attribute mapping
         return replace(updated_config, attr_weights_configs_mapping=updated_attr_mapping)
 
-    @property
-    def max_input_activation_n_bits(self) -> int:
-        """
-        Get the maximum supported input bit-width.
-
-        Returns:
-            int: Maximum supported input bit-width.
-        """
-        return max(self.supported_input_activation_n_bits)
-
 
 @dataclass(frozen=True)
 class QuantizationConfigOptions:
@@ -236,12 +226,12 @@ class QuantizationConfigOptions:
 
     Attributes:
         quantization_config_list (List[OpQuantizationConfig]): List of possible OpQuantizationConfig to gather.
-        base_config (Union[OpQuantizationConfig, None]): Fallback OpQuantizationConfig to use when optimizing the model in a non-mixed-precision manner.
+        base_config (Optional[OpQuantizationConfig]): Fallback OpQuantizationConfig to use when optimizing the model in a non-mixed-precision manner.
     """
     quantization_config_list: List[OpQuantizationConfig]
-    base_config: Union[OpQuantizationConfig, None] = None
+    base_config: Optional[OpQuantizationConfig] = None
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         """
         Post-initialization processing for input validation.
 
@@ -320,12 +310,12 @@ class QuantizationConfigOptions:
             updated_configs.append(replace(qc, attr_weights_configs_mapping=updated_attr_mapping))
         return replace(self, base_config=updated_base_config, quantization_config_list=updated_configs)
 
-    def clone_and_map_weights_attr_keys(self, layer_attrs_mapping: Union[Dict[str, str], None]) -> 'QuantizationConfigOptions':
+    def clone_and_map_weights_attr_keys(self, layer_attrs_mapping: Optional[Dict[str, str]]) -> 'QuantizationConfigOptions':
         """
         Clones the quantization configurations and updates keys in attribute config mappings.
 
         Args:
-            layer_attrs_mapping (Union[Dict[str, str], None]): A mapping between attribute names.
+            layer_attrs_mapping (Optional[Dict[str, str]]): A mapping between attribute names.
 
         Returns:
             QuantizationConfigOptions: A new instance of QuantizationConfigOptions with updated attribute keys.
@@ -361,7 +351,7 @@ class TargetPlatformModelComponent:
     Component of TargetPlatformModel (Fusing, OperatorsSet, etc.).
     """
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         """
         Post-initialization to register the component with the current TargetPlatformModel.
         """
@@ -384,7 +374,7 @@ class OperatorsSetBase(TargetPlatformModelComponent):
     Base class to represent a set of a target platform model component of operator set types.
     Inherits from TargetPlatformModelComponent.
     """
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         """
         Post-initialization to ensure the component is registered with the TargetPlatformModel.
         Calls the parent class's __post_init__ method to append this component to the current TargetPlatformModel.
@@ -407,7 +397,7 @@ class OperatorsSet(OperatorsSetBase):
     name: str
     qc_options: QuantizationConfigOptions = None
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         """
         Post-initialization processing to mark the operator set as default if applicable.
 
@@ -447,7 +437,7 @@ class OperatorSetConcat(OperatorsSetBase):
     qc_options: None = field(default=None, init=False)
     name: str = None
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         """
         Post-initialization processing to generate the concatenated name and set it as the `name` attribute.
 
@@ -486,7 +476,7 @@ class Fusing(TargetPlatformModelComponent):
     operator_groups_list: Tuple[Union[OperatorsSet, OperatorSetConcat]]
     name: str = None
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         """
         Post-initialization processing for input validation and name generation.
 
@@ -504,7 +494,6 @@ class Fusing(TargetPlatformModelComponent):
         if len(self.operator_groups_list) < 2:
             Logger.critical("Fusing cannot be created for a single operator.") # pragma: no cover
 
-        # if self.name is None:
         # Generate the name from the operator groups if not provided
         generated_name = '_'.join([x.name for x in self.operator_groups_list])
         object.__setattr__(self, 'name', generated_name)
@@ -578,7 +567,7 @@ class TargetPlatformModel:
 
     SCHEMA_VERSION: int = 1
 
-    def __post_init__(self) -> None:
+    def __post_init__(self):
         """
         Post-initialization processing for input validation.
 
@@ -592,62 +581,7 @@ class TargetPlatformModel:
         if len(self.default_qco.quantization_config_list) != 1:
             Logger.critical("Default QuantizationConfigOptions must contain exactly one option.") # pragma: no cover
 
-    def get_config_options_by_operators_set(self, operators_set_name: str) -> QuantizationConfigOptions:
-        """
-        Get the QuantizationConfigOptions of an OperatorsSet by its name.
-
-        Args:
-            operators_set_name (str): Name of the OperatorsSet to get.
-
-        Returns:
-            QuantizationConfigOptions: Quantization configuration options for the given OperatorsSet name.
-        """
-        for op_set in self.operator_set:
-            if operators_set_name == op_set.name:
-                return op_set.qc_options
-        return self.default_qco
-
-    def get_default_op_quantization_config(self) -> OpQuantizationConfig:
-        """
-        Get the default OpQuantizationConfig of the TargetPlatformModel.
-
-        Returns:
-            OpQuantizationConfig: The default quantization configuration.
-        """
-        assert len(self.default_qco.quantization_config_list) == 1, \
-            f"Default quantization configuration options must contain only one option, " \
-            f"but found {len(self.default_qco.quantization_config_list)} configurations."
-        return self.default_qco.quantization_config_list[0]
-
-    def is_opset_in_model(self, opset_name: str) -> bool:
-        """
-        Check whether an OperatorsSet is defined in the model.
-
-        Args:
-            opset_name (str): Name of the OperatorsSet to check.
-
-        Returns:
-            bool: True if the OperatorsSet exists, False otherwise.
-        """
-        return opset_name in [x.name for x in self.operator_set]
-
-    def get_opset_by_name(self, opset_name: str) -> Optional[OperatorsSetBase]:
-        """
-        Get an OperatorsSet object from the model by its name.
-
-        Args:
-            opset_name (str): Name of the OperatorsSet to retrieve.
-
-        Returns:
-            Optional[OperatorsSetBase]: The OperatorsSet object with the given name,
-                                        or None if not found in the model.
-        """
-        opset_list = [x for x in self.operator_set if x.name == opset_name]
-        if len(opset_list) > 1:
-            Logger.critical(f"Found more than one OperatorsSet in TargetPlatformModel with the name {opset_name}.")
-        return opset_list[0] if opset_list else None
-
-    def append_component(self, tp_model_component: TargetPlatformModelComponent) -> None:
+    def append_component(self, tp_model_component: TargetPlatformModelComponent):
         """
         Attach a TargetPlatformModel component to the model (like Fusing or OperatorsSet).
 
@@ -674,12 +608,11 @@ class TargetPlatformModel:
         """
         return {
             "Model name": self.name,
-            "Default quantization config": self.get_default_op_quantization_config().get_info(),
             "Operators sets": [o.get_info() for o in self.operator_set],
             "Fusing patterns": [f.get_info() for f in self.fusing_patterns],
         }
 
-    def __validate_model(self) -> None:
+    def __validate_model(self):
         """
         Validate the model's configuration to ensure its integrity.
 
@@ -721,7 +654,7 @@ class TargetPlatformModel:
         _current_tp_model.reset()
         return self
 
-    def show(self) -> None:
+    def show(self):
         """
 
         Display the TargetPlatformModel.

@@ -19,6 +19,8 @@ import pprint
 from typing import List, Any, Dict, Tuple
 
 from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
+    get_config_options_by_operators_set, get_default_op_quantization_config, get_opset_by_name
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.operations_to_layers import \
     OperationsToLayers, OperationsSetToLayers
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.target_platform_capabilities_component import TargetPlatformCapabilitiesComponent
@@ -64,7 +66,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         Returns:
             List of layers/LayerFilterParams that are attached to the opset name.
         """
-        opset = self.tp_model.get_opset_by_name(opset_name)
+        opset = get_opset_by_name(self.tp_model, opset_name)
         if opset is None:
             Logger.warning(f'{opset_name} was not found in TargetPlatformCapabilities.')
             return None
@@ -165,7 +167,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         to the TargetPlatformCapabilities.
 
         """
-        return self.tp_model.get_default_op_quantization_config()
+        return get_default_op_quantization_config(self.tp_model)
 
 
     def _get_config_options_mapping(self) -> Tuple[Dict[Any, QuantizationConfigOptions],
@@ -181,7 +183,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         filterlayer2qco = {}
         for op2layers in self.op_sets_to_layers.op_sets_to_layers:
             for l in op2layers.layers:
-                qco = self.tp_model.get_config_options_by_operators_set(op2layers.name)
+                qco = get_config_options_by_operators_set(self.tp_model, op2layers.name)
                 if qco is None:
                     qco = self.tp_model.default_qco
 

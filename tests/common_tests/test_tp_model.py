@@ -20,6 +20,8 @@ import model_compression_toolkit.target_platform_capabilities.schema.mct_current
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common import BaseNode
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
+from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
+    get_config_options_by_operators_set, is_opset_in_model
 from model_compression_toolkit.target_platform_capabilities.target_platform import \
     get_default_quantization_config_options
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, generate_test_op_qc
@@ -92,13 +94,13 @@ class OpsetTest(unittest.TestCase):
             qco_3bit = get_default_quantization_config_options().clone_and_edit(activation_n_bits=3)
             schema.OperatorsSet(opset_name, qco_3bit)
 
-        for op_qc in hm.get_config_options_by_operators_set(opset_name).quantization_config_list:
+        for op_qc in get_config_options_by_operators_set(hm, opset_name).quantization_config_list:
             self.assertEqual(op_qc.activation_n_bits, 3)
 
-        self.assertTrue(hm.is_opset_in_model(opset_name))
-        self.assertFalse(hm.is_opset_in_model("ShouldNotBeInModel"))
-        self.assertEqual(hm.get_config_options_by_operators_set(opset_name), qco_3bit)
-        self.assertEqual(hm.get_config_options_by_operators_set("ShouldNotBeInModel"),
+        self.assertTrue(is_opset_in_model(hm, opset_name))
+        self.assertFalse(is_opset_in_model(hm, "ShouldNotBeInModel"))
+        self.assertEqual(get_config_options_by_operators_set(hm, opset_name), qco_3bit)
+        self.assertEqual(get_config_options_by_operators_set(hm, "ShouldNotBeInModel"),
                          hm.default_qco)
 
     def test_opset_concat(self):
@@ -115,8 +117,8 @@ class OpsetTest(unittest.TestCase):
             schema.OperatorsSet('opset_C')  # Just add it without using it in concat
             schema.OperatorSetConcat([a, b])
         self.assertEqual(len(hm.operator_set), 4)
-        self.assertTrue(hm.is_opset_in_model("opset_A_opset_B"))
-        self.assertTrue(hm.get_config_options_by_operators_set('opset_A_opset_B') is None)
+        self.assertTrue(is_opset_in_model(hm, "opset_A_opset_B"))
+        self.assertTrue(get_config_options_by_operators_set(hm, 'opset_A_opset_B') is None)
 
     def test_non_unique_opset(self):
         hm = schema.TargetPlatformModel(
