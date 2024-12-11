@@ -271,7 +271,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
             base_config=base_config)
 
         # Define operator sets that use mixed_precision_configuration_options:
-        conv = schema.OperatorsSet(schema.OPS_SET_LIST.OPSET_CONV, mixed_precision_configuration_options)
+        conv = schema.OperatorsSet(OPSET_CONV, mixed_precision_configuration_options)
         fc = schema.OperatorsSet(OPSET_FULLY_CONNECTED, mixed_precision_configuration_options)
 
         schema.OperatorsSet(OPSET_BATCH_NORM, default_config_options_16bit)
