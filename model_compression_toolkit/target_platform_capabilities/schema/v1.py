@@ -12,23 +12,72 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import copy
-
-from enum import Enum
-
 import pprint
 
+from dataclasses import replace, dataclass, asdict, field
+from enum import Enum
 from typing import Dict, Any, Union, Tuple, List, Optional
-
 from mct_quantizers import QuantizationMethod
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
-
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.constants import OPS_SET_LIST
-from model_compression_toolkit.target_platform_capabilities.immutable import ImmutableClass
 from model_compression_toolkit.target_platform_capabilities.target_platform.current_tp_model import \
-    get_current_tp_model, _current_tp_model
-from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import clone_and_edit_object_params
+    _current_tp_model
+
+class OperatorSetNames(Enum):
+    OPSET_CONV = "Conv"
+    OPSET_DEPTHWISE_CONV = "DepthwiseConv2D"
+    OPSET_CONV_TRANSPOSE = "ConvTraspose"
+    OPSET_FULLY_CONNECTED = "FullyConnected"
+    OPSET_CONCATENATE = "Concatenate"
+    OPSET_STACK = "Stack"
+    OPSET_UNSTACK = "Unstack"
+    OPSET_GATHER = "Gather"
+    OPSET_EXPAND = "Expend"
+    OPSET_BATCH_NORM = "BatchNorm"
+    OPSET_RELU = "ReLU"
+    OPSET_RELU6 = "ReLU6"
+    OPSET_LEAKY_RELU = "LEAKYReLU"
+    OPSET_HARD_TANH = "HardTanh"
+    OPSET_ADD = "Add"
+    OPSET_SUB = "Sub"
+    OPSET_MUL = "Mul"
+    OPSET_DIV = "Div"
+    OPSET_MIN_MAX = "MinMax"
+    OPSET_PRELU = "PReLU"
+    OPSET_SWISH = "Swish"
+    OPSET_SIGMOID = "Sigmoid"
+    OPSET_TANH = "Tanh"
+    OPSET_GELU = "Gelu"
+    OPSET_HARDSIGMOID = "HardSigmoid"
+    OPSET_HARDSWISH = "HardSwish"
+    OPSET_FLATTEN = "Flatten"
+    OPSET_GET_ITEM = "GetItem"
+    OPSET_RESHAPE = "Reshape"
+    OPSET_UNSQUEEZE = "Unsqueeze"
+    OPSET_SQUEEZE = "Squeeze"
+    OPSET_PERMUTE = "Permute"
+    OPSET_TRANSPOSE = "Transpose"
+    OPSET_DROPOUT = "Dropout"
+    OPSET_SPLIT = "Split"
+    OPSET_CHUNK = "Chunk"
+    OPSET_UNBIND = "Unbind"
+    OPSET_MAXPOOL = "MaxPool"
+    OPSET_SIZE = "Size"
+    OPSET_SHAPE = "Shape"
+    OPSET_EQUAL = "Equal"
+    OPSET_ARGMAX = "ArgMax"
+    OPSET_TOPK = "TopK"
+    OPSET_FAKE_QUANT_WITH_MIN_MAX_VARS = "FakeQuantWithMinMaxVars"
+    OPSET_COMBINED_NON_MAX_SUPPRESSION = "CombinedNonMaxSuppression"
+    OPSET_CROPPING2D = "Cropping2D"
+    OPSET_ZERO_PADDING2d = "ZeroPadding2D"
+    OPSET_CAST = "Cast"
+    OPSET_STRIDED_SLICE = "StridedSlice"
+
+    @classmethod
+    def get_values(cls):
+        return [v.value for v in cls]
 
 
 class Signedness(Enum):
@@ -44,451 +93,420 @@ class Signedness(Enum):
     UNSIGNED = 2
 
 
+@dataclass(frozen=True)
 class AttributeQuantizationConfig:
     """
-    Hold the quantization configuration of a weight attribute of a layer.
+    Holds the quantization configuration of a weight attribute of a layer.
+
+    Attributes:
+        weights_quantization_method (QuantizationMethod): The method to use from QuantizationMethod for weights quantization.
+        weights_n_bits (int): Number of bits to quantize the coefficients.
+        weights_per_channel_threshold (bool): Indicates whether to quantize the weights per-channel or per-tensor.
+        enable_weights_quantization (bool): Indicates whether to quantize the model weights or not.
+        lut_values_bitwidth (Optional[int]): Number of bits to use when quantizing in a look-up table.
+                                               If None, defaults to 8 in hptq; otherwise, it uses the provided value.
     """
-    def __init__(self,
-                 weights_quantization_method: QuantizationMethod = QuantizationMethod.POWER_OF_TWO,
-                 weights_n_bits: int = FLOAT_BITWIDTH,
-                 weights_per_channel_threshold: bool = False,
-                 enable_weights_quantization: bool = False,
-                 lut_values_bitwidth: Union[int, None] = None,  # If None - set 8 in hptq, o.w use it
-                 ):
+    weights_quantization_method: QuantizationMethod = QuantizationMethod.POWER_OF_TWO
+    weights_n_bits: int = FLOAT_BITWIDTH
+    weights_per_channel_threshold: bool = False
+    enable_weights_quantization: bool = False
+    lut_values_bitwidth: Optional[int] = None
+
+    def __post_init__(self):
         """
-        Initializes an attribute quantization config.
+        Post-initialization processing for input validation.
+
+        Raises:
+            Logger critical if attributes are of incorrect type or have invalid values.
+        """
+        if not isinstance(self.weights_n_bits, int) or self.weights_n_bits < 1:
+            Logger.critical("weights_n_bits must be a positive integer.") # pragma: no cover
+        if not isinstance(self.enable_weights_quantization, bool):
+            Logger.critical("enable_weights_quantization must be a boolean.") # pragma: no cover
+        if self.lut_values_bitwidth is not None and not isinstance(self.lut_values_bitwidth, int):
+            Logger.critical("lut_values_bitwidth must be an integer or None.") # pragma: no cover
+
+    def clone_and_edit(self, **kwargs) -> 'AttributeQuantizationConfig':
+        """
+        Clone the current AttributeQuantizationConfig and edit some of its attributes.
 
         Args:
-            weights_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for weights quantization.
-            weights_n_bits (int): Number of bits to quantize the coefficients.
-            weights_per_channel_threshold (bool): Whether to quantize the weights per-channel or not (per-tensor).
-            enable_weights_quantization (bool): Whether to quantize the model weights or not.
-            lut_values_bitwidth (int): Number of bits to use when quantizing in look-up-table.
-
-        """
-
-        self.weights_quantization_method = weights_quantization_method
-        self.weights_n_bits = weights_n_bits
-        self.weights_per_channel_threshold = weights_per_channel_threshold
-        self.enable_weights_quantization = enable_weights_quantization
-        self.lut_values_bitwidth = lut_values_bitwidth
-
-    def clone_and_edit(self, **kwargs):
-        """
-        Clone the quantization config and edit some of its attributes.
-
-        Args:
-            **kwargs: Keyword arguments to edit the configuration to clone.
+            **kwargs: Keyword arguments representing the attributes to edit in the cloned instance.
 
         Returns:
-            Edited quantization configuration.
+            AttributeQuantizationConfig: A new instance of AttributeQuantizationConfig with updated attributes.
         """
-
-        return clone_and_edit_object_params(self, **kwargs)
-
-    def __eq__(self, other):
-        """
-        Is this configuration equal to another object.
-
-        Args:
-            other: Object to compare.
-
-        Returns:
-
-            Whether this configuration is equal to another object or not.
-        """
-        if not isinstance(other, AttributeQuantizationConfig):
-            return False  # pragma: no cover
-        return self.weights_quantization_method == other.weights_quantization_method and \
-            self.weights_n_bits == other.weights_n_bits and \
-            self.weights_per_channel_threshold == other.weights_per_channel_threshold and \
-            self.enable_weights_quantization == other.enable_weights_quantization and \
-            self.lut_values_bitwidth == other.lut_values_bitwidth
+        return replace(self, **kwargs)
 
 
+@dataclass(frozen=True)
 class OpQuantizationConfig:
     """
     OpQuantizationConfig is a class to configure the quantization parameters of an operator.
+
+    Args:
+        default_weight_attr_config (AttributeQuantizationConfig): A default attribute quantization configuration for the operation.
+        attr_weights_configs_mapping (Dict[str, AttributeQuantizationConfig]): A mapping between an op attribute name and its quantization configuration.
+        activation_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for activation quantization.
+        activation_n_bits (int): Number of bits to quantize the activations.
+        supported_input_activation_n_bits (int or Tuple[int]): Number of bits that operator accepts as input.
+        enable_activation_quantization (bool): Whether to quantize the model activations or not.
+        quantization_preserving (bool): Whether quantization parameters should be the same for an operator's input and output.
+        fixed_scale (float): Scale to use for an operator quantization parameters.
+        fixed_zero_point (int): Zero-point to use for an operator quantization parameters.
+        simd_size (int): Per op integer representing the Single Instruction, Multiple Data (SIMD) width of an operator. It indicates the number of data elements that can be fetched and processed simultaneously in a single instruction.
+        signedness (bool): Set activation quantization signedness.
+
     """
+    default_weight_attr_config: AttributeQuantizationConfig
+    attr_weights_configs_mapping: Dict[str, AttributeQuantizationConfig]
+    activation_quantization_method: QuantizationMethod
+    activation_n_bits: int
+    supported_input_activation_n_bits: Union[int, Tuple[int]]
+    enable_activation_quantization: bool
+    quantization_preserving: bool
+    fixed_scale: float
+    fixed_zero_point: int
+    simd_size: int
+    signedness: Signedness
 
-    def __init__(self,
-                 default_weight_attr_config: AttributeQuantizationConfig,
-                 attr_weights_configs_mapping: Dict[str, AttributeQuantizationConfig],
-                 activation_quantization_method: QuantizationMethod,
-                 activation_n_bits: int,
-                 supported_input_activation_n_bits: Union[int, Tuple[int]],
-                 enable_activation_quantization: bool,
-                 quantization_preserving: bool,
-                 fixed_scale: float,
-                 fixed_zero_point: int,
-                 simd_size: int,
-                 signedness: Signedness
-                 ):
+    def __post_init__(self):
         """
+        Post-initialization processing for input validation.
 
-        Args:
-            default_weight_attr_config (AttributeQuantizationConfig): A default attribute quantization configuration for the operation.
-            attr_weights_configs_mapping (Dict[str, AttributeQuantizationConfig]): A mapping between an op attribute name and its quantization configuration.
-            activation_quantization_method (QuantizationMethod): Which method to use from QuantizationMethod for activation quantization.
-            activation_n_bits (int): Number of bits to quantize the activations.
-            supported_input_activation_n_bits (int or Tuple[int]): Number of bits that operator accepts as input.
-            enable_activation_quantization (bool): Whether to quantize the model activations or not.
-            quantization_preserving (bool): Whether quantization parameters should be the same for an operator's input and output.
-            fixed_scale (float): Scale to use for an operator quantization parameters.
-            fixed_zero_point (int): Zero-point to use for an operator quantization parameters.
-            simd_size (int): Per op integer representing the Single Instruction, Multiple Data (SIMD) width of an operator. It indicates the number of data elements that can be fetched and processed simultaneously in a single instruction.
-            signedness (bool): Set activation quantization signedness.
-
+        Raises:
+            Logger critical if supported_input_activation_n_bits is not an int or a tuple of ints.
         """
+        if isinstance(self.supported_input_activation_n_bits, int):
+            object.__setattr__(self, 'supported_input_activation_n_bits', (self.supported_input_activation_n_bits,))
+        elif not isinstance(self.supported_input_activation_n_bits, tuple):
+            Logger.critical(
+                f"Supported_input_activation_n_bits only accepts int or tuple of ints, but got {type(self.supported_input_activation_n_bits)}")  # pragma: no cover
 
-        self.default_weight_attr_config = default_weight_attr_config
-        self.attr_weights_configs_mapping = attr_weights_configs_mapping
-
-        self.activation_quantization_method = activation_quantization_method
-        self.activation_n_bits = activation_n_bits
-        if isinstance(supported_input_activation_n_bits, tuple):
-            self.supported_input_activation_n_bits = supported_input_activation_n_bits
-        elif isinstance(supported_input_activation_n_bits, int):
-            self.supported_input_activation_n_bits = (supported_input_activation_n_bits,)
-        else:
-            Logger.critical(f"Supported_input_activation_n_bits only accepts int or tuple of ints, but got {type(supported_input_activation_n_bits)}")  # pragma: no cover
-        self.enable_activation_quantization = enable_activation_quantization
-        self.quantization_preserving = quantization_preserving
-        self.fixed_scale = fixed_scale
-        self.fixed_zero_point = fixed_zero_point
-        self.signedness = signedness
-        self.simd_size = simd_size
-
-    def get_info(self):
+    def get_info(self) -> Dict[str, Any]:
         """
+        Get information about the quantization configuration.
 
-        Returns: Info about the quantization configuration as a dictionary.
-
+        Returns:
+            dict: Information about the quantization configuration as a dictionary.
         """
-        return self.__dict__  # pragma: no cover
+        return asdict(self)  # pragma: no cover
 
-    def clone_and_edit(self, attr_to_edit: Dict[str, Dict[str, Any]] = {}, **kwargs):
+    def clone_and_edit(self, attr_to_edit: Dict[str, Dict[str, Any]] = {}, **kwargs) -> 'OpQuantizationConfig':
         """
         Clone the quantization config and edit some of its attributes.
+
         Args:
-            attr_to_edit: A mapping between attributes names to edit and their parameters that
-            should be edited to a new value.
+            attr_to_edit (Dict[str, Dict[str, Any]]): A mapping between attribute names to edit and their parameters that
+                                                     should be edited to a new value.
             **kwargs: Keyword arguments to edit the configuration to clone.
 
         Returns:
-            Edited quantization configuration.
+            OpQuantizationConfig: Edited quantization configuration.
         """
 
-        qc = clone_and_edit_object_params(self, **kwargs)
+        # Clone and update top-level attributes
+        updated_config = replace(self, **kwargs)
 
-        # optionally: editing specific parameters in the config of specified attributes
-        edited_attrs = copy.deepcopy(qc.attr_weights_configs_mapping)
-        for attr_name, attr_cfg in qc.attr_weights_configs_mapping.items():
-            if attr_name in attr_to_edit:
-                edited_attrs[attr_name] = attr_cfg.clone_and_edit(**attr_to_edit[attr_name])
+        # Clone and update nested immutable dataclasses in `attr_weights_configs_mapping`
+        updated_attr_mapping = {
+            attr_name: (attr_cfg.clone_and_edit(**attr_to_edit[attr_name])
+                        if attr_name in attr_to_edit else attr_cfg)
+            for attr_name, attr_cfg in updated_config.attr_weights_configs_mapping.items()
+        }
 
-        qc.attr_weights_configs_mapping = edited_attrs
-
-        return qc
-
-    def __eq__(self, other):
-        """
-        Is this configuration equal to another object.
-        Args:
-            other: Object to compare.
-
-        Returns:
-            Whether this configuration is equal to another object or not.
-        """
-        if not isinstance(other, OpQuantizationConfig):
-            return False  # pragma: no cover
-        return self.default_weight_attr_config == other.default_weight_attr_config and \
-            self.attr_weights_configs_mapping == other.attr_weights_configs_mapping and \
-            self.activation_quantization_method == other.activation_quantization_method and \
-            self.activation_n_bits == other.activation_n_bits and \
-            self.supported_input_activation_n_bits == other.supported_input_activation_n_bits and \
-            self.enable_activation_quantization == other.enable_activation_quantization and \
-            self.signedness == other.signedness and \
-            self.simd_size == other.simd_size
-
-    @property
-    def max_input_activation_n_bits(self) -> int:
-        """
-        Get maximum supported input bit-width.
-
-        Returns: Maximum supported input bit-width.
-
-        """
-        return max(self.supported_input_activation_n_bits)
+        # Return a new instance with the updated attribute mapping
+        return replace(updated_config, attr_weights_configs_mapping=updated_attr_mapping)
 
 
+@dataclass(frozen=True)
 class QuantizationConfigOptions:
     """
+    QuantizationConfigOptions wraps a set of quantization configurations to consider during the quantization of an operator.
 
-    Wrap a set of quantization configurations to consider during the quantization
-    of an operator.
-
+    Attributes:
+        quantization_config_list (List[OpQuantizationConfig]): List of possible OpQuantizationConfig to gather.
+        base_config (Optional[OpQuantizationConfig]): Fallback OpQuantizationConfig to use when optimizing the model in a non-mixed-precision manner.
     """
-    def __init__(self,
-                 quantization_config_list: List[OpQuantizationConfig],
-                 base_config: OpQuantizationConfig = None):
+    quantization_config_list: List[OpQuantizationConfig]
+    base_config: Optional[OpQuantizationConfig] = None
+
+    def __post_init__(self):
         """
+        Post-initialization processing for input validation.
+
+        Raises:
+            Logger critical if quantization_config_list is not a list, contains invalid elements, or if base_config is not set correctly.
+        """
+        # Validate `quantization_config_list`
+        if not isinstance(self.quantization_config_list, list):
+            Logger.critical(
+                f"'quantization_config_list' must be a list, but received: {type(self.quantization_config_list)}.") # pragma: no cover
+        for cfg in self.quantization_config_list:
+            if not isinstance(cfg, OpQuantizationConfig):
+                Logger.critical(
+                    f"Each option must be an instance of 'OpQuantizationConfig', but found an object of type: {type(cfg)}.") # pragma: no cover
+
+        # Handle base_config
+        if len(self.quantization_config_list) > 1:
+            if self.base_config is None:
+                Logger.critical(f"For multiple configurations, a 'base_config' is required for non-mixed-precision optimization.") # pragma: no cover
+            if not any(self.base_config == cfg for cfg in self.quantization_config_list):
+                Logger.critical(f"'base_config' must be included in the quantization config options list.") # pragma: no cover
+        elif len(self.quantization_config_list) == 1:
+            if self.base_config is None:
+                object.__setattr__(self, 'base_config', self.quantization_config_list[0])
+            elif self.base_config != self.quantization_config_list[0]:
+                Logger.critical(
+                    "'base_config' should be the same as the sole item in 'quantization_config_list'.") # pragma: no cover
+
+        elif len(self.quantization_config_list) == 0:
+            Logger.critical("'QuantizationConfigOptions' requires at least one 'OpQuantizationConfig'. The provided list is empty.") # pragma: no cover
+
+    def clone_and_edit(self, **kwargs) -> 'QuantizationConfigOptions':
+        """
+        Clone the quantization configuration options and edit attributes in each configuration.
 
         Args:
-            quantization_config_list (List[OpQuantizationConfig]): List of possible OpQuantizationConfig to gather.
-            base_config (OpQuantizationConfig): Fallback OpQuantizationConfig to use when optimizing the model in a non mixed-precision manner.
-        """
-
-        assert isinstance(quantization_config_list,
-                          list), f"'QuantizationConfigOptions' options list must be a list, but received: {type(quantization_config_list)}."
-        for cfg in quantization_config_list:
-            assert isinstance(cfg, OpQuantizationConfig),\
-                f"Each option must be an instance of 'OpQuantizationConfig', but found an object of type: {type(cfg)}."
-        self.quantization_config_list = quantization_config_list
-        if len(quantization_config_list) > 1:
-            assert base_config is not None, \
-                f"For multiple configurations, a 'base_config' is required for non-mixed-precision optimization."
-            assert any([base_config is cfg for cfg in quantization_config_list]), \
-                f"'base_config' must be included in the quantization config options list."
-            # Enforce base_config to be a reference to an instance in quantization_config_list.
-            self.base_config = base_config
-        elif len(quantization_config_list) == 1:
-            assert base_config is None or base_config == quantization_config_list[0], "'base_config' should be included in 'quantization_config_list'"
-            # Set base_config to be a reference to the first instance in quantization_config_list.
-            self.base_config = quantization_config_list[0]
-        else:
-            raise AssertionError("'QuantizationConfigOptions' requires at least one 'OpQuantizationConfig'. The provided list is empty.")
-
-    def __eq__(self, other):
-        """
-        Is this QCOptions equal to another object.
-        Args:
-            other: Object to compare.
+            **kwargs: Keyword arguments to edit in each configuration.
 
         Returns:
-            Whether this QCOptions equal to another object or not.
+            A new instance of QuantizationConfigOptions with updated configurations.
         """
+        updated_base_config = replace(self.base_config, **kwargs)
+        updated_configs_list = [
+            replace(cfg, **kwargs) for cfg in self.quantization_config_list
+        ]
+        return replace(self, base_config=updated_base_config, quantization_config_list=updated_configs_list)
 
-        if not isinstance(other, QuantizationConfigOptions):
-            return False
-        if len(self.quantization_config_list) != len(other.quantization_config_list):
-            return False
-        for qc, other_qc in zip(self.quantization_config_list, other.quantization_config_list):
-            if qc != other_qc:
-                return False
-        return True
-
-    def clone_and_edit(self, **kwargs):
-        qc_options = copy.deepcopy(self)
-        for qc in qc_options.quantization_config_list:
-            self.__edit_quantization_configuration(qc, kwargs)
-        return qc_options
-
-    def clone_and_edit_weight_attribute(self, attrs: List[str] = None, **kwargs):
+    def clone_and_edit_weight_attribute(self, attrs: List[str] = None, **kwargs) -> 'QuantizationConfigOptions':
         """
         Clones the quantization configurations and edits some of their attributes' parameters.
 
         Args:
-            attrs: attributes names to clone their configurations. If None is provided, updating the configurations
-                of all attributes in the operation attributes config mapping.
+            attrs (List[str]): Attributes names to clone and edit their configurations. If None, updates all attributes.
             **kwargs: Keyword arguments to edit in the attributes configuration.
 
         Returns:
-            QuantizationConfigOptions with edited attributes configurations.
-
+            QuantizationConfigOptions: A new instance of QuantizationConfigOptions with edited attributes configurations.
         """
-
-        qc_options = copy.deepcopy(self)
-
-        for qc in qc_options.quantization_config_list:
+        updated_base_config = self.base_config
+        updated_configs = []
+        for qc in self.quantization_config_list:
             if attrs is None:
                 attrs_to_update = list(qc.attr_weights_configs_mapping.keys())
             else:
-                if not isinstance(attrs, List):  # pragma: no cover
-                    Logger.critical(f"Expected a list of attributes but received {type(attrs)}.")
                 attrs_to_update = attrs
-
+            # Ensure all attributes exist in the config
             for attr in attrs_to_update:
-                if qc.attr_weights_configs_mapping.get(attr) is None:  # pragma: no cover
-                    Logger.critical(f'Editing attributes is only possible for existing attributes in the configuration\'s '
-                                    f'weights config mapping; {attr} does not exist in {qc}.')
-                self.__edit_quantization_configuration(qc.attr_weights_configs_mapping[attr], kwargs)
-        return qc_options
+                if attr not in qc.attr_weights_configs_mapping:
+                    Logger.critical(f"{attr} does not exist in {qc}.")
+            updated_attr_mapping = {
+                attr: qc.attr_weights_configs_mapping[attr].clone_and_edit(**kwargs)
+                for attr in attrs_to_update
+            }
+            if qc == updated_base_config:
+                updated_base_config = replace(updated_base_config, attr_weights_configs_mapping=updated_attr_mapping)
+            updated_configs.append(replace(qc, attr_weights_configs_mapping=updated_attr_mapping))
+        return replace(self, base_config=updated_base_config, quantization_config_list=updated_configs)
 
-    def clone_and_map_weights_attr_keys(self, layer_attrs_mapping: Union[Dict[str, str], None]):
+    def clone_and_map_weights_attr_keys(self, layer_attrs_mapping: Optional[Dict[str, str]]) -> 'QuantizationConfigOptions':
         """
-       Clones the quantization configuration options and edits the keys in each configuration attributes config mapping,
-       based on the given attributes names mapping.
+        Clones the quantization configurations and updates keys in attribute config mappings.
 
         Args:
-            layer_attrs_mapping: A mapping between attributes names.
+            layer_attrs_mapping (Optional[Dict[str, str]]): A mapping between attribute names.
 
         Returns:
-            QuantizationConfigOptions with edited attributes names.
-
+            QuantizationConfigOptions: A new instance of QuantizationConfigOptions with updated attribute keys.
         """
-        qc_options = copy.deepcopy(self)
-
-        # Extract the list of existing quantization configurations from qc_options
-
-        # Check if the base_config is already included in the quantization configuration list
-        # If not, add base_config to the list of configurations to update
-        cfgs_to_update = [cfg for cfg in qc_options.quantization_config_list]
-        if not any(qc_options.base_config is cfg for cfg in cfgs_to_update):
-            # TODO: add test for this case
-            cfgs_to_update.append(qc_options.base_config)
-
-        for qc in cfgs_to_update:
+        updated_configs = []
+        new_base_config = self.base_config
+        for qc in self.quantization_config_list:
             if layer_attrs_mapping is None:
-                qc.attr_weights_configs_mapping = {}
-            else:
                 new_attr_mapping = {}
-                for attr in list(qc.attr_weights_configs_mapping.keys()):
-                    new_key = layer_attrs_mapping.get(attr)
-                    if new_key is None:  # pragma: no cover
-                        Logger.critical(f"Attribute \'{attr}\' does not exist in the provided attribute mapping.")
+            else:
+                new_attr_mapping = {
+                    layer_attrs_mapping.get(attr, attr): cfg
+                    for attr, cfg in qc.attr_weights_configs_mapping.items()
+                }
+            if qc == self.base_config:
+                new_base_config = replace(qc, attr_weights_configs_mapping=new_attr_mapping)
+            updated_configs.append(replace(qc, attr_weights_configs_mapping=new_attr_mapping))
+        return replace(self, base_config=new_base_config, quantization_config_list=updated_configs)
 
-                    new_attr_mapping[new_key] = qc.attr_weights_configs_mapping.pop(attr)
+    def get_info(self) -> Dict[str, Any]:
+        """
+        Get detailed information about each quantization configuration option.
 
-                qc.attr_weights_configs_mapping.update(new_attr_mapping)
-
-        return qc_options
-
-    def __edit_quantization_configuration(self, qc, kwargs):
-        for k, v in kwargs.items():
-            assert hasattr(qc,
-                           k), (f'Editing is only possible for existing attributes in the configuration; '
-                                f'{k} is not an attribute of {qc}.')
-            setattr(qc, k, v)
-
-    def get_info(self):
+        Returns:
+            dict: Information about the quantization configuration options as a dictionary.
+        """
         return {f'option {i}': cfg.get_info() for i, cfg in enumerate(self.quantization_config_list)}
 
 
+@dataclass(frozen=True)
 class TargetPlatformModelComponent:
     """
-    Component of TargetPlatformModel (Fusing, OperatorsSet, etc.)
+    Component of TargetPlatformModel (Fusing, OperatorsSet, etc.).
     """
-    def __init__(self, name: str):
-        """
 
-        Args:
-            name: Name of component.
+    def __post_init__(self):
         """
-        self.name = name
+        Post-initialization to register the component with the current TargetPlatformModel.
+        """
         _current_tp_model.get().append_component(self)
 
     def get_info(self) -> Dict[str, Any]:
         """
+        Get information about the component to display.
 
-        Returns: Get information about the component to display (return an empty dictionary.
-        the actual component should fill it with info).
-
+        Returns:
+            Dict[str, Any]: Returns an empty dictionary. The actual component should override
+                            this method to provide relevant information.
         """
         return {}
 
 
+@dataclass(frozen=True)
 class OperatorsSetBase(TargetPlatformModelComponent):
     """
-    Base class to represent a set of operators.
+    Base class to represent a set of a target platform model component of operator set types.
+    Inherits from TargetPlatformModelComponent.
     """
-    def __init__(self, name: str):
+    def __post_init__(self):
         """
-
-        Args:
-            name: Name of OperatorsSet.
+        Post-initialization to ensure the component is registered with the TargetPlatformModel.
+        Calls the parent class's __post_init__ method to append this component to the current TargetPlatformModel.
         """
-        super().__init__(name=name)
+        super().__post_init__()
 
 
+@dataclass(frozen=True)
 class OperatorsSet(OperatorsSetBase):
-    def __init__(self,
-                 name: str,
-                 qc_options: QuantizationConfigOptions = None):
+    """
+    Set of operators that are represented by a unique label.
+
+    Attributes:
+        name (str): The set's label (must be unique within a TargetPlatformModel).
+        qc_options (QuantizationConfigOptions): Configuration options to use for this set of operations.
+                                                If None, it represents a fusing set.
+        is_default (bool): Indicates whether this set is the default quantization configuration
+                           for the TargetPlatformModel or a fusing set.
+    """
+    name: str
+    qc_options: QuantizationConfigOptions = None
+
+    def __post_init__(self):
         """
-        Set of operators that are represented by a unique label.
+        Post-initialization processing to mark the operator set as default if applicable.
 
-        Args:
-            name (str): Set's label (must be unique in a TargetPlatformModel).
-            qc_options (QuantizationConfigOptions): Configuration options to use for this set of operations.
+        Calls the parent class's __post_init__ method and sets `is_default` to True
+        if this set corresponds to the default quantization configuration for the
+        TargetPlatformModel or if it is a fusing set.
+
         """
+        super().__post_init__()
+        is_fusing_set = self.qc_options is None
+        is_default = _current_tp_model.get().default_qco == self.qc_options or is_fusing_set
+        object.__setattr__(self, 'is_default', is_default)
 
-        super().__init__(name)
-        self.qc_options = qc_options
-        is_fusing_set = qc_options is None
-        self.is_default = _current_tp_model.get().default_qco == self.qc_options or is_fusing_set
-
-
-    def get_info(self) -> Dict[str,Any]:
+    def get_info(self) -> Dict[str, Any]:
         """
+        Get information about the set as a dictionary.
 
-        Returns: Info about the set as a dictionary.
-
+        Returns:
+            Dict[str, Any]: A dictionary containing the set name and
+                            whether it is the default quantization configuration.
         """
         return {"name": self.name,
                 "is_default_qc": self.is_default}
 
 
+@dataclass(frozen=True)
 class OperatorSetConcat(OperatorsSetBase):
     """
     Concatenate a list of operator sets to treat them similarly in different places (like fusing).
+
+    Attributes:
+        op_set_list (List[OperatorsSet]): List of operator sets to group.
+        qc_options (None): Configuration options for the set, always None for concatenated sets.
+        name (str): Concatenated name generated from the names of the operator sets in the list.
     """
-    def __init__(self, *opsets: OperatorsSet):
+    op_set_list: List[OperatorsSet] = field(default_factory=list)
+    qc_options: None = field(default=None, init=False)
+    name: str = None
+
+    def __post_init__(self):
         """
-        Group a list of operation sets.
+        Post-initialization processing to generate the concatenated name and set it as the `name` attribute.
 
-        Args:
-            *opsets (OperatorsSet): List of operator sets to group.
+        Calls the parent class's __post_init__ method and creates a concatenated name
+        by joining the names of all operator sets in `op_set_list`.
         """
-        name = "_".join([a.name for a in opsets])
-        super().__init__(name=name)
-        self.op_set_list = opsets
-        self.qc_options = None  # Concat have no qc options
+        super().__post_init__()
+        # Generate the concatenated name from the operator sets
+        concatenated_name = "_".join([op.name for op in self.op_set_list])
+        # Set the inherited name attribute using `object.__setattr__` since the dataclass is frozen
+        object.__setattr__(self, "name", concatenated_name)
 
-    def get_info(self) -> Dict[str,Any]:
+    def get_info(self) -> Dict[str, Any]:
         """
+        Get information about the concatenated set as a dictionary.
 
-        Returns: Info about the sets group as a dictionary.
-
+        Returns:
+            Dict[str, Any]: A dictionary containing the concatenated name and
+                            the list of names of the operator sets in `op_set_list`.
         """
         return {"name": self.name,
                 OPS_SET_LIST: [s.name for s in self.op_set_list]}
 
 
+@dataclass(frozen=True)
 class Fusing(TargetPlatformModelComponent):
     """
-     Fusing defines a list of operators that should be combined and treated as a single operator,
-     hence no quantization is applied between them.
+    Fusing defines a list of operators that should be combined and treated as a single operator,
+    hence no quantization is applied between them.
+
+    Attributes:
+        operator_groups_list (Tuple[Union[OperatorsSet, OperatorSetConcat]]): A list of operator groups,
+                                                                              each being either an OperatorSetConcat or an OperatorsSet.
+        name (str): The name for the Fusing instance. If not provided, it is generated from the operator groups' names.
     """
+    operator_groups_list: Tuple[Union[OperatorsSet, OperatorSetConcat]]
+    name: str = None
 
-    def __init__(self,
-                 operator_groups_list: List[Union[OperatorsSet, OperatorSetConcat]],
-                 name: str = None):
+    def __post_init__(self):
         """
-        Args:
-            operator_groups_list (List[Union[OperatorsSet, OperatorSetConcat]]): A list of operator groups, each being either an OperatorSetConcat or an OperatorsSet.
-            name (str): The name for the Fusing instance. If not provided, it's generated from the operator groups' names.
+        Post-initialization processing for input validation and name generation.
+
+        Calls the parent class's __post_init__ method, validates the operator_groups_list,
+        and generates the name if not explicitly provided.
+
+        Raises:
+            Logger critical if operator_groups_list is not a list or if it contains fewer than two operators.
         """
-        assert isinstance(operator_groups_list,
-                          list), f'List of operator groups should be of type list but is {type(operator_groups_list)}'
-        assert len(operator_groups_list) >= 2, f'Fusing can not be created for a single operators group'
+        super().__post_init__()
+        # Validate the operator_groups_list
+        if not isinstance(self.operator_groups_list, list):
+            Logger.critical(
+                f"List of operator groups should be of type list but is {type(self.operator_groups_list)}.") # pragma: no cover
+        if len(self.operator_groups_list) < 2:
+            Logger.critical("Fusing cannot be created for a single operator.") # pragma: no cover
 
-        # Generate a name from the operator groups if no name is provided
-        if name is None:
-            name = '_'.join([x.name for x in operator_groups_list])
-
-        super().__init__(name)
-        self.operator_groups_list = operator_groups_list
+        # Generate the name from the operator groups if not provided
+        generated_name = '_'.join([x.name for x in self.operator_groups_list])
+        object.__setattr__(self, 'name', generated_name)
 
     def contains(self, other: Any) -> bool:
         """
         Determines if the current Fusing instance contains another Fusing instance.
 
         Args:
-            other: The other Fusing instance to check against.
+            other (Any): The other Fusing instance to check against.
 
         Returns:
-            A boolean indicating whether the other instance is contained within this one.
+            bool: True if the other Fusing instance is contained within this one, False otherwise.
         """
         if not isinstance(other, Fusing):
             return False
@@ -506,208 +524,135 @@ class Fusing(TargetPlatformModelComponent):
         # Other Fusing instance is not contained
         return False
 
-    def get_info(self):
+    def get_info(self) -> Union[Dict[str, str], str]:
         """
         Retrieves information about the Fusing instance, including its name and the sequence of operator groups.
 
         Returns:
-            A dictionary with the Fusing instance's name as the key and the sequence of operator groups as the value,
-            or just the sequence of operator groups if no name is set.
+            Union[Dict[str, str], str]: A dictionary with the Fusing instance's name as the key
+                                        and the sequence of operator groups as the value,
+                                        or just the sequence of operator groups if no name is set.
         """
         if self.name is not None:
             return {self.name: ' -> '.join([x.name for x in self.operator_groups_list])}
         return ' -> '.join([x.name for x in self.operator_groups_list])
 
 
-class TargetPlatformModel(ImmutableClass):
+@dataclass(frozen=True)
+class TargetPlatformModel:
     """
     Represents the hardware configuration used for quantized model inference.
 
-    This model defines:
-    - The operators and their associated quantization configurations.
-    - Fusing patterns, enabling multiple operators to be combined into a single operator
-      for optimization during inference.
-    - Versioning support through minor and patch versions for backward compatibility.
-
     Attributes:
-        SCHEMA_VERSION (int): The schema version of the target platform model.
+        default_qco (QuantizationConfigOptions): Default quantization configuration options for the model.
+        tpc_minor_version (Optional[int]): Minor version of the Target Platform Configuration.
+        tpc_patch_version (Optional[int]): Patch version of the Target Platform Configuration.
+        tpc_platform_type (Optional[str]): Type of the platform for the Target Platform Configuration.
+        add_metadata (bool): Flag to determine if metadata should be added.
+        name (str): Name of the Target Platform Model.
+        operator_set (List[OperatorsSetBase]): List of operator sets within the model.
+        fusing_patterns (List[Fusing]): List of fusing patterns for the model.
+        is_simd_padding (bool): Indicates if SIMD padding is applied.
+        SCHEMA_VERSION (int): Version of the schema for the Target Platform Model.
     """
-    SCHEMA_VERSION = 1
-    def __init__(self,
-                 default_qco: QuantizationConfigOptions,
-                 tpc_minor_version: Optional[int],
-                 tpc_patch_version: Optional[int],
-                 tpc_platform_type: Optional[str],
-                 add_metadata: bool = True,
-                 name="default_tp_model"):
+    default_qco: QuantizationConfigOptions
+    tpc_minor_version: Optional[int]
+    tpc_patch_version: Optional[int]
+    tpc_platform_type: Optional[str]
+    add_metadata: bool = True
+    name: str = "default_tp_model"
+    operator_set: List[OperatorsSetBase] = field(default_factory=list)
+    fusing_patterns: List[Fusing] = field(default_factory=list)
+    is_simd_padding: bool = False
+
+    SCHEMA_VERSION: int = 1
+
+    def __post_init__(self):
         """
+        Post-initialization processing for input validation.
+
+        Raises:
+            Logger critical if the default_qco is not an instance of QuantizationConfigOptions
+            or if it contains more than one quantization configuration.
+        """
+        # Validate `default_qco`
+        if not isinstance(self.default_qco, QuantizationConfigOptions):
+            Logger.critical("'default_qco' must be an instance of QuantizationConfigOptions.") # pragma: no cover
+        if len(self.default_qco.quantization_config_list) != 1:
+            Logger.critical("Default QuantizationConfigOptions must contain exactly one option.") # pragma: no cover
+
+    def append_component(self, tp_model_component: TargetPlatformModelComponent):
+        """
+        Attach a TargetPlatformModel component to the model (like Fusing or OperatorsSet).
 
         Args:
-            default_qco (QuantizationConfigOptions): Default QuantizationConfigOptions to use for operators that their QuantizationConfigOptions are not defined in the model.
-            tpc_minor_version (Optional[int]): The minor version of the target platform capabilities.
-            tpc_patch_version (Optional[int]): The patch version of the target platform capabilities.
-            tpc_platform_type (Optional[str]): The platform type of the target platform capabilities.
-            add_metadata (bool): Whether to add metadata to the model or not.
-            name (str): Name of the model.
+            tp_model_component (TargetPlatformModelComponent): Component to attach to the model.
 
-         Raises:
-            AssertionError: If the provided `default_qco` does not contain exactly one quantization configuration.
-        """
-
-        super().__init__()
-        self.tpc_minor_version = tpc_minor_version
-        self.tpc_patch_version = tpc_patch_version
-        self.tpc_platform_type = tpc_platform_type
-        self.add_metadata = add_metadata
-        self.name = name
-        self.operator_set = []
-        assert isinstance(default_qco, QuantizationConfigOptions), \
-            "default_qco must be an instance of QuantizationConfigOptions"
-        assert len(default_qco.quantization_config_list) == 1, \
-            "Default QuantizationConfigOptions must contain exactly one option."
-
-        self.default_qco = default_qco
-        self.fusing_patterns = []
-        self.is_simd_padding = False
-
-    def get_config_options_by_operators_set(self,
-                                            operators_set_name: str) -> QuantizationConfigOptions:
-        """
-        Get the QuantizationConfigOptions of a OperatorsSet by the OperatorsSet name.
-        If the name is not in the model, the default QuantizationConfigOptions is returned.
-
-        Args:
-            operators_set_name: Name of OperatorsSet to get.
-
-        Returns:
-            QuantizationConfigOptions to use for ops in OperatorsSet named operators_set_name.
-        """
-        for op_set in self.operator_set:
-            if operators_set_name == op_set.name:
-                return op_set.qc_options
-        return self.default_qco
-
-    def get_default_op_quantization_config(self) -> OpQuantizationConfig:
-        """
-
-        Returns: The default OpQuantizationConfig of the TargetPlatformModel.
-
-        """
-        assert len(self.default_qco.quantization_config_list) == 1, \
-            f'Default quantization configuration options must contain only one option,' \
-            f' but found {len(get_current_tp_model().default_qco.quantization_config_list)} configurations.'
-        return self.default_qco.quantization_config_list[0]
-
-    def is_opset_in_model(self,
-                          opset_name: str) -> bool:
-        """
-        Check whether an operators set is defined in the model or not.
-
-        Args:
-            opset_name: Operators set name to check.
-
-        Returns:
-            Whether an operators set is defined in the model or not.
-        """
-        return opset_name in [x.name for x in self.operator_set]
-
-    def get_opset_by_name(self,
-                          opset_name: str) -> OperatorsSetBase:
-        """
-        Get an OperatorsSet object from the model by its name.
-        If name is not in the model - None is returned.
-
-        Args:
-            opset_name: OperatorsSet name to retrieve.
-
-        Returns:
-            OperatorsSet object with the name opset_name, or None if opset_name is not in the model.
-        """
-
-        opset_list = [x for x in self.operator_set if x.name == opset_name]
-        assert len(opset_list) <= 1, f'Found more than one OperatorsSet in' \
-                                     f' TargetPlatformModel with the name {opset_name}. ' \
-                                     f'OperatorsSet name must be unique.'
-        if len(opset_list) == 0:  # opset_name is not in the model.
-            return None
-
-        return opset_list[0]  # There's one opset with that name
-
-    def append_component(self,
-                         tp_model_component: TargetPlatformModelComponent):
-        """
-        Attach a TargetPlatformModel component to the model. Components can be for example:
-        Fusing, OperatorsSet, etc.
-
-        Args:
-            tp_model_component: Component to attach to the model.
-
+        Raises:
+            Logger critical if the component is not an instance of Fusing or OperatorsSetBase.
         """
         if isinstance(tp_model_component, Fusing):
             self.fusing_patterns.append(tp_model_component)
         elif isinstance(tp_model_component, OperatorsSetBase):
             self.operator_set.append(tp_model_component)
-        else:  # pragma: no cover
-            Logger.critical(f'Attempted to append an unrecognized TargetPlatformModelComponent of type: {type(tp_model_component)}.')
+        else:
+            Logger.critical(
+                f"Attempted to append an unrecognized TargetPlatformModelComponent of type: {type(tp_model_component)}.") # pragma: no cover
 
-    def __enter__(self):
+    def get_info(self) -> Dict[str, Any]:
         """
-        Start defining the TargetPlatformModel using 'with'.
+        Get a dictionary summarizing the TargetPlatformModel properties.
 
-        Returns: Initialized TargetPlatformModel object.
+        Returns:
+            Dict[str, Any]: Summary of the TargetPlatformModel properties.
+        """
+        return {
+            "Model name": self.name,
+            "Operators sets": [o.get_info() for o in self.operator_set],
+            "Fusing patterns": [f.get_info() for f in self.fusing_patterns],
+        }
 
+    def __validate_model(self):
+        """
+        Validate the model's configuration to ensure its integrity.
+
+        Raises:
+            Logger critical if the model contains multiple operator sets with the same name.
+        """
+        opsets_names = [op.name for op in self.operator_set]
+        if len(set(opsets_names)) != len(opsets_names):
+            Logger.critical("Operator Sets must have unique names.") # pragma: no cover
+
+    def __enter__(self) -> 'TargetPlatformModel':
+        """
+        Start defining the TargetPlatformModel using a 'with' statement.
+
+        Returns:
+            TargetPlatformModel: The initialized TargetPlatformModel object.
         """
         _current_tp_model.set(self)
         return self
 
-    def __exit__(self, exc_type, exc_value, tb):
+    def __exit__(self, exc_type, exc_value, tb) -> 'TargetPlatformModel':
         """
-        Finish defining the TargetPlatformModel at the end of the 'with' clause.
-        Returns the final and immutable TargetPlatformModel instance.
-        """
+        Finalize and validate the TargetPlatformModel at the end of the 'with' clause.
 
-        if exc_value is not None:
-            print(exc_value, exc_value.args)
-            raise exc_value
-        self.__validate_model()  # Assert that model is valid.
-        _current_tp_model.reset()
-        self.initialized_done()  # Make model immutable.
-        return self
+        Args:
+            exc_type: Exception type, if any occurred.
+            exc_value: Exception value, if any occurred.
+            tb: Traceback object, if an exception occurred.
 
-    def __validate_model(self):
-        """
-
-        Assert model is valid.
-        Model is invalid if, for example, it contains multiple operator sets with the same name,
-        as their names should be unique.
-
-        """
-        opsets_names = [op.name for op in self.operator_set]
-        if len(set(opsets_names)) != len(opsets_names):
-            Logger.critical(f'Operator Sets must have unique names.')
-
-    def get_default_config(self) -> OpQuantizationConfig:
-        """
+        Raises:
+            The exception raised in the 'with' block, if any.
 
         Returns:
-
+            TargetPlatformModel: The validated TargetPlatformModel object.
         """
-        assert len(self.default_qco.quantization_config_list) == 1, \
-            f'Default quantization configuration options must contain only one option,' \
-            f' but found {len(self.default_qco.quantization_config_list)} configurations.'
-        return self.default_qco.quantization_config_list[0]
-
-    def get_info(self) -> Dict[str, Any]:
-        """
-
-        Returns: Dictionary that summarizes the TargetPlatformModel properties (for display purposes).
-
-        """
-        return {"Model name": self.name,
-                "Default quantization config": self.get_default_config().get_info(),
-                "Operators sets": [o.get_info() for o in self.operator_set],
-                "Fusing patterns": [f.get_info() for f in self.fusing_patterns]
-                }
+        if exc_value is not None:
+            raise exc_value
+        self.__validate_model()
+        _current_tp_model.reset()
+        return self
 
     def show(self):
         """
@@ -716,16 +661,3 @@ class TargetPlatformModel(ImmutableClass):
 
         """
         pprint.pprint(self.get_info(), sort_dicts=False)
-
-    def set_simd_padding(self,
-                         is_simd_padding: bool):
-        """
-        Set flag is_simd_padding to indicate whether this TP model defines
-        that padding due to SIMD constrains occurs.
-
-        Args:
-            is_simd_padding: Whether this TP model defines that padding due to SIMD constrains occurs.
-
-        """
-        self.is_simd_padding = is_simd_padding
-

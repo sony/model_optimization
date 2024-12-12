@@ -180,11 +180,11 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                                    fixed_zero_point=-128, fixed_scale=1 / 256))
 
         conv2d = schema.OperatorsSet("Conv2d")
-        kernel = schema.OperatorSetConcat(conv2d, fc)
+        kernel = schema.OperatorSetConcat([conv2d, fc])
 
         relu = schema.OperatorsSet("Relu")
         elu = schema.OperatorsSet("Elu")
-        activations_to_fuse = schema.OperatorSetConcat(relu, elu)
+        activations_to_fuse = schema.OperatorSetConcat([relu, elu])
 
         batch_norm = schema.OperatorsSet("BatchNorm")
         bias_add = schema.OperatorsSet("BiasAdd")

@@ -15,7 +15,7 @@
 from typing import List, Tuple
 
 import model_compression_toolkit as mct
-import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+import model_compression_toolkit.target_platform_capabilities.schema.v1 as schema
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS, \
     IMX500_TP_MODEL
@@ -235,7 +235,9 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         tpc_minor_version=4,
         tpc_patch_version=0,
         tpc_platform_type=IMX500_TP_MODEL,
-        add_metadata=True, name=name)
+        add_metadata=True,
+        name=name,
+        is_simd_padding=True)
 
     # To start defining the model's components (such as operator sets, and fusing patterns),
     # use 'with' the TargetPlatformModel instance, and create them as below:
@@ -245,8 +247,6 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # If a quantization configuration options is passed, these options will
         # be used for operations that will be attached to this set's label.
         # Otherwise, it will be a configure-less set (used in fusing):
-
-        generated_tpm.set_simd_padding(is_simd_padding=True)
 
         # May suit for operations like: Dropout, Reshape, etc.
         default_qco = tp.get_default_quantization_config_options()
@@ -294,11 +294,11 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         # Combine multiple operators into a single operator to avoid quantization between
         # them. To do this we define fusing patterns using the OperatorsSets that were created.
         # To group multiple sets with regard to fusing, an OperatorSetConcat can be created
-        activations_after_conv_to_fuse = schema.OperatorSetConcat(any_relu, swish, prelu, sigmoid,
-                                                                     tanh, gelu, hardswish, hardsigmoid)
-        activations_after_fc_to_fuse = schema.OperatorSetConcat(any_relu, swish, sigmoid, tanh, gelu,
-                                                                   hardswish, hardsigmoid)
-        any_binary = schema.OperatorSetConcat(add, sub, mul, div)
+        activations_after_conv_to_fuse = schema.OperatorSetConcat([any_relu, swish, prelu, sigmoid,
+                                                                     tanh, gelu, hardswish, hardsigmoid])
+        activations_after_fc_to_fuse = schema.OperatorSetConcat([any_relu, swish, sigmoid, tanh, gelu,
+                                                                   hardswish, hardsigmoid])
+        any_binary = schema.OperatorSetConcat([add, sub, mul, div])
 
         # ------------------- #
         # Fusions

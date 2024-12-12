@@ -24,6 +24,7 @@ from model_compression_toolkit.core.common.quantization.node_quantization_config
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import QuantizationConfigOptions, \
     OpQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import max_input_activation_n_bits
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, LayerFilterParams
 
 
@@ -584,7 +585,7 @@ class BaseNode:
         _node_qc_options = node_qc_options.quantization_config_list
         if len(next_nodes):
             next_nodes_qc_options = [_node.get_qco(tpc) for _node in next_nodes]
-            next_nodes_supported_input_bitwidth = min([op_cfg.max_input_activation_n_bits
+            next_nodes_supported_input_bitwidth = min([max_input_activation_n_bits(op_cfg)
                                                        for qc_opts in next_nodes_qc_options
                                                        for op_cfg in qc_opts.quantization_config_list])
 
@@ -595,7 +596,7 @@ class BaseNode:
                 Logger.critical(f"Graph doesn't match TPC bit configurations: {self} -> {next_nodes}.")  # pragma: no cover
 
             # Verify base config match
-            if any([node_qc_options.base_config.activation_n_bits > qc_opt.base_config.max_input_activation_n_bits
+            if any([node_qc_options.base_config.activation_n_bits > max_input_activation_n_bits(qc_opt.base_config)
                     for qc_opt in next_nodes_qc_options]):
                 # base_config activation bits doesn't match next node supported input bit-width -> replace with
                 # a qco from quantization_config_list with maximum activation bit-width.
