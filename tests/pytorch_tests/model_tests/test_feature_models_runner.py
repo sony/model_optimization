@@ -60,6 +60,7 @@ from tests.pytorch_tests.model_tests.feature_models.lut_quantizer_test import LU
     LUTActivationQuantizerTest
 from tests.pytorch_tests.model_tests.feature_models.manual_bit_selection import ManualBitWidthByLayerTypeTest, \
     ManualBitWidthByLayerNameTest, Manual16BitTest, Manual16BitTestMixedPrecisionTest
+from tests.pytorch_tests.model_tests.feature_models.matmul_test import MatMulFNetTest, MatMulOpNetTest
 from tests.pytorch_tests.model_tests.feature_models.metadata_test import MetadataTest
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPrecisionActivationSearch8Bit, MixedPrecisionActivationSearch2Bit, MixedPrecisionActivationSearch4Bit, \
@@ -245,6 +246,21 @@ class FeatureModelsTestRunner(unittest.TestCase):
         This test check the linear functional substitution function.
         """
         LinearFNetTest(self).run_test()
+
+    def test_matmul_function(self):
+        """
+        This test checks the MatMul subsitution function
+        """
+        MatMulFNetTest(self, [3, 5, 10]).run_test()
+        MatMulOpNetTest(self, [3, 5, 10]).run_test()
+        MatMulFNetTest(self, [3, 2, 5, 10]).run_test()
+        MatMulOpNetTest(self, [3, 2, 5, 10]).run_test()
+        MatMulFNetTest(self, [50, 2, 400, 32]).run_test()
+        MatMulOpNetTest(self, [50, 2, 400, 32]).run_test()
+        MatMulFNetTest(self, [3, 1, 5, 10]).run_test()
+        MatMulOpNetTest(self, [3, 1, 5, 10]).run_test()
+        MatMulFNetTest(self, [3, 2, 4, 5, 10]).run_test()
+        MatMulOpNetTest(self, [3, 2, 4, 5, 10]).run_test()
 
     def test_broken_net(self):
         """
