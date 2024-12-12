@@ -19,22 +19,6 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
     TargetPlatformModel, QuantizationConfigOptions, OperatorsSetBase
 
 
-def get_config_options_by_operators_set(self, operators_set_name: str) -> QuantizationConfigOptions:
-    """
-    Get the QuantizationConfigOptions of an OperatorsSet by its name.
-
-    Args:
-        operators_set_name (str): Name of the OperatorsSet to get.
-
-    Returns:
-        QuantizationConfigOptions: Quantization configuration options for the given OperatorsSet name.
-    """
-    for op_set in self.operator_set:
-        if operators_set_name == op_set.name:
-            return op_set.qc_options
-    return self.default_qco
-
-
 def max_input_activation_n_bits(op_quantization_config: OpQuantizationConfig) -> int:
     """
     Get the maximum supported input bit-width.
