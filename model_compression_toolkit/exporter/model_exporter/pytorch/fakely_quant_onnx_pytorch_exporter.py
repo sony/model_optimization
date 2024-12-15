@@ -116,6 +116,7 @@ if FOUND_ONNX:
                                   opset_version=self._onnx_opset_version,
                                   verbose=False,
                                   input_names=['input_ids', "attention_mask", "segment_ids"],
+                                  # input_names=['input_ids'],
                                   output_names=['output'],
                                   dynamic_axes={"input_ids": symbolic_names,
                                                 "attention_mask": symbolic_names,

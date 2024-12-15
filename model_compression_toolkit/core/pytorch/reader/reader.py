@@ -94,7 +94,8 @@ def fx_graph_module_generation(pytorch_model: torch.nn.Module,
     try:
         batch_data = iter(representative_data_gen()).__next__()
         if is_language_model(pytorch_model, batch_data):
-            input_names = ["input_ids", "attention_mask", "token_type_ids"]
+            # input_names = ["input_ids", "attention_mask", "token_type_ids"]
+            input_names = ["input_ids"]
             symbolic_traced = transformers_fx.symbolic_trace(pytorch_model, input_names)
         else:
             symbolic_traced = symbolic_trace(pytorch_model)

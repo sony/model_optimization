@@ -58,10 +58,10 @@ class ScaledDotProductDecomposition(BaseSubstitution):
         return default_value
 
     def _get_attention_input_nodes(self, graph: Graph, attention_node: FunctionalNode) -> dict:
-        q, k, v = 0, 1, 2
+        q, k, v, mask_idx = 0, 1, 2, 3
         prev_nodes = graph.get_prev_nodes(attention_node, sink_index_sorted=True)
         q_node, k_node, v_node = prev_nodes[q], prev_nodes[k], prev_nodes[v]
-        return {"q": q_node, "k": k_node, "v": v_node}
+        return {"q": q_node, "k": k_node, "v": v_node, "attn_mask": prev_nodes[mask_idx] if len(prev_nodes) > mask_idx else None}
 
     def _get_transpose_k_node(self, attention_node_name: str, key_node: BaseNode) -> BaseNode:
         input_shape, output_shape = copy(key_node.output_shape[0]), copy(key_node.output_shape[0])
@@ -111,22 +111,16 @@ class ScaledDotProductDecomposition(BaseSubstitution):
                               op_call_kwargs={},
                               functional_op=torch.matmul)
 
-    def _get_mask_node(self, attention_node: FunctionalNode, scale_node: FunctionalNode) -> FunctionalNode:
-        """
-        :return: Add operator node with the mask tensor as input. In case there is no mask tensor, returns None.
-        """
-        attention_mask_tensor = self._get_attention_mask_tensor(attention_node)
-        if attention_mask_tensor is None:
-            return None
-        mask_node_name = f'{attention_node.name}_mask'
-        return FunctionalNode(name=mask_node_name,
+    def _get_add_node(self, attention_node_name: str, scale_node: FunctionalNode, mask_node: FunctionalNode) -> FunctionalNode:
+        add_node_name = f'{attention_node_name}_add_mask'
+        return FunctionalNode(name=add_node_name,
                               framework_attr={},
-                              input_shape=(scale_node.output_shape),
+                              input_shape=(scale_node.output_shape, mask_node.output_shape),
                               output_shape=scale_node.output_shape,
                               weights={},
                               layer_class=torch.add,
                               op_call_args=[],
-                              op_call_kwargs={'other': attention_mask_tensor},
+                              op_call_kwargs={},  #{'other': attention_mask_tensor},
                               functional_op=torch.add)
 
     def _get_softmax_node(self, attention_node_name: str, in_out_shape: tuple) -> BaseNode:
@@ -198,13 +192,12 @@ class ScaledDotProductDecomposition(BaseSubstitution):
         :param attention_node: the node to replace
         :return: A graph after the substitution
         """
-        print("In scale_dot_product_attention substitution@@@@@@@@")
         input_nodes = self._get_attention_input_nodes(graph, attention_node)
-        q_node, k_node, v_node = input_nodes["q"], input_nodes["k"], input_nodes["v"]
+        q_node, k_node, v_node, mask_node = input_nodes["q"], input_nodes["k"], input_nodes["v"], input_nodes["attn_mask"]
         transpose_k_node = self._get_transpose_k_node(attention_node.name, k_node)
         matmul_node = self._get_matmul_node(attention_node.name, q_node, transpose_k_node)
         scale_node = self._get_scale_node(attention_node, q_node, matmul_node)
-        mask_node = self._get_mask_node(attention_node, scale_node)
+        # mask_node = self._get_mask_node(attention_node, scale_node, mask_node)
         softmax_node = self._get_softmax_node(attention_node.name, matmul_node.output_shape)
         dropout_node = self._get_dropout_node(attention_node, softmax_node.output_shape)
         matmul2_node = self._get_matmul2_node(attention_node.name, softmax_node, v_node)
@@ -212,9 +205,35 @@ class ScaledDotProductDecomposition(BaseSubstitution):
         graph.add_node_with_in_edges(transpose_k_node, [k_node])
         graph.add_node_with_in_edges(matmul_node, [q_node, transpose_k_node])
         graph.add_node_with_in_edges(scale_node, [matmul_node])
+        add_node = None
         if mask_node:
+            # print("layer:", mask_node.name)
+            # prev_nodes = graph.get_prev_nodes(mask_node, sink_index_sorted=True)
+            # while len(prev_nodes) > 0:
+            #     layer_names = []
+            #     new_prev_layer = []
+            #     for p in prev_nodes:
+            #         layer_names.append(p.name)
+            #         p_prev = graph.get_prev_nodes(p, sink_index_sorted=True)
+            #         for pp in p_prev:
+            #             new_prev_layer.append(pp)
+            #     print("layer:", layer_names)
+            #     prev_nodes = new_prev_layer
             graph.add_node_with_in_edges(mask_node, [scale_node])
-        graph.add_node_with_in_edges(softmax_node, [mask_node if mask_node else scale_node])
+            add_node = self._get_add_node(attention_node.name, scale_node, mask_node)
+            # mask_prev_nodes = graph.get_prev_nodes(mask_node)
+            # new_mask_node = deepcopy(mask_node)
+            # new_mask_node.input_shape = [scale_node.output_shape, mask_node.output_shape]
+            # new_mask_node.output_shape = scale_node.output_shape
+            # graph.add_node_with_in_edges(new_mask_node, [scale_node] + mask_prev_nodes[1:])
+            graph.add_node_with_in_edges(add_node, [scale_node, mask_node])
+            # if attention_node.name == "scaled_dot_product_attention:scaled_dot_product_attention_11": # delete only at last attention since mask_node is in use in all of the attentions
+            #     for prev_node in mask_prev_nodes:
+            #         graph.remove_edge(prev_node, mask_node)
+            graph.remove_edge(mask_node, attention_node)
+        # graph.add_node_with_in_edges(softmax_node, [mask_node if mask_node else scale_node])
+        graph.add_node_with_in_edges(softmax_node, [add_node if mask_node else scale_node])
+        # graph.add_node_with_in_edges(softmax_node, [scale_node])
         graph.add_node_with_in_edges(dropout_node, [softmax_node])
         graph.add_node_with_in_edges(matmul2_node, [dropout_node if dropout_node else softmax_node, v_node])
 
