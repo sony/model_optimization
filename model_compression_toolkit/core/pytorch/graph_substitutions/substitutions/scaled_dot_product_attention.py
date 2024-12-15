@@ -68,8 +68,8 @@ class ScaledDotProductDecomposition(BaseSubstitution):
         output_shape[-2], output_shape[-1] = input_shape[-1], input_shape[-2]
         transpose_node = FunctionalNode(name=f"{attention_node_name}_{key_node.name}_transpose",
                                         framework_attr={},
-                                        input_shape=input_shape,
-                                        output_shape=output_shape,
+                                        input_shape=[input_shape],
+                                        output_shape=[output_shape],
                                         weights={},
                                         layer_class=torch.transpose,
                                         op_call_args=[-1, -2],  # axes to transpose
@@ -99,7 +99,7 @@ class ScaledDotProductDecomposition(BaseSubstitution):
     def _get_matmul_node(self, attention_node_name: str, q_node: BaseNode, transposed_k_node: BaseNode) -> BaseNode:
         matmul1_output_shape = copy(q_node.output_shape[0])
         matmul1_output_shape[-2] = q_node.output_shape[0][-2]
-        matmul1_output_shape[-1] = transposed_k_node.output_shape[-1]
+        matmul1_output_shape[-1] = transposed_k_node.output_shape[0][-1]
         matmul_name = f'{attention_node_name}_matmul1'
         return FunctionalNode(name=matmul_name,
                               framework_attr={},

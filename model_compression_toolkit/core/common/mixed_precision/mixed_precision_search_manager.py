@@ -26,7 +26,7 @@ from model_compression_toolkit.core.common.graph.virtual_activation_weights_node
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import RUTarget, ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_functions_mapping import RuFunctions
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_aggregation_methods import MpRuAggregation
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import MpRuMetric
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import MpRuMetric, calc_graph_cuts
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 
@@ -66,6 +66,8 @@ class MixedPrecisionSearchManager:
         self.sensitivity_evaluator = sensitivity_evaluator
         self.layer_to_bitwidth_mapping = self.get_search_space()
         self.compute_metric_fn = self.get_sensitivity_metric()
+
+        self.cuts = calc_graph_cuts(self.original_graph)
 
         self.compute_ru_functions = ru_functions
         self.target_resource_utilization = target_resource_utilization
@@ -122,7 +124,10 @@ class MixedPrecisionSearchManager:
         for ru_target, ru_fns in self.compute_ru_functions.items():
             # ru_fns is a pair of resource utilization computation method and 
             # resource utilization aggregation method (in this method we only need the first one)
-            min_ru[ru_target] = ru_fns.metric_fn(self.min_ru_config, self.graph, self.fw_info, self.fw_impl)
+            if ru_target is RUTarget.ACTIVATION:
+                min_ru[ru_target] = ru_fns.metric_fn(self.min_ru_config, self.graph, self.fw_info, self.fw_impl, self.cuts)
+            else:
+                min_ru[ru_target] = ru_fns.metric_fn(self.min_ru_config, self.graph, self.fw_info, self.fw_impl)
 
         return min_ru
 
@@ -213,7 +218,10 @@ class MixedPrecisionSearchManager:
 
         """
         cfg = self.replace_config_in_index(self.min_ru_config, conf_node_idx, candidate_idx)
-        return self.compute_ru_functions[target].metric_fn(cfg, self.graph, self.fw_info, self.fw_impl)
+        if target == RUTarget.ACTIVATION:
+            return self.compute_ru_functions[target].metric_fn(cfg, self.graph, self.fw_info, self.fw_impl, self.cuts)
+        else:
+            return self.compute_ru_functions[target].metric_fn(cfg, self.graph, self.fw_info, self.fw_impl)
 
     @staticmethod
     def replace_config_in_index(mp_cfg: List[int], idx: int, value: int) -> List[int]:
@@ -247,6 +255,8 @@ class MixedPrecisionSearchManager:
             # compute for non-configurable nodes
             if target == RUTarget.BOPS:
                 ru_vector = None
+            elif target == RUTarget.ACTIVATION:
+                ru_vector = self.compute_ru_functions[target].metric_fn([], self.graph, self.fw_info, self.fw_impl, self.cuts)
             else:
                 ru_vector = self.compute_ru_functions[target].metric_fn([], self.graph, self.fw_info, self.fw_impl)
 
@@ -272,6 +282,8 @@ class MixedPrecisionSearchManager:
             # are not for constraints setting
             if ru_target == RUTarget.BOPS:
                 configurable_nodes_ru_vector = ru_fns.metric_fn(config, self.original_graph, self.fw_info, self.fw_impl, False)
+            elif ru_target == RUTarget.ACTIVATION:
+                configurable_nodes_ru_vector = ru_fns.metric_fn(config, self.graph, self.fw_info, self.fw_impl, self.cuts)
             else:
                 configurable_nodes_ru_vector = ru_fns.metric_fn(config, self.original_graph, self.fw_info, self.fw_impl)
             non_configurable_nodes_ru_vector = self.non_conf_ru_dict.get(ru_target)
