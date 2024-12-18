@@ -61,7 +61,6 @@ class OperatorSetNames(Enum):
     OPSET_DROPOUT = "Dropout"
     OPSET_SPLIT = "Split"
     OPSET_CHUNK = "Chunk"
-    OPSET_UNBIND = "Unbind"
     OPSET_MAXPOOL = "MaxPool"
     OPSET_SIZE = "Size"
     OPSET_SHAPE = "Shape"

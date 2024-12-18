@@ -9,3 +9,4 @@ OperatorsSet = schema.OperatorsSet
 OperatorSetConcat= schema.OperatorSetConcat
 Fusing = schema.Fusing
 TargetPlatformModel = schema.TargetPlatformModel
+OperatorSetNames = schema.OperatorSetNames
