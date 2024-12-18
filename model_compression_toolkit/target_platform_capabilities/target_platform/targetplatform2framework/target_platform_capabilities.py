@@ -52,7 +52,7 @@ class TargetPlatformCapabilities(ImmutableClass):
         self.op_sets_to_layers = OperationsToLayers() # Init an empty OperationsToLayers
         self.layer2qco, self.filterlayer2qco = {}, {} # Init empty mappings from layers/LayerFilterParams to QC options
         # Track the unused opsets for warning purposes.
-        self.__tp_model_opsets_not_used = [s.name for s in tp_model.operator_set]
+        self.__tp_model_opsets_not_used = [s.name for s in tp_model.operator_set] if tp_model.operator_set else []
         self.remove_fusing_names_from_not_used_list()
 
     def get_layers_by_opset_name(self, opset_name: str) -> List[Any]:
@@ -100,8 +100,10 @@ class TargetPlatformCapabilities(ImmutableClass):
 
         """
         res = []
+        if self.tp_model.fusing_patterns is None:
+            return res
         for p in self.tp_model.fusing_patterns:
-            ops = [self.get_layers_by_opset(x) for x in p.operator_groups_list]
+            ops = [self.get_layers_by_opset(x) for x in p.operator_groups]
             res.extend(itertools.product(*ops))
         return [list(x) for x in res]
 
@@ -207,9 +209,10 @@ class TargetPlatformCapabilities(ImmutableClass):
         Remove OperatorSets names from the list of the unused sets (so a warning
         will not be displayed).
         """
-        for f in self.tp_model.fusing_patterns:
-            for s in f.operator_groups_list:
-                self.remove_opset_from_not_used_list(s.name)
+        if self.tp_model.fusing_patterns is not None:
+            for f in self.tp_model.fusing_patterns:
+                for s in f.operator_groups:
+                    self.remove_opset_from_not_used_list(s.name)
 
     def remove_opset_from_not_used_list(self,
                                         opset_to_remove: str):

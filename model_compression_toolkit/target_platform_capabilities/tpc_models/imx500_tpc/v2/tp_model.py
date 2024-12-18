@@ -19,7 +19,8 @@ import model_compression_toolkit.target_platform_capabilities.schema.mct_current
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, WEIGHTS_N_BITS, \
     IMX500_TP_MODEL
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, Signedness, \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, \
+    Signedness, \
     AttributeQuantizationConfig, OpQuantizationConfig
 
 tp = mct.target_platform
@@ -155,7 +156,54 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
-    default_configuration_options = schema.QuantizationConfigOptions([default_config])
+    default_configuration_options = schema.QuantizationConfigOptions(tuple([default_config]))
+
+    # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+                                                                             base_config=base_config)
+
+    # Create an OperatorsSet to represent a set of operations.
+    # Each OperatorsSet has a unique label.
+    # If a quantization configuration options is passed, these options will
+    # be used for operations that will be attached to this set's label.
+    # Otherwise, it will be a configure-less set (used in fusing):
+    operator_set = []
+    fusing_patterns = []
+    # May suit for operations like: Dropout, Reshape, etc.
+    operator_set.append(schema.OperatorsSet("NoQuantization", default_configuration_options.clone_and_edit(
+        enable_activation_quantization=False).clone_and_edit_weight_attribute(enable_weights_quantization=False)))
+
+    # Define operator sets that use mixed_precision_configuration_options:
+    conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+    fc = schema.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
+
+    # Define operations sets without quantization configuration
+    # options (useful for creating fusing patterns, for example):
+    any_relu = schema.OperatorsSet("AnyReLU")
+    add = schema.OperatorsSet("Add")
+    sub = schema.OperatorsSet("Sub")
+    mul = schema.OperatorsSet("Mul")
+    div = schema.OperatorsSet("Div")
+    prelu = schema.OperatorsSet("PReLU")
+    swish = schema.OperatorsSet("Swish")
+    sigmoid = schema.OperatorsSet("Sigmoid")
+    tanh = schema.OperatorsSet("Tanh")
+
+    operator_set.extend([conv, fc, any_relu, add, sub, mul, div, prelu, swish, sigmoid, tanh])
+
+    # Combine multiple operators into a single operator to avoid quantization between
+    # them. To do this we define fusing patterns using the OperatorsSets that were created.
+    # To group multiple sets with regard to fusing, an OperatorSetConcat can be created
+    activations_after_conv_to_fuse = schema.OperatorSetConcat([any_relu, swish, prelu, sigmoid, tanh])
+    activations_after_fc_to_fuse = schema.OperatorSetConcat([any_relu, swish, sigmoid])
+    any_binary = schema.OperatorSetConcat([add, sub, mul, div])
+
+    # ------------------- #
+    # Fusions
+    # ------------------- #
+    fusing_patterns.append(schema.Fusing((conv, activations_after_conv_to_fuse)))
+    fusing_patterns.append(schema.Fusing((fc, activations_after_fc_to_fuse)))
+    fusing_patterns.append(schema.Fusing((any_binary, any_relu)))
 
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
@@ -165,57 +213,10 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         tpc_minor_version=2,
         tpc_patch_version=0,
         tpc_platform_type=IMX500_TP_MODEL,
+        operator_set=tuple(operator_set),
+        fusing_patterns=tuple(fusing_patterns),
         add_metadata=True,
         name=name,
         is_simd_padding=True)
-
-    # To start defining the model's components (such as operator sets, and fusing patterns),
-    # use 'with' the TargetPlatformModel instance, and create them as below:
-    with generated_tpm:
-        # Create an OperatorsSet to represent a set of operations.
-        # Each OperatorsSet has a unique label.
-        # If a quantization configuration options is passed, these options will
-        # be used for operations that will be attached to this set's label.
-        # Otherwise, it will be a configure-less set (used in fusing):
-
-        # May suit for operations like: Dropout, Reshape, etc.
-        default_qco = tp.get_default_quantization_config_options()
-        schema.OperatorsSet("NoQuantization",
-                               default_qco.clone_and_edit(enable_activation_quantization=False)
-                               .clone_and_edit_weight_attribute(enable_weights_quantization=False))
-
-        # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
-        mixed_precision_configuration_options = schema.QuantizationConfigOptions(mixed_precision_cfg_list,
-                                                                                    base_config=base_config)
-
-        # Define operator sets that use mixed_precision_configuration_options:
-        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-        fc = schema.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
-
-        # Define operations sets without quantization configuration
-        # options (useful for creating fusing patterns, for example):
-        any_relu = schema.OperatorsSet("AnyReLU")
-        add = schema.OperatorsSet("Add")
-        sub = schema.OperatorsSet("Sub")
-        mul = schema.OperatorsSet("Mul")
-        div = schema.OperatorsSet("Div")
-        prelu = schema.OperatorsSet("PReLU")
-        swish = schema.OperatorsSet("Swish")
-        sigmoid = schema.OperatorsSet("Sigmoid")
-        tanh = schema.OperatorsSet("Tanh")
-
-        # Combine multiple operators into a single operator to avoid quantization between
-        # them. To do this we define fusing patterns using the OperatorsSets that were created.
-        # To group multiple sets with regard to fusing, an OperatorSetConcat can be created
-        activations_after_conv_to_fuse = schema.OperatorSetConcat([any_relu, swish, prelu, sigmoid, tanh])
-        activations_after_fc_to_fuse = schema.OperatorSetConcat([any_relu, swish, sigmoid])
-        any_binary = schema.OperatorSetConcat([add, sub, mul, div])
-
-        # ------------------- #
-        # Fusions
-        # ------------------- #
-        schema.Fusing([conv, activations_after_conv_to_fuse])
-        schema.Fusing([fc, activations_after_fc_to_fuse])
-        schema.Fusing([any_binary, any_relu])
 
     return generated_tpm
