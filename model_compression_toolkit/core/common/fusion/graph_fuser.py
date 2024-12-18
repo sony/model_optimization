@@ -36,10 +36,10 @@ class GraphFuser:
         The fusion process involves:
             1. Creating new fused nodes to represent these groups.
             2. Updating the graph structure to replace the original nodes with fused nodes.
-            3. Maintaining mapping mapping of original node names to their fused node names.
+            3. Maintaining mapping of original node names to their fused node names.
 
         Args:
-            graph: Graph to sue its nodes.
+            graph: Graph to fuse its nodes.
 
         Returns:
             Mapping of original node names to their fused node names
@@ -54,7 +54,8 @@ class GraphFuser:
                 fused_nodes_mapping[node.name] = new_fused_node.name
         return fused_nodes_mapping
 
-    def _create_fused_node(self, nodes: List[BaseNode]) -> BaseNode:
+    @staticmethod
+    def _create_fused_node(nodes: List[BaseNode]) -> BaseNode:
         """
         Create a new node that represents the fusion of the given nodes.
 
@@ -79,10 +80,10 @@ class GraphFuser:
 
         return fused_node
 
-    def _replace_nodes_with_fused_node(self,
-                                      graph: Graph,
-                                      nodes_to_fuse: List[BaseNode],
-                                      fused_node: BaseNode):
+    @staticmethod
+    def _replace_nodes_with_fused_node(graph: Graph,
+                                       nodes_to_fuse: List[BaseNode],
+                                       fused_node: BaseNode):
         """
         Replace the specified nodes in the graph with a new fused node.
 

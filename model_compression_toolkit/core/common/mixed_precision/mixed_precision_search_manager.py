@@ -24,8 +24,9 @@ from model_compression_toolkit.core.common.graph.base_graph import Graph
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualActivationWeightsNode, \
     VirtualSplitWeightsNode, VirtualSplitActivationNode
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import RUTarget, ResourceUtilization
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_functions_mapping import RuFunctions
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_aggregation_methods import MpRuAggregation
-from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import MpRuMetric
+from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import MpRuMetric, calc_graph_cuts
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 
@@ -40,7 +41,7 @@ class MixedPrecisionSearchManager:
                  fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation,
                  sensitivity_evaluator: SensitivityEvaluation,
-                 ru_functions: Dict[RUTarget, Tuple[MpRuMetric, MpRuAggregation]],
+                 ru_functions: Dict[RUTarget, RuFunctions[MpRuMetric, MpRuAggregation]],
                  target_resource_utilization: ResourceUtilization,
                  original_graph: Graph = None):
         """
@@ -66,7 +67,10 @@ class MixedPrecisionSearchManager:
         self.layer_to_bitwidth_mapping = self.get_search_space()
         self.compute_metric_fn = self.get_sensitivity_metric()
 
-        self.compute_ru_functions = ru_functions
+        self.cuts = calc_graph_cuts(self.original_graph)
+
+        ru_types = [k for k, v in target_resource_utilization.get_resource_utilization_dict().items() if v < np.inf]
+        self.compute_ru_functions = {k: v for k, v in ru_functions.items() if k in ru_types}
         self.target_resource_utilization = target_resource_utilization
         self.min_ru_config = self.graph.get_min_candidates_config(fw_info)
         self.max_ru_config = self.graph.get_max_candidates_config(fw_info)
@@ -121,7 +125,10 @@ class MixedPrecisionSearchManager:
         for ru_target, ru_fns in self.compute_ru_functions.items():
             # ru_fns is a pair of resource utilization computation method and 
             # resource utilization aggregation method (in this method we only need the first one)
-            min_ru[ru_target] = ru_fns[0](self.min_ru_config, self.graph, self.fw_info, self.fw_impl)
+            if ru_target is RUTarget.ACTIVATION:
+                min_ru[ru_target] = ru_fns.metric_fn(self.min_ru_config, self.graph, self.fw_info, self.fw_impl, self.cuts)
+            else:
+                min_ru[ru_target] = ru_fns.metric_fn(self.min_ru_config, self.graph, self.fw_info, self.fw_impl)
 
         return min_ru
 
@@ -212,7 +219,10 @@ class MixedPrecisionSearchManager:
 
         """
         cfg = self.replace_config_in_index(self.min_ru_config, conf_node_idx, candidate_idx)
-        return self.compute_ru_functions[target].metric_fn(cfg, self.graph, self.fw_info, self.fw_impl)
+        if target == RUTarget.ACTIVATION:
+            return self.compute_ru_functions[target].metric_fn(cfg, self.graph, self.fw_info, self.fw_impl, self.cuts)
+        else:
+            return self.compute_ru_functions[target].metric_fn(cfg, self.graph, self.fw_info, self.fw_impl)
 
     @staticmethod
     def replace_config_in_index(mp_cfg: List[int], idx: int, value: int) -> List[int]:
@@ -241,13 +251,15 @@ class MixedPrecisionSearchManager:
         """
 
         non_conf_ru_dict = {}
-        for target, ru_value in self.target_resource_utilization.get_resource_utilization_dict().items():
+        for target, ru_fns in self.compute_ru_functions.items():
             # Call for the ru method of the given target - empty quantization configuration list is passed since we
             # compute for non-configurable nodes
             if target == RUTarget.BOPS:
                 ru_vector = None
+            elif target == RUTarget.ACTIVATION:
+                ru_vector = ru_fns.metric_fn([], self.graph, self.fw_info, self.fw_impl, self.cuts)
             else:
-                ru_vector = self.compute_ru_functions[target].metric_fn([], self.graph, self.fw_info, self.fw_impl)
+                ru_vector = ru_fns.metric_fn([], self.graph, self.fw_info, self.fw_impl)
 
             non_conf_ru_dict[target] = ru_vector
 
@@ -266,14 +278,15 @@ class MixedPrecisionSearchManager:
         """
 
         ru_dict = {}
-
         for ru_target, ru_fns in self.compute_ru_functions.items():
             # Passing False to ru methods and aggregations to indicates that the computations
             # are not for constraints setting
             if ru_target == RUTarget.BOPS:
-                configurable_nodes_ru_vector = ru_fns[0](config, self.original_graph, self.fw_info, self.fw_impl, False)
+                configurable_nodes_ru_vector = ru_fns.metric_fn(config, self.original_graph, self.fw_info, self.fw_impl, False)
+            elif ru_target == RUTarget.ACTIVATION:
+                configurable_nodes_ru_vector = ru_fns.metric_fn(config, self.graph, self.fw_info, self.fw_impl, self.cuts)
             else:
-                configurable_nodes_ru_vector = ru_fns[0](config, self.original_graph, self.fw_info, self.fw_impl)
+                configurable_nodes_ru_vector = ru_fns.metric_fn(config, self.original_graph, self.fw_info, self.fw_impl)
             non_configurable_nodes_ru_vector = self.non_conf_ru_dict.get(ru_target)
             if non_configurable_nodes_ru_vector is None or len(non_configurable_nodes_ru_vector) == 0:
                 ru_ru = self.compute_ru_functions[ru_target].aggregate_fn(configurable_nodes_ru_vector, False)
@@ -647,7 +660,7 @@ class ConfigReconstructionHelper:
                 # It's ok, need to find the node's configuration
                 self.retrieve_weights_activation_config(activation_node, weights_node, virtual_node, virtual_cfg_idx, virtual_mp_cfg)
             else:
-                Logger.critical(f"Virtual graph configuration error: Expected the predecessor of node '{n.name}' to have multiple outputs when not composed with an activation node.")  # pragma: no cover
+                Logger.critical(f"Virtual graph configuration error: Expected the predecessor of node '{weights_node.name}' to have multiple outputs when not composed with an activation node.")  # pragma: no cover
 
     def update_config_at_original_idx(self, n: BaseNode, origin_cfg_idx: int):
         """
