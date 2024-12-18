@@ -32,7 +32,10 @@ class ActivationMemoryTensor:
 
         # remove batch size (first element) from output shape. If the shape is a list then remove the first
         # axis. If shape a vector (e.g. output of size) then set the shape minus 1 to ignore the batch value.
-        self.shape = [shape[0] - 1] if len(shape) == 1 else shape[1:]
+        if len(shape) == 1:
+            self.shape = [] if shape[0] is None else [shape[0] - 1]
+        else:
+            self.shape = shape[1:]
         # The total size of a tensor is considered to be the number of elements in the tensor
         self.total_size = self._get_tensor_total_size() if not init_size_to_zero else 0
 

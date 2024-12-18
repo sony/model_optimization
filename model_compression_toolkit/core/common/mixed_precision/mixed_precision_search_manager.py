@@ -69,7 +69,8 @@ class MixedPrecisionSearchManager:
 
         self.cuts = calc_graph_cuts(self.original_graph)
 
-        self.compute_ru_functions = ru_functions
+        ru_types = [k for k, v in target_resource_utilization.get_resource_utilization_dict().items() if v < np.inf]
+        self.compute_ru_functions = {k: v for k, v in ru_functions.items() if k in ru_types}
         self.target_resource_utilization = target_resource_utilization
         self.min_ru_config = self.graph.get_min_candidates_config(fw_info)
         self.max_ru_config = self.graph.get_max_candidates_config(fw_info)
@@ -250,15 +251,15 @@ class MixedPrecisionSearchManager:
         """
 
         non_conf_ru_dict = {}
-        for target, ru_value in self.target_resource_utilization.get_resource_utilization_dict().items():
+        for target, ru_fns in self.compute_ru_functions.items():
             # Call for the ru method of the given target - empty quantization configuration list is passed since we
             # compute for non-configurable nodes
             if target == RUTarget.BOPS:
                 ru_vector = None
             elif target == RUTarget.ACTIVATION:
-                ru_vector = self.compute_ru_functions[target].metric_fn([], self.graph, self.fw_info, self.fw_impl, self.cuts)
+                ru_vector = ru_fns.metric_fn([], self.graph, self.fw_info, self.fw_impl, self.cuts)
             else:
-                ru_vector = self.compute_ru_functions[target].metric_fn([], self.graph, self.fw_info, self.fw_impl)
+                ru_vector = ru_fns.metric_fn([], self.graph, self.fw_info, self.fw_impl)
 
             non_conf_ru_dict[target] = ru_vector
 

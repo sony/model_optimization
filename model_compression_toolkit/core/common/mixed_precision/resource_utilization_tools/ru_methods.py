@@ -162,11 +162,11 @@ def activation_maxcut_size_utilization(mp_cfg: List[int],
 
             mem = 0
             for op_name in mem_elements:
-                if op_name in nodes_act_nbits:
-                    n = graph.find_node_by_name(op_name)[0]
-                    mem += _compute_node_activation_memory(n, nodes_act_nbits[op_name])
-                    print(n, nodes_act_nbits[op_name],
-                          _compute_node_activation_memory(n, nodes_act_nbits[op_name]))
+                n = graph.find_node_by_name(op_name)[0]
+                if n.is_activation_quantization_enabled():
+                    base_nbits = n.candidates_quantization_cfg[0].activation_quantization_cfg.activation_n_bits
+                    mem += _compute_node_activation_memory(n, nodes_act_nbits.get(op_name, base_nbits))
+
             activation_cut_memory.append(mem)
 
     return np.array(activation_cut_memory)

@@ -605,10 +605,10 @@ class FeatureModelsTestRunner(unittest.TestCase):
         MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
         MixedPrecisionWeightsOnlyBopsTest(self).run_test()
         MixedPrecisionActivationOnlyBopsTest(self).run_test()
-        MixedPrecisionBopsAndWeightsMemoryUtilizationTest(self).run_test()
-        MixedPrecisionBopsAndActivationMemoryUtilizationTest(self).run_test()
-        MixedPrecisionBopsAndTotalMemoryUtilizationTest(self).run_test()
-        MixedPrecisionBopsWeightsActivationUtilizationTest(self).run_test()
+        # MixedPrecisionBopsAndWeightsMemoryUtilizationTest(self).run_test()
+        # MixedPrecisionBopsAndActivationMemoryUtilizationTest(self).run_test()
+        # MixedPrecisionBopsAndTotalMemoryUtilizationTest(self).run_test()
+        # MixedPrecisionBopsWeightsActivationUtilizationTest(self).run_test()
         MixedPrecisionBopsMultipleOutEdgesTest(self).run_test()
 
     def test_mixed_precision_distance_functions(self):

@@ -79,14 +79,14 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
         return tpc
 
     def get_resource_utilization(self):
-        return mct.core.ResourceUtilization(activation_memory=200)
+        return mct.core.ResourceUtilization(activation_memory=5000)
 
     def get_mixed_precision_config(self):
         return MixedPrecisionQuantizationConfig()
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
-        x = tf.multiply(inputs, inputs)
+        x = tf.multiply(inputs, inputs)[:, :8, :8, :]
         x = tf.add(x, np.ones((3,), dtype=np.float32))
         x1 = tf.subtract(x, np.ones((3,), dtype=np.float32))
         x = tf.multiply(x, x1)
@@ -96,7 +96,7 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
         mul1_act_quant = quantized_model.layers[3]
-        mul2_act_quant = quantized_model.layers[9]
+        mul2_act_quant = quantized_model.layers[10]
         self.unit_test.assertTrue(mul1_act_quant.activation_holder_quantizer.num_bits == 8,
                                   "1st mul activation bits should be 8 bits because of RU.")
         self.unit_test.assertTrue(mul1_act_quant.activation_holder_quantizer.signed == False,
