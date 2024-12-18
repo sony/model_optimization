@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from dataclasses import replace
+
 from operator import mul
 import torch
 
@@ -82,10 +84,9 @@ class Activation16BitNetMP(torch.nn.Module):
 
 
 def set_16bit_as_default(tpc, required_op_set, required_ops_list):
-    op_set = get_op_set(required_op_set, tpc.tp_model.operator_set)
-    op_set.qc_options.base_config = [l for l in op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
     for op in required_ops_list:
-        tpc.layer2qco[op].base_config = [l for l in tpc.layer2qco[op].quantization_config_list if l.activation_n_bits == 16][0]
+        base_config = [l for l in tpc.layer2qco[op].quantization_config_list if l.activation_n_bits == 16][0]
+        tpc.layer2qco[op] = replace(tpc.layer2qco[op], base_config=base_config)
 
 
 class Activation16BitTest(BasePytorchFeatureNetworkTest):
@@ -125,9 +126,9 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
     def get_tpc(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v4')
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        mul_op_set.qc_options.base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.mul].base_config = mul_op_set.qc_options.base_config
-        tpc.layer2qco[mul].base_config = mul_op_set.qc_options.base_config
+        base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
+        tpc.layer2qco[torch.mul] = replace(tpc.layer2qco[torch.mul], base_config=base_config)
+        tpc.layer2qco[mul] = replace(tpc.layer2qco[mul], base_config=base_config)
         mul_op_set.qc_options.quantization_config_list.extend(
             [mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=4),
              mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=2)])

@@ -130,7 +130,7 @@ class TestKerasTPModel(unittest.TestCase):
         with hm:
             op_obj_a = schema.OperatorsSet('opsetA')
             op_obj_b = schema.OperatorsSet('opsetB')
-            op_concat = schema.OperatorSetConcat(op_obj_a, op_obj_b)
+            op_concat = schema.OperatorSetConcat([op_obj_a, op_obj_b])
 
         fw_tp = TargetPlatformCapabilities(hm)
         with fw_tp:

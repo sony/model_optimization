@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+from dataclasses import replace
 
 import unittest
 import model_compression_toolkit as mct
@@ -34,8 +34,8 @@ class TestTorchQuantConfigFiltering(unittest.TestCase):
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
         # Force Mul base_config to 16bit only
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        mul_op_set.qc_options.base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.multiply].base_config = mul_op_set.qc_options.base_config
+        base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
+        tpc.layer2qco[torch.multiply] = replace(tpc.layer2qco[torch.multiply], base_config=base_config)
         return tpc
 
     def test_config_filtering(self):

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from dataclasses import replace
+
 from operator import mul
 
 import inspect
@@ -187,9 +189,9 @@ class Manual16BitTest(ManualBitWidthByLayerNameTest):
     def get_tpc(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        mul_op_set.qc_options.base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.mul].base_config = mul_op_set.qc_options.base_config
-        tpc.layer2qco[mul].base_config = mul_op_set.qc_options.base_config
+        base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
+        tpc.layer2qco[torch.mul] = replace(tpc.layer2qco[torch.mul], base_config=base_config)
+        tpc.layer2qco[mul] = replace(tpc.layer2qco[mul] , base_config=base_config)
         return {'mixed_precision_activation_model': tpc}
 
     def create_feature_network(self, input_shape):
@@ -201,9 +203,9 @@ class Manual16BitTestMixedPrecisionTest(ManualBitWidthByLayerNameTest):
     def get_tpc(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        mul_op_set.qc_options.base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.mul].base_config = mul_op_set.qc_options.base_config
-        tpc.layer2qco[mul].base_config = mul_op_set.qc_options.base_config
+        base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
+        tpc.layer2qco[torch.mul] = replace(tpc.layer2qco[torch.mul], base_config=base_config)
+        tpc.layer2qco[mul] = replace(tpc.layer2qco[mul], base_config=base_config)
         mul_op_set.qc_options.quantization_config_list.extend(
             [mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=4),
              mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=2)])
