@@ -56,10 +56,12 @@ class TargetPlatformModelingTest(unittest.TestCase):
 
     def test_tp_model_show(self):
         tpm = schema.TargetPlatformModel(TEST_QCO,
-                                         operator_set=tuple([schema.OperatorsSet("opA")]),
                                          tpc_minor_version=None,
                                          tpc_patch_version=None,
                                          tpc_platform_type=None,
+                                         operator_set=tuple([schema.OperatorsSet("opA"), schema.OperatorsSet("opB")]),
+                                         fusing_patterns=tuple(
+                                             [schema.Fusing((schema.OperatorsSet("opA"), schema.OperatorsSet("opB")))]),
                                          add_metadata=False)
         tpm.show()
 

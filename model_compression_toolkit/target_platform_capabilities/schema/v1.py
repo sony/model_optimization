@@ -298,7 +298,7 @@ class QuantizationConfigOptions:
             # Ensure all attributes exist in the config
             for attr in attrs_to_update:
                 if attr not in qc.attr_weights_configs_mapping:
-                    Logger.critical(f"{attr} does not exist in {qc}.")
+                    Logger.critical(f"{attr} does not exist in {qc}.") # pragma: no cover
             updated_attr_mapping = {
                 attr: qc.attr_weights_configs_mapping[attr].clone_and_edit(**kwargs)
                 for attr in attrs_to_update
@@ -348,15 +348,7 @@ class TargetPlatformModelComponent:
     """
     Component of TargetPlatformModel (Fusing, OperatorsSet, etc.).
     """
-    def get_info(self) -> Dict[str, Any]:
-        """
-        Get information about the component to display.
-
-        Returns:
-            Dict[str, Any]: Returns an empty dictionary. The actual component should override
-                            this method to provide relevant information.
-        """
-        return {}
+    pass
 
 
 @dataclass(frozen=True)
@@ -418,17 +410,6 @@ class OperatorSetConcat(OperatorsSetBase):
         concatenated_name = "_".join([op.name.value if hasattr(op.name, "value") else op.name for op in self.operators_set])
         # Set the inherited name attribute using `object.__setattr__` since the dataclass is frozen
         object.__setattr__(self, "name", concatenated_name)
-
-    def get_info(self) -> Dict[str, Any]:
-        """
-        Get information about the concatenated set as a dictionary.
-
-        Returns:
-            Dict[str, Any]: A dictionary containing the concatenated name and
-                            the list of names of the operator sets in `operators_set`.
-        """
-        return {"name": self.name,
-                OPS_SET_LIST: [s.name for s in self.operators_set]}
 
 
 @dataclass(frozen=True)
@@ -561,7 +542,7 @@ class TargetPlatformModel:
         """
         return {
             "Model name": self.name,
-            "Operators sets": [o.get_info() for o in self.operator_set],
+            "Operators sets": [o.get_info() for o in self.operator_set] if self.operator_set else [],
             "Fusing patterns": [f.get_info() for f in self.fusing_patterns] if self.fusing_patterns else [],
         }
 
