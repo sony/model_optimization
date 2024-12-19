@@ -64,10 +64,10 @@ def get_default_op_quantization_config(tp_model: TargetPlatformModel) -> OpQuant
     Raises:
         AssertionError: If the default quantization configuration list contains more than one configuration option.
     """
-    assert len(tp_model.default_qco.quantization_config_list) == 1, \
+    assert len(tp_model.default_qco.quantization_configurations) == 1, \
         f"Default quantization configuration options must contain only one option, " \
-        f"but found {len(tp_model.default_qco.quantization_config_list)} configurations." # pragma: no cover
-    return tp_model.default_qco.quantization_config_list[0]
+        f"but found {len(tp_model.default_qco.quantization_configurations)} configurations." # pragma: no cover
+    return tp_model.default_qco.quantization_configurations[0]
 
 
 def is_opset_in_model(tp_model: TargetPlatformModel, opset_name: str) -> bool:
@@ -82,7 +82,10 @@ def is_opset_in_model(tp_model: TargetPlatformModel, opset_name: str) -> bool:
         bool: True if an OperatorsSet with the given name exists in the target platform model,
               otherwise False.
     """
-    return opset_name in [x.name for x in tp_model.operator_set]
+    if tp_model.operator_set is None:
+        return False
+    else:
+        return opset_name in [x.name for x in tp_model.operator_set]
 
 
 def get_opset_by_name(tp_model: TargetPlatformModel, opset_name: str) -> Optional[OperatorsSetBase]:

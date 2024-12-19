@@ -171,7 +171,7 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
     def test_threshold_selection_hmse_no_kernel_attr(self):
         def _generate_bn_quantization_tpc(quant_method, per_channel):
             cfg, _, _ = get_op_quantization_configs()
-            conv_qco = schema.QuantizationConfigOptions([cfg], base_config=cfg)
+            conv_qco = schema.QuantizationConfigOptions(tuple([cfg]), base_config=cfg)
 
             # enable BN attributes quantization using the
             bn_qco = conv_qco.clone_and_edit(attr_weights_configs_mapping=
@@ -182,11 +182,9 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                                   tpc_minor_version=None,
                                                   tpc_patch_version=None,
                                                   tpc_platform_type=None,
+                                                  operator_set=tuple([schema.OperatorsSet("Linear", conv_qco),
+                                                                schema.OperatorsSet("BN", bn_qco)]),
                                                   add_metadata=False)
-
-            with tp_model:
-                schema.OperatorsSet("Linear", conv_qco)
-                schema.OperatorsSet("BN", bn_qco)
 
             tpc = tp.TargetPlatformCapabilities(tp_model)
 

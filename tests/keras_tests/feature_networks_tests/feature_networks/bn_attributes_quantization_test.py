@@ -77,20 +77,18 @@ def _generate_bn_quantized_tpm(quantize_linear):
                                                 simd_size=32,
                                                 signedness=Signedness.AUTO)
 
-    default_configuration_options = schema.QuantizationConfigOptions([default_op_qc])
-    linear_configuration_options = schema.QuantizationConfigOptions([linear_op_qc])
-    bn_configuration_options = schema.QuantizationConfigOptions([bn_op_qc])
+    default_configuration_options = schema.QuantizationConfigOptions(tuple([default_op_qc]))
+    linear_configuration_options = schema.QuantizationConfigOptions(tuple([linear_op_qc]))
+    bn_configuration_options = schema.QuantizationConfigOptions(tuple([bn_op_qc]))
 
     generated_tpm = schema.TargetPlatformModel(
         default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,
         tpc_platform_type=None,
+        operator_set=tuple([schema.OperatorsSet("Conv", linear_configuration_options),
+                      schema.OperatorsSet("BN", bn_configuration_options)]),
         add_metadata=False, name='bn_quantized_tpm')
-
-    with generated_tpm:
-        schema.OperatorsSet("Conv", linear_configuration_options)
-        schema.OperatorsSet("BN", bn_configuration_options)
 
     return generated_tpm
 

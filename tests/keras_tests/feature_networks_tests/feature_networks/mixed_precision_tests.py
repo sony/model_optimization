@@ -643,27 +643,25 @@ class MixedPrecisionActivationOnlyConfigurableWeightsTest(MixedPrecisionActivati
             [c.clone_and_edit(enable_activation_quantization=False) for c in mixed_precision_cfg_list]
         cfg = mixed_precision_cfg_list[0]
 
-        act_mixed_cfg = schema.QuantizationConfigOptions(
-            [act_eight_bit_cfg, act_four_bit_cfg, act_two_bit_cfg],
+        act_mixed_cfg = schema.QuantizationConfigOptions(tuple(
+            [act_eight_bit_cfg, act_four_bit_cfg, act_two_bit_cfg]),
             base_config=act_eight_bit_cfg,
         )
 
-        weight_mixed_cfg = schema.QuantizationConfigOptions(
-            mixed_precision_cfg_list,
+        weight_mixed_cfg = schema.QuantizationConfigOptions(tuple(
+            mixed_precision_cfg_list),
             base_config=cfg,
         )
 
         tp_model = schema.TargetPlatformModel(
-            schema.QuantizationConfigOptions([cfg], cfg),
+            schema.QuantizationConfigOptions(tuple([cfg]), cfg),
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
+            operator_set=tuple([schema.OperatorsSet("Activations", act_mixed_cfg),
+                          schema.OperatorsSet("Weights", weight_mixed_cfg)]),
             add_metadata=False,
             name="mp_activation_conf_weights_test")
-
-        with tp_model:
-            schema.OperatorsSet("Activations", act_mixed_cfg)
-            schema.OperatorsSet("Weights", weight_mixed_cfg)
 
         keras_tpc = tp.TargetPlatformCapabilities(tp_model)
 

@@ -90,7 +90,7 @@ class OperationsToLayers:
                 return o.layers
         if isinstance(op, OperatorSetConcat):  # If its a concat - return all layers from all OperatorsSets that in the OperatorSetConcat
             layers = []
-            for o in op.op_set_list:
+            for o in op.operators_set:
                 layers.extend(self.get_layers_by_op(o))
             return layers
         Logger.warning(f'{op.name} is not in model.')

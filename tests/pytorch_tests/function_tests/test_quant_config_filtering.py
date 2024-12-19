@@ -34,7 +34,7 @@ class TestTorchQuantConfigFiltering(unittest.TestCase):
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
         # Force Mul base_config to 16bit only
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
+        base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
         tpc.layer2qco[torch.multiply] = replace(tpc.layer2qco[torch.multiply], base_config=base_config)
         return tpc
 

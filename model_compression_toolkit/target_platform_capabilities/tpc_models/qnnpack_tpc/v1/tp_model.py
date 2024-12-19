@@ -18,7 +18,8 @@ import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, QNNPACK_TP_MODEL
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, Signedness, \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, \
+    Signedness, \
     AttributeQuantizationConfig, OpQuantizationConfig
 
 tp = mct.target_platform
@@ -138,8 +139,28 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
-    default_configuration_options = schema.QuantizationConfigOptions([default_config])
+    default_configuration_options = schema.QuantizationConfigOptions(tuple([default_config]))
 
+    # Combine operations/modules into a single module.
+    # Pytorch supports the next fusing patterns:
+    # [Conv, Relu], [Conv, BatchNorm], [Conv, BatchNorm, Relu], [Linear, Relu]
+    # Source: # https://pytorch.org/docs/stable/quantization.html#model-preparation-for-quantization-eager-mode
+    operator_set = []
+    fusing_patterns = []
+
+    conv = schema.OperatorsSet("Conv")
+    batchnorm = schema.OperatorsSet("BatchNorm")
+    relu = schema.OperatorsSet("Relu")
+    linear = schema.OperatorsSet("Linear")
+
+    operator_set.extend([conv, batchnorm, relu, linear])
+    # ------------------- #
+    # Fusions
+    # ------------------- #
+    fusing_patterns.append(schema.Fusing((conv, batchnorm, relu)))
+    fusing_patterns.append(schema.Fusing((conv, batchnorm)))
+    fusing_patterns.append(schema.Fusing((conv, relu)))
+    fusing_patterns.append(schema.Fusing((linear, relu)))
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
@@ -148,27 +169,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         tpc_minor_version=1,
         tpc_patch_version=0,
         tpc_platform_type=QNNPACK_TP_MODEL,
+        operator_set=tuple(operator_set),
+        fusing_patterns=tuple(fusing_patterns),
         add_metadata=False,
         name=name)
-
-    # To start defining the model's components (such as operator sets, and fusing patterns),
-    # use 'with' the target platform model instance, and create them as below:
-    with generated_tpc:
-        # Combine operations/modules into a single module.
-        # Pytorch supports the next fusing patterns:
-        # [Conv, Relu], [Conv, BatchNorm], [Conv, BatchNorm, Relu], [Linear, Relu]
-        # Source: # https://pytorch.org/docs/stable/quantization.html#model-preparation-for-quantization-eager-mode
-        conv = schema.OperatorsSet("Conv")
-        batchnorm = schema.OperatorsSet("BatchNorm")
-        relu = schema.OperatorsSet("Relu")
-        linear = schema.OperatorsSet("Linear")
-
-        # ------------------- #
-        # Fusions
-        # ------------------- #
-        schema.Fusing([conv, batchnorm, relu])
-        schema.Fusing([conv, batchnorm])
-        schema.Fusing([conv, relu])
-        schema.Fusing([linear, relu])
-
     return generated_tpc

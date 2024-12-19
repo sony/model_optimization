@@ -66,42 +66,50 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                       base_config: OpQuantizationConfig,
                       mixed_precision_cfg_list: List[OpQuantizationConfig],
                       name: str) -> TargetPlatformModel:
-    default_configuration_options = schema.QuantizationConfigOptions(
-        [default_config])
+    default_configuration_options = schema.QuantizationConfigOptions(tuple(
+        [default_config]))
+
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+                                                                             base_config=base_config)
+
+    operator_set, fusing_patterns = [], []
+
+    operator_set.append(schema.OperatorsSet("NoQuantization",
+                        default_configuration_options
+                        .clone_and_edit(enable_activation_quantization=False)
+                        .clone_and_edit_weight_attribute(enable_weights_quantization=False)))
+
+    conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+    fc = schema.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
+
+    any_relu = schema.OperatorsSet("AnyReLU")
+    add = schema.OperatorsSet("Add")
+    sub = schema.OperatorsSet("Sub")
+    mul = schema.OperatorsSet("Mul")
+    div = schema.OperatorsSet("Div")
+    prelu = schema.OperatorsSet("PReLU")
+    swish = schema.OperatorsSet("Swish")
+    sigmoid = schema.OperatorsSet("Sigmoid")
+    tanh = schema.OperatorsSet("Tanh")
+
+    operator_set.extend([conv, fc, any_relu, add, sub, mul, div, prelu, swish, sigmoid, tanh])
+
+    activations_after_conv_to_fuse = schema.OperatorSetConcat((any_relu, swish, prelu, sigmoid, tanh))
+    activations_after_fc_to_fuse = schema.OperatorSetConcat((any_relu, swish, sigmoid))
+    any_binary = schema.OperatorSetConcat((add, sub, mul, div))
+
+    fusing_patterns.append(schema.Fusing((conv, activations_after_conv_to_fuse)))
+    fusing_patterns.append(schema.Fusing((fc, activations_after_fc_to_fuse)))
+    fusing_patterns.append(schema.Fusing((any_binary, any_relu)))
+
     generated_tpc = schema.TargetPlatformModel(
         default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,
         tpc_platform_type=None,
+        operator_set=tuple(operator_set),
+        fusing_patterns=tuple(fusing_patterns),
         add_metadata=False, name=name)
-    with generated_tpc:
-        schema.OperatorsSet("NoQuantization",
-                            tp.get_default_quantization_config_options()
-                            .clone_and_edit(enable_activation_quantization=False)
-                            .clone_and_edit_weight_attribute(enable_weights_quantization=False))
-
-        mixed_precision_configuration_options = schema.QuantizationConfigOptions(mixed_precision_cfg_list,
-                                                                                 base_config=base_config)
-
-        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-        fc = schema.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
-
-        any_relu = schema.OperatorsSet("AnyReLU")
-        add = schema.OperatorsSet("Add")
-        sub = schema.OperatorsSet("Sub")
-        mul = schema.OperatorsSet("Mul")
-        div = schema.OperatorsSet("Div")
-        prelu = schema.OperatorsSet("PReLU")
-        swish = schema.OperatorsSet("Swish")
-        sigmoid = schema.OperatorsSet("Sigmoid")
-        tanh = schema.OperatorsSet("Tanh")
-        activations_after_conv_to_fuse = schema.OperatorSetConcat([any_relu, swish, prelu, sigmoid, tanh])
-        activations_after_fc_to_fuse = schema.OperatorSetConcat([any_relu, swish, sigmoid])
-        any_binary = schema.OperatorSetConcat([add, sub, mul, div])
-        schema.Fusing([conv, activations_after_conv_to_fuse])
-        schema.Fusing([fc, activations_after_fc_to_fuse])
-        schema.Fusing([any_binary, any_relu])
-
     return generated_tpc
 
 

@@ -101,7 +101,7 @@ def filter_node_qco_by_graph(node: BaseNode,
     """
     # Filter quantization config options that don't match the graph.
     _base_config = node_qc_options.base_config
-    _node_qc_options = node_qc_options.quantization_config_list
+    _node_qc_options = node_qc_options.quantization_configurations
 
     # Build next_nodes list by appending to the node's next nodes list all nodes that are quantization preserving.
     _next_nodes = graph.get_next_nodes(node)
@@ -109,7 +109,7 @@ def filter_node_qco_by_graph(node: BaseNode,
     while len(_next_nodes):
         n = _next_nodes.pop(0)
         qco = n.get_qco(tpc)
-        qp = [qc.quantization_preserving for qc in qco.quantization_config_list]
+        qp = [qc.quantization_preserving for qc in qco.quantization_configurations]
         if not all(qp) and any(qp):
             Logger.error(f'Attribute "quantization_preserving" should be the same for all QuantizaionConfigOptions in {n}.')
         if qp[0]:
@@ -120,7 +120,7 @@ def filter_node_qco_by_graph(node: BaseNode,
         next_nodes_qc_options = [_node.get_qco(tpc) for _node in next_nodes]
         next_nodes_supported_input_bitwidth = min([max_input_activation_n_bits(op_cfg)
                                                    for qc_opts in next_nodes_qc_options
-                                                   for op_cfg in qc_opts.quantization_config_list])
+                                                   for op_cfg in qc_opts.quantization_configurations])
 
         # Filter node's QC options that match next nodes input bit-width.
         _node_qc_options = [_option for _option in _node_qc_options
@@ -132,7 +132,7 @@ def filter_node_qco_by_graph(node: BaseNode,
         if any([node_qc_options.base_config.activation_n_bits > max_input_activation_n_bits(qc_opt.base_config)
                 for qc_opt in next_nodes_qc_options]):
             # base_config activation bits doesn't match next node supported input bit-width -> replace with
-            # a qco from quantization_config_list with maximum activation bit-width.
+            # a qco from quantization_configurations with maximum activation bit-width.
             if len(_node_qc_options) > 0:
                 output_act_bitwidth = {qco.activation_n_bits: i for i, qco in enumerate(_node_qc_options)}
                 _base_config = _node_qc_options[output_act_bitwidth[max(output_act_bitwidth)]]

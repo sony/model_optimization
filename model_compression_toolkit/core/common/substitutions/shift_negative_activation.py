@@ -392,7 +392,7 @@ def shift_negative_function(graph: Graph,
                     bypass_candidate_qc.activation_quantization_cfg.activation_quantization_params[SIGNED] = False
                     graph.shift_stats_collector(bypass_node, np.array(shift_value))
 
-    add_node_qco = add_node.get_qco(graph.tpc).quantization_config_list
+    add_node_qco = add_node.get_qco(graph.tpc).quantization_configurations
     for op_qc_idx, candidate_qc in enumerate(add_node.candidates_quantization_cfg):
         for attr in add_node.get_node_weights_attributes():
             candidate_qc.weights_quantization_cfg.get_attr_config(attr).enable_weights_quantization = False
@@ -535,7 +535,7 @@ def apply_shift_negative_correction(graph: Graph,
         # Skip substitution if QuantizationMethod is uniform.
         node_qco = n.get_qco(graph.tpc)
         if any([op_qc.activation_quantization_method is QuantizationMethod.UNIFORM
-                for op_qc in node_qco.quantization_config_list]):
+                for op_qc in node_qco.quantization_configurations]):
             continue
 
         if snc_node_types.apply(n):
