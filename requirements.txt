@@ -7,7 +7,7 @@ scikit-image
 scikit-learn
 tensorboard
 PuLP
-matplotlib<3.10.0
+matplotlib<3.11.0
 scipy
 protobuf
 mct-quantizers==1.5.2
