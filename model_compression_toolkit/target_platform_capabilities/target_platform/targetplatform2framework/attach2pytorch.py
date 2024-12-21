@@ -31,10 +31,10 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames
 from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    TpcAttach2Fw
+    AttachTpModelToFw
 
 
-class TpcAttach2Pytorch(TpcAttach2Fw):
+class AttachTpModelToPytorch(AttachTpModelToFw):
     def __init__(self):
         super().__init__()
 
