@@ -82,11 +82,7 @@ def is_opset_in_model(tp_model: TargetPlatformModel, opset_name: str) -> bool:
         bool: True if an OperatorsSet with the given name exists in the target platform model,
               otherwise False.
     """
-    if tp_model.operator_set is None:
-        return False
-    else:
-        return opset_name in [x.name for x in tp_model.operator_set]
-
+    return tp_model.operator_set is not None and opset_name in [x.name for x in tp_model.operator_set]
 
 def get_opset_by_name(tp_model: TargetPlatformModel, opset_name: str) -> Optional[OperatorsSetBase]:
     """

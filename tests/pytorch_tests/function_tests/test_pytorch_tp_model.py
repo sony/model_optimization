@@ -225,6 +225,7 @@ class TestPytorchTPModel(unittest.TestCase):
                                         tpc_minor_version=None,
                                         tpc_patch_version=None,
                                         tpc_platform_type=None,
+                                        operator_set=tuple([schema.OperatorsSet("opA")]),
                                         add_metadata=False)
         hm_pytorch = tp.TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
