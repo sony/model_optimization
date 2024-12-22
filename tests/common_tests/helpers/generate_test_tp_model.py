@@ -107,7 +107,7 @@ def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_c
                                       mixed_precision_cfg_list=mp_op_cfg_list,
                                       name=name)
 
-    mixed_precision_configuration_options = schema.QuantizationConfigOptions(mp_op_cfg_list,
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mp_op_cfg_list),
                                                                                 base_config=base_cfg)
 
     operator_sets_dict = {op_set.name: mixed_precision_configuration_options for op_set in base_tp_model.operator_set
@@ -126,35 +126,37 @@ def generate_custom_test_tp_model(name: str,
                                   base_cfg: OpQuantizationConfig,
                                   base_tp_model: schema.TargetPlatformModel,
                                   operator_sets_dict: Dict[str, QuantizationConfigOptions] = None):
-    default_configuration_options = schema.QuantizationConfigOptions([base_cfg])
+    default_configuration_options = schema.QuantizationConfigOptions(tuple([base_cfg]))
+
+    operator_set, fusing_patterns = [], []
+
+    for op_set in base_tp_model.operator_set:
+        # Add existing OperatorSets from base TP model
+        if operator_sets_dict is not None and operator_sets_dict.get(op_set.name) is not None:
+            qc_options = operator_sets_dict[op_set.name]
+        else:
+            qc_options = op_set.qc_options
+
+        operator_set.append(schema.OperatorsSet(op_set.name, qc_options))
+
+    existing_op_sets_names = [op_set.name for op_set in base_tp_model.operator_set]
+    for op_set_name, op_set_qc_options in operator_sets_dict.items():
+        # Add new OperatorSets from the given operator_sets_dict
+        if op_set_name not in existing_op_sets_names:
+            operator_set.append( schema.OperatorsSet(op_set_name, op_set_qc_options))
+
+    for fusion in base_tp_model.fusing_patterns:
+        fusing_patterns.append(schema.Fusing(fusion.operator_groups))
 
     custom_tp_model = schema.TargetPlatformModel(
         default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,
         tpc_platform_type=None,
+        operator_set=tuple(operator_set),
+        fusing_patterns=tuple(fusing_patterns),
         add_metadata=False,
         name=name)
-
-    with custom_tp_model:
-        for op_set in base_tp_model.operator_set:
-            # Add existing OperatorSets from base TP model
-            if operator_sets_dict is not None and operator_sets_dict.get(op_set.name) is not None:
-                qc_options = operator_sets_dict[op_set.name]
-            else:
-                qc_options = op_set.qc_options
-
-            schema.OperatorsSet(op_set.name, qc_options)
-
-        existing_op_sets_names = [op_set.name for op_set in base_tp_model.operator_set]
-        for op_set_name, op_set_qc_options in operator_sets_dict.items():
-            # Add new OperatorSets from the given operator_sets_dict
-            if op_set_name not in existing_op_sets_names:
-                schema.OperatorsSet(op_set_name, op_set_qc_options)
-
-        for fusion in base_tp_model.fusing_patterns:
-            schema.Fusing(fusion.operator_groups_list)
-
     return custom_tp_model
 
 

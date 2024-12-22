@@ -65,7 +65,7 @@ class Activation16BitNet(torch.nn.Module):
 
 def set_16bit_as_default(tpc, required_op_set, required_ops_list):
     for op in required_ops_list:
-        base_config = [l for l in tpc.layer2qco[op].quantization_config_list if l.activation_n_bits == 16][0]
+        base_config = [l for l in tpc.layer2qco[op].quantization_configurations if l.activation_n_bits == 16][0]
         tpc.layer2qco[op] = replace(tpc.layer2qco[op], base_config=base_config)
 
 
@@ -107,19 +107,13 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
     def get_tpc(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.mul] = replace(tpc.layer2qco[torch.mul], base_config=base_config)
-        tpc.layer2qco[mul] = replace(tpc.layer2qco[mul], base_config=base_config)
-        mul_op_set.qc_options.quantization_config_list.extend(
-            [mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=4),
-             mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[torch.mul].quantization_config_list.extend([
+        base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
+        quantization_configurations = list(mul_op_set.qc_options.quantization_configurations)
+        quantization_configurations.extend([
             tpc.layer2qco[torch.mul].base_config.clone_and_edit(activation_n_bits=4),
             tpc.layer2qco[torch.mul].base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[mul].quantization_config_list.extend([
-            tpc.layer2qco[mul].base_config.clone_and_edit(activation_n_bits=4),
-            tpc.layer2qco[mul].base_config.clone_and_edit(activation_n_bits=2)])
-
+        tpc.layer2qco[torch.mul] = replace(tpc.layer2qco[torch.mul], base_config=base_config, quantization_configurations=tuple(quantization_configurations))
+        tpc.layer2qco[mul] = replace(tpc.layer2qco[mul], base_config=base_config, quantization_configurations=tuple(quantization_configurations))
         return tpc
 
     def get_resource_utilization(self):
