@@ -36,7 +36,7 @@ class Activation16BitTest(BaseKerasFeatureNetworkTest):
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, 'v4')
         # Force Mul base_config to 16bit only
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
+        base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
         tpc.layer2qco[tf.multiply] = replace(tpc.layer2qco[tf.multiply], base_config=base_config)
         return tpc
 
@@ -69,15 +69,12 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
     def get_tpc(self):
         tpc = mct.get_target_platform_capabilities(TENSORFLOW, IMX500_TP_MODEL, 'v3')
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
-        tpc.layer2qco[tf.multiply] = replace(tpc.layer2qco[tf.multiply], base_config=base_config)
-        mul_op_set.qc_options.quantization_config_list.extend(
-            [mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=4),
-             mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[tf.multiply].quantization_config_list.extend([
+        base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
+        quantization_configurations = list(tpc.layer2qco[tf.multiply].quantization_configurations)
+        quantization_configurations.extend([
             tpc.layer2qco[tf.multiply].base_config.clone_and_edit(activation_n_bits=4),
             tpc.layer2qco[tf.multiply].base_config.clone_and_edit(activation_n_bits=2)])
-
+        tpc.layer2qco[tf.multiply] = replace(tpc.layer2qco[tf.multiply], base_config=base_config, quantization_configurations=tuple(quantization_configurations))
         return tpc
 
     def get_resource_utilization(self):

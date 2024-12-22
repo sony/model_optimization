@@ -79,29 +79,33 @@ def create_network_4(input_shape):
     return tf.keras.models.Model(inputs=inputs, outputs=y)
 
 
-def generate_base_tpc():
+def generate_base_tpc(operator_set, fusing_patterns):
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-    default_configuration_options = schema.QuantizationConfigOptions(
-        [default_config])
+    default_configuration_options = schema.QuantizationConfigOptions(tuple(
+        [default_config]))
     generated_tp = schema.TargetPlatformModel(
         default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,
         tpc_platform_type=None,
+        operator_set=tuple(operator_set),
+        fusing_patterns=tuple(fusing_patterns),
         add_metadata=False, name='layer_fusing_test')
-    mixed_precision_configuration_options = schema.QuantizationConfigOptions(mixed_precision_cfg_list,
-                                                                             base_config=base_config)
 
-    return generated_tp, mixed_precision_configuration_options
+    return generated_tp
 
 
 def get_tpc_1():
-    generated_tp, mixed_precision_configuration_options = generate_base_tpc()
-    with generated_tp:
-        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-        any_relu = schema.OperatorsSet("AnyReLU")
-        # Define fusions
-        schema.Fusing([conv, any_relu])
+    base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+                                                                             base_config=base_config)
+    conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+    any_relu = schema.OperatorsSet("AnyReLU")
+    operator_set = [conv, any_relu]
+    # Define fusions
+    fusing_patterns = [schema.Fusing((conv, any_relu))]
+
+    generated_tp = generate_base_tpc(operator_set, fusing_patterns)
 
     keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
     with keras_tpc:
@@ -113,16 +117,20 @@ def get_tpc_1():
 
 
 def get_tpc_2():
-    generated_tp, mixed_precision_configuration_options = generate_base_tpc()
-    with generated_tp:
-        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-        any_relu = schema.OperatorsSet("AnyReLU")
-        swish = schema.OperatorsSet("Swish")
-        sigmoid = schema.OperatorsSet("Sigmoid")
-        tanh = schema.OperatorsSet("Tanh")
-        activations_after_conv_to_fuse = schema.OperatorSetConcat([any_relu, swish, sigmoid, tanh])
-        # Define fusions
-        schema.Fusing([conv, activations_after_conv_to_fuse])
+    base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+                                                                             base_config=base_config)
+    conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+    any_relu = schema.OperatorsSet("AnyReLU")
+    swish = schema.OperatorsSet("Swish")
+    sigmoid = schema.OperatorsSet("Sigmoid")
+    tanh = schema.OperatorsSet("Tanh")
+    operator_set = [conv, any_relu, swish, sigmoid, tanh]
+    activations_after_conv_to_fuse = schema.OperatorSetConcat([any_relu, swish, sigmoid, tanh])
+    # Define fusions
+    fusing_patterns = [schema.Fusing((conv, activations_after_conv_to_fuse))]
+
+    generated_tp = generate_base_tpc(operator_set, fusing_patterns)
 
     keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
     with keras_tpc:
@@ -137,12 +145,16 @@ def get_tpc_2():
 
 
 def get_tpc_3():
-    generated_tp, mixed_precision_configuration_options = generate_base_tpc()
-    with generated_tp:
-        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-        any_relu = schema.OperatorsSet("AnyReLU")
-        # Define fusions
-        schema.Fusing([conv, any_relu])
+    base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+                                                                             base_config=base_config)
+    conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+    any_relu = schema.OperatorsSet("AnyReLU")
+    operator_set = [conv, any_relu]
+    # Define fusions
+    fusing_patterns = [schema.Fusing((conv, any_relu))]
+
+    generated_tp = generate_base_tpc(operator_set, fusing_patterns)
 
     keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
     with keras_tpc:
@@ -154,19 +166,23 @@ def get_tpc_3():
 
 
 def get_tpc_4():
-    generated_tp, mixed_precision_configuration_options = generate_base_tpc()
-    with generated_tp:
-        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-        fc = schema.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
-        any_relu = schema.OperatorsSet("AnyReLU")
-        add = schema.OperatorsSet("Add")
-        swish = schema.OperatorsSet("Swish")
-        activations_to_fuse = schema.OperatorSetConcat([any_relu, swish])
-        # Define fusions
-        schema.Fusing([conv, activations_to_fuse])
-        schema.Fusing([conv, add, activations_to_fuse])
-        schema.Fusing([conv, activations_to_fuse, add])
-        schema.Fusing([fc, activations_to_fuse])
+    base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+                                                                             base_config=base_config)
+    conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
+    fc = schema.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
+    any_relu = schema.OperatorsSet("AnyReLU")
+    add = schema.OperatorsSet("Add")
+    swish = schema.OperatorsSet("Swish")
+    activations_to_fuse = schema.OperatorSetConcat([any_relu, swish])
+    operator_set = [conv, fc, any_relu, add, swish]
+    # Define fusions
+    fusing_patterns = [schema.Fusing((conv, activations_to_fuse)),
+                       schema.Fusing((conv, add, activations_to_fuse)),
+                       schema.Fusing((conv, activations_to_fuse, add)),
+                       schema.Fusing((fc, activations_to_fuse))]
+
+    generated_tp = generate_base_tpc(operator_set, fusing_patterns)
 
     keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
     with keras_tpc:
