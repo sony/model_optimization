@@ -322,6 +322,7 @@ class FeatureNetworkTest(unittest.TestCase):
         MixedPrecisionBopsAllWeightsLayersTest(self).run_test()
         MixedPrecisionWeightsOnlyBopsTest(self).run_test()
         MixedPrecisionActivationOnlyBopsTest(self).run_test()
+        # TODO: uncomment these tests when the issue of combined BOPs and other RU metrics is solved.
         # MixedPrecisionBopsAndWeightsUtilizationTest(self).run_test()
         # MixedPrecisionBopsAndActivationUtilizationTest(self).run_test()
         # MixedPrecisionBopsAndTotalUtilizationTest(self).run_test()

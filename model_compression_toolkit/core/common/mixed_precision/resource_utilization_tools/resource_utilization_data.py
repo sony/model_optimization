@@ -13,10 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 import copy
+from collections import defaultdict
 
 import numpy as np
 from typing import Callable, Any, Dict, Tuple
 
+from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import FLOAT_BITWIDTH, BITS_TO_BYTES
 from model_compression_toolkit.core import FrameworkInfo, ResourceUtilization, CoreConfig, QuantizationErrorMethod
 from model_compression_toolkit.core.common import Graph
@@ -152,22 +154,19 @@ def compute_activation_output_maxcut_sizes(graph: Graph) -> Tuple[np.ndarray, np
     cuts = calc_graph_cuts(graph)
 
     # map nodes to cuts.
-    node_to_cat_mapping = {}
+    node_to_cat_mapping = defaultdict(list)
     for i, cut in enumerate(cuts):
         mem_element_names = [m.node_name for m in cut.mem_elements.elements]
         for m_name in mem_element_names:
             if len(graph.find_node_by_name(m_name)) > 0:
-                if m_name in node_to_cat_mapping:
-                    node_to_cat_mapping[m_name].append(i)
-                else:
-                    node_to_cat_mapping[m_name] = [i]
+                node_to_cat_mapping[m_name].append(i)
             else:
-                raise Exception("Missing node")
+                Logger.critical(f"Missing node: {m_name}")
 
     activation_outputs = np.zeros(len(cuts))
     activation_outputs_bytes = np.zeros(len(cuts))
     for n in graph.nodes:
-        # Go over all nodes that have configurable activation.
+        # Go over all nodes that have activation quantization enabled.
         if n.has_activation_quantization_enabled_candidate():
             # Fetch maximum bits required for activations quantization.
             max_activation_bits = max([qc.activation_quantization_cfg.activation_n_bits for qc in n.candidates_quantization_cfg])
@@ -177,7 +176,6 @@ def compute_activation_output_maxcut_sizes(graph: Graph) -> Tuple[np.ndarray, np
                 # Calculate activation size in bytes and append to list
                 activation_outputs_bytes[cut_index] += node_output_size * max_activation_bits / BITS_TO_BYTES
 
-    del cuts
     return activation_outputs_bytes, activation_outputs
 
 
@@ -285,16 +283,17 @@ def requires_mixed_precision(in_model: Any,
     total_weights_memory_bytes = 0 if len(weights_memory_by_layer_bytes) == 0 else sum(weights_memory_by_layer_bytes)
 
     # Compute max activation tensor in bytes
-    activation_output_sizes_bytes, _ = compute_activation_output_maxcut_sizes(transformed_graph)
-    max_activation_tensor_size_bytes = 0 if len(activation_output_sizes_bytes) == 0 else max(activation_output_sizes_bytes)
+    activation_memory_estimation_bytes, _ = compute_activation_output_maxcut_sizes(transformed_graph)
+    max_activation_memory_estimation_bytes = 0 if len(activation_memory_estimation_bytes) == 0 \
+        else max(activation_memory_estimation_bytes)
 
     # Compute BOPS utilization - total count of bit-operations for all configurable layers with kernel
     bops_count = compute_total_bops(graph=transformed_graph, fw_info=fw_info, fw_impl=fw_impl)
     bops_count = np.inf if len(bops_count) == 0 else sum(bops_count)
 
     is_mixed_precision |= target_resource_utilization.weights_memory < total_weights_memory_bytes
-    is_mixed_precision |= target_resource_utilization.activation_memory < max_activation_tensor_size_bytes
-    is_mixed_precision |= target_resource_utilization.total_memory < total_weights_memory_bytes + max_activation_tensor_size_bytes
+    is_mixed_precision |= target_resource_utilization.activation_memory < max_activation_memory_estimation_bytes
+    is_mixed_precision |= target_resource_utilization.total_memory < total_weights_memory_bytes + max_activation_memory_estimation_bytes
     is_mixed_precision |= target_resource_utilization.bops < bops_count
     return is_mixed_precision
 

@@ -14,7 +14,7 @@
 # ==============================================================================
 from enum import Enum
 from functools import partial
-from typing import List
+from typing import List, Optional
 from copy import deepcopy
 
 import numpy as np
@@ -104,23 +104,23 @@ def calc_graph_cuts(graph: Graph) -> List[Cut]:
     _, _, cuts = compute_graph_max_cut(memory_graph)
 
     if cuts is None:
-        return None
-    else:
-        # filter empty cuts and cuta that contain nodes with activation quantization disabled.
-        filtered_cuts = []
-        for cut in cuts:
-            if len(cut.mem_elements.elements) > 0 and any(
-                    [graph.find_node_by_name(e.node_name)[0].has_activation_quantization_enabled_candidate()
-                     for e in cut.mem_elements.elements]):
-                filtered_cuts.append(cut)
-        return filtered_cuts
+        Logger.critical("Failed to calculate activation memory cuts for graph.")
+    # filter empty cuts and cuts that contain only nodes with activation quantization disabled.
+    filtered_cuts = []
+    for cut in cuts:
+        cut_has_no_act_quant_nodes = any(
+            [graph.find_node_by_name(e.node_name)[0].has_activation_quantization_enabled_candidate()
+             for e in cut.mem_elements.elements])
+        if len(cut.mem_elements.elements) > 0 and cut_has_no_act_quant_nodes:
+            filtered_cuts.append(cut)
+    return filtered_cuts
 
 
 def activation_maxcut_size_utilization(mp_cfg: List[int],
                                        graph: Graph,
                                        fw_info: FrameworkInfo,
                                        fw_impl: FrameworkImplementation,
-                                       cuts: List[Cut] = None) -> np.ndarray:
+                                       cuts: Optional[List[Cut]] = None) -> np.ndarray:
     """
     Computes a resource utilization vector with the respective output memory max-cut size for activation
     nodes, according to the given mixed-precision configuration.
@@ -156,10 +156,7 @@ def activation_maxcut_size_utilization(mp_cfg: List[int],
             cuts = calc_graph_cuts(graph)
 
         for i, cut in enumerate(cuts):
-            mem_elements = []
-            for m in cut.mem_elements.elements:
-                mem_elements.append(m.node_name)
-
+            mem_elements = [m.node_name for m in cut.mem_elements.elements]
             mem = 0
             for op_name in mem_elements:
                 n = graph.find_node_by_name(op_name)[0]

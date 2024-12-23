@@ -21,7 +21,9 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
+from mct_quantizers.keras.activation_quantization_holder import KerasActivationQuantizationHolder
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
+from tests.keras_tests.utils import get_layers_from_model_by_type
 
 keras = tf.keras
 layers = keras.layers
@@ -54,8 +56,8 @@ class Activation16BitTest(BaseKerasFeatureNetworkTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        mul1_act_quant = quantized_model.layers[3]
-        mul2_act_quant = quantized_model.layers[11]
+        act_quant_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        mul1_act_quant, mul2_act_quant = act_quant_layers[1], act_quant_layers[5]
         self.unit_test.assertTrue(mul1_act_quant.activation_holder_quantizer.num_bits == 16,
                                   "1st mul activation bits should be 16 bits because of following concat node.")
         self.unit_test.assertTrue(mul1_act_quant.activation_holder_quantizer.signed == True,
@@ -97,8 +99,8 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
         return keras.Model(inputs=inputs, outputs=outputs)
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
-        mul1_act_quant = quantized_model.layers[3]
-        mul2_act_quant = quantized_model.layers[10]
+        act_quant_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
+        mul1_act_quant, mul2_act_quant = act_quant_layers[1], act_quant_layers[4]
         self.unit_test.assertTrue(mul1_act_quant.activation_holder_quantizer.num_bits == 8,
                                   "1st mul activation bits should be 8 bits because of RU.")
         self.unit_test.assertTrue(mul1_act_quant.activation_holder_quantizer.signed == False,

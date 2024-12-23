@@ -66,11 +66,11 @@ class MixedPrecisionSearchManager:
         self.sensitivity_evaluator = sensitivity_evaluator
         self.layer_to_bitwidth_mapping = self.get_search_space()
         self.compute_metric_fn = self.get_sensitivity_metric()
+        self._cuts = None
 
-        self.cuts = calc_graph_cuts(self.original_graph)
-
-        ru_types = [k for k, v in target_resource_utilization.get_resource_utilization_dict().items() if v < np.inf]
-        self.compute_ru_functions = {k: v for k, v in ru_functions.items() if k in ru_types}
+        ru_types = [ru_target for ru_target, ru_value in
+                    target_resource_utilization.get_resource_utilization_dict().items() if ru_value < np.inf]
+        self.compute_ru_functions = {ru_target: ru_fn for ru_target, ru_fn in ru_functions.items() if ru_target in ru_types}
         self.target_resource_utilization = target_resource_utilization
         self.min_ru_config = self.graph.get_min_candidates_config(fw_info)
         self.max_ru_config = self.graph.get_max_candidates_config(fw_info)
@@ -79,6 +79,17 @@ class MixedPrecisionSearchManager:
 
         self.config_reconstruction_helper = ConfigReconstructionHelper(virtual_graph=self.graph,
                                                                        original_graph=self.original_graph)
+
+    @property
+    def cuts(self):
+        """
+        Calcualtes graph cuts. Written as property so it will only be calculkated once and
+        only if cuts are needed.
+
+        """
+        if self._cuts is None:
+            self._cuts = calc_graph_cuts(self.original_graph)
+        return self._cuts
 
     def get_search_space(self) -> Dict[int, List[int]]:
         """
@@ -110,6 +121,21 @@ class MixedPrecisionSearchManager:
 
         return self.sensitivity_evaluator.compute_metric
 
+    def _calc_ru_fn(self, ru_target, ru_fn, mp_cfg):
+        """
+        Computes a resource utilization for a certain mp configuration
+        The method computes a resource utilization vector for specific target resource utilization.
+
+        Returns: resource utilization value.
+
+        """
+        # ru_fn is a pair of resource utilization computation method and
+        # resource utilization aggregation method (in this method we only need the first one)
+        if ru_target is RUTarget.ACTIVATION:
+            return ru_fn.metric_fn(mp_cfg, self.graph, self.fw_info, self.fw_impl, self.cuts)
+        else:
+            return ru_fn.metric_fn(mp_cfg, self.graph, self.fw_info, self.fw_impl)
+
     def compute_min_ru(self) -> Dict[RUTarget, np.ndarray]:
         """
         Computes a resource utilization vector with the values matching to the minimal mp configuration
@@ -122,13 +148,10 @@ class MixedPrecisionSearchManager:
 
         """
         min_ru = {}
-        for ru_target, ru_fns in self.compute_ru_functions.items():
-            # ru_fns is a pair of resource utilization computation method and 
+        for ru_target, ru_fn in self.compute_ru_functions.items():
+            # ru_fns is a pair of resource utilization computation method and
             # resource utilization aggregation method (in this method we only need the first one)
-            if ru_target is RUTarget.ACTIVATION:
-                min_ru[ru_target] = ru_fns.metric_fn(self.min_ru_config, self.graph, self.fw_info, self.fw_impl, self.cuts)
-            else:
-                min_ru[ru_target] = ru_fns.metric_fn(self.min_ru_config, self.graph, self.fw_info, self.fw_impl)
+            min_ru[ru_target] = self._calc_ru_fn(ru_target, ru_fn, self.min_ru_config)
 
         return min_ru
 
@@ -219,10 +242,7 @@ class MixedPrecisionSearchManager:
 
         """
         cfg = self.replace_config_in_index(self.min_ru_config, conf_node_idx, candidate_idx)
-        if target == RUTarget.ACTIVATION:
-            return self.compute_ru_functions[target].metric_fn(cfg, self.graph, self.fw_info, self.fw_impl, self.cuts)
-        else:
-            return self.compute_ru_functions[target].metric_fn(cfg, self.graph, self.fw_info, self.fw_impl)
+        return self._calc_ru_fn(target, self.compute_ru_functions[target], cfg)
 
     @staticmethod
     def replace_config_in_index(mp_cfg: List[int], idx: int, value: int) -> List[int]:
