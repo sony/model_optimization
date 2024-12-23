@@ -189,7 +189,7 @@ class Manual16BitTest(ManualBitWidthByLayerNameTest):
     def get_tpc(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
+        base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
         tpc.layer2qco[torch.mul] = replace(tpc.layer2qco[torch.mul], base_config=base_config)
         tpc.layer2qco[mul] = replace(tpc.layer2qco[mul] , base_config=base_config)
         return {'mixed_precision_activation_model': tpc}
@@ -203,19 +203,15 @@ class Manual16BitTestMixedPrecisionTest(ManualBitWidthByLayerNameTest):
     def get_tpc(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        base_config = [l for l in mul_op_set.qc_options.quantization_config_list if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.mul] = replace(tpc.layer2qco[torch.mul], base_config=base_config)
-        tpc.layer2qco[mul] = replace(tpc.layer2qco[mul], base_config=base_config)
-        mul_op_set.qc_options.quantization_config_list.extend(
+        base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
+        quantization_configurations = list(mul_op_set.qc_options.quantization_configurations)
+        quantization_configurations.extend(
             [mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=4),
              mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[torch.mul].quantization_config_list.extend([
-            tpc.layer2qco[torch.mul].base_config.clone_and_edit(activation_n_bits=4),
-            tpc.layer2qco[torch.mul].base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[mul].quantization_config_list.extend([
-            tpc.layer2qco[mul].base_config.clone_and_edit(activation_n_bits=4),
-            tpc.layer2qco[mul].base_config.clone_and_edit(activation_n_bits=2)])
-
+        tpc.layer2qco[torch.mul] = replace(tpc.layer2qco[torch.mul], base_config=base_config,
+                                           quantization_configurations=tuple(quantization_configurations))
+        tpc.layer2qco[mul] = replace(tpc.layer2qco[mul], base_config=base_config,
+                                     quantization_configurations=tuple(quantization_configurations))
         return {'mixed_precision_activation_model': tpc}
 
     def get_resource_utilization(self):

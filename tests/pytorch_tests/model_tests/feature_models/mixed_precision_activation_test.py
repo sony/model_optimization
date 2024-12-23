@@ -292,26 +292,25 @@ class MixedPrecisionActivationConfigurableWeights(MixedPrecisionActivationBaseTe
             [c.clone_and_edit(enable_activation_quantization=False) for c in mixed_precision_cfg_list]
         cfg = mixed_precision_cfg_list[0]
 
-        act_mixed_cfg = QuantizationConfigOptions(
-            [act_eight_bit_cfg, act_four_bit_cfg, act_two_bit_cfg],
+        act_mixed_cfg = QuantizationConfigOptions(tuple(
+            [act_eight_bit_cfg, act_four_bit_cfg, act_two_bit_cfg]),
             base_config=act_eight_bit_cfg,
         )
 
-        weight_mixed_cfg = QuantizationConfigOptions(
-            mixed_precision_cfg_list,
+        weight_mixed_cfg = QuantizationConfigOptions(tuple(
+            mixed_precision_cfg_list),
             base_config=cfg,
         )
 
-        tp_model = TargetPlatformModel(QuantizationConfigOptions([cfg], cfg),
+        tp_model = TargetPlatformModel(QuantizationConfigOptions(tuple([cfg]), cfg),
                                        tpc_minor_version=None,
                                        tpc_patch_version=None,
                                        tpc_platform_type=None,
+                                       operator_set=tuple([
+                                           OperatorsSet("Activations", act_mixed_cfg),
+                                           OperatorsSet("Weights", weight_mixed_cfg)]),
                                        add_metadata=False,
                                        name="mp_activation_conf_weights_test")
-
-        with tp_model:
-            OperatorsSet("Activations", act_mixed_cfg)
-            OperatorsSet("Weights", weight_mixed_cfg)
 
         torch_tpc = TargetPlatformCapabilities(tp_model)
 

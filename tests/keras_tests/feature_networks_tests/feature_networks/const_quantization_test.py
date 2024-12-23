@@ -49,11 +49,11 @@ def create_const_quant_tpc(qmethod):
         default_weight_attr_config=default_cfg.default_weight_attr_config.clone_and_edit(
             enable_weights_quantization=True, weights_per_channel_threshold=True,
             weights_n_bits=16, weights_quantization_method=qmethod))
-    const_configuration_options = schema.QuantizationConfigOptions([const_config])
+    const_configuration_options = schema.QuantizationConfigOptions(tuple([const_config]))
     const_merge_config = default_cfg.clone_and_edit(
         default_weight_attr_config=default_cfg.default_weight_attr_config.clone_and_edit(
             weights_per_channel_threshold=False))
-    const_merge_configuration_options = schema.QuantizationConfigOptions([const_merge_config])
+    const_merge_configuration_options = schema.QuantizationConfigOptions(tuple([const_merge_config]))
 
     operator_sets_dict = {}
     operator_sets_dict["Add"] = const_configuration_options

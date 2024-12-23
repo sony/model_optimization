@@ -76,18 +76,17 @@ def get_tpc():
                                            simd_size=32,
                                            signedness=Signedness.AUTO)
 
-    default_configuration_options = schema.QuantizationConfigOptions([base_cfg])
+    default_configuration_options = schema.QuantizationConfigOptions(tuple([base_cfg]))
+
+    operator_set = [schema.OperatorsSet("NoQuantization",
+                        default_configuration_options.clone_and_edit(enable_activation_quantization=False)
+                        .clone_and_edit_weight_attribute(enable_weights_quantization=False))]
     tp_model = schema.TargetPlatformModel(default_configuration_options,
+                                          operator_set=tuple(operator_set),
                                           tpc_minor_version=None,
                                           tpc_patch_version=None,
                                           tpc_platform_type=None,
                                           add_metadata=False)
-    with tp_model:
-        default_qco = tp.get_default_quantization_config_options()
-        schema.OperatorsSet("NoQuantization",
-                            default_qco.clone_and_edit(enable_activation_quantization=False)
-                            .clone_and_edit_weight_attribute(enable_weights_quantization=False))
-
     tpc = tp.TargetPlatformCapabilities(tp_model)
     with tpc:
         # No need to quantize Flatten and Dropout layers
