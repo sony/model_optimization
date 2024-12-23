@@ -25,7 +25,7 @@ from model_compression_toolkit.target_platform_capabilities.constants import OPS
 class OperatorSetNames(Enum):
     OPSET_CONV = "Conv"
     OPSET_DEPTHWISE_CONV = "DepthwiseConv2D"
-    OPSET_CONV_TRANSPOSE = "ConvTraspose"
+    OPSET_CONV_TRANSPOSE = "ConvTranspose"
     OPSET_FULLY_CONNECTED = "FullyConnected"
     OPSET_CONCATENATE = "Concatenate"
     OPSET_STACK = "Stack"
@@ -41,7 +41,8 @@ class OperatorSetNames(Enum):
     OPSET_SUB = "Sub"
     OPSET_MUL = "Mul"
     OPSET_DIV = "Div"
-    OPSET_MIN_MAX = "MinMax"
+    OPSET_MIN = "Min"
+    OPSET_MAX = "Max"
     OPSET_PRELU = "PReLU"
     OPSET_SWISH = "Swish"
     OPSET_SIGMOID = "Sigmoid"
