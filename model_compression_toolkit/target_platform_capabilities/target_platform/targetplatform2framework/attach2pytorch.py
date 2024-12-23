@@ -57,7 +57,8 @@ class AttachTpModelToPytorch(AttachTpModelToFw):
             OperatorSetNames.OPSET_SUB.value: [operator.sub, sub, subtract],
             OperatorSetNames.OPSET_MUL.value: [operator.mul, mul, multiply],
             OperatorSetNames.OPSET_DIV.value: [operator.truediv, div, divide],
-            OperatorSetNames.OPSET_MIN_MAX.value: [minimum, maximum],
+            OperatorSetNames.OPSET_MIN.value: [minimum],
+            OperatorSetNames.OPSET_MAX.value: [maximum],
             OperatorSetNames.OPSET_PRELU.value: [PReLU, prelu],
             OperatorSetNames.OPSET_SWISH.value: [SiLU, silu],
             OperatorSetNames.OPSET_SIGMOID.value: [Sigmoid, sigmoid, F.sigmoid],
@@ -86,4 +87,5 @@ class AttachTpModelToPytorch(AttachTpModelToFw):
         pytorch_linear_attr_mapping = {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
                                        BIAS_ATTR: DefaultDict(default_value=BIAS)}
         self._opset2attr_mapping = {OperatorSetNames.OPSET_CONV.value: pytorch_linear_attr_mapping,
+                                    OperatorSetNames.OPSET_CONV_TRANSPOSE.value: pytorch_linear_attr_mapping,
                                     OperatorSetNames.OPSET_FULLY_CONNECTED.value: pytorch_linear_attr_mapping}
