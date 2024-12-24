@@ -170,7 +170,7 @@ def compute_activation_output_maxcut_sizes(graph: Graph) -> Tuple[np.ndarray, np
         if n.has_activation_quantization_enabled_candidate():
             # Fetch maximum bits required for activations quantization.
             max_activation_bits = max([qc.activation_quantization_cfg.activation_n_bits for qc in n.candidates_quantization_cfg])
-            node_output_size = n.get_total_output_params()  # TODO maxcut: use memory elements
+            node_output_size = n.get_total_output_params()
             for cut_index in node_to_cat_mapping[n.name]:
                 activation_outputs[cut_index] += node_output_size
                 # Calculate activation size in bytes and append to list
