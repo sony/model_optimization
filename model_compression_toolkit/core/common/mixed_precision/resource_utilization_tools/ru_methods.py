@@ -100,7 +100,7 @@ def calc_graph_cuts(graph: Graph) -> List[Cut]:
         A list of activation cuts.
 
     """
-    memory_graph = MemoryGraph(deepcopy(graph))  # TODO maxcut: do we need the deepcopy?
+    memory_graph = MemoryGraph(deepcopy(graph))
     _, _, cuts = compute_graph_max_cut(memory_graph)
 
     if cuts is None:
@@ -137,34 +137,34 @@ def activation_maxcut_size_utilization(mp_cfg: List[int],
     Note that the vector is not necessarily of the same length as the given config.
 
     """
-    activation_cut_memory = []
     if len(mp_cfg) == 0:
         # Computing non-configurable nodes resource utilization for max-cut is included in the calculation of the
         # configurable nodes.
-        activation_cut_memory.append(0.0)
-    else:
-        mp_nodes = graph.get_configurable_sorted_nodes_names(fw_info)
-        # Go over all nodes that should be taken into consideration when computing the weights memory utilization.
-        nodes_act_nbits = {}
-        for n in graph.get_sorted_activation_configurable_nodes():
-            node_idx = mp_nodes.index(n.name)
-            node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
-            node_nbits = node_qc.activation_quantization_cfg.activation_n_bits
-            nodes_act_nbits[n.name] = node_nbits
+        return np.array([])
 
-        if cuts is None:
-            cuts = calc_graph_cuts(graph)
+    activation_cut_memory = []
+    mp_nodes = graph.get_configurable_sorted_nodes_names(fw_info)
+    # Go over all nodes that should be taken into consideration when computing the weights memory utilization.
+    nodes_act_nbits = {}
+    for n in graph.get_sorted_activation_configurable_nodes():
+        node_idx = mp_nodes.index(n.name)
+        node_qc = n.candidates_quantization_cfg[mp_cfg[node_idx]]
+        node_nbits = node_qc.activation_quantization_cfg.activation_n_bits
+        nodes_act_nbits[n.name] = node_nbits
 
-        for i, cut in enumerate(cuts):
-            mem_elements = [m.node_name for m in cut.mem_elements.elements]
-            mem = 0
-            for op_name in mem_elements:
-                n = graph.find_node_by_name(op_name)[0]
-                if n.is_activation_quantization_enabled():
-                    base_nbits = n.candidates_quantization_cfg[0].activation_quantization_cfg.activation_n_bits
-                    mem += _compute_node_activation_memory(n, nodes_act_nbits.get(op_name, base_nbits))
+    if cuts is None:
+        cuts = calc_graph_cuts(graph)
 
-            activation_cut_memory.append(mem)
+    for i, cut in enumerate(cuts):
+        mem_elements = [m.node_name for m in cut.mem_elements.elements]
+        mem = 0
+        for op_name in mem_elements:
+            n = graph.find_node_by_name(op_name)[0]
+            if n.is_activation_quantization_enabled():
+                base_nbits = n.candidates_quantization_cfg[0].activation_quantization_cfg.activation_n_bits
+                mem += _compute_node_activation_memory(n, nodes_act_nbits.get(op_name, base_nbits))
+
+        activation_cut_memory.append(mem)
 
     return np.array(activation_cut_memory)
 
@@ -506,6 +506,8 @@ class MpRuMetric(Enum):
 
      WEIGHTS_SIZE - applies the weights_size_utilization function
 
+     ACTIVATION_MAXCUT_SIZE - applies the activation_maxcut_size_utilization function.
+
      ACTIVATION_OUTPUT_SIZE - applies the activation_output_size_utilization function
 
      TOTAL_WEIGHTS_ACTIVATION_SIZE - applies the total_weights_activation_utilization function
@@ -515,7 +517,8 @@ class MpRuMetric(Enum):
     """
 
     WEIGHTS_SIZE = partial(weights_size_utilization)
-    ACTIVATION_OUTPUT_SIZE = partial(activation_maxcut_size_utilization)
+    ACTIVATION_MAXCUT_SIZE = partial(activation_maxcut_size_utilization)
+    ACTIVATION_OUTPUT_SIZE = partial(activation_output_size_utilization)
     TOTAL_WEIGHTS_ACTIVATION_SIZE = partial(total_weights_activation_utilization)
     BOPS_COUNT = partial(bops_utilization)
 

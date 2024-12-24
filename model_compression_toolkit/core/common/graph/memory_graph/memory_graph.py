@@ -46,10 +46,7 @@ class MemoryGraph(DirectedBipartiteGraph):
         tensor_to_node = []
 
         for n in nodes:
-            if len(n.output_shape) == 0:
-                n_outputs = []
-            else:
-                n_outputs = n.output_shape if isinstance(n.output_shape[0], (tuple, list)) else [n.output_shape]
+            n_outputs = n.output_shape if isinstance(n.output_shape[0], (tuple, list)) else [n.output_shape]
 
             out_edges = model_graph.out_edges(n, sort_by_attr=EDGE_SOURCE_INDEX)
 
