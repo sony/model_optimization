@@ -161,7 +161,7 @@ class TestResourceUtilizationDataBasicPartialBitwidth(ResourceUtilizationDataBas
         self.verify_results(ru_data, sum_parameters, max_tensor)
 
 
-class TestResourceUtilizationDataComplesAllBitwidth(ResourceUtilizationDataBaseTestClass):
+class TestResourceUtilizationDataComplexAllBitwidth(ResourceUtilizationDataBaseTestClass):
 
     def run_test(self):
         model = ComplexModel()
