@@ -37,7 +37,7 @@ class ManualBitWidthSelectionTest(BaseKerasFeatureNetworkTest):
     Uses the manual bit width API in the "get_core_configs" method.
     """
 
-    def __init__(self, unit_test, filters, bit_widths):
+    def __init__(self, unit_test, filters, bit_widths, **kwargs):
         self.filters = filters
         self.bit_widths = bit_widths
         self.layer_types = {}
@@ -53,7 +53,7 @@ class ManualBitWidthSelectionTest(BaseKerasFeatureNetworkTest):
                 self.layer_names.update({filter.node_name: bit_width})
             elif isinstance(filter, NodeTypeFilter):
                 self.layer_types.update({filter.node_type: bit_width})
-        super().__init__(unit_test)
+        super().__init__(unit_test, **kwargs)
 
     def create_networks(self):
         input_tensor = layers.Input(shape=self.get_input_shapes()[0][1:], name='input')
@@ -141,7 +141,7 @@ class Manual16BitWidthSelectionTest(ManualBitWidthSelectionTest):
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:], name='input')
-        x = layers.Multiply(name='mul1')([inputs, inputs])
+        x = layers.Multiply(name='mul1')([inputs, inputs])[:, :8, :8, :]
         x1 = layers.Add(name='add1')([x, x])
         x2 = layers.Subtract(name='sub1')([x1, x])
         x = layers.Multiply(name='mul2')([x, x2])
@@ -170,4 +170,4 @@ class Manual16BitWidthSelectionMixedPrecisionTest(Manual16BitWidthSelectionTest)
         return tpc
 
     def get_resource_utilization(self):
-        return mct.core.ResourceUtilization(activation_memory=400)
+        return mct.core.ResourceUtilization(activation_memory=6000)

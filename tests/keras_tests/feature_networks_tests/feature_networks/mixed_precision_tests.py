@@ -286,7 +286,7 @@ class MixedPrecisionActivationSplitLayerTest(MixedPrecisionActivationBaseTest):
         # resource utilization is infinity -> should give best model - 8bits
         holder_layers = get_layers_from_model_by_type(quantized_model, KerasActivationQuantizationHolder)
         activation_bits = [layer.activation_holder_quantizer.get_config()['num_bits'] for layer in holder_layers]
-        self.unit_test.assertTrue((activation_bits == [8, 4, 4]))
+        self.unit_test.assertTrue(activation_bits in [[8, 4, 2], [8, 2, 4]])  # There are 2 options because the maxcut may choose either.
 
         self.verify_quantization(quantized_model, input_x,
                                  weights_layers_idx=[3, 4],

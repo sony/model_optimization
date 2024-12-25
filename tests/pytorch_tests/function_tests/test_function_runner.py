@@ -21,7 +21,7 @@ from tests.pytorch_tests.function_tests.bn_info_collection_test import BNInfoCol
     BNLayerInfoCollectionTest, INP2BNInfoCollectionTest
 from tests.pytorch_tests.function_tests.get_gptq_config_test import TestGetGPTQConfig
 from tests.pytorch_tests.function_tests.resource_utilization_data_test import TestResourceUtilizationDataBasicAllBitwidth, \
-    TestResourceUtilizationDataBasicPartialBitwidth, TestResourceUtilizationDataComplexPartialBitwidth, TestResourceUtilizationDataComplesAllBitwidth
+    TestResourceUtilizationDataBasicPartialBitwidth, TestResourceUtilizationDataComplexPartialBitwidth, TestResourceUtilizationDataComplexAllBitwidth
 from tests.pytorch_tests.function_tests.layer_fusing_test import LayerFusingTest1, LayerFusingTest2, LayerFusingTest3, \
     LayerFusingTest4
 from tests.pytorch_tests.function_tests.set_device_test import SetDeviceTest
@@ -100,7 +100,8 @@ class FunctionTestRunner(unittest.TestCase):
         """
         This test checks the resource utilization data Pytorch API.
         """
-        TestResourceUtilizationDataComplesAllBitwidth(self).run_test()
+        # TODO maxcut: test fails to fund lowest cut (3*224*250 + 3). also need to fix the "max_tensor" of the test Model.
+        TestResourceUtilizationDataComplexAllBitwidth(self).run_test()
 
     def test_ru_data_complex_partial(self):
         """
