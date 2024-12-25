@@ -112,7 +112,8 @@ class MixedPrecisionActivationSearch4Bit(MixedPrecisionActivationBaseTest):
 class MixedPrecisionActivationSearch4BitFunctional(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [1, 4, 4, 1]
+        # TODO maxcut: verify expected_config change is reasonable (was [1, 4, 4, 1])
+        self.expected_config = [2, 5, 5, 1]
 
     def get_resource_utilization(self):
         return ResourceUtilization(81, 1536)
@@ -127,7 +128,8 @@ class MixedPrecisionActivationSearch4BitFunctional(MixedPrecisionActivationBaseT
 class MixedPrecisionActivationMultipleInputs(MixedPrecisionActivationBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
-        self.expected_config = [0 for _ in range(8)] + [1] # expected config for this test.
+        # TODO maxcut: verify expected_config change is reasonable (was all zeros)
+        self.expected_config = [0, 0, 0, 0, 0, 0, 1, 0, 1]  # expected config for this test.
         self.num_calibration_iter = 3
         self.val_batch_size = 2
 

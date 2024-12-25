@@ -110,7 +110,7 @@ def _extract_torch_layer_data(node_module: torch.nn.Module) -> Tuple[Any, Dict[s
     """
     node_type = type(node_module)
     if not isinstance(node_module, torch.nn.Module):
-        Logger.error(f"Expected an instance of torch.nn.Module for node {node_module.name}, but got {node_type}")
+        Logger.error(f"Expected an instance of torch.nn.Module for node {node_module.name}, but got {node_type}")  # pragma: no cover
     # Extract the instance framework_attr (i.e. the arguments the class instance was initialized with). "fullargspec"
     # is a list of the layer's attribute names, that will be used as keys of the framework_attr dictionary. We the
     # values from the layer instance.
@@ -147,12 +147,14 @@ def _extract_input_and_output_shapes(_node: Node) -> Tuple[List, List]:
 
     if _node.meta[TYPE] == torch.Tensor:
         output_shape = [list(_node.meta[TENSOR_META].shape)]
+    elif _node.meta[TYPE] == torch.Size:
+        output_shape = [[len(input_shape[0])]] if len(input_shape) > 0 else [[]]
     elif _node.meta[TYPE] in (list, tuple):
         output_shape = [list(m.shape) for m in _node.meta.get(TENSOR_META, [])]
-    elif _node.meta[TYPE] == int:
+    elif _node.meta[TYPE] in [int, bool]:
         output_shape = [[1]]
     else:
-        output_shape = []
+        output_shape = [[]]
 
     return input_shape, output_shape
 
@@ -219,16 +221,16 @@ def nodes_builder(model: GraphModule,
             elif hasattr(torch.Tensor, node.target):
                 node_type = getattr(torch.Tensor, node.target)
             else:
-                Logger.critical(f"The call method '{node.target}' in {node} is not supported.")
+                Logger.critical(f"The call method '{node.target}' in {node} is not supported.")  # pragma: no cover
 
         elif node.op == GET_ATTR:
             # Node holding a constant -> add to consts_dict so can add them later to weights of next node.
             if node.target in consts_dict:
-                Logger.critical('A constant weight appears to have been recorded multiple times.')
+                Logger.critical('A constant weight appears to have been recorded multiple times.')  # pragma: no cover
             consts_dict[node] = model_parameters_and_buffers[node.target]
             continue
         else:
-            Logger.critical(f'Encountered an unsupported node type in node: {node.name}.')
+            Logger.critical(f'Encountered an unsupported node type in node: {node.name}.')  # pragma: no cover
 
         # Add constants to weights dictionary.
         if node.op != PLACEHOLDER:

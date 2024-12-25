@@ -28,6 +28,6 @@ class RuFunctions(NamedTuple):
 
 
 ru_functions_mapping = {RUTarget.WEIGHTS: RuFunctions(MpRuMetric.WEIGHTS_SIZE, MpRuAggregation.SUM),
-                        RUTarget.ACTIVATION: RuFunctions(MpRuMetric.ACTIVATION_OUTPUT_SIZE, MpRuAggregation.MAX),
+                        RUTarget.ACTIVATION: RuFunctions(MpRuMetric.ACTIVATION_MAXCUT_SIZE, MpRuAggregation.MAX),
                         RUTarget.TOTAL: RuFunctions(MpRuMetric.TOTAL_WEIGHTS_ACTIVATION_SIZE, MpRuAggregation.TOTAL),
                         RUTarget.BOPS: RuFunctions(MpRuMetric.BOPS_COUNT, MpRuAggregation.SUM)}
