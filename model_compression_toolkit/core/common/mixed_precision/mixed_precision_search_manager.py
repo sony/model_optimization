@@ -27,6 +27,7 @@ from model_compression_toolkit.core.common.mixed_precision.resource_utilization_
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_functions_mapping import RuFunctions
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_aggregation_methods import MpRuAggregation
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.ru_methods import MpRuMetric, calc_graph_cuts
+from model_compression_toolkit.core.common.graph.memory_graph.compute_graph_max_cut import Cut
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.sensitivity_evaluation import SensitivityEvaluation
 
@@ -81,9 +82,9 @@ class MixedPrecisionSearchManager:
                                                                        original_graph=self.original_graph)
 
     @property
-    def cuts(self):
+    def cuts(self) -> List[Cut]:
         """
-        Calcualtes graph cuts. Written as property so it will only be calculkated once and
+        Calculates graph cuts. Written as property, so it will only be calculated once and
         only if cuts are needed.
 
         """
@@ -121,9 +122,9 @@ class MixedPrecisionSearchManager:
 
         return self.sensitivity_evaluator.compute_metric
 
-    def _calc_ru_fn(self, ru_target, ru_fn, mp_cfg):
+    def _calc_ru_fn(self, ru_target, ru_fn, mp_cfg) -> np.ndarray:
         """
-        Computes a resource utilization for a certain mp configuration
+        Computes a resource utilization for a certain mixed precision configuration.
         The method computes a resource utilization vector for specific target resource utilization.
 
         Returns: resource utilization value.

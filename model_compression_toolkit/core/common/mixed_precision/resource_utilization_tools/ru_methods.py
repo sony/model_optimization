@@ -132,6 +132,7 @@ def activation_maxcut_size_utilization(mp_cfg: List[int],
             (not used in this method).
         fw_impl: FrameworkImplementation object with specific framework methods implementation(not used in this method).
         cuts: a list of graph cuts (optional. if not provided calculated locally).
+    TODO maxcut: refactor - need to remove the cuts so all metric functions signatures are the same.
 
     Returns: A vector of node's cut memory sizes.
     Note that the vector is not necessarily of the same length as the given config.
