@@ -169,11 +169,10 @@ def activation_maxcut_size_utilization(mp_cfg: List[int],
     return np.array(activation_cut_memory)
 
 
-# pragma: no cover
 def activation_output_size_utilization(mp_cfg: List[int],
                                        graph: Graph,
                                        fw_info: FrameworkInfo,
-                                       fw_impl: FrameworkImplementation) -> np.ndarray:
+                                       fw_impl: FrameworkImplementation) -> np.ndarray:  # pragma: no cover
     """
     Computes a resource utilization vector with the respective output memory size for each activation configurable node,
     according to the given mixed-precision configuration.
