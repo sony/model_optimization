@@ -104,7 +104,7 @@ def calc_graph_cuts(graph: Graph) -> List[Cut]:
     _, _, cuts = compute_graph_max_cut(memory_graph)
 
     if cuts is None:
-        Logger.critical("Failed to calculate activation memory cuts for graph.")
+        Logger.critical("Failed to calculate activation memory cuts for graph.")  # pragma: no cover
     # filter empty cuts and cuts that contain only nodes with activation quantization disabled.
     filtered_cuts = []
     for cut in cuts:

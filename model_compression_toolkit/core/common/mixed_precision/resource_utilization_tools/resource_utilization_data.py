@@ -161,7 +161,7 @@ def compute_activation_output_maxcut_sizes(graph: Graph) -> Tuple[np.ndarray, np
             if len(graph.find_node_by_name(m_name)) > 0:
                 node_to_cat_mapping[m_name].append(i)
             else:
-                Logger.critical(f"Missing node: {m_name}")
+                Logger.critical(f"Missing node: {m_name}")  # pragma: no cover
 
     activation_outputs = np.zeros(len(cuts))
     activation_outputs_bytes = np.zeros(len(cuts))
