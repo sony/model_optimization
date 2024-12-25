@@ -76,12 +76,13 @@ def get_tpc():
                                            simd_size=32,
                                            signedness=Signedness.AUTO)
 
-    default_configuration_options = schema.QuantizationConfigOptions(tuple([base_cfg]))
+    default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([base_cfg]))
 
-    operator_set = [schema.OperatorsSet("NoQuantization",
-                        default_configuration_options.clone_and_edit(enable_activation_quantization=False)
-                        .clone_and_edit_weight_attribute(enable_weights_quantization=False))]
-    tp_model = schema.TargetPlatformModel(default_configuration_options,
+    operator_set = [schema.OperatorsSet(name="NoQuantization",
+                                        qc_options=default_configuration_options.clone_and_edit(
+                                            enable_activation_quantization=False)
+                                        .clone_and_edit_weight_attribute(enable_weights_quantization=False))]
+    tp_model = schema.TargetPlatformModel(default_qco=default_configuration_options,
                                           operator_set=tuple(operator_set),
                                           tpc_minor_version=None,
                                           tpc_patch_version=None,

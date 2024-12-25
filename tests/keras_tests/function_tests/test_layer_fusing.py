@@ -81,10 +81,10 @@ def create_network_4(input_shape):
 
 def generate_base_tpc(operator_set, fusing_patterns):
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-    default_configuration_options = schema.QuantizationConfigOptions(tuple(
+    default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(
         [default_config]))
     generated_tp = schema.TargetPlatformModel(
-        default_configuration_options,
+        default_qco=default_configuration_options,
         tpc_minor_version=None,
         tpc_patch_version=None,
         tpc_platform_type=None,
@@ -97,13 +97,13 @@ def generate_base_tpc(operator_set, fusing_patterns):
 
 def get_tpc_1():
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-    mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(mixed_precision_cfg_list),
                                                                              base_config=base_config)
-    conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-    any_relu = schema.OperatorsSet("AnyReLU")
+    conv = schema.OperatorsSet(name="Conv", qc_options=mixed_precision_configuration_options)
+    any_relu = schema.OperatorsSet(name="AnyReLU")
     operator_set = [conv, any_relu]
     # Define fusions
-    fusing_patterns = [schema.Fusing((conv, any_relu))]
+    fusing_patterns = [schema.Fusing(operator_groups=(conv, any_relu))]
 
     generated_tp = generate_base_tpc(operator_set, fusing_patterns)
 
@@ -118,17 +118,17 @@ def get_tpc_1():
 
 def get_tpc_2():
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-    mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(mixed_precision_cfg_list),
                                                                              base_config=base_config)
-    conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-    any_relu = schema.OperatorsSet("AnyReLU")
-    swish = schema.OperatorsSet("Swish")
-    sigmoid = schema.OperatorsSet("Sigmoid")
-    tanh = schema.OperatorsSet("Tanh")
+    conv = schema.OperatorsSet(name="Conv", qc_options=mixed_precision_configuration_options)
+    any_relu = schema.OperatorsSet(name="AnyReLU")
+    swish = schema.OperatorsSet(name="Swish")
+    sigmoid = schema.OperatorsSet(name="Sigmoid")
+    tanh = schema.OperatorsSet(name="Tanh")
     operator_set = [conv, any_relu, swish, sigmoid, tanh]
-    activations_after_conv_to_fuse = schema.OperatorSetConcat([any_relu, swish, sigmoid, tanh])
+    activations_after_conv_to_fuse = schema.OperatorSetConcat(operators_set=[any_relu, swish, sigmoid, tanh])
     # Define fusions
-    fusing_patterns = [schema.Fusing((conv, activations_after_conv_to_fuse))]
+    fusing_patterns = [schema.Fusing(operator_groups=(conv, activations_after_conv_to_fuse))]
 
     generated_tp = generate_base_tpc(operator_set, fusing_patterns)
 
@@ -146,13 +146,13 @@ def get_tpc_2():
 
 def get_tpc_3():
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-    mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(mixed_precision_cfg_list),
                                                                              base_config=base_config)
-    conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-    any_relu = schema.OperatorsSet("AnyReLU")
+    conv = schema.OperatorsSet(name="Conv", qc_options=mixed_precision_configuration_options)
+    any_relu = schema.OperatorsSet(name="AnyReLU")
     operator_set = [conv, any_relu]
     # Define fusions
-    fusing_patterns = [schema.Fusing((conv, any_relu))]
+    fusing_patterns = [schema.Fusing(operator_groups=(conv, any_relu))]
 
     generated_tp = generate_base_tpc(operator_set, fusing_patterns)
 
@@ -167,20 +167,20 @@ def get_tpc_3():
 
 def get_tpc_4():
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-    mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(mixed_precision_cfg_list),
                                                                              base_config=base_config)
-    conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-    fc = schema.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
-    any_relu = schema.OperatorsSet("AnyReLU")
-    add = schema.OperatorsSet("Add")
-    swish = schema.OperatorsSet("Swish")
-    activations_to_fuse = schema.OperatorSetConcat([any_relu, swish])
+    conv = schema.OperatorsSet(name="Conv", qc_options=mixed_precision_configuration_options)
+    fc = schema.OperatorsSet(name="FullyConnected", qc_options=mixed_precision_configuration_options)
+    any_relu = schema.OperatorsSet(name="AnyReLU")
+    add = schema.OperatorsSet(name="Add")
+    swish = schema.OperatorsSet(name="Swish")
+    activations_to_fuse = schema.OperatorSetConcat(operators_set=[any_relu, swish])
     operator_set = [conv, fc, any_relu, add, swish]
     # Define fusions
-    fusing_patterns = [schema.Fusing((conv, activations_to_fuse)),
-                       schema.Fusing((conv, add, activations_to_fuse)),
-                       schema.Fusing((conv, activations_to_fuse, add)),
-                       schema.Fusing((fc, activations_to_fuse))]
+    fusing_patterns = [schema.Fusing(operator_groups=(conv, activations_to_fuse)),
+                       schema.Fusing(operator_groups=(conv, add, activations_to_fuse)),
+                       schema.Fusing(operator_groups=(conv, activations_to_fuse, add)),
+                       schema.Fusing(operator_groups=(fc, activations_to_fuse))]
 
     generated_tp = generate_base_tpc(operator_set, fusing_patterns)
 

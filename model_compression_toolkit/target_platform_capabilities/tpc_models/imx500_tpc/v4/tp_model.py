@@ -178,9 +178,9 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
-    default_configuration_options = schema.QuantizationConfigOptions(tuple([default_config]))
+    default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config]))
     default_config_input16 = default_config.clone_and_edit(supported_input_activation_n_bits=(8, 16))
-    default_config_options_16bit = schema.QuantizationConfigOptions(tuple([default_config_input16,
+    default_config_options_16bit = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config_input16,
                                                                      default_config_input16.clone_and_edit(
                                                                          activation_n_bits=16,
                                                                          signedness=Signedness.SIGNED)]),
@@ -195,7 +195,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         default_weight_attr_config=default_config.default_weight_attr_config.clone_and_edit(
             enable_weights_quantization=True, weights_per_channel_threshold=True,
             weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO))
-    const_configuration_options = schema.QuantizationConfigOptions(tuple([const_config]))
+    const_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([const_config]))
 
     # 16 bits inputs and outputs. Currently, only defined for consts since they are used in operators that
     # support 16 bit as input and output.
@@ -203,7 +203,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         supported_input_activation_n_bits=(8, 16))
     const_config_input16_output16 = const_config_input16.clone_and_edit(
         activation_n_bits=16, signedness=Signedness.SIGNED)
-    const_configuration_options_inout16 = schema.QuantizationConfigOptions(tuple([const_config_input16_output16,
+    const_configuration_options_inout16 = schema.QuantizationConfigOptions(quantization_configurations=tuple([const_config_input16_output16,
                                                                             const_config_input16]),
                                                                            base_config=const_config_input16)
 
@@ -215,7 +215,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     )
     const_config_input16_output16_per_tensor = const_config_input16_per_tensor.clone_and_edit(
         activation_n_bits=16, signedness=Signedness.SIGNED)
-    const_configuration_options_inout16_per_tensor = schema.QuantizationConfigOptions(tuple(
+    const_configuration_options_inout16_per_tensor = schema.QuantizationConfigOptions(quantization_configurations=tuple(
         [const_config_input16_output16_per_tensor,
          const_config_input16_per_tensor]),
         base_config=const_config_input16_per_tensor)
@@ -224,13 +224,13 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                                                            quantization_preserving=True,
                                                            default_weight_attr_config=const_config.default_weight_attr_config.clone_and_edit(
                                                                weights_per_channel_threshold=False))
-    qpreserving_const_config_options = schema.QuantizationConfigOptions(tuple([qpreserving_const_config]))
+    qpreserving_const_config_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([qpreserving_const_config]))
 
     mp_cfg_list_16bit = [mp_cfg.clone_and_edit(activation_n_bits=16, signedness=Signedness.SIGNED)
                          for mp_cfg in mixed_precision_cfg_list]
 
     # Create Mixed-Precision quantization configuration options from the given list of OpQuantizationConfig objects
-    mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(
         mixed_precision_cfg_list + mp_cfg_list_16bit),
         base_config=base_config)
 
@@ -242,69 +242,70 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set = []
     fusing_patterns = []
     # May suit for operations like: Dropout, Reshape, etc.
-    operator_set.append(schema.OperatorsSet(OPSET_NO_QUANTIZATION,
-                                            default_configuration_options.clone_and_edit(
+    operator_set.append(schema.OperatorsSet(name=OPSET_NO_QUANTIZATION,
+                                            qc_options=default_configuration_options.clone_and_edit(
                                                 enable_activation_quantization=False)
                                             .clone_and_edit_weight_attribute(enable_weights_quantization=False)))
-    operator_set.append(schema.OperatorsSet(OPSET_QUANTIZATION_PRESERVING,
-                                            default_configuration_options.clone_and_edit(
+    operator_set.append(schema.OperatorsSet(name=OPSET_QUANTIZATION_PRESERVING,
+                                            qc_options=default_configuration_options.clone_and_edit(
                                                 enable_activation_quantization=False,
                                                 quantization_preserving=True)
                                             .clone_and_edit_weight_attribute(enable_weights_quantization=False)))
     operator_set.append(
-        schema.OperatorsSet(OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS, qpreserving_const_config_options))
-    operator_set.append(schema.OperatorsSet(OPSET_DIMENSION_MANIPULATION_OPS,
-                                            default_configuration_options.clone_and_edit(
+        schema.OperatorsSet(name=OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS,
+                            qc_options=qpreserving_const_config_options))
+    operator_set.append(schema.OperatorsSet(name=OPSET_DIMENSION_MANIPULATION_OPS,
+                                            qc_options=default_configuration_options.clone_and_edit(
                                                 enable_activation_quantization=False,
                                                 quantization_preserving=True,
                                                 supported_input_activation_n_bits=(8, 16))
                                             .clone_and_edit_weight_attribute(enable_weights_quantization=False)))
-    operator_set.append(schema.OperatorsSet(OPSET_MERGE_OPS, const_configuration_options_inout16_per_tensor))
+    operator_set.append(schema.OperatorsSet(name=OPSET_MERGE_OPS, qc_options=const_configuration_options_inout16_per_tensor))
 
     # Define operator sets that use mixed_precision_configuration_options:
-    conv = schema.OperatorsSet(OPSET_CONV, mixed_precision_configuration_options)
-    fc = schema.OperatorsSet(OPSET_FULLY_CONNECTED, mixed_precision_configuration_options)
+    conv = schema.OperatorsSet(name=OPSET_CONV, qc_options=mixed_precision_configuration_options)
+    fc = schema.OperatorsSet(name=OPSET_FULLY_CONNECTED, qc_options=mixed_precision_configuration_options)
 
-    operator_set.append(schema.OperatorsSet(OPSET_BATCH_NORM, default_config_options_16bit))
+    operator_set.append(schema.OperatorsSet(name=OPSET_BATCH_NORM, qc_options=default_config_options_16bit))
 
     # Note: Operations sets without quantization configuration are useful for creating fusing patterns
-    any_relu = schema.OperatorsSet(OPSET_ANY_RELU, default_config_options_16bit)
-    add = schema.OperatorsSet(OPSET_ADD, const_configuration_options_inout16)
-    sub = schema.OperatorsSet(OPSET_SUB, const_configuration_options_inout16)
-    mul = schema.OperatorsSet(OPSET_MUL, const_configuration_options_inout16)
-    div = schema.OperatorsSet(OPSET_DIV, const_configuration_options)
-    min_max = schema.OperatorsSet(OPSET_MIN_MAX, const_configuration_options_inout16)
-    prelu = schema.OperatorsSet(OPSET_PRELU, default_config_options_16bit)
-    swish = schema.OperatorsSet(OPSET_SWISH, default_config_options_16bit)
-    sigmoid = schema.OperatorsSet(OPSET_SIGMOID, default_config_options_16bit)
-    tanh = schema.OperatorsSet(OPSET_TANH, default_config_options_16bit)
-    gelu = schema.OperatorsSet(OPSET_GELU, default_config_options_16bit)
-    hardsigmoid = schema.OperatorsSet(OPSET_HARDSIGMOID, default_config_options_16bit)
-    hardswish = schema.OperatorsSet(OPSET_HARDSWISH, default_config_options_16bit)
+    any_relu = schema.OperatorsSet(name=OPSET_ANY_RELU, qc_options=default_config_options_16bit)
+    add = schema.OperatorsSet(name=OPSET_ADD, qc_options=const_configuration_options_inout16)
+    sub = schema.OperatorsSet(name=OPSET_SUB, qc_options=const_configuration_options_inout16)
+    mul = schema.OperatorsSet(name=OPSET_MUL, qc_options=const_configuration_options_inout16)
+    div = schema.OperatorsSet(name=OPSET_DIV, qc_options=const_configuration_options)
+    min_max = schema.OperatorsSet(name=OPSET_MIN_MAX, qc_options=const_configuration_options_inout16)
+    prelu = schema.OperatorsSet(name=OPSET_PRELU, qc_options=default_config_options_16bit)
+    swish = schema.OperatorsSet(name=OPSET_SWISH, qc_options=default_config_options_16bit)
+    sigmoid = schema.OperatorsSet(name=OPSET_SIGMOID, qc_options=default_config_options_16bit)
+    tanh = schema.OperatorsSet(name=OPSET_TANH, qc_options=default_config_options_16bit)
+    gelu = schema.OperatorsSet(name=OPSET_GELU, qc_options=default_config_options_16bit)
+    hardsigmoid = schema.OperatorsSet(name=OPSET_HARDSIGMOID, qc_options=default_config_options_16bit)
+    hardswish = schema.OperatorsSet(name=OPSET_HARDSWISH, qc_options=default_config_options_16bit)
 
     operator_set.extend(
         [conv, fc, any_relu, add, sub, mul, div, prelu, swish, sigmoid, tanh, min_max, gelu, hardsigmoid, hardswish])
     # Combine multiple operators into a single operator to avoid quantization between
     # them. To do this we define fusing patterns using the OperatorsSets that were created.
     # To group multiple sets with regard to fusing, an OperatorSetConcat can be created
-    activations_after_conv_to_fuse = schema.OperatorSetConcat([any_relu, swish, prelu, sigmoid,
+    activations_after_conv_to_fuse = schema.OperatorSetConcat(operators_set=[any_relu, swish, prelu, sigmoid,
                                                                tanh, gelu, hardswish, hardsigmoid])
-    activations_after_fc_to_fuse = schema.OperatorSetConcat([any_relu, swish, sigmoid, tanh, gelu,
+    activations_after_fc_to_fuse = schema.OperatorSetConcat(operators_set=[any_relu, swish, sigmoid, tanh, gelu,
                                                              hardswish, hardsigmoid])
-    any_binary = schema.OperatorSetConcat([add, sub, mul, div])
+    any_binary = schema.OperatorSetConcat(operators_set=[add, sub, mul, div])
 
     # ------------------- #
     # Fusions
     # ------------------- #
-    fusing_patterns.append(schema.Fusing((conv, activations_after_conv_to_fuse)))
-    fusing_patterns.append(schema.Fusing((fc, activations_after_fc_to_fuse)))
-    fusing_patterns.append(schema.Fusing((any_binary, any_relu)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(conv, activations_after_conv_to_fuse)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(fc, activations_after_fc_to_fuse)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(any_binary, any_relu)))
 
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
     generated_tpm = schema.TargetPlatformModel(
-        default_configuration_options,
+        default_qco=default_configuration_options,
         tpc_minor_version=4,
         tpc_patch_version=0,
         tpc_platform_type=IMX500_TP_MODEL,

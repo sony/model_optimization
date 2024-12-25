@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from dataclasses import replace
-
 from operator import mul
 import torch
 
@@ -66,7 +64,9 @@ class Activation16BitNet(torch.nn.Module):
 def set_16bit_as_default(tpc, required_op_set, required_ops_list):
     for op in required_ops_list:
         base_config = [l for l in tpc.layer2qco[op].quantization_configurations if l.activation_n_bits == 16][0]
-        tpc.layer2qco[op] = replace(tpc.layer2qco[op], base_config=base_config)
+        tpc.layer2qco[op] = tpc.layer2qco[op].model_copy(
+            update={'quantization_configurations': tpc.layer2qco[op].quantization_configurations,
+                    'base_config': base_config})
 
 
 class Activation16BitTest(BasePytorchFeatureNetworkTest):
@@ -112,8 +112,10 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
         quantization_configurations.extend([
             tpc.layer2qco[torch.mul].base_config.clone_and_edit(activation_n_bits=4),
             tpc.layer2qco[torch.mul].base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[torch.mul] = replace(tpc.layer2qco[torch.mul], base_config=base_config, quantization_configurations=tuple(quantization_configurations))
-        tpc.layer2qco[mul] = replace(tpc.layer2qco[mul], base_config=base_config, quantization_configurations=tuple(quantization_configurations))
+        tpc.layer2qco[torch.mul] = tpc.layer2qco[torch.mul].model_copy(
+            update={'base_config': base_config, 'quantization_configurations': tuple(quantization_configurations)})
+        tpc.layer2qco[mul] = tpc.layer2qco[mul].model_copy(
+            update={'base_config': base_config, 'quantization_configurations': tuple(quantization_configurations)})
         return tpc
 
     def get_resource_utilization(self):

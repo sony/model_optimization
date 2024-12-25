@@ -49,7 +49,7 @@ from model_compression_toolkit.core.keras.keras_implementation import KerasImple
 tp = mct.target_platform
 
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
-TEST_QCO = schema.QuantizationConfigOptions(tuple([TEST_QC]))
+TEST_QCO = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
 
 
 def get_node(layer) -> BaseNode:
@@ -104,10 +104,10 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertFalse(get_node(conv).is_match_filter_params(conv_filter_contains))
 
     def test_get_layers_by_op(self):
-        op_obj = schema.OperatorsSet('opsetA')
+        op_obj = schema.OperatorsSet(name='opsetA')
 
         hm = schema.TargetPlatformModel(
-            schema.QuantizationConfigOptions(tuple([TEST_QC])),
+            default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
@@ -122,11 +122,11 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual(fw_tp.get_layers_by_opset_name('nonExistingOpsetName'), None)
 
     def test_get_layers_by_opconcat(self):
-        op_obj_a = schema.OperatorsSet('opsetA')
-        op_obj_b = schema.OperatorsSet('opsetB')
-        op_concat = schema.OperatorSetConcat([op_obj_a, op_obj_b])
+        op_obj_a = schema.OperatorsSet(name='opsetA')
+        op_obj_b = schema.OperatorsSet(name='opsetB')
+        op_concat = schema.OperatorSetConcat(operators_set=[op_obj_a, op_obj_b])
         hm = schema.TargetPlatformModel(
-            schema.QuantizationConfigOptions(tuple([TEST_QC])),
+            default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
@@ -144,12 +144,12 @@ class TestKerasTPModel(unittest.TestCase):
 
     def test_layer_attached_to_multiple_opsets(self):
         hm = schema.TargetPlatformModel(
-            schema.QuantizationConfigOptions(tuple([TEST_QC])),
+            default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
-            operator_set=tuple([schema.OperatorsSet('opsetA'),
-                          schema.OperatorsSet('opsetB')]),
+            operator_set=tuple([schema.OperatorsSet(name='opsetA'),
+                          schema.OperatorsSet(name='opsetB')]),
             add_metadata=False)
 
 
@@ -162,12 +162,12 @@ class TestKerasTPModel(unittest.TestCase):
 
     def test_filter_layer_attached_to_multiple_opsets(self):
         hm = schema.TargetPlatformModel(
-            schema.QuantizationConfigOptions(tuple([TEST_QC])),
+            default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
-            operator_set=tuple([schema.OperatorsSet('opsetA'),
-                          schema.OperatorsSet('opsetB')]),
+            operator_set=tuple([schema.OperatorsSet(name='opsetA'),
+                          schema.OperatorsSet(name='opsetB')]),
             add_metadata=False)
         fw_tp = TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
@@ -178,7 +178,7 @@ class TestKerasTPModel(unittest.TestCase):
 
     def test_qco_by_keras_layer(self):
         operator_set = []
-        default_qco = schema.QuantizationConfigOptions(tuple([TEST_QC]))
+        default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
         default_qco = default_qco.clone_and_edit(attr_weights_configs_mapping={})
         mixed_precision_configuration_options = schema.QuantizationConfigOptions(
             quantization_configurations=tuple([TEST_QC,
@@ -186,13 +186,13 @@ class TestKerasTPModel(unittest.TestCase):
                                       TEST_QC.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 2}})]),
             base_config=TEST_QC)
 
-        operator_set.append(schema.OperatorsSet("conv", mixed_precision_configuration_options))
+        operator_set.append(schema.OperatorsSet(name="conv", qc_options=mixed_precision_configuration_options))
         sevenbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=7,
                                                attr_weights_configs_mapping={})
-        operator_set.append(schema.OperatorsSet("tanh", sevenbit_qco))
-        operator_set.append(schema.OperatorsSet("relu"))
+        operator_set.append(schema.OperatorsSet(name="tanh", qc_options=sevenbit_qco))
+        operator_set.append(schema.OperatorsSet(name="relu"))
 
-        tpm = schema.TargetPlatformModel(default_qco,
+        tpm = schema.TargetPlatformModel(default_qco=default_qco,
                                          tpc_minor_version=None,
                                          tpc_patch_version=None,
                                          tpc_platform_type=None,
@@ -226,12 +226,12 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual(relu_qco, default_qco)
 
     def test_opset_not_in_tp(self):
-        default_qco = schema.QuantizationConfigOptions(tuple([TEST_QC]))
-        hm = schema.TargetPlatformModel(default_qco,
+        default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
+        hm = schema.TargetPlatformModel(default_qco=default_qco,
                                         tpc_minor_version=None,
                                         tpc_patch_version=None,
                                         tpc_platform_type=None,
-                                        operator_set=tuple([schema.OperatorsSet("opA")]),
+                                        operator_set=tuple([schema.OperatorsSet(name="opA")]),
                                         add_metadata=False)
         hm_keras = tp.TargetPlatformCapabilities(hm)
         with self.assertRaises(Exception) as e:
@@ -242,15 +242,15 @@ class TestKerasTPModel(unittest.TestCase):
             str(e.exception))
 
     def test_keras_fusing_patterns(self):
-        default_qco = schema.QuantizationConfigOptions(tuple([TEST_QC]))
-        a = schema.OperatorsSet("opA")
-        b = schema.OperatorsSet("opB")
-        c = schema.OperatorsSet("opC")
+        default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
+        a = schema.OperatorsSet(name="opA")
+        b = schema.OperatorsSet(name="opB")
+        c = schema.OperatorsSet(name="opC")
         operator_set = [a, b, c]
-        fusing_patterns = [schema.Fusing((a, b, c)),
-                           schema.Fusing((a, c))]
+        fusing_patterns = [schema.Fusing(operator_groups=(a, b, c)),
+                           schema.Fusing(operator_groups=(a, c))]
 
-        hm = schema.TargetPlatformModel(default_qco,
+        hm = schema.TargetPlatformModel(default_qco=default_qco,
                                         tpc_minor_version=None,
                                         tpc_patch_version=None,
                                         tpc_platform_type=None,
@@ -278,12 +278,12 @@ class TestKerasTPModel(unittest.TestCase):
         self.assertEqual(p1[1], LayerFilterParams(ReLU, Greater("max_value", 7), negative_slope=0))
 
     def test_get_default_op_qc(self):
-        default_qco = schema.QuantizationConfigOptions(tuple([TEST_QC]))
-        tpm = schema.TargetPlatformModel(default_qco,
+        default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
+        tpm = schema.TargetPlatformModel(default_qco=default_qco,
                                          tpc_minor_version=None,
                                          tpc_patch_version=None,
                                          tpc_platform_type=None,
-                                         operator_set=tuple([schema.OperatorsSet("opA")]),
+                                         operator_set=tuple([schema.OperatorsSet(name="opA")]),
                                          add_metadata=False)
 
         tpc = tp.TargetPlatformCapabilities(tpm)
