@@ -76,7 +76,7 @@ class AttachTpModelToPytorch(AttachTpModelToFw):
             OperatorSetNames.OPSET_DROPOUT.value: [Dropout, dropout],
             OperatorSetNames.OPSET_SPLIT.value: [split],
             OperatorSetNames.OPSET_CHUNK.value: [chunk],
-            OperatorSetNames.OPSET_MAXPOOL.value: [MaxPool2d],
+            OperatorSetNames.OPSET_MAXPOOL.value: [MaxPool2d, F.max_pool2d],
             OperatorSetNames.OPSET_SIZE.value: [torch.Tensor.size],
             OperatorSetNames.OPSET_SHAPE.value: [torch.Tensor.shape],
             OperatorSetNames.OPSET_EQUAL.value: [equal],

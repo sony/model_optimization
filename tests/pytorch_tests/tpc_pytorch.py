@@ -27,8 +27,7 @@ tp = mct.target_platform
 
 def get_pytorch_test_tpc_dict(tp_model, test_name, ftp_name):
     return {
-        test_name: generate_pytorch_tpc(name=ftp_name,
-                                        tp_model=tp_model),
+        test_name: tp_model
     }
 
 def get_activation_quantization_disabled_pytorch_tpc(name):
@@ -55,10 +54,6 @@ def get_mp_activation_pytorch_tpc_dict(tpc_model, test_name, tpc_name, custom_op
                                        BIAS_ATTR: DefaultDict(default_value=BIAS)}}
 
     return {
-        test_name: generate_test_tpc(name=tpc_name,
-                                     tp_model=tpc_model,
-                                     base_tpc=generate_pytorch_tpc(name=f"base_{tpc_name}",
-                                                                   tp_model=tpc_model),
-                                     op_sets_to_layer_add=op_sets_to_layer_add,
+        test_name: generate_test_tpc(tp_model=tpc_model, op_sets_to_layer_add=op_sets_to_layer_add,
                                      attr_mapping=attr_mapping),
     }

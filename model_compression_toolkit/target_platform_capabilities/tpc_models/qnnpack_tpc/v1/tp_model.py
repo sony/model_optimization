@@ -148,19 +148,27 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set = []
     fusing_patterns = []
 
-    conv = schema.OperatorsSet("Conv")
-    batchnorm = schema.OperatorsSet("BatchNorm")
-    relu = schema.OperatorsSet("Relu")
-    linear = schema.OperatorsSet("Linear")
+    conv = schema.OperatorsSet(schema.OperatorSetNames.OPSET_CONV.value)
+    conv_transpose = schema.OperatorsSet(schema.OperatorSetNames.OPSET_CONV_TRANSPOSE.value)
+    batchnorm = schema.OperatorsSet(schema.OperatorSetNames.OPSET_BATCH_NORM.value)
+    relu = schema.OperatorsSet(schema.OperatorSetNames.OPSET_RELU.value)
+    relu6 = schema.OperatorsSet(schema.OperatorSetNames.OPSET_RELU.value)
+    hard_tanh = schema.OperatorsSet(schema.OperatorSetNames.OPSET_HARD_TANH.value)
+    linear = schema.OperatorsSet(schema.OperatorSetNames.OPSET_FULLY_CONNECTED.value)
 
     operator_set.extend([conv, batchnorm, relu, linear])
+
+    conv_opset_concat = schema.OperatorSetConcat([conv, conv_transpose])
+    relu_opset_concat = schema.OperatorSetConcat([relu, relu6, hard_tanh])
+
     # ------------------- #
     # Fusions
     # ------------------- #
-    fusing_patterns.append(schema.Fusing((conv, batchnorm, relu)))
-    fusing_patterns.append(schema.Fusing((conv, batchnorm)))
-    fusing_patterns.append(schema.Fusing((conv, relu)))
-    fusing_patterns.append(schema.Fusing((linear, relu)))
+    fusing_patterns.append(schema.Fusing((conv_opset_concat, batchnorm, relu_opset_concat)))
+    fusing_patterns.append(schema.Fusing((conv_opset_concat, batchnorm)))
+    fusing_patterns.append(schema.Fusing((conv_opset_concat, relu_opset_concat)))
+    fusing_patterns.append(schema.Fusing((linear, relu_opset_concat)))
+
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):

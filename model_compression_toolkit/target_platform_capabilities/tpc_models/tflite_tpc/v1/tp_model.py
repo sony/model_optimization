@@ -148,45 +148,62 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                            default_configuration_options.clone_and_edit(
                                quantization_preserving=True)))
 
-    fc = schema.OperatorsSet("FullyConnected",
-                                default_configuration_options.clone_and_edit_weight_attribute(weights_per_channel_threshold=False))
+    fc = schema.OperatorsSet(schema.OperatorSetNames.OPSET_FULLY_CONNECTED.value,
+                             default_configuration_options.clone_and_edit_weight_attribute(
+                                 weights_per_channel_threshold=False))
+    sigmoid = schema.OperatorsSet(schema.OperatorSetNames.OPSET_SIGMOID.value,
+                             default_configuration_options.clone_and_edit_weight_attribute(
+                                 weights_per_channel_threshold=False))
+    tanh = schema.OperatorsSet(schema.OperatorSetNames.OPSET_TANH.value, default_configuration_options.clone_and_edit(
+                               fixed_zero_point=-128, fixed_scale=1 / 256))
+    squeeze = schema.OperatorsSet("Squeeze",
+                                  qc_options=default_configuration_options.clone_and_edit(
+                                      quantization_preserving=True))
 
-    operator_set.append(schema.OperatorsSet("L2Normalization",
-                           default_configuration_options.clone_and_edit(
-                               fixed_zero_point=0, fixed_scale=1 / 128)))
-    operator_set.append(schema.OperatorsSet("LogSoftmax",
-                           default_configuration_options.clone_and_edit(
-                               fixed_zero_point=127, fixed_scale=16 / 256)))
-    operator_set.append(schema.OperatorsSet("Tanh",
-                           default_configuration_options.clone_and_edit(
-                               fixed_zero_point=0, fixed_scale=1 / 128)))
-    operator_set.append(schema.OperatorsSet("Softmax",
-                           default_configuration_options.clone_and_edit(
-                               fixed_zero_point=-128, fixed_scale=1 / 256)))
-    operator_set.append(schema.OperatorsSet("Logistic",
-                           default_configuration_options.clone_and_edit(
-                               fixed_zero_point=-128, fixed_scale=1 / 256)))
+    conv2d = schema.OperatorsSet(schema.OperatorSetNames.OPSET_CONV.value)
+    relu = schema.OperatorsSet(schema.OperatorSetNames.OPSET_RELU.value)
+    relu6 = schema.OperatorsSet(schema.OperatorSetNames.OPSET_RELU6.value)
+    batch_norm = schema.OperatorsSet(schema.OperatorSetNames.OPSET_BATCH_NORM.value)
+    add = schema.OperatorsSet(schema.OperatorSetNames.OPSET_ADD.value)
 
-    conv2d = schema.OperatorsSet("Conv2d")
+    # TODO: in the old TPC the following operator sets were defined in the tflite TPC but it requires custom opset
+    #  implementation in the attach2fw side
+    #   FW:
+    #   tp.OperationsSetToLayers("L2Normalization", [tp.LayerFilterParams(torch.nn.functional.normalize, Eq('p', 2) | Eq('p', None))])
+    #   tp.OperationsSetToLayers("LogSoftmax", [torch.nn.LogSoftmax])
+    #   tp.OperationsSetToLayers("Elu", [torch.nn.ELU, torch.nn.functional.elu])
+    #   tp.OperationsSetToLayers("Softmax", [torch.nn.Softmax, torch.nn.functional.softmax])
+    #   HardTanh:
+    #       tp.LayerFilterParams(torch.nn.Hardtanh, min_val=0, max_val=6),
+    #       tp.LayerFilterParams(torch.nn.functional.hardtanh, min_val=0, max_val=6)
+    #   CFG:
+    #   operator_set.append(schema.OperatorsSet("L2Normalization",
+    #                            default_configuration_options.clone_and_edit(
+    #                                fixed_zero_point=0, fixed_scale=1 / 128)))
+    #   operator_set.append(schema.OperatorsSet("LogSoftmax",
+    #                            default_configuration_options.clone_and_edit(
+    #                                fixed_zero_point=127, fixed_scale=16 / 256)))
+    #   operator_set.append(schema.OperatorsSet("Softmax",
+    #                            default_configuration_options.clone_and_edit(
+    #                                fixed_zero_point=-128, fixed_scale=1 / 256)))
+    #   elu = schema.OperatorsSet("Elu")
+    #   hardtanh - same as relu and part of relu fuses
+    #   .
+    #   activations_to_fuse = schema.OperatorSetConcat([relu, elu])
+    #   operator_set.extend([fc, conv2d, relu, elu, batch_norm, bias_add, add, squeeze])
+
+    activations_to_fuse = schema.OperatorSetConcat([relu, relu6])
     kernel = schema.OperatorSetConcat([conv2d, fc])
 
-    relu = schema.OperatorsSet("Relu")
-    elu = schema.OperatorsSet("Elu")
-    activations_to_fuse = schema.OperatorSetConcat([relu, elu])
+    operator_set.extend([fc, conv2d, relu, relu6, tanh, sigmoid, batch_norm, add, squeeze])
 
-    batch_norm = schema.OperatorsSet("BatchNorm")
-    bias_add = schema.OperatorsSet("BiasAdd")
-    add = schema.OperatorsSet("Add")
-    squeeze = schema.OperatorsSet("Squeeze",
-                                     qc_options=default_configuration_options.clone_and_edit(
-                                         quantization_preserving=True))
-    operator_set.extend([fc, conv2d, kernel, relu, elu, batch_norm, bias_add, add, squeeze])
     # ------------------- #
     # Fusions
     # ------------------- #
     # Source: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/grappler/optimizers/remapper
-    fusing_patterns.append(schema.Fusing((kernel, bias_add)))
-    fusing_patterns.append(schema.Fusing((kernel, bias_add, activations_to_fuse)))
+    # TODO: bias_add was removed since there is no connection to bias-add operator on the fw side
+    # fusing_patterns.append(schema.Fusing((kernel, bias_add)))
+    # fusing_patterns.append(schema.Fusing((kernel, bias_add, activations_to_fuse)))
     fusing_patterns.append(schema.Fusing((conv2d, batch_norm, activations_to_fuse)))
     fusing_patterns.append(schema.Fusing((conv2d, squeeze, activations_to_fuse)))
     fusing_patterns.append(schema.Fusing((batch_norm, activations_to_fuse)))

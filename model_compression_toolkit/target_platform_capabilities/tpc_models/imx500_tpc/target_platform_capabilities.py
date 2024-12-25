@@ -62,22 +62,14 @@ def get_tpc_dict_by_fw(fw_name):
         if FOUND_TORCH:
             from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
                 get_pytorch_tpc_latest
-            from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tpc_pytorch import \
-                get_pytorch_tpc as get_pytorch_tpc_v1
             from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1_pot.tpc_pytorch import \
                 get_pytorch_tpc as get_pytorch_tpc_v1_pot
             from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1_lut.tpc_pytorch import \
                 get_pytorch_tpc as get_pytorch_tpc_v1_lut
-            from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v2.tpc_pytorch import \
-                get_pytorch_tpc as get_pytorch_tpc_v2
             from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v2_lut.tpc_pytorch import \
                 get_pytorch_tpc as get_pytorch_tpc_v2_lut
-            from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tpc_pytorch import \
-                get_pytorch_tpc as get_pytorch_tpc_v3
             from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3_lut.tpc_pytorch import \
                 get_pytorch_tpc as get_pytorch_tpc_v3_lut
-            from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tpc_pytorch import \
-                get_pytorch_tpc as get_pytorch_tpc_v4
 
             # Pytorch: TPC versioning
             tpc_models_dict = {'v1': get_pytorch_tpc_v1,

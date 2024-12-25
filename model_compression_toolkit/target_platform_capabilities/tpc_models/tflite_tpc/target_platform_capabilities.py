@@ -38,8 +38,6 @@ def get_tpc_dict_by_fw(fw_name):
         # Build Pytorch TPC models
         ###############################
         if FOUND_TORCH:
-            from model_compression_toolkit.target_platform_capabilities.tpc_models.tflite_tpc.v1.tpc_pytorch import \
-                get_pytorch_tpc as get_pytorch_tpc_v1
             from model_compression_toolkit.target_platform_capabilities.tpc_models.tflite_tpc.latest import \
                 get_pytorch_tpc_latest
 

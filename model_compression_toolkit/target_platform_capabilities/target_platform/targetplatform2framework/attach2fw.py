@@ -1,7 +1,8 @@
 from typing import Dict, Tuple, List, Any, Optional
 
 from model_compression_toolkit import DefaultDict
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, \
+    OperatorsSet
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities, \
     OperationsSetToLayers
 
@@ -35,11 +36,13 @@ class AttachTpModelToFw:
         """
 
         tpc = TargetPlatformCapabilities(tpc_model)
-
+        tpc_model_opsets = [opset.name for opset in tpc_model.operator_set if isinstance(opset, OperatorsSet)]
         with tpc:
             for opset_name, operators in self._opset2layer.items():
-                attr_mapping = self._opset2attr_mapping.get(opset_name)
-                OperationsSetToLayers(opset_name, operators, attr_mapping=attr_mapping)
+                if opset_name in tpc_model_opsets:
+                    attr_mapping = self._opset2attr_mapping.get(opset_name)
+                    OperationsSetToLayers(opset_name, operators, attr_mapping=attr_mapping)
+                # TODO: we need warning otherwise that opset in TPC but not in TP model? or error?
 
             if custom_opset2layer is not None:
                 for opset_name, operators in custom_opset2layer.items():
