@@ -154,6 +154,9 @@ class MaxCutAstar:
             cut_route = routes[next_cut]
 
             if next_cut == self.target_cut:
+                # TODO maxcut: Why do we filter the cuts (cut_route) but not the max cut size (cut_sost).
+                #              This is a mismatch between max_cut and max(cuts).
+                #              Also, unfiltered cut_route seems perfect, including input and output tensor sizes of current op.
                 return self._remove_dummys_from_path(cut_route[0].op_order), cut_cost,\
                        list(set([self._remove_dummys_from_cut(self.clean_memory_for_next_step(c)) for c in cut_route]))
 
