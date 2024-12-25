@@ -169,6 +169,7 @@ def activation_maxcut_size_utilization(mp_cfg: List[int],
     return np.array(activation_cut_memory)
 
 
+# TODO maxcut: add test for this function and remove no cover
 def activation_output_size_utilization(mp_cfg: List[int],
                                        graph: Graph,
                                        fw_info: FrameworkInfo,

@@ -179,6 +179,7 @@ def compute_activation_output_maxcut_sizes(graph: Graph) -> Tuple[np.ndarray, np
     return activation_outputs_bytes, activation_outputs
 
 
+# TODO maxcut: add test for this function and remove no cover
 def compute_activation_output_sizes(graph: Graph) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
     """
     Computes an array of the respective output tensor size and an array of the output tensor size in bytes for

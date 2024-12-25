@@ -58,6 +58,7 @@ def flat_gen_fn(data_gen_fn: Callable[[], Generator]):
 
     return gen
 
+
 class TFDatasetFromGenerator:
     """
     TensorFlow dataset from a data generator function, batched to a specified size.
@@ -70,14 +71,13 @@ class TFDatasetFromGenerator:
         """
         inputs = next(data_gen_fn())
         if not isinstance(inputs, list):
-            raise TypeError(f'Data generator is expected to yield a list of tensors, got {type(inputs)}')
+            raise TypeError(f'Data generator is expected to yield a list of tensors, got {type(inputs)}')  # pragma: no cover
         self.orig_batch_size = inputs[0].shape[0]
         self._size = None
 
         # TFDatasetFromGenerator flattens the dataset, thus we ignore the batch dimension
         output_signature = get_tensor_spec(inputs, ignore_batch_dim=True)
         self.dataset = tf.data.Dataset.from_generator(flat_gen_fn(data_gen_fn), output_signature=output_signature)
-
 
     def __iter__(self):
         return iter(self.dataset)
@@ -87,7 +87,6 @@ class TFDatasetFromGenerator:
         if self._size is None:
             self._size = sum(1 for _ in self.dataset)
         return self._size
-
 
 
 class FixedTFDataset:
@@ -103,7 +102,7 @@ class FixedTFDataset:
         """
         inputs = next(data_gen_fn())
         if not isinstance(inputs, list):
-            raise TypeError(f'Data generator is expected to yield a list of tensors, got {type(inputs)}')
+            raise TypeError(f'Data generator is expected to yield a list of tensors, got {type(inputs)}')  # pragma: no cover
         self.orig_batch_size = inputs[0].shape[0]
 
         samples = []
@@ -131,7 +130,7 @@ class FixedSampleInfoDataset:
 
     def __init__(self, samples: Sequence, sample_info: Sequence):
         if not all(len(info) == len(samples) for info in sample_info):
-            raise ValueError('Sample and additional info lengths must match')
+            raise ValueError('Sample and additional info lengths must match')  # pragma: no cover
         self.samples = samples
         self.sample_info = sample_info
 

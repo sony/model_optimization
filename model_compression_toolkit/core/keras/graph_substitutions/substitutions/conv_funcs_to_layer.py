@@ -20,7 +20,7 @@ from packaging import version
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers.core import TFOpLambda
     from keras.src.layers import Conv2D, DepthwiseConv2D
-else:
+else:  # pragma: no cover
     from keras.layers.core import TFOpLambda
     from keras.layers import Conv2D, DepthwiseConv2D
 from model_compression_toolkit.logger import Logger
