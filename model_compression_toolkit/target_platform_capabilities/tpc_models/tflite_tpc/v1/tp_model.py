@@ -136,7 +136,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
-    default_configuration_options = schema.QuantizationConfigOptions(tuple([default_config]))
+    default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config]))
 
     # In TFLite, the quantized operator specifications constraint operators quantization
     # differently. For more details:

@@ -33,8 +33,6 @@ from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.metadata import create_model_metadata
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
-    AttachTpModelToPytorch
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 
@@ -50,7 +48,10 @@ if FOUND_TORCH:
     from torch.optim import Adam, Optimizer
     from model_compression_toolkit import get_target_platform_capabilities
     from mct_quantizers.pytorch.metadata import add_metadata
-    # DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
+    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+        AttachTpModelToPytorch
+
+    DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
     def get_pytorch_gptq_config(n_epochs: int,
                                 optimizer: Optimizer = None,

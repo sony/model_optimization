@@ -139,7 +139,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
-    default_configuration_options = schema.QuantizationConfigOptions(tuple([default_config]))
+    default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config]))
 
     # Combine operations/modules into a single module.
     # Pytorch supports the next fusing patterns:
@@ -148,32 +148,40 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set = []
     fusing_patterns = []
 
-    conv = schema.OperatorsSet(schema.OperatorSetNames.OPSET_CONV.value)
-    conv_transpose = schema.OperatorsSet(schema.OperatorSetNames.OPSET_CONV_TRANSPOSE.value)
-    batchnorm = schema.OperatorsSet(schema.OperatorSetNames.OPSET_BATCH_NORM.value)
-    relu = schema.OperatorsSet(schema.OperatorSetNames.OPSET_RELU.value)
-    relu6 = schema.OperatorsSet(schema.OperatorSetNames.OPSET_RELU.value)
-    hard_tanh = schema.OperatorsSet(schema.OperatorSetNames.OPSET_HARD_TANH.value)
-    linear = schema.OperatorsSet(schema.OperatorSetNames.OPSET_FULLY_CONNECTED.value)
+    conv = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV.value)
+    conv_depthwise = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_DEPTHWISE_CONV.value)
+    conv_transpose = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV_TRANSPOSE.value)
+    batchnorm = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_BATCH_NORM.value)
+    relu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU.value)
+    relu6 = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU.value)
 
-    operator_set.extend([conv, batchnorm, relu, linear])
+    # TODO: missing this operator from relu in attach2fw which is part of the old Keras TPC.
+    #                                            tp.LayerFilterParams(ReLU, negative_slope=0.0),
+    #  need to figure out how to allow to retrive out built-int fw TPCs with a custom layer mapping
+    #  (preferably without changing the existing API for any user who used them).
+    #  consider adding a test for qnnpack and tflite tpcs
 
-    conv_opset_concat = schema.OperatorSetConcat([conv, conv_transpose])
-    relu_opset_concat = schema.OperatorSetConcat([relu, relu6, hard_tanh])
+    hard_tanh = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_HARD_TANH.value)
+    linear = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FULLY_CONNECTED.value)
+
+    operator_set.extend([conv, conv_depthwise, conv_transpose, batchnorm, relu, relu6, hard_tanh, linear])
+
+    conv_opset_concat = schema.OperatorSetConcat(operators_set=[conv, conv_transpose])
+    relu_opset_concat = schema.OperatorSetConcat(operators_set=[relu, relu6, hard_tanh])
 
     # ------------------- #
     # Fusions
     # ------------------- #
-    fusing_patterns.append(schema.Fusing((conv_opset_concat, batchnorm, relu_opset_concat)))
-    fusing_patterns.append(schema.Fusing((conv_opset_concat, batchnorm)))
-    fusing_patterns.append(schema.Fusing((conv_opset_concat, relu_opset_concat)))
-    fusing_patterns.append(schema.Fusing((linear, relu_opset_concat)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(conv_opset_concat, batchnorm, relu_opset_concat)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(conv_opset_concat, batchnorm)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(conv_opset_concat, relu_opset_concat)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(linear, relu_opset_concat)))
 
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
     generated_tpc = schema.TargetPlatformModel(
-        default_configuration_options,
+        default_qco=default_configuration_options,
         tpc_minor_version=1,
         tpc_patch_version=0,
         tpc_platform_type=QNNPACK_TP_MODEL,

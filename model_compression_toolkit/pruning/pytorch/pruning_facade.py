@@ -17,14 +17,11 @@ from typing import Callable, Tuple
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
-    AttachTpModelToPytorch
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.pruner import Pruner
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig
 from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo
-from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import set_quantization_configuration_to_graph
 from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 from model_compression_toolkit.logger import Logger
@@ -41,6 +38,8 @@ if FOUND_TORCH:
         PruningPytorchImplementation
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from torch.nn import Module
+    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+        AttachTpModelToPytorch
 
     # Set the default Target Platform Capabilities (TPC) for PyTorch.
     DEFAULT_PYOTRCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)

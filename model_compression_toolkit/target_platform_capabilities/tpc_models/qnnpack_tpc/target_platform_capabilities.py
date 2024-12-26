@@ -25,8 +25,6 @@ def get_tpc_dict_by_fw(fw_name):
         # Build Tensorflow TPC models
         ###############################
         if FOUND_TF:
-            from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_tpc.v1.tpc_keras import \
-                get_keras_tpc as get_keras_tpc_v1
             from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_tpc.latest import \
                 get_keras_tpc_latest
 

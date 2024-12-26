@@ -13,11 +13,11 @@
 #  limitations under the License.
 #  ==============================================================================
 
-
+from model_compression_toolkit import get_target_platform_capabilities
+from model_compression_toolkit.constants import TENSORFLOW
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.xquant.common.framework_report_utils import FrameworkReportUtils
-from model_compression_toolkit.ptq.keras.quantization_facade import DEFAULT_KERAS_TPC
 from model_compression_toolkit.xquant.common.model_folding_utils import ModelFoldingUtils
 from model_compression_toolkit.xquant.common.similarity_calculator import SimilarityCalculator
 from model_compression_toolkit.xquant.keras.dataset_utils import KerasDatasetUtils
@@ -26,6 +26,9 @@ from model_compression_toolkit.xquant.keras.model_analyzer import KerasModelAnal
 from model_compression_toolkit.xquant.keras.similarity_functions import KerasSimilarityFunctions
 from model_compression_toolkit.xquant.keras.tensorboard_utils import KerasTensorboardUtils
 from mct_quantizers.keras.metadata import get_metadata
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpModelToKeras
 
 
 class KerasReportUtils(FrameworkReportUtils):
@@ -40,10 +43,15 @@ class KerasReportUtils(FrameworkReportUtils):
         fw_info = DEFAULT_KERAS_INFO
         fw_impl = KerasImplementation()
 
+        # Set the default Target Platform Capabilities (TPC) for PyTorch.
+        default_tpc = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
+        attach2pytorch = AttachTpModelToKeras()
+        target_platform_capabilities = attach2pytorch.attach(default_tpc)
+
         dataset_utils = KerasDatasetUtils()
         model_folding = ModelFoldingUtils(fw_info=fw_info,
                                           fw_impl=fw_impl,
-                                          fw_default_tpc=DEFAULT_KERAS_TPC)
+                                          fw_default_tpc=target_platform_capabilities)
 
         similarity_calculator = SimilarityCalculator(dataset_utils=dataset_utils,
                                                      model_folding=model_folding,

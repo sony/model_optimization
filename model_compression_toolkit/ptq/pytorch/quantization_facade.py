@@ -20,9 +20,6 @@ from model_compression_toolkit.core.common.visualization.tensorboard_writer impo
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
-    AttachTpModelToPytorch
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import get_tp_model
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
@@ -43,12 +40,11 @@ if FOUND_TORCH:
     from model_compression_toolkit.exporter.model_wrapper.pytorch.builder.fully_quantized_model_builder import get_exportable_pytorch_model
     from model_compression_toolkit import get_target_platform_capabilities
     from mct_quantizers.pytorch.metadata import add_metadata
+    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+        AttachTpModelToPytorch
 
-    # TODO: replace with TPC MODEL from v1 as default (until defining an academic TPC model and removing IMX500)
-    #   replace in all facades
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
-    # TODO: update all facades to get a TPC model (JSON? Parsed? - currently an initialized object)
     def pytorch_post_training_quantization(in_module: Module,
                                            representative_data_gen: Callable,
                                            target_resource_utilization: ResourceUtilization = None,

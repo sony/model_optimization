@@ -20,20 +20,18 @@ from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
-from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import compute_resource_utilization_data
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
-    AttachTpModelToPytorch
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import get_tp_model
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
-    from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
     from torch.nn import Module
+    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+        AttachTpModelToPytorch
 
     from model_compression_toolkit import get_target_platform_capabilities
 
@@ -43,7 +41,7 @@ if FOUND_TORCH:
     def pytorch_resource_utilization_data(in_model: Module,
                                           representative_data_gen: Callable,
                                           core_config: CoreConfig = CoreConfig(),
-                                          target_platform_capabilities: TargetPlatformCapabilities = PYTORCH_DEFAULT_TPC
+                                          target_platform_capabilities: TargetPlatformModel= PYTORCH_DEFAULT_TPC
                                           ) -> ResourceUtilization:
         """
         Computes resource utilization data that can be used to calculate the desired target resource utilization for mixed-precision quantization.
@@ -86,8 +84,9 @@ if FOUND_TORCH:
 
         # Attach tpc model to framework
         attach2pytorch = AttachTpModelToPytorch()
-        # TODO: add option to pass custom opsets
-        target_platform_capabilities = attach2pytorch.attach(target_platform_capabilities)
+        target_platform_capabilities = (
+            attach2pytorch.attach(target_platform_capabilities,
+                                  custom_opset2layer=core_config.quantization_config.custom_tpc_opset_to_layer))
 
         return compute_resource_utilization_data(in_model,
                                                  representative_data_gen,

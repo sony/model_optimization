@@ -19,6 +19,7 @@ from functools import partial
 from model_compression_toolkit.core import CoreConfig
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import \
@@ -54,6 +55,8 @@ if FOUND_TF:
     from model_compression_toolkit.qat.keras.quantizer.quantization_builder import quantization_builder, \
     get_activation_quantizer_holder
     from model_compression_toolkit.qat.common.qat_config import QATConfig
+    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+        AttachTpModelToKeras
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
@@ -90,7 +93,7 @@ if FOUND_TF:
                                                             target_resource_utilization: ResourceUtilization = None,
                                                             core_config: CoreConfig = CoreConfig(),
                                                             qat_config: QATConfig = QATConfig(),
-                                                            target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC):
+                                                            target_platform_capabilities: TargetPlatformModel = DEFAULT_KERAS_TPC):
         """
          Prepare a trained Keras model for quantization aware training. First the model quantization is optimized
          with post-training quantization, then the model layers are wrapped with QuantizeWrappers. The model is
@@ -185,6 +188,11 @@ if FOUND_TF:
         tb_w = init_tensorboard_writer(DEFAULT_KERAS_INFO)
 
         fw_impl = KerasImplementation()
+
+        attach2keras = AttachTpModelToKeras()
+        target_platform_capabilities = attach2keras.attach(
+            target_platform_capabilities,
+            custom_opset2layer=core_config.quantization_config.custom_tpc_opset_to_layer)
 
         # Ignore hessian service since is not used in QAT at the moment
         tg, bit_widths_config, _, _ = core_runner(in_model=in_model,

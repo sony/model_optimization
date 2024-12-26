@@ -17,12 +17,12 @@ from typing import Callable, Tuple
 
 from model_compression_toolkit import get_target_platform_capabilities
 from model_compression_toolkit.constants import TENSORFLOW
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 from model_compression_toolkit.verify_packages import FOUND_TF
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.pruning.pruner import Pruner
 from model_compression_toolkit.core.common.pruning.pruning_config import PruningConfig
 from model_compression_toolkit.core.common.pruning.pruning_info import PruningInfo
-from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import set_quantization_configuration_to_graph
 from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 from model_compression_toolkit.logger import Logger
@@ -35,6 +35,8 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.pruning.pruning_keras_implementation import PruningKerasImplementation
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from tensorflow.keras.models import Model
+    from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+        AttachTpModelToKeras
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
@@ -42,7 +44,7 @@ if FOUND_TF:
                                    target_resource_utilization: ResourceUtilization,
                                    representative_data_gen: Callable,
                                    pruning_config: PruningConfig = PruningConfig(),
-                                   target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_KERAS_TPC) -> Tuple[Model, PruningInfo]:
+                                   target_platform_capabilities: TargetPlatformModel = DEFAULT_KERAS_TPC) -> Tuple[Model, PruningInfo]:
         """
         Perform structured pruning on a Keras model to meet a specified target resource utilization.
         This function prunes the provided model according to the target resource utilization by grouping and pruning
@@ -110,6 +112,10 @@ if FOUND_TF:
 
         # Instantiate the Keras framework implementation.
         fw_impl = PruningKerasImplementation()
+
+        # Attach tpc model to framework
+        attach2keras = AttachTpModelToKeras()
+        target_platform_capabilities = attach2keras.attach(target_platform_capabilities)
 
         # Convert the original Keras model to an internal graph representation.
         float_graph = read_model_to_graph(model,

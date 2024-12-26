@@ -21,7 +21,6 @@ import model_compression_toolkit.target_platform_capabilities.schema.mct_current
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import generate_tp_model, \
     get_op_quantization_configs
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tpc_keras import generate_keras_tpc
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, DEFAULT_WEIGHT_ATTR_CONFIG, \
     generate_test_tp_model, generate_custom_test_tp_model
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
