@@ -64,15 +64,15 @@ class LayerFusingTest1(BaseLayerFusingTest):
 
     def get_tpc(self):
         base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-        default_configuration_options = schema.QuantizationConfigOptions(tuple([default_config]))
-        mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+        default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config]))
+        mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(mixed_precision_cfg_list),
                                                                                  base_config=base_config)
-        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-        any_relu = schema.OperatorsSet("ReLU")
+        conv = schema.OperatorsSet(name="Conv", qc_options=mixed_precision_configuration_options)
+        any_relu = schema.OperatorsSet(name="ReLU")
         operator_set = [conv, any_relu]
         # Define fusions
-        fusing_patterns = [schema.Fusing((conv, any_relu))]
-        generated_tp = schema.TargetPlatformModel(default_configuration_options,
+        fusing_patterns = [schema.Fusing(operator_groups=(conv, any_relu))]
+        generated_tp = schema.TargetPlatformModel(default_qco=default_configuration_options,
                                                   tpc_minor_version=None,
                                                   tpc_patch_version=None,
                                                   tpc_platform_type=None,
@@ -111,15 +111,15 @@ class LayerFusingTest2(BaseLayerFusingTest):
 
     def get_tpc(self):
         base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-        mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+        mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(mixed_precision_cfg_list),
                                                                                  base_config=base_config)
-        default_configuration_options = schema.QuantizationConfigOptions(tuple([default_config]))
-        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-        any_act = schema.OperatorsSet("AnyAct")
+        default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config]))
+        conv = schema.OperatorsSet(name="Conv", qc_options=mixed_precision_configuration_options)
+        any_act = schema.OperatorsSet(name="AnyAct")
         operator_set = [conv, any_act]
         # Define fusions
-        fusing_patterns = [schema.Fusing((conv, any_act))]
-        generated_tp = schema.TargetPlatformModel(default_configuration_options,
+        fusing_patterns = [schema.Fusing(operator_groups=(conv, any_act))]
+        generated_tp = schema.TargetPlatformModel(default_qco=default_configuration_options,
                                                   tpc_minor_version=None,
                                                   tpc_patch_version=None,
                                                   tpc_platform_type=None,
@@ -134,10 +134,8 @@ class LayerFusingTest2(BaseLayerFusingTest):
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, lambda name, _tp: self.get_tpc(),
                                            qc=QuantizationConfig(
-                                               custom_tpc_opset_to_layer={"AnyAct":
-                                                                              ([ReLU, relu6, relu, SiLU, Sigmoid,
-                                                                                LayerFilterParams(Hardtanh,
-                                                                                                  min_val=0)],)}))
+                                               custom_tpc_opset_to_layer={"AnyAct": ([ReLU, relu6, relu, SiLU, Sigmoid,
+                                                                                      LayerFilterParams(Hardtanh, min_val=0)],)}))
 
         self._compare(graph.fused_nodes)
 
@@ -174,15 +172,15 @@ class LayerFusingTest3(BaseLayerFusingTest):
 
     def get_tpc(self):
         base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-        mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+        mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(mixed_precision_cfg_list),
                                                                                  base_config=base_config)
-        default_configuration_options = schema.QuantizationConfigOptions(tuple([default_config]))
-        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-        any_act = schema.OperatorsSet("AnyAct")
+        default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config]))
+        conv = schema.OperatorsSet(name="Conv", qc_options=mixed_precision_configuration_options)
+        any_act = schema.OperatorsSet(name="AnyAct")
         operator_set = [conv, any_act]
         # Define fusions
-        fusing_patterns = [schema.Fusing((conv, any_act))]
-        generated_tp = schema.TargetPlatformModel(default_configuration_options,
+        fusing_patterns = [schema.Fusing(operator_groups=(conv, any_act))]
+        generated_tp = schema.TargetPlatformModel(default_qco=default_configuration_options,
                                                   tpc_minor_version=None,
                                                   tpc_patch_version=None,
                                                   tpc_platform_type=None,
@@ -196,8 +194,7 @@ class LayerFusingTest3(BaseLayerFusingTest):
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, lambda name, _tp: self.get_tpc(),
                                            qc=QuantizationConfig(
-                                               custom_tpc_opset_to_layer={"AnyAct":
-                                                                              ([ReLU, relu6, relu],)}))
+                                               custom_tpc_opset_to_layer={"AnyAct": ([ReLU, relu6, relu],)}))
 
         self._compare(graph.fused_nodes)
 
@@ -235,23 +232,23 @@ class LayerFusingTest4(BaseLayerFusingTest):
 
     def get_tpc(self):
         base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
-        mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
+        mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(mixed_precision_cfg_list),
                                                                                  base_config=base_config)
-        default_configuration_options = schema.QuantizationConfigOptions(tuple([default_config]))
-        conv = schema.OperatorsSet(schema.OperatorSetNames.OPSET_CONV.value, mixed_precision_configuration_options)
-        fc = schema.OperatorsSet(schema.OperatorSetNames.OPSET_FULLY_CONNECTED.value, mixed_precision_configuration_options)
-        relu = schema.OperatorsSet(schema.OperatorSetNames.OPSET_RELU.value)
-        add = schema.OperatorsSet(schema.OperatorSetNames.OPSET_ADD.value)
-        swish = schema.OperatorsSet(schema.OperatorSetNames.OPSET_SWISH.value)
+        default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([default_config]))
+        conv = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CONV.value, qc_options=mixed_precision_configuration_options)
+        fc = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FULLY_CONNECTED.value, qc_options=mixed_precision_configuration_options)
+        relu = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_RELU.value)
+        add = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ADD.value)
+        swish = schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SWISH.value)
         operator_set = [conv, fc, relu, add, swish]
-        activations_to_fuse = schema.OperatorSetConcat([relu, swish])
+        activations_to_fuse = schema.OperatorSetConcat(operators_set=[relu, swish])
         # Define fusions
-        fusing_patterns = [schema.Fusing((conv, activations_to_fuse)),
-                           schema.Fusing((conv, add, activations_to_fuse)),
-                           schema.Fusing((conv, activations_to_fuse, add)),
-                           schema.Fusing((fc, activations_to_fuse))]
+        fusing_patterns = [schema.Fusing(operator_groups=(conv, activations_to_fuse)),
+                           schema.Fusing(operator_groups=(conv, add, activations_to_fuse)),
+                           schema.Fusing(operator_groups=(conv, activations_to_fuse, add)),
+                           schema.Fusing(operator_groups=(fc, activations_to_fuse))]
 
-        generated_tp = schema.TargetPlatformModel(default_configuration_options,
+        generated_tp = schema.TargetPlatformModel(default_qco=default_configuration_options,
                                                   tpc_minor_version=None,
                                                   tpc_patch_version=None,
                                                   tpc_platform_type=None,

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from dataclasses import replace
-
 from operator import mul
 import torch
 
@@ -137,8 +135,10 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
         quantization_configurations.extend([
             tpc.layer2qco[torch.mul].base_config.clone_and_edit(activation_n_bits=4),
             tpc.layer2qco[torch.mul].base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[torch.mul] = replace(tpc.layer2qco[torch.mul], base_config=base_config, quantization_configurations=tuple(quantization_configurations))
-        tpc.layer2qco[mul] = replace(tpc.layer2qco[mul], base_config=base_config, quantization_configurations=tuple(quantization_configurations))
+        tpc.layer2qco[torch.mul] = tpc.layer2qco[torch.mul].model_copy(
+            update={'base_config': base_config, 'quantization_configurations': tuple(quantization_configurations)})
+        tpc.layer2qco[mul] = tpc.layer2qco[mul].model_copy(
+            update={'base_config': base_config, 'quantization_configurations': tuple(quantization_configurations)})
         return tpc
 
     def get_resource_utilization(self):

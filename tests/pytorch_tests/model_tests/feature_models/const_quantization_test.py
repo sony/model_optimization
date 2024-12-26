@@ -244,21 +244,21 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
                                                simd_size=32,
                                                signedness=Signedness.AUTO)
 
-        default_configuration_options = schema.QuantizationConfigOptions(tuple([base_cfg]))
+        default_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([base_cfg]))
 
         const_config = base_cfg.clone_and_edit(enable_activation_quantization=False,
                                                default_weight_attr_config=base_cfg.default_weight_attr_config.clone_and_edit(
                                                    enable_weights_quantization=True,
                                                    weights_per_channel_threshold=False,
                                                    weights_quantization_method=tp.QuantizationMethod.POWER_OF_TWO))
-        const_configuration_options = schema.QuantizationConfigOptions(tuple([const_config]))
+        const_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([const_config]))
 
         tp_model = schema.TargetPlatformModel(
-            default_configuration_options,
+            default_qco=default_configuration_options,
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
-            operator_set=tuple([schema.OperatorsSet("WeightQuant", const_configuration_options)]),
+            operator_set=tuple([schema.OperatorsSet(name="WeightQuant", qc_options=const_configuration_options)]),
             add_metadata=False)
 
         return tp_model

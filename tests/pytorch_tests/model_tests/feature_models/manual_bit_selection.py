@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from dataclasses import replace
-
 from operator import mul
 
 import inspect
@@ -199,8 +197,12 @@ class Manual16BitTest(ManualBitWidthByLayerNameTest):
         tpc = get_tp_model()
         mul_op_set = get_op_set('Mul', tpc.operator_set)
         base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.mul] = replace(tpc.layer2qco[torch.mul], base_config=base_config)
-        tpc.layer2qco[mul] = replace(tpc.layer2qco[mul], base_config=base_config)
+        tpc.layer2qco[torch.mul] = tpc.layer2qco[torch.mul].model_copy(
+            update={'quantization_configurations': mul_op_set.qc_options.quantization_configurations,
+                    'base_config': base_config})
+        tpc.layer2qco[mul] = tpc.layer2qco[mul].model_copy(
+            update={'quantization_configurations': mul_op_set.qc_options.quantization_configurations,
+                    'base_config': base_config})
         return {'mixed_precision_activation_model': tpc}
 
     def create_feature_network(self, input_shape):
@@ -217,10 +219,10 @@ class Manual16BitTestMixedPrecisionTest(ManualBitWidthByLayerNameTest):
         quantization_configurations.extend(
             [mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=4),
              mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[torch.mul] = replace(tpc.layer2qco[torch.mul], base_config=base_config,
-                                           quantization_configurations=tuple(quantization_configurations))
-        tpc.layer2qco[mul] = replace(tpc.layer2qco[mul], base_config=base_config,
-                                     quantization_configurations=tuple(quantization_configurations))
+        tpc.layer2qco[torch.mul] = tpc.layer2qco[torch.mul].model_copy(
+            update={'base_config': base_config, 'quantization_configurations': tuple(quantization_configurations)})
+        tpc.layer2qco[mul] = tpc.layer2qco[mul].model_copy(
+            update={'base_config': base_config, 'quantization_configurations': tuple(quantization_configurations)})
         return {'mixed_precision_activation_model': tpc}
 
     def get_resource_utilization(self):

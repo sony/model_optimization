@@ -42,7 +42,7 @@ from tests.pytorch_tests.layer_tests.base_pytorch_layer_test import LayerTestMod
 tp = mct.target_platform
 
 TEST_QC = generate_test_op_qc(**generate_test_attr_configs())
-TEST_QCO = schema.QuantizationConfigOptions(tuple([TEST_QC]))
+TEST_QCO = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
 
 
 class TestPytorchTPModel(unittest.TestCase):
@@ -84,28 +84,28 @@ class TestPytorchTPModel(unittest.TestCase):
             get_node(partial(torch.nn.functional.normalize, p=3.0)).is_match_filter_params(l2norm_tflite_opset))
 
     def test_qco_by_pytorch_layer(self):
-        default_qco = schema.QuantizationConfigOptions(tuple([TEST_QC]))
+        default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
         default_qco = default_qco.clone_and_edit(attr_weights_configs_mapping={})
-        mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(
+        mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(
             [TEST_QC,
              TEST_QC.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 4}}),
              TEST_QC.clone_and_edit(attr_to_edit={KERNEL_ATTR: {WEIGHTS_N_BITS: 2}})]),
             base_config=TEST_QC)
 
         operator_set = []
-        operator_set.append(schema.OperatorsSet("conv", mixed_precision_configuration_options))
+        operator_set.append(schema.OperatorsSet(name="conv", qc_options=mixed_precision_configuration_options))
 
         sevenbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=7,
                                                attr_weights_configs_mapping={})
-        operator_set.append(schema.OperatorsSet("tanh", sevenbit_qco))
+        operator_set.append(schema.OperatorsSet(name="tanh", qc_options=sevenbit_qco))
 
         sixbit_qco = TEST_QCO.clone_and_edit(activation_n_bits=6,
                                              attr_weights_configs_mapping={})
-        operator_set.append(schema.OperatorsSet("avg_pool2d_kernel_2", sixbit_qco))
+        operator_set.append(schema.OperatorsSet(name="avg_pool2d_kernel_2", qc_options=sixbit_qco))
 
-        operator_set.append(schema.OperatorsSet("avg_pool2d"))
+        operator_set.append(schema.OperatorsSet(name="avg_pool2d"))
 
-        tpm = schema.TargetPlatformModel(default_qco,
+        tpm = schema.TargetPlatformModel(default_qco=default_qco,
                                          tpc_minor_version=None,
                                          tpc_patch_version=None,
                                          tpc_platform_type=None,
@@ -145,10 +145,10 @@ class TestPytorchTPModel(unittest.TestCase):
         self.assertEqual(avg_pool2d_qco, default_qco)
 
     def test_get_layers_by_op(self):
-        op_obj = schema.OperatorsSet('opsetA')
+        op_obj = schema.OperatorsSet(name='opsetA')
 
         hm = schema.TargetPlatformModel(
-            schema.QuantizationConfigOptions(tuple([TEST_QC])),
+            default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
@@ -163,12 +163,12 @@ class TestPytorchTPModel(unittest.TestCase):
         self.assertEqual(fw_tp.get_layers_by_opset(op_obj), opset_layers)
 
     def test_get_layers_by_opconcat(self):
-        op_obj_a = schema.OperatorsSet('opsetA')
-        op_obj_b = schema.OperatorsSet('opsetB')
-        op_concat = schema.OperatorSetConcat([op_obj_a, op_obj_b])
+        op_obj_a = schema.OperatorsSet(name='opsetA')
+        op_obj_b = schema.OperatorsSet(name='opsetB')
+        op_concat = schema.OperatorSetConcat(operators_set=[op_obj_a, op_obj_b])
 
         hm = schema.TargetPlatformModel(
-            schema.QuantizationConfigOptions(tuple([TEST_QC])),
+            default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
@@ -186,13 +186,13 @@ class TestPytorchTPModel(unittest.TestCase):
 
     def test_layer_attached_to_multiple_opsets(self):
         hm = schema.TargetPlatformModel(
-            schema.QuantizationConfigOptions(tuple([TEST_QC])),
+            default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
             operator_set=tuple([
-                schema.OperatorsSet('opsetA'),
-                schema.OperatorsSet('opsetB')]),
+                schema.OperatorsSet(name='opsetA'),
+                schema.OperatorsSet(name='opsetB')]),
             add_metadata=False)
 
         fw_tp = TargetPlatformCapabilities(hm)
@@ -204,12 +204,12 @@ class TestPytorchTPModel(unittest.TestCase):
 
     def test_filter_layer_attached_to_multiple_opsets(self):
         hm = schema.TargetPlatformModel(
-            schema.QuantizationConfigOptions(tuple([TEST_QC])),
+            default_qco=schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC])),
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
-            operator_set=tuple([schema.OperatorsSet('opsetA'),
-                          schema.OperatorsSet('opsetB')]),
+            operator_set=tuple([schema.OperatorsSet(name='opsetA'),
+                          schema.OperatorsSet(name='opsetB')]),
             add_metadata=False)
 
         fw_tp = TargetPlatformCapabilities(hm)
@@ -221,12 +221,12 @@ class TestPytorchTPModel(unittest.TestCase):
 
     # TODO: bring back the test if we decide that this needs to be enforced by the TPC during initialization
     # def test_opset_not_in_tp(self):
-    #     default_qco = schema.QuantizationConfigOptions(tuple([TEST_QC]))
-    #     hm = schema.TargetPlatformModel(default_qco,
+    #     default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple([TEST_QC]))
+    #     hm = schema.TargetPlatformModel(default_qco=default_qco,
     #                                     tpc_minor_version=None,
     #                                     tpc_patch_version=None,
     #                                     tpc_platform_type=None,
-    #                                     operator_set=tuple([schema.OperatorsSet("opA")]),
+    #                                     operator_set=tuple([schema.OperatorsSet(name="opA")]),
     #                                     add_metadata=False)
     #     hm_pytorch = tp.TargetPlatformCapabilities(hm)
     #     with self.assertRaises(Exception) as e:
@@ -237,15 +237,15 @@ class TestPytorchTPModel(unittest.TestCase):
     #         str(e.exception))
 
     def test_pytorch_fusing_patterns(self):
-        default_qco = schema.QuantizationConfigOptions(tuple(
+        default_qco = schema.QuantizationConfigOptions(quantization_configurations=tuple(
             [TEST_QC]))
-        a = schema.OperatorsSet("opA")
-        b = schema.OperatorsSet("opB")
-        c = schema.OperatorsSet("opC")
+        a = schema.OperatorsSet(name="opA")
+        b = schema.OperatorsSet(name="opB")
+        c = schema.OperatorsSet(name="opC")
         operator_set = [a, b, c]
-        fusing_patterns = [schema.Fusing((a, b, c)),
-                           schema.Fusing((a, c))]
-        hm = schema.TargetPlatformModel(default_qco,
+        fusing_patterns = [schema.Fusing(operator_groups=(a, b, c)),
+                           schema.Fusing(operator_groups=(a, c))]
+        hm = schema.TargetPlatformModel(default_qco=default_qco,
                                         tpc_minor_version=None,
                                         tpc_patch_version=None,
                                         tpc_platform_type=None,
@@ -297,7 +297,6 @@ class TestGetPytorchTPC(unittest.TestCase):
                                                                         target_platform_capabilities=tpc,
                                                                         core_config=core_config)
 
-    # TODO: modify the tests once implementing the default TPC API
     def test_get_pytorch_supported_version(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)  # Latest
         self.assertTrue(tpc.tp_model.tpc_minor_version == 1)

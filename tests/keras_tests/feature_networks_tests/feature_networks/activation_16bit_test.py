@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from dataclasses import replace
-
 import numpy as np
 import tensorflow as tf
 
@@ -39,7 +37,9 @@ class Activation16BitTest(BaseKerasFeatureNetworkTest):
         # Force Mul base_config to 16bit only
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
         base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
-        tpc.layer2qco[tf.multiply] = replace(tpc.layer2qco[tf.multiply], base_config=base_config)
+        tpc.layer2qco[tf.multiply] = tpc.layer2qco[tf.multiply].model_copy(update=
+            {'quantization_configurations': mul_op_set.qc_options.quantization_configurations,
+             'base_config': base_config})
         return tpc
 
     def create_networks(self):
@@ -76,7 +76,8 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
         quantization_configurations.extend([
             tpc.layer2qco[tf.multiply].base_config.clone_and_edit(activation_n_bits=4),
             tpc.layer2qco[tf.multiply].base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[tf.multiply] = replace(tpc.layer2qco[tf.multiply], base_config=base_config, quantization_configurations=tuple(quantization_configurations))
+        tpc.layer2qco[tf.multiply] = tpc.layer2qco[tf.multiply].model_copy(
+            update={'base_config': base_config, 'quantization_configurations': tuple(quantization_configurations)})
         return tpc
 
     def get_resource_utilization(self):

@@ -151,23 +151,23 @@ class MixedPrecisionSearchPartWeightsLayers(MixedPrecisionBaseTest):
 
         two_bit_cfg = mixed_precision_cfg_list[2]
 
-        weight_mixed_cfg = schema.QuantizationConfigOptions(tuple(
+        weight_mixed_cfg = schema.QuantizationConfigOptions(quantization_configurations=tuple(
             mixed_precision_cfg_list),
             base_config=cfg,
         )
 
-        weight_fixed_cfg = schema.QuantizationConfigOptions(tuple(
+        weight_fixed_cfg = schema.QuantizationConfigOptions(quantization_configurations=tuple(
             [two_bit_cfg]),
             base_config=two_bit_cfg,
         )
 
         tp_model = schema.TargetPlatformModel(
-            weight_fixed_cfg,
+            default_qco=weight_fixed_cfg,
             tpc_minor_version=None,
             tpc_patch_version=None,
             tpc_platform_type=None,
-            operator_set=tuple([schema.OperatorsSet("Weights_mp", weight_mixed_cfg),
-                          schema.OperatorsSet("Weights_fixed", weight_fixed_cfg)]),
+            operator_set=tuple([schema.OperatorsSet(name="Weights_mp", qc_options=weight_mixed_cfg),
+                          schema.OperatorsSet(name="Weights_fixed", qc_options=weight_fixed_cfg)]),
             name="mp_part_weights_layers_test")
 
         return {'mixed_precision_model': tp_model}
@@ -308,24 +308,25 @@ class MixedPrecisionWeightsConfigurableActivations(MixedPrecisionBaseTest):
             [c.clone_and_edit(enable_activation_quantization=False) for c in mixed_precision_cfg_list]
         cfg = mixed_precision_cfg_list[0]
 
-        act_mixed_cfg = QuantizationConfigOptions(tuple(
+        act_mixed_cfg = QuantizationConfigOptions(quantization_configurations=tuple(
             [act_eight_bit_cfg, act_four_bit_cfg, act_two_bit_cfg]),
             base_config=act_eight_bit_cfg,
         )
 
-        weight_mixed_cfg = QuantizationConfigOptions(tuple(
+        weight_mixed_cfg = QuantizationConfigOptions(quantization_configurations=tuple(
             mixed_precision_cfg_list),
             base_config=cfg,
         )
 
-        tp_model = TargetPlatformModel(QuantizationConfigOptions(tuple([cfg]), cfg),
-                                       tpc_minor_version=None,
-                                       tpc_patch_version=None,
-                                       tpc_platform_type=None,
-                                       operator_set=tuple([
-                                           OperatorsSet("Activations", act_mixed_cfg),
-                                           OperatorsSet("Weights", weight_mixed_cfg)]),
-                                       name="mp_weights_conf_act_test")
+        tp_model = TargetPlatformModel(
+            default_qco=QuantizationConfigOptions(quantization_configurations=tuple([cfg]), base_config=cfg),
+            tpc_minor_version=None,
+            tpc_patch_version=None,
+            tpc_platform_type=None,
+            operator_set=tuple([
+                OperatorsSet(name="Activations", qc_options=act_mixed_cfg),
+                OperatorsSet(name="Weights", qc_options=weight_mixed_cfg)]),
+            name="mp_weights_conf_act_test")
 
         return {'mixed_precision_model': tp_model}
 
