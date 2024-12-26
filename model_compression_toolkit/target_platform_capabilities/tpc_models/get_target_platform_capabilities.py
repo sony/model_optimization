@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.target_platform_capabilities import \
     get_tpc_dict_by_fw as get_imx500_tpc
@@ -26,7 +25,7 @@ tpc_dict = {DEFAULT_TP_MODEL: get_imx500_tpc,
 
 def get_target_platform_capabilities(fw_name: str,
                                      target_platform_name: str,
-                                     target_platform_version: str = None) -> TargetPlatformCapabilities:
+                                     target_platform_version: str = None) -> TargetPlatformModel:
     """
     Get a TargetPlatformCapabilities by the target platform model name and the framework name.
     For now, it supports frameworks 'tensorflow' and 'pytorch'. For both of them
