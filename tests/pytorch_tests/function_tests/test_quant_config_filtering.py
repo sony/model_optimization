@@ -31,6 +31,8 @@ class TestTorchQuantConfigFiltering(unittest.TestCase):
 
     @staticmethod
     def get_tpc_default_16bit():
+        # TODO: same issue with the 16bit tpc for test, need to fix this globaly
+        raise Exception("TODO: need 16 bit tpc")
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
         # Force Mul base_config to 16bit only
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)

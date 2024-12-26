@@ -24,6 +24,8 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.quantization_prep_runner import quantization_preparation_runner
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+    AttachTpModelToPytorch
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_tp_model, \
     get_op_quantization_configs
@@ -48,6 +50,12 @@ def prepare_graph_with_configs(in_model,
     # and doesn't use the TP that is passed from outside.
     _tp = generate_tp_model(default_config, base_config, op_cfg_list, "function_test")
     tpc = get_tpc_func("function_test", _tp)
+
+    # TODO: consider replacing this attach2fw to given attach2fw function from the user that allow to create a
+    #  test-dedicated fw TPC instead of relying on the ful attach2fw
+    attach2pytorch = AttachTpModelToPytorch()
+    tpc = attach2pytorch.attach(tpc,
+                                qc.custom_tpc_opset_to_layer)
 
     # Read Model
     graph = graph_preparation_runner(in_model,

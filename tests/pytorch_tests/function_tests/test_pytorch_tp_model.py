@@ -219,21 +219,22 @@ class TestPytorchTPModel(unittest.TestCase):
                 tp.OperationsSetToLayers('opsetB', [LayerFilterParams(torch.nn.Softmax, dim=2)])
         self.assertEqual('Found layer Softmax(dim=2) in more than one OperatorsSet', str(e.exception))
 
-    def test_opset_not_in_tp(self):
-        default_qco = schema.QuantizationConfigOptions(tuple([TEST_QC]))
-        hm = schema.TargetPlatformModel(default_qco,
-                                        tpc_minor_version=None,
-                                        tpc_patch_version=None,
-                                        tpc_platform_type=None,
-                                        operator_set=tuple([schema.OperatorsSet("opA")]),
-                                        add_metadata=False)
-        hm_pytorch = tp.TargetPlatformCapabilities(hm)
-        with self.assertRaises(Exception) as e:
-            with hm_pytorch:
-                tp.OperationsSetToLayers("conv", [torch.nn.Conv2d])
-        self.assertEqual(
-            'conv is not defined in the target platform model that is associated with the target platform capabilities.',
-            str(e.exception))
+    # TODO: bring back the test if we decide that this needs to be enforced by the TPC during initialization
+    # def test_opset_not_in_tp(self):
+    #     default_qco = schema.QuantizationConfigOptions(tuple([TEST_QC]))
+    #     hm = schema.TargetPlatformModel(default_qco,
+    #                                     tpc_minor_version=None,
+    #                                     tpc_patch_version=None,
+    #                                     tpc_platform_type=None,
+    #                                     operator_set=tuple([schema.OperatorsSet("opA")]),
+    #                                     add_metadata=False)
+    #     hm_pytorch = tp.TargetPlatformCapabilities(hm)
+    #     with self.assertRaises(Exception) as e:
+    #         with hm_pytorch:
+    #             tp.OperationsSetToLayers("conv", [torch.nn.Conv2d])
+    #     self.assertEqual(
+    #         'conv is not defined in the target platform model that is associated with the target platform capabilities.',
+    #         str(e.exception))
 
     def test_pytorch_fusing_patterns(self):
         default_qco = schema.QuantizationConfigOptions(tuple(
@@ -296,6 +297,7 @@ class TestGetPytorchTPC(unittest.TestCase):
                                                                         target_platform_capabilities=tpc,
                                                                         core_config=core_config)
 
+    # TODO: modify the tests once implementing the default TPC API
     def test_get_pytorch_supported_version(self):
         tpc = mct.get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)  # Latest
         self.assertTrue(tpc.tp_model.tpc_minor_version == 1)

@@ -18,6 +18,7 @@ from torch.nn import Conv2d, ReLU, SiLU, Sigmoid, Linear, Hardtanh
 from torch.nn.functional import relu, relu6
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
+from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
@@ -67,7 +68,7 @@ class LayerFusingTest1(BaseLayerFusingTest):
         mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
                                                                                  base_config=base_config)
         conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-        any_relu = schema.OperatorsSet("AnyReLU")
+        any_relu = schema.OperatorsSet("ReLU")
         operator_set = [conv, any_relu]
         # Define fusions
         fusing_patterns = [schema.Fusing((conv, any_relu))]
@@ -79,13 +80,7 @@ class LayerFusingTest1(BaseLayerFusingTest):
                                                   fusing_patterns=tuple(fusing_patterns),
                                                   name='layer_fusing_test')
 
-
-        pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp)
-        with pytorch_tpc:
-            tp.OperationsSetToLayers("Conv", [nn.Conv2d])
-            tp.OperationsSetToLayers("AnyReLU", [torch.relu,
-                                                 nn.ReLU])
-        return pytorch_tpc
+        return generated_tp
 
     def run_test(self, seed=0):
         model_float = self.LayerFusingNetTest()
@@ -132,17 +127,17 @@ class LayerFusingTest2(BaseLayerFusingTest):
                                                   fusing_patterns=tuple(fusing_patterns),
                                                   name='layer_fusing_test')
 
-        pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp)
-        with pytorch_tpc:
-            tp.OperationsSetToLayers("Conv", [Conv2d])
-            tp.OperationsSetToLayers("AnyAct",
-                                     [ReLU, relu6, relu, SiLU, Sigmoid, LayerFilterParams(Hardtanh, min_val=0)])
-        return pytorch_tpc
+        return generated_tp
 
     def run_test(self, seed=0):
         model_float = self.LayerFusingNetTest()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
-                                           self.representative_data_gen, lambda name, _tp: self.get_tpc())
+                                           self.representative_data_gen, lambda name, _tp: self.get_tpc(),
+                                           qc=QuantizationConfig(
+                                               custom_tpc_opset_to_layer={"AnyAct":
+                                                                              ([ReLU, relu6, relu, SiLU, Sigmoid,
+                                                                                LayerFilterParams(Hardtanh,
+                                                                                                  min_val=0)],)}))
 
         self._compare(graph.fused_nodes)
 
@@ -194,16 +189,15 @@ class LayerFusingTest3(BaseLayerFusingTest):
                                                   operator_set=tuple(operator_set),
                                                   fusing_patterns=tuple(fusing_patterns),
                                                   name='layer_fusing_test')
-        pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp)
-        with pytorch_tpc:
-            tp.OperationsSetToLayers("Conv", [Conv2d])
-            tp.OperationsSetToLayers("AnyAct", [ReLU, relu6, relu])
-        return pytorch_tpc
+        return generated_tp
 
     def run_test(self, seed=0):
         model_float = self.LayerFusingNetTest()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
-                                           self.representative_data_gen, lambda name, _tp: self.get_tpc())
+                                           self.representative_data_gen, lambda name, _tp: self.get_tpc(),
+                                           qc=QuantizationConfig(
+                                               custom_tpc_opset_to_layer={"AnyAct":
+                                                                              ([ReLU, relu6, relu],)}))
 
         self._compare(graph.fused_nodes)
 
@@ -244,13 +238,13 @@ class LayerFusingTest4(BaseLayerFusingTest):
         mixed_precision_configuration_options = schema.QuantizationConfigOptions(tuple(mixed_precision_cfg_list),
                                                                                  base_config=base_config)
         default_configuration_options = schema.QuantizationConfigOptions(tuple([default_config]))
-        conv = schema.OperatorsSet("Conv", mixed_precision_configuration_options)
-        fc = schema.OperatorsSet("FullyConnected", mixed_precision_configuration_options)
-        any_relu = schema.OperatorsSet("AnyReLU")
-        add = schema.OperatorsSet("Add")
-        swish = schema.OperatorsSet("Swish")
-        operator_set = [conv, fc, any_relu, add, swish]
-        activations_to_fuse = schema.OperatorSetConcat([any_relu, swish])
+        conv = schema.OperatorsSet(schema.OperatorSetNames.OPSET_CONV.value, mixed_precision_configuration_options)
+        fc = schema.OperatorsSet(schema.OperatorSetNames.OPSET_FULLY_CONNECTED.value, mixed_precision_configuration_options)
+        relu = schema.OperatorsSet(schema.OperatorSetNames.OPSET_RELU.value)
+        add = schema.OperatorsSet(schema.OperatorSetNames.OPSET_ADD.value)
+        swish = schema.OperatorsSet(schema.OperatorSetNames.OPSET_SWISH.value)
+        operator_set = [conv, fc, relu, add, swish]
+        activations_to_fuse = schema.OperatorSetConcat([relu, swish])
         # Define fusions
         fusing_patterns = [schema.Fusing((conv, activations_to_fuse)),
                            schema.Fusing((conv, add, activations_to_fuse)),
@@ -265,14 +259,7 @@ class LayerFusingTest4(BaseLayerFusingTest):
                                                   fusing_patterns=tuple(fusing_patterns),
                                                   name='layer_fusing_test')
 
-        pytorch_tpc = tp.TargetPlatformCapabilities(generated_tp)
-        with pytorch_tpc:
-            tp.OperationsSetToLayers("Conv", [Conv2d])
-            tp.OperationsSetToLayers("FullyConnected", [Linear])
-            tp.OperationsSetToLayers("AnyReLU", [ReLU])
-            tp.OperationsSetToLayers("Add", [torch.add])
-            tp.OperationsSetToLayers("Swish", [SiLU])
-        return pytorch_tpc
+        return generated_tp
 
     def run_test(self, seed=0):
         model_float = self.LayerFusingNetTest()
