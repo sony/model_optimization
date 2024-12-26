@@ -92,7 +92,7 @@ class AttachTpModelToKeras(AttachTpModelToFw):
         }
 
         if FOUND_SONY_CUSTOM_LAYERS:
-            self._opset2layer[OperatorSetNames.OPSET_POST_PROCESS] = [SSDPostProcess]
+            self._opset2layer[OperatorSetNames.OPSET_SSD_POST_PROCESS] = [SSDPostProcess]
 
         self._opset2attr_mapping = {OperatorSetNames.OPSET_CONV.value: {
             KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),

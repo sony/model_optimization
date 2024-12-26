@@ -14,16 +14,7 @@
 # ==============================================================================
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.defaultdict import DefaultDict
-from model_compression_toolkit.core.pytorch.constants import BIAS
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, PYTORCH_KERNEL
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
-    AttachTpModelToPytorch
-
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
-from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
-from tests.common_tests.helpers.generate_test_tp_model import generate_test_tpc, generate_test_tp_model
+from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 
 tp = mct.target_platform
 
