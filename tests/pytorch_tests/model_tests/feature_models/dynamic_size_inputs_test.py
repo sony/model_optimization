@@ -18,9 +18,7 @@ import numpy as np
 import torch
 
 import model_compression_toolkit as mct
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
-from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
-from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 
 """
@@ -111,7 +109,8 @@ class ReshapeNetTest(BasePytorchTest):
                                            "mapping the test model name to a TPC object."
         for model_name in tpc_dict.keys():
             tpc = tpc_dict[model_name]
-            assert isinstance(tpc, TargetPlatformCapabilities)
+
+            assert isinstance(tpc, TargetPlatformModel)
 
             core_config = core_config_dict.get(model_name)
             assert core_config is not None, f"Model name {model_name} does not exists in the test's " \

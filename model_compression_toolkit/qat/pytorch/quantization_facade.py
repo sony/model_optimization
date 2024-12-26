@@ -17,6 +17,9 @@ from typing import Callable
 from functools import partial
 
 from model_compression_toolkit.constants import PYTORCH
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+    AttachTpModelToPytorch
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 from model_compression_toolkit.core import CoreConfig
@@ -79,7 +82,7 @@ if FOUND_TORCH:
                                                               target_resource_utilization: ResourceUtilization = None,
                                                               core_config: CoreConfig = CoreConfig(),
                                                               qat_config: QATConfig = QATConfig(),
-                                                              target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
+                                                              target_platform_capabilities: TargetPlatformModel = DEFAULT_PYTORCH_TPC):
         """
          Prepare a trained Pytorch model for quantization aware training. First the model quantization is optimized
          with post-training quantization, then the model layers are wrapped with QuantizeWrappers. The model is
@@ -153,6 +156,11 @@ if FOUND_TORCH:
 
         tb_w = init_tensorboard_writer(DEFAULT_PYTORCH_INFO)
         fw_impl = PytorchImplementation()
+
+        # Attach tpc model to framework
+        attach2pytorch = AttachTpModelToPytorch()
+        target_platform_capabilities = attach2pytorch.attach(target_platform_capabilities,
+                                                             core_config.quantization_config.custom_tpc_opset_to_layer)
 
         # Ignore hessian scores service as we do not use it here
         tg, bit_widths_config, _, _ = core_runner(in_model=in_model,

@@ -105,8 +105,4 @@ def get_tpc_with_activation_mp_keras(base_config, default_config, mp_bitwidth_ca
         'FullyConnected': {KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
                            BIAS_ATTR: DefaultDict(default_value=BIAS)}}
 
-    return generate_test_tpc(name=name,
-                             tp_model=mp_tp_model,
-                             base_tpc=generate_keras_tpc(name=f"base_{name}", tp_model=mp_tp_model),
-                             op_sets_to_layer_add=op_sets_to_layer_add,
-                             attr_mapping=attr_mapping)
+    return generate_test_tpc(tp_model=mp_tp_model, op_sets_to_layer_add=op_sets_to_layer_add, attr_mapping=attr_mapping)

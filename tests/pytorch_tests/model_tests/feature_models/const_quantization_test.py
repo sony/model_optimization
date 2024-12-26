@@ -19,7 +19,7 @@ import numpy as np
 import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
-from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
+from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, CoreConfig, QuantizationConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
@@ -225,6 +225,10 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
     def generate_inputs(self):
         return [np.random.randint(-128, 127, size=in_shape).astype(np.float32) for in_shape in self.get_input_shapes()]
 
+    def get_core_config(self):
+        return CoreConfig(quantization_config=QuantizationConfig(custom_tpc_opset_to_layer=
+                                                                 {"WeightQuant": ([torch.Tensor.expand, torch.cat],)}))
+
     def get_tpc(self):
         tp = mct.target_platform
         attr_cfg = generate_test_attr_configs()
@@ -257,11 +261,7 @@ class ConstQuantizationExpandTest(BasePytorchFeatureNetworkTest):
             operator_set=tuple([schema.OperatorsSet("WeightQuant", const_configuration_options)]),
             add_metadata=False)
 
-        tpc = tp.TargetPlatformCapabilities(tp_model)
-        with tpc:
-            tp.OperationsSetToLayers("WeightQuant", [torch.Tensor.expand, torch.cat])
-
-        return tpc
+        return tp_model
 
     def create_networks(self):
         return ExpandConstQuantizationNet(self.val_batch_size)

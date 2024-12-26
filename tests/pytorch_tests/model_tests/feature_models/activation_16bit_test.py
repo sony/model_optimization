@@ -21,8 +21,11 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import \
-    OPSET_MUL, OPSET_GELU, OPSET_TANH
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames
+from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import get_opset_by_name
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+    AttachTpModelToPytorch
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import get_tp_model
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 
@@ -63,19 +66,20 @@ class Activation16BitNet(torch.nn.Module):
         return x
 
 
-def set_16bit_as_default(tpc, required_op_set, required_ops_list):
-    for op in required_ops_list:
-        base_config = [l for l in tpc.layer2qco[op].quantization_configurations if l.activation_n_bits == 16][0]
-        tpc.layer2qco[op] = replace(tpc.layer2qco[op], base_config=base_config)
-
+def set_16bit_as_default(tpc, required_op_set):
+    # base_config = [l for l in tpc.layer2qco[op].quantization_configurations if l.activation_n_bits == 16][0]
+    # tpc.layer2qco[op] = replace(tpc.layer2qco[op], base_config=base_config)
+    pass
 
 class Activation16BitTest(BasePytorchFeatureNetworkTest):
 
     def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v4')
-        set_16bit_as_default(tpc, OPSET_MUL, [torch.mul, mul])
-        set_16bit_as_default(tpc, OPSET_GELU, [torch.nn.GELU, torch.nn.functional.gelu])
-        set_16bit_as_default(tpc, OPSET_TANH, [torch.nn.Tanh, torch.nn.functional.tanh, torch.tanh])
+        # TODO: need to build a TP model that puts the 16 bit oprion ad default, but include also all other configs, opsets and fusing as in the v4 tpc
+        raise Exception("TODO: need to build a TP model that puts the 16 bit oprion ad default, but include also all other configs, opsets and fusing as in the v4 tpc")
+        tpc = get_tp_model()
+        set_16bit_as_default(tpc, OperatorSetNames.OPSET_MUL.value)
+        set_16bit_as_default(tpc, OperatorSetNames.OPSET_GELU.value)
+        set_16bit_as_default(tpc, OperatorSetNames.OPSET_TANH.value)
         return tpc
 
     def create_networks(self):

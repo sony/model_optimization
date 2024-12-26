@@ -17,12 +17,16 @@ from typing import Callable
 
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import PYTORCH
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
 from model_compression_toolkit.core.common.framework_info import FrameworkInfo
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import compute_resource_utilization_data
 from model_compression_toolkit.core.common.quantization.core_config import CoreConfig
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_quantization_config import MixedPrecisionQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+    AttachTpModelToPytorch
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import get_tp_model
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 if FOUND_TORCH:
@@ -79,6 +83,11 @@ if FOUND_TORCH:
                             "The provided 'mixed_precision_config' is not of this type.")
 
         fw_impl = PytorchImplementation()
+
+        # Attach tpc model to framework
+        attach2pytorch = AttachTpModelToPytorch()
+        # TODO: add option to pass custom opsets
+        target_platform_capabilities = attach2pytorch.attach(target_platform_capabilities)
 
         return compute_resource_utilization_data(in_model,
                                                  representative_data_gen,

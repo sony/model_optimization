@@ -19,6 +19,10 @@ from typing import Callable
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.constants import PYTORCH
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+    AttachTpModelToPytorch
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import get_tp_model
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 from model_compression_toolkit.target_platform_capabilities.target_platform import TargetPlatformCapabilities
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization import ResourceUtilization
@@ -40,13 +44,16 @@ if FOUND_TORCH:
     from model_compression_toolkit import get_target_platform_capabilities
     from mct_quantizers.pytorch.metadata import add_metadata
 
+    # TODO: replace with TPC MODEL from v1 as default (until defining an academic TPC model and removing IMX500)
+    #   replace in all facades
     DEFAULT_PYTORCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
 
+    # TODO: update all facades to get a TPC model (JSON? Parsed? - currently an initialized object)
     def pytorch_post_training_quantization(in_module: Module,
                                            representative_data_gen: Callable,
                                            target_resource_utilization: ResourceUtilization = None,
                                            core_config: CoreConfig = CoreConfig(),
-                                           target_platform_capabilities: TargetPlatformCapabilities = DEFAULT_PYTORCH_TPC):
+                                           target_platform_capabilities: TargetPlatformModel = DEFAULT_PYTORCH_TPC):
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds
@@ -106,6 +113,11 @@ if FOUND_TORCH:
         tb_w = init_tensorboard_writer(fw_info)
 
         fw_impl = PytorchImplementation()
+
+        # Attach tpc model to framework
+        attach2pytorch = AttachTpModelToPytorch()
+        target_platform_capabilities = attach2pytorch.attach(target_platform_capabilities,
+                                                             core_config.quantization_config.custom_tpc_opset_to_layer)
 
         # Ignore hessian info service as it is not used here yet.
         tg, bit_widths_config, _, scheduling_info = core_runner(in_model=in_module,

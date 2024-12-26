@@ -19,10 +19,15 @@ from operator import mul
 import inspect
 
 from model_compression_toolkit.constants import PYTORCH
+from model_compression_toolkit.core.pytorch.reader.node_holders import DummyPlaceHolder
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
 from mct_quantizers import PytorchActivationQuantizationHolder
 import model_compression_toolkit as mct
 import torch
+
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+    AttachTpModelToPytorch
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tp_model import get_tp_model
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPrecisionActivationBaseTest
 from tests.pytorch_tests.utils import get_layer_type_from_activation_quantizer
@@ -83,7 +88,8 @@ class BaseManualBitWidthSelectionTest(MixedPrecisionActivationBaseTest):
     def get_mp_core_config():
         qc = mct.core.QuantizationConfig(mct.core.QuantizationErrorMethod.MSE, mct.core.QuantizationErrorMethod.MSE,
                                          relu_bound_to_power_of_2=False, weights_bias_correction=True,
-                                         input_scaling=False, activation_channel_equalization=False)
+                                         input_scaling=False, activation_channel_equalization=False,
+                                         custom_tpc_opset_to_layer={"Input": ([DummyPlaceHolder],)})
         mpc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=1)
 
         core_config = mct.core.CoreConfig(quantization_config=qc, mixed_precision_config=mpc)
@@ -186,11 +192,14 @@ class ManualBitWidthByLayerNameTest(BaseManualBitWidthSelectionTest):
 class Manual16BitTest(ManualBitWidthByLayerNameTest):
 
     def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
-        mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
+        # TODO: need to build a TP model that puts the 16 bit oprion ad default, but include also all other configs
+        raise Exception(
+            "TODO: need to build a TP model that puts the 16 bit oprion ad default, but include also all other configs")
+        tpc = get_tp_model()
+        mul_op_set = get_op_set('Mul', tpc.operator_set)
         base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
         tpc.layer2qco[torch.mul] = replace(tpc.layer2qco[torch.mul], base_config=base_config)
-        tpc.layer2qco[mul] = replace(tpc.layer2qco[mul] , base_config=base_config)
+        tpc.layer2qco[mul] = replace(tpc.layer2qco[mul], base_config=base_config)
         return {'mixed_precision_activation_model': tpc}
 
     def create_feature_network(self, input_shape):

@@ -14,7 +14,7 @@
 #  ==============================================================================
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 
-from model_compression_toolkit.ptq.pytorch.quantization_facade import DEFAULT_PYTORCH_TPC
+# from model_compression_toolkit.ptq.pytorch.quantization_facade import DEFAULT_PYTORCH_TPC
 from model_compression_toolkit.xquant.common.framework_report_utils import FrameworkReportUtils
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
@@ -41,7 +41,7 @@ class PytorchReportUtils(FrameworkReportUtils):
         dataset_utils = PytorchDatasetUtils()
         model_folding = ModelFoldingUtils(fw_info=fw_info,
                                           fw_impl=fw_impl,
-                                          fw_default_tpc=DEFAULT_PYTORCH_TPC)
+                                          fw_default_tpc=None)
 
         similarity_calculator = SimilarityCalculator(dataset_utils=dataset_utils,
                                                      model_folding=model_folding,

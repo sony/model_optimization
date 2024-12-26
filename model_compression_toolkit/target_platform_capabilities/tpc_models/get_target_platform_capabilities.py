@@ -17,16 +17,11 @@ from model_compression_toolkit.target_platform_capabilities.target_platform impo
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.target_platform_capabilities import \
     get_tpc_dict_by_fw as get_imx500_tpc
-from model_compression_toolkit.target_platform_capabilities.tpc_models.tflite_tpc.target_platform_capabilities import \
-    get_tpc_dict_by_fw as get_tflite_tpc
-from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_tpc.target_platform_capabilities import \
-    get_tpc_dict_by_fw as get_qnnpack_tpc
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL,  LATEST
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tp_model import get_tp_model
 
 tpc_dict = {DEFAULT_TP_MODEL: get_imx500_tpc,
-            IMX500_TP_MODEL: get_imx500_tpc,
-            TFLITE_TP_MODEL: get_tflite_tpc,
-            QNNPACK_TP_MODEL: get_qnnpack_tpc}
+            IMX500_TP_MODEL: get_imx500_tpc}
 
 
 def get_target_platform_capabilities(fw_name: str,
@@ -45,12 +40,13 @@ def get_target_platform_capabilities(fw_name: str,
         A TargetPlatformCapabilities object that models the hardware and attaches
         a framework information to it.
     """
-    assert target_platform_name in tpc_dict, f'Target platform {target_platform_name} is not defined!'
-    fw_tpc = tpc_dict.get(target_platform_name)
-    tpc_versions = fw_tpc(fw_name)
-    if target_platform_version is None:
-        target_platform_version = LATEST
-    else:
-        assert target_platform_version in tpc_versions, (f'TPC version {target_platform_version} is not supported for '
-                                                         f'framework {fw_name}.')
-    return tpc_versions[target_platform_version]()
+    # assert target_platform_name in tpc_dict, f'Target platform {target_platform_name} is not defined!'
+    # fw_tpc = tpc_dict.get(target_platform_name)
+    # tpc_versions = fw_tpc(fw_name)
+    # if target_platform_version is None:
+    #     target_platform_version = LATEST
+    # else:
+    #     assert target_platform_version in tpc_versions, (f'TPC version {target_platform_version} is not supported for '
+    #                                                      f'framework {fw_name}.')
+    # return tpc_versions[target_platform_version]()
+    return get_tp_model()

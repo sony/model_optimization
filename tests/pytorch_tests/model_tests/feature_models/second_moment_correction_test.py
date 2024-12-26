@@ -34,6 +34,8 @@ from model_compression_toolkit.core.pytorch.statistics_correction.apply_second_m
     pytorch_apply_second_moment_correction
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, set_model
 from model_compression_toolkit.core.runner import core_runner
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+    AttachTpModelToPytorch
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_tp_model
 from tests.pytorch_tests.model_tests.base_pytorch_test import BasePytorchTest
 from tests.pytorch_tests.tpc_pytorch import get_pytorch_test_tpc_dict
@@ -312,6 +314,10 @@ class ValueSecondMomentTest(BaseSecondMomentTest):
 
         for model_name, core_config in core_config_dict.items():
             tpc = tpc_dict[model_name]
+
+            attach2pytorch = AttachTpModelToPytorch()
+            tpc = attach2pytorch.attach(tpc)
+
             tg, graph_after_second_moment_correction = self.prepare_graph(model_float,
                                                                           representative_data_gen,
                                                                           core_config=core_config,
