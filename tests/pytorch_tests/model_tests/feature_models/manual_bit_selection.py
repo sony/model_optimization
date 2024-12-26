@@ -186,7 +186,8 @@ class ManualBitWidthByLayerNameTest(BaseManualBitWidthSelectionTest):
                         self.unit_test.assertTrue(layer.activation_holder_quantizer.num_bits == bit_width)
                     else:
                         # make sure that the bit width of other layers was not changed.
-                        self.unit_test.assertFalse(layer.activation_holder_quantizer.num_bits in bit_widths, msg=f"name {name}, layer.activation_holder_quantizer.num_bits {layer.activation_holder_quantizer.num_bits }, {self.bit_widths}")
+                        err_msg = f"name {name}, layer.activation_holder_quantizer.num_bits {layer.activation_holder_quantizer.num_bits}, {self.bit_widths}"
+                        self.unit_test.assertFalse(layer.activation_holder_quantizer.num_bits in bit_widths, msg=err_msg)
 
 
 class Manual16BitTest(ManualBitWidthByLayerNameTest):
@@ -223,8 +224,7 @@ class Manual16BitTestMixedPrecisionTest(ManualBitWidthByLayerNameTest):
         return {'mixed_precision_activation_model': tpc}
 
     def get_resource_utilization(self):
-        return mct.core.ResourceUtilization(activation_memory=6200)
-
+        return mct.core.ResourceUtilization(activation_memory=15000)
 
     def create_feature_network(self, input_shape):
         return Activation16BitNet()

@@ -22,7 +22,7 @@ else:
     from keras.layers import TFOpLambda
 
 
-def get_layers_from_model_by_type(model:keras.Model,
+def get_layers_from_model_by_type(model: keras.Model,
                                   layer_type: type,
                                   include_wrapped_layers: bool = True):
     """

@@ -66,24 +66,45 @@ class Activation16BitNet(torch.nn.Module):
         return x
 
 
+class Activation16BitNetMP(torch.nn.Module):
+
+    def __init__(self):
+        super().__init__()
+        self.register_buffer('add_const', torch.rand((3, 1, 1)))
+        self.register_buffer('sub_const', torch.rand((3, 1, 1)))
+        self.register_buffer('div_const', 2*torch.ones((3, 1, 1)))
+
+    def forward(self, x):
+        x = torch.mul(x, x)[:, :, :8, :8]
+        x1 = torch.add(x, self.add_const)
+        x = torch.sub(x, self.sub_const)
+        x = torch.mul(x, x1)
+        x = torch.reshape(x, (-1, 3, 2, 4, 8))
+        x = torch.reshape(x, (-1, 3, 8, 8))
+        x = torch.divide(x, self.div_const)
+
+        return x
+
+
 def set_16bit_as_default(tpc, required_op_set):
     # base_config = [l for l in tpc.layer2qco[op].quantization_configurations if l.activation_n_bits == 16][0]
     # tpc.layer2qco[op] = replace(tpc.layer2qco[op], base_config=base_config)
     pass
 
+
 class Activation16BitTest(BasePytorchFeatureNetworkTest):
 
     def get_tpc(self):
         # TODO: need to build a TP model that puts the 16 bit oprion ad default, but include also all other configs, opsets and fusing as in the v4 tpc
-        raise Exception("TODO: need to build a TP model that puts the 16 bit oprion ad default, but include also all other configs, opsets and fusing as in the v4 tpc")
+        raise Exception(
+            "TODO: need to build a TP model that puts the 16 bit oprion ad default, but include also all other configs, opsets and fusing as in the v4 tpc")
         tpc = get_tp_model()
-        set_16bit_as_default(tpc, OperatorSetNames.OPSET_MUL.value)
-        set_16bit_as_default(tpc, OperatorSetNames.OPSET_GELU.value)
-        set_16bit_as_default(tpc, OperatorSetNames.OPSET_TANH.value)
+        set_16bit_as_default(tpc, OPSET_MUL, [torch.mul, mul])
+        set_16bit_as_default(tpc, OPSET_GELU, [torch.nn.GELU, torch.nn.functional.gelu])
+        set_16bit_as_default(tpc, OPSET_TANH, [torch.nn.Tanh, torch.nn.functional.tanh, torch.tanh])
         return tpc
 
     def create_networks(self):
-        # Activation16BitNet()(torch.from_numpy(self.generate_inputs()[0]).type(torch.float32))
         return Activation16BitNet()
 
     def compare(self, quantized_model, float_model, input_x=None, quantization_info=None):
@@ -109,7 +130,7 @@ class Activation16BitTest(BasePytorchFeatureNetworkTest):
 class Activation16BitMixedPrecisionTest(Activation16BitTest):
 
     def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
+        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v4')
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
         base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
         quantization_configurations = list(mul_op_set.qc_options.quantization_configurations)
@@ -121,10 +142,10 @@ class Activation16BitMixedPrecisionTest(Activation16BitTest):
         return tpc
 
     def get_resource_utilization(self):
-        return mct.core.ResourceUtilization(activation_memory=200)
+        return mct.core.ResourceUtilization(activation_memory=5000)
 
     def create_networks(self):
-        return Activation16BitNet(use_concat=False, enable_head=False)
+        return Activation16BitNetMP()
 
     def get_mixed_precision_config(self):
         return MixedPrecisionQuantizationConfig()
