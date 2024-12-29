@@ -19,7 +19,7 @@ def get_glue_dataset_num_labels():
     return len(plain_dataset["train"].features["label"].names)
 
 quantization_dataset_name = "wikitext"
-batch_size = 4
+batch_size = 1
 dataset_name = "glue"
 task_name = "mrpc"
 model_name = 'bert-base-uncased'
@@ -139,7 +139,7 @@ mct.exporter.pytorch_export_model(model=quant_model,
                                   save_model_path='./bert_qmodel_wo_mask.onnx',
                                   repr_dataset=representative_dataset,
                                   onnx_opset_version=20)
-
+print("Finished model quantization!")
 """
 bert-mct issues map:
 attention substitution fails
@@ -148,4 +148,11 @@ nodes with output_shape=[]
 output with single value: [128] and not a tensor
 WARNING:Model Compression Toolkit:Skipping bias correction due to valiation problem.
 recursion error on run, but not on debug mode
+"""
+
+"""
+regarding cast mode:
+* it doesn't exist in original model
+* it's not added during pytorch_post_training_quantization run
+* 
 """

@@ -96,6 +96,7 @@ def fx_graph_module_generation(pytorch_model: torch.nn.Module,
         if is_language_model(pytorch_model, batch_data):
             # input_names = ["input_ids", "attention_mask", "token_type_ids"]
             input_names = ["input_ids"]
+            # input_names = ["inputs_embeds"]
             symbolic_traced = transformers_fx.symbolic_trace(pytorch_model, input_names)
         else:
             symbolic_traced = symbolic_trace(pytorch_model)
@@ -104,7 +105,9 @@ def fx_graph_module_generation(pytorch_model: torch.nn.Module,
                         f'fx error: {e}')
     inputs = next(representative_data_gen())
     if is_language_model(pytorch_model, inputs):
-        llm_inputs = [inputs["input_ids"], inputs["attention_mask"], inputs["token_type_ids"]]
+        # llm_inputs = [inputs["input_ids"], inputs["attention_mask"], inputs["token_type_ids"]]
+        llm_inputs = [inputs["input_ids"]]
+        # llm_inputs = inputs
         input_for_shape_infer = [to_tensor(i, torch.int32) for i in llm_inputs]
     else:
         input_for_shape_infer = [to_tensor(i) for i in inputs]

@@ -109,18 +109,19 @@ if FOUND_ONNX:
                 onnx_model = add_onnx_metadata(onnx_model, self.model.metadata)
                 onnx.save_model(onnx_model, self.save_model_path)
             else:
-                symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
+                # symbolic_names = {0: 'batch_size', 1: 'max_seq_len'}
+                symbolic_names = {0: 'batch_size'}
                 torch.onnx.export(self.model,
                                   tuple(model_input) if isinstance(model_input, list) else model_input,
                                   self.save_model_path,
                                   opset_version=self._onnx_opset_version,
                                   verbose=False,
-                                  input_names=['input_ids', "attention_mask", "segment_ids"],
-                                  # input_names=['input_ids'],
+                                  # input_names=['input_ids', "attention_mask", "segment_ids"],
+                                  input_names=['input_ids'],
                                   output_names=['output'],
                                   dynamic_axes={"input_ids": symbolic_names,
-                                                "attention_mask": symbolic_names,
-                                                "segment_ids": symbolic_names,
+                                  #               "attention_mask": symbolic_names,
+                                  #               "segment_ids": symbolic_names,
                                                 'output': symbolic_names
                                                 }
                                   )

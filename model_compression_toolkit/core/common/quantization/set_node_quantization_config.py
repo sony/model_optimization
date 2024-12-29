@@ -189,8 +189,11 @@ def set_quantization_configs_to_node(node: BaseNode,
     node.sort_node_candidates(fw_info)
 
     for candidate_qc in node.candidates_quantization_cfg:
-        candidate_qc.activation_quantization_cfg.enable_activation_quantization = \
-            candidate_qc.activation_quantization_cfg.enable_activation_quantization and node.get_has_activation()
+        if node.name == 'input_ids':
+            candidate_qc.activation_quantization_cfg.enable_activation_quantization = False
+        else:
+            candidate_qc.activation_quantization_cfg.enable_activation_quantization = \
+                candidate_qc.activation_quantization_cfg.enable_activation_quantization and node.get_has_activation()
 
 
 def create_node_activation_qc(qc: QuantizationConfig,

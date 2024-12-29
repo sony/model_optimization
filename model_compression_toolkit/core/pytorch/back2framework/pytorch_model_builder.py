@@ -152,9 +152,9 @@ def _run_operation(n: BaseNode,
         else:
             if n.name == "getitem_2" or n.name == "getitem_4":
                 op_call_args = [(slice(None, None, None), slice(0, 512, None))]
-            if n.name == 'bert_embeddings_word_embeddings' or n.layer_class.__name__ == 'Embedding':
+            # if n.name == 'bert_embeddings_word_embeddings' or n.layer_class.__name__ == 'Embedding':
                 # 'bert_embeddings_token_type_embeddings', 'bert_embeddings_position_embeddings'
-                input_tensors = [t.type(torch.int32) for t in input_tensors]
+                # input_tensors = [t.type(torch.int32) for t in input_tensors]
             if n.layer_class.__name__ == 'masked_fill':
                 input_tensors[1] = input_tensors[1].type(torch.bool)
             merged_inputs, functional_kwargs = _merge_inputs(n, input_tensors, op_call_args, functional_kwargs.copy(),
