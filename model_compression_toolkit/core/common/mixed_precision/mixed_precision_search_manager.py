@@ -42,7 +42,7 @@ class MixedPrecisionSearchManager:
                  fw_info: FrameworkInfo,
                  fw_impl: FrameworkImplementation,
                  sensitivity_evaluator: SensitivityEvaluation,
-                 ru_functions: Dict[RUTarget, RuFunctions[MpRuMetric, MpRuAggregation]],
+                 ru_functions: Dict[RUTarget, RuFunctions],
                  target_resource_utilization: ResourceUtilization,
                  original_graph: Graph = None):
         """
