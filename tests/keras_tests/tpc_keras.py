@@ -89,20 +89,4 @@ def get_tpc_with_activation_mp_keras(base_config, default_config, mp_bitwidth_ca
                                                        mp_bitwidth_candidates_list=mp_bitwidth_candidates_list,
                                                        custom_opsets=list(custom_opsets.keys()))
 
-    op_sets_to_layer_add = {
-        "Input": [InputLayer],
-    }
-
-    op_sets_to_layer_add.update(custom_opsets)
-
-    # we assume a standard tp model with standard operator sets names,
-    # otherwise - need to generate the tpc per test and not with this generic function
-    attr_mapping = {'Conv': {
-        KERNEL_ATTR: DefaultDict({
-            DepthwiseConv2D: KERAS_DEPTHWISE_KERNEL,
-            tf.nn.depthwise_conv2d: KERAS_DEPTHWISE_KERNEL}, default_value=KERAS_KERNEL),
-        BIAS_ATTR: DefaultDict(default_value=BIAS)},
-        'FullyConnected': {KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
-                           BIAS_ATTR: DefaultDict(default_value=BIAS)}}
-
-    return generate_test_tpc(tp_model=mp_tp_model, op_sets_to_layer_add=op_sets_to_layer_add, attr_mapping=attr_mapping)
+    return mp_tp_model
