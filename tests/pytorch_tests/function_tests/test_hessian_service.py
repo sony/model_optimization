@@ -251,7 +251,8 @@ class FetchHessianRequiredZeroTest(BaseHessianServiceTest):
                                                 self.pytorch_impl,
                                                 DEFAULT_PYTORCH_INFO,
                                                 representative_dataset,
-                                                generate_pytorch_tpc)
+                                                generate_pytorch_tpc,
+                                                attach2fw=AttachTpModelToPytorch())
         data_loader = data_gen_to_dataloader(representative_dataset, batch_size=1)
         self.request = HessianScoresRequest(mode=HessianMode.ACTIVATION,
                                             granularity=HessianScoresGranularity.PER_TENSOR,

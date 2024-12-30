@@ -23,6 +23,11 @@ from mct_quantizers import PytorchActivationQuantizationHolder
 import model_compression_toolkit as mct
 import torch
 
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames, \
+    QuantizationConfigOptions
+from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
+    get_config_options_by_operators_set
+from tests.common_tests.helpers.generate_test_tp_model import generate_custom_test_tp_model
 from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPrecisionActivationBaseTest
@@ -95,7 +100,7 @@ class BaseManualBitWidthSelectionTest(MixedPrecisionActivationBaseTest):
         # Configures the core settings including manual bit width adjustments.
         core_config = self.get_mp_core_config()
         core_config.bit_width_config.set_manual_activation_bit_width(self.filters, self.bit_widths)
-        return {"mixed_precision_activation_model": core_config}
+        return {"manual_bit_selection": core_config}
 
 
 class ManualBitWidthByLayerTypeTest(BaseManualBitWidthSelectionTest):
@@ -121,6 +126,10 @@ class ManualBitWidthByLayerTypeTest(BaseManualBitWidthSelectionTest):
                 self.functional_names.update({filter.node_type.__name__: bit_width})
 
         super().__init__(unit_test)
+
+    def get_tpc(self):
+        tpc_dict = super().get_tpc()
+        return {"manual_bit_selection": v for _, v in tpc_dict.items()}
 
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         # in the compare we need bit_widths to be a list
@@ -167,6 +176,10 @@ class ManualBitWidthByLayerNameTest(BaseManualBitWidthSelectionTest):
 
         super().__init__(unit_test)
 
+    def get_tpc(self):
+        tpc_dict = super().get_tpc()
+        return {"manual_bit_selection": v for _, v in tpc_dict.items()}
+
     def compare(self, quantized_models, float_model, input_x=None, quantization_info=None):
         # in the compare we need bit_widths to be a list
         bit_widths = [self.bit_widths] if not isinstance(self.bit_widths, list) else self.bit_widths
@@ -189,19 +202,24 @@ class ManualBitWidthByLayerNameTest(BaseManualBitWidthSelectionTest):
 class Manual16BitTest(ManualBitWidthByLayerNameTest):
 
     def get_tpc(self):
-        # TODO: need to build a TP model that puts the 16 bit oprion ad default, but include also all other configs
-        raise Exception(
-            "TODO: need to build a TP model that puts the 16 bit oprion ad default, but include also all other configs")
         tpc = get_tp_model()
-        mul_op_set = get_op_set('Mul', tpc.operator_set)
-        base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.mul] = tpc.layer2qco[torch.mul].model_copy(
-            update={'quantization_configurations': mul_op_set.qc_options.quantization_configurations,
-                    'base_config': base_config})
-        tpc.layer2qco[mul] = tpc.layer2qco[mul].model_copy(
-            update={'quantization_configurations': mul_op_set.qc_options.quantization_configurations,
-                    'base_config': base_config})
-        return {'mixed_precision_activation_model': tpc}
+
+        mul_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.OPSET_MUL.value)
+        base_cfg_16 = [l for l in mul_qco.quantization_configurations if l.activation_n_bits == 16][0]
+        quantization_configurations = list(mul_qco.quantization_configurations)
+
+        qco_16 = QuantizationConfigOptions(base_config=base_cfg_16,
+                                           quantization_configurations=quantization_configurations)
+
+        tpc = generate_custom_test_tp_model(
+            name="custom_16_bit_tpc",
+            base_cfg=tpc.default_qco.base_config,
+            base_tp_model=tpc,
+            operator_sets_dict={
+                OperatorSetNames.OPSET_MUL.value: qco_16,
+            })
+
+        return {'manual_bit_selection': tpc}
 
     def create_feature_network(self, input_shape):
         return Activation16BitNet()
@@ -210,18 +228,27 @@ class Manual16BitTest(ManualBitWidthByLayerNameTest):
 class Manual16BitTestMixedPrecisionTest(ManualBitWidthByLayerNameTest):
 
     def get_tpc(self):
-        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
-        mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
-        quantization_configurations = list(mul_op_set.qc_options.quantization_configurations)
-        quantization_configurations.extend(
-            [mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=4),
-             mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[torch.mul] = tpc.layer2qco[torch.mul].model_copy(
-            update={'base_config': base_config, 'quantization_configurations': tuple(quantization_configurations)})
-        tpc.layer2qco[mul] = tpc.layer2qco[mul].model_copy(
-            update={'base_config': base_config, 'quantization_configurations': tuple(quantization_configurations)})
-        return {'mixed_precision_activation_model': tpc}
+        tpc = get_tp_model()
+
+        mul_qco = get_config_options_by_operators_set(tpc, OperatorSetNames.OPSET_MUL.value)
+        base_cfg_16 = [l for l in mul_qco.quantization_configurations if l.activation_n_bits == 16][0]
+        quantization_configurations = list(mul_qco.quantization_configurations)
+        quantization_configurations.extend([
+            base_cfg_16.clone_and_edit(activation_n_bits=4),
+            base_cfg_16.clone_and_edit(activation_n_bits=2)])
+
+        qco_16 = QuantizationConfigOptions(base_config=base_cfg_16,
+                                           quantization_configurations=quantization_configurations)
+
+        tpc = generate_custom_test_tp_model(
+            name="custom_16_bit_tpc",
+            base_cfg=tpc.default_qco.base_config,
+            base_tp_model=tpc,
+            operator_sets_dict={
+                OperatorSetNames.OPSET_MUL.value: qco_16,
+            })
+
+        return {'manual_bit_selection': tpc}
 
     def get_resource_utilization(self):
         return mct.core.ResourceUtilization(activation_memory=15000)

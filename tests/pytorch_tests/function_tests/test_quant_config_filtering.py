@@ -21,6 +21,14 @@ from model_compression_toolkit.core.keras.constants import FUNCTION
 
 import torch
 
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames, \
+    QuantizationConfigOptions
+from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
+    get_config_options_by_operators_set
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+    AttachTpModelToPytorch
+from tests.common_tests.helpers.generate_test_tp_model import generate_custom_test_tp_model
+from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model
 
 get_op_set = lambda x, x_list: [op_set for op_set in x_list if op_set.name == x][0]
 
@@ -29,15 +37,23 @@ class TestTorchQuantConfigFiltering(unittest.TestCase):
 
     @staticmethod
     def get_tpc_default_16bit():
-        # TODO: same issue with the 16bit tpc for test, need to fix this globaly
-        raise Exception("TODO: need 16 bit tpc")
-        tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
-        # Force Mul base_config to 16bit only
-        mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
-        base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.multiply] = tpc.layer2qco[torch.multiply].model_copy(
-            update={'quantization_configurations': mul_op_set.qc_options.quantization_configurations,
-                    'base_config': base_config})
+        tpc = get_tp_model()
+        base_cfg_16 = [c for c in get_config_options_by_operators_set(tpc,
+                                                                      OperatorSetNames.OPSET_MUL.value).quantization_configurations
+                       if c.activation_n_bits == 16][0].clone_and_edit()
+        qco_16 = QuantizationConfigOptions(base_config=base_cfg_16,
+                                           quantization_configurations=(tpc.default_qco.base_config,
+                                                                        base_cfg_16))
+        tpc = generate_custom_test_tp_model(
+            name="custom_16_bit_tpc",
+            base_cfg=tpc.default_qco.base_config,
+            base_tp_model=tpc,
+            operator_sets_dict={
+                OperatorSetNames.OPSET_MUL.value: qco_16,
+                OperatorSetNames.OPSET_GELU.value: qco_16,
+                OperatorSetNames.OPSET_TANH.value: qco_16,
+            })
+
         return tpc
 
     def test_config_filtering(self):
@@ -52,6 +68,8 @@ class TestTorchQuantConfigFiltering(unittest.TestCase):
                               [], {}, functional_op=torch.div)
 
         tpc = self.get_tpc_default_16bit()
+        tpc = AttachTpModelToPytorch().attach(tpc)
+
         node_qc_options = node.get_qco(tpc)
         self.assertTrue(node_qc_options.base_config.activation_n_bits == 16, "base_config should start with 16 bits.")
 

@@ -270,15 +270,15 @@ class FeatureModelsTestRunner(unittest.TestCase):
         ResidualCollapsingTest2(self).run_test()
 
     def test_const_quantization(self):
-        # c = (np.ones((16, 32, 32)) + np.random.random((16, 32, 32))).astype(np.float32)
-        # for func in [torch.add, torch.sub, torch.mul, torch.div]:
-        #     ConstQuantizationTest(self, func, c).run_test()
-        #     ConstQuantizationTest(self, func, c, input_reverse_order=True).run_test()
-        #     ConstQuantizationTest(self, func, 2.45).run_test()
-        #     ConstQuantizationTest(self, func, 5, input_reverse_order=True).run_test()
-        #
-        # AdvancedConstQuantizationTest(self).run_test()
-        # ConstQuantizationMultiInputTest(self).run_test()
+        c = (np.ones((16, 32, 32)) + np.random.random((16, 32, 32))).astype(np.float32)
+        for func in [torch.add, torch.sub, torch.mul, torch.div]:
+            ConstQuantizationTest(self, func, c).run_test()
+            ConstQuantizationTest(self, func, c, input_reverse_order=True).run_test()
+            ConstQuantizationTest(self, func, 2.45).run_test()
+            ConstQuantizationTest(self, func, 5, input_reverse_order=True).run_test()
+
+        AdvancedConstQuantizationTest(self).run_test()
+        ConstQuantizationMultiInputTest(self).run_test()
         ConstQuantizationExpandTest(self).run_test()
 
     def test_const_representation(self):
@@ -653,101 +653,101 @@ class FeatureModelsTestRunner(unittest.TestCase):
             ScaledDotProductAttentionTest(self, batch_size[i], q_and_k_embd_size[i], v_embd_size[i], source_seq_len[i],
                                           target_seq_len[i], attn_mask=attn_mask).run_test(seed=3)
 
-    #
-    # def test_gptq(self):
-    #     """
-    #     This test checks the GPTQ feature.
-    #     """
-    #     GPTQAccuracyTest(self).run_test()
-    #     GPTQAccuracyTest(self, per_channel=False).run_test()
-    #     GPTQAccuracyTest(self, per_channel=True, hessian_weights=False).run_test()
-    #     GPTQAccuracyTest(self, per_channel=True, log_norm_weights=False).run_test()
-    #     GPTQWeightsUpdateTest(self).run_test()
-    #     GPTQLearnRateZeroTest(self).run_test()
-    #
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
-    #                      params_learning=False).run_test()
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
-    #                      params_learning=True).run_test()
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-    #                      per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
-    #     GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
-    #     GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-    #                      weights_quant_method=QuantizationMethod.UNIFORM).run_test()
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-    #                      weights_quant_method=QuantizationMethod.UNIFORM, per_channel=False,
-    #                      params_learning=False).run_test()
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-    #                      weights_quant_method=QuantizationMethod.UNIFORM,
-    #                      per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
-    #     GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer,
-    #                           weights_quant_method=QuantizationMethod.UNIFORM,
-    #                           params_learning=False).run_test()  # TODO: When params learning is True, the uniform quantizer gets a min value  > max value
-    #
-    # def test_gptq_with_gradual_activation(self):
-    #     """
-    #     This test checks the GPTQ feature with gradual activation quantization.
-    #     """
-    #     GPTQAccuracyTest(self, gradual_activation_quantization=True).run_test()
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
-    #                      gradual_activation_quantization=True).run_test()
-    #     GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer,
-    #                           gradual_activation_quantization=True).run_test()
-    #
-    # def test_gptq_with_sample_layer_attention(self):
-    #     kwargs = dict(sample_layer_attention=True, loss=sample_layer_attention_loss,
-    #                   hessian_weights=True, hessian_num_samples=None,
-    #                   norm_scores=False, log_norm_weights=False, scaled_log_norm=False)
-    #     GPTQAccuracyTest(self, **kwargs).run_test()
-    #     GPTQAccuracyTest(self, hessian_batch_size=16, rounding_type=RoundingType.SoftQuantizer, **kwargs).run_test()
-    #     GPTQAccuracyTest(self, hessian_batch_size=5, rounding_type=RoundingType.SoftQuantizer,
-    #                      gradual_activation_quantization=True, **kwargs).run_test()
-    #     GPTQAccuracyTest(self, rounding_type=RoundingType.STE, **kwargs)
-    #
-    # def test_qat(self):
-    #     """
-    #     This test checks the QAT feature.
-    #     """
-    #     QuantizationAwareTrainingTest(self).run_test()
-    #     QuantizationAwareTrainingTest(self, finalize=True).run_test()
-    #     _method = mct.target_platform.QuantizationMethod.SYMMETRIC
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=_method,
-    #                                   activation_quantization_method=_method
-    #                                   ).run_test()
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=_method,
-    #                                   activation_quantization_method=_method,
-    #                                   finalize=True).run_test()
-    #     _method = mct.target_platform.QuantizationMethod.UNIFORM
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=_method,
-    #                                   activation_quantization_method=_method
-    #                                   ).run_test()
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=_method,
-    #                                   activation_quantization_method=_method,
-    #                                   finalize=True).run_test()
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
-    #                                   activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
-    #                                   training_method=TrainingMethod.LSQ,
-    #                                   finalize=True).run_test()
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
-    #                                   activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
-    #                                   training_method=TrainingMethod.LSQ,
-    #                                   finalize=True).run_test()
-    #     QuantizationAwareTrainingTest(self,
-    #                                   weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-    #                                   activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
-    #                                   training_method=TrainingMethod.LSQ,
-    #                                   finalize=True).run_test()
-    #     QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
-    #     QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
-    #     QuantizationAwareTrainingMixedPrecisionRUCfgTest(self).run_test()
+
+    def test_gptq(self):
+        """
+        This test checks the GPTQ feature.
+        """
+        GPTQAccuracyTest(self).run_test()
+        GPTQAccuracyTest(self, per_channel=False).run_test()
+        GPTQAccuracyTest(self, per_channel=True, hessian_weights=False).run_test()
+        GPTQAccuracyTest(self, per_channel=True, log_norm_weights=False).run_test()
+        GPTQWeightsUpdateTest(self).run_test()
+        GPTQLearnRateZeroTest(self).run_test()
+
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
+                         params_learning=False).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer, per_channel=False,
+                         params_learning=True).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
+        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         weights_quant_method=QuantizationMethod.UNIFORM).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         weights_quant_method=QuantizationMethod.UNIFORM, per_channel=False,
+                         params_learning=False).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         weights_quant_method=QuantizationMethod.UNIFORM,
+                         per_channel=True, hessian_weights=True, log_norm_weights=True, scaled_log_norm=True).run_test()
+        GPTQWeightsUpdateTest(self, rounding_type=RoundingType.SoftQuantizer,
+                              weights_quant_method=QuantizationMethod.UNIFORM,
+                              params_learning=False).run_test()  # TODO: When params learning is True, the uniform quantizer gets a min value  > max value
+
+    def test_gptq_with_gradual_activation(self):
+        """
+        This test checks the GPTQ feature with gradual activation quantization.
+        """
+        GPTQAccuracyTest(self, gradual_activation_quantization=True).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.SoftQuantizer,
+                         gradual_activation_quantization=True).run_test()
+        GPTQLearnRateZeroTest(self, rounding_type=RoundingType.SoftQuantizer,
+                              gradual_activation_quantization=True).run_test()
+
+    def test_gptq_with_sample_layer_attention(self):
+        kwargs = dict(sample_layer_attention=True, loss=sample_layer_attention_loss,
+                      hessian_weights=True, hessian_num_samples=None,
+                      norm_scores=False, log_norm_weights=False, scaled_log_norm=False)
+        GPTQAccuracyTest(self, **kwargs).run_test()
+        GPTQAccuracyTest(self, hessian_batch_size=16, rounding_type=RoundingType.SoftQuantizer, **kwargs).run_test()
+        GPTQAccuracyTest(self, hessian_batch_size=5, rounding_type=RoundingType.SoftQuantizer,
+                         gradual_activation_quantization=True, **kwargs).run_test()
+        GPTQAccuracyTest(self, rounding_type=RoundingType.STE, **kwargs)
+
+    def test_qat(self):
+        """
+        This test checks the QAT feature.
+        """
+        QuantizationAwareTrainingTest(self).run_test()
+        QuantizationAwareTrainingTest(self, finalize=True).run_test()
+        _method = mct.target_platform.QuantizationMethod.SYMMETRIC
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method
+                                      ).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method,
+                                      finalize=True).run_test()
+        _method = mct.target_platform.QuantizationMethod.UNIFORM
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method
+                                      ).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=_method,
+                                      activation_quantization_method=_method,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
+                                      activation_quantization_method=mct.target_platform.QuantizationMethod.SYMMETRIC,
+                                      training_method=TrainingMethod.LSQ,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
+                                      activation_quantization_method=mct.target_platform.QuantizationMethod.UNIFORM,
+                                      training_method=TrainingMethod.LSQ,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingTest(self,
+                                      weights_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                      activation_quantization_method=mct.target_platform.QuantizationMethod.POWER_OF_TWO,
+                                      training_method=TrainingMethod.LSQ,
+                                      finalize=True).run_test()
+        QuantizationAwareTrainingQuantizerHolderTest(self).run_test()
+        QuantizationAwareTrainingMixedPrecisionCfgTest(self).run_test()
+        QuantizationAwareTrainingMixedPrecisionRUCfgTest(self).run_test()
 
     def test_bn_attributes_quantization(self):
         """
