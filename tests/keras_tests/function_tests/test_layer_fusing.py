@@ -3,13 +3,12 @@ import numpy as np
 import tensorflow as tf
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
-from model_compression_toolkit.core import DEFAULTCONFIG
+from model_compression_toolkit.core import DEFAULTCONFIG, QuantizationConfig
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
-from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
-    set_quantization_configuration_to_graph
-from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpModelToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
 import model_compression_toolkit as mct
@@ -107,14 +106,7 @@ def get_tpc_1():
 
     generated_tp = generate_base_tpc(operator_set, fusing_patterns)
 
-    keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
-    with keras_tpc:
-        tp.OperationsSetToLayers("Conv", [Conv2D])
-        tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
-                                             tp.LayerFilterParams(ReLU, negative_slope=0.0),
-                                             tp.LayerFilterParams(Activation, activation="relu")])
-    return keras_tpc
-
+    return generated_tp
 
 def get_tpc_2():
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
@@ -132,17 +124,7 @@ def get_tpc_2():
 
     generated_tp = generate_base_tpc(operator_set, fusing_patterns)
 
-    keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
-    with keras_tpc:
-        tp.OperationsSetToLayers("Conv", [Conv2D, DepthwiseConv2D])
-        tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
-                                             tp.LayerFilterParams(ReLU, negative_slope=0.0),
-                                             tp.LayerFilterParams(Activation, activation="relu")])
-        tp.OperationsSetToLayers("Swish", [tf.nn.swish, tp.LayerFilterParams(Activation, activation="swish")])
-        tp.OperationsSetToLayers("Sigmoid", [tf.nn.sigmoid, tp.LayerFilterParams(Activation, activation="sigmoid")])
-        tp.OperationsSetToLayers("Tanh", [tf.nn.tanh, tp.LayerFilterParams(Activation, activation="tanh")])
-    return keras_tpc
-
+    return generated_tp
 
 def get_tpc_3():
     base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
@@ -156,13 +138,7 @@ def get_tpc_3():
 
     generated_tp = generate_base_tpc(operator_set, fusing_patterns)
 
-    keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
-    with keras_tpc:
-        tp.OperationsSetToLayers("Conv", [Conv2D])
-        tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
-                                             tp.LayerFilterParams(ReLU, negative_slope=0.0),
-                                             tp.LayerFilterParams(Activation, activation="relu")])
-    return keras_tpc
+    return generated_tp
 
 
 def get_tpc_4():
@@ -184,17 +160,7 @@ def get_tpc_4():
 
     generated_tp = generate_base_tpc(operator_set, fusing_patterns)
 
-    keras_tpc = tp.TargetPlatformCapabilities(generated_tp)
-    with keras_tpc:
-        tp.OperationsSetToLayers("Conv", [Conv2D])
-        tp.OperationsSetToLayers("FullyConnected", [Dense])
-        tp.OperationsSetToLayers("AnyReLU", [tf.nn.relu,
-                                             tp.LayerFilterParams(ReLU, negative_slope=0.0),
-                                             tp.LayerFilterParams(Activation, activation="relu")])
-        tp.OperationsSetToLayers("Add", [tf.add, Add])
-        tp.OperationsSetToLayers("Swish", [tf.nn.swish, tp.LayerFilterParams(Activation, activation="swish")])
-
-    return keras_tpc
+    return generated_tp
 
 
 def get_type(fusion):
@@ -216,8 +182,14 @@ class TestLayerFusing(unittest.TestCase):
         expected_fusions = [[Conv2D, Activation]]
         model = create_network_1(INPUT_SHAPE)
 
+        qc = QuantizationConfig(custom_tpc_opset_to_layer={"Conv": ([Conv2D],),
+                                                           "AnyReLU": ([tf.nn.relu,
+                                                                        tp.LayerFilterParams(ReLU, negative_slope=0.0),
+                                                                        tp.LayerFilterParams(Activation, activation="relu")],)})
+
         fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
-                                                  representative_dataset, lambda name, _tp: get_tpc_1())
+                                                  representative_dataset, lambda name, _tp: get_tpc_1(),
+                                                  attach2fw=AttachTpModelToKeras(), qc=qc)
 
         self._compare(fusion_graph.fused_nodes, expected_fusions)
 
@@ -225,8 +197,21 @@ class TestLayerFusing(unittest.TestCase):
         expected_fusions = [[Conv2D, Activation], [Conv2D, ReLU], [Conv2D, tf.nn.sigmoid], [Conv2D, Activation]]
         model = create_network_2(INPUT_SHAPE)
 
+        qc = QuantizationConfig(custom_tpc_opset_to_layer={"Conv": ([Conv2D],),
+                                                           "AnyReLU": ([tf.nn.relu,
+                                                                        tp.LayerFilterParams(ReLU, negative_slope=0.0),
+                                                                        tp.LayerFilterParams(Activation,
+                                                                                             activation="relu")],),
+                                                           "Swish": ([tf.nn.swish, tp.LayerFilterParams(Activation,
+                                                                                                        activation="swish")],),
+                                                           "Sigmoid": ([tf.nn.sigmoid, tp.LayerFilterParams(Activation,
+                                                                                                            activation="sigmoid")],),
+                                                           "Tanh": ([tf.nn.tanh, tp.LayerFilterParams(Activation,
+                                                                                                      activation="tanh")],)})
+
         fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
-                                                  representative_dataset, lambda name, _tp: get_tpc_2())
+                                                  representative_dataset, lambda name, _tp: get_tpc_2(),
+                                                  attach2fw=AttachTpModelToKeras(), qc=qc)
 
         self._compare(fusion_graph.fused_nodes, expected_fusions)
 
@@ -234,8 +219,15 @@ class TestLayerFusing(unittest.TestCase):
         expected_fusions = [[Conv2D, Activation]]
         model = create_network_3(INPUT_SHAPE)
 
+        qc = QuantizationConfig(custom_tpc_opset_to_layer={"Conv": ([Conv2D],),
+                                                           "AnyReLU": ([tf.nn.relu,
+                                                                        tp.LayerFilterParams(ReLU, negative_slope=0.0),
+                                                                        tp.LayerFilterParams(Activation,
+                                                                                             activation="relu")],)})
+
         fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
-                                                  representative_dataset, lambda name, _tp: get_tpc_3())
+                                                  representative_dataset, lambda name, _tp: get_tpc_3(),
+                                                  attach2fw=AttachTpModelToKeras(), qc=qc)
 
         self._compare(fusion_graph.fused_nodes, expected_fusions)
 
@@ -244,7 +236,19 @@ class TestLayerFusing(unittest.TestCase):
                             [Conv2D, ReLU, Add], [Dense, tf.nn.silu], [Dense, Activation]]
         model = create_network_4(INPUT_SHAPE)
 
+        qc = QuantizationConfig(custom_tpc_opset_to_layer={
+            "Conv": ([Conv2D],),
+            "FullyConnected": ([Dense],),
+            "AnyReLU": ([tf.nn.relu,
+                         tp.LayerFilterParams(ReLU, negative_slope=0.0),
+                         tp.LayerFilterParams(Activation,
+                                              activation="relu")],),
+            "Add": ([tf.add, Add],),
+            "Swish": ([tf.nn.swish, tp.LayerFilterParams(Activation, activation="swish")],),
+        })
+
         fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
-                                                  representative_dataset, lambda name, _tp: get_tpc_4())
+                                                  representative_dataset, lambda name, _tp: get_tpc_4(),
+                                                  attach2fw=AttachTpModelToKeras(), qc=qc)
 
         self._compare(fusion_graph.fused_nodes, expected_fusions)

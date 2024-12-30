@@ -31,6 +31,8 @@ from model_compression_toolkit.core.common.quantization.quantization_params_gene
 from model_compression_toolkit.core.keras.constants import KERNEL, GAMMA
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL, BIAS
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpModelToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -69,9 +71,8 @@ def get_tpc(quant_method, per_channel):
     tp = generate_test_tp_model(edit_params_dict={
         'weights_quantization_method': quant_method,
         'weights_per_channel_threshold': per_channel})
-    tpc = generate_keras_tpc(name="hmse_params_selection_test", tp_model=tp)
 
-    return tpc
+    return tp
 
 
 class TestParamSelectionWithHMSE(unittest.TestCase):
@@ -87,7 +88,8 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                                 representative_dataset,
                                                 lambda name, _tp: tpc_fn(quant_method, per_channel),
                                                 qc=self.qc,
-                                                running_gptq=running_gptq
+                                                running_gptq=running_gptq,
+                                                attach2fw=AttachTpModelToKeras()
                                                 # to enable HMSE in params calculation if needed
                                                 )
 

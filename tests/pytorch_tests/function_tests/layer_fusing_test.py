@@ -22,6 +22,8 @@ from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
+    AttachTpModelToPytorch
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
@@ -61,6 +63,7 @@ class LayerFusingTest1(BaseLayerFusingTest):
     def __init__(self, unit_test):
         super().__init__(unit_test)
         self.expected_fusions = [[nn.Conv2d, nn.ReLU]]
+        self.attach2fw = AttachTpModelToPytorch()
 
     def get_tpc(self):
         base_config, mixed_precision_cfg_list, default_config = get_op_quantization_configs()
@@ -86,7 +89,8 @@ class LayerFusingTest1(BaseLayerFusingTest):
         model_float = self.LayerFusingNetTest()
 
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
-                                           self.representative_data_gen, lambda name, _tp: self.get_tpc())
+                                           self.representative_data_gen, lambda name, _tp: self.get_tpc(),
+                                           attach2fw=self.attach2fw)
 
         self._compare(graph.fused_nodes)
 
@@ -133,6 +137,7 @@ class LayerFusingTest2(BaseLayerFusingTest):
         model_float = self.LayerFusingNetTest()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, lambda name, _tp: self.get_tpc(),
+                                           attach2fw=AttachTpModelToPytorch(),
                                            qc=QuantizationConfig(
                                                custom_tpc_opset_to_layer={"AnyAct": ([ReLU, relu6, relu, SiLU, Sigmoid,
                                                                                       LayerFilterParams(Hardtanh, min_val=0)],)}))
@@ -193,6 +198,7 @@ class LayerFusingTest3(BaseLayerFusingTest):
         model_float = self.LayerFusingNetTest()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
                                            self.representative_data_gen, lambda name, _tp: self.get_tpc(),
+                                           attach2fw=AttachTpModelToPytorch(),
                                            qc=QuantizationConfig(
                                                custom_tpc_opset_to_layer={"AnyAct": ([ReLU, relu6, relu],)}))
 
@@ -261,7 +267,8 @@ class LayerFusingTest4(BaseLayerFusingTest):
     def run_test(self, seed=0):
         model_float = self.LayerFusingNetTest()
         graph = prepare_graph_with_configs(model_float, PytorchImplementation(), DEFAULT_PYTORCH_INFO,
-                                           self.representative_data_gen, lambda name, _tp: self.get_tpc())
+                                           self.representative_data_gen, lambda name, _tp: self.get_tpc(),
+                                           attach2fw=AttachTpModelToPytorch())
 
         self._compare(graph.fused_nodes)
 

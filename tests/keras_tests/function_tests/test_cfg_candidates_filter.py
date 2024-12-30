@@ -27,6 +27,8 @@ from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpModelToKeras
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, generate_test_op_qc
 from tests.keras_tests.tpc_keras import get_tpc_with_activation_mp_keras
 
@@ -48,6 +50,10 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
     fw_info = DEFAULT_KERAS_INFO
     keras_impl = KerasImplementation()
     graph = keras_impl.model_reader(in_model, None)  # model reading
+
+    attach2keras = AttachTpModelToKeras()
+    tpc = attach2keras.attach(tpc)
+
     graph.set_tpc(tpc)
     graph.set_fw_info(fw_info)
     graph = set_quantization_configuration_to_graph(graph=graph,

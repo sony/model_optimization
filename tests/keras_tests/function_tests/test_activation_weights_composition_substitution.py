@@ -21,6 +21,8 @@ from packaging import version
 import tensorflow as tf
 
 from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpModelToKeras
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
@@ -106,6 +108,9 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
                                            default_config=default_config,
                                            mp_bitwidth_candidates_list=mixed_precision_candidates_list,
                                            name="activation_weights_composition_test")
+
+    attach2keras = AttachTpModelToKeras()
+    tpc = attach2keras.attach(tpc)
 
     graph.set_fw_info(fw_info)
     graph.set_tpc(tpc)

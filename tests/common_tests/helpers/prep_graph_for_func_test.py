@@ -18,14 +18,11 @@ from model_compression_toolkit.core import DEFAULTCONFIG, CoreConfig, DebugConfi
 from model_compression_toolkit.core.common.mixed_precision.bit_width_setter import set_bit_widths
 from model_compression_toolkit.core.common.mixed_precision.mixed_precision_search_facade import search_bit_width
 from model_compression_toolkit.core.common.model_collector import ModelCollector
-from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.quantization_params_generation.qparams_computation import \
     calculate_quantization_params
 from model_compression_toolkit.core.common.visualization.tensorboard_writer import init_tensorboard_writer
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.quantization_prep_runner import quantization_preparation_runner
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
-    AttachTpModelToPytorch
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_tp_model, \
     get_op_quantization_configs
@@ -40,6 +37,7 @@ def prepare_graph_with_configs(in_model,
                                fw_info,
                                representative_dataset,
                                get_tpc_func,
+                               attach2fw,
                                qc=DEFAULTCONFIG,
                                mixed_precision_enabled=False,
                                running_gptq=False):
@@ -51,11 +49,7 @@ def prepare_graph_with_configs(in_model,
     _tp = generate_tp_model(default_config, base_config, op_cfg_list, "function_test")
     tpc = get_tpc_func("function_test", _tp)
 
-    # TODO: consider replacing this attach2fw to given attach2fw function from the user that allow to create a
-    #  test-dedicated fw TPC instead of relying on the ful attach2fw
-    attach2pytorch = AttachTpModelToPytorch()
-    tpc = attach2pytorch.attach(tpc,
-                                qc.custom_tpc_opset_to_layer)
+    tpc = attach2fw.attach(tpc, qc.custom_tpc_opset_to_layer)
 
     # Read Model
     graph = graph_preparation_runner(in_model,
@@ -76,6 +70,7 @@ def prepare_graph_with_quantization_parameters(in_model,
                                                representative_dataset,
                                                get_tpc_func,
                                                input_shape,
+                                               attach2fw,
                                                qc=DEFAULTCONFIG,
                                                mixed_precision_enabled=False):
 
@@ -84,6 +79,7 @@ def prepare_graph_with_quantization_parameters(in_model,
                                        fw_info,
                                        representative_dataset,
                                        get_tpc_func,
+                                       attach2fw,
                                        qc,
                                        mixed_precision_enabled)
 

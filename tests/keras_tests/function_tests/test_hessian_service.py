@@ -25,6 +25,8 @@ from model_compression_toolkit.core.common.hessian import HessianInfoService, He
 from model_compression_toolkit.core.keras.data_util import data_gen_to_dataloader
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpModelToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_configs
 
@@ -72,7 +74,8 @@ class TestHessianService(unittest.TestCase):
                                                 self.keras_impl,
                                                 DEFAULT_KERAS_INFO,
                                                 get_representative_dataset_fn(),
-                                                generate_keras_tpc)
+                                                generate_keras_tpc,
+                                                attach2fw=AttachTpModelToKeras())
 
         self.hessian_service = HessianInfoService(graph=self.graph, fw_impl=self.keras_impl)
 
@@ -162,7 +165,8 @@ class TestHessianService(unittest.TestCase):
                                                 self.keras_impl,
                                                 DEFAULT_KERAS_INFO,
                                                 get_representative_dataset_fn(),
-                                                generate_keras_tpc)
+                                                generate_keras_tpc,
+                                                attach2fw=AttachTpModelToKeras())
 
         self.hessian_service = HessianInfoService(graph=self.graph, fw_impl=self.keras_impl)
 

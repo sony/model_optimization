@@ -20,6 +20,8 @@ import tensorflow as tf
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpModelToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
 import model_compression_toolkit.core.common.hessian as hess
@@ -82,6 +84,7 @@ class TestSensitivityEvalWithNonSupportedOutputNodes(unittest.TestCase):
                                                            DEFAULT_KERAS_INFO,
                                                            representative_dataset,
                                                            generate_keras_tpc,
+                                                           attach2fw=AttachTpModelToKeras(),
                                                            input_shape=(1, 8, 8, 3),
                                                            mixed_precision_enabled=True)
 

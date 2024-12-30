@@ -14,6 +14,8 @@ from model_compression_toolkit.gptq.pytorch.gptq_pytorch_implementation import G
 from model_compression_toolkit.gptq.pytorch.gptq_training import PytorchGPTQTrainer
 from model_compression_toolkit.gptq.common.gradual_activation_quantization import \
     GradualActivationQuantizerWrapper
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpModelToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_pytorch_tpc
 from model_compression_toolkit.trainable_infrastructure import TrainingMethod
 from model_compression_toolkit.trainable_infrastructure.common.base_trainable_quantizer import VariableGroup
@@ -151,7 +153,8 @@ class TestGPTQModelBuilderWithActivationHolder(unittest.TestCase):
                                                            generate_pytorch_tpc,
                                                            [1] + input_shape,
                                                            mixed_precision_enabled=False,
-                                                           qc=qc)
+                                                           qc=qc,
+                                                           attach2fw=AttachTpModelToKeras())
         graph = set_bit_widths(mixed_precision_enable=False,
                                graph=graph)
         gptq_cfg = gptq_cfg or mct.gptq.get_pytorch_gptq_config(1, use_hessian_based_weights=False,

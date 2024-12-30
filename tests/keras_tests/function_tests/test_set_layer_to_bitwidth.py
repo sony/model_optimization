@@ -19,6 +19,8 @@ import numpy as np
 from keras import Input
 from keras.layers import Conv2D
 from mct_quantizers import KerasActivationQuantizationHolder
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpModelToKeras
 
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
@@ -44,13 +46,14 @@ def representative_dataset():
     yield [np.random.randn(1, 8, 8, 3).astype(np.float32)]
 
 
-def test_setup(get_tpc_fn):
+def setup_test(get_tpc_fn):
 
     model = base_model((8, 8, 3))
 
     graph = prepare_graph_with_quantization_parameters(model,  KerasImplementation(), DEFAULT_KERAS_INFO,
                                                        representative_dataset, get_tpc_fn,
                                                        input_shape=(1, 8, 8, 3),
+                                                       attach2fw=AttachTpModelToKeras(),
                                                        mixed_precision_enabled=True)
 
     layer = model.layers[1]
@@ -71,7 +74,7 @@ class TestKerasSetLayerToBitwidth(unittest.TestCase):
 
         # In this test we need a dedicated TPC so we just override the TPC generator function that needed to be passed
         # to the tests preparation helper method
-        layer, node = test_setup(get_tpc_fn=lambda x, y: tpc)
+        layer, node = setup_test(get_tpc_fn=lambda x, y: tpc)
 
         wrapper_layer = \
             KerasTrainableQuantizationWrapper(layer,
@@ -106,7 +109,7 @@ class TestKerasSetLayerToBitwidth(unittest.TestCase):
 
         # In this test we need a dedicated TPC so we just override the TPC generator function that needed to be passed
         # to the tests preparation helper method
-        layer, node = test_setup(get_tpc_fn=lambda x, y: tpc)
+        layer, node = setup_test(get_tpc_fn=lambda x, y: tpc)
 
         holder_layer = \
             KerasActivationQuantizationHolder(ConfigurableActivationQuantizer(

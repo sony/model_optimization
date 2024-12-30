@@ -28,6 +28,8 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weig
     WeightsActivationSplit
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpModelToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 
 import model_compression_toolkit as mct
@@ -75,11 +77,12 @@ def get_tpc(mixed_precision_candidates_list):
                                             name="weights_activation_split_test")
 
 
-def test_setup(in_model, keras_impl, mixed_precision_candidates_list):
+def setup_test(in_model, keras_impl, mixed_precision_candidates_list):
     qc = DEFAULTCONFIG
     graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset,
                                        lambda name, _tp: get_tpc(mixed_precision_candidates_list), qc=qc,
-                                       mixed_precision_enabled=True)
+                                       mixed_precision_enabled=True,
+                                       attach2fw=AttachTpModelToKeras())
 
     # Split graph substitution
     split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])
@@ -120,7 +123,7 @@ class TestWeightsActivationSplit(unittest.TestCase):
         in_model = single_conv_model()
         keras_impl = KerasImplementation()
 
-        graph, split_graph = test_setup(in_model, keras_impl, mixed_precision_candidates_list=_get_base_mp_nbits_candidates())
+        graph, split_graph = setup_test(in_model, keras_impl, mixed_precision_candidates_list=_get_base_mp_nbits_candidates())
         # num_activation_candidates here is 1 because the split Conv has ReLU after it - thenbecause of fusion, the
         # Conv layer doesn't have activation quantization candidates
         self._verify_single_conv_test(graph, split_graph, num_weights_candidates=3, num_activation_candidates=1)
@@ -129,14 +132,14 @@ class TestWeightsActivationSplit(unittest.TestCase):
         in_model = single_conv_model()
         keras_impl = KerasImplementation()
 
-        graph, split_graph = test_setup(in_model, keras_impl, mixed_precision_candidates_list=[(8, 8), (4, 8), (2, 8)])
+        graph, split_graph = setup_test(in_model, keras_impl, mixed_precision_candidates_list=[(8, 8), (4, 8), (2, 8)])
         self._verify_single_conv_test(graph, split_graph, num_weights_candidates=3, num_activation_candidates=1)
 
     def test_single_conv_net_activation_only_split(self):
         in_model = single_conv_model()
         keras_impl = KerasImplementation()
 
-        graph, split_graph = test_setup(in_model, keras_impl, mixed_precision_candidates_list=[(8, 8), (8, 4), (8, 2)])
+        graph, split_graph = setup_test(in_model, keras_impl, mixed_precision_candidates_list=[(8, 8), (8, 4), (8, 2)])
         # num_activation_candidates here is 1 because the split Conv has ReLU after it - thenbecause of fusion, the
         # Conv layer doesn't have activation quantization candidates
         self._verify_single_conv_test(graph, split_graph, num_weights_candidates=1, num_activation_candidates=1)
@@ -145,7 +148,7 @@ class TestWeightsActivationSplit(unittest.TestCase):
         in_model = multiple_weights_nodes_model()
         keras_impl = KerasImplementation()
 
-        graph, split_graph = test_setup(in_model, keras_impl, mixed_precision_candidates_list=_get_base_mp_nbits_candidates())
+        graph, split_graph = setup_test(in_model, keras_impl, mixed_precision_candidates_list=_get_base_mp_nbits_candidates())
         weights_node_types = [Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense]
         original_weights_nodes = [n for n in graph.get_topo_sorted_nodes() if any([n.is_match_type(_type) for _type in weights_node_types])]
 
@@ -170,4 +173,4 @@ class TestWeightsActivationSplit(unittest.TestCase):
         keras_impl = KerasImplementation()
 
         with self.assertRaises(Exception):
-            test_setup(in_model, keras_impl, mixed_precision_candidates_list=[(8, 2), (2, 4), (4, 8)])
+            setup_test(in_model, keras_impl, mixed_precision_candidates_list=[(8, 2), (2, 4), (4, 8)])

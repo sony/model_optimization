@@ -86,8 +86,8 @@ def generate_mixed_precision_test_tp_model(base_cfg, default_config, mp_bitwidth
 
 
 def _op_config_quantize_activation(op_set, default_quantize_activation):
-    return ((not getattr(op_set, 'qc_options') and default_quantize_activation) or
-            op_set.qc_options.base_config.enable_activation_quantization)
+    return ((not getattr(op_set, 'qc_options') and default_quantize_activation) or (op_set.qc_options is not None and
+            op_set.qc_options.base_config.enable_activation_quantization))
 
 
 def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_candidates_list, custom_opsets=[],
