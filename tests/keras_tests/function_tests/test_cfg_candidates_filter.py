@@ -15,11 +15,10 @@
 
 import keras
 import unittest
-from tensorflow.keras.layers import Conv2D, ReLU, Input
+from tensorflow.keras.layers import Conv2D, ReLU, Input, InputLayer
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
-from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.core.common.quantization.filter_nodes_candidates import filter_nodes_candidates
 from model_compression_toolkit.core.common.quantization.set_node_quantization_config import \
     set_quantization_configuration_to_graph
@@ -52,7 +51,7 @@ def prepare_graph(in_model, base_config, default_config, bitwidth_candidates):
     graph = keras_impl.model_reader(in_model, None)  # model reading
 
     attach2keras = AttachTpModelToKeras()
-    tpc = attach2keras.attach(tpc)
+    tpc = attach2keras.attach(tpc, custom_opset2layer={"Input": ([InputLayer],)})
 
     graph.set_tpc(tpc)
     graph.set_fw_info(fw_info)

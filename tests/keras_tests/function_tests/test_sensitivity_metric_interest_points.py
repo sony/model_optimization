@@ -17,11 +17,13 @@ import unittest
 import numpy as np
 from keras.applications.densenet import DenseNet121
 from keras.applications.mobilenet_v2 import MobileNetV2
+from keras_core.src.layers import InputLayer
 
 from packaging import version
 
-from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpModelToKeras
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers.core import TFOpLambda
@@ -65,6 +67,8 @@ def build_ip_list_for_test(in_model, num_interest_points_factor):
                                         mp_bitwidth_candidates_list=[(c.attr_weights_configs_mapping[KERNEL_ATTR].weights_n_bits,
                                                                       c.activation_n_bits) for c in mixed_precision_cfg_list],
                                         name="sem_test")
+
+    tpc = AttachTpModelToKeras().attach(tpc, custom_opset2layer={"Input": ([InputLayer],)})
 
     graph.set_tpc(tpc)
     graph = set_quantization_configuration_to_graph(graph=graph,

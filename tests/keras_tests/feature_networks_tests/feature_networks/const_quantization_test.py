@@ -22,7 +22,7 @@ from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 
 from tests.common_tests.helpers.generate_test_tp_model import generate_custom_test_tp_model
 from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model as get_tp_v3
-from tests.common_tests.helpers.tpcs_for_tests.v4.tp_model import get_tp_model as get_tp_v4
+from tests.common_tests.helpers.tpcs_for_tests.v4.tp_model import get_tp_model as get_tp_v4, get_tp_model
 from tests.common_tests.helpers.tpcs_for_tests.v4.tp_model import generate_tp_model, get_op_quantization_configs
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
@@ -93,7 +93,7 @@ class ConstQuantizationTest(BaseKerasFeatureNetworkTest):
         return mct.core.QuantizationConfig(weights_error_method=self.error_method)
 
     def get_tpc(self):
-        return create_const_quant_tpc(self.qmethod)
+        return get_tp_model()
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])

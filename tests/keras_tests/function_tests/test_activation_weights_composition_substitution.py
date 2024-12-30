@@ -20,15 +20,14 @@ import unittest
 from packaging import version
 import tensorflow as tf
 
-from model_compression_toolkit.core.common.quantization.bit_width_config import BitWidthConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
     AttachTpModelToKeras
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_op_qc, generate_test_attr_configs
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
-    from keras.src.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add
+    from keras.src.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add, InputLayer
 else:
-    from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add
+    from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input, Add, InputLayer
 import numpy as np
 
 from model_compression_toolkit.core import DEFAULTCONFIG, MixedPrecisionQuantizationConfig
@@ -100,7 +99,7 @@ def representative_dataset():
 
 def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_config, default_config):
     fw_info = DEFAULT_KERAS_INFO
-    qc = mct.core.QuantizationConfig()
+    qc = mct.core.QuantizationConfig(custom_tpc_opset_to_layer={"Input": ([InputLayer],)})
 
     graph = keras_impl.model_reader(in_model, representative_dataset)  # model reading
 
@@ -110,7 +109,7 @@ def prepare_graph(in_model, keras_impl, mixed_precision_candidates_list, base_co
                                            name="activation_weights_composition_test")
 
     attach2keras = AttachTpModelToKeras()
-    tpc = attach2keras.attach(tpc)
+    tpc = attach2keras.attach(tpc, qc.custom_tpc_opset_to_layer)
 
     graph.set_fw_info(fw_info)
     graph.set_tpc(tpc)
