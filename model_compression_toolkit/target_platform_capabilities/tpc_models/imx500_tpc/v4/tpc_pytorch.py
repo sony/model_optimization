@@ -36,7 +36,7 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
     OPSET_QUANTIZATION_PRESERVING, OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS, OPSET_DIMENSION_MANIPULATION_OPS, \
     OPSET_MERGE_OPS, OPSET_CONV, OPSET_FULLY_CONNECTED, OPSET_ANY_RELU, OPSET_ADD, OPSET_SUB, OPSET_MUL, OPSET_DIV, \
     OPSET_PRELU, OPSET_SWISH, OPSET_SIGMOID, OPSET_TANH, OPSET_GELU, OPSET_BATCH_NORM, OPSET_MIN_MAX, OPSET_HARDSIGMOID, \
-    OPSET_HARDSWISH
+    OPSET_HARDSWISH, OPSET_SPLIT_OPS
 
 tp = mct.target_platform
 
@@ -77,9 +77,6 @@ def generate_pytorch_tpc(name: str, tp_model: schema.TargetPlatformModel):
                                                          topk])
         tp.OperationsSetToLayers(OPSET_QUANTIZATION_PRESERVING, [Dropout,
                                                                  dropout,
-                                                                 split,
-                                                                 chunk,
-                                                                 unbind,
                                                                  MaxPool2d])
         tp.OperationsSetToLayers(OPSET_DIMENSION_MANIPULATION_OPS, [Flatten,
                                                                     flatten,
@@ -90,6 +87,7 @@ def generate_pytorch_tpc(name: str, tp_model: schema.TargetPlatformModel):
                                                                     permute,
                                                                     transpose])
         tp.OperationsSetToLayers(OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS, [gather, torch.Tensor.expand])
+        tp.OperationsSetToLayers(OPSET_SPLIT_OPS,[split, chunk, unbind])
         tp.OperationsSetToLayers(OPSET_MERGE_OPS,
                                  [torch.stack, torch.cat, torch.concat, torch.concatenate])
 

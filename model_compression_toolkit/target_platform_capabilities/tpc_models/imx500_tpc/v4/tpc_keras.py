@@ -39,7 +39,8 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tp
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import OPSET_NO_QUANTIZATION, \
     OPSET_QUANTIZATION_PRESERVING, OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS, OPSET_DIMENSION_MANIPULATION_OPS, \
     OPSET_MERGE_OPS, OPSET_CONV, OPSET_FULLY_CONNECTED, OPSET_ANY_RELU, OPSET_ADD, OPSET_SUB, OPSET_MUL, OPSET_DIV, \
-    OPSET_PRELU, OPSET_SWISH, OPSET_SIGMOID, OPSET_TANH, OPSET_GELU, OPSET_BATCH_NORM, OPSET_MIN_MAX, OPSET_HARDSIGMOID
+    OPSET_PRELU, OPSET_SWISH, OPSET_SIGMOID, OPSET_TANH, OPSET_GELU, OPSET_BATCH_NORM, OPSET_MIN_MAX, OPSET_HARDSIGMOID, \
+    OPSET_SPLIT_OPS
 
 tp = mct.target_platform
 
@@ -78,11 +79,7 @@ def generate_keras_tpc(name: str, tp_model: schema.TargetPlatformModel):
                                ZeroPadding2D,
                                Dropout,
                                MaxPooling2D,
-                               tf.split,
-                               tf.cast,
-                               tf.unstack,
-                               tf.__operators__.getitem,
-                               tf.strided_slice]
+                               tf.cast]
     quantization_preserving_list_16bit_input = [Reshape,
                                                 tf.reshape,
                                                 Permute,
@@ -97,6 +94,7 @@ def generate_keras_tpc(name: str, tp_model: schema.TargetPlatformModel):
         tp.OperationsSetToLayers(OPSET_QUANTIZATION_PRESERVING, quantization_preserving)
         tp.OperationsSetToLayers(OPSET_DIMENSION_MANIPULATION_OPS, quantization_preserving_list_16bit_input)
         tp.OperationsSetToLayers(OPSET_DIMENSION_MANIPULATION_OPS_WITH_WEIGHTS, [tf.gather, tf.compat.v1.gather])
+        tp.OperationsSetToLayers(OPSET_SPLIT_OPS,[tf.unstack, tf.split, tf.strided_slice, tf.__operators__.getitem])
         tp.OperationsSetToLayers(OPSET_MERGE_OPS, [tf.stack, tf.concat, Concatenate])
         tp.OperationsSetToLayers(OPSET_CONV,
                                  [Conv2D,
