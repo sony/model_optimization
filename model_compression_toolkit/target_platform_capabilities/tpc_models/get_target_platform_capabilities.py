@@ -16,8 +16,8 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.target_platform_capabilities import \
     get_tpc_dict_by_fw as get_imx500_tpc
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, TFLITE_TP_MODEL, QNNPACK_TP_MODEL,  LATEST
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tp_model import get_tp_model
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL
+from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import get_tp_model
 
 tpc_dict = {DEFAULT_TP_MODEL: get_imx500_tpc,
             IMX500_TP_MODEL: get_imx500_tpc}

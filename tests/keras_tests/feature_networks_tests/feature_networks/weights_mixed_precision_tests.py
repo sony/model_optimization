@@ -19,6 +19,7 @@ import tensorflow as tf
 
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from mct_quantizers import KerasQuantizationWrapper
+from model_compression_toolkit.core import CoreConfig, QuantizationConfig
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.defaultdict import DefaultDict
 from model_compression_toolkit.core.common.mixed_precision.distance_weighting import MpDistanceWeighting
@@ -170,6 +171,15 @@ class MixedPrecisionSearchPartWeightsLayersTest(MixedPrecisionBaseTest):
     def __init__(self, unit_test):
         super().__init__(unit_test, val_batch_size=2)
 
+    def get_core_config(self):
+        return CoreConfig(quantization_config=QuantizationConfig(
+            custom_tpc_opset_to_layer={"Weights_fixed": ([layers.Dense],
+                                                         {KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                                                          BIAS_ATTR: DefaultDict(default_value=BIAS)},),
+                                       "Weights_mp": ([layers.Conv2D],
+                                                      {KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                                                       BIAS_ATTR: DefaultDict(default_value=BIAS)},)}))
+
     def get_tpc(self):
         # Building a TPC that gives Conv layers mixed precision candidates and Dense layers a fixed candidate.
         # Both layers that have weights to quantized, so we want to verify that finalizing the model is successful.
@@ -198,24 +208,7 @@ class MixedPrecisionSearchPartWeightsLayersTest(MixedPrecisionBaseTest):
             add_metadata=False,
             name="mp_part_weights_layers_test")
 
-        keras_tpc = tp.TargetPlatformCapabilities(tp_model)
-
-        with keras_tpc:
-            tp.OperationsSetToLayers(
-                "Weights_fixed",
-                [layers.Dense],
-                attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
-                              BIAS_ATTR: DefaultDict(default_value=BIAS)}
-            )
-
-            tp.OperationsSetToLayers(
-                "Weights_mp",
-                [layers.Conv2D],
-                attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
-                              BIAS_ATTR: DefaultDict(default_value=BIAS)}
-            )
-
-        return keras_tpc
+        return tp_model
 
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
@@ -489,6 +482,13 @@ class MixedPrecisionWeightsOnlyConfigurableActivationsTest(MixedPrecisionBaseTes
     def __init__(self, unit_test):
         super().__init__(unit_test)
 
+    def get_core_config(self):
+        return CoreConfig(quantization_config=QuantizationConfig(
+            custom_tpc_opset_to_layer={"Weights": ([layers.Conv2D],
+                                                   {KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
+                                                    BIAS_ATTR: DefaultDict(default_value=BIAS)},),
+                                       "Activations": ([layers.ReLU, layers.Add],)}))
+
     def create_networks(self):
         inputs = layers.Input(shape=self.get_input_shapes()[0][1:])
         x = layers.Conv2D(32, 4)(inputs)
@@ -531,22 +531,7 @@ class MixedPrecisionWeightsOnlyConfigurableActivationsTest(MixedPrecisionBaseTes
             add_metadata=False,
             name="mp_weights_conf_act_test")
 
-        keras_tpc = tp.TargetPlatformCapabilities(tp_model)
-
-        with keras_tpc:
-            tp.OperationsSetToLayers(
-                "Weights",
-                [layers.Conv2D],
-                attr_mapping={KERNEL_ATTR: DefaultDict(default_value=KERAS_KERNEL),
-                              BIAS_ATTR: DefaultDict(default_value=BIAS)}
-            )
-
-            tp.OperationsSetToLayers(
-                "Activations",
-                [layers.ReLU, layers.Add]
-            )
-
-        return keras_tpc
+        return tp_model
 
     def get_resource_utilization(self):
         return ResourceUtilization(1535)

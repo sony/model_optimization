@@ -19,11 +19,7 @@ import model_compression_toolkit as mct
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames
-from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import get_opset_by_name
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
-    AttachTpModelToPytorch
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v4.tp_model import get_tp_model
+from tests.common_tests.helpers.tpcs_for_tests.v4 import get_tp_model
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 

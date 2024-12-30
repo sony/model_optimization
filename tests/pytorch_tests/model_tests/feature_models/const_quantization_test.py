@@ -21,6 +21,8 @@ import model_compression_toolkit.target_platform_capabilities.schema.mct_current
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import Signedness
 from model_compression_toolkit.core import MixedPrecisionQuantizationConfig, CoreConfig, QuantizationConfig
 from model_compression_toolkit.core.pytorch.utils import to_torch_tensor, torch_tensor_to_numpy, set_model
+from tests.common_tests.helpers.tpcs_for_tests.v4.tp_model import get_tp_model as get_tp_v4
+from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model as get_tp_v3
 from tests.pytorch_tests.model_tests.base_pytorch_feature_test import BasePytorchFeatureNetworkTest
 from tests.common_tests.helpers.tensors_compare import cosine_similarity
 from tests.pytorch_tests.utils import get_layers_from_model_by_type
@@ -64,7 +66,7 @@ class ConstQuantizationTest(BasePytorchFeatureNetworkTest):
         return [np.random.random(in_shape) + 1 for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v3")
+        return get_tp_v3()
 
     def create_networks(self):
         if self.input_reverse_order:
@@ -121,7 +123,7 @@ class AdvancedConstQuantizationTest(BasePytorchFeatureNetworkTest):
         return [np.random.random(in_shape) + 1 for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v3")
+        return get_tp_v3()
 
     def get_mixed_precision_config(self):
         return MixedPrecisionQuantizationConfig()
@@ -180,7 +182,7 @@ class ConstQuantizationMultiInputTest(BasePytorchFeatureNetworkTest):
         return [np.random.randint(-128, 127, size=in_shape) for in_shape in self.get_input_shapes()]
 
     def get_tpc(self):
-        return mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, "v4")
+        return get_tp_v4()
 
     def create_networks(self):
         return MultiInputConstQuantizationNet()

@@ -85,6 +85,11 @@ def generate_mixed_precision_test_tp_model(base_cfg, default_config, mp_bitwidth
                              name=name)
 
 
+def _op_config_quantize_activation(op_set, default_quantize_activation):
+    return ((not getattr(op_set, 'qc_options') and default_quantize_activation) or
+            op_set.qc_options.base_config.enable_activation_quantization)
+
+
 def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_candidates_list, custom_opsets=[],
                                          name="activation_mp_model"):
     mp_op_cfg_list = []
@@ -107,11 +112,13 @@ def generate_tp_model_with_activation_mp(base_cfg, default_config, mp_bitwidth_c
                                       mixed_precision_cfg_list=mp_op_cfg_list,
                                       name=name)
 
-    mixed_precision_configuration_options = schema.QuantizationConfigOptions(quantization_configurations=tuple(mp_op_cfg_list),
-                                                                                base_config=base_cfg)
+    mixed_precision_configuration_options = schema.QuantizationConfigOptions(
+        quantization_configurations=tuple(mp_op_cfg_list), base_config=base_cfg)
 
+    # setting only operator that already quantizing activations to mixed precision activation
     operator_sets_dict = {op_set.name: mixed_precision_configuration_options for op_set in base_tp_model.operator_set
-                          if op_set.name is not "NoQuantization"}
+                          if _op_config_quantize_activation(op_set, base_tp_model.default_qco.base_config.enable_activation_quantization)}
+
     operator_sets_dict["Input"] = mixed_precision_configuration_options
     for c_ops in custom_opsets:
         operator_sets_dict[c_ops] = mixed_precision_configuration_options

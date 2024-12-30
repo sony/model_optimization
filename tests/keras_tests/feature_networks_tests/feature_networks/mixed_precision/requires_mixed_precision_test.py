@@ -14,6 +14,17 @@
 # ==============================================================================
 
 import numpy as np
+import tensorflow as tf
+
+from packaging import version
+
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpModelToKeras
+
+if version.parse(tf.__version__) >= version.parse("2.13"):
+    from keras.src.engine.input_layer import InputLayer
+else:
+    from keras.engine.input_layer import InputLayer
 
 from model_compression_toolkit.core import ResourceUtilization
 from model_compression_toolkit.core.common.mixed_precision.resource_utilization_tools.resource_utilization_data import \
@@ -54,10 +65,14 @@ class RequiresMixedPrecision(MixedPrecisionBaseTest):
                                                 name="")
 
     def get_max_resources_for_model(self, model):
+        tpc = self.get_tpc()
+        attach2keras = AttachTpModelToKeras()
+        tpc = attach2keras.attach(tpc)
+
         return compute_resource_utilization_data(in_model=model,
                                                  representative_data_gen=self.representative_data_gen(),
                                                  core_config=self.get_core_config(),
-                                                 tpc=self.get_tpc(),
+                                                 tpc=tpc,
                                                  fw_info=DEFAULT_KERAS_INFO,
                                                  fw_impl=KerasImplementation(),
                                                  transformed_graph=None,

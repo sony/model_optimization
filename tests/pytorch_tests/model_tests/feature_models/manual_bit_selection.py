@@ -23,9 +23,7 @@ from mct_quantizers import PytorchActivationQuantizationHolder
 import model_compression_toolkit as mct
 import torch
 
-from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
-    AttachTpModelToPytorch
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v3.tp_model import get_tp_model
+from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model
 from tests.pytorch_tests.model_tests.feature_models.mixed_precision_activation_test import \
     MixedPrecisionActivationBaseTest
 from tests.pytorch_tests.utils import get_layer_type_from_activation_quantizer
