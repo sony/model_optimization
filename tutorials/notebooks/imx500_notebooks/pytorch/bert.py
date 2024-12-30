@@ -29,7 +29,7 @@ plain_dataset = load_dataset(dataset_name, task_name, trust_remote_code=True)
 tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
 model = AutoModelForSequenceClassification.from_pretrained(pretrained_model_name_or_path=model_name,
                                                            num_labels=get_glue_dataset_num_labels(), torchscript=True)
-
+embedding = model.bert.embeddings
 model.eval()
 
 #####################################tokenize dataset######################################################
@@ -41,7 +41,7 @@ def get_wikitext_tokenized_dataset():
 
     testdata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='test')
     tokenized_datasets = testdata.map(tokenize_function, batched=True)
-    train_dataloader = DataLoader(tokenized_datasets, shuffle=False, batch_size=4, collate_fn=data_collator)
+    train_dataloader = DataLoader(tokenized_datasets, shuffle=False, batch_size=batch_size, collate_fn=data_collator)
     return train_dataloader
 
 
@@ -118,7 +118,10 @@ def get_representative_dataset(n_iter: int, dataset_loader: Iterator[Tuple]):
         ds_iter = iter(dataset_loader)
         for _ in range(n_iter):
             try:
-                yield next(ds_iter)
+                input_data = next(ds_iter)
+                input_embeddings = embedding(input_data["input_ids"])
+                yield input_embeddings
+                # yield next(ds_iter)
             except StopIteration:
                 return
 
@@ -136,7 +139,7 @@ print('Quantized model is ready')
 
 
 mct.exporter.pytorch_export_model(model=quant_model,
-                                  save_model_path='./bert_qmodel_wo_mask.onnx',
+                                  save_model_path='./bert_qmodel_wo_embeds.onnx',
                                   repr_dataset=representative_dataset,
                                   onnx_opset_version=20)
 print("Finished model quantization!")

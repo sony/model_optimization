@@ -195,7 +195,7 @@ class PytorchImplementation(FrameworkImplementation):
         Returns:
             The Pytorch model's output.
         """
-        if "input_ids" in input_list:
+        if isinstance(input_list, dict) and "input_ids" in input_list:
             # llm_inputs = [input_list["input_ids"], input_list["attention_mask"], input_list["token_type_ids"]]
             llm_inputs = [input_list["input_ids"]]
             input_for_shape_infer = [self.to_tensor(i, torch.int32) for i in llm_inputs]

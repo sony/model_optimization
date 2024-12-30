@@ -91,8 +91,10 @@ if FOUND_ONNX:
 
             # model_input = to_torch_tensor(next(self.repr_dataset()))
             data = next(self.repr_dataset())
-            llm_inputs = [data["input_ids"], data["attention_mask"], data["token_type_ids"]]
-            model_input = [to_torch_tensor(i, torch.int32) for i in llm_inputs]
+            # llm_inputs = [data["input_ids"], data["attention_mask"], data["token_type_ids"]]
+            # model_input = [to_torch_tensor(i, torch.int32) for i in llm_inputs]
+            llm_inputs = [data]
+            model_input = [to_torch_tensor(i, torch.float32) for i in llm_inputs]
 
             if hasattr(self.model, 'metadata'):
                 onnx_bytes = BytesIO()
@@ -117,9 +119,10 @@ if FOUND_ONNX:
                                   opset_version=self._onnx_opset_version,
                                   verbose=False,
                                   # input_names=['input_ids', "attention_mask", "segment_ids"],
-                                  input_names=['input_ids'],
+                                  # input_names=['input_ids'],
+                                  input_names=['inputs_embeds'],
                                   output_names=['output'],
-                                  dynamic_axes={"input_ids": symbolic_names,
+                                  dynamic_axes={"inputs_embeds": symbolic_names,
                                   #               "attention_mask": symbolic_names,
                                   #               "segment_ids": symbolic_names,
                                                 'output': symbolic_names
