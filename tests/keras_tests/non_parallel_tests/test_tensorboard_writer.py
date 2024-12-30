@@ -25,12 +25,15 @@ from tensorboard.compat.proto.graph_pb2 import GraphDef
 
 import model_compression_toolkit as mct
 from model_compression_toolkit.constants import TENSORFLOW
+from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.visualization.final_config_visualizer import \
     ActivationFinalBitwidthConfigVisualizer
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.logger import Logger
+from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
+    AttachTpModelToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
@@ -142,6 +145,7 @@ class TestFileLogger(unittest.TestCase):
                                          (4, 8), (4, 4), (4, 2),
                                          (2, 8), (2, 4), (2, 2)])
         tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
+        tpc =AttachTpModelToKeras().attach(tpc)
 
         # Hessian service assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP
         cfg = mct.core.DEFAULTCONFIG
@@ -193,7 +197,11 @@ class TestFileLogger(unittest.TestCase):
         mp_qc = mct.core.MixedPrecisionQuantizationConfig(num_of_images=1,
                                                           use_hessian_based_scores=False)
         core_config = mct.core.CoreConfig(mixed_precision_config=mp_qc,
+                                          quantization_config=
+                                          QuantizationConfig(custom_tpc_opset_to_layer=
+                                                             {"Input": ([layers.InputLayer],)}),
                                           debug_config=mct.core.DebugConfig(analyze_similarity=True))
+
         quantized_model, _ = mct.ptq.keras_post_training_quantization(self.model,
                                                                       rep_data,
                                                                       target_resource_utilization=mct.core.ResourceUtilization(

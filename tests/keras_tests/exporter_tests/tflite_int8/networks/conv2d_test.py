@@ -68,6 +68,7 @@ class TestConv2DPOTTFLiteINT8Exporter(TestConv2DSymmetricTFLiteINT8Exporter):
         self.weights_diff_tolerance = 0
 
     def get_tpc(self):
+        # TODO: requires a dedicated TP model and custom op building or allowing editing configs for built in latest tp model
         return get_int8_tpc(edit_weights_params_dict={'weights_quantization_method': QuantizationMethod.POWER_OF_TWO})
 
     def run_checks(self):
