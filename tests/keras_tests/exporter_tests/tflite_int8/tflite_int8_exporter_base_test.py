@@ -24,6 +24,7 @@ from keras import Input
 
 import model_compression_toolkit as mct
 import tests.keras_tests.exporter_tests.constants as constants
+from tests.common_tests.helpers.tpcs_for_tests.v1.tp_model import get_tp_model
 from tests.keras_tests.exporter_tests.tflite_int8.imx500_int8_tp_model import get_int8_tpc
 
 
@@ -73,7 +74,7 @@ class TFLiteINT8ExporterBaseTest:
         return [(16, 16, 3)]
 
     def get_tpc(self):
-        return get_int8_tpc()
+        return get_tp_model()
 
     def __get_repr_dataset(self):
         for _ in range(1):
