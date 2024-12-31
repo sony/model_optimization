@@ -190,6 +190,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     qpreseving_config = default_config.clone_and_edit(enable_activation_quantization=False,
                                                       quantization_preserving=True,
                                                       supported_input_activation_n_bits=(8, 16))
+
     qpreseving_config_options = schema.QuantizationConfigOptions(quantization_configurations=tuple([qpreseving_config,
                                                                         qpreseving_config.clone_and_edit(
                                                                             activation_n_bits=16,
@@ -271,6 +272,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
                                                 quantization_preserving=True,
                                                 supported_input_activation_n_bits=(8, 16))
                                             .clone_and_edit_weight_attribute(enable_weights_quantization=False)))
+
     operator_set.append(schema.OperatorsSet(name=OPSET_SPLIT_OPS, qc_options=qpreseving_config_options))
     operator_set.append(schema.OperatorsSet(name=OPSET_MERGE_OPS, qc_options=const_configuration_options_inout16_per_tensor))
 
