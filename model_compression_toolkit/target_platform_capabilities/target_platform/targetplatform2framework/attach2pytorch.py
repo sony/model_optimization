@@ -16,7 +16,6 @@
 import operator
 
 import torch
-from sony_custom_layers.pytorch import SSDPostProcess
 from torch import add, sub, mul, div, divide, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, \
     chunk, unbind, topk, gather, equal, transpose, permute, argmax, squeeze, multiply, subtract, minimum, \
     maximum, softmax
@@ -87,15 +86,8 @@ class AttachTpcToPytorch(AttachTpcToFramework):
             OperatorSetNames.OPSET_LOG_SOFTMAX.value: [LogSoftmax],
             OperatorSetNames.OPSET_L2NORM.value: [LayerFilterParams(torch.nn.functional.normalize,
                                                                     Eq('p', 2) | Eq('p', None))],
-
+            OperatorSetNames.OPSET_SSD_POST_PROCESS.value: []  # for alignment with the default TargetPlatformModel
         }
-
-        if FOUND_SONY_CUSTOM_LAYERS:
-            self._opset2layer[OperatorSetNames.OPSET_SSD_POST_PROCESS.value] = [SSDPostProcess]
-        else:
-            # If Custom layers is not installed then we don't want the user to fail, but just ignore custom layers
-            # in the initialized framework TPC
-            self._opset2layer[OperatorSetNames.OPSET_SSD_POST_PROCESS.value] = []
 
         pytorch_linear_attr_mapping = {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
                                        BIAS_ATTR: DefaultDict(default_value=BIAS)}
