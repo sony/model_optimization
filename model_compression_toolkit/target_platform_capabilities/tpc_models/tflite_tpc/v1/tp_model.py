@@ -18,7 +18,8 @@ import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
 from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.target_platform_capabilities.constants import BIAS_ATTR, KERNEL_ATTR, TFLITE_TP_MODEL
-from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, Signedness, \
+from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel, \
+    Signedness, \
     AttributeQuantizationConfig, OpQuantizationConfig
 
 tp = mct.target_platform
@@ -136,7 +137,8 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     # of possible configurations to consider when quantizing a set of operations (in mixed-precision, for example).
     # If the QuantizationConfigOptions contains only one configuration,
     # this configuration will be used for the operation quantization:
-    default_configuration_options = schema.QuantizationConfigOptions(tuple([default_config]))
+    default_configuration_options = schema.QuantizationConfigOptions(
+        quantization_configurations=tuple([default_config]))
 
     # In TFLite, the quantized operator specifications constraint operators quantization
     # differently. For more details:
@@ -144,59 +146,60 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set = []
     fusing_patterns = []
 
-    operator_set.append(schema.OperatorsSet("NoQuantization",
-                           default_configuration_options.clone_and_edit(
-                               quantization_preserving=True)))
+    operator_set.append(schema.OperatorsSet(name="NoQuantization",
+                                            qc_options=default_configuration_options.clone_and_edit(
+                                                quantization_preserving=True)))
 
-    fc = schema.OperatorsSet("FullyConnected",
-                                default_configuration_options.clone_and_edit_weight_attribute(weights_per_channel_threshold=False))
+    fc = schema.OperatorsSet(name="FullyConnected",
+                             qc_options=default_configuration_options.clone_and_edit_weight_attribute(
+                                 weights_per_channel_threshold=False))
 
-    operator_set.append(schema.OperatorsSet("L2Normalization",
-                           default_configuration_options.clone_and_edit(
-                               fixed_zero_point=0, fixed_scale=1 / 128)))
-    operator_set.append(schema.OperatorsSet("LogSoftmax",
-                           default_configuration_options.clone_and_edit(
-                               fixed_zero_point=127, fixed_scale=16 / 256)))
-    operator_set.append(schema.OperatorsSet("Tanh",
-                           default_configuration_options.clone_and_edit(
-                               fixed_zero_point=0, fixed_scale=1 / 128)))
-    operator_set.append(schema.OperatorsSet("Softmax",
-                           default_configuration_options.clone_and_edit(
-                               fixed_zero_point=-128, fixed_scale=1 / 256)))
-    operator_set.append(schema.OperatorsSet("Logistic",
-                           default_configuration_options.clone_and_edit(
-                               fixed_zero_point=-128, fixed_scale=1 / 256)))
+    operator_set.append(schema.OperatorsSet(name="L2Normalization",
+                                            qc_options=default_configuration_options.clone_and_edit(
+                                                fixed_zero_point=0, fixed_scale=1 / 128)))
+    operator_set.append(schema.OperatorsSet(name="LogSoftmax",
+                                            qc_options=default_configuration_options.clone_and_edit(
+                                                fixed_zero_point=127, fixed_scale=16 / 256)))
+    operator_set.append(schema.OperatorsSet(name="Tanh",
+                                            qc_options=default_configuration_options.clone_and_edit(
+                                                fixed_zero_point=0, fixed_scale=1 / 128)))
+    operator_set.append(schema.OperatorsSet(name="Softmax",
+                                            qc_options=default_configuration_options.clone_and_edit(
+                                                fixed_zero_point=-128, fixed_scale=1 / 256)))
+    operator_set.append(schema.OperatorsSet(name="Logistic",
+                                            qc_options=default_configuration_options.clone_and_edit(
+                                                fixed_zero_point=-128, fixed_scale=1 / 256)))
 
-    conv2d = schema.OperatorsSet("Conv2d")
-    kernel = schema.OperatorSetConcat([conv2d, fc])
+    conv2d = schema.OperatorsSet(name="Conv2d")
+    kernel = schema.OperatorSetConcat(operators_set=[conv2d, fc])
 
-    relu = schema.OperatorsSet("Relu")
-    elu = schema.OperatorsSet("Elu")
-    activations_to_fuse = schema.OperatorSetConcat([relu, elu])
+    relu = schema.OperatorsSet(name="Relu")
+    elu = schema.OperatorsSet(name="Elu")
+    activations_to_fuse = schema.OperatorSetConcat(operators_set=[relu, elu])
 
-    batch_norm = schema.OperatorsSet("BatchNorm")
-    bias_add = schema.OperatorsSet("BiasAdd")
-    add = schema.OperatorsSet("Add")
-    squeeze = schema.OperatorsSet("Squeeze",
-                                     qc_options=default_configuration_options.clone_and_edit(
-                                         quantization_preserving=True))
-    operator_set.extend([fc, conv2d, kernel, relu, elu, batch_norm, bias_add, add, squeeze])
+    batch_norm = schema.OperatorsSet(name="BatchNorm")
+    bias_add = schema.OperatorsSet(name="BiasAdd")
+    add = schema.OperatorsSet(name="Add")
+    squeeze = schema.OperatorsSet(name="Squeeze",
+                                  qc_options=default_configuration_options.clone_and_edit(
+                                      quantization_preserving=True))
+    operator_set.extend([fc, conv2d, relu, elu, batch_norm, bias_add, add, squeeze])
     # ------------------- #
     # Fusions
     # ------------------- #
     # Source: https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/grappler/optimizers/remapper
-    fusing_patterns.append(schema.Fusing((kernel, bias_add)))
-    fusing_patterns.append(schema.Fusing((kernel, bias_add, activations_to_fuse)))
-    fusing_patterns.append(schema.Fusing((conv2d, batch_norm, activations_to_fuse)))
-    fusing_patterns.append(schema.Fusing((conv2d, squeeze, activations_to_fuse)))
-    fusing_patterns.append(schema.Fusing((batch_norm, activations_to_fuse)))
-    fusing_patterns.append(schema.Fusing((batch_norm, add, activations_to_fuse)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(kernel, bias_add)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(kernel, bias_add, activations_to_fuse)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(conv2d, batch_norm, activations_to_fuse)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(conv2d, squeeze, activations_to_fuse)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(batch_norm, activations_to_fuse)))
+    fusing_patterns.append(schema.Fusing(operator_groups=(batch_norm, add, activations_to_fuse)))
 
     # Create a TargetPlatformModel and set its default quantization config.
     # This default configuration will be used for all operations
     # unless specified otherwise (see OperatorsSet, for example):
     generated_tpc = schema.TargetPlatformModel(
-        default_configuration_options,
+        default_qco=default_configuration_options,
         tpc_minor_version=1,
         tpc_patch_version=0,
         operator_set=tuple(operator_set),

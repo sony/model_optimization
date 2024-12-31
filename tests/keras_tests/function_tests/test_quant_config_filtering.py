@@ -12,18 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from dataclasses import replace
-
 import unittest
-import numpy as np
 import model_compression_toolkit as mct
-import model_compression_toolkit.core.common.quantization.quantization_config as qc
 from model_compression_toolkit.constants import THRESHOLD, TENSORFLOW
 from model_compression_toolkit.target_platform_capabilities.constants import IMX500_TP_MODEL
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.error_functions import _mse_error_histogram
-from model_compression_toolkit.core.common.collectors.histogram_collector import HistogramCollector
-from model_compression_toolkit.core.common.quantization.quantization_params_generation.power_of_two_selection import power_of_two_selection_tensor
-from model_compression_toolkit.core.common.graph import BaseNode
 from model_compression_toolkit.core.common.graph.functional_node import FunctionalNode
 from model_compression_toolkit.core.keras.constants import FUNCTION
 
@@ -45,7 +37,9 @@ class TestKerasQuantConfigFiltering(unittest.TestCase):
         # Force Mul base_config to 16bit only
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
         base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
-        tpc.layer2qco[tf.multiply] = replace(tpc.layer2qco[tf.multiply], base_config=base_config)
+        tpc.layer2qco[tf.multiply] = tpc.layer2qco[tf.multiply].copy(
+            update={'quantization_configurations': mul_op_set.qc_options.quantization_configurations,
+                    'base_config': base_config})
         return tpc
 
     def test_config_filtering(self):
