@@ -188,10 +188,10 @@ class Manual16BitTest(ManualBitWidthByLayerNameTest):
         tpc = mct.get_target_platform_capabilities(PYTORCH, IMX500_TP_MODEL, 'v3')
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
         base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.mul] = tpc.layer2qco[torch.mul].model_copy(
+        tpc.layer2qco[torch.mul] = tpc.layer2qco[torch.mul].copy(
             update={'quantization_configurations': mul_op_set.qc_options.quantization_configurations,
                     'base_config': base_config})
-        tpc.layer2qco[mul] = tpc.layer2qco[mul].model_copy(
+        tpc.layer2qco[mul] = tpc.layer2qco[mul].copy(
             update={'quantization_configurations': mul_op_set.qc_options.quantization_configurations,
                     'base_config': base_config})
         return {'mixed_precision_activation_model': tpc}
@@ -210,9 +210,9 @@ class Manual16BitTestMixedPrecisionTest(ManualBitWidthByLayerNameTest):
         quantization_configurations.extend(
             [mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=4),
              mul_op_set.qc_options.base_config.clone_and_edit(activation_n_bits=2)])
-        tpc.layer2qco[torch.mul] = tpc.layer2qco[torch.mul].model_copy(
+        tpc.layer2qco[torch.mul] = tpc.layer2qco[torch.mul].copy(
             update={'base_config': base_config, 'quantization_configurations': tuple(quantization_configurations)})
-        tpc.layer2qco[mul] = tpc.layer2qco[mul].model_copy(
+        tpc.layer2qco[mul] = tpc.layer2qco[mul].copy(
             update={'base_config': base_config, 'quantization_configurations': tuple(quantization_configurations)})
         return {'mixed_precision_activation_model': tpc}
 

@@ -39,8 +39,7 @@ def generate_test_tp_model(edit_params_dict, name=""):
     base_config, op_cfg_list, default_config = get_op_quantization_configs()
 
     # separate weights attribute parameters from the requested param to edit
-    weights_params_names = [name for name in schema.AttributeQuantizationConfig.model_fields.keys() if
-                            name != 'self']
+    weights_params_names = base_config.default_weight_attr_config.field_names
     weights_params = {k: v for k, v in edit_params_dict.items() if k in weights_params_names}
     rest_params = {k: v for k, v in edit_params_dict.items() if k not in list(weights_params.keys())}
 

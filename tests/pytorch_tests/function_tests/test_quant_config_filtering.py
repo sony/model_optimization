@@ -33,7 +33,7 @@ class TestTorchQuantConfigFiltering(unittest.TestCase):
         # Force Mul base_config to 16bit only
         mul_op_set = get_op_set('Mul', tpc.tp_model.operator_set)
         base_config = [l for l in mul_op_set.qc_options.quantization_configurations if l.activation_n_bits == 16][0]
-        tpc.layer2qco[torch.multiply] = tpc.layer2qco[torch.multiply].model_copy(
+        tpc.layer2qco[torch.multiply] = tpc.layer2qco[torch.multiply].copy(
             update={'quantization_configurations': mul_op_set.qc_options.quantization_configurations,
                     'base_config': base_config})
         return tpc
