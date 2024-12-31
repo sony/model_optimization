@@ -35,7 +35,7 @@ from model_compression_toolkit.core.common.substitutions.apply_substitutions imp
 from model_compression_toolkit.core.graph_prep_runner import graph_preparation_runner
 from model_compression_toolkit.core.keras.constants import KERNEL
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpModelToKeras
+    AttachTpcToKeras
 from tests.keras_tests.feature_networks_tests.base_keras_feature_test import BaseKerasFeatureNetworkTest
 from model_compression_toolkit.target_platform_capabilities.target_platform import QuantizationMethod
 
@@ -50,7 +50,7 @@ def prepare_graph_for_first_network_editor(in_model, representative_data_gen, co
     if target_resource_utilization is not None:
         core_config.mixed_precision_config.set_mixed_precision_enable()
 
-    attach2keras = AttachTpModelToKeras()
+    attach2keras = AttachTpcToKeras()
     tpc = attach2keras.attach(tpc)
 
     transformed_graph = graph_preparation_runner(in_model,

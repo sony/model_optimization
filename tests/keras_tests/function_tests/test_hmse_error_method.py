@@ -32,7 +32,7 @@ from model_compression_toolkit.core.keras.constants import KERNEL, GAMMA
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR, KERAS_KERNEL, BIAS
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import AttributeQuantizationConfig
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpModelToKeras
+    AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
@@ -89,7 +89,7 @@ class TestParamSelectionWithHMSE(unittest.TestCase):
                                                 lambda name, _tp: tpc_fn(quant_method, per_channel),
                                                 qc=self.qc,
                                                 running_gptq=running_gptq,
-                                                attach2fw=AttachTpModelToKeras()
+                                                attach2fw=AttachTpcToKeras()
                                                 # to enable HMSE in params calculation if needed
                                                 )
 

@@ -40,7 +40,7 @@ from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpModelToKeras
+    AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
 from tests.keras_tests.tpc_keras import get_weights_only_mp_tpc_keras
@@ -233,7 +233,7 @@ class TestSearchBitwidthConfiguration(unittest.TestCase):
 
         graph = keras_impl.model_reader(in_model, dummy_representative_dataset)  # model reading
 
-        tpc = AttachTpModelToKeras().attach(tpc)
+        tpc = AttachTpcToKeras().attach(tpc)
 
         graph.set_fw_info(fw_info)
         graph.set_tpc(tpc)

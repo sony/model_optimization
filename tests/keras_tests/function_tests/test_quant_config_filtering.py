@@ -26,7 +26,7 @@ from model_compression_toolkit.target_platform_capabilities.schema.mct_current_s
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
     get_config_options_by_operators_set
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpModelToKeras
+    AttachTpcToKeras
 from tests.common_tests.helpers.generate_test_tp_model import generate_custom_test_tp_model
 from tests.common_tests.helpers.tpcs_for_tests.v3.tp_model import get_tp_model
 
@@ -74,7 +74,7 @@ class TestKerasQuantConfigFiltering(unittest.TestCase):
                               [], {}, functional_op=tf.divide)
 
         tpc = self.get_tpc_default_16bit()
-        tpc = AttachTpModelToKeras().attach(tpc)
+        tpc = AttachTpcToKeras().attach(tpc)
 
         node_qc_options = node.get_qco(tpc)
         self.assertTrue(node_qc_options.base_config.activation_n_bits == 16, "base_config should start with 16 bits.")

@@ -29,7 +29,7 @@ from model_compression_toolkit.core.keras.graph_substitutions.substitutions.weig
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.core.common.substitutions.apply_substitutions import substitute
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpModelToKeras
+    AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 
 import model_compression_toolkit as mct
@@ -82,7 +82,7 @@ def setup_test(in_model, keras_impl, mixed_precision_candidates_list):
     graph = prepare_graph_with_configs(in_model, keras_impl, DEFAULT_KERAS_INFO, representative_dataset,
                                        lambda name, _tp: get_tpc(mixed_precision_candidates_list), qc=qc,
                                        mixed_precision_enabled=True,
-                                       attach2fw=AttachTpModelToKeras())
+                                       attach2fw=AttachTpcToKeras())
 
     # Split graph substitution
     split_graph = substitute(copy.deepcopy(graph), [WeightsActivationSplit()])

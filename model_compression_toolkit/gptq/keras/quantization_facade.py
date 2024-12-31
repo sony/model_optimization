@@ -49,7 +49,7 @@ if FOUND_TF:
     from model_compression_toolkit import get_target_platform_capabilities
     from mct_quantizers.keras.metadata import add_metadata
     from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-        AttachTpModelToKeras
+        AttachTpcToKeras
 
     # As from TF2.9 optimizers package is changed
     if version.parse(tf.__version__) < version.parse("2.9"):
@@ -241,7 +241,7 @@ if FOUND_TF:
         fw_impl = GPTQKerasImplemantation()
 
         # Attach tpc model to framework
-        attach2keras = AttachTpModelToKeras()
+        attach2keras = AttachTpcToKeras()
         target_platform_capabilities = attach2keras.attach(
             target_platform_capabilities,
             custom_opset2layer=core_config.quantization_config.custom_tpc_opset_to_layer)

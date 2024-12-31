@@ -17,10 +17,10 @@ from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_t
 if FOUND_TF:
     from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_tpc.v1.tp_model import get_tp_model as \
         get_keras_tpc_latest
-    from model_compression_toolkit.target_platform_capabilities.target_platform.get_tpc_model import \
-        get_tpc_model as generate_keras_tpc
+    from model_compression_toolkit.target_platform_capabilities.tpc_models.get_target_platform_capabilities import \
+        get_tpc_model as generate_keras_tpc, get_tpc_model as generate_keras_tpc
 if FOUND_TORCH:
     from model_compression_toolkit.target_platform_capabilities.tpc_models.qnnpack_tpc.v1.tp_model import get_tp_model as \
         get_pytorch_tpc_latest
-    from model_compression_toolkit.target_platform_capabilities.target_platform.get_tpc_model import \
-        get_tpc_model as generate_pytorch_tpc
+    from model_compression_toolkit.target_platform_capabilities.tpc_models.get_target_platform_capabilities import \
+        get_tpc_model as generate_pytorch_tpc, get_tpc_model as generate_pytorch_tpc

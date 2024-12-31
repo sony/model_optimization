@@ -54,7 +54,7 @@ def get_mp_activation_pytorch_tpc_dict(tpc_model, test_name, tpc_name, custom_op
 #                     'FullyConnected': {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
 #                                        BIAS_ATTR: DefaultDict(default_value=BIAS)}}
 #
-#     attach2pytorch = AttachTpModelToPytorch()
+#     attach2pytorch = AttachTpcToPytorch()
 #     tpc = attach2pytorch.attach(tpc_model)
 #     return {
 #         test_name: generate_test_tpc(name=tpc_name,

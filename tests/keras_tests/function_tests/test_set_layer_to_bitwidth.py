@@ -20,7 +20,7 @@ from keras import Input
 from keras.layers import Conv2D
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpModelToKeras
+    AttachTpcToKeras
 
 from model_compression_toolkit.trainable_infrastructure import KerasTrainableQuantizationWrapper
 from model_compression_toolkit.core.common.mixed_precision.set_layer_to_bitwidth import set_layer_to_bitwidth
@@ -50,10 +50,10 @@ def setup_test(get_tpc_fn):
 
     model = base_model((8, 8, 3))
 
-    graph = prepare_graph_with_quantization_parameters(model,  KerasImplementation(), DEFAULT_KERAS_INFO,
+    graph = prepare_graph_with_quantization_parameters(model, KerasImplementation(), DEFAULT_KERAS_INFO,
                                                        representative_dataset, get_tpc_fn,
                                                        input_shape=(1, 8, 8, 3),
-                                                       attach2fw=AttachTpModelToKeras(),
+                                                       attach2fw=AttachTpcToKeras(),
                                                        mixed_precision_enabled=True)
 
     layer = model.layers[1]

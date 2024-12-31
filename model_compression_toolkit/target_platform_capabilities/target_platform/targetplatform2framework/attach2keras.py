@@ -24,11 +24,11 @@ if FOUND_SONY_CUSTOM_LAYERS:
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
-        Conv2DTranspose, Identity, Concatenate, BatchNormalization, Minimum, Maximum
+        Conv2DTranspose, Identity, Concatenate, BatchNormalization, Minimum, Maximum, Softmax
 else:
     from keras.layers import Conv2D, DepthwiseConv2D, Dense, Reshape, ZeroPadding2D, Dropout, \
         MaxPooling2D, Activation, ReLU, Add, Subtract, Multiply, PReLU, Flatten, Cropping2D, LeakyReLU, Permute, \
-        Conv2DTranspose, Concatenate, BatchNormalization, Minimum, Maximum
+        Conv2DTranspose, Concatenate, BatchNormalization, Minimum, Maximum, Softmax
 
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS, \
@@ -36,10 +36,10 @@ from model_compression_toolkit.target_platform_capabilities.constants import KER
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames
 from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    AttachTpModelToFw
+    AttachTpcToFramework
 
 
-class AttachTpModelToKeras(AttachTpModelToFw):
+class AttachTpcToKeras(AttachTpcToFramework):
     def __init__(self):
         super().__init__()
 
@@ -53,7 +53,7 @@ class AttachTpModelToKeras(AttachTpModelToFw):
             OperatorSetNames.OPSET_UNSTACK.value: [tf.unstack],
             OperatorSetNames.OPSET_GATHER.value: [tf.gather, tf.compat.v1.gather],
             OperatorSetNames.OPSET_EXPAND.value: [],
-            OperatorSetNames.OPSET_BATCH_NORM.value: [BatchNormalization],
+            OperatorSetNames.OPSET_BATCH_NORM.value: [BatchNormalization, tf.nn.batch_normalization],
             OperatorSetNames.OPSET_RELU.value: [tf.nn.relu, ReLU, LayerFilterParams(Activation, activation="relu")],
             OperatorSetNames.OPSET_RELU6.value: [tf.nn.relu6],
             OperatorSetNames.OPSET_LEAKY_RELU.value: [tf.nn.leaky_relu, LeakyReLU, LayerFilterParams(Activation, activation="leaky_relu")],
@@ -66,6 +66,7 @@ class AttachTpModelToKeras(AttachTpModelToFw):
             OperatorSetNames.OPSET_MAX.value: [tf.math.maximum, Maximum],
             OperatorSetNames.OPSET_PRELU.value: [PReLU],
             OperatorSetNames.OPSET_SWISH.value: [tf.nn.swish, LayerFilterParams(Activation, activation="swish")],
+            OperatorSetNames.OPSET_HARDSWISH.value: [LayerFilterParams(Activation, activation="hard_swish")],
             OperatorSetNames.OPSET_SIGMOID.value: [tf.nn.sigmoid, LayerFilterParams(Activation, activation="sigmoid")],
             OperatorSetNames.OPSET_TANH.value: [tf.nn.tanh, LayerFilterParams(Activation, activation="tanh")],
             OperatorSetNames.OPSET_GELU.value: [tf.nn.gelu, LayerFilterParams(Activation, activation="gelu")],
@@ -76,9 +77,12 @@ class AttachTpModelToKeras(AttachTpModelToFw):
             OperatorSetNames.OPSET_RESHAPE.value: [Reshape, tf.reshape],
             OperatorSetNames.OPSET_PERMUTE.value: [Permute],
             OperatorSetNames.OPSET_TRANSPOSE.value: [tf.transpose],
+            OperatorSetNames.OPSET_UNSQUEEZE.value: [tf.expand_dims],
+            OperatorSetNames.OPSET_SQUEEZE.value: [tf.squeeze],
             OperatorSetNames.OPSET_DROPOUT.value: [Dropout],
-            OperatorSetNames.OPSET_SPLIT.value: [tf.split],
+            OperatorSetNames.OPSET_SPLIT_CHUNK.value: [tf.split],
             OperatorSetNames.OPSET_MAXPOOL.value: [MaxPooling2D],
+            OperatorSetNames.OPSET_SIZE.value: [tf.size],
             OperatorSetNames.OPSET_SHAPE.value: [tf.shape, tf.compat.v1.shape],
             OperatorSetNames.OPSET_EQUAL.value: [tf.math.equal],
             OperatorSetNames.OPSET_ARGMAX.value: [tf.math.argmax],
@@ -88,11 +92,21 @@ class AttachTpModelToKeras(AttachTpModelToFw):
             OperatorSetNames.OPSET_CROPPING2D.value: [Cropping2D],
             OperatorSetNames.OPSET_ZERO_PADDING2d.value: [ZeroPadding2D],
             OperatorSetNames.OPSET_CAST.value: [tf.cast],
-            OperatorSetNames.OPSET_STRIDED_SLICE.value: [tf.strided_slice]
+            OperatorSetNames.OPSET_STRIDED_SLICE.value: [tf.strided_slice],
+            OperatorSetNames.OPSET_ELU.value: [tf.nn.elu, LayerFilterParams(Activation, activation="elu")],
+            OperatorSetNames.OPSET_SOFTMAX.value: [tf.nn.softmax, Softmax,
+                                                   LayerFilterParams(Activation, activation="softmax")],
+            OperatorSetNames.OPSET_LOG_SOFTMAX.value: [tf.nn.log_softmax],
+            OperatorSetNames.OPSET_ADD_BIAS.value: [tf.nn.bias_add],
+            OperatorSetNames.OPSET_L2NORM.value: [tf.math.l2_normalize],
         }
 
         if FOUND_SONY_CUSTOM_LAYERS:
-            self._opset2layer[OperatorSetNames.OPSET_SSD_POST_PROCESS] = [SSDPostProcess]
+            self._opset2layer[OperatorSetNames.OPSET_SSD_POST_PROCESS.value] = [SSDPostProcess]
+        else:
+            # If Custom layers is not installed then we don't want the user to fail, but just ignore custom layers
+            # in the initialized framework TPC
+            self._opset2layer[OperatorSetNames.OPSET_SSD_POST_PROCESS.value] = []
 
         self._opset2attr_mapping = {
             OperatorSetNames.OPSET_CONV.value: {

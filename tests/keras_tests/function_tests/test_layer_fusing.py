@@ -8,7 +8,7 @@ from model_compression_toolkit.core.common.fusion.layer_fusing import fusion
 from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpModelToKeras
+    AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import \
     get_op_quantization_configs
 import model_compression_toolkit as mct
@@ -189,7 +189,7 @@ class TestLayerFusing(unittest.TestCase):
 
         fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
                                                   representative_dataset, lambda name, _tp: get_tpc_1(),
-                                                  attach2fw=AttachTpModelToKeras(), qc=qc)
+                                                  attach2fw=AttachTpcToKeras(), qc=qc)
 
         self._compare(fusion_graph.fused_nodes, expected_fusions)
 
@@ -211,7 +211,7 @@ class TestLayerFusing(unittest.TestCase):
 
         fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
                                                   representative_dataset, lambda name, _tp: get_tpc_2(),
-                                                  attach2fw=AttachTpModelToKeras(), qc=qc)
+                                                  attach2fw=AttachTpcToKeras(), qc=qc)
 
         self._compare(fusion_graph.fused_nodes, expected_fusions)
 
@@ -227,7 +227,7 @@ class TestLayerFusing(unittest.TestCase):
 
         fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
                                                   representative_dataset, lambda name, _tp: get_tpc_3(),
-                                                  attach2fw=AttachTpModelToKeras(), qc=qc)
+                                                  attach2fw=AttachTpcToKeras(), qc=qc)
 
         self._compare(fusion_graph.fused_nodes, expected_fusions)
 
@@ -249,6 +249,6 @@ class TestLayerFusing(unittest.TestCase):
 
         fusion_graph = prepare_graph_with_configs(model, KerasImplementation(), DEFAULT_KERAS_INFO,
                                                   representative_dataset, lambda name, _tp: get_tpc_4(),
-                                                  attach2fw=AttachTpModelToKeras(), qc=qc)
+                                                  attach2fw=AttachTpcToKeras(), qc=qc)
 
         self._compare(fusion_graph.fused_nodes, expected_fusions)

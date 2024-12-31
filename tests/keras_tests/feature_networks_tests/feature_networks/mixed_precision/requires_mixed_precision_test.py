@@ -19,7 +19,7 @@ import tensorflow as tf
 from packaging import version
 
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpModelToKeras
+    AttachTpcToKeras
 
 if version.parse(tf.__version__) >= version.parse("2.13"):
     from keras.src.engine.input_layer import InputLayer
@@ -66,7 +66,7 @@ class RequiresMixedPrecision(MixedPrecisionBaseTest):
 
     def get_max_resources_for_model(self, model):
         tpc = self.get_tpc()
-        attach2keras = AttachTpModelToKeras()
+        attach2keras = AttachTpcToKeras()
         tpc = attach2keras.attach(tpc)
 
         return compute_resource_utilization_data(in_model=model,

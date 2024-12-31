@@ -39,7 +39,7 @@ if FOUND_TORCH:
     from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
     from torch.nn import Module
     from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
-        AttachTpModelToPytorch
+        AttachTpcToPytorch
 
     # Set the default Target Platform Capabilities (TPC) for PyTorch.
     DEFAULT_PYOTRCH_TPC = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
@@ -120,7 +120,7 @@ if FOUND_TORCH:
         fw_impl = PruningPytorchImplementation()
 
         # Attach TPC to framework
-        attach2pytorch = AttachTpModelToPytorch()
+        attach2pytorch = AttachTpcToPytorch()
         target_platform_capabilities = attach2pytorch.attach(target_platform_capabilities)
 
         # Convert the original Pytorch model to an internal graph representation.

@@ -33,7 +33,7 @@ from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_
 from model_compression_toolkit.core.keras.keras_implementation import KerasImplementation
 from model_compression_toolkit.logger import Logger
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpModelToKeras
+    AttachTpcToKeras
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import generate_keras_tpc
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_tp_model_with_activation_mp
@@ -145,7 +145,7 @@ class TestFileLogger(unittest.TestCase):
                                          (4, 8), (4, 4), (4, 2),
                                          (2, 8), (2, 4), (2, 2)])
         tpc = generate_keras_tpc(name='mp_keras_tpc', tp_model=tpc_model)
-        tpc =AttachTpModelToKeras().attach(tpc)
+        tpc =AttachTpcToKeras().attach(tpc)
 
         # Hessian service assumes core should be initialized. This test does not do it, so we disable the use of hessians in MP
         cfg = mct.core.DEFAULTCONFIG

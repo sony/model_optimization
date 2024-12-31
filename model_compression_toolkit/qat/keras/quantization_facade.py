@@ -56,7 +56,7 @@ if FOUND_TF:
     get_activation_quantizer_holder
     from model_compression_toolkit.qat.common.qat_config import QATConfig
     from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-        AttachTpModelToKeras
+        AttachTpcToKeras
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
@@ -189,7 +189,7 @@ if FOUND_TF:
 
         fw_impl = KerasImplementation()
 
-        attach2keras = AttachTpModelToKeras()
+        attach2keras = AttachTpcToKeras()
         target_platform_capabilities = attach2keras.attach(
             target_platform_capabilities,
             custom_opset2layer=core_config.quantization_config.custom_tpc_opset_to_layer)

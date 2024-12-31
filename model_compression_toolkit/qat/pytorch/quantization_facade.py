@@ -19,7 +19,7 @@ from functools import partial
 from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
-    AttachTpModelToPytorch
+    AttachTpcToPytorch
 from model_compression_toolkit.verify_packages import FOUND_TORCH
 
 from model_compression_toolkit.core import CoreConfig
@@ -158,7 +158,7 @@ if FOUND_TORCH:
         fw_impl = PytorchImplementation()
 
         # Attach tpc model to framework
-        attach2pytorch = AttachTpModelToPytorch()
+        attach2pytorch = AttachTpcToPytorch()
         target_platform_capabilities = attach2pytorch.attach(target_platform_capabilities,
                                                              core_config.quantization_config.custom_tpc_opset_to_layer)
 

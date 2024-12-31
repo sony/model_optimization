@@ -25,7 +25,7 @@ from model_compression_toolkit.core.graph_prep_runner import read_model_to_graph
 import keras
 
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpModelToKeras
+    AttachTpcToKeras
 
 layers = keras.layers
 import numpy as np
@@ -53,7 +53,7 @@ class TestParameterCounter(unittest.TestCase):
         fw_impl = PruningKerasImplementation()
         tpc = mct.get_target_platform_capabilities('tensorflow', 'imx500')
 
-        tpc = AttachTpModelToKeras().attach(tpc)
+        tpc = AttachTpcToKeras().attach(tpc)
 
         # Convert the original Keras model to an internal graph representation.
         float_graph = read_model_to_graph(model,

@@ -26,7 +26,7 @@ from model_compression_toolkit.core.pytorch.mixed_precision.configurable_weights
     ConfigurableWeightsQuantizer
 from model_compression_toolkit.core.pytorch.pytorch_implementation import PytorchImplementation
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
-    AttachTpModelToPytorch
+    AttachTpcToPytorch
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.latest import get_op_quantization_configs
 from tests.common_tests.helpers.generate_test_tp_model import generate_mixed_precision_test_tp_model
 from tests.common_tests.helpers.prep_graph_for_func_test import prepare_graph_with_quantization_parameters
@@ -52,7 +52,7 @@ def setup_test(representative_data_gen, get_tpc_fn):
                                                        representative_data_gen, get_tpc_fn,
                                                        input_shape=(1, 3, 8, 8),
                                                        mixed_precision_enabled=True,
-                                                       attach2fw=AttachTpModelToPytorch())
+                                                       attach2fw=AttachTpcToPytorch())
 
     layer = list(model.children())[0]
     node = graph.get_topo_sorted_nodes()[1]

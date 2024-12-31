@@ -16,25 +16,26 @@
 import operator
 
 import torch
+from sony_custom_layers.pytorch import SSDPostProcess
 from torch import add, sub, mul, div, divide, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, \
     chunk, unbind, topk, gather, equal, transpose, permute, argmax, squeeze, multiply, subtract, minimum, \
-    maximum
-from torch.nn import Conv2d, Linear, ConvTranspose2d, MaxPool2d, BatchNorm2d
-from torch.nn import Dropout, Flatten, Hardtanh
-from torch.nn import ReLU, ReLU6, PReLU, SiLU, Sigmoid, Tanh, Hardswish, Hardsigmoid, LeakyReLU, GELU
-import torch.nn.functional as F
+    maximum, softmax
+from torch.nn import Conv2d, Linear, ConvTranspose2d, MaxPool2d, BatchNorm2d, Dropout, Flatten, Hardtanh, ReLU, ReLU6, \
+    PReLU, SiLU, Sigmoid, Tanh, Hardswish, Hardsigmoid, LeakyReLU, GELU, LogSoftmax, Softmax, ELU
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, hardsigmoid, leaky_relu, gelu
+import torch.nn.functional as F
 
 from model_compression_toolkit import DefaultDict
 from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, PYTORCH_KERNEL, BIAS, \
     BIAS_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import OperatorSetNames
-from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams
+from model_compression_toolkit.target_platform_capabilities.target_platform import LayerFilterParams, Eq
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2fw import \
-    AttachTpModelToFw
+    AttachTpcToFramework
+from model_compression_toolkit.verify_packages import FOUND_SONY_CUSTOM_LAYERS
 
 
-class AttachTpModelToPytorch(AttachTpModelToFw):
+class AttachTpcToPytorch(AttachTpcToFramework):
     def __init__(self):
         super().__init__()
 
@@ -74,15 +75,27 @@ class AttachTpModelToPytorch(AttachTpModelToFw):
             OperatorSetNames.OPSET_PERMUTE.value: [permute],
             OperatorSetNames.OPSET_TRANSPOSE.value: [transpose],
             OperatorSetNames.OPSET_DROPOUT.value: [Dropout, dropout],
-            OperatorSetNames.OPSET_SPLIT.value: [split],
-            OperatorSetNames.OPSET_CHUNK.value: [chunk],
+            OperatorSetNames.OPSET_SPLIT_CHUNK.value: [split, chunk],
             OperatorSetNames.OPSET_MAXPOOL.value: [MaxPool2d, F.max_pool2d],
             OperatorSetNames.OPSET_SIZE.value: [torch.Tensor.size],
             OperatorSetNames.OPSET_SHAPE.value: [torch.Tensor.shape],
             OperatorSetNames.OPSET_EQUAL.value: [equal],
             OperatorSetNames.OPSET_ARGMAX.value: [argmax],
             OperatorSetNames.OPSET_TOPK.value: [topk],
+            OperatorSetNames.OPSET_ELU.value: [ELU, F.elu],
+            OperatorSetNames.OPSET_SOFTMAX.value: [Softmax, softmax, F.softmax],
+            OperatorSetNames.OPSET_LOG_SOFTMAX.value: [LogSoftmax],
+            OperatorSetNames.OPSET_L2NORM.value: [LayerFilterParams(torch.nn.functional.normalize,
+                                                                    Eq('p', 2) | Eq('p', None))],
+
         }
+
+        if FOUND_SONY_CUSTOM_LAYERS:
+            self._opset2layer[OperatorSetNames.OPSET_SSD_POST_PROCESS.value] = [SSDPostProcess]
+        else:
+            # If Custom layers is not installed then we don't want the user to fail, but just ignore custom layers
+            # in the initialized framework TPC
+            self._opset2layer[OperatorSetNames.OPSET_SSD_POST_PROCESS.value] = []
 
         pytorch_linear_attr_mapping = {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
                                        BIAS_ATTR: DefaultDict(default_value=BIAS)}

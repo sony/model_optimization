@@ -17,7 +17,7 @@ from model_compression_toolkit.constants import PYTORCH
 from model_compression_toolkit.core.pytorch.utils import get_working_device
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2pytorch import \
-    AttachTpModelToPytorch
+    AttachTpcToPytorch
 
 from model_compression_toolkit.xquant.common.framework_report_utils import FrameworkReportUtils
 from model_compression_toolkit.core.pytorch.default_framework_info import DEFAULT_PYTORCH_INFO
@@ -43,7 +43,7 @@ class PytorchReportUtils(FrameworkReportUtils):
         fw_impl = PytorchImplementation()
         # Set the default Target Platform Capabilities (TPC) for PyTorch.
         default_tpc = get_target_platform_capabilities(PYTORCH, DEFAULT_TP_MODEL)
-        attach2pytorch = AttachTpModelToPytorch()
+        attach2pytorch = AttachTpcToPytorch()
         target_platform_capabilities = attach2pytorch.attach(default_tpc)
 
         dataset_utils = PytorchDatasetUtils()

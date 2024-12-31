@@ -237,8 +237,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
 
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_UNSTACK.value, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_DROPOUT.value, qc_options=quant_preserving_config))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SPLIT.value, qc_options=quant_preserving_config))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CHUNK.value, qc_options=quant_preserving_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SPLIT_CHUNK.value, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_GET_ITEM.value, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MAXPOOL.value, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CROPPING2D.value, qc_options=quant_preserving_config))

@@ -36,7 +36,7 @@ if FOUND_TF:
     from model_compression_toolkit.core.keras.default_framework_info import DEFAULT_KERAS_INFO
     from tensorflow.keras.models import Model
     from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-        AttachTpModelToKeras
+        AttachTpcToKeras
 
     DEFAULT_KERAS_TPC = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
 
@@ -114,7 +114,7 @@ if FOUND_TF:
         fw_impl = PruningKerasImplementation()
 
         # Attach tpc model to framework
-        attach2keras = AttachTpModelToKeras()
+        attach2keras = AttachTpcToKeras()
         target_platform_capabilities = attach2keras.attach(target_platform_capabilities)
 
         # Convert the original Keras model to an internal graph representation.

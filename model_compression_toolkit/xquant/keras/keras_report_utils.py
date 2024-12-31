@@ -28,7 +28,7 @@ from model_compression_toolkit.xquant.keras.tensorboard_utils import KerasTensor
 from mct_quantizers.keras.metadata import get_metadata
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.target_platform.targetplatform2framework.attach2keras import \
-    AttachTpModelToKeras
+    AttachTpcToKeras
 
 
 class KerasReportUtils(FrameworkReportUtils):
@@ -45,7 +45,7 @@ class KerasReportUtils(FrameworkReportUtils):
 
         # Set the default Target Platform Capabilities (TPC) for PyTorch.
         default_tpc = get_target_platform_capabilities(TENSORFLOW, DEFAULT_TP_MODEL)
-        attach2pytorch = AttachTpModelToKeras()
+        attach2pytorch = AttachTpcToKeras()
         target_platform_capabilities = attach2pytorch.attach(default_tpc)
 
         dataset_utils = KerasDatasetUtils()

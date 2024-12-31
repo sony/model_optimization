@@ -14,38 +14,42 @@
 # ==============================================================================
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 
-from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.target_platform_capabilities import \
-    get_tpc_dict_by_fw as get_imx500_tpc
-from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import get_tp_model
 
-tpc_dict = {DEFAULT_TP_MODEL: get_imx500_tpc,
-            IMX500_TP_MODEL: get_imx500_tpc}
+
+# TODO: These methods need to be replaced once modifying the TPC API.
 
 
 def get_target_platform_capabilities(fw_name: str,
                                      target_platform_name: str,
                                      target_platform_version: str = None) -> TargetPlatformModel:
     """
-    Get a TargetPlatformCapabilities by the target platform model name and the framework name.
-    For now, it supports frameworks 'tensorflow' and 'pytorch'. For both of them
-    the target platform model can be 'default', 'imx500', 'tflite', or 'qnnpack'.
+    This is a degenerated function that only returns the MCT default TargetPlatformModel object, to comply with the
+    existing TPC API.
 
     Args:
-        fw_name: Framework name of the TargetPlatformCapabilities.
-        target_platform_name: Target platform model name the model will use for inference.
-        target_platform_version: Target platform capabilities version.
+        fw_name: Framework name of the TargetPlatformCapabilities (not used in this function).
+        target_platform_name: Target platform model name the model will use for inference (not used in this function).
+        target_platform_version: Target platform capabilities version (not used in this function).
+
     Returns:
-        A TargetPlatformCapabilities object that models the hardware and attaches
-        a framework information to it.
+        A default TargetPlatformModel object.
     """
-    # assert target_platform_name in tpc_dict, f'Target platform {target_platform_name} is not defined!'
-    # fw_tpc = tpc_dict.get(target_platform_name)
-    # tpc_versions = fw_tpc(fw_name)
-    # if target_platform_version is None:
-    #     target_platform_version = LATEST
-    # else:
-    #     assert target_platform_version in tpc_versions, (f'TPC version {target_platform_version} is not supported for '
-    #                                                      f'framework {fw_name}.')
-    # return tpc_versions[target_platform_version]()
+
     return get_tp_model()
+
+
+def get_tpc_model(name: str, tp_model: TargetPlatformModel):
+    """
+    This is a utility method that just returns the TargetPlatformModel that it receives, to support existing TPC API.
+
+    Args:
+        name: the name of the TargetPlatformModel (not used in this function).
+        tp_model: a TargetPlatformModel to return.
+
+    Returns:
+        The given TargetPlatformModel object.
+
+    """
+
+    return tp_model
