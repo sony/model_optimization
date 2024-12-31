@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
 
 from model_compression_toolkit.target_platform_capabilities.tpc_models.imx500_tpc.v1.tp_model import get_tp_model
@@ -36,6 +37,8 @@ def get_target_platform_capabilities(fw_name: str,
         A default TargetPlatformModel object.
     """
 
+    assert fw_name == DEFAULT_TP_MODEL or fw_name == 'v1', \
+        "The usage of get_target_platform_capabilities API is supported only with the default TPC ('v1')."
     return get_tp_model()
 
 
