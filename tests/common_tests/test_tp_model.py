@@ -15,13 +15,11 @@
 import os
 
 import unittest
-from pydantic_core import from_json
 
 import model_compression_toolkit as mct
 import model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema as schema
-from model_compression_toolkit.constants import FLOAT_BITWIDTH
 from model_compression_toolkit.core.common import BaseNode
-from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR, BIAS_ATTR
+from model_compression_toolkit.target_platform_capabilities.constants import KERNEL_ATTR
 from model_compression_toolkit.target_platform_capabilities.schema.schema_functions import \
     get_config_options_by_operators_set, is_opset_in_model
 from tests.common_tests.helpers.generate_test_tp_model import generate_test_attr_configs, generate_test_op_qc
