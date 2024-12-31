@@ -213,9 +213,10 @@ def generate_tp_model(default_config: OpQuantizationConfig,
         supported_input_activation_n_bits=(8, 16))
     const_config_input16_output16 = const_config_input16.clone_and_edit(
         activation_n_bits=16, signedness=Signedness.SIGNED)
-    const_configuration_options_inout16 = schema.QuantizationConfigOptions(quantization_configurations=tuple([const_config_input16_output16,
-                                                                            const_config_input16]),
-                                                                           base_config=const_config_input16)
+    const_configuration_options_inout16 = schema.QuantizationConfigOptions(
+        quantization_configurations=tuple([const_config_input16_output16,
+                                           const_config_input16]),
+        base_config=const_config_input16)
 
     const_config_input16_per_tensor = const_config.clone_and_edit(
         supported_input_activation_n_bits=(8, 16),
