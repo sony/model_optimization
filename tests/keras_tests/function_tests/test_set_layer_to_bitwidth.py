@@ -18,7 +18,7 @@ import numpy as np
 
 from keras import Input
 from keras.layers import Conv2D
-from keras_core.src.layers import InputLayer
+from keras.src.engine.input_layer import InputLayer
 
 from mct_quantizers import KerasActivationQuantizationHolder
 from model_compression_toolkit.core import QuantizationConfig

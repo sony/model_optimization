@@ -17,7 +17,7 @@ import unittest
 import numpy as np
 from keras.applications.densenet import DenseNet121
 from keras.applications.mobilenet_v2 import MobileNetV2
-from keras_core.src.layers import InputLayer
+from keras.src.engine.input_layer import InputLayer
 
 from packaging import version
 

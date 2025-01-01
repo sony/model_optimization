@@ -19,7 +19,7 @@ import unittest
 
 from keras.layers import Conv2D, Conv2DTranspose, DepthwiseConv2D, Dense, BatchNormalization, ReLU, Input
 import numpy as np
-from keras_core.src.layers import InputLayer
+from keras.src.engine.input_layer import InputLayer
 
 from model_compression_toolkit.core import QuantizationConfig
 from model_compression_toolkit.core.common.graph.virtual_activation_weights_node import VirtualSplitActivationNode, \
