@@ -228,7 +228,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ARGMAX.value, qc_options=no_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_TOPK.value, qc_options=no_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_COMBINED_NON_MAX_SUPPRESSION.value,qc_options=no_quantization_config))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FAKE_QUANT_WITH_MIN_MAX_VARS.value,qc_options=no_quantization_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_FAKE_QUANT.value,qc_options=no_quantization_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SSD_POST_PROCESS.value, qc_options=no_quantization_config))
 
     quant_preserving_config = (default_configuration_options.clone_and_edit(enable_activation_quantization=False,
@@ -240,7 +240,7 @@ def generate_tp_model(default_config: OpQuantizationConfig,
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_SPLIT_CHUNK.value, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_GET_ITEM.value, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_MAXPOOL.value, qc_options=quant_preserving_config))
-    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CROPPING2D.value, qc_options=quant_preserving_config))
+    operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_PAD.value, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_ZERO_PADDING2d.value, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_CAST.value, qc_options=quant_preserving_config))
     operator_set.append(schema.OperatorsSet(name=schema.OperatorSetNames.OPSET_STRIDED_SLICE.value, qc_options=quant_preserving_config))

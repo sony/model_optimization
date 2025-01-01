@@ -18,9 +18,9 @@ import operator
 import torch
 from torch import add, sub, mul, div, divide, flatten, reshape, split, unsqueeze, dropout, sigmoid, tanh, \
     chunk, unbind, topk, gather, equal, transpose, permute, argmax, squeeze, multiply, subtract, minimum, \
-    maximum, softmax
+    maximum, softmax, fake_quantize_per_channel_affine
 from torch.nn import Conv2d, Linear, ConvTranspose2d, MaxPool2d, BatchNorm2d, Dropout, Flatten, Hardtanh, ReLU, ReLU6, \
-    PReLU, SiLU, Sigmoid, Tanh, Hardswish, Hardsigmoid, LeakyReLU, GELU, LogSoftmax, Softmax, ELU, AvgPool2d
+    PReLU, SiLU, Sigmoid, Tanh, Hardswish, Hardsigmoid, LeakyReLU, GELU, LogSoftmax, Softmax, ELU, AvgPool2d, ZeroPad2d
 from torch.nn.functional import relu, relu6, prelu, silu, hardtanh, hardswish, hardsigmoid, leaky_relu, gelu, fold
 import torch.nn.functional as F
 
@@ -39,6 +39,7 @@ class AttachTpcToPytorch(AttachTpcToFramework):
 
         self._opset2layer = {
             OperatorSetNames.OPSET_CONV.value: [Conv2d],
+            OperatorSetNames.OPSET_DEPTHWISE_CONV.value: [],  # no specific operator for depthwise conv in pytorch
             OperatorSetNames.OPSET_CONV_TRANSPOSE.value: [ConvTranspose2d],
             OperatorSetNames.OPSET_FULLY_CONNECTED.value: [Linear],
             OperatorSetNames.OPSET_CONCATENATE.value: [torch.cat, torch.concat, torch.concatenate],
@@ -84,12 +85,17 @@ class AttachTpcToPytorch(AttachTpcToFramework):
             OperatorSetNames.OPSET_EQUAL.value: [equal],
             OperatorSetNames.OPSET_ARGMAX.value: [argmax],
             OperatorSetNames.OPSET_TOPK.value: [topk],
+            OperatorSetNames.OPSET_FAKE_QUANT.value: [fake_quantize_per_channel_affine],
+            OperatorSetNames.OPSET_ZERO_PADDING2d.value: [ZeroPad2d],
+            OperatorSetNames.OPSET_CAST.value: [torch.Tensor.type],
+            OperatorSetNames.OPSET_STRIDED_SLICE.value: [],  # no such operator in pytorch, the equivalent is get_item which has a separate operator set
             OperatorSetNames.OPSET_ELU.value: [ELU, F.elu],
             OperatorSetNames.OPSET_SOFTMAX.value: [Softmax, softmax, F.softmax],
             OperatorSetNames.OPSET_LOG_SOFTMAX.value: [LogSoftmax],
             OperatorSetNames.OPSET_L2NORM.value: [LayerFilterParams(torch.nn.functional.normalize,
                                                                     Eq('p', 2) | Eq('p', None))],
-            OperatorSetNames.OPSET_SSD_POST_PROCESS.value: []  # for alignment with the default TargetPlatformModel
+            OperatorSetNames.OPSET_SSD_POST_PROCESS.value: [],  # no such operator in pytorch
+            OperatorSetNames.OPSET_COMBINED_NON_MAX_SUPPRESSION.value: []  # no such operator in pytorch
         }
 
         pytorch_linear_attr_mapping = {KERNEL_ATTR: DefaultDict(default_value=PYTORCH_KERNEL),
