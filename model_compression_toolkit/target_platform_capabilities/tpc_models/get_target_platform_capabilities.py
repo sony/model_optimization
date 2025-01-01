@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from common.constants import TENSORFLOW, PYTORCH
+from model_compression_toolkit.constants import TENSORFLOW, PYTORCH
 from model_compression_toolkit.target_platform_capabilities.constants import DEFAULT_TP_MODEL, IMX500_TP_MODEL, \
     TFLITE_TP_MODEL, QNNPACK_TP_MODEL
 from model_compression_toolkit.target_platform_capabilities.schema.mct_current_schema import TargetPlatformModel
