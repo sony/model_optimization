@@ -144,7 +144,7 @@ if FOUND_TORCH:
                                                     core_config: CoreConfig = CoreConfig(),
                                                     gptq_config: GradientPTQConfig = None,
                                                     gptq_representative_data_gen: Callable = None,
-                                                    target_platform_capabilities: TargetPlatformModel = None):
+                                                    target_platform_capabilities: TargetPlatformModel = DEFAULT_PYTORCH_TPC):
         """
         Quantize a trained Pytorch module using post-training quantization.
         By default, the module is quantized using a symmetric constraint quantization thresholds

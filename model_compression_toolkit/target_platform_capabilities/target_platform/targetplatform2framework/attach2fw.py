@@ -37,7 +37,6 @@ class AttachTpcToFramework:
         """
 
         tpc = TargetPlatformCapabilities(tpc_model)
-        # tpc_model_opsets = [opset.name for opset in tpc_model.operator_set if isinstance(opset, OperatorsSet)]
         custom_opset2layer = custom_opset2layer if custom_opset2layer is not None else {}
 
         with tpc:
